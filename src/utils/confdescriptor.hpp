@@ -37,7 +37,7 @@ TODO("We could probably use templated Entries instead of InputType_t and Storage
 enum InputType_t {
     INPUT_BOOLEAN,
     INPUT_UNSIGNED,
-    INPUT_LEVEL
+//     INPUT_LEVEL
 };
 
 enum StorageType_t {
@@ -87,11 +87,11 @@ struct Entry {
                 this->store(result);
             }
             break;
-            case INPUT_LEVEL: {
-                unsigned long level  = level_from_cstr(value);
-                this->store(level);
-            }
-            break;
+            //case INPUT_LEVEL: {
+            //    unsigned long level  = level_from_cstr(value);
+            //    this->store(level);
+            //}
+            //break;
         }
         return true;
     }

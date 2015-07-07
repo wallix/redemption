@@ -54,8 +54,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.video.png_limit = 10; // one snapshot by second
         ini.video.png_interval = 10; // one snapshot by second
 
-        ini.video.capture_wrm = true;
-        ini.video.capture_png = true;
+        ini.video.capture_flags = CaptureFlags::wrm | CaptureFlags::png;
         ini.globals.enable_file_encryption.set(false);
 
         Capture capture(
@@ -198,8 +197,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.video.png_limit = 10; // one snapshot by second
         ini.video.png_interval = 10; // one snapshot by second
 
-        ini.video.capture_wrm = false;
-        ini.video.capture_png = true;
+        ini.video.capture_flags = CaptureFlags::png;
         ini.globals.enable_file_encryption.set(false);
         Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini);
 

@@ -197,13 +197,11 @@ static inline const char * TR(const char * key, Inifile & ini)
     const char * res = nullptr;
 
     if (!res || !*res || 0 == strcmp(res, "ASK")) {
-        const char * lang = ini.translation.language.get_cstr();
-        if (0 == strcmp("fr", lang)) {
-            TRANSLATIONCONF.set_lang(Translation::FR);
-        }
-        else if (0 == strcmp("en", lang)) {
-            TRANSLATIONCONF.set_lang(Translation::EN);
-        }
+        TRANSLATIONCONF.set_lang(
+            ini.translation.language.get() == Language::fr
+          ? Translation::FR
+          : Translation::EN
+        );
         res = TRANSLATIONCONF.translate(key);
         if (!res) {
             LOG(LOG_INFO, "Translation not found for '%s'", key);

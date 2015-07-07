@@ -102,7 +102,7 @@ inline int shutdown(const char * pid_file)
     std::cout << "stopping rdpproxy\n";
     /* read the rdpproxy.pid file */
     io::posix::fdbuf fd;
-    cout << "looking if pid_file " << pid_file <<  " exists\n";
+    std::cout << "looking if pid_file " << pid_file <<  " exists\n";
     if ((0 == access(pid_file, F_OK))) {
         fd.open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
         if (!fd) {
@@ -139,7 +139,7 @@ inline int shutdown(const char * pid_file)
                 }
                 if ((errno != ESRCH) || (res == 0)){
                     // if errno != ESRCH, pid is still running
-                    cerr << "Error stopping process id " << pid << "\n";
+                    std::cerr << "Error stopping process id " << pid << "\n";
                 }
             }
         }
@@ -251,13 +251,13 @@ int app_proxy(
         return status;
     }
     if (options.count("help")) {
-        cout << copyright_notice << "\n\n";
-        cout << "Usage: rdpproxy [options]\n\n";
-        cout << desc << endl;
+        std::cout << copyright_notice << "\n\n";
+        std::cout << "Usage: rdpproxy [options]\n\n";
+        std::cout << desc << endl;
         return 0;
     }
     if (options.count("version")) {
-        cout << copyright_notice << std::endl;
+        std::cout << copyright_notice << std::endl;
         return 0;
     }
 

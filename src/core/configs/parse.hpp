@@ -34,15 +34,15 @@
 
 namespace configs {
 
-void parse(unsigned & x, char const * value) { x = ulong_from_cstr(value); }
-void parse(int & x, char const * value) { x = long_from_cstr(value); }
-void parse(bool & x, char const * value) { x = bool_from_cstr(value); }
+inline void parse(unsigned & x, char const * value) { x = ulong_from_cstr(value); }
+inline void parse(int & x, char const * value) { x = long_from_cstr(value); }
+inline void parse(bool & x, char const * value) { x = bool_from_cstr(value); }
 
-void parse(std::string & x, char const * value) { x = value; }
+inline void parse(std::string & x, char const * value) { x = value; }
 
-void parse(Level & x, char const * value) { x = level_from_cstr(value); }
-void parse(ColorDepth & x, char const * value) { x = color_depth_from_cstr(value); }
-void parse(CaptureFlags & x, char const * value) { x = static_cast<CaptureFlags>(ulong_from_cstr(value)); }
+inline void parse(Level & x, char const * value) { x = level_from_cstr(value); }
+inline void parse(ColorDepth & x, char const * value) { x = color_depth_from_cstr(value); }
+inline void parse(CaptureFlags & x, char const * value) { x = static_cast<CaptureFlags>(ulong_from_cstr(value)); }
 
 template<std::size_t N, class Copier, bool NullableString>
 void parse(StaticStringBase<N, Copier, NullableString> & x, char const * value) { x = value; }
@@ -60,10 +60,10 @@ void parse(StaticKeyString<N> & key, char const * value) {
     }
 }
 
-void parse(BoolField & x, char const * value) { x.set_from_cstr(value); }
-void parse(UnsignedField & x, char const * value) { x.set_from_cstr(value); }
-void parse(SignedField & x, char const * value) { x.set_from_cstr(value); }
-void parse(StringField & x, char const * value) { x.set_from_cstr(value); }
+inline void parse(BoolField & x, char const * value) { x.set_from_cstr(value); }
+inline void parse(UnsignedField & x, char const * value) { x.set_from_cstr(value); }
+inline void parse(SignedField & x, char const * value) { x.set_from_cstr(value); }
+inline void parse(StringField & x, char const * value) { x.set_from_cstr(value); }
 
 template<class T, T Min, T Max, T Default>
 void parse(Range<T, Min, Max, Default> & x, char const * value) { x = long_from_cstr(value); }
@@ -74,7 +74,7 @@ void parse(FlagsField<Enum> & x, char const * value) { x.set_from_cstr(value); }
 template<class Enum, class Traits>
 void parse(EnumField<Enum, Traits> & x, char const * value) { x.set_from_cstr(value); }
 
-void parse(Theme & theme, char const * value) {
+inline void parse(Theme & theme, char const * value) {
     if (value && *value) {
         LOG(LOG_INFO, "LOAD_THEME: %s", value);
         char theme_path[1024] = {};

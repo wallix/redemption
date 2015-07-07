@@ -47,7 +47,7 @@ static inline bool check_file_hash_sha256( const char * file_path
     size_t  number_of_bytes_read = 0;
     int len_read = 0;
     do {
-        len_read = file.read(buf, 
+        len_read = file.read(buf,
                 ((len_to_check == 0) ||(number_of_bytes_read + sizeof(buf) < len_to_check))
                 ? sizeof(buf)
                 : len_to_check - number_of_bytes_read);
@@ -69,7 +69,7 @@ static inline bool check_file_hash_sha256( const char * file_path
     if (len_to_check == 0){
         len_to_check = number_of_bytes_read;
     }
-    
+
     return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 
@@ -245,10 +245,10 @@ bool check_file_hash(const char * file_path, const Stream & crypto_key, const ch
     StaticStream full_hash(hash + (HASH_LEN / 2), HASH_LEN / 2);
 
     if (quick_check){
-        return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key, 
+        return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key,
                                       _4kb_hash.get_data(), _4kb_hash.size(), 4096);
     }
-    return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key, 
+    return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key,
                                       full_hash.get_data(), full_hash.size(), 0);
 }
 
@@ -378,15 +378,15 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char ha
                 while ((/*line_len = */read_line(cf_struct, crypto_read, opaque_stream, opaque_data, line, sizeof(line))) > 0) {
                     int extract_file_info_result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
-                    if ((extract_file_info_result > 0) 
-                        && (((quick_check) 
+                    if ((extract_file_info_result > 0)
+                        && (((quick_check)
                             && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
                                         , ss_hmac_key
                                         , _4kb_hash.get_data()
                                         , _4kb_hash.size()
                                         , 4096) == false)
                            )
-                          || ((!quick_check) 
+                          || ((!quick_check)
                             && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
                                         , ss_hmac_key
                                         , full_hash.get_data()
@@ -452,7 +452,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
         std::cout << "Usage: redver [options]\n\n";
-        std::cout << desc << endl;
+        std::cout << desc << std::endl;
         exit(0);
     }
 
@@ -487,7 +487,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
 
         canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
 
-        //cout << "temp_path: \"" << temp_path << "\", \"" << temp_basename << "\", \"" << temp_extension << "\"" << endl;
+        //cout << "temp_path: \"" << temp_path << "\", \"" << temp_basename << "\", \"" << temp_extension << "\"" << std::endl;
 
         if (strlen(temp_path) > 0) {
             mwrm_path       = temp_path;
@@ -557,14 +557,14 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
         //snprintf(temp_filename, sizeof(temp_filename), "%s%s", temp_basename, temp_extension);
 //        temp_filename[sizeof(temp_filename) - 1] = '\0';
 
-//        std::cout << "temp_filename: \"" << temp_filename << "\"" << endl << endl;
+//        std::cout << "temp_filename: \"" << temp_filename << "\"" << std::endl << std::endl;
 //        size_t filename_len = strlen(temp_filename);
         size_t filename_len = input_filename.length();
 
         bool hash_ok = false;
 
         make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
-        std::cout << "hash file path: \"" << file_path << "\"." << endl;
+        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
 
         char   temp_buffer[4096];
         char * buf;
@@ -602,18 +602,18 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
                     hash_ok = true;
                 }
                 else {
-                    std::cerr << "Truncated hash: \"" << file_path << "\"" << endl << endl;
+                    std::cerr << "Truncated hash: \"" << file_path << "\"" << std::endl << std::endl;
                 }
             }
             else {
-                std::cerr << "File name mismatch: \"" << file_path << "\"" << endl << endl;
+                std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
             }
         }
         catch (Error const & e) {
-            std::cerr << "Exception code (hash): " << e.id << endl << endl;
+            std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
         }
         catch (...) {
-            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << endl << endl;
+            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
         }
 
         if (hash_ok == false) {
@@ -625,12 +625,12 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     * Check mwrm file *
     *****************/
     if (check_mwrm_file(&cctx, fullfilename, hash, quick_check) == false) {
-        std::cerr << "File \"" << fullfilename << "\" is invalid!" << endl << endl;
+        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 
         exit(-1);
     }
 
-    std::cout << "No error detected during the data verification." << endl << endl;
+    std::cout << "No error detected during the data verification." << std::endl << std::endl;
 
     return 0;
 }

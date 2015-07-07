@@ -395,7 +395,7 @@ public:
     , capture(nullptr)
     , up_and_running(0)
     , share_id(65538)
-    , encryptionLevel(ini.globals.encryptionLevel + 1)
+    , encryptionLevel(underlying_cast(ini.globals.encryptionLevel) + 1)
     , trans(trans)
     , userid(0)
     , order_level(0)
@@ -606,11 +606,7 @@ public:
         }
 
         if (!ini.globals.movie.get()) {
-            ini.video.capture_flags = 8;
-            ini.video.capture_wrm   = false;
-            ini.video.capture_flv   = false;
-            ini.video.capture_ocr   = true;
-            ini.video.capture_png   = false;
+            ini.video.capture_flags = CaptureFlags::ocr;
             ini.video.png_limit     = 0;
         }
 
@@ -620,10 +616,10 @@ public:
         if (this->verbose & 1) {
             LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
             LOG(LOG_INFO, "codec_id      = %s\n", ini.globals.codec_id.get_cstr());
-            LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
+            LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_value());
             LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
             LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
-            LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
+            LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get_cstr());
             LOG(LOG_INFO, "target_user   = %s\n", ini.globals.target_user.get_cstr());
         }
 
@@ -1184,9 +1180,9 @@ public:
                         default:
                         break;
                         }
-                        if (this->ini.client.max_color_depth) {
-                            this->client_info.bpp = std::min<int>(
-                                this->client_info.bpp, this->ini.client.max_color_depth);
+                        if (bool(this->ini.client.max_color_depth)) {
+                            this->client_info.bpp = std::min(
+                                this->client_info.bpp, static_cast<int>(this->ini.client.max_color_depth));
                         }
                     }
                     break;

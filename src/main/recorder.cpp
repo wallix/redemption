@@ -54,9 +54,9 @@ int main(int argc, char** argv)
       , [](po::options_description const &){}
       , [](Inifile const & ini, po::variables_map const &, std::string const & output_filename) -> int {
             if (   output_filename.length()
-                && !(  ini.video.capture_png | ini.video.capture_flv | ini.video.capture_ocr | ini.video.capture_wrm
+                && !(bool(ini.video.capture_flags & (CaptureFlags::png | CaptureFlags::wrm))
                     | ini.globals.capture_chunk.get())) {
-                std::cerr << "Missing target format : need --png or --wrm" << endl << endl;
+                std::cerr << "Missing target format : need --png or --wrm\n" << std::endl;
                 return -1;
             }
             return 0;

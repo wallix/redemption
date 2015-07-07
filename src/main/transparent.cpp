@@ -245,7 +245,7 @@ int main(int argc, char * argv[]) {
 
             int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.debug.mod_rdp);
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
-                                     , ini.debug.mod_rdp, &ini.context.auth_error_message);
+                                     , ini.debug.mod_rdp, &ini.context.auth_error_message.get());
 
             ClientInfo client_info = front.client_info;
 

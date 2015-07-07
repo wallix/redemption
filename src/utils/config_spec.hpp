@@ -360,7 +360,7 @@ void writer_config_spec(Writer && w)
             "  4: disable keyboard log in META files"
         }, attached, linked);
         w.sep();
-        w.field(V, type_<DisableClipboardLogFlagsField>(), "disable_clipboard_log", desc{
+        w.field(V, type_<ClipboardLogFlagsField>(), "disable_clipboard_log", desc{
             "Disable clipboard log:\n"
             "  1: disable clipboard log in syslog"
         }, attached);
@@ -475,9 +475,9 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.field(type_<StringField>(), "reporting", linked, attached);
         w.sep();
-        w.field(type_<StringField>(), "authchannel_answer", attached);
-        w.field(type_<StringField>(), "authchannel_result", linked, attached);
-        w.field(type_<StringField>(), "authchannel_target", linked, attached);
+        w.field(type_<StringField>(), "auth_channel_answer", attached);
+        w.field(type_<StringField>(), "auth_channel_result", linked, attached);
+        w.field(type_<StringField>(), "auth_channel_target", linked, attached);
         w.sep();
         w.field(type_<StringField>(), "message", attached);
         w.field(type_<StringField>(), "pattern_kill", attached);

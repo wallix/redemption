@@ -123,7 +123,7 @@ public:
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
         if (auth_error_message) {
-            this->ini.context.auth_error_message = auth_error_message;
+            this->ini.context.auth_error_message.set_from_cstr(auth_error_message);
         }
         if (this->mod) {
             this->mod->disconnect();
@@ -146,8 +146,8 @@ public:
             (!strcmp(module_cstr, STRMODULE_RDP) ||
              !strcmp(module_cstr, STRMODULE_VNC))) {
             LOG(LOG_INFO, "===========> MODULE_CLOSE");
-            if (this->ini.context.auth_error_message.empty()) {
-                this->ini.context.auth_error_message = TR("end_connection", this->ini);
+            if (this->ini.context.auth_error_message.get().empty()) {
+                this->ini.context.auth_error_message.set_from_cstr(TR("end_connection", this->ini));
             }
             return MODULE_INTERNAL_CLOSE;
         }
@@ -483,7 +483,7 @@ public:
                                      , this->ini.context.movie
                                      , this->front.client_info.width
                                      , this->front.client_info.height
-                                     , this->ini.context.auth_error_message
+                                     , this->ini.context.auth_error_message.get()
                                      , this->ini
                                      );
             if (this->verbose){
@@ -526,8 +526,8 @@ public:
         case MODULE_INTERNAL_CLOSE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
-                if (this->ini.context.auth_error_message.empty()) {
-                    this->ini.context.auth_error_message = "Connection to server ended";
+                if (this->ini.context.auth_error_message.get().empty()) {
+                    this->ini.context.auth_error_message.set_from_cstr("Connection to server ended");
                 }
                 this->mod = new FlatWabCloseMod(this->ini,
                             // new WabCloseMod(this->ini,
@@ -690,11 +690,11 @@ public:
                                             this->ini.debug.mod_xup);
 
                 if (client_sck == -1){
-                    this->ini.context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini.context.auth_error_message.set_from_cstr("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.context.auth_error_message = "failed authentification on remote X host";
+                this->ini.context.auth_error_message.set_from_cstr("failed authentification on remote X host");
 
                 this->mod = new ModWithSocket<xup_mod>( *this
                                                       , name
@@ -710,7 +710,7 @@ public:
                                                       , this->ini.context.opt_bpp.get()
                 );
 
-                this->ini.context.auth_error_message.clear();
+                this->ini.context.auth_error_message.get().clear();
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                 this->connected = true;
             }
@@ -752,11 +752,11 @@ public:
                                             this->ini.debug.mod_rdp);
 
                 if (client_sck == -1){
-                    this->ini.context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini.context.auth_error_message.set_from_cstr("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.context.auth_error_message = "failed authentification on remote RDP host";
+                this->ini.context.auth_error_message.set_from_cstr("failed authentification on remote RDP host");
 
                 // BEGIN READ PROXY_OPT
                 if (!this->ini.globals.disable_proxy_opt) {
@@ -792,7 +792,7 @@ public:
                 mod_rdp_params.wab_agent_launch_timeout            = this->ini.globals.wab_agent_launch_timeout.get();
                 mod_rdp_params.wab_agent_keepalive_timeout         = this->ini.globals.wab_agent_keepalive_timeout.get();
                 mod_rdp_params.wab_agent_alternate_shell           = this->ini.globals.wab_agent_alternate_shell;
-                mod_rdp_params.disable_clipboard_log               = this->ini.video.disable_clipboard_log.get();
+                mod_rdp_params.disable_clipboard_log               = underlying_cast(this->ini.video.disable_clipboard_log.get());
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
                 mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
@@ -800,7 +800,7 @@ public:
                 mod_rdp_params.target_application_account          = this->ini.globals.target_application_account.get_cstr();
                 mod_rdp_params.target_application_password         = this->ini.globals.target_application_password.get_cstr();
                 mod_rdp_params.rdp_compression                     = this->ini.mod_rdp.rdp_compression;
-                mod_rdp_params.error_message                       = &this->ini.context.auth_error_message;
+                mod_rdp_params.error_message                       = &this->ini.context.auth_error_message.get();
                 mod_rdp_params.disconnect_on_logon_user_change     = this->ini.mod_rdp.disconnect_on_logon_user_change;
                 mod_rdp_params.open_session_timeout                = this->ini.mod_rdp.open_session_timeout;
                 mod_rdp_params.certificate_change_action           = this->ini.mod_rdp.certificate_change_action;
@@ -834,7 +834,7 @@ public:
                                                       , name
                                                       , client_sck
                                                       , this->ini.debug.mod_rdp
-                                                      , &this->ini.context.auth_error_message
+                                                      , &this->ini.context.auth_error_message.get()
                                                       , sock_mod_barrier()
                                                       , this->front
                                                       , client_info
@@ -848,7 +848,7 @@ public:
                 // this->mod->rdp_input_invalidate2(rects);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
-                this->ini.context.auth_error_message.clear();
+                this->ini.context.auth_error_message.get().clear();
                 this->connected = true;
             }
             break;
@@ -866,11 +866,11 @@ public:
                                             this->ini.debug.mod_vnc);
 
                 if (client_sck == -1){
-                    this->ini.context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini.context.auth_error_message.set_from_cstr("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.context.auth_error_message = "failed authentification on remote VNC host";
+                this->ini.context.auth_error_message.set_from_cstr("failed authentification on remote VNC host");
 
                 this->mod = new ModWithSocket<mod_vnc>( *this
                                                       , name
@@ -897,7 +897,7 @@ public:
                 );
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
-                this->ini.context.auth_error_message.clear();
+                this->ini.context.auth_error_message.get().clear();
                 this->connected = true;
             }
             break;
