@@ -39,7 +39,7 @@ private:
     struct temporary_text {
         char text[255];
 
-        temporary_text(Inifile & ini)
+        explicit temporary_text(Inifile & ini)
         {
             if (strcmp(ini.context.module.get_cstr(), "selector") == 0) {
                 snprintf(text, sizeof(text), "%s", TR("selector", ini));
@@ -84,21 +84,18 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~FlatWabCloseMod()
-    {
+    ~FlatWabCloseMod() override {
         this->screen.clear();
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
-    {
+    void notify(Widget2* sender, notify_event_t event) override {
         if (NOTIFY_CANCEL == event) {
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
         }
     }
 
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
         case TimeoutT<time_t>::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;

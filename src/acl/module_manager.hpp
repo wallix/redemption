@@ -101,12 +101,12 @@ class MMIni : public MMApi {
 public:
     Inifile & ini;
     uint32_t verbose;
-    MMIni(Inifile & _ini) : ini(_ini)
+    explicit MMIni(Inifile & _ini) : ini(_ini)
                           , verbose(ini.debug.auth)
     {}
-    virtual ~MMIni() {}
-    virtual void remove_mod() {};
-    virtual void new_mod(int target_module, time_t now, auth_api * acl) {
+    ~MMIni() override {}
+    void remove_mod() override {}
+    void new_mod(int target_module, time_t now, auth_api * acl) override {
         LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
         switch (target_module) {
         case MODULE_VNC:
@@ -119,8 +119,8 @@ public:
         };
     };
 
-    virtual void invoke_close_box(const char * auth_error_message,
-                                  BackEvent_t & signal, time_t now) {
+    void invoke_close_box(const char * auth_error_message,
+                                  BackEvent_t & signal, time_t now) override {
         this->last_module = true;
         if (auth_error_message) {
             this->ini.context.auth_error_message.set_from_cstr(auth_error_message);
@@ -138,7 +138,7 @@ public:
         }
     }
 
-    int next_module() {
+    int next_module() override {
         LOG(LOG_INFO, "----------> ACL next_module <--------");
         const char * module_cstr = this->ini.context.module.get_cstr();
 
@@ -245,7 +245,7 @@ public:
         return MODULE_INTERNAL_CLOSE;
     }
 
-    virtual void check_module() {
+    void check_module() override {
         if (this->ini.context.forcemodule.get() &&
             !this->is_connected()) {
             this->mod->get_event().signal = BACK_EVENT_NEXT;
@@ -277,8 +277,7 @@ class ModuleManager : public MMIni
             manager.osd = this;
         }
 
-        ~module_osd()
-        {
+        ~module_osd() override {
             this->manager.mod = this->old_mod;
             this->manager.osd = nullptr;
             // disable draw hidden
@@ -287,8 +286,7 @@ class ModuleManager : public MMIni
             }
         }
 
-        virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-        {
+        void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
             if (!this->external_deleting && this->fg().contains_pt(x, y)) {
                 if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                     this->delete_self();
@@ -299,8 +297,7 @@ class ModuleManager : public MMIni
             }
         }
 
-        virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-        {
+        void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
             if (   !this->external_deleting
                 && keymap->nb_kevent_available() > 0
                 && !(param3 & SlowPath::KBDFLAGS_DOWN)
@@ -348,7 +345,7 @@ class ModuleManager : public MMIni
         }
 
         bool targer_info_is_shown = false;
-        virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+        void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
             //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
             Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
@@ -443,8 +440,7 @@ public:
         this->mod = &this->no_mod;
     }
 
-    virtual void remove_mod()
-    {
+    void remove_mod() override {
         delete this->osd;
 
         if (this->mod != &this->no_mod){
@@ -454,13 +450,11 @@ public:
         }
     }
 
-    virtual ~ModuleManager()
-    {
+    ~ModuleManager() override {
         this->remove_mod();
     }
 
-    virtual void new_mod(int target_module, time_t now, auth_api * acl)
-    {
+    void new_mod(int target_module, time_t now, auth_api * acl) override {
         LOG(LOG_INFO, "target_module=%u", target_module);
         if (this->last_module) this->front.stop_capture();
         switch (target_module)
@@ -912,8 +906,7 @@ public:
     }
 
     // Check movie start/stop/pause
-    virtual void record(auth_api * acl)
-    {
+    void record(auth_api * acl) override {
         if (this->ini.globals.movie.get() || !ini.context.pattern_kill.is_empty() || !ini.context.pattern_notify.is_empty()) {
             //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?
             if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {

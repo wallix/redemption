@@ -75,7 +75,7 @@ public:
     struct temporary_number_of_page {
         char buffer[15];
 
-        temporary_number_of_page(const char * s)
+        explicit temporary_number_of_page(const char * s)
         {
             size_t len = std::min(sizeof(this->buffer) - 3, strlen(s));
             this->buffer[0] = '/';
@@ -197,12 +197,11 @@ public:
         this->rearrange();
     }
 
-    virtual ~WidgetSelectorFlat2()
-    {
+    ~WidgetSelectorFlat2() override {
         this->clear();
     }
 
-    virtual int get_bg_color() const {
+    int get_bg_color() const override {
         return this->bg_color;
     }
 
@@ -324,8 +323,7 @@ public:
     }
 
 
-    virtual void notify(Widget2* widget, notify_event_t event)
-    {
+    void notify(Widget2* widget, notify_event_t event) override {
         if ((widget->group_id == this->selector_lines.group_id) ||
             (widget->group_id == this->connect.group_id)) {
             if (NOTIFY_SUBMIT == event) {

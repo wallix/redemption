@@ -167,7 +167,7 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     }
 
 
-    virtual ~NTLMNegotiateMessage() {}
+    ~NTLMNegotiateMessage() override {}
 
     void emit(Stream & stream) {
         uint32_t currentOffset = this->PayloadOffset;

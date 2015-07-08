@@ -31,7 +31,7 @@ struct CompressionTransportBase
     static const unsigned min_algorithm = 0;
     static const unsigned max_algorithm = static_cast<unsigned>(Algorithm::NUNMBER);
 
-    CompressionTransportBase(unsigned compression_algorithm)
+    explicit CompressionTransportBase(unsigned compression_algorithm)
     : algorithm(static_cast<Algorithm>(compression_algorithm < max_algorithm ? compression_algorithm : 0))
     {}
 
@@ -91,7 +91,7 @@ private:
         SnappyTransport snappy_trans;
         Transport *     trans;
 
-        CompressionTransport(Transport & trans)
+        explicit CompressionTransport(Transport & trans)
         : trans(&trans)
         {}
 

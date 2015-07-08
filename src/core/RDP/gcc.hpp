@@ -241,7 +241,7 @@ namespace GCC
         public:
         SubStream payload;
 
-        Create_Request_Recv(Stream & stream)
+        explicit Create_Request_Recv(Stream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
                     LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
@@ -474,7 +474,7 @@ namespace GCC
         public:
         SubStream payload;
 
-        Create_Response_Recv(Stream & stream)
+        explicit Create_Response_Recv(Stream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
                     LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
@@ -540,7 +540,7 @@ namespace GCC
             uint16_t length;
             SubStream payload;
 
-            RecvFactory(Stream & stream)
+            explicit RecvFactory(Stream & stream)
             : tag([&stream](){
                 if (!stream.in_check_rem(4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");

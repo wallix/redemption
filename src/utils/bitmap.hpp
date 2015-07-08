@@ -421,7 +421,7 @@ public:
     }
 
     TODO("I could use some data provider lambda instead of filename")
-    Bitmap(const char* filename)
+    explicit Bitmap(const char* filename)
     : data_bitmap(nullptr)
     {
         //LOG(LOG_INFO, "loading bitmap %s", filename);
@@ -1571,7 +1571,7 @@ public:
 
         struct RLE_OutStream {
             Stream & stream;
-            RLE_OutStream(Stream & outbuffer)
+            explicit RLE_OutStream(Stream & outbuffer)
             : stream(outbuffer)
             {}
 

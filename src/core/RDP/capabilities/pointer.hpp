@@ -81,7 +81,7 @@ struct PointerCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->colorPointerFlag);
@@ -90,7 +90,7 @@ struct PointerCaps : public Capability {
         stream.out_uint16_le(this->pointerCacheSize);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
 
         unsigned int expected = 2 + 2 + ((this->len < 10) ? 0 : 2); /* colorPointerFlag(2) + colorPointerCacheSize(2) + pointerCacheSize*/
@@ -106,7 +106,7 @@ struct PointerCaps : public Capability {
         this->pointerCacheSize = stream.in_uint16_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s Pointer caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Pointer caps::colorPointerFlag %u", this->colorPointerFlag);
         LOG(LOG_INFO, "Pointer caps::colorPointerCacheSize %u", this->colorPointerCacheSize);

@@ -177,7 +177,7 @@ enum {
         this->confirm.set_button_y(y + 10);
     }
 
-    virtual ~FlatForm() {
+    ~FlatForm() override {
         this->clear();
     }
 
@@ -186,11 +186,11 @@ enum {
         this->rect.y += y;
         this->WidgetParent::move_xy(x,y);
     }
-    virtual void set_xy(int16_t x, int16_t y) {
+    void set_xy(int16_t x, int16_t y) override {
         this->move_xy(x - this->rect.x, y - this->rect.y);
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event) {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if (widget->group_id == this->confirm.group_id) {
             if (NOTIFY_SUBMIT == event) {
                 this->check_confirmation();
@@ -296,8 +296,7 @@ enum {
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:

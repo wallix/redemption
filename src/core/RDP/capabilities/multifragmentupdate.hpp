@@ -58,18 +58,18 @@ struct MultiFragmentUpdateCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->MaxRequestSize);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
         this->MaxRequestSize = stream.in_uint32_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s MultifragmentUpdate caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "MultifragmentUpdate caps::MaxRequestSize %u", this->MaxRequestSize);
     }

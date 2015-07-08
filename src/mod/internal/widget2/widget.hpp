@@ -88,7 +88,7 @@ public:
     , has_focus(false)
     , notify_value(0) {}
 
-    virtual ~Widget2() {}
+    ~Widget2() override {}
 
     virtual bool next_focus()
     {
@@ -146,23 +146,19 @@ public:
 
     // External world can generate 4 kind of events
     // - keyboard event (scancode)
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
-    {
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
     }
 
     // - mouve event (mouse moves or a button went up or down)
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
     }
 
     // - synchronisation of capslock, numlock, etc state.
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
-    {
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
     }
 
     // - part of screen should be redrawn
-    virtual void rdp_input_invalidate(const Rect & r)
-    {
+    void rdp_input_invalidate(const Rect & r) override {
         this->refresh(r);
     }
 
@@ -172,8 +168,7 @@ public:
             this->notifier->notify(this, event);
     }
 
-    virtual void notify(Widget2 * w, NotifyApi::notify_event_t event)
-    {
+    void notify(Widget2 * w, NotifyApi::notify_event_t event) override {
         if (this->notifier)
             this->notifier->notify(this, event);
     }

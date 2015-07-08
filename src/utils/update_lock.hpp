@@ -27,7 +27,7 @@ class update_lock
     T & r_;
 
 public:
-    update_lock(T & r)
+    explicit update_lock(T & r)
     : r_(r)
     {
         this->r_.begin_update();

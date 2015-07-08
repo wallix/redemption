@@ -659,7 +659,7 @@ enum {
         uint32_t length;
         SubStream payload;
 
-        SecExchangePacket_Recv(Stream & stream)
+        explicit SecExchangePacket_Recv(Stream & stream)
             : basicSecurityHeader([&stream](){
                 const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
                 if (!stream.in_check_rem(expected)){

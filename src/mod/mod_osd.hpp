@@ -149,8 +149,7 @@ public:
         this->set_gd(mod, this);
     }
 
-    virtual ~mod_osd()
-    {
+    ~mod_osd() override {
         if (this->is_active()) {
             this->mod.rdp_input_invalidate(this->fg_rect);
         }
@@ -180,13 +179,11 @@ public:
         }
     }
 
-    virtual wait_obj& get_event()
-    {
+    wait_obj& get_event() override {
         return this->mod.get_event();
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         this->split_draw(cmd.rect, cmd, clip);
     }
 
@@ -210,8 +207,7 @@ private:
     }
 
 public:
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         const Rect drect = cmd.rect.intersect(clip);
         const int deltax = cmd.srcx - cmd.rect.x;
         const int deltay = cmd.srcy - cmd.rect.y;
@@ -233,58 +229,47 @@ public:
         }
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         this->split_draw(cmd.rect, cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
-    {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->split_draw(cmd.rect, cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
-    {
+    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->split_draw(cmd.rect, cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->split_draw(cmd.rect, cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->split_draw(cmd.rect, cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
-    {
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
         this->split_draw(Rect(cmd.startx, cmd.starty, cmd.endx - cmd.startx, cmd.endy - cmd.starty), cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         this->split_draw(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
-    {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         int16_t endx = 0;
         int16_t endy = 0;
         for (unsigned i = 0; i < cmd.NumDeltaEntries; i++) {
@@ -294,8 +279,7 @@ public:
         this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
     }
 
-    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
-    {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         int16_t endx = 0;
         int16_t endy = 0;
         for (unsigned i = 0; i < cmd.NumDeltaEntries; i++) {
@@ -305,8 +289,7 @@ public:
         this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
     }
 
-    virtual void draw(const RDPPolyline & cmd, const Rect & clip)
-    {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         int16_t endx = 0;
         int16_t endy = 0;
         for (unsigned i = 0; i < cmd.NumDeltaEntries; i++) {
@@ -316,22 +299,20 @@ public:
         this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         this->split_draw(Rect(cmd.el.center_x() - cmd.el.radius_x(),
                               cmd.el.center_y() - cmd.el.radius_y(), cmd.el.radius_x() * 2, cmd.el.radius_y() * 2),
                          cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         this->split_draw(Rect(cmd.el.center_x() - cmd.el.radius_x(),
                               cmd.el.center_y() - cmd.el.radius_y(), cmd.el.radius_x() * 2, cmd.el.radius_y() * 2),
                          cmd, clip);
     }
 
-    virtual void draw(const RDPBrushCache & cmd) { this->mod.draw(cmd); }
-    virtual void draw(const RDPColCache   & cmd) { this->mod.draw(cmd); }
+    void draw(const RDPBrushCache & cmd) override { this->mod.draw(cmd); }
+    void draw(const RDPColCache   & cmd) override { this->mod.draw(cmd); }
 
 private:
     void draw_bitmap_rect(Rect const & rect, Rect const & rectBmp, Bitmap const & bmp)
@@ -342,9 +323,8 @@ private:
     }
 
 public:
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp)
-    {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+                      size_t size, const Bitmap & bmp) override {
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                     , bitmap_data.dest_right - bitmap_data.dest_left + 1
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
@@ -365,44 +345,39 @@ public:
         }
     }
 
-    virtual void draw(const RDP::FrameMarker& order)
-    {
+    void draw(const RDP::FrameMarker& order) override {
         this->mod.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->mod.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->mod.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->mod.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->mod.draw(order);
     }
 
-    virtual void begin_update()
-    {
+    void begin_update() override {
         this->mod.begin_update();
     }
 
-    virtual void end_update()
-    {
+    void end_update() override {
         this->mod.end_update();
     }
 
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         this->mod.draw_event(now);
     }
 
-    virtual void rdp_input_invalidate(const Rect & r)
-    {
+    void rdp_input_invalidate(const Rect & r) override {
         if (r.has_intersection(this->fg_rect)) {
             this->mod.begin_update();
             this->subrect_input_invalidate(r);
@@ -414,86 +389,70 @@ public:
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         this->mod.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
-    {
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
         this->mod.rdp_input_synchronize(time, device_flags, param1, param2);
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
-    virtual void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length,
-                                       size_t chunk_size, int flags)
-    {
+    void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length,
+                                       size_t chunk_size, int flags) override {
         this->mod.send_to_front_channel(mod_channel_name, data, length, chunk_size, flags);
     }
 
-    virtual void server_set_pointer(const Pointer & cursor)
-    {
+    void server_set_pointer(const Pointer & cursor) override {
         this->mod.server_set_pointer(cursor);
     }
 
-    virtual void flush()
-    {
+    void flush() override {
         this->mod.flush();
     }
 
-    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags)
-    {
+    void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags) override {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
-    virtual void send_auth_channel_data(const char * data)
-    {
+    void send_auth_channel_data(const char * data) override {
         this->mod.send_auth_channel_data(data);
     }
 
     // Client calls this member function when it became up and running.
-    virtual void rdp_input_up_and_running()
-    {
+    void rdp_input_up_and_running() override {
         this->mod.rdp_input_up_and_running();
     }
 
-    virtual void disconnect()
-    {
+    void disconnect() override {
         this->mod.disconnect();
     }
 
-    virtual bool is_up_and_running()
-    {
+    bool is_up_and_running() override {
         return this->mod.is_up_and_running();
     }
 
-    virtual void rdp_input_invalidate2(const DArray< Rect >& vr)
-    {
+    void rdp_input_invalidate2(const DArray< Rect >& vr) override {
         this->mod.rdp_input_invalidate2(vr);
     }
 
-    virtual void refresh_context(Inifile& ini)
-    {
+    void refresh_context(Inifile& ini) override {
         this->mod.refresh_context(ini);
     }
 
-    virtual void send_data_indication_ex(uint16_t channelId, HStream& stream)
-    {
+    void send_data_indication_ex(uint16_t channelId, HStream& stream) override {
         this->mod.send_data_indication_ex(channelId, stream);
     }
 
-    virtual void send_fastpath_data(Stream& data)
-    {
+    void send_fastpath_data(Stream& data) override {
         this->mod.send_fastpath_data(data);
     }
 
-    virtual void set_mod_palette(const BGRPalette& palette)
-    {
+    void set_mod_palette(const BGRPalette& palette) override {
         this->mod.set_mod_palette(palette);
     }
 };

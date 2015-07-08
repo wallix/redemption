@@ -230,7 +230,7 @@ namespace LIC
         uint8_t tag;
         uint8_t flags;
         uint16_t wMsgSize;
-        RecvFactory(Stream & stream)
+        explicit RecvFactory(Stream & stream)
         {
             if (!stream.in_check_rem(4)){
                 LOG(LOG_ERR, "Not enough data to read licence info header, need %u, got %u", 4, stream.in_remain());
@@ -721,7 +721,7 @@ namespace LIC
         uint16_t wMsgSize;
         uint8_t server_random[SEC_RANDOM_SIZE];
 
-        LicenseRequest_Recv(Stream & stream){
+        explicit LicenseRequest_Recv(Stream & stream){
             unsigned expected = 4 + SEC_RANDOM_SIZE; /* tag(1) + flags(1) + wMsgSize(2) + server_random(SEC_RANDOM_SIZE) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated License Request_Recv: need %u remains=%u",
@@ -1152,7 +1152,7 @@ namespace LIC
         uint8_t * hwid;
         uint8_t * signature;
 
-        NewLicenseRequest_Recv(Stream & stream)
+        explicit NewLicenseRequest_Recv(Stream & stream)
         {
             const unsigned expected =
                 /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
@@ -1790,7 +1790,7 @@ namespace LIC
         uint8_t * hwid;
         uint8_t * signature;
 
-        ClientLicenseInfo_Recv(Stream & stream)
+        explicit ClientLicenseInfo_Recv(Stream & stream)
         {
             /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
              * client_random(SEC_RANDOM_SIZE) + wBlobType(2) + lenLicensingBlob(2)
@@ -1978,7 +1978,7 @@ namespace LIC
         } encryptedPlatformChallenge;
         uint8_t MACData[LICENSE_SIGNATURE_SIZE];
 
-        PlatformChallenge_Recv(Stream & stream){
+        explicit PlatformChallenge_Recv(Stream & stream){
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwConnectFlags(4) + wBlobType(2) + wBlobLen(2) +
              * blob(LICENSE_TOKEN_SIZE) + MACData(LICENSE_SIGNATURE_SIZE)
              */
@@ -3051,7 +3051,7 @@ namespace LIC
         // The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
         ValidClientMessage validClientMessage;
 
-        ErrorAlert_Recv(Stream & stream){
+        explicit ErrorAlert_Recv(Stream & stream){
             hexdump_d(stream.get_data(), stream.size());
 
             const unsigned expected =

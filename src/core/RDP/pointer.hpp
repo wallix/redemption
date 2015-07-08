@@ -56,7 +56,7 @@ public:
     uint8_t mask[MASK_SIZE];
 
 public:
-    Pointer(uint8_t pointer_type = POINTER_NULL) {
+    explicit Pointer(uint8_t pointer_type = POINTER_NULL) {
         switch (pointer_type) {
             default:
             case POINTER_NULL:

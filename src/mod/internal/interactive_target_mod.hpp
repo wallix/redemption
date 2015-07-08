@@ -74,13 +74,11 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~InteractiveTargetMod()
-    {
+    ~InteractiveTargetMod() override {
         this->screen.clear();
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
-    {
+    void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -119,8 +117,7 @@ private:
     }
 
 public:
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         this->event.reset();
     }
 

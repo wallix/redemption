@@ -28,7 +28,7 @@ namespace detail {
     struct empty_ctor
     : Buf
     {
-        empty_ctor(no_param = no_param()) noexcept
+        explicit empty_ctor(no_param = no_param()) noexcept
         {}
     };
 }

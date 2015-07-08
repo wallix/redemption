@@ -685,7 +685,7 @@ public:
         // this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }   // mod_rdp
 
-    virtual ~mod_rdp() {
+    ~mod_rdp() override {
         if (this->enable_wab_agent) {
             this->front.disable_input_event_and_graphics_update(false);
         }
@@ -878,28 +878,28 @@ public:
                        );
     }   // configure_proxy_managed_drives
 
-    virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
-                                     , Keymap2 * keymap) {
+    void rdp_input_scancode( long param1, long param2, long device_flags, long time
+                                     , Keymap2 * keymap) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
     }
 
-    virtual void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
-                                        , int16_t param2) {
+    void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
+                                        , int16_t param2) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
         }
     }
 
-    virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
-                                        , size_t length, size_t chunk_size, int flags) override {
+    void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
+                              , size_t length, size_t chunk_size, int flags) override {
         if (this->transparent_recorder) {
             this->transparent_recorder->send_to_front_channel( mod_channel_name, data, length
                                                              , chunk_size, flags);
@@ -944,7 +944,7 @@ private:
     }
 
 public:
-    virtual wait_obj * get_asynchronous_task_event(int & out_fd) override {
+    wait_obj * get_asynchronous_task_event(int & out_fd) override {
         if (this->asynchronous_tasks.empty()) {
             out_fd = -1;
             return nullptr;
@@ -955,7 +955,7 @@ public:
         return &this->asynchronous_task_event;
     }
 
-    virtual void process_asynchronous_task() override {
+    void process_asynchronous_task() override {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -968,10 +968,10 @@ public:
         }
     }
 
-    virtual void send_to_mod_channel( const char * const front_channel_name
+    void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
                                     , size_t length
-                                    , uint32_t flags) {
+                                    , uint32_t flags) override {
         if (this->verbose & 16) {
             LOG(LOG_INFO,
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
@@ -1538,7 +1538,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
-    virtual void send_auth_channel_data(const char * string_data) {
+    void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started
         //}
@@ -1651,7 +1651,7 @@ public:
         this->nego.trans.send(x224_header, mcs_header, stream);
     }
 
-    virtual void draw_event(time_t now) {
+    void draw_event(time_t now) override {
         if (!this->event.waked_up_by_time &&
             (!this->enable_wab_agent || !this->wab_agent_event.set_state || !this->wab_agent_event.waked_up_by_time)) {
             try{
@@ -3229,7 +3229,7 @@ public:
         }
     }   // draw_event
 
-    virtual wait_obj * get_secondary_event() {
+    wait_obj * get_secondary_event() override {
         if (this->wab_agent_event.set_state) {
             return &this->wab_agent_event;
         }
@@ -5297,7 +5297,7 @@ public:
         }
     }
 
-    virtual void rdp_input_invalidate(const Rect & r) {
+    void rdp_input_invalidate(const Rect & r) override {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
@@ -5318,7 +5318,7 @@ public:
         }
     }
 
-    virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {
+    void rdp_input_invalidate2(const DArray<Rect> & vr) override {
         LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
@@ -5978,128 +5978,128 @@ public:
         }
     }
 
-    virtual void begin_update() {
+    void begin_update() override {
         this->front.begin_update();
     }
 
-    virtual void end_update() {
+    void end_update() override {
         this->front.end_update();
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect &clip) {
+    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip,
-                      const Bitmap & bmp) {
+    void draw(const RDPMemBlt & cmd, const Rect & clip,
+                      const Bitmap & bmp) override {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip,
-                      const Bitmap & bmp) {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip,
+                      const Bitmap & bmp) override {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip) {
+    void draw(const RDPLineTo& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-                      const GlyphCache * gly_cache) {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+                      const GlyphCache * gly_cache) override {
         this->front.draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
 
-    virtual void draw(const RDPPolyline& cmd, const Rect & clip) {
+    void draw(const RDPPolyline& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC& cmd, const Rect & clip) {
+    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB& cmd, const Rect & clip) {
+    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void server_set_pointer(const Pointer & cursor) {
+    void server_set_pointer(const Pointer & cursor) override {
         this->front.server_set_pointer(cursor);
     }
 
-    virtual void draw(const RDPColCache & cmd) {
+    void draw(const RDPColCache & cmd) override {
         this->front.draw(cmd);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+                      size_t size, const Bitmap & bmp) override {
         this->front.draw(bitmap_data, data, size, bmp);
     }
 
-    virtual void draw(const RDPBrushCache & cmd) {
+    void draw(const RDPBrushCache & cmd) override {
         this->front.draw(cmd);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->front.draw(order);
     }
 
-    virtual bool is_up_and_running() {
+    bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
-    virtual void disconnect() {
+    void disconnect() override {
         if (this->is_up_and_running()) {
             if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::disconnect()");

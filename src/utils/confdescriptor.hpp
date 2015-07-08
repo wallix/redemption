@@ -133,7 +133,7 @@ struct GeneralCapsLoader : public ConfigurationHolder
 
     Entry entries[NUMBER_OF_CAPS];
 
-    GeneralCapsLoader(GeneralCaps & caps)
+    explicit GeneralCapsLoader(GeneralCaps & caps)
     {
         strncpy(this->name, "General Capability Set", sizeof(this->name));
 
@@ -172,7 +172,7 @@ struct GeneralCapsLoader : public ConfigurationHolder
         return 0 == strncasecmp(this->name, name, sizeof(this->name));
     }
 
-    virtual void set_value(const char * section, const char * key, const char * value) {
+    void set_value(const char * section, const char * key, const char * value) override {
         TODO("parsing like this is very, very inefficient, change that later")
 
         if (!this->match(section)) {
@@ -208,7 +208,7 @@ struct BitmapCapsLoader : public ConfigurationHolder
 
     Entry entries[NUMBER_OF_CAPS];
 
-    BitmapCapsLoader(BitmapCaps & caps)
+    explicit BitmapCapsLoader(BitmapCaps & caps)
     {
         strncpy(this->name, "Bitmap Capability Set", sizeof(this->name));
 
@@ -250,7 +250,7 @@ struct BitmapCapsLoader : public ConfigurationHolder
         return 0 == strncasecmp(this->name, name, sizeof(this->name));
     }
 
-    virtual void set_value(const char * section, const char * key, const char * value) {
+    void set_value(const char * section, const char * key, const char * value) override {
         TODO("parsing like this is very, very inefficient, change that later")
 
         if (!this->match(section)) {
@@ -305,7 +305,7 @@ struct OrderCapsLoader : public ConfigurationHolder
 
     Entry entries[NUMBER_OF_CAPS];
 
-    OrderCapsLoader(OrderCaps & caps)
+    explicit OrderCapsLoader(OrderCaps & caps)
     {
         strncpy(this->name, "Order Capability Set", sizeof(this->name));
 
@@ -401,7 +401,7 @@ struct OrderCapsLoader : public ConfigurationHolder
         return 0 == strncasecmp(this->name, name, sizeof(this->name));
     }
 
-    virtual void set_value(const char * section, const char * key, const char * value) {
+    void set_value(const char * section, const char * key, const char * value) override {
         TODO("parsing like this is very, very inefficient, change that later")
 
         if (!this->match(section)) {

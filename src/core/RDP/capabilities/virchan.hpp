@@ -75,20 +75,20 @@ struct VirtualChannelCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->flags);
         stream.out_uint32_le(this->VCChunkSize);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
         this->flags = stream.in_uint32_le();
         this->VCChunkSize = stream.in_uint32_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s VirtualChannel caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "VirtualChannel caps::flags %u", this->flags);
         LOG(LOG_INFO, "VirtualChannel caps::VCChunkSize %u", this->VCChunkSize);

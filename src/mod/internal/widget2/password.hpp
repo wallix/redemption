@@ -58,7 +58,7 @@ public:
         --this->h_char;
     }
 
-    ~WidgetPassword() {
+    ~WidgetPassword() override {
     }
 
     void set_masked_text() {
@@ -70,42 +70,37 @@ public:
         this->masked_text.set_text(buff);
     }
 
-    virtual void set_edit_x(int x)
-    {
+    void set_edit_x(int x) override {
         WidgetEdit::set_edit_x(x);
         this->masked_text.rect.x = x + 1;
     }
 
-    virtual void set_edit_y(int y)
-    {
+    void set_edit_y(int y) override {
         WidgetEdit::set_edit_y(y);
         this->masked_text.rect.y = y + 1;
     }
 
-    virtual void set_edit_cx(int w)
-    {
+    void set_edit_cx(int w) override {
         WidgetEdit::set_edit_cx(w);
         this->masked_text.rect.cx = w - 2;
     }
 
-    virtual void set_edit_cy(int h)
-    {
+    void set_edit_cy(int h) override {
         WidgetEdit::set_edit_cy(h);
         this->masked_text.rect.cy = h - 2;
     }
 
-    virtual void set_xy(int16_t x, int16_t y)
-    {
+    void set_xy(int16_t x, int16_t y) override {
         this->set_edit_x(x);
         this->set_edit_y(y);
     }
 
-    virtual void set_text(const char * text) {
+    void set_text(const char * text) override {
         WidgetEdit::set_text(text);
         this->set_masked_text();
     }
 
-    virtual void insert_text(const char* text) {
+    void insert_text(const char* text) override {
         WidgetEdit::insert_text(text);
         this->set_masked_text();
         this->refresh(this->rect);
@@ -115,7 +110,7 @@ public:
     //    return this->masked_text.buffer;
     //}
 
-    virtual void draw(const Rect& clip) {
+    void draw(const Rect& clip) override {
         this->masked_text.draw(clip);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
@@ -128,8 +123,7 @@ public:
         }
 
     }
-    virtual void update_draw_cursor(Rect old_cursor)
-    {
+    void update_draw_cursor(Rect old_cursor) override {
         this->drawable.begin_update();
         this->masked_text.draw(old_cursor);
         this->draw_cursor(this->get_cursor_rect());
@@ -137,16 +131,14 @@ public:
     }
 
 
-    virtual Rect get_cursor_rect() const
-    {
+    Rect get_cursor_rect() const override {
         return Rect(this->masked_text.x_text + this->edit_pos * this->w_char + this->dx() + 2,
                     this->masked_text.y_text + this->masked_text.dy(),
                     1,
                     this->h_char);
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
             Rect old_cursor_rect = this->get_cursor_rect();
             size_t e = this->edit_pos;
@@ -189,8 +181,8 @@ public:
     }
 
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3,
-                                    long int param4, Keymap2* keymap) {
+    void rdp_input_scancode(long int param1, long int param2, long int param3,
+                                    long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             uint32_t kevent = keymap->top_kevent();
             WidgetEdit::rdp_input_scancode(param1, param2, param3, param4, keymap);

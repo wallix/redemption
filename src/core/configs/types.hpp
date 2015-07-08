@@ -203,12 +203,12 @@ public:
         this->asked = false;
     }
 
-    virtual void set_from_acl(const char * cstr) override {
+    void set_from_acl(const char * cstr) override {
         this->modify_from_acl();
         this->data = static_cast<Enum>(ulong_from_cstr(cstr)) & Enum::FULL;
         this->asked = false;
     }
-    virtual void set_from_cstr(const char * cstr) override {
+    void set_from_cstr(const char * cstr) override {
         this->set(static_cast<Enum>(ulong_from_cstr(cstr)) & Enum::FULL);
     }
 
@@ -216,7 +216,7 @@ public:
         return this->data;
     }
 
-    virtual const char * get_value() override {
+    const char * get_value() override {
         if (this->is_asked()) {
             return "ASK";
         }
@@ -250,7 +250,7 @@ public:
         this->set(Traits::cstr_to_enum(cstr));
     }
 
-    virtual void set_from_acl(const char * cstr) override {
+    void set_from_acl(const char * cstr) override {
         Enum lang = Traits::cstr_to_enum(cstr);
         if (!Traits::valid(lang)) {
             return ;
@@ -259,7 +259,7 @@ public:
         this->data = lang;
         this->asked = false;
     }
-    virtual void set_from_cstr(const char * cstr) override {
+    void set_from_cstr(const char * cstr) override {
         this->set(Traits::cstr_to_enum(cstr));
     }
 
@@ -267,7 +267,7 @@ public:
         return Traits::valid(this->data) ? this->data : Traits::get_default();
     }
 
-    virtual const char * get_value() override {
+    const char * get_value() override {
         if (this->is_asked()) {
             return "ASK";
         }
@@ -430,12 +430,12 @@ public:
             this->data.clear();
         }
     }
-    virtual void set_from_acl(const char * cstr) override {
+    void set_from_acl(const char * cstr) override {
         this->modify_from_acl();
         this->data = cstr;
         this->asked = false;
     }
-    virtual void set_from_cstr(const char * cstr) override {
+    void set_from_cstr(const char * cstr) override {
         this->data = cstr;
     }
     bool is_empty(){
@@ -452,7 +452,7 @@ public:
         return this->get().c_str();
     }
 
-    virtual const char * get_value() override {
+    const char * get_value() override {
         if (this->is_asked()) {
             return "ASK";
         }

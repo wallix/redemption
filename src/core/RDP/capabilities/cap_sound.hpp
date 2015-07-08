@@ -65,20 +65,20 @@ struct SoundCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->soundFlags);
         stream.out_uint16_le(this->pad2octetsA);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
         this->soundFlags = stream.in_uint16_le();
         this->pad2octetsA = stream.in_uint16_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s SoundCaps caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "SoundCaps caps::soundFlags %u", this->soundFlags);
         LOG(LOG_INFO, "SoundCaps caps::pad2octetsA %u", this->pad2octetsA);

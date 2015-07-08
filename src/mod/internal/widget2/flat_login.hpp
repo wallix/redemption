@@ -158,16 +158,15 @@ public:
         // this->frame.focus_flag = IGNORE_FOCUS;
     }
 
-    virtual ~FlatLogin() {
+    ~FlatLogin() override {
         this->clear();
     }
 
-    virtual int get_bg_color() const {
+    int get_bg_color() const override {
         return this->bg_color;
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
-    {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if ((widget == &this->login_edit
              || widget == &this->password_edit)
              && event == NOTIFY_SUBMIT) {
@@ -180,8 +179,7 @@ public:
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:
@@ -195,7 +193,7 @@ public:
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {

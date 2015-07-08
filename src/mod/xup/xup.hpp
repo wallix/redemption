@@ -109,15 +109,13 @@ enum {
         this->t.send(stream);
     }
 
-    virtual ~xup_mod()
-    {}
+    ~xup_mod() override {}
 
     enum {
         XUPWM_INVALIDATE = 200
     };
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         LOG(LOG_INFO, "input mouse");
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
@@ -148,7 +146,7 @@ enum {
         }
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
+    void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap)override {
         LOG(LOG_INFO, "scan code");
         /*
         if (ki != 0) {
@@ -158,14 +156,12 @@ enum {
         */
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
-    {
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
         LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
 
-    virtual void rdp_input_invalidate(const Rect & r)
-    {
+    void rdp_input_invalidate(const Rect & r) override {
         LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
             this->x_input_event(XUPWM_INVALIDATE,
@@ -190,8 +186,7 @@ enum {
         this->t.send(stream.get_data(), len);
     }
 
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         try{
             BStream stream(32768);
             this->t.recv(&stream.end, 8);
@@ -317,127 +312,114 @@ enum {
         }
     }
 
-    virtual void begin_update()
-    {
+    void begin_update() override {
         this->front.begin_update();
     }
 
-    virtual void end_update()
-    {
+    void end_update() override {
         this->front.end_update();
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
-    {
+    void draw(const RDPScrBlt & cmd, const Rect &clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
-    {
+    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
-    {
+    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
-    {
+    void draw(const RDPLineTo& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         this->front.draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolyline& cmd, const Rect & clip) {
+    void draw(const RDPPolyline& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC& cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB& cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+        size_t size, const Bitmap & bmp) override {
         this->front.draw(bitmap_data, data, size, bmp);
     }
 
-    virtual void server_set_pointer(const Pointer & cursor) {
+    void server_set_pointer(const Pointer & cursor) override {
         this->front.server_set_pointer(cursor);
     }
 
     using RDPGraphicDevice::draw;
 
-    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
-    {
+    void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) override {
     }
 };
 

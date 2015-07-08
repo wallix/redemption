@@ -53,11 +53,11 @@ public:
     , player(&this->ift, &this->front)
     {}
 
-    virtual ~TransparentReplayMod() {
+    ~TransparentReplayMod() override {
         close(this->fd);
     }
 
-    virtual void draw_event(time_t now) {
+    void draw_event(time_t now) override {
         try {
             if (!this->player.interpret_chunk()) {
                 this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;

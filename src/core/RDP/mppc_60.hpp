@@ -237,11 +237,10 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
     /**
      * Deinitialize rdp_mppc_60_dec structure
      */
-    virtual ~rdp_mppc_60_dec() {
+    ~rdp_mppc_60_dec() override {
     }
 
-    virtual void mini_dump()
-    {
+    void mini_dump() override {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf, 16);
@@ -251,8 +250,7 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
         LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
     }
 
-    virtual void dump()
-    {
+    void dump() override {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf, RDP_60_HIST_BUF_LEN);
@@ -606,7 +604,7 @@ public:
         return true;
     }   // decompress_60
 
-    virtual int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) {
+    int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
         uint32_t roff = 0;
         int      result;
 
@@ -698,7 +696,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
     hash_table_manager hash_tab_mgr;
 
-    rdp_mppc_60_enc(uint32_t verbose = 0)
+    explicit rdp_mppc_60_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
@@ -716,10 +714,9 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         , hash_tab_mgr(MINIMUM_MATCH_LENGTH, MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 
-    virtual ~rdp_mppc_60_enc()
-    {}
+    ~rdp_mppc_60_enc() override {}
 
-    virtual void dump(bool mini_dump) const {
+    void dump(bool mini_dump) const override {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
@@ -985,9 +982,8 @@ private:
         this->flagsHold     =  0;
     }   // void compress_60(const uint8_t * uncompressed_data, int uncompressed_data_size)
 
-    virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved)
-    {
+    void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved) override {
         this->compress_60(uncompressed_data, (int)uncompressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
             compressedType       = this->flags;
@@ -1000,7 +996,7 @@ private:
     }
 
 public:
-    virtual void get_compressed_data(Stream & stream) const {
+    void get_compressed_data(Stream & stream) const override {
         if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
             LOG(LOG_ERR, "rdp_mppc_60_enc::get_compressed_data: Buffer too small");
             throw Error(ERR_BUFFER_TOO_SMALL);

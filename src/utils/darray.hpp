@@ -33,7 +33,7 @@ class DArray {
     std::unique_ptr<T[]> items;
 
 public:
-    DArray(size_t count)
+    explicit DArray(size_t count)
     : item_count(count)
     , items(new T[count])
     {

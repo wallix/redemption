@@ -70,8 +70,7 @@ public:
         }
     }
 
-    virtual ~WidgetEditValid()
-    {
+    ~WidgetEditValid() override {
         if (this->editbox) {
             delete this->editbox;
             this->editbox = nullptr;
@@ -121,14 +120,12 @@ public:
     //     this->button.set_button_x(this->editbox->lx());
     // }
 
-    virtual void set_xy(int16_t x, int16_t y)
-    {
+    void set_xy(int16_t x, int16_t y) override {
         this->set_edit_x(x);
         this->set_edit_y(y);
     }
 
-    virtual void draw(const Rect& clip)
-    {
+    void draw(const Rect& clip) override {
         this->editbox->draw(clip);
         if (this->label) {
             if (this->editbox->num_chars == 0) {
@@ -164,17 +161,16 @@ public:
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
         )), color), this->rect);
     }
-    virtual void focus(int reason) {
+    void focus(int reason) override {
         this->editbox->focus(reason);
         Widget2::focus(reason);
     }
-    virtual void blur() {
+    void blur() override {
         this->editbox->blur();
         Widget2::blur();
     }
 
-    virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
-    {
+    Widget2 * widget_at_pos(int16_t x, int16_t y) override {
         Widget2 * w = this->editbox;
         if (x > this->editbox->lx()) {
             w = &this->button;
@@ -182,8 +178,7 @@ public:
         return w;
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (x > this->editbox->lx()) {
             this->button.rdp_input_mouse(device_flags, x, y, keymap);
             this->refresh(this->button.rect);
@@ -198,14 +193,12 @@ public:
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3,
-                                    long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3,
+                                    long int param4, Keymap2* keymap) override {
         this->editbox->rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
-    {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if (event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_SUBMIT);
         }

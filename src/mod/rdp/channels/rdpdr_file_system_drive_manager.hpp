@@ -970,7 +970,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveQueryDirectoryRequest(
+    void ProcessServerDriveQueryDirectoryRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
             const char * path, Stream & in_stream,
@@ -1158,7 +1158,7 @@ public:
     //    LOG(LOG_INFO, "ManagedFile::ManagedFile(): <%p>", this);
     //}
 
-    virtual ~ManagedFile() {
+    ~ManagedFile() override {
         //LOG(LOG_INFO, "ManagedFile::~ManagedFile(): <%p> fd=%d",
         //    this, this->fd);
 
@@ -1171,9 +1171,9 @@ public:
         }
     }
 
-    virtual bool IsDirectory() const override { return false; }
+    bool IsDirectory() const override { return false; }
 
-    virtual void ProcessServerCreateDriveRequest(
+    void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             int drive_access_mode, const char * path, Stream & in_stream,
@@ -1426,7 +1426,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveWriteRequest(
+    void ProcessServerDriveWriteRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, int drive_access_mode,
             bool first_chunk, Stream & in_stream,
@@ -1496,7 +1496,7 @@ public:
         }
     }
 
-    virtual void ProcessServerDriveQueryDirectoryRequest(
+    void ProcessServerDriveQueryDirectoryRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
             const char * path, Stream & in_stream,

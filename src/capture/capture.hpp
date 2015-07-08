@@ -172,7 +172,7 @@ public:
         }
     }
 
-    virtual ~Capture() {
+    ~Capture() override {
         delete this->psc;
         delete this->png_trans;
 
@@ -223,14 +223,13 @@ public:
         }
     }
 
-    virtual void set_row(size_t rownum, const uint8_t * data)
-    {
+    void set_row(size_t rownum, const uint8_t * data) override {
         if (this->capture_drawable){
             this->drawable->set_row(rownum, data);
         }
     }
 
-    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
+    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
                           bool const & requested_to_stop) override {
         this->capture_event.reset();
 
@@ -252,13 +251,13 @@ public:
         }
     }
 
-    void flush() {
+    void flush() override {
         if (this->capture_wrm) {
             this->pnc->flush();
         }
     }
 
-    virtual bool input(const timeval & now, Stream & input_data_32) override {
+    void input(const timeval & now, Stream & input_data_32) override {
         if (this->capture_wrm) {
             return this->pnc->input(now, input_data_32);
         }
@@ -266,25 +265,25 @@ public:
         return true;
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect &clip) {
+    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPMultiOpaqueRect capture_cmd = cmd;
@@ -302,7 +301,7 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDP::RDPMultiPatBlt capture_cmd = cmd;
@@ -324,13 +323,13 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPPatBlt & cmd, const Rect &clip) {
+    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPatBlt capture_cmd = cmd;
@@ -352,13 +351,13 @@ public:
         }
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
         if (this->gd) {
             this->gd->draw(cmd, clip, bmp);
         }
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPMem3Blt capture_cmd = cmd;
@@ -380,7 +379,7 @@ public:
         }
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPOpaqueRect capture_cmd = cmd;
@@ -398,7 +397,7 @@ public:
         }
     }
 
-    void draw(const RDPLineTo & cmd, const Rect & clip) {
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPLineTo capture_cmd = cmd;
@@ -420,19 +419,19 @@ public:
         }
     }
 
-    void draw(const RDPBrushCache & cmd) {
+    void draw(const RDPBrushCache & cmd) override {
         if (this->gd) {
             this->gd->draw(cmd);
         }
     }
 
-    void draw(const RDPColCache & cmd) {
+    void draw(const RDPColCache & cmd) override {
         if (this->gd) {
             this->gd->draw(cmd);
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPGlyphIndex capture_cmd = cmd;
@@ -454,7 +453,7 @@ public:
         }
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) override {
         if (this->gd) {
             if (this->capture_wrm) {
                 if (bmp.bpp() > this->capture_bpp) {
@@ -476,7 +475,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
@@ -489,7 +488,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPolygonSC capture_cmd = cmd;
@@ -507,7 +506,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPolygonCB capture_cmd = cmd;
@@ -529,7 +528,7 @@ public:
         }
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPolyline capture_cmd = cmd;
@@ -547,7 +546,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPEllipseSC capture_cmd = cmd;
@@ -565,7 +564,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPEllipseCB capture_cmd = cmd;
@@ -587,63 +586,62 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void server_set_pointer(const Pointer & cursor)
-    {
+    void server_set_pointer(const Pointer & cursor) override {
         if (this->gd) {
             this->gd->server_set_pointer(cursor);
         }
     }
 
-    virtual void set_mod_palette(const BGRPalette & palette) {
+    void set_mod_palette(const BGRPalette & palette) override {
         if (this->capture_drawable) {
             this->drawable->set_mod_palette(palette);
         }
     }
 
-    virtual void set_pointer_display() {
+    void set_pointer_display() override {
         if (this->capture_drawable) {
             this->drawable->show_mouse_cursor(false);
         }
     }
 
     // toggles externally genareted breakpoint.
-    virtual void external_breakpoint() {
+    void external_breakpoint() override {
         if (this->capture_wrm) {
             this->pnc->external_breakpoint();
         }
     }
 
-    virtual void external_time(const timeval & now) {
+    void external_time(const timeval & now) override {
         if (this->capture_wrm) {
             this->pnc->external_time(now);
         }
     }
 
-    virtual void session_update(const timeval & now, const char * message) override {
+    void session_update(const timeval & now, const char * message) override {
         if (this->capture_wrm) {
             this->pnc->session_update(now, message);
         }

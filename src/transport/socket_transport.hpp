@@ -139,7 +139,7 @@ public:
         this->ip_address[127] = 0;
     }
 
-    virtual ~SocketTransport(){
+    ~SocketTransport()override {
         if (!this->sck_closed){
             this->disconnect();
         }
@@ -159,16 +159,15 @@ public:
         }
     }
 
-    virtual const uint8_t * get_public_key() const {
+    const uint8_t * get_public_key() const override {
         return this->public_key.get();
     }
 
-    virtual size_t get_public_key_length() const {
+    size_t get_public_key_length() const override {
         return this->public_key_length;
     }
 
-    virtual void enable_server_tls(const char * certificate_password) throw (Error)
-    {
+    void enable_server_tls(const char * certificate_password) throw (Error) override {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS");
             return;
@@ -447,8 +446,7 @@ public:
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
 
-    virtual void enable_client_tls(bool ignore_certificate_change) throw (Error)
-    {
+    void enable_client_tls(bool ignore_certificate_change) throw (Error) override {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS");
             return;
@@ -1086,7 +1084,7 @@ public:
        LOG(LOG_INFO, "SocketTransport::enable_tls() done");
     }
 
-    virtual bool disconnect(){
+    bool disconnect()override {
         if (0 == strcmp("127.0.0.1", this->ip_address)){
             // silent trace in the case of watchdog
             LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
@@ -1110,8 +1108,7 @@ public:
         return true;
     }
 
-    virtual bool connect()
-    {
+    bool connect() override {
         if (this->sck_closed == 1){
             this->sck = ip_connect(this->ip_address,
                                     this->port,
@@ -1144,8 +1141,7 @@ public:
         return rv;
     }
 
-    virtual void do_recv(char ** pbuffer, size_t len)
-    {
+    void do_recv(char ** pbuffer, size_t len) override {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, len);
         }
@@ -1171,8 +1167,7 @@ public:
         this->last_quantum_received += len;
     }
 
-    virtual void do_send(const char * const buffer, size_t len)
-    {
+    void do_send(const char * const buffer, size_t len) override {
         if (len == 0) { return; }
 
         if (this->verbose & 0x100){
@@ -1196,7 +1191,7 @@ public:
         this->last_quantum_sent += len;
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) {
+    void seek(int64_t offset, int whence) throw (Error) override {
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 

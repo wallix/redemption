@@ -67,7 +67,7 @@ struct OffScreenCacheCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->offscreenSupportLevel);
@@ -75,14 +75,14 @@ struct OffScreenCacheCaps : public Capability {
         stream.out_uint16_le(this->offscreenCacheEntries);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
         this->offscreenSupportLevel = stream.in_uint32_le();
         this->offscreenCacheSize = stream.in_uint16_le();
         this->offscreenCacheEntries = stream.in_uint16_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s OffScreenCache caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "OffScreenCache caps::offscreenSupportLevel %u", this->offscreenSupportLevel);
         LOG(LOG_INFO, "OffScreenCache caps::offscreenCacheSize %u", this->offscreenCacheSize);

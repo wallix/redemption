@@ -49,22 +49,18 @@ public:
         this->event.set(33333);
     }
 
-    ~Bouncer2Mod()
-    {
+    ~Bouncer2Mod() override {
         this->screen.clear();
     }
 
-    virtual void rdp_input_invalidate(const Rect & /*rect*/)
-    {
+    void rdp_input_invalidate(const Rect & /*rect*/) override {
     }
 
-    virtual void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/)
-    {
+    void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {
     }
 
-    virtual void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/,
-                                    long /*param4*/, Keymap2 * keymap)
-    {
+    void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/,
+                                    long /*param4*/, Keymap2 * keymap) override {
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
             this->event.signal = BACK_EVENT_STOP;
@@ -103,8 +99,7 @@ public:
     }
 
     // This should come from BACK!
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         this->interaction();
         // Calculating new speedx and speedy
         if (this->dancing_rect.x <= 0 && this->speedx < 0) {

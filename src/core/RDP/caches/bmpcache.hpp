@@ -54,7 +54,7 @@ private:
         , sha1()
         , is_valid(false) {}
 
-        cache_lite_element(const uint8_t (& sha1_)[20])
+        explicit cache_lite_element(const uint8_t (& sha1_)[20])
         : stamp(0)
         , is_valid(true) {
             memcpy(this->sha1, sha1_, sizeof(this->sha1));
@@ -90,7 +90,7 @@ private:
         , cached(false)
         {}
 
-        cache_element(Bitmap const & bmp)
+        explicit cache_element(Bitmap const & bmp)
         : bmp(bmp)
         , stamp(0)
         , cached(false)
@@ -171,7 +171,7 @@ private:
             typedef aligned_set_allocator<U> other;
         };
 
-        aligned_set_allocator(storage_value_set & storage)
+        explicit aligned_set_allocator(storage_value_set & storage)
         : storage(storage)
         {
             this->storage.template update<T>();
@@ -183,7 +183,7 @@ private:
         {}
 
         template<class U>
-        aligned_set_allocator(aligned_set_allocator<U> const & other)
+        explicit aligned_set_allocator(aligned_set_allocator<U> const & other)
         : std::allocator<T>(other)
         , storage(other.storage)
         {
@@ -233,7 +233,7 @@ private:
         cache_range(T * first, size_t sz, storage_value_set & storage)
         : first(first)
         , last(first + sz)
-        , sorted_elements(set_compare(), storage)
+        , sorted_elements(set_compare(), set_allocator{storage})
         {}
 
         T & operator[](size_t i) {
@@ -308,7 +308,7 @@ public:
         uint16_t bmp_size;
         bool is_persistent;
 
-        CacheOption(uint16_t entries = 0, uint16_t bmp_size = 0, bool is_persistent = false)
+        explicit CacheOption(uint16_t entries = 0, uint16_t bmp_size = 0, bool is_persistent = false)
         : entries(entries)
         , bmp_size(bmp_size)
         , is_persistent(is_persistent)
@@ -398,7 +398,7 @@ public:
     }
     , size_lite_elements(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0)
     , lite_elements(new cache_lite_element[this->size_lite_elements])
-    , waiting_list(this->lite_elements.get(), (use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0), this->lite_storage)
+    , waiting_list(this->lite_elements.get(), CacheOption(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0), this->lite_storage)
     , stamp(0)
     , verbose(verbose)
     {

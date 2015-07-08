@@ -47,7 +47,7 @@ namespace transbuf {
         ifile_base file;
 
     public:
-        icrypto_filename_base(CryptoContext * ctx)
+        explicit icrypto_filename_base(CryptoContext * ctx)
         : ctx(ctx)
         {}
 
@@ -82,7 +82,7 @@ namespace transbuf {
         ofile_base file;
 
     public:
-        ocrypto_filename_base(CryptoContext * ctx)
+        explicit ocrypto_filename_base(CryptoContext * ctx)
         : ctx(ctx)
         {}
 

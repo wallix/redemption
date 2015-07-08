@@ -61,13 +61,11 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~FlatWaitMod()
-    {
+    ~FlatWaitMod() override {
         this->screen.clear();
     }
 
-    virtual void notify(Widget2 * sender, notify_event_t event)
-    {
+    void notify(Widget2 * sender, notify_event_t event) override {
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -112,8 +110,7 @@ private:
     }
 
 public:
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
         case TimeoutT<time_t>::TIMEOUT_REACHED:
             this->refused();
@@ -130,8 +127,7 @@ public:
         }
     }
 
-    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
-    {
+    void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags) override {
         if (this->copy_paste) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }

@@ -31,7 +31,7 @@ public:
         TIMEOUT_INACTIVE
     } timeout_result_t;
 
-    TimeoutT(T now, T length = 0)
+    explicit TimeoutT(T now, T length = 0)
         : timeout(length ? (now + length) : static_cast<T>(0)) {}
 
     timeout_result_t check(T now) const {

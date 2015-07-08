@@ -43,11 +43,10 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
     /**
      * Deinitialize rdp_mppc_50_dec structure
      */
-    virtual ~rdp_mppc_50_dec() {
+    ~rdp_mppc_50_dec() override {
     }
 
-    virtual void mini_dump()
-    {
+    void mini_dump() override {
         LOG(LOG_INFO, "Type=RDP 5.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf,               16);
@@ -55,8 +54,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
         LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
     }
 
-    virtual void dump()
-    {
+    void dump() override {
         LOG(LOG_INFO, "Type=RDP 5.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf,               RDP_50_HIST_BUF_LEN);
@@ -455,7 +453,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
         return true;
     }   // decompress_50
 
-    virtual int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) {
+    int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
         uint32_t roff   = 0;
         int      result;
 
@@ -491,7 +489,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
     /**
      * Initialize rdp_mppc_50_enc structure
      */
-    rdp_mppc_50_enc(uint32_t verbose = 0)
+    explicit rdp_mppc_50_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
@@ -509,10 +507,10 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
     /**
      * Deinitialize rdp_mppc_50_enc structure
      */
-    virtual ~rdp_mppc_50_enc() {
+    ~rdp_mppc_50_enc() override {
     }
 
-    virtual void dump(bool mini_dump) const {
+    void dump(bool mini_dump) const override {
         LOG(LOG_INFO, "Type=RDP 5.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_50_HIST_BUF_LEN));
@@ -741,10 +739,9 @@ private:
         this->flagsHold     =  0;
     }
 
-    virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+    void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType, uint16_t & compressed_data_size,
-        uint16_t max_compressed_data_size)
-    {
+        uint16_t max_compressed_data_size) override {
         this->compress_50(uncompressed_data, (int)uncompressed_data_size,
             max_compressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
@@ -758,7 +755,7 @@ private:
     }
 
 public:
-    virtual void get_compressed_data(Stream & stream) const {
+    void get_compressed_data(Stream & stream) const override {
         if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
             LOG(LOG_ERR, "rdp_mppc_50_enc::get_compressed_data: Buffer too small");
             throw Error(ERR_BUFFER_TOO_SMALL);

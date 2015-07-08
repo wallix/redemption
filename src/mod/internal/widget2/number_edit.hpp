@@ -35,12 +35,12 @@ public:
                  focus_color, font, edit_position, xtext, ytext)
     {}
 
-    virtual void set_text(const char * text) {
+    void set_text(const char * text) override {
         this->label.x_text = this->label.initial_x_text;
         this->WidgetEdit::set_text(text);
     }
 
-    virtual void insert_text(const char* text) {
+    void insert_text(const char* text) override {
         for (const char * s = text; *s; ++s) {
             if (*s < '0' || '9' < *s) {
                 return ;
@@ -49,8 +49,7 @@ public:
         WidgetEdit::insert_text(text);
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() && keymap->top_kevent() == Keymap2::KEVENT_KEY){
             uint32_t c = keymap->top_char();
             if (c < '0' || '9' < c) {
