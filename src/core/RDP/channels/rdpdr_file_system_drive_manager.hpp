@@ -1804,15 +1804,24 @@ public:
             ToServerSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) override {
-        LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryDirectoryRequest() Using ToServerSender + + + + + + + + + +");
-        SendClientDriveIoUnsuccessfulResponse(device_io_request,
-                                              "ManagedFile::ProcessServerDriveQueryDirectoryRequest",
-                                              to_server_sender,
-                                              out_asynchronous_task,
-                                              verbose);
+        BStream out_stream(65536);
 
-        // Unsupported.
-        REDASSERT(false);
+        MakeClientDriveIoResponse(out_stream,
+                                  device_io_request,
+                                  "ManagedFile::ProcessServerDriveQueryDirectoryRequest",
+                                  0x80000006, // STATUS_NO_MORE_FILES
+                                  verbose);
+
+        out_stream.out_uint32_le(0);    // Length(4)
+        out_stream.out_uint8(0);        // Padding(1)
+
+        out_stream.mark_end();
+
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
     }
 };  // ManagedFile
 
