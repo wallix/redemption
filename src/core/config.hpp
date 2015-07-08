@@ -42,13 +42,13 @@
 
 struct Inifile : FieldObserver, configs::VariablesConfiguration
 {
-    Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME)
+    explicit Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME)
     : VariablesConfiguration(default_font_name)
     {
         this->initialize();
     }
 
-    virtual void set_value(const char * context, const char * key, const char * value) override;
+    void set_value(const char * context, const char * key, const char * value) override;
 
     using authid_t = ::authid_t;
 

@@ -107,7 +107,7 @@ inline int shutdown(const char * pid_file)
         fd.open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
         if (!fd) {
             /* can't open read / write, try to open read only */
-            fd.open(open(pid_file, O_RDONLY));
+            fd.open(pid_file, O_RDONLY);
         }
     }
     if (!fd) {
@@ -152,11 +152,11 @@ inline int shutdown(const char * pid_file)
     if (d){
         size_t path_len = strlen("/var/run/redemption/");
         size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
-        char * buffer = (char*)malloc(file_len + path_len);
+        char * buffer = static_cast<char*>(malloc(file_len + path_len));
         strcpy(buffer, "/var/run/redemption/");
-        size_t len = offsetof(struct dirent, d_name) + file_len;
-        struct dirent * entryp = (struct dirent *)malloc(len);
-        struct dirent * result;
+        size_t len = offsetof(dirent, d_name) + file_len;
+        dirent * entryp = static_cast<dirent *>(malloc(len));
+        dirent * result;
         for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
             if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
                 continue;

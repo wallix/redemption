@@ -48,7 +48,7 @@ class Array {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-    Array(size_t size = AUTOSIZE)
+    explicit Array(size_t size = AUTOSIZE)
         : data(nullptr)
         , capacity(0)
         , autobuffer()

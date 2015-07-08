@@ -31,7 +31,7 @@ public:
     uint8_t * p;
 
 public:
-    Parse(uint8_t * p) : p(p) {}
+    explicit Parse(uint8_t * p) : p(p) {}
 
     int8_t in_sint8(void) {
         return *(reinterpret_cast<int8_t*>(this->p++));
@@ -43,22 +43,22 @@ public:
 
     int16_t in_sint16_be(void) {
         unsigned int v = this->in_uint16_be();
-        return (int16_t)((v > 32767)?v - 65536:v);
+        return static_cast<int16_t>(v > 32767 ? v - 65536 : v);
     }
 
     int16_t in_sint16_le(void) {
         unsigned int v = this->in_uint16_le();
-        return (int16_t)((v > 32767)?v - 65536:v);
+        return static_cast<int16_t>(v > 32767 ? v - 65536 : v);
     }
 
     uint16_t in_uint16_le(void) {
         this->p += 2;
-        return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
+        return static_cast<uint16_t>(this->p[-2] | (this->p[-1] << 8));
     }
 
     uint16_t in_uint16_be(void) {
         this->p += 2;
-        return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
+        return static_cast<uint16_t>(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
     unsigned int in_uint32_le(void) {

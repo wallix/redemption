@@ -331,6 +331,10 @@ struct RFXSrvrCaps : public RFXGenCaps {
 
     RFXSrvrCaps() = default;
 
+    ~RFXSrvrCaps() {
+        delete [] this->reserved;
+    }
+
     void setReserved(uint16_t len) {
         this->reserved = new uint8_t[len];
         for (size_t i = 0; i < len; i++)

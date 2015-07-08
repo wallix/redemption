@@ -325,7 +325,7 @@ class OutStream {
     uint8_t * p;
 
 public:
-    OutStream(Array & array, size_t headroom = 0)
+    explicit OutStream(Array & array, size_t headroom = 0)
     : begin(array.get_data()+headroom)
     , end(array.get_data()+array.size())
     , p(this->begin)
@@ -374,7 +374,7 @@ public:
         this->p[4] = (v >> 32) & 0xFF;
         this->p[5] = (v >> 40) & 0xFF;
         this->p[6] = (v >> 48) & 0xFF;
-        this->p[7] = (uint8_t)(v >> 56) & 0xFF;
+        this->p[7] = (v >> 56) & 0xFF;
         this->p+=8;
     }
 
@@ -601,7 +601,7 @@ public:
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
-        this->p[3] = (uint8_t)(v >> 24) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
         this->p+=4;
     }
 
@@ -609,12 +609,12 @@ public:
         (this->get_data())[offset+0] = v & 0xFF;
         (this->get_data())[offset+1] = (v >> 8) & 0xFF;
         (this->get_data())[offset+2] = (v >> 16) & 0xFF;
-        (this->get_data())[offset+3] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+3] = (v >> 24) & 0xFF;
     }
 
     void out_uint32_be(unsigned int v) {
         REDASSERT(this->has_room(4));
-        this->p[0] = (uint8_t)(v >> 24) & 0xFF;
+        this->p[0] = (v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
         this->p[3] = v & 0xFF;
@@ -623,7 +623,7 @@ public:
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
         REDASSERT(this->has_room(4));
-        (this->get_data())[offset+0] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+0] = (v >> 24) & 0xFF;
         (this->get_data())[offset+1] = (v >> 16) & 0xFF;
         (this->get_data())[offset+2] = (v >> 8) & 0xFF;
         (this->get_data())[offset+3] = v & 0xFF;
@@ -688,11 +688,11 @@ public:
     }
 
     void out_copy_bytes(const char * v, size_t n) {
-        this->out_copy_bytes((uint8_t const*)v, n);
+        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
     }
 
     void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
-        this->set_out_copy_bytes((uint8_t const*)v, n, offset);
+        this->set_out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n, offset);
     }
 
     void out_clear_bytes(size_t n) {
@@ -826,26 +826,26 @@ public:
     int16_t in_sint16_be(void) {
         REDASSERT(this->in_check_rem(2));
         unsigned int v = this->in_uint16_be();
-        return (int16_t)((v > 32767)?v - 65536:v);
+        return static_cast<int16_t>((v > 32767)?v - 65536:v);
     }
 
 
     int16_t in_sint16_le(void) {
         REDASSERT(this->in_check_rem(2));
         unsigned int v = this->in_uint16_le();
-        return (int16_t)((v > 32767)?v - 65536:v);
+        return static_cast<int16_t>((v > 32767)?v - 65536:v);
     }
 
     uint16_t in_uint16_le(void) {
         REDASSERT(this->in_check_rem(2));
         this->p += 2;
-        return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
+        return static_cast<uint16_t>(this->p[-2] | (this->p[-1] << 8));
     }
 
     uint16_t in_uint16_be(void) {
         REDASSERT(this->in_check_rem(2));
         this->p += 2;
-        return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
+        return static_cast<uint16_t>(this->p[-1] | (this->p[-2] << 8));
     }
 
     unsigned int in_uint32_le(void) {
@@ -870,12 +870,12 @@ public:
 
     int32_t in_sint32_le(void) {
         uint64_t v = this->in_uint32_le();
-        return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
+        return static_cast<int32_t>((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
     }
 
     int32_t in_sint32_be(void) {
         uint64_t v = this->in_uint32_be();
-        return (int32_t)((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
+        return static_cast<int32_t>((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
     }
 
     // ---------------------------------------------------------------------------
@@ -907,7 +907,7 @@ public:
         this->p[4] = (v >> 32) & 0xFF;
         this->p[5] = (v >> 40) & 0xFF;
         this->p[6] = (v >> 48) & 0xFF;
-        this->p[7] = (uint8_t)(v >> 56) & 0xFF;
+        this->p[7] = (v >> 56) & 0xFF;
         this->p+=8;
     }
 
@@ -977,7 +977,7 @@ public:
     }
 
     void in_copy_bytes(char * v, size_t n) {
-        this->in_copy_bytes((uint8_t*)(v), n);
+        this->in_copy_bytes(reinterpret_cast<uint8_t*>(v), n);
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
@@ -1261,7 +1261,7 @@ public:
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
-        this->p[3] = (uint8_t)(v >> 24) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
         this->p+=4;
     }
 
@@ -1269,12 +1269,12 @@ public:
         (this->get_data())[offset+0] = v & 0xFF;
         (this->get_data())[offset+1] = (v >> 8) & 0xFF;
         (this->get_data())[offset+2] = (v >> 16) & 0xFF;
-        (this->get_data())[offset+3] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+3] = (v >> 24) & 0xFF;
     }
 
     void out_uint32_be(unsigned int v) {
         REDASSERT(this->has_room(4));
-        this->p[0] = (uint8_t)(v >> 24) & 0xFF;
+        this->p[0] = (v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
         this->p[3] = v & 0xFF;
@@ -1283,7 +1283,7 @@ public:
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
         REDASSERT(this->has_room(4));
-        (this->get_data())[offset+0] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+0] = (v >> 24) & 0xFF;
         (this->get_data())[offset+1] = (v >> 16) & 0xFF;
         (this->get_data())[offset+2] = (v >> 8) & 0xFF;
         (this->get_data())[offset+3] = v & 0xFF;
@@ -1363,7 +1363,7 @@ public:
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
         size_t len = strlen(v);
-        this->out_copy_bytes((uint8_t const*)v, len);
+        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), len);
     }
 
 
@@ -1382,11 +1382,11 @@ public:
     }
 
     void out_copy_bytes(const char * v, size_t n) {
-        this->out_copy_bytes((uint8_t const*)v, n);
+        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
     }
 
     void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
-        this->set_out_copy_bytes((uint8_t const*)v, n, offset);
+        this->set_out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n, offset);
     }
 
     void out_clear_bytes(size_t n) {
@@ -1451,7 +1451,7 @@ class BStream : public Stream {
     uint8_t autobuffer[AUTOSIZE];
 
 public:
-    BStream(size_t size = AUTOSIZE)
+    explicit BStream(size_t size = AUTOSIZE)
         : autobuffer()
     {
         this->p = nullptr;
@@ -1469,7 +1469,7 @@ public:
     }
 
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
-    virtual void init(size_t v) {
+    virtual void init(size_t v) override {
         if (v != this->capacity) {
             // <this->data> is allocated dynamically.
             if (this->capacity > AUTOSIZE){
@@ -1499,7 +1499,7 @@ public:
     size_t    reserved_leading_space;
     uint8_t * data_start;
 
-    HStream(size_t reserved_leading_space, size_t total_size = AUTOSIZE)
+    explicit HStream(size_t reserved_leading_space, size_t total_size = AUTOSIZE)
             : BStream(total_size)
             , reserved_leading_space(reserved_leading_space) {
         if (reserved_leading_space > total_size) {
@@ -1513,9 +1513,6 @@ public:
         this->data_start  = this->p;
         this->end         = this->p;
     }
-
-    virtual ~HStream() {}
-
 
     void copy_to_head(const uint8_t * v, size_t n) {
         if (this->data_start - this->data >= static_cast<ssize_t>(n)) {
@@ -1531,15 +1528,15 @@ public:
         }
     }
 
-    virtual size_t headroom() const {
+    virtual size_t headroom() const override {
         return this->data_start - this->data;
     }
 
-    virtual uint8_t * get_data() const {
+    virtual uint8_t * get_data() const override {
         return this->data_start;
     }
 
-    virtual void init(size_t body_size) {
+    virtual void init(size_t body_size) override {
         BStream::init(this->reserved_leading_space + body_size);
 
         this->p          += this->reserved_leading_space;
@@ -1547,7 +1544,7 @@ public:
         this->end         = this->p;
     }
 
-    virtual void reset() {
+    virtual void reset() override {
         BStream::reset();
 
         this->p          += this->reserved_leading_space;
@@ -1555,7 +1552,7 @@ public:
         this->end         = this->p;
     }
 
-    virtual void rewind() {
+    virtual void rewind() override {
         this->data_start = this->p = this->data + this->reserved_leading_space;
     }
 };
@@ -1568,7 +1565,7 @@ class SubStream : public Stream {
     public:
     SubStream(){}  // not yet initialized
 
-    SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
+    explicit SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
     {
         if ((offset + new_size) > stream.size()){
             LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
@@ -1582,7 +1579,7 @@ class SubStream : public Stream {
         this->end = this->data + this->capacity;
     }
 
-    SubStream(const InStream & stream, size_t offset = 0, size_t new_size = 0)
+    explicit SubStream(const InStream & stream, size_t offset = 0, size_t new_size = 0)
     {
         if ((offset + new_size) > stream.size()){
             LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
@@ -1595,17 +1592,14 @@ class SubStream : public Stream {
         this->capacity = (new_size == 0)?(stream.size() - offset):new_size;
         this->end = this->data + this->capacity;
     }
-
-
-    virtual ~SubStream() {}
 
     // Not allowed on SubStreams
-    virtual void init(size_t) {}
+    virtual void init(size_t) override {}
 };
 
 class SubStreamArray : public Stream {
     public:
-    SubStreamArray(const Array & array, size_t offset = 0, size_t new_size = 0)
+    explicit SubStreamArray(const Array & array, size_t offset = 0, size_t new_size = 0)
     {
         if ((offset + new_size) > array.size()){
             LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
@@ -1619,10 +1613,8 @@ class SubStreamArray : public Stream {
         this->end = this->data + this->capacity;
     }
 
-    virtual ~SubStreamArray() {}
-
     // Not allowed on SubStreams
-    virtual void init(size_t) {}
+    virtual void init(size_t) override {}
 };
 
 
@@ -1638,7 +1630,7 @@ class FixedSizeStream : public Stream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) {}
+    virtual void init(size_t) override {}
 };
 
 // StaticStream does not allocate/reallocate any buffer
@@ -1660,7 +1652,7 @@ class StaticStream : public FixedSizeStream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) {}
+    virtual void init(size_t) override {}
 
     void resize(const uint8_t * data, size_t len) {
         this->p = this->data = const_cast<uint8_t *>(data);
@@ -1681,7 +1673,7 @@ public:
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) {}
+    virtual void init(size_t) override {}
 };
 
 #endif

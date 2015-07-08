@@ -326,7 +326,7 @@ private:
     Error() = delete;
 
 public:
-    Error(int id, int errnum = 0) noexcept
+    explicit Error(int id, int errnum = 0) noexcept
     : id(id)
     , errnum(errnum) {}
 

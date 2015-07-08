@@ -73,7 +73,7 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
 
     bool infile_is_encrypted = false;
 
-    if (io::posix::fdbuf file = open(input_filename.c_str(), O_RDONLY)) {
+    if (io::posix::fdbuf file {open(input_filename.c_str(), O_RDONLY)}) {
         uint32_t magic_test;
         // Reads file header (4 bytes).
         int res_test = file.read(&magic_test, sizeof(magic_test));

@@ -208,7 +208,7 @@ struct Font
     // Params :
     //    - file_path : path to the font definition file (*.fv1)
     //==============================================================================
-    Font(const char * file_path) {
+    explicit Font(const char * file_path) {
     //==============================================================================
         int fd;
         int b;

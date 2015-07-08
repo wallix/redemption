@@ -5,7 +5,7 @@
 namespace configs {
 
 struct VariablesConfiguration {
-    VariablesConfiguration(char const * default_font_name)
+    explicit VariablesConfiguration(char const * default_font_name)
     : font(default_font_name)
     {}
 
@@ -16,21 +16,21 @@ struct VariablesConfiguration {
     struct Inifile_client {
         UnsignedField keyboard_layout;  // AUTHID_KEYBOARD_LAYOUT
         // If true, ignore password provided by RDP client, user need do login manually.
-        bool ignore_logon_password = {0};
+        bool ignore_logon_password{0};
 
-        uint32_t performance_flags_default = {0};
+        uint32_t performance_flags_default{0};
         // Disable theme (0x8).
-        uint32_t performance_flags_force_present = {8};
+        uint32_t performance_flags_force_present{8};
         // Disable font smoothing (0x80).
-        uint32_t performance_flags_force_not_present = {128};
+        uint32_t performance_flags_force_not_present{128};
 
         // Fallback to RDP Legacy Encryption if client does not support TLS.
-        bool tls_fallback_legacy = {1};
-        bool tls_support = {1};
+        bool tls_fallback_legacy{1};
+        bool tls_support{1};
         // Needed to connect with jrdp, based on bogus X224 layer code.
-        bool bogus_neg_request = {0};
+        bool bogus_neg_request{0};
         // Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code.
-        bool bogus_user_id = {1};
+        bool bogus_user_id{1};
 
         // If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
         BoolField disable_tsk_switch_shortcuts;  // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS
@@ -41,27 +41,27 @@ struct VariablesConfiguration {
         //   2: RDP 5.0 bulk compression
         //   3: RDP 6.0 bulk compression
         //   4: RDP 6.1 bulk compression
-        Range<unsigned, 0, 4, 0> rdp_compression = {4};
+        Range<unsigned, 0, 4, 0> rdp_compression{4};
 
         // Specifies the maximum color resolution (color depth) for client session:
         //   8: 8 bbp
         //   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
         //   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
         //   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
-        ColorDepth max_color_depth = {static_cast<ColorDepth>(24)};
+        ColorDepth max_color_depth{static_cast<ColorDepth>(24)};
 
         // Persistent Disk Bitmap Cache on the front side.
-        bool persistent_disk_bitmap_cache = {0};
+        bool persistent_disk_bitmap_cache{0};
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
-        bool cache_waiting_list = {1};
+        bool cache_waiting_list{1};
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
-        bool persist_bitmap_cache_on_disk = {0};
+        bool persist_bitmap_cache_on_disk{0};
 
         // Support of Bitmap Compression.
-        bool bitmap_compression = {1};
+        bool bitmap_compression{1};
 
         // Enables support of Clent Fast-Path Input Event PDUs.
-        bool fast_path = {1};
+        bool fast_path{1};
         Inifile_client() = default;
     } client;
 
@@ -142,13 +142,13 @@ struct VariablesConfiguration {
     } context;
 
     struct Inifile_crypto {
-        StaticKeyString<32> key0 = {
+        StaticKeyString<32> key0{
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
         };
-        StaticKeyString<32> key1 = {
+        StaticKeyString<32> key1{
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -158,32 +158,32 @@ struct VariablesConfiguration {
     } crypto;
 
     struct Inifile_debug {
-        uint32_t x224 = {0};
-        uint32_t mcs = {0};
-        uint32_t sec = {0};
-        uint32_t rdp = {0};
-        uint32_t primary_orders = {0};
-        uint32_t secondary_orders = {0};
-        uint32_t bitmap = {0};
-        uint32_t capture = {0};
-        uint32_t auth = {0};
-        uint32_t session = {0};
-        uint32_t front = {0};
-        uint32_t mod_rdp = {0};
-        uint32_t mod_vnc = {0};
-        uint32_t mod_int = {0};
-        uint32_t mod_xup = {0};
-        uint32_t widget = {0};
-        uint32_t input = {0};
-        uint32_t password = {0};
-        uint32_t compression = {0};
-        uint32_t cache = {0};
-        uint32_t bitmap_update = {0};
-        uint32_t performance = {0};
-        uint32_t pass_dialog_box = {0};
+        uint32_t x224{0};
+        uint32_t mcs{0};
+        uint32_t sec{0};
+        uint32_t rdp{0};
+        uint32_t primary_orders{0};
+        uint32_t secondary_orders{0};
+        uint32_t bitmap{0};
+        uint32_t capture{0};
+        uint32_t auth{0};
+        uint32_t session{0};
+        uint32_t front{0};
+        uint32_t mod_rdp{0};
+        uint32_t mod_vnc{0};
+        uint32_t mod_int{0};
+        uint32_t mod_xup{0};
+        uint32_t widget{0};
+        uint32_t input{0};
+        uint32_t password{0};
+        uint32_t compression{0};
+        uint32_t cache{0};
+        uint32_t bitmap_update{0};
+        uint32_t performance{0};
+        uint32_t pass_dialog_box{0};
 
         // 0 = disable, 1 = enable, 2 = enable but no specified
-        Range<unsigned, 0, 2, 0> config = {2};
+        Range<unsigned, 0, 2, 0> config{2};
         Inifile_debug() = default;
     } debug;
 
@@ -200,33 +200,33 @@ struct VariablesConfiguration {
         StringField target_application_password;  // AUTHID_TARGET_APPLICATION_PASSWORD
 
         // Support of Bitmap Cache.
-        bool bitmap_cache = {1};
-        bool glyph_cache = {0};
-        unsigned port = {3389};
-        bool nomouse = {0};
-        bool notimestamp = {0};
+        bool bitmap_cache{1};
+        bool glyph_cache{0};
+        unsigned port{3389};
+        bool nomouse{0};
+        bool notimestamp{0};
         // low, medium or high.
-        Level encryptionLevel = {static_cast<Level>(0)};
-        StaticIpString authip = {"127.0.0.1"};
-        unsigned authport = {3350};
+        Level encryptionLevel{static_cast<Level>(0)};
+        StaticIpString authip{"127.0.0.1"};
+        unsigned authport{3350};
 
         // No traffic auto disconnection (in seconds).
-        unsigned session_timeout = {900};
+        unsigned session_timeout{900};
         // Keepalive (in seconds).
-        unsigned keepalive_grace_delay = {30};
+        unsigned keepalive_grace_delay{30};
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
-        unsigned close_timeout = {600};
+        unsigned close_timeout{600};
 
-        StaticNilString<8> auth_channel = {null_fill()};
+        StaticNilString<8> auth_channel{null_fill()};
         BoolField enable_file_encryption;  // AUTHID_OPT_FILE_ENCRYPTION
-        StaticIpString listen_address = {"0.0.0.0"};
+        StaticIpString listen_address{"0.0.0.0"};
         // Allow IP Transparent.
-        bool enable_ip_transparent = {0};
+        bool enable_ip_transparent{0};
         // Proxy certificate password.
-        StaticString<256> certificate_password = {"inquisition"};
+        StaticString<256> certificate_password{"inquisition"};
 
-        StaticString<1024> png_path = {PNG_PATH};
-        StaticString<1024> wrm_path = {WRM_PATH};
+        StaticString<1024> png_path{PNG_PATH};
+        StaticString<1024> wrm_path{WRM_PATH};
 
         StringField alternate_shell;  // AUTHID_ALTERNATE_SHELL
         StringField shell_working_directory;  // AUTHID_SHELL_WORKING_DIRECTORY
@@ -238,29 +238,29 @@ struct VariablesConfiguration {
         // low, medium or high.
         LevelField video_quality;  // AUTHID_VIDEO_QUALITY
         // Support of Bitmap Update.
-        bool enable_bitmap_update = {1};
+        bool enable_bitmap_update{1};
 
         // Show close screen.
-        bool enable_close_box = {1};
-        bool enable_osd = {1};
-        bool enable_osd_display_remote_target = {1};
+        bool enable_close_box{1};
+        bool enable_osd{1};
+        bool enable_osd_display_remote_target{1};
 
         BoolField enable_wab_agent;  // AUTHID_OPT_WABAGENT
         UnsignedField wab_agent_launch_timeout;  // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT
         UnsignedField wab_agent_keepalive_timeout;  // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
 
-        StaticString<512> wab_agent_alternate_shell = {""};
+        StaticString<512> wab_agent_alternate_shell{""};
 
-        StaticPath<1024> persistent_path = {PERSISTENT_PATH};
+        StaticPath<1024> persistent_path{PERSISTENT_PATH};
 
-        bool disable_proxy_opt = {0};
+        bool disable_proxy_opt{0};
         //  The maximum length of the chunked virtual channel data.
-        uint32_t max_chunked_virtual_channel_data_length = {2 * 1024 * 1024};
+        uint32_t max_chunked_virtual_channel_data_length{2 * 1024 * 1024};
         Inifile_globals() = default;
     } globals;
 
     struct Inifile_internal_mod {
-        std::string theme = {""};
+        std::string theme{""};
         Inifile_internal_mod() = default;
     } internal_mod;
 
@@ -271,15 +271,15 @@ struct VariablesConfiguration {
         //   2: RDP 5.0 bulk compression
         //   3: RDP 6.0 bulk compression
         //   4: RDP 6.1 bulk compression
-        Range<unsigned, 0, 4, 0> rdp_compression = {4};
+        Range<unsigned, 0, 4, 0> rdp_compression{4};
 
-        bool disconnect_on_logon_user_change = {0};
+        bool disconnect_on_logon_user_change{0};
 
-        uint32_t open_session_timeout = {0};
+        uint32_t open_session_timeout{0};
 
         // 0: Cancel connection and reports error.
         // 1: Replace existing certificate and continue connection.
-        unsigned certificate_change_action = {0};
+        unsigned certificate_change_action{0};
 
         // Enables support of additional drawing orders:
         //   15: MultiDstBlt
@@ -287,31 +287,31 @@ struct VariablesConfiguration {
         //   17: MultiScrBlt
         //   18: MultiOpaqueRect
         //   22: Polyline
-        std::string extra_orders = {"15,16,17,18,22"};
+        std::string extra_orders{"15,16,17,18,22"};
 
         // NLA authentication in secondary target.
-        bool enable_nla = {1};
+        bool enable_nla{1};
         // If enabled, NLA authentication will try Kerberos before NTLM.
         // (if enable_nla is disabled, this value is ignored).
-        bool enable_kerberos = {0};
+        bool enable_kerberos{0};
 
         // Persistent Disk Bitmap Cache on the mod side.
-        bool persistent_disk_bitmap_cache = {0};
+        bool persistent_disk_bitmap_cache{0};
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
-        bool cache_waiting_list = {1};
+        bool cache_waiting_list{1};
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
-        bool persist_bitmap_cache_on_disk = {0};
+        bool persist_bitmap_cache_on_disk{0};
 
         // Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
-        std::string allow_channels = {"*"};
+        std::string allow_channels{"*"};
         // Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
         std::string deny_channels;
 
         // Enables support of Server Fast-Path Update PDUs.
-        bool fast_path = {1};
+        bool fast_path{1};
 
         // Enables Server Redirection Support.
-        bool server_redirection_support = {0};
+        bool server_redirection_support{0};
 
         RedirectionInfo redir_info;
 
@@ -326,7 +326,7 @@ struct VariablesConfiguration {
 
     struct Inifile_mod_replay {
         // 0 - Wait for Escape, 1 - End session
-        int on_end_of_data = {0};
+        int on_end_of_data{0};
         Inifile_mod_replay() = default;
     } mod_replay;
 
@@ -344,7 +344,7 @@ struct VariablesConfiguration {
         //   -239 (0xFFFFFF11): Cursor pseudo-encoding
         std::string encodings;
 
-        bool allow_authentification_retries = {0};
+        bool allow_authentification_retries{0};
 
         // VNC server clipboard data encoding type.
         //   latin1 (default) or utf-8
@@ -360,7 +360,7 @@ struct VariablesConfiguration {
     } translation;
 
     struct Inifile_video {
-        unsigned capture_groupid = {33};
+        unsigned capture_groupid{33};
 
         // Specifies the type of data to be captured:
         //   1: PNG
@@ -368,71 +368,71 @@ struct VariablesConfiguration {
         //   4: FLV
         //   8: OCR
         //  16: OCR2
-        CaptureFlags capture_flags = {static_cast<CaptureFlags>(3)};
+        CaptureFlags capture_flags{static_cast<CaptureFlags>(3)};
 
 
         // latin (default) or cyrillic
         std::string ocr_locale;
         // Is in 1/100 s
-        unsigned ocr_interval = {100};
-        bool ocr_on_title_bar_only = {0};
+        unsigned ocr_interval{100};
+        bool ocr_on_title_bar_only{0};
         // Expressed in percentage,
         //   0   - all of characters need be recognized
         //   100 - accept all results
-        Range<unsigned, 0, 100, 0> ocr_max_unrecog_char_rate = {40};
+        Range<unsigned, 0, 100, 0> ocr_max_unrecog_char_rate{40};
 
         // Frame interval is in 1/10 s.
-        unsigned png_interval = {3000};
+        unsigned png_interval{3000};
         // Frame interval is in 1/100 s.
-        unsigned frame_interval = {40};
+        unsigned frame_interval{40};
         // Time between 2 wrm movies (in seconds).
-        unsigned break_interval = {600};
+        unsigned break_interval{600};
         // Number of png captures to keep.
-        unsigned png_limit = {5};
+        unsigned png_limit{5};
 
-        uint64_t flv_break_interval = {0};
+        uint64_t flv_break_interval{0};
 
-        StaticString<1024> replay_path = {"/tmp/"};
+        StaticString<1024> replay_path{"/tmp/"};
 
         // Bitrate for low quality.
-        unsigned l_bitrate = {10000};
+        unsigned l_bitrate{10000};
         // Framerate for low quality.
-        unsigned l_framerate = {5};
+        unsigned l_framerate{5};
         // Height for low quality.
-        unsigned l_height = {480};
+        unsigned l_height{480};
         // Width for low quality.
-        unsigned l_width = {640};
+        unsigned l_width{640};
         // Qscale (parameter given to ffmpeg) for low quality.
-        unsigned l_qscale = {28};
+        unsigned l_qscale{28};
 
         // Bitrate for medium quality.
-        unsigned m_bitrate = {20000};
+        unsigned m_bitrate{20000};
         // Framerate for medium quality.
-        unsigned m_framerate = {5};
+        unsigned m_framerate{5};
         // Height for medium quality.
-        unsigned m_height = {768};
+        unsigned m_height{768};
         // Width for medium quality.
-        unsigned m_width = {1024};
+        unsigned m_width{1024};
         // Qscale (parameter given to ffmpeg) for medium quality.
-        unsigned m_qscale = {14};
+        unsigned m_qscale{14};
 
         // Bitrate for high quality.
-        unsigned h_bitrate = {30000};
+        unsigned h_bitrate{30000};
         // Framerate for high quality.
-        unsigned h_framerate = {5};
+        unsigned h_framerate{5};
         // Height for high quality.
-        unsigned h_height = {2048};
+        unsigned h_height{2048};
         // Width for high quality.
-        unsigned h_width = {2048};
+        unsigned h_width{2048};
         // Qscale (parameter given to ffmpeg) for high quality.
-        unsigned h_qscale = {7};
+        unsigned h_qscale{7};
 
-        StaticPath<1024> hash_path = {"/var/rdpproxy/hash"};
-        StaticPath<1024> record_tmp_path = {"/var/rdpproxy/tmp"};
-        StaticPath<1024> record_path = {"/var/rdpproxy/recorded"};
+        StaticPath<1024> hash_path{"/var/rdpproxy/hash"};
+        StaticPath<1024> record_tmp_path{"/var/rdpproxy/tmp"};
+        StaticPath<1024> record_path{"/var/rdpproxy/recorded"};
 
-        bool inactivity_pause = {0};
-        unsigned inactivity_timeout = {300};
+        bool inactivity_pause{0};
+        unsigned inactivity_timeout{300};
 
         // Disable keyboard log:
         //   1: disable keyboard log in syslog
@@ -449,12 +449,12 @@ struct VariablesConfiguration {
         // The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
         //   0: 24-bit
         //   1: 16-bit
-        Range<unsigned, 0, 1, 0> wrm_color_depth_selection_strategy = {0};
+        Range<unsigned, 0, 1, 0> wrm_color_depth_selection_strategy{0};
         // The compression method of native video capture:
         //   0: No compression
         //   1: GZip
         //   2: Snappy
-        Range<unsigned, 0, 2, 0> wrm_compression_algorithm = {0};
+        Range<unsigned, 0, 2, 0> wrm_compression_algorithm{0};
         Inifile_video() = default;
     } video;
 

@@ -490,11 +490,11 @@ class UTF8toUnicodeIterator
 
 
 public:
-    UTF8toUnicodeIterator(const uint8_t * str)
+    explicit UTF8toUnicodeIterator(const uint8_t * str)
     : source(str)
     { ++*this; }
 
-    UTF8toUnicodeIterator(const char * str)
+    explicit UTF8toUnicodeIterator(const char * str)
     : UTF8toUnicodeIterator(reinterpret_cast<const uint8_t*>(str))
     {}
 

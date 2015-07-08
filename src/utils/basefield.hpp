@@ -176,12 +176,12 @@ struct FieldObserver : public ConfigurationHolder {
                 this->data.clear();
             }
         }
-        virtual void set_from_acl(const char * cstr) {
+        virtual void set_from_acl(const char * cstr) override {
             this->modify_from_acl();
             this->data = cstr;
             this->asked = false;
         }
-        virtual void set_from_cstr(const char * cstr) {
+        virtual void set_from_cstr(const char * cstr) override {
             if (this->asked || this->data.compare(cstr)) {
                 this->modify();
                 this->data = cstr;
@@ -199,7 +199,7 @@ struct FieldObserver : public ConfigurationHolder {
             return this->get().c_str();
         }
 
-        virtual const char * get_value() {
+        virtual const char * get_value() override {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -228,12 +228,12 @@ struct FieldObserver : public ConfigurationHolder {
             this->asked = false;
         }
 
-        virtual void set_from_acl(const char * cstr) {
+        virtual void set_from_acl(const char * cstr) override {
             this->modify_from_acl();
             this->data = ulong_from_cstr(cstr);
             this->asked = false;
         }
-        virtual void set_from_cstr(const char * cstr) {
+        virtual void set_from_cstr(const char * cstr) override {
             this->set(ulong_from_cstr(cstr));
         }
 
@@ -241,7 +241,7 @@ struct FieldObserver : public ConfigurationHolder {
             return this->data;
         }
 
-        virtual const char * get_value() {
+        virtual const char * get_value() override {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -271,20 +271,20 @@ struct FieldObserver : public ConfigurationHolder {
             }
             this->asked = false;
         }
-        virtual void set_from_acl(const char * cstr) {
+        virtual void set_from_acl(const char * cstr) override {
             this->modify_from_acl();
             this->data = _long_from_cstr(cstr);
             this->asked = false;
         }
 
-        virtual void set_from_cstr(const char * cstr) {
+        virtual void set_from_cstr(const char * cstr) override {
             this->set(_long_from_cstr(cstr));
         }
 
         signed get() const {
             return this->data;
         }
-        virtual const char * get_value() {
+        virtual const char * get_value() override {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -312,19 +312,19 @@ struct FieldObserver : public ConfigurationHolder {
             }
             this->asked = false;
         }
-        virtual void set_from_acl(const char * cstr) {
+        virtual void set_from_acl(const char * cstr) override {
             this->modify_from_acl();
             this->data = bool_from_cstr(cstr);
             this->asked = false;
         }
-        virtual void set_from_cstr(const char * cstr) {
+        virtual void set_from_cstr(const char * cstr) override {
             this->set(bool_from_cstr(cstr));
         }
 
         bool get() const {
             return this->data;
         }
-        virtual const char * get_value() {
+        virtual const char * get_value() override {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -389,10 +389,6 @@ public:
     FieldObserver() = default;
     FieldObserver(FieldObserver const &) = delete;
     FieldObserver & operator = (FieldObserver const &) = delete;
-
-    virtual ~FieldObserver() {}
-    // BASE64 TRY
-    // Base64 b64;
 
     std::set< authid_t > to_send_set;
 

@@ -66,10 +66,6 @@ static inline bool check_file_hash_sha256( const char * file_path
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
 
-    if (len_to_check == 0){
-        len_to_check = number_of_bytes_read;
-    }
-
     return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 
