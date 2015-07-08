@@ -187,6 +187,7 @@ class mod_rdp : public mod_api {
     const bool persist_bitmap_cache_on_disk;
 
     const unsigned    wab_agent_launch_timeout;
+    const unsigned    wab_agent_on_launch_failure;
     const unsigned    wab_agent_keepalive_timeout;
     const std::string wab_agent_alternate_shell;
 
@@ -350,6 +351,7 @@ public:
         , rdp_compression(mod_rdp_params.rdp_compression)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
+        , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
         , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
         , disable_clipboard_log(mod_rdp_params.disable_clipboard_log)
@@ -606,8 +608,9 @@ public:
 
         if (this->verbose & 1) {
             LOG(LOG_INFO,
-                "enable_wab_agent=%s wab_agent_launch_timeout=%u",
-                (this->enable_wab_agent ? "yes" : "no"), this->wab_agent_launch_timeout);
+                "enable_wab_agent=%s wab_agent_launch_timeout=%u wab_agent_on_launch_failure=%u",
+                (this->enable_wab_agent ? "yes" : "no"), this->wab_agent_launch_timeout,
+                this->wab_agent_on_launch_failure);
         }
         if (this->enable_wab_agent) {
             this->wab_agent_event.object_and_time = true;
@@ -3487,13 +3490,15 @@ public:
             this->wab_agent_event.waked_up_by_time = false;
 
             if (this->wab_agent_launch_timeout && !this->wab_agent_is_ready) {
-                LOG(LOG_ERR, "Agent is not ready yet!");
+                LOG((this->wab_agent_on_launch_failure ? LOG_WARNING : LOG_ERR), "Agent is not ready yet!");
 
-                this->event.signal = BACK_EVENT_NEXT;
-                this->event.set();
+                if (!this->wab_agent_on_launch_failure) {
+                    this->event.signal = BACK_EVENT_NEXT;
+                    this->event.set();
+                }
             }
 
-            if (this->wab_agent_keepalive_timeout) {
+            if (this->wab_agent_is_ready && this->wab_agent_keepalive_timeout) {
                 if (!this->wab_agent_keep_alive_received) {
                     LOG(LOG_ERR, "No keep alive received from Agent!");
 

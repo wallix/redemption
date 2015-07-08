@@ -153,6 +153,7 @@ enum authid_t {
 
     AUTHID_OPT_WABAGENT,
     AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
+    AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE,
     AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
 
     AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT,
@@ -263,6 +264,7 @@ enum authid_t {
 
 #define STRAUTHID_OPT_WABAGENT                      "wab_agent"
 #define STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT       "wab_agent_launch_timeout"
+#define STRAUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE    "wab_agent_on_launch_failure"
 #define STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT    "wab_agent_keepalive_timeout"
 
 #define STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT    "client_device_announce_timeout"
@@ -379,6 +381,7 @@ static const char * const authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_OPT_WABAGENT,
     STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
+    STRAUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE,
     STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
 
     STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT,
@@ -564,6 +567,7 @@ public:
 
         BoolField       enable_wab_agent;               // AUTHID_OPT_WABAGENT //
         UnsignedField   wab_agent_launch_timeout;       // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT //
+        UnsignedField   wab_agent_on_launch_failure;    // AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE //
         UnsignedField   wab_agent_keepalive_timeout;    // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT //
 
         StaticString<512> wab_agent_alternate_shell = "";
@@ -978,6 +982,9 @@ public:
         this->globals.wab_agent_launch_timeout.attach_ini(this, AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT);
         this->globals.wab_agent_launch_timeout.set(0);
 
+        this->globals.wab_agent_on_launch_failure.attach_ini(this, AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE);
+        this->globals.wab_agent_on_launch_failure.set(0);
+
         this->globals.wab_agent_keepalive_timeout.attach_ini(this, AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT);
         this->globals.wab_agent_keepalive_timeout.set(0);
         // End Init globals
@@ -1271,6 +1278,9 @@ public:
             }
             else if (0 == strcmp(key, "wab_agent_launch_timeout")) {
                 this->globals.wab_agent_launch_timeout.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "wab_agent_on_launch_failure")) {
+                this->globals.wab_agent_on_launch_failure.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "wab_agent_keepalive_timeout")) {
                 this->globals.wab_agent_keepalive_timeout.set_from_cstr(value);
