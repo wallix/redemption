@@ -33,7 +33,7 @@ struct ConfigurationHolder {
 
 
 struct ConfigurationLoader {
-    ConfigurationLoader(ConfigurationHolder & configuration_holder) {
+    explicit ConfigurationLoader(ConfigurationHolder & configuration_holder) {
     }
 
     ConfigurationLoader(ConfigurationHolder & configuration_holder, const char * filename) {

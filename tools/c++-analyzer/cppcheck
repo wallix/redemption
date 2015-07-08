@@ -3,7 +3,7 @@
 cd "$(dirname "$0")"/../..
 
 exec cppcheck -v --enable=all --std=posix --std=c++11 \
-main/*.cpp \
+src/main/*.cpp \
 -DCERTIF_PATH='"/etc/rdpproxy/cert/rdp"' \
 -DCFG_PATH='"/etc/rdpproxy"' \
 -DFIXTURES_PATH='"./tests/fixtures"' \
@@ -27,7 +27,6 @@ main/*.cpp \
 -I"src/main" \
 -I"src/mod" \
 -I"src/regex" \
--I"src/tests" \
 -I"src/transport" \
 -I"src/utils" \
--I"src/acl"
+-I"src/acl" \

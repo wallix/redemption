@@ -1,6 +1,4 @@
 void Inifile::set_value(const char * context, const char * key, const char * value) {
-    using namespace configs;
-
     if (0) {}
     else if (0 == strcmp(context, "client")) {
         if (0) {}

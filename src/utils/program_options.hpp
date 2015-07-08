@@ -128,7 +128,7 @@ namespace program_options {
         using const_iterator = options_list::const_iterator;
         using iterator = const_iterator;
 
-        options_description(options_list options)
+        explicit options_description(options_list options)
         : options_(std::move(options))
         {}
 
@@ -159,8 +159,8 @@ namespace program_options {
     struct unknow_option : std::runtime_error
     {
         unknow_option();
-        unknow_option(char opt);
-        unknow_option(std::string opt);
+        explicit unknow_option(char opt);
+        explicit unknow_option(std::string opt);
     };
 
     struct invalid_option_value : std::runtime_error
@@ -171,7 +171,7 @@ namespace program_options {
 
     struct invalid_command_line_syntax : std::runtime_error
     {
-        invalid_command_line_syntax(option_description const & option);
+        explicit invalid_command_line_syntax(option_description const & option);
         invalid_command_line_syntax();
     };
 

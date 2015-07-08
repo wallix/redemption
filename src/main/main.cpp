@@ -24,7 +24,6 @@
 
 #include "version.hpp"
 
-#include "log.hpp"
 #include "parameters_holder.hpp"
 
 #include "apps/app_proxy.hpp"

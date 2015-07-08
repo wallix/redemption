@@ -105,7 +105,8 @@ struct Theme : public ConfigurationHolder {
         this->selector_label.bgcolor = MEDIUM_BLUE;
         this->selector_label.fgcolor = WHITE;
     }
-    virtual void set_value(const char * context, const char * key, const char * value)
+
+    virtual void set_value(const char * context, const char * key, const char * value) override
     {
         if (0 == strcmp(context, "global")) {
             if (0 == strcmp(key, "bgcolor")){

@@ -40,7 +40,7 @@ class fdbuf
     int fd;
 
 public:
-    fdbuf(int fd = -1) noexcept
+    explicit fdbuf(int fd = -1) noexcept
     : fd(fd)
     {}
 

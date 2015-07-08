@@ -274,7 +274,7 @@ struct ConfigCppWriter {
     typename std::enable_if<!std::is_base_of<BaseField, T>::value>::type
     write_assignable_default(ref<type_<T>>, default_<U> const & d)
     {
-        this->out() << " = {";
+        this->out() << "{";
         this->write(d.value);
         this->out() << "}";
     }
@@ -372,7 +372,7 @@ void write_variable_configuration(std::ostream & out_varconf, config_writer::Con
         "#include \"configs/includes.hpp\"\n\n"
         "namespace configs {\n\n"
         "struct VariablesConfiguration {\n"
-        "    VariablesConfiguration(char const * default_font_name)\n"
+        "    explicit VariablesConfiguration(char const * default_font_name)\n"
         "    : font(default_font_name)\n"
         "    {}\n\n"
     ;
@@ -395,8 +395,7 @@ void write_variable_configuration(std::ostream & out_varconf, config_writer::Con
 
 void config_initialize(std::ostream & out_body, config_writer::ConfigCppWriter & writer) {
     out_body <<
-        "void Inifile::initialize() {\n"
-        "    using namespace configs;\n\n" <<
+        "void Inifile::initialize() {\n" <<
         writer.out_body_ctor_.str() <<
         "}\n"
     ;
@@ -405,7 +404,6 @@ void config_initialize(std::ostream & out_body, config_writer::ConfigCppWriter &
 void write_config_set_value(std::ostream & out_set_value, config_writer::ConfigCppWriter & writer) {
     out_set_value <<
         "void Inifile::set_value(const char * context, const char * key, const char * value) {\n"
-        "    using namespace configs;\n\n"
         "    if (0) {}\n"
     ;
     for (auto & body : writer.sections_parser) {
