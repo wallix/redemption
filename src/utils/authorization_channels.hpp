@@ -99,10 +99,11 @@ struct AuthorizationChannels
             case rdpdr::RDPDR_DTYP_SMARTCARD:
                 return this->rdpdr_restriction_[4];
 
-            default:
-                LOG(LOG_ERR, "Unknown RDPDR DeviceType(%d)", DeviceType);
-                throw Error(ERR_RDP_PROTOCOL);
+            default:;
         }
+
+        assert(true && "Unknown RDPDR DeviceType");
+        return false;
     }
 
     inline bool rdpdr_drive_read_is_authorized() const noexcept {
