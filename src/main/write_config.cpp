@@ -35,7 +35,7 @@ namespace config_writer {
 
 using namespace config_spec;
 
-using config_spec::link;
+using config_spec::link; // for ambiguousity
 
 struct ConfigCppWriter {
     std::string section_name;
@@ -88,7 +88,7 @@ struct ConfigCppWriter {
     };
 
     template<class... Ts>
-    void field(Ts const & ... args) {
+    void member(Ts const & ... args) {
         struct Pack : ref<Ts>... {
             explicit Pack(Ts const &... x)
             : ref<Ts>{x}...
@@ -269,11 +269,19 @@ struct ConfigCppWriter {
     void write_body_constructor(ref<type_<T>>, Pack &, std::string const &, U const &)
     { }
 
+    template<class T, class U>
+    void check_constructible(type_<T>, default_<U> const & d)
+    { static_assert((void(type_<decltype(T(d.value))>{}), 1), "incompatible type"); }
+
+    template<class T>
+    void check_constructible(type_<T>, default_<expr> const &)
+    {}
 
     template<class T, class U>
     typename std::enable_if<!std::is_base_of<BaseField, T>::value>::type
     write_assignable_default(ref<type_<T>>, default_<U> const & d)
     {
+        this->check_constructible(type_<T>{}, d);
         this->out() << "{";
         this->write(d.value);
         this->out() << "}";
