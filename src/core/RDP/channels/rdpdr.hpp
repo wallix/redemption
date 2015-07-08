@@ -1117,6 +1117,66 @@ public:
     }
 };
 
+// [MS-RDPEFS] - 2.2.1.4.4 Device Write Request (DR_WRITE_REQ)
+// ===========================================================
+
+// This header initiates a write request. This message can have different
+//  purposes depending on the device for which it is issued. The device type
+//  is determined by the DeviceId field in the DR_DEVICE_IOREQUEST header.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        DeviceIoRequest                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                             Offset                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                      WriteData (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST header. The
+//  MajorFunction field in this header MUST be set to IRP_MJ_WRITE.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes in the WriteData field.
+
+// Offset (8 bytes): A 64-bit unsigned integer. This field specifies the file
+//  offset at which the data is written.
+
+// Padding (20 bytes): An array of 20 bytes. Reserved. This field can be set
+//  to any value, and MUST be ignored on receipt.
+
+// WriteData (variable): A variable-length array of bytes, where the length
+//  is specified by the Length field in this packet. This array contains data
+//  to be written on the target device.
+
 // [MS-RDPEFS] - 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ)
 // ===============================================================
 
@@ -1565,6 +1625,43 @@ public:
 // ReadData (variable): A variable-length array of bytes that specifies the
 //  output data from the read request. The length of ReadData is specified by
 //  the Length field in this packet.
+
+// [MS-RDPEFS] - 2.2.1.5.4 Device Write Response (DR_WRITE_RSP)
+// ============================================================
+
+// A message with this header describes a response to a Device Write Request
+//  (section 2.2.1.4.4).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------+-----------------------------------------------+
+// |    Padding    |
+// |   (optional)  |
+// +---------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION header. The
+//  CompletionId field of this header MUST match a Device I/O Request
+//  (section 2.2.1.4) message that had the MajorFunction field set to
+//  IRP_MJ_WRITE.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of
+//  bytes written in response to the write request.
+
+// Padding (1 byte): An 8-bit unsigned integer intended to allow the client
+//  minor flexibility in determining the overall packet length. This field is
+//  unused and can be set to any value. If present, this field MUST be
+//  ignored on receipt.
 
 // [MS-RDPEFS] - 2.2.2.1 Server Device Announce Response
 //  (DR_CORE_DEVICE_ANNOUNCE_RSP)
@@ -2357,6 +2454,25 @@ public:
 //  DR_DEVICELIST_ANNOUNCE (section 2.2.3.1) message. The drive letter is
 //  contained in the PreferredDosName field.
 
+// [MS-RDPEFS] - 2.2.3.3.4 Server Drive Write Request (DR_DRIVE_WRITE_REQ)
+// =======================================================================
+
+// The server writes to a file on a redirected file system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 DeviceWriteRequest (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceWriteRequest (variable): A DR_WRITE_REQ header. The Length field
+//  contains the number of bytes to be written to the number of bytes to be
+//  written to the file. The Offset field specifies the offset within the
+//  file at which the write operation starts.
+
 // [MS-RDPEFS] - 2.2.3.3.8 Server Drive Query Information Request
 //  (DR_DRIVE_QUERY_INFORMATION_REQ)
 // ==============================================================
@@ -2913,7 +3029,6 @@ public:
 
     inline uint32_t Length() const { return this->Length_; }
 
-private:
     inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileBasicInformation:       return "FileBasicInformation";
@@ -2926,12 +3041,149 @@ private:
         return "<unknown>";
     }
 
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveSetInformationRequest: FsInformationClass=%s(0x%X) "
                 "Length=%u",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->Length_);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};
+
+// [MS-RDPEFS] - 2.2.3.3.9.1 RDP_FILE_RENAME_INFORMATION
+// =====================================================
+
+// RDP_FILE_RENAME_INFORMATION is a structure representing
+//  FileRenameInformation as a possible value of the FsInformationClass
+//  field. All fields have the same meaning as in FILE_RENAME_INFORMATION in
+//  [MS-FSCC] section 2.4.34. The differences are only in the layout of the
+//  fields.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |   ReplaceIf   | RootDirectory |         FileNameLength        |
+// |     Exists    |               |                               |
+// +---------------+---------------+-------------------------------+
+// |              ...              |      FileName (variable)      |
+// +-------------------------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ReplaceIfExists (1 byte): See [MS-FSCC] section 2.4.34 for a description
+//  of this field.
+
+// RootDirectory (1 byte): See [MS-FSCC] section 2.4.34 for a description of
+//  this field. For network operations, the value of the RootDirectory field
+//  in this structure MUST always be zero.
+
+// FileNameLength (4 bytes): See [MS-FSCC] section 2.4.34 for a description
+//  of this field.
+
+// FileName (variable): See [MS-FSCC] section 2.4.34 for a description of
+//  this field.
+
+class RDPFileRenameInformation {
+    bool     replace_if_exists_ = false;
+    uint8_t  RootDirectory_     = 0;
+    uint16_t FileNameLength     = 0;
+
+    std::string file_name;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint8(this->replace_if_exists_ ? ((uint8_t)-1) : 0);
+        stream.out_uint8(this->RootDirectory_);
+
+        const size_t maximum_length_of_FileName_in_bytes =
+            (this->file_name.length() + 1) * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+            maximum_length_of_FileName_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, maximum_length_of_FileName_in_bytes);
+        // Writes null terminator.
+        unicode_data[size_of_unicode_data    ] =
+        unicode_data[size_of_unicode_data + 1] = 0;
+        size_of_unicode_data += 2;
+
+        stream.out_uint32_le(size_of_unicode_data); // FileNameLength(4)
+
+        stream.out_copy_bytes(unicode_data, size_of_unicode_data);  // FileName(variable)
+    }
+
+    void receive(Stream & stream) {
+        {
+            const unsigned expected = 6;  // ReplaceIfExists(1) + RootDirectory(1) +
+                                           //     FileNameLength(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated RDP_FILE_RENAME_INFORMATION (0): expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->replace_if_exists_ = (stream.in_uint8() != 0);
+        this->RootDirectory_     = stream.in_uint8();
+
+        const uint32_t FileNameLength = stream.in_uint32_le();
+
+        if (FileNameLength) {
+            {
+                const unsigned expected = FileNameLength;  // FileName(variable)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated RDP_FILE_RENAME_INFORMATION (1): expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                }
+            }
+
+            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
+
+            stream.in_copy_bytes(unicode_data, FileNameLength);
+
+            const size_t size_of_utf8_string =
+                FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+            uint8_t * const utf8_string = static_cast<uint8_t *>(
+                ::alloca(size_of_utf8_string));
+            ::UTF16toUTF8(unicode_data, FileNameLength / 2, utf8_string, size_of_utf8_string);
+            // The null-terminator is included.
+            this->file_name = ::char_ptr_cast(utf8_string);
+            std::replace(this->file_name.begin(), this->file_name.end(), '\\', '/');
+        }
+        else {
+            this->file_name.clear();
+        }
+    }
+
+    inline bool replace_if_exists() const { return this->replace_if_exists_; }
+
+    inline uint8_t RootDirectory() const { return this->RootDirectory_; }
+
+    inline const char * FileName() const { return this->file_name.c_str(); }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "RDP_FILE_RENAME_INFORMATION: ReplaceIfExists=%s RootDirectory=%u FileName=\"%s\"",
+            (this->replace_if_exists_ ? "yes" : "no"),
+            this->RootDirectory_, this->file_name.c_str());
         return ((length < size) ? length : size - 1);
     }
 
@@ -3160,6 +3412,28 @@ public:
         LOG(level, buffer);
     }
 };  // ServerDriveQueryDirectoryRequest
+
+// [MS-RDPEFS] - 2.2.3.4.4 Client Drive Write Response (DR_DRIVE_WRITE_RSP)
+// ========================================================================
+
+// This message is sent by the client as a response to the Server Drive Write
+//  Request (section 2.2.3.3.4).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 DeviceWriteResponse (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceWriteResponse (variable): Returns the result of DR_DRIVE_WRITE_REQ;
+//  it is the same as the common Device Write Response (section 2.2.1.5.4).
+//  If successful (that is, if the IoStatus field is equal to
+//  STATUS_SUCCESS), then the number of bytes written is specified by the
+//  Length field of the Server Drive Write Request (section 2.2.3.3.4)
+//  message.
 
 // [MS-RDPEFS] - 2.2.3.4.8 Client Drive Query Information Response
 //  (DR_DRIVE_QUERY_INFORMATION_RSP)

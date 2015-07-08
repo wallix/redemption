@@ -371,4 +371,51 @@ static inline int recursive_create_directory(const char *directory, mode_t mode,
     return status;
 }
 
+static inline int recursive_delete_directory(const char * directory_path) {
+    DIR * dir = opendir(directory_path);
+
+    int return_value = 0;
+
+    if (dir) {
+        struct dirent * ent;
+
+        while (!return_value && (ent = readdir(dir)))
+        {
+            /* Skip the names "." and ".." as we don't want to recurse on them. */
+            if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) {
+                continue;
+            }
+
+            char * entry_path;
+            size_t entry_path_length;
+
+            entry_path_length = strlen(directory_path) + strlen(ent->d_name) + 2;
+            entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
+
+            if (entry_path) {
+                struct stat statbuf;
+
+                snprintf(entry_path, entry_path_length, "%s/%s", directory_path, ent->d_name);
+
+                if (!stat(entry_path, &statbuf)) {
+                    if (S_ISDIR(statbuf.st_mode)) {
+                        return_value = recursive_delete_directory(entry_path);
+                    }
+                    else {
+                        return_value = unlink(entry_path);
+                    }
+                }
+            }
+        }
+
+        closedir(dir);
+    }
+
+    if (!return_value) {
+        return_value = rmdir(directory_path);
+    }
+
+    return return_value;
+}
+
 #endif

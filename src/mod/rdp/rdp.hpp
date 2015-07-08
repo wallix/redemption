@@ -207,6 +207,7 @@ class mod_rdp : public mod_api {
           bool              client_device_announce_timer_enabled   = false;
           TimeoutT<TimeVal> client_device_announce_timeout_checker;
           bool              server_user_logged_on_processed        = false;
+          bool              proxy_managed_drives_announced         = false;
 
     std::string output_filename;
 
@@ -1254,6 +1255,7 @@ public:
     static uint32_t filter_unsupported_device(AuthorizationChannels const & authorization_channels,
             Stream & chunk, uint32_t device_count, Stream & result,
             FileSystemDriveManager & file_system_drive_manager,
+            bool & proxy_managed_drives_announced,
             bool device_capability_version_02_supported, uint32_t verbose = 0) {
         //LOG(LOG_INFO, "filter_unsupported_device: device_count=%u", device_count);
         result.out_uint16_le(static_cast<uint16_t>(rdpdr::Component::RDPDR_CTYP_CORE));
@@ -1292,8 +1294,12 @@ public:
         }
 
         // Add proxy managed File System Drives.
-        real_device_count += file_system_drive_manager.AnnounceDrivePartially(result,
-            device_capability_version_02_supported, verbose);
+        if (!proxy_managed_drives_announced) {
+            real_device_count += file_system_drive_manager.AnnounceDrivePartially(result,
+                device_capability_version_02_supported, verbose);
+
+            proxy_managed_drives_announced = true;
+        }
 
         result.set_out_uint32_le(real_device_count, device_count_offset);
 
@@ -1448,6 +1454,7 @@ private:
                                                         chunk, DeviceCount,
                                                         result,
                                                         this->file_system_drive_manager,
+                                                        this->proxy_managed_drives_announced,
                                                         this->device_capability_version_02_supported,
                                                         this->verbose)) {
                         if (this->verbose) {
@@ -3445,6 +3452,7 @@ public:
                                                                 0,
                                                                 result,
                                                                 this->file_system_drive_manager,
+                                                                this->proxy_managed_drives_announced,
                                                                 this->device_capability_version_02_supported,
                                                                 this->verbose)) {
                                 this->send_to_channel(*rdpdr_channel, result, result.size(),
@@ -6739,11 +6747,13 @@ public:
 
         const auto saved_stream_p = stream.p;
 
-        rdpdr::SharedHeader sh_r;
+        static rdpdr::SharedHeader sh_r;
 
-        sh_r.receive(stream);
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            sh_r.receive(stream);
 
-        this->update_total_rdpdr_data(sh_r.packet_id, length);
+            this->update_total_rdpdr_data(sh_r.packet_id, length);
+        }
 
         switch (sh_r.packet_id) {
             case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
@@ -6926,15 +6936,21 @@ public:
                         "mod_rdp::process_rdpdr_event: Device I/O Request");
                 }
 
-                rdpdr::DeviceIORequest device_io_request;
+                static rdpdr::DeviceIORequest device_io_request;
 
-                device_io_request.receive(stream);
-                if (this->verbose) {
-                    device_io_request.log(LOG_INFO);
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    device_io_request.receive(stream);
+                    if (this->verbose) {
+                        device_io_request.log(LOG_INFO);
+                    }
                 }
 
                 if (!this->file_system_drive_manager.IsManagedDrive(
                         device_io_request.DeviceId())) {
+                    if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                        break;
+                    }
+
                     uint32_t extra_data = 0;
 
                     switch (device_io_request.MajorFunction()) {
@@ -7107,13 +7123,14 @@ public:
                                 this->userid,
                                 rdpdr_channel.chanid
                             );
-
                     }
 
                     std::unique_ptr<AsynchronousTask> returned_asynchronous_task;
 
                     this->file_system_drive_manager.ProcessDeviceIORequest(
-                        device_io_request, stream, *(this->to_server_sender.get()), returned_asynchronous_task,
+                        device_io_request,
+                        (flags & CHANNELS::CHANNEL_FLAG_FIRST),
+                        stream, *(this->to_server_sender.get()), returned_asynchronous_task,
                         this->verbose);
 
                     if (returned_asynchronous_task) {
