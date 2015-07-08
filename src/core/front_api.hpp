@@ -75,6 +75,8 @@ class FrontAPI : public DrawApi {
     virtual void set_keylayout(int LCID) {}
     virtual void focus_changed(bool on_password_textbox) {}
     virtual void session_update(const char * message) {}
+
+    virtual bool disable_graphics_update(bool disable) { return false; }
 };
 
 #endif
