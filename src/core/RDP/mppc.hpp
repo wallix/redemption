@@ -495,7 +495,7 @@ protected:
     /**
      * Initialize rdp_mppc_enc structure
      */
-    rdp_mppc_enc(uint32_t verbose)
+    explicit rdp_mppc_enc(uint32_t verbose)
         : total_uncompressed_data_size(0)
         , total_compressed_data_size(0)
         , verbose(verbose)

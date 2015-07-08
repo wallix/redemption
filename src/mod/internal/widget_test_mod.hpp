@@ -88,7 +88,7 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~WidgetTestMod() {
+    ~WidgetTestMod() override {
         this->screen.clear();
 
         delete this->wedit_on_screen;
@@ -97,10 +97,10 @@ public:
         delete this->wedit_on_first_tab;
     }
 
-    virtual void notify(Widget2 * sender, notify_event_t event) {}
+    void notify(Widget2 * sender, notify_event_t event) override {}
 
 public:
-    virtual void draw_event(time_t now) {
+    void draw_event(time_t now) override {
         this->event.reset();
     }
 };

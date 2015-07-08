@@ -50,18 +50,16 @@ public:
     OutputTransport() = default;
 
     template<class T>
-    OutputTransport(const T & buf_params)
+    explicit OutputTransport(const T & buf_params)
     : buf(buf_params)
     {}
 
-    bool disconnect()
-    {
+    bool disconnect() override {
         return !this->buf.close();
     }
 
 private:
-    void do_send(const char * data, size_t len)
-    {
+    void do_send(const char * data, size_t len) override {
         const ssize_t res = this->buf.write(data, len);
         if (res < 0) {
             this->status = false;
@@ -100,17 +98,16 @@ public:
     InputTransport() = default;
 
     template<class T>
-    InputTransport(const T & buf_params)
+    explicit InputTransport(const T & buf_params)
     : buf(buf_params)
     {}
 
-    bool disconnect()
-    {
+    bool disconnect() override {
         return !this->buf.close();
     }
 
 private:
-    void do_recv(char ** pbuffer, size_t len) {
+    void do_recv(char ** pbuffer, size_t len) override {
         const ssize_t res = this->buf.read(*pbuffer, len);
         if (res < 0){
             this->status = false;
@@ -142,12 +139,11 @@ struct InputNextTransport
     InputNextTransport() = default;
 
     template<class T>
-    InputNextTransport(const T & buf_params)
+    explicit InputNextTransport(const T & buf_params)
     : InputTransport<Buf>(buf_params)
     {}
 
-    virtual bool next()
-    {
+    bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
@@ -174,12 +170,11 @@ struct OutputNextTransport
     OutputNextTransport() = default;
 
     template<class T>
-    OutputNextTransport(const T & buf_params)
+    explicit OutputNextTransport(const T & buf_params)
     : OutputTransport<Buf, PathTraits>(buf_params)
     {}
 
-    virtual bool next()
-    {
+    bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
@@ -208,12 +203,11 @@ struct SeekableTransport
     SeekableTransport() = default;
 
     template<class T>
-    SeekableTransport(const T & params)
+    explicit SeekableTransport(const T & params)
     : TTransport(params)
     {}
 
-    virtual void seek(int64_t offset, int whence)
-    {
+    void seek(int64_t offset, int whence) override {
         if ((off64_t)-1 == this->buffer().seek(offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
@@ -231,12 +225,11 @@ struct RequestCleaningTransport
     RequestCleaningTransport() = default;
 
     template<class T>
-    RequestCleaningTransport(const T & params)
+    explicit RequestCleaningTransport(const T & params)
     : TTransport(params)
     {}
 
-    virtual void request_full_cleaning()
-    {
+    void request_full_cleaning() override {
         this->buffer().request_full_cleaning();
     }
 
@@ -252,7 +245,7 @@ struct FlushingTransport
     FlushingTransport() = default;
 
     template<class T>
-    FlushingTransport(const T & params)
+    explicit FlushingTransport(const T & params)
     : TTransport(params)
     {}
 

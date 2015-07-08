@@ -117,65 +117,65 @@ private:
 
 public:
     // RDPGraphicDevice
-    virtual void draw(const RDPOpaqueRect      & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPScrBlt          & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPDestBlt         & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPPatBlt          & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) { REDASSERT(false); }
-    virtual void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) { REDASSERT(false); }
-    virtual void draw(const RDPLineTo          & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) { REDASSERT(false); }
-    virtual void draw(const RDPPolygonSC       & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPPolygonCB       & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPPolyline        & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPEllipseSC       & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDPEllipseCB       & cmd, const Rect & clip) { REDASSERT(false); }
-    virtual void draw(const RDP::FrameMarker &) { REDASSERT(false); }
-    virtual void draw(const RDPBitmapData &, const uint8_t *, size_t, const Bitmap &) { REDASSERT(false); }
-    virtual void draw(const RDPBrushCache &) { REDASSERT(false); }
-    virtual void draw(const RDPColCache &) { REDASSERT(false); }
+    void draw(const RDPOpaqueRect      & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPScrBlt          & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPDestBlt         & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPPatBlt          & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) override { REDASSERT(false); }
+    void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) override { REDASSERT(false); }
+    void draw(const RDPLineTo          & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) override { REDASSERT(false); }
+    void draw(const RDPPolygonSC       & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPPolygonCB       & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPPolyline        & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPEllipseSC       & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDPEllipseCB       & cmd, const Rect & clip) override { REDASSERT(false); }
+    void draw(const RDP::FrameMarker &) override { REDASSERT(false); }
+    void draw(const RDPBitmapData &, const uint8_t *, size_t, const Bitmap &) override { REDASSERT(false); }
+    void draw(const RDPBrushCache &) override { REDASSERT(false); }
+    void draw(const RDPColCache &) override { REDASSERT(false); }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) { REDASSERT(false); }
-    virtual void draw(const RDP::RAIL::WindowIcon          & order) { REDASSERT(false); }
-    virtual void draw(const RDP::RAIL::CachedIcon          & order) { REDASSERT(false); }
-    virtual void draw(const RDP::RAIL::DeletedWindow       & order) { REDASSERT(false); }
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override { REDASSERT(false); }
+    void draw(const RDP::RAIL::WindowIcon          & order) override { REDASSERT(false); }
+    void draw(const RDP::RAIL::CachedIcon          & order) override { REDASSERT(false); }
+    void draw(const RDP::RAIL::DeletedWindow       & order) override { REDASSERT(false); }
 
-    virtual void server_set_pointer(const Pointer & cursor) { REDASSERT(false); }
+    void server_set_pointer(const Pointer & cursor) override { REDASSERT(false); }
 
-    virtual void flush() { REDASSERT(false); }
+    void flush() override { REDASSERT(false); }
 
     // DrawApi
-    virtual void begin_update() { REDASSERT(false); }
-    virtual void end_update() { REDASSERT(false); }
+    void begin_update() override { REDASSERT(false); }
+    void end_update() override { REDASSERT(false); }
 
-    virtual void text_metrics(Font const & font, const char * text, int & width, int & height) { REDASSERT(false); }
+    void text_metrics(Font const & font, const char * text, int & width, int & height) override { REDASSERT(false); }
 
-    virtual void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text
-                                 , uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) { REDASSERT(false); }
+    void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text
+                                 , uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) override { REDASSERT(false); }
 
     // FrontAPI
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const {
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->channel_list;
     }
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
-                                , size_t length, size_t chunk_size, int flags) {
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
+                                , size_t length, size_t chunk_size, int flags) override {
         LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%u chunk_size=%u flags=0x%X",
             channel.name, channel.chanid, length, chunk_size, flags);
     }
 
-    virtual void send_global_palette() throw(Error) { REDASSERT(false); }
-    virtual void set_mod_palette(const BGRPalette & palette) { REDASSERT(false); }
+    void send_global_palette() throw(Error) override { REDASSERT(false); }
+    void set_mod_palette(const BGRPalette & palette) override { REDASSERT(false); }
 
-    virtual int server_resize(int width, int height, int bpp) {
+    int server_resize(int width, int height, int bpp) override {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
         return 1;
     };
 
-    virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+    void send_data_indication_ex(uint16_t channelId, HStream & stream) override {
         LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, stream.size());
 
         stream.p = stream.get_data();
@@ -276,7 +276,7 @@ public:
         }
     }
 
-    virtual void send_fastpath_data(InStream & data) {
+    void send_fastpath_data(InStream & data) override {
         LOG(LOG_INFO, "send_fastpath_data: data_size=%u", data.size());
 
         while (data.in_remain()) {

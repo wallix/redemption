@@ -98,25 +98,22 @@ public:
         this->img.set_xy((width - this->img.rect.cx) / 2, y_bbloc);
     }
 
-    virtual ~FlatVNCAuthentification()
-    {
+    ~FlatVNCAuthentification() override {
         this->clear();
     }
 
-    virtual int get_bg_color() const {
+    int get_bg_color() const override {
         return this->bgcolor;
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
-    {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if ((widget == &this->password_edit)
              && event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_SUBMIT);
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:

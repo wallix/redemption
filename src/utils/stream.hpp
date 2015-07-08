@@ -1461,7 +1461,7 @@ public:
         this->init(size);
     }
 
-    virtual ~BStream() {
+    ~BStream() override {
         // <this->data> is allocated dynamically.
         if (this->capacity > AUTOSIZE) {
             delete [] this->data;
@@ -1469,7 +1469,7 @@ public:
     }
 
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
-    virtual void init(size_t v) override {
+    void init(size_t v) override {
         if (v != this->capacity) {
             // <this->data> is allocated dynamically.
             if (this->capacity > AUTOSIZE){
@@ -1528,15 +1528,15 @@ public:
         }
     }
 
-    virtual size_t headroom() const override {
+    size_t headroom() const override {
         return this->data_start - this->data;
     }
 
-    virtual uint8_t * get_data() const override {
+    uint8_t * get_data() const override {
         return this->data_start;
     }
 
-    virtual void init(size_t body_size) override {
+    void init(size_t body_size) override {
         BStream::init(this->reserved_leading_space + body_size);
 
         this->p          += this->reserved_leading_space;
@@ -1544,7 +1544,7 @@ public:
         this->end         = this->p;
     }
 
-    virtual void reset() override {
+    void reset() override {
         BStream::reset();
 
         this->p          += this->reserved_leading_space;
@@ -1552,7 +1552,7 @@ public:
         this->end         = this->p;
     }
 
-    virtual void rewind() override {
+    void rewind() override {
         this->data_start = this->p = this->data + this->reserved_leading_space;
     }
 };
@@ -1594,7 +1594,7 @@ class SubStream : public Stream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) override {}
+    void init(size_t) override {}
 };
 
 class SubStreamArray : public Stream {
@@ -1614,7 +1614,7 @@ class SubStreamArray : public Stream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) override {}
+    void init(size_t) override {}
 };
 
 
@@ -1630,7 +1630,7 @@ class FixedSizeStream : public Stream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) override {}
+    void init(size_t) override {}
 };
 
 // StaticStream does not allocate/reallocate any buffer
@@ -1652,7 +1652,7 @@ class StaticStream : public FixedSizeStream {
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) override {}
+    void init(size_t) override {}
 
     void resize(const uint8_t * data, size_t len) {
         this->p = this->data = const_cast<uint8_t *>(data);
@@ -1673,7 +1673,7 @@ public:
     }
 
     // Not allowed on SubStreams
-    virtual void init(size_t) override {}
+    void init(size_t) override {}
 };
 
 #endif

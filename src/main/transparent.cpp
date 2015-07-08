@@ -147,7 +147,7 @@ int main(int argc, char * argv[]) {
            this->ip_source[0] = 0;
         }
 
-        virtual Server_status start(int incoming_sck) {
+        Server_status start(int incoming_sck) override {
             union {
                 struct sockaddr s;
                 struct sockaddr_storage ss;

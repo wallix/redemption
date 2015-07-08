@@ -67,7 +67,7 @@ public:
     , to_server_sender(to_server_sender)
     , verbose(verbose) {}
 
-    virtual void configure_wait_object(wait_obj & wait_object) const override {
+    void configure_wait_object(wait_obj & wait_object) const override {
         REDASSERT(!wait_object.waked_up_by_time);
 
         wait_object.object_and_time = true;
@@ -75,9 +75,9 @@ public:
         wait_object.set(1000000);
     }
 
-    virtual int get_file_descriptor() const override { return this->file_descriptor; }
+    int get_file_descriptor() const override { return this->file_descriptor; }
 
-    virtual bool run(const wait_obj & wait_object) override {
+    bool run(const wait_obj & wait_object) override {
         if (wait_object.waked_up_by_time) {
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
                 this->file_descriptor);
@@ -196,7 +196,7 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    virtual void configure_wait_object(wait_obj & wait_object) const override {
+    void configure_wait_object(wait_obj & wait_object) const override {
         REDASSERT(!wait_object.waked_up_by_time);
 
         wait_object.object_and_time = true;
@@ -204,7 +204,7 @@ public:
         wait_object.set(1000);  // 1 ms
     }
 
-    virtual bool run(const wait_obj & wait_object) override {
+    bool run(const wait_obj & wait_object) override {
         if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             this->to_server_sender(this->data_length, this->flags, this->data.get(), this->data_length);
 

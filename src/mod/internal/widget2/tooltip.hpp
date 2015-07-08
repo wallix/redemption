@@ -48,8 +48,7 @@ public:
         this->rect.cy = this->desc.rect.cy + 2*h_border;
     }
 
-    virtual ~WidgetTooltip()
-    {
+    ~WidgetTooltip() override {
     }
 
     void set_text(const char * text)
@@ -59,8 +58,7 @@ public:
         this->rect.cy = this->desc.rect.cy + 2*h_border;
     }
 
-    virtual void draw(const Rect& clip)
-    {
+    void draw(const Rect& clip) override {
         this->drawable.draw(RDPOpaqueRect(this->rect, desc.bg_color), clip);
         this->desc.draw(clip);
         this->draw_border(clip);

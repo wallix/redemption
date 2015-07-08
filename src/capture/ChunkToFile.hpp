@@ -165,7 +165,7 @@ private:
     }
 
 public:
-    virtual void chunk(uint16_t chunk_type, uint16_t chunk_count, const Stream & data) {
+    void chunk(uint16_t chunk_type, uint16_t chunk_count, const Stream & data) override {
         switch (chunk_type) {
         case META_FILE:
             {

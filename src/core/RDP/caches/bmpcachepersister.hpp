@@ -40,7 +40,7 @@ private:
         uint8_t key[8];
 
     public:
-        map_key(const uint8_t (& sig)[8]) {
+        explicit map_key(const uint8_t (& sig)[8]) {
             memcpy(this->key, sig, sizeof(this->key));
         }
 
@@ -52,7 +52,7 @@ private:
 
         struct CString
         {
-            CString(const uint8_t (& sig)[8]) {
+            explicit CString(const uint8_t (& sig)[8]) {
                 snprintf( this->s, sizeof(this->s), "%02X%02X%02X%02X%02X%02X%02X%02X"
                         , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
             }

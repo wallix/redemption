@@ -40,7 +40,7 @@ public:
         uint32_t fg_color;
 
     public:
-        DrawingPolicy(DrawApi & drawable) : drawable(drawable), bg_color(BLACK), fg_color(WHITE) {}
+        explicit DrawingPolicy(DrawApi & drawable) : drawable(drawable), bg_color(BLACK), fg_color(WHITE) {}
 
         virtual ~DrawingPolicy() {}
 
@@ -140,7 +140,7 @@ public:
         this->drawing_policy.set_color(bgcolor, fgcolor);
     }
 
-    virtual ~WidgetTab() {
+    ~WidgetTab() override {
         this->clear();
     }
 
@@ -172,7 +172,7 @@ public:
         this->items[item_index]->add_widget(w);
     }
 
-    virtual void blur() {
+    void blur() override {
         if (this->has_focus) {
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
@@ -182,7 +182,7 @@ public:
             this->refresh(this->rect);
         }
     }
-    virtual void focus(int reason) {
+    void focus(int reason) override {
         if (!this->has_focus) {
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
@@ -222,7 +222,7 @@ public:
         this->item_count = 0;
     }
 
-    virtual void draw(const Rect & clip) {
+    void draw(const Rect & clip) override {
         this->drawable.begin_update();
         this->drawing_policy.draw( this->rect
                                  , clip
@@ -238,7 +238,7 @@ public:
         this->drawable.end_update();
     }
 
-    virtual bool next_focus() {
+    bool next_focus() override {
         if (!this->child_has_focus) {
             if (this->item_count) {
                 if (!this->items[this->current_item_index]->get_next_focus(nullptr, false)) {
@@ -258,7 +258,7 @@ public:
 
         return false;
     }
-    virtual bool previous_focus() {
+    bool previous_focus() override {
         if (this->child_has_focus) {
             REDASSERT(this->item_count);
             REDASSERT(this->item_count > this->current_item_index);
@@ -274,7 +274,7 @@ public:
         return false;
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         Widget2 * w = this->widget_at_pos(x, y);
 
         if (w == this) {
@@ -296,8 +296,8 @@ public:
         }
     }
 
-    virtual void rdp_input_scancode( long param1, long param2, long param3
-                                   , long param4, Keymap2 * keymap) {
+    void rdp_input_scancode( long param1, long param2, long param3
+                                   , long param4, Keymap2 * keymap) override {
         if (keymap->nb_kevent_available() > 0) {
             if (this->child_has_focus && this->item_count) {
                 REDASSERT(this->item_count > this->current_item_index);
@@ -337,7 +337,7 @@ public:
         }
     }
 
-    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
+    Widget2 * widget_at_pos(int16_t x, int16_t y) override {
         if (this->item_count) {
             REDASSERT(this->item_count > this->current_item_index);
             if (Widget2 * w = this->items[this->current_item_index]->widget_at_pos(x, y)) {
@@ -347,7 +347,7 @@ public:
         return Widget2::widget_at_pos(x, y);
     }
 
-    virtual void notify(Widget2 * w, NotifyApi::notify_event_t event) {
+    void notify(Widget2 * w, NotifyApi::notify_event_t event) override {
         if (event == NOTIFY_FOCUS_BEGIN) {
             this->child_has_focus = true;
             this->refresh(this->rect);
@@ -387,12 +387,12 @@ public:
                                   + text_padding_y;
     }
 
-    virtual void draw( const Rect & rect_tab
+    void draw( const Rect & rect_tab
                      , const Rect & clip
                      , WidgetTab::Item ** items
                      , size_t item_count
                      , size_t current_item_index
-                     , bool draw_focus) {
+                     , bool draw_focus) override {
         this->drawable.begin_update();
         this->draw_opaque_rect(rect_tab, this->get_bg_color(), clip);
 
@@ -532,14 +532,14 @@ private:
     }
 public:
 
-    virtual Rect get_child_area(const Rect & rect_tab) {
+    Rect get_child_area(const Rect & rect_tab) override {
         return Rect( rect_tab.x + border_width_height
                    , rect_tab.y + this->item_index_height + border_width_height
                    , rect_tab.cx - border_width_height * 2
                    , rect_tab.cy - this->item_index_height - border_width_height * 2);
     }
 
-    virtual void process_input_mouse( WidgetTab & tab
+    void process_input_mouse( WidgetTab & tab
                                     , const Rect & rect_tab
                                     , WidgetTab::Item ** items
                                     , size_t item_count
@@ -547,7 +547,7 @@ public:
                                     , int device_flags
                                     , int x
                                     , int y
-                                    , Keymap2 * keymap) {
+                                    , Keymap2 * keymap) override {
         uint16_t item_index_offset = first_item_index_offset_left;
         for (size_t item_index = 0; item_index < item_count; item_index++) {
             WidgetTab::Item * item = items[item_index];

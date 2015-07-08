@@ -105,7 +105,7 @@ struct InputCaps : public Capability {
         memset(this->imeFileName, 0, 64);
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->inputFlags);
@@ -117,7 +117,7 @@ struct InputCaps : public Capability {
         stream.out_utf16(this->imeFileName, 32);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
         this->inputFlags = stream.in_uint16_le();
         this->pad2octetsA = stream.in_uint16_le();
@@ -128,7 +128,7 @@ struct InputCaps : public Capability {
         stream.in_utf16(this->imeFileName, 32);
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s Input caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Input caps::inputFlags 0x%X", this->inputFlags);
         LOG(LOG_INFO, "Input caps::pad2octetsA %u", this->pad2octetsA);

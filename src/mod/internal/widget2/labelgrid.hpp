@@ -50,11 +50,11 @@ struct WidgetLabelGrid : public WidgetGrid {
     {
     }
 
-    virtual ~WidgetLabelGrid() {
+    ~WidgetLabelGrid() override {
         this->clean_labels();
     }
 
-    virtual void clear() {
+    void clear() override {
         this->clean_labels();
         WidgetGrid::clear();
     }

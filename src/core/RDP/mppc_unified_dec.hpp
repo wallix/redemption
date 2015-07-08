@@ -33,17 +33,17 @@ class rdp_mppc_unified_dec : public rdp_mppc_dec {
 public:
     rdp_mppc_unified_dec() = default;
 
-    virtual ~rdp_mppc_unified_dec() {
+    ~rdp_mppc_unified_dec() override {
         delete this->mppc_dec;
     }
 
-    virtual void mini_dump() override {
+    void mini_dump() override {
         if (this->mppc_dec) {
             this->mppc_dec->mini_dump();
         }
     }
 
-    virtual void dump() override {
+    void dump() override {
         if (this->mppc_dec) {
             this->mppc_dec->dump();
         }

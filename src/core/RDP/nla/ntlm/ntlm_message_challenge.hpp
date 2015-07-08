@@ -200,7 +200,7 @@ struct NTLMChallengeMessage : public NTLMMessage {
     {
     }
 
-    virtual ~NTLMChallengeMessage() {}
+    ~NTLMChallengeMessage() override {}
 
     void emit(Stream & stream) {
         this->TargetInfo.Buffer.reset();

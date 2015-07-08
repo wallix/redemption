@@ -59,7 +59,7 @@ public:
         this->event.set(0);
     }
 
-    virtual ~mod_api() {}
+    ~mod_api() override {}
 
     virtual wait_obj& get_event() { return this->event; }
 
@@ -72,8 +72,7 @@ public:
     uint16_t get_front_width() const { return this->front_width; }
     uint16_t get_front_height() const { return this->front_height; }
 
-    virtual void text_metrics(Font const & font, const char * text, int & width, int & height)
-    {
+    void text_metrics(Font const & font, const char * text, int & width, int & height) override {
         ::text_metrics(font, text, width, height,
             [](uint32_t charnum) {
                 LOG(LOG_WARNING, "mod_api::text_metrics() - character not defined >0x%02x<", charnum);
@@ -82,9 +81,8 @@ public:
     }
 
     TODO("implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
-                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
+    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) override {
         static GlyphCache mod_glyph_cache;
 
         UTF8toUnicodeIterator unicode_iter(text);

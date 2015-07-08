@@ -91,7 +91,7 @@ struct WindowListCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->WndSupportLevel);
@@ -99,14 +99,14 @@ struct WindowListCaps : public Capability {
         stream.out_uint16_le(this->NumIconCacheEntries);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
         this->WndSupportLevel = stream.in_uint32_le();
         this->NumIconCaches = stream.in_uint8();
         this->NumIconCacheEntries = stream.in_uint16_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s WindowsList caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "WindowsList caps::WndSupportLevel %u", this->WndSupportLevel);
         LOG(LOG_INFO, "WindowsList caps::NumIconCaches %u", this->NumIconCaches);

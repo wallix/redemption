@@ -799,7 +799,7 @@ namespace re {
             StateMachine2 & sm;
 
         public:
-            DefaultMatchTracer(StateMachine2 & sm)
+            explicit DefaultMatchTracer(StateMachine2 & sm)
             : sm(sm)
             {}
 

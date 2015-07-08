@@ -109,24 +109,20 @@ public:
         this->front.send_global_palette();
     }
 
-    virtual ~ReplayMod()
-    {
+    ~ReplayMod() override {
         delete reader;
         delete in_trans;
         this->screen.clear();
     }
 
-    virtual void rdp_input_invalidate(const Rect & /*rect*/)
-    {
+    void rdp_input_invalidate(const Rect & /*rect*/) override {
     }
 
-    virtual void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/)
-    {
+    void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {
     }
 
-    virtual void rdp_input_scancode(long /*param1*/, long /*param2*/,
-                                    long /*param3*/, long /*param4*/, Keymap2 * keymap)
-    {
+    void rdp_input_scancode(long /*param1*/, long /*param2*/,
+                                    long /*param3*/, long /*param4*/, Keymap2 * keymap) override {
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
             this->event.signal = BACK_EVENT_STOP;
@@ -134,16 +130,14 @@ public:
         }
     }
 
-    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                                       int16_t /*param1*/, int16_t /*param2*/)
-    {
+    void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t /*param1*/, int16_t /*param2*/) override {
     }
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         TODO("use system constants for sizes");
         TODO("RZ: Support encrypted recorded file.");
         if (!this->end_of_data) {

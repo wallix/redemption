@@ -194,7 +194,7 @@ public:
         }
     }
 
-    virtual ~SessionManager() {
+    ~SessionManager() override {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
@@ -383,8 +383,7 @@ public:
         this->acl_serial.send_acl_data();
     }
 
-    virtual void set_auth_channel_target(const char * target)
-    {
+    void set_auth_channel_target(const char * target) override {
         this->ini.context.auth_channel_target.set_from_cstr(target);
     }
 
@@ -393,8 +392,7 @@ public:
     //    this->ini.context.auth_channel_result.set_from_cstr(result);
     //}
 
-    virtual void report(const char * reason, const char * message)
-    {
+    void report(const char * reason, const char * message) override {
         this->ini.context_ask(AUTHID_KEEPALIVE);
 
         char report[1024];
@@ -416,7 +414,7 @@ class PauseRecord {
     uint64_t last_total_sent;
 
 public:
-    PauseRecord(time_t timeout)
+    explicit PauseRecord(time_t timeout)
         : stop_record_inactivity(false)
         , stop_record_time((timeout > 30)?timeout:30)
         , last_record_activity_time(0)

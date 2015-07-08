@@ -69,7 +69,7 @@ namespace re {
         , step_limit(step_limit)
         {}
 
-        Regex(const char * s, flag_t flags = DEFAULT_FLAG, unsigned step_limit = 10000)
+        explicit Regex(const char * s, flag_t flags = DEFAULT_FLAG, unsigned step_limit = 10000)
         : parser(s)
         , sm(this->parser.st_parser.states(),
              this->parser.st_parser.root(),

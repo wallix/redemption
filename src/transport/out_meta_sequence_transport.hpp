@@ -61,8 +61,7 @@ RequestCleaningTransport<
         detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier);
     }
 
-    virtual void timestamp(timeval now)
-    {
+    void timestamp(timeval now) override {
         this->buffer().update_sec(now.tv_sec);
     }
 

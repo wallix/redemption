@@ -45,15 +45,14 @@ class LCGRandom : public Random
 {
     uint64_t seed;
     public:
-        LCGRandom(uint32_t seed)
+        explicit LCGRandom(uint32_t seed)
         : seed(seed)
         {
         }
 
-    virtual ~LCGRandom() {}
+    ~LCGRandom() override {}
 
-    virtual void random(void * dest, size_t size)
-    {
+    void random(void * dest, size_t size) override {
         for (size_t x = 0; x < size ; x++){
             ((uint32_t*)dest)[x / sizeof(uint32_t)] = this->rand32();
         }
@@ -69,15 +68,14 @@ class LCGRand : public Random
 {
     uint64_t seed;
     public:
-        LCGRand(uint32_t seed)
+        explicit LCGRand(uint32_t seed)
         : seed(seed)
         {
         }
 
-    virtual ~LCGRand() {}
+    ~LCGRand() override {}
 
-    virtual void random(void * dest, size_t size)
-    {
+    void random(void * dest, size_t size) override {
         for (size_t x = 0; x < size ; x++){
             ((uint32_t*)dest)[x / sizeof(uint32_t)] = this->rand32();
         }
@@ -95,10 +93,9 @@ class UdevRandom : public Random
     UdevRandom()
     {
     }
-    virtual ~UdevRandom() {}
+    ~UdevRandom() override {}
 
-    virtual void random(void * dest, size_t size)
-    {
+    void random(void * dest, size_t size) override {
         io::posix::fdbuf file(open("/dev/urandom", O_RDONLY));
         if (!file.is_open()) {
             LOG(LOG_INFO, "using /dev/random as random source");

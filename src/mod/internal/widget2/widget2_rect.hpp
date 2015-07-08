@@ -40,8 +40,7 @@ public:
         this->focus_flag = IGNORE_FOCUS;
     }
 
-    virtual void draw(const Rect& clip)
-    {
+    void draw(const Rect& clip) override {
         this->drawable.draw(
             RDPOpaqueRect(
                 clip,

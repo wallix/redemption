@@ -58,8 +58,7 @@ public:
         this->rect.cy = this->label.cy() + 3;
     }
 
-    virtual ~WidgetFlatButton()
-    {}
+    ~WidgetFlatButton() override {}
 
     void set_button_x(int x)
     {
@@ -85,8 +84,7 @@ public:
         this->label.rect.cy = h - 3;
     }
 
-    virtual void set_xy(int16_t x, int16_t y)
-    {
+    void set_xy(int16_t x, int16_t y) override {
         this->set_button_x(x);
         this->set_button_y(y);
     }
@@ -150,8 +148,7 @@ public:
               )), this->fg_color), this->rect);
     }
 
-    virtual void draw(const Rect& clip)
-    {
+    void draw(const Rect& clip) override {
         this->update_draw_state(clip);
     }
 
@@ -162,8 +159,7 @@ public:
         this->drawable.end_update();
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
             this->state |= 1;
             this->swap_border_color();
@@ -179,8 +175,7 @@ public:
             this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
                 case Keymap2::KEVENT_ENTER:
@@ -199,7 +194,7 @@ public:
         }
     }
 
-    virtual Dimension get_optimal_dim() {
+    Dimension get_optimal_dim() override {
         int w, h;
         this->drawable.text_metrics(this->font, this->label.buffer, w, h);
         return Dimension(w + 2*this->label.x_text + 4, h + 2*this->label.y_text + 4);

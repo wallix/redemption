@@ -211,9 +211,9 @@ struct GeneralCaps : public Capability {
     , suppressOutputSupport(0)
     {
     }
-    virtual ~GeneralCaps() {}
+    ~GeneralCaps() override {}
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->os_major);
@@ -229,7 +229,7 @@ struct GeneralCaps : public Capability {
         stream.out_uint8(this->suppressOutputSupport);
     }
 
-    void recv(Stream & stream, uint16_t len) throw(Error){
+    void recv(Stream & stream, uint16_t len) throw(Error)override {
         this->len = len;
 
         /* os_major(2) + os_minor(2) + protocolVersion(2) + pad1(2) + compressionType(2) +
@@ -256,7 +256,7 @@ struct GeneralCaps : public Capability {
         this->suppressOutputSupport = stream.in_uint8();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s General caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "General caps::major %u", this->os_major);
         LOG(LOG_INFO, "General caps::minor %u", this->os_minor);

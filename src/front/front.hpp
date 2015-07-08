@@ -481,7 +481,7 @@ public:
         }
     }
 
-    ~Front() {
+    ~Front() override {
         ERR_free_strings();
         delete this->mppc_enc;
 
@@ -502,8 +502,7 @@ public:
         return this->trans.get_total_sent();
     }
 
-    int server_resize(int width, int height, int bpp)
-    {
+    int server_resize(int width, int height, int bpp) override {
         uint32_t res = 0;
 
         this->mod_bpp = bpp;
@@ -562,8 +561,7 @@ public:
         return res;
     }
 
-    void server_set_pointer(const Pointer & cursor)
-    {
+    void server_set_pointer(const Pointer & cursor) override {
         this->orders->server_set_pointer(cursor);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -571,7 +569,7 @@ public:
         }
     }
 
-    virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) override
     {
         this->orders->update_pointer_position(xPos, yPos);
         if (  this->capture
@@ -580,14 +578,12 @@ public:
         }
     }
 
-    virtual void text_metrics(Font const & font, const char * text, int & width, int & height)
-    {
+    void text_metrics(Font const & font, const char * text, int & width, int & height) override {
         REDASSERT(false);
     }
 
-    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
-                                  uint32_t bgcolor, const Rect & clip)
-    {
+    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
+                                  uint32_t bgcolor, const Rect & clip) override {
         REDASSERT(false);
     }
 
@@ -845,16 +841,14 @@ private:
     }
 
 public:
-    virtual void begin_update()
-    {
+    void begin_update() override {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "Front::begin_update");
         }
         this->order_level++;
     }
 
-    virtual void end_update()
-    {
+    void end_update() override {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "Front::end_update");
         }
@@ -882,16 +876,15 @@ public:
         this->trans.send(x224_header, mcs_data);
     }
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const
-    {
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->channel_list;
     }
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel
+    void send_to_channel( const CHANNELS::ChannelDef & channel
                                 , uint8_t * chunk
                                 , size_t length
                                 , size_t chunk_size
-                                , int flags) {
+                                , int flags) override {
         if (this->verbose & 16) {
             LOG( LOG_INFO
                , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%u, chunk_size=%u, flags=%x)"
@@ -970,8 +963,7 @@ public:
     //                        );
     //}
 
-    void send_global_palette()
-    {
+    void send_global_palette() override {
         if (!this->palette_sent && (this->client_info.bpp == 8)) {
             if (this->verbose & 4) {
                 LOG(LOG_INFO, "Front::send_global_palette");
@@ -2412,12 +2404,11 @@ public:
         this->trans.send(x224_header, mcs_header, stream);
     }
 
-    inline void send_data_indication_ex(uint16_t channelId, HStream & stream)
-    {
+    inline void send_data_indication_ex(uint16_t channelId, HStream & stream) override {
         ::send_data_indication_ex(this->trans, this->encryptionLevel, this->encrypt, this->userid, stream);
     }
 
-    virtual void send_fastpath_data(InStream & data) {
+    void send_fastpath_data(InStream & data) override {
         HStream stream(1024, 1024 + 65536);
 
         stream.out_copy_bytes(data.get_data(), data.size());
@@ -2438,7 +2429,7 @@ public:
         this->trans.send(fastpath_header, stream);
     }
 
-    virtual bool retrieve_client_capability_set(Capability & caps) {
+    bool retrieve_client_capability_set(Capability & caps) override {
 #ifdef __clang__
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
@@ -2484,15 +2475,15 @@ public:
         return true;
     }
 
-    virtual void set_keylayout(int LCID) override {
+    void set_keylayout(int LCID) override {
         this->keymap.init_layout(LCID);
     }
 
-    virtual void focus_changed(bool on_password_textbox) override {
+    void focus_changed(bool on_password_textbox) override {
         this->focus_on_password_textbox = on_password_textbox;
     }
 
-    virtual void session_update(const char * message) override {
+    void session_update(const char * message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
@@ -3825,7 +3816,7 @@ public:
         }
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
@@ -3858,8 +3849,7 @@ public:
         }
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->orders->draw(cmd, clip);
 
@@ -3870,8 +3860,7 @@ public:
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->orders->draw(cmd, clip);
             if (  this->capture
@@ -3881,7 +3870,7 @@ public:
         }
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->orders->draw(cmd, clip);
@@ -3892,7 +3881,7 @@ public:
         }
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->send_global_palette();
@@ -3926,7 +3915,7 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
@@ -3962,7 +3951,7 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->orders->draw(cmd, clip);
 
@@ -3973,7 +3962,7 @@ public:
         }
     }
 
-    void draw(const RDPPatBlt & cmd, const Rect & clip) {
+    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
@@ -4101,8 +4090,7 @@ private:
     }
 
 public:
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
-    {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
@@ -4145,12 +4133,11 @@ public:
         }
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap)
-    {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
-    void draw(const RDPLineTo & cmd, const Rect & clip) {
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
         const uint16_t miny = std::min(cmd.starty, cmd.endy);
         const Rect rect(minx, miny,
@@ -4194,8 +4181,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()) {
             this->send_global_palette();
 
@@ -4229,7 +4215,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 
         minx = maxx = previousx = cmd.xStart;
@@ -4271,7 +4257,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 
         minx = maxx = previousx = cmd.xStart;
@@ -4325,7 +4311,7 @@ public:
         }
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 
         minx = maxx = previousx = cmd.xStart;
@@ -4373,8 +4359,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseSC & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
@@ -4405,8 +4390,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseCB & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
@@ -4444,7 +4428,7 @@ public:
         }
     }
 
-    virtual void flush() {
+    void flush() override {
         this->orders->flush();
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4470,13 +4454,11 @@ public:
         }
     }
 
-    virtual void draw(const RDPColCache & cmd)
-    {
+    void draw(const RDPColCache & cmd) override {
         this->orders->draw(cmd);
     }
 
-    void set_mod_palette(const BGRPalette & palette)
-    {
+    void set_mod_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
         this->palette_sent = false;
 
@@ -4486,7 +4468,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
             this->orders->draw(order);
         }
@@ -4496,7 +4478,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4505,7 +4487,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4514,7 +4496,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4523,7 +4505,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4532,16 +4514,16 @@ public:
         }
     }
 
-    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {
+    void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const override {
         proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
     }
 
-    virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {
+    void intersect_order_caps_ex(OrderCaps & order_caps) const override {
         order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
+                     , size_t size, const Bitmap & bmp) override {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
         if (   !this->ini.globals.enable_bitmap_update
@@ -4580,8 +4562,7 @@ public:
         }
     }
 
-    virtual bool check_and_reset_activity()
-    {
+    bool check_and_reset_activity() override {
         const bool res = this->has_activity;
         this->has_activity = false;
         return res;

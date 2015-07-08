@@ -57,14 +57,14 @@ class OutChunkedBufferingTransport : public Transport
     BStream stream;
 
 public:
-    OutChunkedBufferingTransport(Transport & trans)
+    explicit OutChunkedBufferingTransport(Transport & trans)
         : trans(trans)
         , max(SZ-8)
         , stream(SZ)
     {
     }
 
-    virtual void flush() {
+    void flush() override {
         this->stream.mark_end();
         if (this->stream.size() > 0) {
             BStream header(8);
@@ -75,7 +75,7 @@ public:
     }
 
 private:
-    virtual void do_send(const char * const buffer, size_t len) {
+    void do_send(const char * const buffer, size_t len) override {
         size_t to_buffer_len = len;
         while (this->stream.size() + to_buffer_len > max) {
             BStream header(8);
@@ -200,7 +200,7 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    virtual void input(const timeval & now, Stream & input_data_32) {
+    void input(const timeval & now, Stream & input_data_32) override {
         uint32_t count  = input_data_32.size() / sizeof(uint32_t);
 
         size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
@@ -557,8 +557,7 @@ public:
     }
 
 protected:
-    virtual void flush_orders()
-    {
+    void flush_orders() override {
         if (this->order_count > 0) {
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
                 this->send_timestamp_chunk();
@@ -579,115 +578,98 @@ public:
         this->stream_orders.reset();
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
-    {
+    void draw(const RDPScrBlt & cmd, const Rect &clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
-    {
+    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
-    {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
-    {
+    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->drawable.draw(cmd, clip, bmp);
         this->RDPSerializer::draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->drawable.draw(cmd, clip, bmp);
         this->RDPSerializer::draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
-    {
+    void draw(const RDPLineTo& cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         this->drawable.draw(cmd, clip, gly_cache);
         this->RDPSerializer::draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip)
-    {
+    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip)
-    {
+    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolyline& cmd, const Rect & clip)
-    {
+    void draw(const RDPPolyline& cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {}
-    virtual void draw(const RDP::RAIL::WindowIcon          & order) {}
-    virtual void draw(const RDP::RAIL::CachedIcon          & order) {}
-    virtual void draw(const RDP::RAIL::DeletedWindow       & order) {}
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {}
+    void draw(const RDP::RAIL::WindowIcon          & order) override {}
+    void draw(const RDP::RAIL::CachedIcon          & order) override {}
+    void draw(const RDP::RAIL::DeletedWindow       & order) override {}
 
 protected:
-    virtual void flush_bitmaps() {
+    void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
                 this->send_timestamp_chunk();
@@ -697,17 +679,17 @@ protected:
     }
 
 public:
-    virtual void flush() {
+    void flush() override {
         this->flush_bitmaps();
         this->flush_orders();
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override {
         this->drawable.draw(bitmap_data, data, size, bmp);
         this->RDPSerializer::draw(bitmap_data, data, size, bmp);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         this->drawable.draw(order);
         this->RDPSerializer::draw(order);
     }
@@ -725,13 +707,13 @@ public:
         this->stream_bitmaps.reset();
     }
 
-    virtual void server_set_pointer(const Pointer & cursor) {
+    void server_set_pointer(const Pointer & cursor) override {
         this->drawable.server_set_pointer(cursor);
         this->RDPSerializer::server_set_pointer(cursor);
     }
 
 protected:
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) {
+    void send_pointer(int cache_idx, const Pointer & cursor) override {
         BStream header(8);
         size_t size =   2           // mouse x
                       + 2           // mouse y
@@ -757,7 +739,7 @@ protected:
         this->trans.send(cursor.mask, cursor.mask_size());
     }
 
-    virtual void set_pointer(int cache_idx) {
+    void set_pointer(int cache_idx) override {
         BStream header(8);
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
@@ -775,7 +757,7 @@ protected:
     }
 
 public:
-    virtual void session_update(const timeval & now, const char * message) override {
+    void session_update(const timeval & now, const char * message) override {
         uint16_t message_length = ::strlen(message) + 1;    // Null-terminator is included.
 
         BStream payload(16);

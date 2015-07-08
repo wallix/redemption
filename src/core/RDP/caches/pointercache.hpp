@@ -52,7 +52,7 @@ public:
 public:
     REDEMPTION_NON_COPYABLE(PointerCache);
 
-    PointerCache(int pointer_cache_entries = 0)
+    explicit PointerCache(int pointer_cache_entries = 0)
     : pointer_cache_entries(pointer_cache_entries)
     {}
 

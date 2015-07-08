@@ -41,7 +41,7 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
     struct temporary_login {
         char buffer[256];
 
-        temporary_login(Inifile & ini) {
+        explicit temporary_login(Inifile & ini) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
                      "%s@%s", ini.globals.auth_user.get_cstr(), ini.globals.host.get_cstr());
@@ -76,8 +76,7 @@ public:
         this->selector.refresh(this->selector.rect);
     }
 
-    virtual ~FlatSelector2Mod()
-    {
+    ~FlatSelector2Mod() override {
         this->screen.clear();
     }
 
@@ -97,8 +96,7 @@ public:
         this->event.set();
     }
 
-    virtual void notify(Widget2* widget, notify_event_t event)
-    {
+    void notify(Widget2* widget, notify_event_t event) override {
         if (NOTIFY_CANCEL == event) {
             this->ini.context_ask(AUTHID_AUTH_USER);
             this->ini.context_ask(AUTHID_PASSWORD);
@@ -169,8 +167,7 @@ public:
         }
     }
 
-    virtual void refresh_context(Inifile& ini)
-    {
+    void refresh_context(Inifile& ini) override {
         char buffer[16];
 
         this->current_page = ini.context.selector_current_page.get();
@@ -257,9 +254,8 @@ public:
         return p - list;
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3,
-                                    long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3,
+                                    long int param4, Keymap2* keymap) override {
         if (&this->selector.selector_lines == this->selector.current_focus
             && keymap->nb_kevent_available() > 0) {
             switch (keymap->top_kevent()){
@@ -296,16 +292,14 @@ public:
     }
 
 
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
         this->event.reset();
     }
 
-    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
-    {
+    void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags) override {
         if (this->copy_paste) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }

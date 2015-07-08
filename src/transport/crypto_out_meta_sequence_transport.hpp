@@ -64,7 +64,7 @@ namespace detail {
         typedef out_meta_sequence_filename_buf<BufWrm, BufMwrm> sequence_base_type;
 
     public:
-        crypto_meta_sequence_filename_buf(crypto_out_meta_sequence_filename_buf_param const & params)
+        explicit crypto_meta_sequence_filename_buf(crypto_out_meta_sequence_filename_buf_param const & params)
         : sequence_base_type(params.meta_sq_params)
         , hf_(params.hash_prefix, params.meta_sq_params.sq_params.filename, params.meta_sq_params.sq_params.format)
         , cctx(params.cctx)
@@ -241,8 +241,7 @@ RequestCleaningTransport<
         detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier);
     }
 
-    virtual void timestamp(timeval now)
-    {
+    void timestamp(timeval now) override {
         this->buffer().update_sec(now.tv_sec);
     }
 

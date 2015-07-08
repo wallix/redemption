@@ -69,7 +69,7 @@ public:
         this->update_config(ini);
     }
 
-    ~NativeCapture(){
+    ~NativeCapture() override {
         this->recorder.flush();
     }
 
@@ -87,7 +87,7 @@ public:
         }
     }
 
-    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
+    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
                           bool const & requested_to_stop) override {
         if (difftimeval(now, this->start_native_capture)
                 >= this->inter_frame_interval_native_capture) {
@@ -107,144 +107,128 @@ public:
         }
     }
 
-    virtual void flush()
-    {
+    void flush() override {
         this->recorder.flush();
     }
 
-    virtual void input(const timeval & now, Stream & input_data_32) {
+    void input(const timeval & now, Stream & input_data_32) override {
         if (!this->disable_keyboard_log_wrm) {
             this->recorder.input(now, input_data_32);
         }
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->recorder.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
         this->recorder.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
-    {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
-    {
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         this->recorder.draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-            size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+            size_t size, const Bitmap & bmp) override {
         this->recorder.draw(bitmap_data, data, size, bmp);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         this->recorder.draw(order);
     }
 
-    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
-    {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
-    {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolyline & cmd, const Rect & clip)
-    {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->recorder.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->recorder.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->recorder.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->recorder.draw(order);
     }
 
     using RDPGraphicDevice::draw;
 
-    virtual void server_set_pointer(const Pointer & cursor) {
+    void server_set_pointer(const Pointer & cursor) override {
         this->recorder.server_set_pointer(cursor);
     }
 
     // toggles externally genareted breakpoint.
-    virtual void external_breakpoint() {
+    void external_breakpoint() override {
         REDASSERT(this->externally_generated_breakpoint);
 
         this->recorder.breakpoint();
     }
 
-    virtual void external_time(const timeval & now) {
+    void external_time(const timeval & now) override {
         this->recorder.flush();
         this->recorder.timestamp(now);
     }
 
-    virtual void session_update(const timeval & now, const char * message) override {
+    void session_update(const timeval & now, const char * message) override {
         this->recorder.session_update(now, message);
     }
 };

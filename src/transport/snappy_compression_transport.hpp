@@ -39,7 +39,7 @@ class SnappyCompressionInTransport : public Transport {
     uint8_t   uncompressed_data_buffer[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
 public:
-    SnappyCompressionInTransport(Transport & st, uint32_t verbose = 0)
+    explicit SnappyCompressionInTransport(Transport & st, uint32_t verbose = 0)
     : Transport()
     , source_transport(st)
     , uncompressed_data(nullptr)
@@ -49,7 +49,7 @@ public:
     }
 
 private:
-    virtual void do_recv(char ** pbuffer, size_t len) {
+    void do_recv(char ** pbuffer, size_t len) override {
         uint8_t * temp_data        = reinterpret_cast<uint8_t *>(*pbuffer);
         size_t    temp_data_length = len;
 
@@ -116,7 +116,7 @@ class SnappyCompressionOutTransport : public Transport {
     size_t  uncompressed_data_length;
 
 public:
-    SnappyCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
+    explicit SnappyCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
     : Transport()
     , target_transport(tt)
     , uncompressed_data()
@@ -126,7 +126,7 @@ public:
         REDASSERT(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
     }
 
-    virtual ~SnappyCompressionOutTransport() {
+    ~SnappyCompressionOutTransport() override {
         if (this->uncompressed_data_length) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "SnappyCompressionOutTransport::~SnappyCompressionOutTransport: Compress");
@@ -169,7 +169,7 @@ private:
         this->target_transport.send(data_stream);
     }
 
-    virtual void do_send(const char * const buffer, size_t len) {
+    void do_send(const char * const buffer, size_t len) override {
         if (this->verbose & 0x4) {
             LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: len=%u", len);
         }
@@ -219,7 +219,7 @@ private:
     }
 
 public:
-    virtual bool next() {
+    bool next() override {
         if (this->uncompressed_data_length) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "SnappyCompressionOutTransport::next: Compress");
@@ -232,7 +232,7 @@ public:
         return this->target_transport.next();
     }
 
-    virtual void timestamp(timeval now) {
+    void timestamp(timeval now) override {
         this->target_transport.timestamp(now);
     }
 };  // class SnappyCompressionOutTransport

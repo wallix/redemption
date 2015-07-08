@@ -57,7 +57,7 @@ public:
 
     GlyphCache() = default;
 
-    GlyphCache(number_of_entries_t const & number_of_entries_in_glyph_cache)
+    explicit GlyphCache(number_of_entries_t const & number_of_entries_in_glyph_cache)
     : number_of_entries_in_cache(number_of_entries_in_glyph_cache)
     {}
 

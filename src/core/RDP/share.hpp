@@ -123,7 +123,7 @@ struct ShareFlow_Recv
     uint8_t flowNumber;
     uint16_t mcs_channel;
 
-    ShareFlow_Recv(Stream & stream)
+    explicit ShareFlow_Recv(Stream & stream)
     : flowMarker([&stream]{
         if (!stream.in_check_rem(2+1+1+1+1+2)){
             LOG(LOG_ERR,
@@ -232,7 +232,7 @@ struct ShareControl_Recv
     uint16_t PDUSource;
     SubStream payload;
 
-    ShareControl_Recv(Stream & stream)
+    explicit ShareControl_Recv(Stream & stream)
     : totalLength([&stream]() {
         if (!stream.in_check_rem(2+2)){
             LOG(LOG_ERR,
@@ -488,7 +488,7 @@ enum {
 
 // Inheritance is only used to check if we have enough data available
 struct CheckShareData_Recv {
-    CheckShareData_Recv(const Stream & stream) {
+    explicit CheckShareData_Recv(const Stream & stream) {
         // share_id(4)
         // + ignored(1)
         // + streamid(1)
@@ -520,7 +520,7 @@ struct ShareData_Recv : private CheckShareData_Recv
     SubStream payload;
 
 
-    ShareData_Recv(Stream & stream, rdp_mppc_dec * dec = nullptr)
+    explicit ShareData_Recv(Stream & stream, rdp_mppc_dec * dec = nullptr)
     //==============================================================================
     : CheckShareData_Recv(stream)
     , share_id(stream.in_uint32_le())
@@ -584,7 +584,7 @@ struct ShareData
 
     // CONSTRUCTOR
     //==============================================================================
-    ShareData(Stream & stream)
+    explicit ShareData(Stream & stream)
     //==============================================================================
     : stream(stream)
     , payload(this->stream, 0)

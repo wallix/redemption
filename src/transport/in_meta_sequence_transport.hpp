@@ -40,7 +40,7 @@ struct InMetaSequenceTransport
         this->verbose = verbose;
     }
 
-    InMetaSequenceTransport(const char * filename, uint32_t verbose = 0)
+    explicit InMetaSequenceTransport(const char * filename, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename, verbose))
     {
         this->verbose = verbose;

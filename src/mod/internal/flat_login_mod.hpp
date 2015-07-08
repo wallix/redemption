@@ -61,13 +61,11 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~FlatLoginMod()
-    {
+    ~FlatLoginMod() override {
         this->screen.clear();
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
-    {
+    void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
         case NOTIFY_SUBMIT:
             this->ini.parse_username(this->login.login_edit.get_text());
@@ -87,16 +85,14 @@ public:
         }
     }
 
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
         this->event.reset();
     }
 
-    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
-    {
+    void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags) override {
         if (this->copy_paste) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }

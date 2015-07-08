@@ -186,7 +186,7 @@ struct rdp_mppc_61_dec : public rdp_mppc_dec {
     /**
      * Deinitialize rdp_mppc_61_dec structure
      */
-    virtual ~rdp_mppc_61_dec() {
+    ~rdp_mppc_61_dec() override {
     }
 
 private:
@@ -222,9 +222,8 @@ private:
     }
 
 public:
-    virtual int decompress(uint8_t * compressed_data, int compressed_data_size,
-        int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size)
-    {
+    int decompress(uint8_t * compressed_data, int compressed_data_size,
+        int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size) override {
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
         //    this->historyOffset, compressed_data_size, compressionFlags);
 
@@ -347,11 +346,11 @@ public:
         return true;
     }
 
-    virtual void dump() {
+    void dump() override {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk decompressor");
     }
 
-    virtual void mini_dump() {
+    void mini_dump() override {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk decompressor");
     }
 };
@@ -377,7 +376,7 @@ struct rdp_mppc_enc_match_finder {
 
 struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
 {
-    virtual void dump(bool mini_dump) const {
+    void dump(bool mini_dump) const override {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder sequential search match finder");
     }
 
@@ -422,7 +421,7 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
         }
     }
 
-    virtual void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) {
+    void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) override {
         if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)
             return;
 
@@ -478,17 +477,16 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 
-    virtual ~rdp_mppc_61_enc_hash_based_match_finder() {
+    ~rdp_mppc_61_enc_hash_based_match_finder() override {
     }
 
-    virtual void dump(bool mini_dump) const  {
+    void dump(bool mini_dump) const  override {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder hash-based match finder");
         this->hash_tab_mgr.dump(mini_dump);
     }
 
-    virtual void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
-        uint16_t uncompressed_data_size)
-    {
+    void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
+        uint16_t uncompressed_data_size) override {
         this->match_details_stream.reset();
 
         this->hash_tab_mgr.clear_undo_history();
@@ -552,11 +550,11 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
     }
 
 public:
-    virtual void process_packet_at_front() {
+    void process_packet_at_front() override {
         this->hash_tab_mgr.reset();
     }
 
-    virtual bool undo_last_changes() {
+    bool undo_last_changes() override {
         return this->hash_tab_mgr.undo_last_changes();
     }
 };
@@ -585,7 +583,7 @@ class rdp_mppc_61_enc : public rdp_mppc_enc {
     MatchFinder match_finder;
 
 public:
-    rdp_mppc_61_enc(uint32_t verbose = 0)
+    explicit rdp_mppc_61_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
         , historyBuffer{0}
         , historyOffset(0)
@@ -601,7 +599,7 @@ public:
     /**
      * Deinitialize rdp_mppc_61_enc structure
      */
-    virtual ~rdp_mppc_61_enc() {
+    ~rdp_mppc_61_enc() override {
     }
 
 private:
@@ -755,9 +753,8 @@ private:
         }
     }
 
-    virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t reserved)
-    {
+    void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t reserved) override {
         this->compress_61(uncompressed_data, uncompressed_data_size);
 
         if (this->bytes_in_output_buffer) {
@@ -772,7 +769,7 @@ private:
     }
 
 public:
-    virtual void dump(bool mini_dump) const {
+    void dump(bool mini_dump) const override {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_61_HISTORY_BUFFER_LENGTH));
@@ -789,7 +786,7 @@ public:
         this->match_finder.dump(mini_dump);
     }
 
-    virtual void get_compressed_data(Stream & stream) const {
+    void get_compressed_data(Stream & stream) const override {
         if (stream.tailroom() <
             static_cast<size_t>(2) + // Level1ComprFlags(1) + Level2ComprFlags(1)
                 this->bytes_in_output_buffer) {

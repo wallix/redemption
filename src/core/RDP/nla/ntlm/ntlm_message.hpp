@@ -98,7 +98,7 @@ struct NTLMMessage {
     uint8_t signature[8];      /* 8 Bytes */
     NtlmMessageType msgType;   /* 4 Bytes */
 
-    NTLMMessage(NtlmMessageType msgType)
+    explicit NTLMMessage(NtlmMessageType msgType)
     : signature()
     , msgType(msgType)
     {

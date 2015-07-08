@@ -63,7 +63,7 @@ public:
         this->update_config(ini);
     }
 
-    virtual ~StaticCapture() {
+    ~StaticCapture() override {
         try {
             if (this->first_picture_capture_delayed && this->rt_display) {
                 this->breakpoint(this->first_picture_capture_now);
@@ -107,7 +107,7 @@ public:
         }
     }
 
-    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
+    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
                           bool const & requested_to_stop) override {
         if (!this->rt_display) {
             this->time_to_wait = 0;

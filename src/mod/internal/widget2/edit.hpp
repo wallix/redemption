@@ -94,7 +94,7 @@ public:
         this->pointer_flag = Pointer::POINTER_EDIT;
     }
 
-    virtual ~WidgetEdit() {}
+    ~WidgetEdit() override {}
 
     virtual void set_text(const char * text/*, int position = 0*/)
     {
@@ -199,14 +199,12 @@ public:
         this->label.rect.cy = h - 2;
     }
 
-    virtual void set_xy(int16_t x, int16_t y)
-    {
+    void set_xy(int16_t x, int16_t y) override {
         this->set_edit_x(x);
         this->set_edit_y(y);
     }
 
-    virtual void draw(const Rect& clip)
-    {
+    void draw(const Rect& clip) override {
         this->label.draw(clip);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
@@ -350,8 +348,7 @@ public:
         this->update_draw_cursor(old_cursor_rect);
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
             if (x <= this->dx() + this->label.x_text) {
                 if (this->edit_pos) {
@@ -395,8 +392,7 @@ public:
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         while (keymap->nb_kevent_available() > 0){
             uint32_t nb_kevent = keymap->nb_kevent_available();
             switch (keymap->top_kevent()){

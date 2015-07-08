@@ -90,7 +90,7 @@ struct ConfigCppWriter {
     template<class... Ts>
     void field(Ts const & ... args) {
         struct Pack : ref<Ts>... {
-            Pack(Ts const &... x)
+            explicit Pack(Ts const &... x)
             : ref<Ts>{x}...
             {}
         } pack{args...};
@@ -428,7 +428,7 @@ void write_config_set_value(std::ostream & out_set_value, config_writer::ConfigC
 }
 
 struct SuitableWrite {
-    SuitableWrite(config_writer::ConfigCppWriter & writer, int errnum = 1)
+    explicit SuitableWrite(config_writer::ConfigCppWriter & writer, int errnum = 1)
     : writer(writer)
     , errnum(errnum)
     {}

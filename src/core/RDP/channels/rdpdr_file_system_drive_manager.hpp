@@ -442,7 +442,7 @@ public:
         //LOG(LOG_INFO, "ManagedDirectory::ManagedDirectory() : <%p>", this);
     }
 
-    virtual ~ManagedDirectory() {
+    ~ManagedDirectory() override {
         //LOG(LOG_INFO, "ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
         //    this, (this->dir ? ::dirfd(this->dir) : -1));
 
@@ -455,9 +455,9 @@ public:
         }
     }
 
-    virtual bool IsDirectory() const override { return true; }
+    bool IsDirectory() const override { return true; }
 
-    virtual void ProcessServerCreateDriveRequest(
+    void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             int drive_access_mode, const char * path, Stream & in_stream,
@@ -568,7 +568,7 @@ public:
         }
     }
 
-    virtual void ProcessServerCloseDriveRequest(
+    void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
             Stream & in_stream,
             ToServerSender & to_server_sender,
@@ -604,13 +604,13 @@ public:
         REDASSERT(!this->dir);
     }
 
-    virtual void ProcessServerDriveReadRequest(
+    void ProcessServerDriveReadRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceReadRequest const & device_read_request,
             const char * path, Stream & in_stream,
             ToServerSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose) override {
         REDASSERT(this->dir);
 
         BStream out_stream(65536);
@@ -632,7 +632,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveQueryVolumeInformationRequest(
+    void ProcessServerDriveQueryVolumeInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryVolumeInformationRequest const &
                 server_drive_query_volume_information_request,
@@ -816,7 +816,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveControlRequest(
+    void ProcessServerDriveControlRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceControlRequest const & device_control_request,
             const char * path, Stream & in_stream,
@@ -848,7 +848,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveQueryInformationRequest(
+    void ProcessServerDriveQueryInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
             const char * path, Stream & in_stream,
@@ -968,7 +968,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveWriteRequest(
+    void ProcessServerDriveWriteRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, int drive_access_mode, bool first_chunk,
             Stream & in_stream, ToServerSender & to_server_sender,
@@ -985,7 +985,7 @@ public:
         REDASSERT(false);
     }
 
-    virtual void ProcessServerDriveQueryDirectoryRequest(
+    void ProcessServerDriveQueryDirectoryRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
             const char * path, Stream & in_stream,
@@ -1170,7 +1170,7 @@ public:
         //LOG(LOG_INFO, "ManagedFile::ManagedFile(): <%p>", this);
     }
 
-    virtual ~ManagedFile() {
+    ~ManagedFile() override {
         //LOG(LOG_INFO, "ManagedFile::~ManagedFile(): <%p> fd=%d",
         //    this, this->fd);
 
@@ -1183,9 +1183,9 @@ public:
         }
     }
 
-    virtual bool IsDirectory() const override { return false; }
+    bool IsDirectory() const override { return false; }
 
-    virtual void ProcessServerCreateDriveRequest(
+    void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             int drive_access_mode, const char * path, Stream & in_stream,
@@ -1344,12 +1344,12 @@ public:
         out_drive_created = (this->fd != -1);
     }   // ProcessServerCreateDriveRequest
 
-    virtual void ProcessServerCloseDriveRequest(
+    void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
             Stream & in_stream,
             ToServerSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose) override {
         REDASSERT(this->fd > -1);
         //LOG(LOG_INFO, "ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd=%d",
         //    this, this->fd);
@@ -1380,13 +1380,13 @@ public:
         REDASSERT(this->fd == -1);
     }
 
-    virtual void ProcessServerDriveReadRequest(
+    void ProcessServerDriveReadRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceReadRequest const & device_read_request,
             const char * path, Stream & in_stream,
             ToServerSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose) override {
         REDASSERT(this->fd > -1);
 
         const uint32_t Length = device_read_request.Length();
@@ -1402,7 +1402,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveControlRequest(
+    void ProcessServerDriveControlRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceControlRequest const & device_control_request,
             const char * path, Stream & in_stream,
@@ -1434,7 +1434,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveQueryVolumeInformationRequest(
+    void ProcessServerDriveQueryVolumeInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryVolumeInformationRequest const &
                 server_drive_query_volume_information_request,
@@ -1621,7 +1621,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveQueryInformationRequest(
+    void ProcessServerDriveQueryInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
             const char * path, Stream & in_stream,
@@ -1730,7 +1730,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveWriteRequest(
+    void ProcessServerDriveWriteRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, int drive_access_mode,
             bool first_chunk, Stream & in_stream,
@@ -1797,7 +1797,7 @@ public:
         }
     }
 
-    virtual void ProcessServerDriveQueryDirectoryRequest(
+    void ProcessServerDriveQueryDirectoryRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
             const char * path, Stream & in_stream,

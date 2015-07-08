@@ -1349,7 +1349,7 @@ class FileNamesInformation {
 public:
     FileNamesInformation() = default;
 
-    FileNamesInformation(const char * file_name)
+    explicit FileNamesInformation(const char * file_name)
     : file_name(file_name) {}
 
     inline void emit(Stream & stream) const {

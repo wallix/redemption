@@ -122,7 +122,7 @@ struct TSRequest {
     }
 
 
-    TSRequest(Stream & stream)
+    explicit TSRequest(Stream & stream)
         : negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)

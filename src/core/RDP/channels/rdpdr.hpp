@@ -1979,7 +1979,7 @@ class ClientNameRequest {
 public:
     ClientNameRequest() = default;
 
-    ClientNameRequest(const char * computer_name)
+    explicit ClientNameRequest(const char * computer_name)
     : computer_name(computer_name) {}
 
     inline void emit(Stream & stream) const {

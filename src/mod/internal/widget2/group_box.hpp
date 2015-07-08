@@ -52,11 +52,11 @@ public:
         this->set_text(text);
     }
 
-    virtual ~WidgetGroupBox() {
+    ~WidgetGroupBox() override {
         this->clear();
     }
 
-    virtual void draw(const Rect & clip) {
+    void draw(const Rect & clip) override {
         Rect rect_intersect = clip.intersect(this->rect);
         WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
 
@@ -109,7 +109,7 @@ public:
         WidgetParent::draw_children(rect_intersect);
     }
 
-    virtual int get_bg_color() const {
+    int get_bg_color() const override {
         return this->bg_color;
     }
     virtual void move_xy(int16_t x, int16_t y) {
@@ -117,7 +117,7 @@ public:
         this->rect.y += y;
         this->WidgetParent::move_xy(x,y);
     }
-    virtual void set_xy(int16_t x, int16_t y) {
+    void set_xy(int16_t x, int16_t y) override {
         this->move_xy(x - this->rect.x, y - this->rect.y);
     }
     const char * get_text() const {

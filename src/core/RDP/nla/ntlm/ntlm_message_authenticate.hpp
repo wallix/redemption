@@ -332,7 +332,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         memset(this->MIC, 0x00, 16);
     }
 
-    virtual ~NTLMAuthenticateMessage() {}
+    ~NTLMAuthenticateMessage() override {}
 
     void emit(Stream & stream) {
         uint32_t currentOffset = this->PayloadOffset;

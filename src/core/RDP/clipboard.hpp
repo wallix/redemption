@@ -206,7 +206,7 @@ enum {
 struct RecvFactory {
     uint16_t msgType;
 
-    RecvFactory(Stream & stream) {
+    explicit RecvFactory(Stream & stream) {
         const unsigned expected = 2;    /* msgType(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO, "RDPECLIP::RecvFactory truncated msgType, need=%u remains=%u"
@@ -389,7 +389,7 @@ enum {
 struct CapabilitySetRecvFactory {
     uint16_t capabilitySetType;
 
-    CapabilitySetRecvFactory(Stream & stream) {
+    explicit CapabilitySetRecvFactory(Stream & stream) {
         const unsigned expected = 2;    /* capabilitySetType(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO
@@ -764,7 +764,7 @@ struct FormatListPDU : public CliprdrHeader {
 //  the msgFlags field of the Clipboard PDU Header.
 
 struct FormatListResponsePDU : public CliprdrHeader {
-    FormatListResponsePDU(bool response_ok)
+    explicit FormatListResponsePDU(bool response_ok)
         : CliprdrHeader( CB_FORMAT_LIST_RESPONSE
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                        , 0) {
@@ -808,7 +808,7 @@ struct FormatDataRequestPDU : public CliprdrHeader {
             , requestedFormatId(0) {
     }   // FormatDataRequestPDU()
 
-    FormatDataRequestPDU(uint32_t requestedFormatId)
+    explicit FormatDataRequestPDU(uint32_t requestedFormatId)
             : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
             , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
@@ -864,7 +864,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , 0) {
     }
 
-    FormatDataResponsePDU(bool response_ok)
+    explicit FormatDataResponsePDU(bool response_ok)
         : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                        , 0) {
@@ -907,7 +907,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
 struct FileContentsResponse : CliprdrHeader {
 
-    FileContentsResponse(bool response_ok = false)
+    explicit FileContentsResponse(bool response_ok = false)
     : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
     {}
 
