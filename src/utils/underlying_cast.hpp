@@ -24,11 +24,11 @@
 #include <type_traits>
 
 template<class E>
-typename std::underlying_type<E>::type & underlying_cast(E & e)
+constexpr typename std::underlying_type<E>::type & underlying_cast(E & e)
 { return reinterpret_cast<typename std::underlying_type<E>::type &>(e); }
 
 template<class E>
-typename std::underlying_type<E>::type underlying_cast(E const & e)
+constexpr typename std::underlying_type<E>::type underlying_cast(E const & e)
 { return static_cast<typename std::underlying_type<E>::type>(e); }
 
 #endif

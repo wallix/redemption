@@ -427,9 +427,9 @@ struct VariablesConfiguration {
         // Qscale (parameter given to ffmpeg) for high quality.
         unsigned h_qscale{7};
 
-        StaticPath<1024> hash_path{"/var/rdpproxy/hash"};
-        StaticPath<1024> record_tmp_path{"/var/rdpproxy/tmp"};
-        StaticPath<1024> record_path{"/var/rdpproxy/recorded"};
+        StaticPath<1024> hash_path{HASH_PATH};
+        StaticPath<1024> record_tmp_path{RECORD_TMP_PATH};
+        StaticPath<1024> record_path{RECORD_PATH};
 
         bool inactivity_pause{0};
         unsigned inactivity_timeout{300};
