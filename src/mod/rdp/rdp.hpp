@@ -1445,6 +1445,10 @@ private:
                         DeviceCount);
                 }
 
+                if (!DeviceCount) {
+                    break;
+                }
+
                 uint8_t * const DeviceList = chunk.p;
 
                 {
