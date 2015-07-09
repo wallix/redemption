@@ -633,7 +633,7 @@ public:
 
     virtual ~mod_rdp() {
         if (this->enable_wab_agent) {
-            this->front.disable_graphics_update(false);
+            this->front.disable_input_event_and_graphics_update(false);
         }
 
         delete this->transparent_recorder;
@@ -1474,7 +1474,7 @@ private:
                         if (this->enable_wab_agent &&
                             !saved_proxy_managed_drives_announced &&
                             this->proxy_managed_drives_announced) {
-                            this->front.disable_graphics_update(true);
+                            this->front.disable_input_event_and_graphics_update(true);
                         }
 
                         if (this->verbose) {
@@ -3481,7 +3481,7 @@ public:
                                 if (this->enable_wab_agent &&
                                     !saved_proxy_managed_drives_announced &&
                                     this->proxy_managed_drives_announced) {
-                                    this->front.disable_graphics_update(true);
+                                    this->front.disable_input_event_and_graphics_update(true);
                                 }
 
                                 this->send_to_channel(*rdpdr_channel, result, result.size(),
@@ -3519,7 +3519,7 @@ public:
                     this->event.set();
                 }
 
-                this->front.disable_graphics_update(false);
+                this->front.disable_input_event_and_graphics_update(false);
             }
 
             if (this->wab_agent_is_ready && this->wab_agent_keepalive_timeout) {
@@ -5104,7 +5104,7 @@ public:
         }
 
         if (this->enable_wab_agent) {
-            this->front.disable_graphics_update(true);
+            this->front.disable_input_event_and_graphics_update(true);
         }
     }
 
@@ -6504,11 +6504,11 @@ public:
             //LOG(LOG_INFO, "<<<Get startup application>>>");
 
             if (this->verbose & 1) {
-                LOG(LOG_ERR, "Agent is ready.");
+                LOG(LOG_INFO, "Agent is ready.");
             }
 
-            if (this->front.disable_graphics_update(false)) {
-                LOG(LOG_ERR, "Force graphics update. Rect=(0, 0, %u, %u)",
+            if (this->front.disable_input_event_and_graphics_update(false)) {
+                LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
                     this->front_width, this->front_height);
                 this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
             }
