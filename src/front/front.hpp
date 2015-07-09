@@ -2511,6 +2511,11 @@ public:
         bool need_full_screen_update =
             (this->graphics_update_disabled && !disable);
 
+            if (this->graphics_update_disabled != disable) {
+                LOG(LOG_INFO, "Front: %s graphics update.",
+                    (disable ? "Disable" : "Enable"));
+            }
+
         this->graphics_update_disabled = disable;
 
         return need_full_screen_update;
