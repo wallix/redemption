@@ -106,13 +106,188 @@ public:
         uint32_t verbose) = 0;
 
     virtual void ProcessServerDriveQueryVolumeInformationRequest(
-        rdpdr::DeviceIORequest const & device_io_request,
-        rdpdr::ServerDriveQueryVolumeInformationRequest const &
-            server_drive_query_volume_information_request,
-        const char * path, Stream & in_stream,
-        ToServerSender & to_server_sender,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-        uint32_t verbose) = 0;
+            rdpdr::DeviceIORequest const & device_io_request,
+            rdpdr::ServerDriveQueryVolumeInformationRequest const &
+                server_drive_query_volume_information_request,
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        REDASSERT(this->fd > -1);
+
+
+        BStream out_stream(65536);
+
+        switch (server_drive_query_volume_information_request.FsInformationClass()) {
+            case rdpdr::FileFsVolumeInformation:
+            {
+                struct statvfs svfsb;
+                ::statvfs(path, &svfsb);
+                struct stat64 sb;
+                ::stat64(path, &sb);
+
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                const fscc::FileFsVolumeInformation file_fs_volume_information(
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),   // VolumeCreationTime(8)
+                        svfsb.f_fsid,                           // VolumeSerialNumber(4)
+                        1,                                      // SupportsObjects(1) - FALSE
+                        "REDEMPTION"
+                    );
+
+                out_stream.out_uint32_le(file_fs_volume_information.size());    // Length(4)
+
+                if (verbose) {
+                    LOG(LOG_INFO, "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
+                    file_fs_volume_information.log(LOG_INFO);
+                }
+                file_fs_volume_information.emit(out_stream);
+            }
+            break;
+
+            case rdpdr::FileFsSizeInformation:
+            {
+                struct statvfs svfsb;
+                ::statvfs(path, &svfsb);
+
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                const fscc::FileFsSizeInformation file_fs_size_information(
+                        svfsb.f_blocks, // TotalAllocationUnits(8)
+                        svfsb.f_bavail, // AvailableAllocationUnits(8)
+                        1,              // SectorsPerAllocationUnit(4)
+                        svfsb.f_bsize   // BytesPerSector(4)
+                    );
+
+                out_stream.out_uint32_le(file_fs_size_information.size()); // Length(4)
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
+                    file_fs_size_information.log(LOG_INFO);
+                }
+                file_fs_size_information.emit(out_stream);
+            }
+            break;
+
+            case rdpdr::FileFsAttributeInformation:
+            {
+                struct statvfs svfsb;
+                ::statvfs(path, &svfsb);
+                struct stat64 sb;
+                ::stat64(path, &sb);
+
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                const fscc::FileFsAttributeInformation file_fs_attribute_information(
+                        fscc::FILE_CASE_SENSITIVE_SEARCH |      // FileSystemAttributes(4)
+                            fscc::FILE_CASE_PRESERVED_NAMES |
+                            //fscc::FILE_READ_ONLY_VOLUME |
+                            fscc::FILE_UNICODE_ON_DISK,
+                        svfsb.f_namemax,                        // MaximumComponentNameLength(4)
+                        "FAT32"                                 // FileSystemName(variable)
+                    );
+
+                out_stream.out_uint32_le(file_fs_attribute_information.size()); // Length(4)
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
+                    file_fs_attribute_information.log(LOG_INFO);
+                }
+                file_fs_attribute_information.emit(out_stream);
+            }
+            break;
+
+            case rdpdr::FileFsFullSizeInformation:
+            {
+                struct statvfs svfsb;
+                ::statvfs(path, &svfsb);
+
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                const fscc::FileFsFullSizeInformation file_fs_full_size_information(
+                        svfsb.f_blocks, // TotalAllocationUnits(8)
+                        svfsb.f_bavail, // CallerAvailableAllocationUnits(8)
+                        svfsb.f_bfree,  // ActualAvailableAllocationUnits(8)
+                        1,              // SectorsPerAllocationUnit(4)
+                        svfsb.f_bsize   // BytesPerSector(4)
+                    );
+
+                out_stream.out_uint32_le(file_fs_full_size_information.size()); // Length(4)
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
+                    file_fs_full_size_information.log(LOG_INFO);
+                }
+                file_fs_full_size_information.emit(out_stream);
+            }
+            break;
+
+            case rdpdr::FileFsDeviceInformation:
+            {
+                LOG(LOG_INFO, "+ + + + + + + + + + ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest() - FileFsDeviceInformation - Using ToServerSender + + + + + + + + + +");
+
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                const fscc::FileFsDeviceInformation file_fs_device_information(
+                        fscc::FILE_DEVICE_DISK, 0
+                    );
+
+                out_stream.out_uint32_le(file_fs_device_information.size());    // Length(4)
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
+                    file_fs_device_information.log(LOG_INFO);
+                }
+                file_fs_device_information.emit(out_stream);
+            }
+            break;
+
+            default:
+                LOG(LOG_ERR,
+                    "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest: "
+                        "Unknown FsInformationClass(0x%X)",
+                    server_drive_query_volume_information_request.FsInformationClass());
+
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest",
+                                          0xC0000001,   // STATUS_UNSUCCESSFUL
+                                          verbose);
+            break;
+        }
+
+        out_stream.mark_end();
+
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
+    }
 
     virtual void ProcessServerDriveQueryInformationRequest(
         rdpdr::DeviceIORequest const & device_io_request,
@@ -203,8 +378,8 @@ public:
                         EndOfFile);
                 }
 
-//                ::posix_fallocate(this->fd, 0, EndOfFile);
-                ::ftruncate(this->fd, EndOfFile);
+//                (void)::posix_fallocate(this->fd, 0, EndOfFile);
+                (void)::ftruncate(this->fd, EndOfFile);
 
                 SendClientDriveSetInformationResponse(
                         device_io_request,
@@ -271,7 +446,7 @@ public:
                     }
                 }
 
-                ::rename(this->full_path.c_str(), new_full_path.c_str());
+                (void)::rename(this->full_path.c_str(), new_full_path.c_str());
 
                 SendClientDriveSetInformationResponse(
                         device_io_request,
@@ -296,7 +471,7 @@ public:
                         AllocationSize);
                 }
 
-                ::ftruncate(this->fd, AllocationSize);
+                (void)::ftruncate(this->fd, AllocationSize);
 
                 SendClientDriveSetInformationResponse(
                         device_io_request,
@@ -581,6 +756,7 @@ public:
         ::closedir(this->dir);
 
         this->dir = nullptr;
+        this->fd  = -1;
 
         BStream out_stream(65536);
 
@@ -622,190 +798,6 @@ public:
                                   verbose);
 
         out_stream.out_uint32_le(0);    // Length(4)
-
-        out_stream.mark_end();
-
-        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
-            verbose);
-    }
-
-    virtual void ProcessServerDriveQueryVolumeInformationRequest(
-            rdpdr::DeviceIORequest const & device_io_request,
-            rdpdr::ServerDriveQueryVolumeInformationRequest const &
-                server_drive_query_volume_information_request,
-            const char * path, Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
-        REDASSERT(this->dir);
-
-        BStream out_stream(65536);
-
-        switch (server_drive_query_volume_information_request.FsInformationClass()) {
-            case rdpdr::FileFsVolumeInformation:
-            {
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-                struct stat64 sb;
-                ::stat64(path, &sb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsVolumeInformation file_fs_volume_information(
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),   // VolumeCreationTime(8)
-                        svfsb.f_fsid,                           // VolumeSerialNumber(4)
-                        1,                                      // SupportsObjects(1) - FALSE
-                        "REDEMPTION"
-                    );
-
-                out_stream.out_uint32_le(file_fs_volume_information.size());    // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_volume_information.log(LOG_INFO);
-                }
-                file_fs_volume_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsSizeInformation:
-            {
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsSizeInformation file_fs_size_information(
-                        svfsb.f_blocks, // TotalAllocationUnits(8)
-                        svfsb.f_bavail, // AvailableAllocationUnits(8)
-                        1,              // SectorsPerAllocationUnit(4)
-                        svfsb.f_bsize   // BytesPerSector(4)
-                    );
-
-                out_stream.out_uint32_le(file_fs_size_information.size()); // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_size_information.log(LOG_INFO);
-                }
-                file_fs_size_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsAttributeInformation:
-            {
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-                struct stat64 sb;
-                ::stat64(path, &sb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsAttributeInformation file_fs_attribute_information(
-                        fscc::FILE_CASE_SENSITIVE_SEARCH |      // FileSystemAttributes(4)
-                            fscc::FILE_CASE_PRESERVED_NAMES |
-                            //fscc::FILE_READ_ONLY_VOLUME |
-                            fscc::FILE_UNICODE_ON_DISK,
-                        svfsb.f_namemax,                        // MaximumComponentNameLength(4)
-                        "FAT32"                                 // FileSystemName(variable)
-                    );
-
-                out_stream.out_uint32_le(file_fs_attribute_information.size()); // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_attribute_information.log(LOG_INFO);
-                }
-                file_fs_attribute_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsFullSizeInformation:
-            {
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsFullSizeInformation file_fs_full_size_information(
-                        svfsb.f_blocks, // TotalAllocationUnits(8)
-                        svfsb.f_bavail, // CallerAvailableAllocationUnits(8)
-                        svfsb.f_bfree,  // ActualAvailableAllocationUnits(8)
-                        1,              // SectorsPerAllocationUnit(4)
-                        svfsb.f_bsize   // BytesPerSector(4)
-                    );
-
-                out_stream.out_uint32_le(file_fs_full_size_information.size()); // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_full_size_information.log(LOG_INFO);
-                }
-                file_fs_full_size_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsDeviceInformation:
-            {
-                LOG(LOG_INFO, "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest() - FileFsDeviceInformation - Using ToServerSender + + + + + + + + + +");
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsDeviceInformation file_fs_device_information(
-                        fscc::FILE_DEVICE_DISK, 0
-                    );
-
-                out_stream.out_uint32_le(file_fs_device_information.size()); // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_device_information.log(LOG_INFO);
-                }
-                file_fs_device_information.emit(out_stream);
-            }
-            break;
-
-            default:
-                LOG(LOG_ERR,
-                    "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest: "
-                        "Unknown FsInformationClass(0x%X)",
-                    server_drive_query_volume_information_request.FsInformationClass());
-
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0xC0000001,   // STATUS_UNSUCCESSFUL
-                                          verbose);
-            break;
-        }
 
         out_stream.mark_end();
 
@@ -1434,193 +1426,6 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveQueryVolumeInformationRequest(
-            rdpdr::DeviceIORequest const & device_io_request,
-            rdpdr::ServerDriveQueryVolumeInformationRequest const &
-                server_drive_query_volume_information_request,
-            const char * path, Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
-        REDASSERT(this->fd > -1);
-
-        BStream out_stream(65536);
-
-        switch (server_drive_query_volume_information_request.FsInformationClass()) {
-            case rdpdr::FileFsVolumeInformation:
-            {
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-                struct stat64 sb;
-                ::stat64(path, &sb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsVolumeInformation file_fs_volume_information(
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),   // VolumeCreationTime(8)
-                        svfsb.f_fsid,                           // VolumeSerialNumber(4)
-                        1,                                      // SupportsObjects(1) - FALSE
-                        "REDEMPTION"
-                    );
-
-                out_stream.out_uint32_le(file_fs_volume_information.size());    // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO, "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_volume_information.log(LOG_INFO);
-                }
-                file_fs_volume_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsSizeInformation:
-            {
-                LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsSizeInformation - Using ToServerSender + + + + + + + + + +");
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsSizeInformation file_fs_size_information(
-                        svfsb.f_blocks, // TotalAllocationUnits(8)
-                        svfsb.f_bavail, // AvailableAllocationUnits(8)
-                        1,              // SectorsPerAllocationUnit(4)
-                        svfsb.f_bsize   // BytesPerSector(4)
-                    );
-
-                out_stream.out_uint32_le(file_fs_size_information.size()); // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_size_information.log(LOG_INFO);
-                }
-                file_fs_size_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsAttributeInformation:
-            {
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-                struct stat64 sb;
-                ::stat64(path, &sb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsAttributeInformation file_fs_attribute_information(
-                        fscc::FILE_CASE_SENSITIVE_SEARCH |      // FileSystemAttributes(4)
-                            fscc::FILE_CASE_PRESERVED_NAMES |
-                            //fscc::FILE_READ_ONLY_VOLUME |
-                            fscc::FILE_UNICODE_ON_DISK,
-                        svfsb.f_namemax,                        // MaximumComponentNameLength(4)
-                        "FAT32"                                 // FileSystemName(variable)
-                    );
-
-                out_stream.out_uint32_le(file_fs_attribute_information.size()); // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_attribute_information.log(LOG_INFO);
-                }
-                file_fs_attribute_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsFullSizeInformation:
-            {
-                LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsFullSizeInformation - Using ToServerSender + + + + + + + + + +");
-                struct statvfs svfsb;
-                ::statvfs(path, &svfsb);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsFullSizeInformation file_fs_full_size_information(
-                        svfsb.f_blocks, // TotalAllocationUnits(8)
-                        svfsb.f_bavail, // CallerAvailableAllocationUnits(8)
-                        svfsb.f_bfree,  // ActualAvailableAllocationUnits(8)
-                        1,              // SectorsPerAllocationUnit(4)
-                        svfsb.f_bsize   // BytesPerSector(4)
-                    );
-
-                out_stream.out_uint32_le(file_fs_full_size_information.size()); // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_full_size_information.log(LOG_INFO);
-                }
-                file_fs_full_size_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileFsDeviceInformation:
-            {
-                LOG(LOG_INFO, "+ + + + + + + + + + ManagedFile::ProcessServerDriveQueryVolumeInformationRequest() - FileFsDeviceInformation - Using ToServerSender + + + + + + + + + +");
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                const fscc::FileFsDeviceInformation file_fs_device_information(
-                        fscc::FILE_DEVICE_DISK, 0
-                    );
-
-                out_stream.out_uint32_le(file_fs_device_information.size());    // Length(4)
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest");
-                    file_fs_device_information.log(LOG_INFO);
-                }
-                file_fs_device_information.emit(out_stream);
-            }
-            break;
-
-            default:
-            {
-                LOG(LOG_ERR,
-                    "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest: "
-                        "Unknown FsInformationClass(0x%X)",
-                    server_drive_query_volume_information_request.FsInformationClass());
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryVolumeInformationRequest",
-                                          0xC0000001,   // STATUS_UNSUCCESSFUL
-                                          verbose);
-            }
-            break;
-        }
-
-        out_stream.mark_end();
-
-        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
-            verbose);
-    }
-
     virtual void ProcessServerDriveQueryInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
@@ -1672,8 +1477,10 @@ public:
 
                 out_stream.out_uint32_le(fscc::FileStandardInformation::size());    // Length(4)
 
+                const size_t block_size = 512;
+
                 fscc::FileStandardInformation file_standard_information(
-                        sb.st_blocks * 512 /* Block size */,    // AllocationSize
+                        sb.st_blocks * block_size,              // AllocationSize
                         sb.st_size,                             // EndOfFile
                         sb.st_nlink,                            // NumberOfLinks
                         0,                                      // DeletePending
