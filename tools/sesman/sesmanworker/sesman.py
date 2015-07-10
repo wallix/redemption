@@ -583,10 +583,12 @@ class Sesman():
                 self.engine.get_proxy_rights([u'RDP', u'VNC'],
                                              check_timeframes=False,
                                              target_context=self.target_context)
+                selector_filters_case_sensitive = SESMANCONF[u'sesman'].get('selector_filters_case_sensitive', False)
                 services, item_filtered = self.engine.get_targets_list(
                     group_filter = self.shared.get(u'selector_group_filter'),
                     device_filter = self.shared.get(u'selector_device_filter'),
-                    protocol_filter = self.shared.get(u'selector_proto_filter'))
+                    protocol_filter = self.shared.get(u'selector_proto_filter'),
+                    case_sensitive = selector_filters_case_sensitive)
                 if (len(services) > 1) or item_filtered:
                     try:
                         _current_page = int(self.shared.get(u'selector_current_page')) - 1
