@@ -153,11 +153,6 @@ private:
     };
 
 public:
-    enum class ClipboardEncodingType : uint8_t {
-        UTF8   = 0,
-        Latin1 = 1
-    };
-
     std::string encodings;
 
 private:
@@ -177,7 +172,7 @@ private:
     uint64_t clipboard_last_client_data_timestamp     = 0;
     int      clipboard_requested_format_id            = 0;
 
-    ClipboardEncodingType clipboard_server_encoding_type = ClipboardEncodingType::UTF8;
+    ClipboardEncodingType clipboard_server_encoding_type;
 
     bool clipboard_owned_by_client = true;
 
@@ -201,7 +196,7 @@ public:
            , const char * encodings
            , bool allow_authentification_retries
            , bool is_socket_transport
-           , const char * clipboard_server_encoding_type
+           , ClipboardEncodingType clipboard_server_encoding_type
            , uint32_t bogus_clipboard_infinite_loop
            , uint32_t verbose
            )
@@ -232,9 +227,9 @@ public:
     , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_socket_transport(is_socket_transport)
-    , clipboard_server_encoding_type(strcasecmp(clipboard_server_encoding_type, "latin1") ?
-                                        ClipboardEncodingType::UTF8 :
-                                        ClipboardEncodingType::Latin1)
+    , clipboard_server_encoding_type(clipboard_server_encoding_type == ClipboardEncodingType::latin1 ?
+                                        ClipboardEncodingType::utf8 :
+                                        ClipboardEncodingType::latin1)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     {
     //--------------------------------------------------------------------------------------------------------------
@@ -2241,10 +2236,10 @@ private:
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
                 if (this->enable_clipboard_up &&
-//                    ((format_list_pdu.contians_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::Latin1)) ||
-//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8)))) {
+//                    ((format_list_pdu.contians_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::latin1)) ||
+//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8)))) {
                     (format_list_pdu.contians_data_in_text_format || format_list_pdu.contians_data_in_unicodetext_format)) {
-                    if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
+                    if (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8) {
                         this->clipboard_requested_format_id =
                             (format_list_pdu.contians_data_in_unicodetext_format ?
                              RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);

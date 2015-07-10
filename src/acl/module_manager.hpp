@@ -886,7 +886,7 @@ public:
                                                       , this->ini.mod_vnc.encodings.c_str()
                                                       , this->ini.mod_vnc.allow_authentification_retries
                                                       , true
-                                                      , this->ini.mod_vnc.server_clipboard_encoding_type.get_cstr()
+                                                      , this->ini.mod_vnc.server_clipboard_encoding_type.get()
                                                       , this->ini.mod_vnc.bogus_clipboard_infinite_loop.get()
                                                       , this->ini.debug.mod_vnc
                 );

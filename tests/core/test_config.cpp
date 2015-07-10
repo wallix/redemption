@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -456,7 +456,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_up.get());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL("",                               ini.context.movie.c_str());
@@ -725,7 +725,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -988,7 +988,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.clipboard_down.get());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -1223,7 +1223,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("utf-8",                          ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::utf8,      ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(1,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(1,                                ini.mod_replay.on_end_of_data);
@@ -1430,7 +1430,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -1644,7 +1644,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(2,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -1832,7 +1832,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -2020,7 +2020,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -2195,7 +2195,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);
@@ -2370,7 +2370,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL("",                               ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
-    BOOST_CHECK_EQUAL("latin1",                         ini.mod_vnc.server_clipboard_encoding_type.get_cstr());
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,    ini.mod_vnc.server_clipboard_encoding_type.get());
     BOOST_CHECK_EQUAL(0,                                ini.mod_vnc.bogus_clipboard_infinite_loop.get());
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_replay.on_end_of_data);

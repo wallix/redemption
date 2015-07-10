@@ -80,7 +80,7 @@ void Inifile::initialize() {
 
 
     this->mod_vnc.server_clipboard_encoding_type.attach_ini(this, AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE);
-    this->mod_vnc.server_clipboard_encoding_type.set("latin1");
+    this->mod_vnc.server_clipboard_encoding_type.set(static_cast<ClipboardEncodingType>(1));
 
     this->mod_vnc.bogus_clipboard_infinite_loop.attach_ini(this, AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP);
     this->mod_vnc.bogus_clipboard_infinite_loop.set(0);
