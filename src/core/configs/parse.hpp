@@ -49,7 +49,7 @@ void parse(StaticStringBase<N, Copier, NullableString> & x, char const * value) 
 
 template<std::size_t N>
 void parse(StaticKeyString<N> & key, char const * value) {
-    if (strlen(value) >= sizeof(key) * 2) {
+    if (strlen(value) >= N * 2) {
         char   hexval[3] = { 0 };
         char * end;
         for (std::size_t i = 0; i < sizeof(key); i++) {

@@ -167,7 +167,7 @@ struct ConfigCppWriter {
     template<class T>
     void write(T const & r) { this->out() << r; }
     void write(const char * s) { this->out() << '"' << s << '"'; }
-    void write(expr x) { this->out() << x.value; }
+    void write(macro x) { this->out() << x.name; }
     void write(null_fill x) { this->out() << "null_fill()"; }
 
 #define WRITE_ENUM(E) \
@@ -179,6 +179,7 @@ struct ConfigCppWriter {
     WRITE_ENUM(CaptureFlags)
     WRITE_ENUM(KeyboardLogFlags)
     WRITE_ENUM(ClipboardLogFlags)
+    WRITE_ENUM(ClipboardEncodingType)
 #undef WRITE_ENUM
 
     void write(todo x) { this->tab(); this->out() << "TODO(\"" << x.value << "\")\n"; }
@@ -274,7 +275,7 @@ struct ConfigCppWriter {
     { static_assert((void(type_<decltype(T(d.value))>{}), 1), "incompatible type"); }
 
     template<class T>
-    void check_constructible(type_<T>, default_<expr> const &)
+    void check_constructible(type_<T>, default_<macro> const &)
     {}
 
     template<class T, class U>
@@ -287,8 +288,27 @@ struct ConfigCppWriter {
         this->out() << "}";
     }
 
-    template<class T, class U>
-    void write_assignable_default(ref<type_<T>>, U const &)
+    template<std::size_t N, class U>
+    void write_assignable_default(ref<type_<StaticKeyString<N>>>, default_<U> const & d)
+    {
+        this->check_constructible(type_<StaticKeyString<N>>{}, d);
+        this->out() << "{\"";
+        const char * k = d.value;
+        int c;
+        for (const char * e = k + N; k != e; ++k) {
+            this->out() << "\\x";
+            c = (*k >> 4);
+            c += (c > 9) ? 'A' - 10 : '0';
+            this->out() << char(c);
+            c = (*k & 0xf);
+            c += (c > 9) ? 'A' - 10 : '0';
+            this->out() << char(c);
+        }
+        this->out() << "\"}";
+    }
+
+    template<class T>
+    void write_assignable_default(ref<type_<T>>, ...)
     { }
 
 
@@ -324,6 +344,7 @@ struct ConfigCppWriter {
     WRITE_TYPE(KeyboardLogFlagsField)
     WRITE_TYPE(ReadOnlyStringField)
     WRITE_TYPE(ClipboardLogFlagsField)
+    WRITE_TYPE(ClipboardEncodingTypeField)
 #undef WRITE_TYPE
 
 #define WRITE_STATIC_STRING(T)        \
@@ -475,10 +496,6 @@ int main(int ac, char ** av)
 
     config_writer::ConfigCppWriter writer;
     config_spec::writer_config_spec(writer);
-
-    const char * filename = av[1];
-    std::ofstream out_authid(filename);
-    write_authid_hpp(out_authid, writer);
 
     SuitableWrite sw(writer);
     sw.then(av[1], &write_authid_hpp)

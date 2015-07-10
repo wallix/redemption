@@ -26,10 +26,6 @@
 
 #include "configs/types.hpp"
 
-#include "theme.hpp"
-#include "font.hpp"
-#include "redirection_info.hpp"
-
 namespace config_spec {
 
 using namespace configs;
@@ -38,8 +34,8 @@ struct real_name { char const * name; };
 struct str_authid { char const * name; };
 struct def_authid { char const * name; };
 
-template<class T>
-struct type_ { };
+template<class T> struct type_ { };
+template<class T> struct user_type { };
 
 template<class T>
 struct default_
@@ -57,13 +53,18 @@ struct attach { constexpr attach() {} };
 struct ask { constexpr ask() {} };
 struct use { constexpr use() {} };
 
-struct expr { char const * value; };
+struct macro { char const * name; char const * value; };
+#define MACRO(name) macro{#name, name}
 struct info { char const * value; };
 struct todo { char const * value; };
 struct desc { char const * value; };
 
-struct uint32_ { uint32_(uint32_t) {} };
-struct uint64_ { uint64_(uint64_t) {} };
+struct uint32_ { uint32_(uint32_t = 0) {} };
+struct uint64_ { uint64_(uint64_t = 0) {} };
+
+struct RedirectionInfo {};
+struct Theme {};
+struct Font {};
 
 enum class Attribute : unsigned {
     none,
@@ -71,7 +72,7 @@ enum class Attribute : unsigned {
     hidden = 1 << 3,
     visible = 1 << 4,
     advanced = 1 << 5,
-    ip_tables = 1 << 6,
+    iptables = 1 << 6,
 };
 
 constexpr Attribute operator | (Attribute x, Attribute y) {
@@ -112,7 +113,7 @@ void writer_config_spec(Writer && w)
     Attribute const H = Attribute::hidden;
     Attribute const V = Attribute::visible;
     Attribute const A = Attribute::advanced;
-    Attribute const IPT = Attribute::ip_tables;
+    Attribute const IPT = Attribute::iptables;
 
     link const linked;
     attach const attached;
@@ -151,8 +152,8 @@ void writer_config_spec(Writer && w)
         w.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
         w.member(V, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
         w.sep();
-        w.member(A, type_<StaticString<1024>>(), "png_path", set(expr{"PNG_PATH"}));
-        w.member(A, type_<StaticString<1024>>(), "wrm_path", set(expr{"WRM_PATH"}));
+        w.member(A, type_<StaticString<1024>>(), "png_path", set(MACRO(PNG_PATH)));
+        w.member(A, type_<StaticString<1024>>(), "wrm_path", set(MACRO(WRM_PATH)));
         w.sep();
         w.member(H, type_<StringField>(), "alternate_shell", attached);
         w.member(H, type_<StringField>(), "shell_working_directory", attached);
@@ -165,18 +166,18 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.member(V, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
         w.member(A, type_<bool>(), "enable_osd", set(true));
-        w.member(V, type_<bool>(), "enable_osd_display_remote_target", set(true));
+        w.member(A, type_<bool>(), "enable_osd_display_remote_target", set(true));
         w.sep();
         w.member(A, type_<BoolField>(), "enable_wab_agent", attached, set(false), def_authid{"opt_wabagent"}, str_authid{"wab_agent"});
         w.member(A, type_<UnsignedField>(), "wab_agent_launch_timeout", attached, set(0), def_authid{"opt_wabagent_launch_timeout"});
         w.member(A, type_<UnsignedField>(), "wab_agent_keepalive_timeout", attached, set(0), def_authid{"opt_wabagent_keepalive_timeout"});
         w.sep();
-        w.member(type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));
+        w.member(H, type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));
         w.sep();
-        w.member(A, type_<StaticPath<1024>>(), "persistent_path", set(expr{"PERSISTENT_PATH"}));
+        w.member(A, type_<StaticPath<1024>>(), "persistent_path", set(MACRO(PERSISTENT_PATH)));
         w.sep();
         w.member(H, type_<bool>(), "disable_proxy_opt", set(false));
-        w.member(A, type_<uint32_>(), "max_chunked_virtual_channel_data_length", desc{" The maximum length of the chunked virtual channel data."}, set(expr{"2 * 1024 * 1024"}));
+        w.member(A, type_<uint32_>(), "max_chunked_virtual_channel_data_length", desc{" The maximum length of the chunked virtual channel data."}, set(2 * 1024 * 1024));
     }
     w.stop_section();
 
@@ -194,7 +195,7 @@ void writer_config_spec(Writer && w)
         w.member(A, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
         w.member(A, type_<bool>(), "bogus_user_id", desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."}, set(true));
         w.sep();
-        w.member(A, type_<BoolField>(), "disable_tsk_switch_shortcuts", desc{"If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences."}, attached, set(0));
+        w.member(A, type_<BoolField>(), "disable_tsk_switch_shortcuts", desc{"If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences."}, attached, set(false));
         w.sep();
         w.member(A, type_<rdp_compression_t>{}, "rdp_compression", rdp_compression_desc, set(4));
         w.sep();
@@ -224,7 +225,7 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.member(A, type_<uint32_>(), "open_session_timeout", set(0));
         w.sep();
-        w.member(A, type_<unsigned>(), "certificate_change_action", desc{
+        w.member(A, type_<Range<unsigned, 0, 1>>(), "certificate_change_action", desc{
             "0: Cancel connection and reports error.\n"
             "1: Replace existing certificate and continue connection."
         }, set(0));
@@ -281,18 +282,18 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.member(A, type_<bool>(), "allow_authentification_retries", set(false));
         w.sep();
-        w.member(A, type_<StringField>(), "server_clipboard_encoding_type", desc{
+        w.member(A, type_<ClipboardEncodingTypeField>(), "server_clipboard_encoding_type", desc{
             "VNC server clipboard data encoding type.\n"
             "  latin1 (default) or utf-8"
-        }, attached, set("latin1"), def_authid{"vnc_server_clipboard_encoding_type"}, str_authid{"vnc_server_clipboard_encoding_type"});
+        }, attached, set(ClipboardEncodingType::latin1), def_authid{"vnc_server_clipboard_encoding_type"}, str_authid{"vnc_server_clipboard_encoding_type"});
         w.sep();
-        w.member(A, type_<UnsignedField>(), "bogus_clipboard_infinite_loop", attached, set(0), def_authid{"vnc_bogus_clipboard_infinite_loop"}, str_authid{"vnc_bogus_clipboard_infinite_loop"});
+        w.member(A, type_<UnsignedField>(), user_type<Range<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", attached, set(0), def_authid{"vnc_bogus_clipboard_infinite_loop"}, str_authid{"vnc_bogus_clipboard_infinite_loop"});
     }
     w.stop_section();
 
     w.start_section("mod_replay");
     {
-        w.member(A, type_<int>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
+        w.member(A, type_<Range<int, 0, 1>>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
     }
     w.stop_section();
 
@@ -346,9 +347,9 @@ void writer_config_spec(Writer && w)
         w.member(A, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
         w.member(A, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
         w.sep();
-        w.member(A, type_<StaticPath<1024>>(), "hash_path", set(expr{"HASH_PATH"}));
-        w.member(A, type_<StaticPath<1024>>(), "record_tmp_path", set(expr{"RECORD_TMP_PATH"}));
-        w.member(A, type_<StaticPath<1024>>(), "record_path", set(expr{"RECORD_PATH"}));
+        w.member(A, type_<StaticPath<1024>>(), "hash_path", set(MACRO(HASH_PATH)));
+        w.member(A, type_<StaticPath<1024>>(), "record_tmp_path", set(MACRO(RECORD_TMP_PATH)));
+        w.member(A, type_<StaticPath<1024>>(), "record_path", set(MACRO(RECORD_PATH)));
         w.sep();
         w.member(type_<bool>(), "inactivity_pause", set(false));
         w.member(type_<unsigned>(), "inactivity_timeout", set(300));
@@ -383,18 +384,18 @@ void writer_config_spec(Writer && w)
 
     w.start_section("crypto");
     {
-        w.member(H, type_<StaticKeyString<32>>(), "key0", set(expr{R"(
+        w.member(H, type_<StaticKeyString<32>>(), "key0", set(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        )"}));
-        w.member(H, type_<StaticKeyString<32>>(), "key1", set(expr{R"(
+        ));
+        w.member(H, type_<StaticKeyString<32>>(), "key1", set(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        )"}));
+        ));
     }
     w.stop_section();
 
@@ -424,7 +425,7 @@ void writer_config_spec(Writer && w)
         w.member(A, type_<uint32_>(), "performance", set(0));
         w.member(A, type_<uint32_>(), "pass_dialog_box", set(0));
         w.sep();
-        w.member(A, type_<Range<unsigned, 0, 2>>(), "config", desc{"0 = disable, 1 = enable, 2 = enable but no specified"}, set(2));
+        w.member(A, type_<Range<unsigned, 0, 2>>(), user_type<bool>(), "config", set(2));
     }
     w.stop_section();
 

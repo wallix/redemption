@@ -142,18 +142,8 @@ struct VariablesConfiguration {
     } context;
 
     struct Inifile_crypto {
-        StaticKeyString<32> key0{
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        };
-        StaticKeyString<32> key1{
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        };
+        StaticKeyString<32> key0{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
+        StaticKeyString<32> key1{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
         Inifile_crypto() = default;
     } crypto;
 
@@ -182,7 +172,6 @@ struct VariablesConfiguration {
         uint32_t performance{0};
         uint32_t pass_dialog_box{0};
 
-        // 0 = disable, 1 = enable, 2 = enable but no specified
         Range<unsigned, 0, 2, 0> config{2};
         Inifile_debug() = default;
     } debug;
@@ -255,7 +244,7 @@ struct VariablesConfiguration {
 
         bool disable_proxy_opt{0};
         //  The maximum length of the chunked virtual channel data.
-        uint32_t max_chunked_virtual_channel_data_length{2 * 1024 * 1024};
+        uint32_t max_chunked_virtual_channel_data_length{2097152};
         Inifile_globals() = default;
     } globals;
 
@@ -279,7 +268,7 @@ struct VariablesConfiguration {
 
         // 0: Cancel connection and reports error.
         // 1: Replace existing certificate and continue connection.
-        unsigned certificate_change_action{0};
+        Range<unsigned, 0, 1, 0> certificate_change_action{0};
 
         // Enables support of additional drawing orders:
         //   15: MultiDstBlt
@@ -326,7 +315,7 @@ struct VariablesConfiguration {
 
     struct Inifile_mod_replay {
         // 0 - Wait for Escape, 1 - End session
-        int on_end_of_data{0};
+        Range<int, 0, 1, 0> on_end_of_data{0};
         Inifile_mod_replay() = default;
     } mod_replay;
 
@@ -348,7 +337,7 @@ struct VariablesConfiguration {
 
         // VNC server clipboard data encoding type.
         //   latin1 (default) or utf-8
-        StringField server_clipboard_encoding_type;  // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
+        ClipboardEncodingTypeField server_clipboard_encoding_type;  // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
 
         UnsignedField bogus_clipboard_infinite_loop;  // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
         Inifile_mod_vnc() = default;

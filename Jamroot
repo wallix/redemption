@@ -440,7 +440,12 @@ exe tls_test_server
 ;
 
 exe make_config
-    : src/utils/config_spec.hpp src/main/write_config.cpp
+    : src/main/write_config.cpp
+    : <variant>coverage:<build>no
+;
+
+exe make_spec
+    : src/main/write_spec.cpp
     : <variant>coverage:<build>no
 ;
 

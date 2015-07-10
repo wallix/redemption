@@ -242,6 +242,9 @@ void Inifile::set_value(const char * context, const char * key, const char * val
         else if (0 == strcmp(key, "wab_agent_keepalive_timeout")) {
             ::configs::parse(this->globals.wab_agent_keepalive_timeout, value);
         }
+        else if (0 == strcmp(key, "wab_agent_alternate_shell")) {
+            ::configs::parse(this->globals.wab_agent_alternate_shell, value);
+        }
         else if (0 == strcmp(key, "persistent_path")) {
             ::configs::parse(this->globals.persistent_path, value);
         }
