@@ -290,12 +290,120 @@ public:
     }
 
     virtual void ProcessServerDriveQueryInformationRequest(
-        rdpdr::DeviceIORequest const & device_io_request,
-        rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
-        const char * path, Stream & in_stream,
-        ToServerSender & to_server_sender,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-        uint32_t verbose) = 0;
+            rdpdr::DeviceIORequest const & device_io_request,
+            rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
+            const char * path, Stream & in_stream,
+            ToServerSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        REDASSERT(this->fd > -1);
+
+        BStream out_stream(65536);
+
+        struct stat64 sb;
+        ::fstat64(this->fd, &sb);
+
+        switch (server_drive_query_information_request.FsInformationClass()) {
+            case rdpdr::FileBasicInformation:
+            {
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                out_stream.out_uint32_le(fscc::FileBasicInformation::size());   // Length(4)
+
+                fscc::FileBasicInformation file_basic_information(
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // CreationTime(8)
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),                           // LastAccessTime(8)
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // LastWriteTime(8)
+                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                           // ChangeTime(8)
+                        (this->IsDirectory() ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |    // FileAttributes(4)
+                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY)
+                    );
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest");
+                    file_basic_information.log(LOG_INFO);
+                }
+                file_basic_information.emit(out_stream);
+            }
+            break;
+
+            case rdpdr::FileStandardInformation:
+            {
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                out_stream.out_uint32_le(fscc::FileStandardInformation::size());    // Length(4)
+
+                const size_t block_size = 512;
+
+                fscc::FileStandardInformation file_standard_information(
+                        sb.st_blocks * block_size,  // AllocationSize
+                        sb.st_size,                 // EndOfFile
+                        sb.st_nlink,                // NumberOfLinks
+                        0,                          // DeletePending
+                        0                           // Directory
+                    );
+
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest");
+                    file_standard_information.log(LOG_INFO);
+                }
+                file_standard_information.emit(out_stream);
+            }
+            break;
+
+            case rdpdr::FileAttributeTagInformation:
+            {
+                MakeClientDriveIoResponse(out_stream,
+                                          device_io_request,
+                                          "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest",
+                                          0x00000000,   // STATUS_SUCCESS
+                                          verbose);
+
+                out_stream.out_uint32_le(fscc::FileAttributeTagInformation::size());    // Length(4)
+
+                fscc::FileAttributeTagInformation file_attribute_tag_information(
+                        fscc::FILE_ATTRIBUTE_DIRECTORY |                                    // FileAttributes
+                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
+                        0                                                                   // ReparseTag
+                    );
+
+                if (verbose) {
+                    LOG(LOG_INFO, "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest");
+                    file_attribute_tag_information.log(LOG_INFO);
+                }
+                file_attribute_tag_information.emit(out_stream);
+            }
+            break;
+
+            default:
+                LOG(LOG_ERR,
+                    "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest: "
+                        "Unknown FsInformationClass=%s(0x%X)",
+                    server_drive_query_information_request.get_FsInformationClass_name(
+                        server_drive_query_information_request.FsInformationClass()),
+                    server_drive_query_information_request.FsInformationClass());
+                throw Error(ERR_RDP_PROTOCOL);
+            //break;
+        }
+
+        out_stream.mark_end();
+
+        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            verbose);
+    }
 
     virtual void ProcessServerDriveSetInformationRequest(
             rdpdr::DeviceIORequest const & device_io_request,
@@ -840,126 +948,6 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveQueryInformationRequest(
-            rdpdr::DeviceIORequest const & device_io_request,
-            rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
-            const char * path, Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
-        REDASSERT(this->dir);
-
-        BStream out_stream;
-
-        struct stat64 sb;
-        ::fstat64(::dirfd(this->dir), &sb);
-
-        switch (server_drive_query_information_request.FsInformationClass()) {
-            case rdpdr::FileBasicInformation:
-            {
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                out_stream.out_uint32_le(fscc::FileBasicInformation::size());   // Length(4)
-
-                fscc::FileBasicInformation file_basic_information(
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // CreationTime(8)
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),                           // LastAccessTime(8)
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // LastWriteTime(8)
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                           // ChangeTime(8)
-                        fscc::FILE_ATTRIBUTE_DIRECTORY |                                // FileAttributes(4)
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY)
-                    );
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedDirectory::ProcessServerDriveQueryInformationRequest");
-                    file_basic_information.log(LOG_INFO);
-                }
-                file_basic_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileStandardInformation:
-            {
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                out_stream.out_uint32_le(fscc::FileStandardInformation::size());    // Length(4)
-
-                fscc::FileStandardInformation file_standard_information(
-                        sb.st_blocks * 512 /* Block size */,    // AllocationSize
-                        sb.st_size,                             // EndOfFile
-                        sb.st_nlink,                            // NumberOfLinks
-                        0,                                      // DeletePending
-                        0                                       // Directory
-                    );
-
-                if (verbose) {
-                    LOG(LOG_INFO,
-                        "ManagedDirectory::ProcessServerDriveQueryInformationRequest");
-                    file_standard_information.log(LOG_INFO);
-                }
-                file_standard_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileAttributeTagInformation:
-            {
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                out_stream.out_uint32_le(fscc::FileAttributeTagInformation::size());    // Length(4)
-
-                fscc::FileAttributeTagInformation file_attribute_tag_information(
-                        fscc::FILE_ATTRIBUTE_DIRECTORY |                                    // FileAttributes
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
-                        0                                                                   // ReparseTag
-                    );
-
-                if (verbose) {
-                    LOG(LOG_INFO, "ManagedDirectory::ProcessServerDriveQueryInformationRequest");
-                    file_attribute_tag_information.log(LOG_INFO);
-                }
-                file_attribute_tag_information.emit(out_stream);
-            }
-            break;
-
-            default:
-            {
-                LOG(LOG_ERR,
-                    "ManagedDirectory::ProcessServerDriveQueryInformationRequest: "
-                        "Unknown FsInformationClass(0x%X)",
-                    server_drive_query_information_request.FsInformationClass());
-                REDASSERT(false);
-
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedDirectory::ProcessServerDriveQueryInformationRequest",
-                                          0xC0000001,   // STATUS_UNSUCCESSFUL
-                                          verbose);
-            }
-            break;
-        }
-
-        out_stream.mark_end();
-
-        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
-            verbose);
-    }
-
     virtual void ProcessServerDriveWriteRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, int drive_access_mode, bool first_chunk,
@@ -1416,117 +1404,6 @@ public:
                 "ManagedFile::ProcessServerDriveControlRequest: OutputBufferLength=0");
         }
         out_stream.out_uint32_le(0);    // OutputBufferLength(4)
-
-        out_stream.mark_end();
-
-        uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
-            verbose);
-    }
-
-    virtual void ProcessServerDriveQueryInformationRequest(
-            rdpdr::DeviceIORequest const & device_io_request,
-            rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
-            const char * path, Stream & in_stream,
-            ToServerSender & to_server_sender,
-            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
-        REDASSERT(this->fd > -1);
-
-        BStream out_stream(65536);
-
-        struct stat64 sb;
-        ::fstat64(this->fd, &sb);
-
-        switch (server_drive_query_information_request.FsInformationClass()) {
-            case rdpdr::FileBasicInformation:
-            {
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                out_stream.out_uint32_le(fscc::FileBasicInformation::size());   // Length(4)
-
-                fscc::FileBasicInformation file_basic_information(
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                       // CreationTime
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),                       // LastAccessTime
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                       // LastWriteTime
-                        FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                       // ChangeTime
-                        (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY)  // FileAttributes
-                    );
-
-                if (verbose) {
-                    LOG(LOG_INFO, "ManagedFile::ProcessServerDriveQueryInformationRequest");
-                    file_basic_information.log(LOG_INFO);
-                }
-                file_basic_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileStandardInformation:
-            {
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                out_stream.out_uint32_le(fscc::FileStandardInformation::size());    // Length(4)
-
-                const size_t block_size = 512;
-
-                fscc::FileStandardInformation file_standard_information(
-                        sb.st_blocks * block_size,              // AllocationSize
-                        sb.st_size,                             // EndOfFile
-                        sb.st_nlink,                            // NumberOfLinks
-                        0,                                      // DeletePending
-                        0                                       // Directory
-                    );
-
-                if (verbose) {
-                    LOG(LOG_INFO, "ManagedFile::ProcessServerDriveQueryInformationRequest");
-                    file_standard_information.log(LOG_INFO);
-                }
-                file_standard_information.emit(out_stream);
-            }
-            break;
-
-            case rdpdr::FileAttributeTagInformation:
-            {
-                MakeClientDriveIoResponse(out_stream,
-                                          device_io_request,
-                                          "ManagedFile::ProcessServerDriveQueryInformationRequest",
-                                          0x00000000,   // STATUS_SUCCESS
-                                          verbose);
-
-                out_stream.out_uint32_le(fscc::FileAttributeTagInformation::size());    // Length(4)
-
-                fscc::FileAttributeTagInformation file_attribute_tag_information(
-                        fscc::FILE_ATTRIBUTE_DIRECTORY |                                    // FileAttributes
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
-                        0                                                                   // ReparseTag
-                    );
-
-                if (verbose) {
-                    LOG(LOG_INFO, "ManagedFile::ProcessServerDriveQueryInformationRequest");
-                    file_attribute_tag_information.log(LOG_INFO);
-                }
-                file_attribute_tag_information.emit(out_stream);
-            }
-            break;
-
-            default:
-                LOG(LOG_ERR,
-                    "ManagedFile::ProcessServerDriveQueryInformationRequest: "
-                        "Unknown FsInformationClass(0x%X)",
-                    server_drive_query_information_request.FsInformationClass());
-                throw Error(ERR_RDP_PROTOCOL);
-            //break;
-        }
 
         out_stream.mark_end();
 
