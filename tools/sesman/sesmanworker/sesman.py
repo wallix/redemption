@@ -1003,38 +1003,37 @@ class Sesman():
                 self.send_data(data_to_send)
                 continue
 
-            if _status:
-                tries = 5
-                Logger().info(u"Wab user '%s' authentication succeeded" % mundane(self.shared.get(u'login')))
-
-                # Warn password will expire soon for user
-                _status, _error = self.check_password_expiration_date()
-
-                # Get services for identified user
-                _status = None
-                while _status is None:
-                    # [ SELECTOR ]
-                    _status, _error = self.get_service()
-                    Logger().info("get service end :%s" % _status)
-                    if not _status:
-                        # logout or error in selector
-                        self.engine.reset_proxy_rights()
-                        break
-                    selected_target, _status, _error = self.select_target()
-                    Logger().info("select_target end :%s" % _status)
-                    if not _status:
-                        # target not available
-                        self.engine.reset_proxy_rights()
-                        break
-                    # [ WAIT INFO ]
-                    _status, _error = self.check_target(selected_target)
-                    Logger().info("check_target end :%s" % _status)
-
         if tries <= 0:
             Logger().info(u"Too many login failures")
             _status, _error = False, TR(u"Too many login failures or selector orders, closing")
             self.engine.NotifyPrimaryConnectionFailed(self.shared.get(u'login'),
                                                       self.shared.get(u'ip_client'))
+
+        if _status:
+            Logger().info(u"Wab user '%s' authentication succeeded" % mundane(self.shared.get(u'login')))
+
+            # Warn password will expire soon for user
+            _status, _error = self.check_password_expiration_date()
+
+            # Get services for identified user
+            _status = None
+            while _status is None:
+                # [ SELECTOR ]
+                _status, _error = self.get_service()
+                Logger().info("get service end :%s" % _status)
+                if not _status:
+                    # logout or error in selector
+                    self.engine.reset_proxy_rights()
+                    break
+                selected_target, _status, _error = self.select_target()
+                Logger().info("select_target end :%s" % _status)
+                if not _status:
+                    # target not available
+                    self.engine.reset_proxy_rights()
+                    break
+                # [ WAIT INFO ]
+                _status, _error = self.check_target(selected_target)
+                Logger().info("check_target end :%s" % _status)
 
         if _status:
             Logger().info(u"Asking service %s@%s" % (self.shared.get(u'target_login'), self.shared.get(u'target_device')))
@@ -1044,7 +1043,6 @@ class Sesman():
             #####################
             ### START_SESSION ###
             #####################
-            session_started = False
             extra_info = self.engine.get_target_extra_info()
             _status, _error = self.check_video_recording(
                 extra_info.is_recorded,
