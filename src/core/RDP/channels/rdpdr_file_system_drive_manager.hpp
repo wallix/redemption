@@ -487,7 +487,8 @@ public:
                 }
 
 //                (void)::posix_fallocate(this->fd, 0, EndOfFile);
-                (void)::ftruncate(this->fd, EndOfFile);
+                int truncate_result = ::ftruncate(this->fd, EndOfFile);
+                (void)truncate_result;
 
                 SendClientDriveSetInformationResponse(
                         device_io_request,
@@ -579,7 +580,8 @@ public:
                         AllocationSize);
                 }
 
-                (void)::ftruncate(this->fd, AllocationSize);
+                int truncate_result = ::ftruncate(this->fd, AllocationSize);
+                (void)truncate_result;
 
                 SendClientDriveSetInformationResponse(
                         device_io_request,
@@ -1453,7 +1455,8 @@ public:
 
         off64_t seek_result = ::lseek64(this->fd, current_offset, SEEK_SET);
         REDASSERT(seek_result == current_offset);
-        ::write(this->fd, in_stream.p, in_stream.in_remain());
+        int write_result = ::write(this->fd, in_stream.p, in_stream.in_remain());
+        (void)write_result;
 
         remaining_number_of_bytes_to_write -= in_stream.in_remain();
         current_offset                     += in_stream.in_remain();
