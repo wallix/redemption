@@ -2103,6 +2103,8 @@ public:
                             //LOG(LOG_INFO, "Decoded keyboard input data:");
                             //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
+                            bool send_to_mod = true;
+
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
@@ -2118,7 +2120,7 @@ public:
 
                                 struct timeval now = tvtime();
 
-                                this->capture->input(now, decoded_data);
+                                send_to_mod = this->capture->input(now, decoded_data);
                             }
 
                             if (this->up_and_running) {
@@ -2126,7 +2128,8 @@ public:
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
-                                    if (!this->input_event_and_graphics_update_disabled) {
+                                    if (!this->input_event_and_graphics_update_disabled &&
+                                        send_to_mod) {
                                         cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
                                     }
                                     this->has_activity = true;
@@ -3425,6 +3428,8 @@ public:
                             //LOG(LOG_INFO, "Decoded keyboard input data:");
                             //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
+                            bool send_to_mod = true;
+
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
@@ -3440,7 +3445,7 @@ public:
 
                                 struct timeval now = tvtime();
 
-                                this->capture->input(now, decoded_data);
+                                send_to_mod = this->capture->input(now, decoded_data);
                             }
 
                             if (this->up_and_running) {
@@ -3448,7 +3453,8 @@ public:
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
-                                    if (!this->input_event_and_graphics_update_disabled) {
+                                    if (!this->input_event_and_graphics_update_disabled &&
+                                        send_to_mod) {
                                         cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
                                     }
                                     this->has_activity = true;

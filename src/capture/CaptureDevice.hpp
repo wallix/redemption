@@ -28,7 +28,8 @@ class Stream;
 struct RDPCaptureDevice : noncopyable {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
 
-    virtual void input(const timeval & now, Stream & input_data_32) {}
+    // Return false to prevent data to be sent to RDP server.
+    virtual bool input(const timeval & now, Stream & input_data_32) { return true; }
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
         bool ignore_frame_in_timeval, bool const & requested_to_stop) {}
