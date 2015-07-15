@@ -19,12 +19,10 @@
 */
 
 #include "config_spec.hpp"
+#include "multi_filename_writer.hpp"
 
 #include <algorithm>
 #include <iostream>
-#include <sstream>
-#include <fstream>
-#include <iomanip>
 #include <locale>
 #include <vector>
 #include <map>
@@ -33,54 +31,16 @@
 #include <cstring>
 
 
-namespace config_writer {
+namespace spec_writer {
 
 using namespace config_spec;
 
-using config_spec::link; // for ambiguousity
-
-struct ConfigCppWriter {
-    std::string section_name;
-    unsigned depth = 0;
-    std::ostringstream out_member_;
-    std::ostream * out_;
-
-    std::map<std::string, std::string> sections_member;
+struct SpecCppWriter : ConfigSpecBase<SpecCppWriter> {
     std::vector<std::string> sections_ordered;
 
-    std::ostream & out() {
-        return *this->out_;
-    }
-
-    void tab() {
-    }
-
-    void start_section(std::string name) {
-        this->out_ = &this->out_member_;
-        this->section_name = std::move(name);
-        if (!this->section_name.empty()) {
-            ++this->depth;
-        }
-    }
-    void stop_section() {
-        this->out_ = &this->out_member_;
-        if (!this->section_name.empty()) {
-            --this->depth;
-        }
-        this->sections_member[this->section_name] += this->out_member_.str();
+    void do_stop_section() {
         this->sections_ordered.emplace_back(std::move(this->section_name));
-        this->out_member_.str("");
     }
-
-    void sep() {
-    }
-
-    template<class T>
-    struct ref
-    {
-        T const & x;
-        operator T const & () const { return x; }
-    };
 
     template<class Pack>
     void member_impl(std::false_type, Pack const & ) {
@@ -127,12 +87,12 @@ struct ConfigCppWriter {
 
 
     template<class T>
-    typename std::enable_if<std::is_base_of<BaseField, T>::value, decltype(std::declval<T>().get())>::type
+    enable_if_basefield<T, decltype(std::declval<T>().get())>
     get_value(T const & x)
     { return x.get(); }
 
     template<class T>
-    typename std::enable_if<!std::is_base_of<BaseField, T>::value, T const &>::type
+    disable_if_basefield<T, T const &>
     get_value(T const & d)
     { return d; }
 
@@ -152,41 +112,11 @@ struct ConfigCppWriter {
 
     template<class... Ts>
     void member(Ts const & ... args) {
-        struct Pack : ref<Ts>... {
-            explicit Pack(Ts const &... x)
-            : ref<Ts>{x}...
-            {}
-        } pack{args...};
+        MK_PACK(Ts) pack{args...};
         this->member_impl(typename std::is_convertible<Pack, ref<Attribute>>::type(), pack);
     }
 
-    void write(desc x) {
-        auto s = x.value;
-        auto p = s;
-        while (*s) {
-            while (*p && *p != '\n') {
-                ++p;
-            }
-            if (*p == '\n') {
-                ++p;
-            }
-            this->tab();
-            this->out() << "# ";
-            this->out().write(s, p-s);
-            s = p;
-        }
-        this->out() << "\n";
-    }
-
-
-    template<class Pack, class To>
-    typename std::enable_if<std::is_convertible<Pack, To>::value>::type
-    write_if_convertible(Pack const & x, type_<To>)
-    { this->write(static_cast<To const &>(x)); }
-
-    template<class Pack, class To>
-    void write_if_convertible(Pack const &, To)
-    { }
+    void write(desc x) { this->write_comment("#", x.value); }
 
 
     template<class T>
@@ -284,16 +214,7 @@ struct ConfigCppWriter {
     template<std::size_t N, class T>
     void write_type(type_<StaticKeyString<N>>, T const & x) {
         this->out() << "string(min=" << N*2 << ", max=" << N*2 << ", default='";
-        const char * k = this->get_cstr(this->get_value(x));
-        int c;
-        for (const char * e = k + N; k != e; ++k) {
-            c = (*k >> 4);
-            c += (c > 9) ? 'A' - 10 : '0';
-            this->out() << char(c);
-            c = (*k & 0xf);
-            c += (c > 9) ? 'A' - 10 : '0';
-            this->out() << char(c);
-        }
+        this->write_key(this->get_cstr(this->get_value(x)), N);
         this->out() << "')\n";
     }
 
@@ -311,7 +232,7 @@ struct ConfigCppWriter {
 }
 
 
-void write_spec(std::ostream & os, config_writer::ConfigCppWriter & writer) {
+void write_spec(std::ostream & os, spec_writer::SpecCppWriter & writer) {
     os << "## Config file for RDP proxy.\n\n\n";
     for (auto & section_name : writer.sections_ordered) {
         auto body = writer.sections_member.find(section_name)->second;
@@ -325,36 +246,6 @@ void write_spec(std::ostream & os, config_writer::ConfigCppWriter & writer) {
     }
 }
 
-struct SuitableWrite {
-    explicit SuitableWrite(config_writer::ConfigCppWriter & writer, int errnum = 1)
-    : writer(writer)
-    , errnum(errnum)
-    {}
-
-    template<class Fn>
-    SuitableWrite & then(const char * new_filename, Fn fn) {
-        if (!err) {
-            const char * filename = this->filename;
-            if (new_filename && *new_filename && strcmp(this->filename, new_filename)) {
-                this->of.close();
-                this->of.open(new_filename);
-                filename = new_filename;
-            }
-
-            fn(this->of, this->writer);
-            this->err = !bool(this->of);
-            this->filename = filename;
-            ++this->errnum;
-        }
-        return *this;
-    }
-
-    char const * filename = "";
-    config_writer::ConfigCppWriter & writer;
-    std::ofstream of;
-    int errnum;
-    int err = 0;
-};
 
 int main(int ac, char ** av)
 {
@@ -363,10 +254,10 @@ int main(int ac, char ** av)
         return 1;
     }
 
-    config_writer::ConfigCppWriter writer;
+    spec_writer::SpecCppWriter writer;
     config_spec::writer_config_spec(writer);
 
-    SuitableWrite sw(writer);
+    MultiFilenameWriter<spec_writer::SpecCppWriter> sw(writer);
     sw.then(av[1], &write_spec);
     if (sw.err) {
         std::cerr << av[0] << ": " << sw.filename << ": " << strerror(errno) << "\n";

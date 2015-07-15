@@ -225,9 +225,7 @@ public:
     }
 };
 
-inline
 #include "configs/config_initialize.tcc"
-inline
 #include "configs/config_set_value.tcc"
 
 #endif
