@@ -1,4 +1,4 @@
-void Inifile::initialize() {
+inline void Inifile::initialize() {
 
     this->to_send_set.insert(AUTHID_AUTH_USER);
     this->globals.auth_user.attach_ini(this, AUTHID_AUTH_USER);
