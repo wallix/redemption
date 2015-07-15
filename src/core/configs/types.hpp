@@ -273,75 +273,73 @@ public:
 };
 
 
-#define MK_ENUM_IO(E)                                                                 \
-    template<class Ch, class Tr>                                                      \
-    std::basic_ostream<Ch, Tr> & operator << (std::basic_ostream<Ch, Tr> & os, E e) { \
-        return os << underlying_cast(e);                                              \
+#define MK_ENUM_IO(E)                                    \
+    template<class Ch, class Tr>                         \
+    std::basic_ostream<Ch, Tr> &                         \
+    operator << (std::basic_ostream<Ch, Tr> & os, E e) { \
+        return os << underlying_cast(e);                 \
     }
 
 
-#define MK_ENUM_FLAG_FN(E)                                              \
-    MK_ENUM_IO(E)                                                       \
-                                                                        \
-    inline E operator | (E x, E y) {                                    \
-        return static_cast<E>(underlying_cast(x) | underlying_cast(y)); \
-    }                                                                   \
-                                                                        \
-    inline E operator & (E x, E y) {                                    \
-        return static_cast<E>(underlying_cast(x) & underlying_cast(y)); \
-    }                                                                   \
-                                                                        \
-    inline E & operator |= (E & x, E y) {                               \
-        return x = x | y;                                               \
-    }                                                                   \
-                                                                        \
-    inline E & operator &= (E & x, E y) {                               \
-        return x = x | y;                                               \
-    }
+#define MK_ENUM_FLAG_FN(E)                                                                             \
+    MK_ENUM_IO(E)                                                                                      \
+    inline E operator | (E x, E y) { return static_cast<E>(underlying_cast(x) | underlying_cast(y)); } \
+    inline E operator & (E x, E y) { return static_cast<E>(underlying_cast(x) & underlying_cast(y)); } \
+    inline E & operator |= (E & x, E y) { return x = x | y; }                                          \
+    inline E & operator &= (E & x, E y) { return x = x | y; }
 
 
 template<class E, class = void>
 struct enum_option
 { using type = std::false_type; };
 
-#define ENUM_OPTION(Enum, X, ...)                                                                           \
-    template<class T> struct enum_option<Enum, T> {                                                         \
-        static constexpr const std::initializer_list<std::decay<decltype(X)>::type> value {X, __VA_ARGS__}; \
-        using type = std::true_type;                                                                        \
-    };                                                                                                      \
-    template<class T> constexpr const std::initializer_list<std::decay<decltype(X)>::type>                  \
+#ifdef IN_IDE_PARSER
+# define ENUM_OPTION(Enum, X, ...)
+#else
+# define ENUM_OPTION(Enum, X, ...)                       \
+    template<class T> struct enum_option<Enum, T> {      \
+        static constexpr const std::initializer_list<    \
+            std::decay<decltype(X)>::type                \
+        > value {X, __VA_ARGS__};                        \
+        using type = std::true_type;                     \
+    };                                                   \
+    template<class T> constexpr const                    \
+    std::initializer_list<std::decay<decltype(X)>::type> \
     enum_option<Enum, T>::value
+#endif
 
-#define MK_ENUM_FIELD(Enum, ...)                                                             \
-    MK_ENUM_IO(Enum)                                                                         \
-    ENUM_OPTION(Enum, __VA_ARGS__);                                                          \
-                                                                                             \
-    struct Enum##FieldTraits {                                                               \
-        static Enum get_default() { return Enum::NB; }                                       \
-        static Enum get_valid() { return static_cast<Enum>(0); }                             \
-        static bool valid(Enum x) { return underlying_cast(x) < underlying_cast(Enum::NB); } \
-        static Enum cstr_to_enum(char const * cstr)  {                                       \
-            unsigned i = 0;                                                                  \
-            auto l{__VA_ARGS__};                                                             \
-            for (auto s : l) {                                                               \
-                if (0 == strcmp(cstr, s)) {                                                  \
-                    return static_cast<Enum>(i);                                             \
-                }                                                                            \
-                ++i;                                                                         \
-            }                                                                                \
-            return get_valid();                                                              \
-        }                                                                                    \
-        static char const * to_string(Enum x) {                                              \
-            auto l{__VA_ARGS__};                                                             \
-            if (!valid(x)) {                                                                 \
-                return *l.begin();                                                           \
-            }                                                                                \
-            return *(l.begin() + underlying_cast(x));                                        \
-        }                                                                                    \
-    };                                                                                       \
-                                                                                             \
-    inline char const * enum_to_option(Enum e) { return Enum##FieldTraits::to_string(e); }   \
-                                                                                             \
+#define MK_ENUM_FIELD(Enum, ...)                                   \
+    MK_ENUM_IO(Enum)                                               \
+    ENUM_OPTION(Enum, __VA_ARGS__);                                \
+                                                                   \
+    struct Enum##FieldTraits {                                     \
+        static Enum get_default() { return Enum::NB; }             \
+        static Enum get_valid() { return static_cast<Enum>(0); }   \
+        static bool valid(Enum x)                                  \
+        { return underlying_cast(x) < underlying_cast(Enum::NB); } \
+        static Enum cstr_to_enum(char const * cstr)  {             \
+            unsigned i = 0;                                        \
+            auto l{__VA_ARGS__};                                   \
+            for (auto s : l) {                                     \
+                if (0 == strcmp(cstr, s)) {                        \
+                    return static_cast<Enum>(i);                   \
+                }                                                  \
+                ++i;                                               \
+            }                                                      \
+            return get_valid();                                    \
+        }                                                          \
+        static char const * to_string(Enum x) {                    \
+            auto l{__VA_ARGS__};                                   \
+            if (!valid(x)) {                                       \
+                return *l.begin();                                 \
+            }                                                      \
+            return *(l.begin() + underlying_cast(x));              \
+        }                                                          \
+    };                                                             \
+                                                                   \
+    inline char const * enum_to_option(Enum e)                     \
+    { return Enum##FieldTraits::to_string(e); }                    \
+                                                                   \
     using Enum##Field = EnumField<Enum, Enum##FieldTraits>
 
 
@@ -450,7 +448,7 @@ inline ColorDepth color_depth_from_cstr(char const * value) {
 
 #undef MK_ENUM_IO
 #undef MK_ENUM_FLAG_FN
-// #undef MK_ENUM_FIELD
+#undef MK_ENUM_FIELD
 #undef ENUM_OPTION
 
 
