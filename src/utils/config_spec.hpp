@@ -21,10 +21,14 @@
 #ifndef REDEMPTION_SRC_UTILS_CONFIG_SPEC_HPP
 #define REDEMPTION_SRC_UTILS_CONFIG_SPEC_HPP
 
-#include <iosfwd>
-#include <vector>
-
 #include "configs/types.hpp"
+
+#include <type_traits>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <map>
+
 
 namespace config_spec {
 
@@ -524,6 +528,120 @@ void writer_config_spec(Writer && w)
     w.member(type_<Font>(), "font");
     w.stop_section();
 }
+
+
+template<class Inherit>
+struct ConfigSpecBase
+{
+    std::string section_name;
+    unsigned depth = 0;
+    std::ostringstream out_member_;
+    std::ostream * out_;
+
+    std::map<std::string, std::string> sections_member;
+
+    std::ostream & out() {
+        return *this->out_;
+    }
+
+    void start_section(std::string name) {
+        this->out_ = &this->out_member_;
+        this->section_name = std::move(name);
+        if (!this->section_name.empty()) {
+            ++this->depth;
+        }
+        this->inherit().do_start_section();
+    }
+
+    void stop_section() {
+        this->out_ = &this->out_member_;
+        if (!this->section_name.empty()) {
+            --this->depth;
+        }
+        this->sections_member[this->section_name] += this->out_member_.str();
+        this->out_member_.str("");
+        this->inherit().do_stop_section();
+    }
+
+    void sep() { this->inherit().do_sep(); }
+    void tab() { this->inherit().do_tab(); }
+
+    template<class T>
+    struct ref
+    {
+        T const & x;
+        operator T const & () const { return x; }
+    };
+
+    template<class Pack, class To>
+    typename std::enable_if<std::is_convertible<Pack, To>::value>::type
+    write_if_convertible(Pack const & x, type_<To>)
+    { this->inherit().write(static_cast<To const &>(x)); }
+
+    template<class Pack, class To>
+    void write_if_convertible(Pack const &, To)
+    { }
+
+    void write_comment(char const * start_line_comment, char const * s) {
+        auto p = s;
+        while (*s) {
+            while (*p && *p != '\n') {
+                ++p;
+            }
+            if (*p == '\n') {
+                ++p;
+            }
+            this->tab();
+            this->out() << start_line_comment << " ";
+            this->out().write(s, p-s);
+            s = p;
+        }
+        this->out() << "\n";
+    }
+
+    void write_key(char const * k, std::size_t n, char const * prefix = "") {
+        int c;
+        for (const char * e = k + n; k != e; ++k) {
+            this->out() << prefix;
+            c = (*k >> 4);
+            c += (c > 9) ? 'A' - 10 : '0';
+            this->out() << char(c);
+            c = (*k & 0xf);
+            c += (c > 9) ? 'A' - 10 : '0';
+            this->out() << char(c);
+        }
+    }
+
+private:
+    Inherit & inherit() {
+        return static_cast<Inherit&>(*this);
+    }
+
+    void do_start_section() {}
+    void do_stop_section() {}
+    void do_sep() {}
+    void do_tab() {}
+};
+
+template<class T, class Result = void>
+using enable_if_basefield = typename std::enable_if<
+    std::is_base_of<FieldObserver::BaseField, T>::value,
+    Result
+>::type;
+
+template<class T, class Result = void>
+using disable_if_basefield = typename std::enable_if<
+    !std::is_base_of<FieldObserver::BaseField, T>::value,
+    Result
+>::type;
+
+#define MK_PACK(Ts)                    \
+    struct Pack : ref<Ts>... {         \
+        explicit Pack(Ts const &... x) \
+        : ref<Ts>{x}...                \
+        {}                             \
+    }
+
 
 }
 
