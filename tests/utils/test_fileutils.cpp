@@ -439,15 +439,58 @@ BOOST_AUTO_TEST_CASE(TestPathNCopy)
 
     memset(dest, 'A', sizeof(dest));
     pathncpy(dest, "", sizeof(dest));
-    BOOST_CHECK_EQUAL(std::string("./"), std::string(dest));
+    BOOST_CHECK_EQUAL("./", std::string(dest));
+
+    memset(dest, 'A', sizeof(dest));
+    try {
+        pathncpy(dest, "", 2);
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(e.id, ERR_PATH_TOO_LONG);
+    };
+
+    memset(dest, 'A', sizeof(dest));
+    pathncpy(dest, "/tmp/a", sizeof(dest));
+    BOOST_CHECK_EQUAL("/tmp/a/", std::string(dest));
+
+    memset(dest, 'A', sizeof(dest));
+    pathncpy(dest, "/tmp/a/", sizeof(dest));
+    BOOST_CHECK_EQUAL("/tmp/a/", std::string(dest));
 
     memset(dest, 'A', sizeof(dest));
     pathncpy(dest, "/tmp", sizeof(dest));
-    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(dest));
+    BOOST_CHECK_EQUAL("/tmp/", std::string(dest));
 
     memset(dest, 'A', sizeof(dest));
     pathncpy(dest, "/tmp/", sizeof(dest));
-    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(dest));
+    BOOST_CHECK_EQUAL("/tmp/", std::string(dest));
+
+    memset(dest, 'A', sizeof(dest));
+    pathncpy(dest, "/tmp/proxy/xxx", sizeof(dest));
+    BOOST_CHECK_EQUAL("/tmp/proxy/xxx/", std::string(dest));
+
+    memset(dest, 'A', sizeof(dest));
+    pathncpy(dest, "/tmp/proxy/xxx/", sizeof(dest));
+    BOOST_CHECK_EQUAL("/tmp/proxy/xxx/", std::string(dest));
+
+    memset(dest, 'A', sizeof(dest));
+    try {
+        pathncpy(dest, "/tmp/proxy/xxxx", sizeof(dest));
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(e.id, ERR_PATH_TOO_LONG);
+    };
+
+    memset(dest, 'A', sizeof(dest));
+    try {
+        pathncpy(dest, "/tmp/proxy/xxxx/", sizeof(dest));
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(e.id, ERR_PATH_TOO_LONG);
+    };
 
     memset(dest, 'A', sizeof(dest));
     try {
@@ -463,7 +506,7 @@ BOOST_AUTO_TEST_CASE(TestPathNCopy)
     memset(dest, 'A', sizeof(dest));
     pathncpy(dest, "/usr/local/tmp", sizeof(dest));
     BOOST_CHECK_EQUAL(15, strlen(dest));
-    BOOST_CHECK_EQUAL(std::string("/usr/local/tmp/"), std::string(dest));
+    BOOST_CHECK_EQUAL("/usr/local/tmp/", std::string(dest));
 
     memset(dest, 'A', sizeof(dest));
     try {

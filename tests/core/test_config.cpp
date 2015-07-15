@@ -62,7 +62,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), ini.globals.persistent_path.c_str());
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
+                                                        ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_on_launch_failure.get());
@@ -96,11 +97,11 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
 
@@ -318,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
@@ -354,11 +355,11 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
@@ -584,7 +585,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
@@ -620,11 +621,11 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
@@ -1091,7 +1092,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(3000,                             ini.globals.wab_agent_launch_timeout.get());
@@ -1301,7 +1302,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
@@ -1337,11 +1338,11 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
@@ -1515,7 +1516,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(6000,                             ini.globals.wab_agent_launch_timeout.get());
@@ -1551,11 +1552,11 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
@@ -1704,7 +1705,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
@@ -1740,11 +1741,11 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
@@ -1892,7 +1893,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(4000,                             ini.globals.wab_agent_launch_timeout.get());
@@ -1928,11 +1929,11 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
@@ -2067,7 +2068,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
@@ -2103,11 +2104,11 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
@@ -2242,7 +2243,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
     BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.globals.persistent_path.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_wab_agent.get());
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_launch_timeout.get());
@@ -2278,11 +2279,11 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_path.c_str());
-    BOOST_CHECK_EQUAL(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)),
+    BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
     BOOST_CHECK_EQUAL(KeyboardLogFlags::none,           ini.video.disable_keyboard_log.get());
