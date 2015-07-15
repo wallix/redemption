@@ -449,6 +449,13 @@ exe make_spec
     : <variant>coverage:<build>no
 ;
 
+
+if ! [ os.environ MAKE_CONFIG ]
+{
+    Echo [ SHELL "cd ./src/core/configs ; make" ] ;
+}
+
+
 #exe freetype_draw : ftests/freetype_draw.cpp freetype
 #    : <link>static <variant>coverage:<library>gcov
 #;
