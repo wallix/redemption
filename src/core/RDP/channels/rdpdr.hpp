@@ -2619,7 +2619,6 @@ public:
 
     inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-private:
     inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileBasicInformation:        return "FileBasicInformation";
@@ -2630,6 +2629,7 @@ private:
         return "<unknown>";
     }
 
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",

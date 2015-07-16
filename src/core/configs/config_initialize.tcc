@@ -34,6 +34,8 @@ inline void Inifile::initialize() {
     this->globals.enable_wab_agent.set(0);
     this->globals.wab_agent_launch_timeout.attach_ini(this, AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT);
     this->globals.wab_agent_launch_timeout.set(0);
+    this->globals.wab_agent_on_launch_failure.attach_ini(this, AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE);
+    this->globals.wab_agent_on_launch_failure.set(0);
     this->globals.wab_agent_keepalive_timeout.attach_ini(this, AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT);
     this->globals.wab_agent_keepalive_timeout.set(0);
 

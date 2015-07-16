@@ -438,7 +438,7 @@ class Engine(object):
             import traceback
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def get_targets_list(self, group_filter, device_filter, protocol_filter):
+    def get_targets_list(self, group_filter, device_filter, protocol_filter, case_sensitive):
         targets = []
         item_filtered = False
         for target_info in self.displaytargets:
@@ -454,9 +454,17 @@ class Engine(object):
                                                                            u':INTERNAL', 1)
                     temp_resource_service_protocol_cn = 'INTERNAL'
 
-            if ((target_info.group.find(group_filter) == -1)
-                or (temp_service_login.find(device_filter) == -1)
-                or (temp_resource_service_protocol_cn.find(protocol_filter) == -1)):
+            compare_group         = target_info.group if case_sensitive else target_info.group.decode("utf-8").lower()
+            compare_service_login = temp_service_login if case_sensitive else temp_service_login.decode("utf-8").lower()
+            compare_protocol      = temp_resource_service_protocol_cn if case_sensitive else temp_resource_service_protocol_cn.decode("utf-8").lower()
+
+            compare_filter_group = group_filter if case_sensitive else group_filter.decode("utf-8").lower()
+            compare_filter_device = device_filter if case_sensitive else device_filter.decode("utf-8").lower()
+            compare_filter_protocol= protocol_filter if case_sensitive else protocol_filter.decode("utf-8").lower()
+
+            if ((compare_group.find(compare_filter_group) == -1)
+                or (compare_service_login.find(compare_filter_device) == -1)
+                or (compare_protocol.find(compare_filter_protocol) == -1)):
                 item_filtered = True
                 continue
 

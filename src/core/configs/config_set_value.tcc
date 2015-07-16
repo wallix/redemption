@@ -233,6 +233,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "wab_agent_launch_timeout")) {
             ::configs::parse(this->globals.wab_agent_launch_timeout, value);
         }
+        else if (0 == strcmp(key, "wab_agent_on_launch_failure")) {
+            ::configs::parse(this->globals.wab_agent_on_launch_failure, value);
+        }
         else if (0 == strcmp(key, "wab_agent_keepalive_timeout")) {
             ::configs::parse(this->globals.wab_agent_keepalive_timeout, value);
         }

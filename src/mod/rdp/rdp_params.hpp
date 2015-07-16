@@ -49,6 +49,7 @@ struct ModRDPParams {
     bool disable_clipboard_log_syslog;
 
     unsigned     wab_agent_launch_timeout;
+    unsigned     wab_agent_on_launch_failure;
     unsigned     wab_agent_keepalive_timeout;
     const char * wab_agent_alternate_shell;
 
@@ -127,6 +128,7 @@ struct ModRDPParams {
         , disable_clipboard_log_syslog(false)
 
         , wab_agent_launch_timeout(0)
+        , wab_agent_on_launch_failure(0)
         , wab_agent_keepalive_timeout(0)
         , wab_agent_alternate_shell("")
 
@@ -213,6 +215,8 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams wab_agent_launch_timeout=%u",            this->wab_agent_launch_timeout);
+        LOG(LOG_INFO,
+            "ModRDPParams wab_agent_on_launch_failure=%u",         this->wab_agent_on_launch_failure);
         LOG(LOG_INFO,
             "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
 

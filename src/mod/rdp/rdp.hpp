@@ -188,6 +188,7 @@ class mod_rdp : public mod_api {
     const int  rdp_compression;
 
     const unsigned    wab_agent_launch_timeout;
+    const unsigned    wab_agent_on_launch_failure;
     const unsigned    wab_agent_keepalive_timeout;
     const std::string wab_agent_alternate_shell;
 
@@ -350,6 +351,7 @@ public:
         , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
+        , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
         , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
         , recv_bmp_update(0)
@@ -605,8 +607,9 @@ public:
 
         if (this->verbose & 1) {
             LOG(LOG_INFO,
-                "enable_wab_agent=%s wab_agent_launch_timeout=%u",
-                (this->enable_wab_agent ? "yes" : "no"), this->wab_agent_launch_timeout);
+                "enable_wab_agent=%s wab_agent_launch_timeout=%u wab_agent_on_launch_failure=%u",
+                (this->enable_wab_agent ? "yes" : "no"), this->wab_agent_launch_timeout,
+                this->wab_agent_on_launch_failure);
         }
         if (this->enable_wab_agent) {
             this->wab_agent_event.object_and_time = true;
@@ -628,6 +631,10 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
+        if (this->enable_wab_agent) {
+            this->front.disable_input_event_and_graphics_update(false);
+        }
+
         delete this->transparent_recorder;
 
         if (this->acl && !this->end_session_reason.empty() &&
@@ -1444,10 +1451,17 @@ private:
                         DeviceCount);
                 }
 
+                if (!DeviceCount) {
+                    break;
+                }
+
                 uint8_t * const DeviceList = chunk.p;
 
                 {
                     BStream result(this->chunked_virtual_channel_data_stream.get_capacity());
+
+                    const bool saved_proxy_managed_drives_announced =
+                        this->proxy_managed_drives_announced;
 
                     if (this->filter_unsupported_device(this->authorization_channels,
                                                         chunk, DeviceCount,
@@ -1456,6 +1470,12 @@ private:
                                                         this->proxy_managed_drives_announced,
                                                         this->device_capability_version_02_supported,
                                                         this->verbose)) {
+                        if (this->enable_wab_agent &&
+                            !saved_proxy_managed_drives_announced &&
+                            this->proxy_managed_drives_announced) {
+                            this->front.disable_input_event_and_graphics_update(true);
+                        }
+
                         if (this->verbose) {
                             LOG(LOG_INFO, "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel");
                             hexdump_d(result.get_data(), result.size());
@@ -3446,6 +3466,9 @@ public:
                         if (rdpdr_channel) {
                             BStream result(this->chunked_virtual_channel_data_stream.get_capacity());
 
+                            const bool saved_proxy_managed_drives_announced =
+                                this->proxy_managed_drives_announced;
+
                             if (this->filter_unsupported_device(this->authorization_channels,
                                                                 result, // Fake data.
                                                                 0,
@@ -3454,6 +3477,12 @@ public:
                                                                 this->proxy_managed_drives_announced,
                                                                 this->device_capability_version_02_supported,
                                                                 this->verbose)) {
+                                if (this->enable_wab_agent &&
+                                    !saved_proxy_managed_drives_announced &&
+                                    this->proxy_managed_drives_announced) {
+                                    this->front.disable_input_event_and_graphics_update(true);
+                                }
+
                                 this->send_to_channel(*rdpdr_channel, result, result.size(),
                                                       CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
                             }
@@ -3482,13 +3511,17 @@ public:
             this->wab_agent_event.waked_up_by_time = false;
 
             if (this->wab_agent_launch_timeout && !this->wab_agent_is_ready) {
-                LOG(LOG_ERR, "Agent is not ready yet!");
+                LOG((this->wab_agent_on_launch_failure ? LOG_WARNING : LOG_ERR), "Agent is not ready yet!");
 
-                this->event.signal = BACK_EVENT_NEXT;
-                this->event.set();
+                if (!this->wab_agent_on_launch_failure) {
+                    this->event.signal = BACK_EVENT_NEXT;
+                    this->event.set();
+                }
+
+                this->front.disable_input_event_and_graphics_update(false);
             }
 
-            if (this->wab_agent_keepalive_timeout) {
+            if (this->wab_agent_is_ready && this->wab_agent_keepalive_timeout) {
                 if (!this->wab_agent_keep_alive_received) {
                     LOG(LOG_ERR, "No keep alive received from Agent!");
 
@@ -5068,6 +5101,10 @@ public:
 
             this->event.reset();
         }
+
+        if (this->enable_wab_agent) {
+            this->front.disable_input_event_and_graphics_update(true);
+        }
     }
 
     void process_save_session_info(Stream & stream) {
@@ -6466,7 +6503,13 @@ public:
             //LOG(LOG_INFO, "<<<Get startup application>>>");
 
             if (this->verbose & 1) {
-                LOG(LOG_ERR, "Agent is ready.");
+                LOG(LOG_INFO, "Agent is ready.");
+            }
+
+            if (this->front.disable_input_event_and_graphics_update(false)) {
+                LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
+                    this->front_width, this->front_height);
+                this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
             }
 
             this->wab_agent_is_ready = true;

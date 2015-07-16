@@ -232,6 +232,7 @@ struct VariablesConfiguration {
 
         BoolField enable_wab_agent;  // AUTHID_OPT_WABAGENT
         UnsignedField wab_agent_launch_timeout;  // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT
+        UnsignedField wab_agent_on_launch_failure;  // AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE
         UnsignedField wab_agent_keepalive_timeout;  // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
 
         StaticString<512> wab_agent_alternate_shell{""};

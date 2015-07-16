@@ -172,6 +172,7 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.member(A, type_<BoolField>(), "enable_wab_agent", attached, set(false), def_authid{"opt_wabagent"}, str_authid{"wab_agent"});
         w.member(A, type_<UnsignedField>(), "wab_agent_launch_timeout", attached, set(0), def_authid{"opt_wabagent_launch_timeout"});
+        w.member(A, type_<UnsignedField>(), "wab_agent_on_launch_failure", attached, set(0), def_authid{"opt_wabagent_on_launch_failure"});
         w.member(A, type_<UnsignedField>(), "wab_agent_keepalive_timeout", attached, set(0), def_authid{"opt_wabagent_keepalive_timeout"});
         w.sep();
         w.member(H, type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));

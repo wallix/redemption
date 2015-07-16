@@ -265,10 +265,12 @@ public:
         }
     }
 
-    void input(const timeval & now, Stream & input_data_32) override {
+    bool input(const timeval & now, Stream & input_data_32) override {
         if (this->capture_wrm) {
-            this->pnc->input(now, input_data_32);
+            return this->pnc->input(now, input_data_32);
         }
+
+        return true;
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {

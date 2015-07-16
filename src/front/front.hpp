@@ -380,6 +380,8 @@ private:
 
     bool focus_on_password_textbox = false;
 
+    bool input_event_and_graphics_update_disabled = false;
+
 public:
     Front ( Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -2082,6 +2084,8 @@ public:
                             //LOG(LOG_INFO, "Decoded keyboard input data:");
                             //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
+                            bool send_to_mod = true;
+
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
@@ -2097,7 +2101,7 @@ public:
 
                                 struct timeval now = tvtime();
 
-                                this->capture->input(now, decoded_data);
+                                send_to_mod = this->capture->input(now, decoded_data);
                             }
 
                             if (this->up_and_running) {
@@ -2105,7 +2109,10 @@ public:
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
-                                    cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                                    if (!this->input_event_and_graphics_update_disabled &&
+                                        send_to_mod) {
+                                        cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                                    }
                                     this->has_activity = true;
                                 }
                             }
@@ -2125,7 +2132,9 @@ public:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                if (!this->input_event_and_graphics_update_disabled) {
+                                    cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                }
                                 this->has_activity = true;
                             }
                         }
@@ -2483,6 +2492,20 @@ public:
 
             this->capture->session_update(now, message);
         }
+    }
+
+    virtual bool disable_input_event_and_graphics_update(bool disable) override {
+        bool need_full_screen_update =
+            (this->input_event_and_graphics_update_disabled && !disable);
+
+            if (this->input_event_and_graphics_update_disabled != disable) {
+                LOG(LOG_INFO, "Front: %s graphics update.",
+                    (disable ? "Disable" : "Enable"));
+            }
+
+        this->input_event_and_graphics_update_disabled = disable;
+
+        return need_full_screen_update;
     }
 
     /*****************************************************************************/
@@ -3360,7 +3383,9 @@ public:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                if (!this->input_event_and_graphics_update_disabled) {
+                                    cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                                }
                                 this->has_activity = true;
                             }
                         }
@@ -3383,6 +3408,8 @@ public:
                             //LOG(LOG_INFO, "Decoded keyboard input data:");
                             //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
+                            bool send_to_mod = true;
+
                             if (  this->capture
                                && (this->capture_state == CAPTURE_STATE_STARTED)
                                && decoded_data.size()) {
@@ -3398,7 +3425,7 @@ public:
 
                                 struct timeval now = tvtime();
 
-                                this->capture->input(now, decoded_data);
+                                send_to_mod = this->capture->input(now, decoded_data);
                             }
 
                             if (this->up_and_running) {
@@ -3406,7 +3433,10 @@ public:
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
-                                    cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                                    if (!this->input_event_and_graphics_update_disabled &&
+                                        send_to_mod) {
+                                        cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                                    }
                                     this->has_activity = true;
                                 }
                             }
@@ -3813,16 +3843,18 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
-            if (this->client_info.bpp != this->mod_bpp) {
-                RDPOpaqueRect new_cmd = cmd;
+            if (!this->input_event_and_graphics_update_disabled) {
+                if (this->client_info.bpp != this->mod_bpp) {
+                    RDPOpaqueRect new_cmd = cmd;
 
-                const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd.color = color_encode(color24, this->client_info.bpp);
+                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
+                    new_cmd.color = color_encode(color24, this->client_info.bpp);
 
-                this->orders->draw(new_cmd, clip);
-            }
-            else {
-                this->orders->draw(cmd, clip);
+                    this->orders->draw(new_cmd, clip);
+                }
+                else {
+                    this->orders->draw(cmd, clip);
+                }
             }
 
             if (  this->capture
@@ -3844,7 +3876,9 @@ public:
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->orders->draw(cmd, clip);
+            if (!this->input_event_and_graphics_update_disabled) {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -3855,7 +3889,10 @@ public:
 
     void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->orders->draw(cmd, clip);
+            if (!this->input_event_and_graphics_update_disabled) {
+                this->orders->draw(cmd, clip);
+            }
+
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
                 this->capture->draw(cmd, clip);
@@ -3866,7 +3903,10 @@ public:
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            this->orders->draw(cmd, clip);
+            if (!this->input_event_and_graphics_update_disabled) {
+                this->orders->draw(cmd, clip);
+            }
+
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
                 this->capture->draw(cmd, clip);
@@ -3879,16 +3919,18 @@ public:
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->send_global_palette();
 
-            if (this->client_info.bpp != this->mod_bpp) {
-                RDPMultiOpaqueRect new_cmd = cmd;
+            if (!this->input_event_and_graphics_update_disabled) {
+                if (this->client_info.bpp != this->mod_bpp) {
+                    RDPMultiOpaqueRect new_cmd = cmd;
 
-                const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd._Color = color_encode(color24, this->client_info.bpp);
+                    const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
+                    new_cmd._Color = color_encode(color24, this->client_info.bpp);
 
-                this->orders->draw(new_cmd, clip);
-            }
-            else {
-                this->orders->draw(cmd, clip);
+                    this->orders->draw(new_cmd, clip);
+                }
+                else {
+                    this->orders->draw(cmd, clip);
+                }
             }
 
             if (  this->capture
@@ -3912,17 +3954,19 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
-            RDP::RDPMultiPatBlt new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp) {
-                const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
-                const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
+            if (!this->input_event_and_graphics_update_disabled) {
+                RDP::RDPMultiPatBlt new_cmd = cmd;
+                if (this->client_info.bpp != this->mod_bpp) {
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
 
-                new_cmd.BackColor = color_encode(back_color24, this->client_info.bpp);
-                new_cmd.ForeColor = color_encode(fore_color24, this->client_info.bpp);
-                // this may change the brush add send it to to remote cache
+                    new_cmd.BackColor = color_encode(back_color24, this->client_info.bpp);
+                    new_cmd.ForeColor = color_encode(fore_color24, this->client_info.bpp);
+                    // this may change the brush add send it to to remote cache
+                }
+                this->cache_brush(new_cmd.brush);
+                this->orders->draw(new_cmd, clip);
             }
-            this->cache_brush(new_cmd.brush);
-            this->orders->draw(new_cmd, clip);
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -3946,7 +3990,9 @@ public:
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->orders->draw(cmd, clip);
+            if (!this->input_event_and_graphics_update_disabled) {
+                this->orders->draw(cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -3959,17 +4005,19 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
-            RDPPatBlt new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp) {
-                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+            if (!this->input_event_and_graphics_update_disabled) {
+                RDPPatBlt new_cmd = cmd;
+                if (this->client_info.bpp != this->mod_bpp) {
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
-                new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-                // this may change the brush add send it to to remote cache
+                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
+                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
+                    // this may change the brush add send it to to remote cache
+                }
+                this->cache_brush(new_cmd.brush);
+                this->orders->draw(new_cmd, clip);
             }
-            this->cache_brush(new_cmd.brush);
-            this->orders->draw(new_cmd, clip);
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4001,7 +4049,11 @@ public:
 
         const Bitmap tiled_bmp(bitmap, src_tile);
         const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-        this->orders->draw(cmd2, clip, tiled_bmp);
+
+        if (!this->input_event_and_graphics_update_disabled) {
+            this->orders->draw(cmd2, clip, tiled_bmp);
+        }
+
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)) {
             this->capture->draw(cmd2, clip, Bitmap(this->capture_bpp, tiled_bmp));
@@ -4106,7 +4158,10 @@ public:
             cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
             // this may change the brush add send it to to remote cache
         }
-        this->orders->draw(cmd2, clip, tiled_bmp);
+
+        if (!this->input_event_and_graphics_update_disabled) {
+            this->orders->draw(cmd2, clip, tiled_bmp);
+        }
 
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4138,21 +4193,22 @@ public:
                         std::max(cmd.starty, cmd.endy) - miny + 1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (this->client_info.bpp != this->mod_bpp) {
-                RDPLineTo new_cmd = cmd;
+            if (!this->input_event_and_graphics_update_disabled) {
+                if (this->client_info.bpp != this->mod_bpp) {
+                    RDPLineTo new_cmd = cmd;
 
-                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                const BGRColor pen_color24  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor pen_color24  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette_rgb);
 
-                new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                new_cmd.pen.color  = color_encode(pen_color24,  this->client_info.bpp);
+                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
+                    new_cmd.pen.color  = color_encode(pen_color24,  this->client_info.bpp);
 
-                this->orders->draw(new_cmd, clip);
+                    this->orders->draw(new_cmd, clip);
+                }
+                else {
+                    this->orders->draw(cmd, clip);
+                }
             }
-            else {
-                this->orders->draw(cmd, clip);
-            }
-
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4189,7 +4245,9 @@ public:
             // this may change the brush and send it to to remote cache
             this->cache_brush(new_cmd.brush);
 
-            this->orders->draw(new_cmd, clip, gly_cache);
+            if (!this->input_event_and_graphics_update_disabled) {
+                this->orders->draw(new_cmd, clip, gly_cache);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4227,13 +4285,15 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            RDPPolygonSC new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp) {
-                const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd.BrushColor = color_encode(pen_color24, this->client_info.bpp);
-            }
+            if (!this->input_event_and_graphics_update_disabled) {
+                RDPPolygonSC new_cmd = cmd;
+                if (this->client_info.bpp != this->mod_bpp) {
+                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
+                    new_cmd.BrushColor = color_encode(pen_color24, this->client_info.bpp);
+                }
 
-            this->orders->draw(new_cmd, clip);
+                this->orders->draw(new_cmd, clip);
+            }
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4269,19 +4329,21 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (this->client_info.bpp != this->mod_bpp) {
-                RDPPolygonCB new_cmd = cmd;
+            if (!this->input_event_and_graphics_update_disabled) {
+                if (this->client_info.bpp != this->mod_bpp) {
+                    RDPPolygonCB new_cmd = cmd;
 
-                const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
-                const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
 
-                new_cmd.foreColor = color_encode(fore_pen_color24, this->client_info.bpp);
-                new_cmd.backColor = color_encode(back_pen_color24, this->client_info.bpp);
+                    new_cmd.foreColor = color_encode(fore_pen_color24, this->client_info.bpp);
+                    new_cmd.backColor = color_encode(back_pen_color24, this->client_info.bpp);
 
-                this->orders->draw(new_cmd, clip);
-            }
-            else {
-                this->orders->draw(cmd, clip);
+                    this->orders->draw(new_cmd, clip);
+                }
+                else {
+                    this->orders->draw(cmd, clip);
+                }
             }
 
             if (  this->capture
@@ -4323,16 +4385,18 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (this->client_info.bpp != this->mod_bpp) {
-                RDPPolyline new_cmd = cmd;
+            if (!this->input_event_and_graphics_update_disabled) {
+                if (this->client_info.bpp != this->mod_bpp) {
+                    RDPPolyline new_cmd = cmd;
 
-                const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd.PenColor = color_encode(pen_color24, this->client_info.bpp);
+                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
+                    new_cmd.PenColor = color_encode(pen_color24, this->client_info.bpp);
 
-                this->orders->draw(new_cmd, clip);
-            }
-            else {
-                this->orders->draw(cmd, clip);
+                    this->orders->draw(new_cmd, clip);
+                }
+                else {
+                    this->orders->draw(cmd, clip);
+                }
             }
 
             if (  this->capture
@@ -4356,14 +4420,16 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
-            if (this->client_info.bpp != this->mod_bpp) {
-                RDPEllipseSC new_cmd = cmd;
-                const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd.color = color_encode(color24, this->client_info.bpp);
-                this->orders->draw(new_cmd, clip);
-            }
-            else {
-                this->orders->draw(cmd, clip);
+            if (!this->input_event_and_graphics_update_disabled) {
+                if (this->client_info.bpp != this->mod_bpp) {
+                    RDPEllipseSC new_cmd = cmd;
+                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
+                    new_cmd.color = color_encode(color24, this->client_info.bpp);
+                    this->orders->draw(new_cmd, clip);
+                }
+                else {
+                    this->orders->draw(cmd, clip);
+                }
             }
 
             if (  this->capture
@@ -4387,18 +4453,20 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
-            if (this->client_info.bpp != this->mod_bpp) {
-                RDPEllipseCB new_cmd = cmd;
-                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+            if (!this->input_event_and_graphics_update_disabled) {
+                if (this->client_info.bpp != this->mod_bpp) {
+                    RDPEllipseCB new_cmd = cmd;
+                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
-                new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-                new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
+                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
+                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
 
-                this->orders->draw(new_cmd, clip);
-            }
-            else {
-                this->orders->draw(cmd, clip);
+                    this->orders->draw(new_cmd, clip);
+                }
+                else {
+                    this->orders->draw(cmd, clip);
+                }
             }
 
             if (  this->capture
@@ -4534,7 +4602,12 @@ public:
             return;
         }
 
-        ::compress_and_draw_bitmap_update(bitmap_data, Bitmap(this->client_info.bpp, bmp), this->client_info.bpp, this->orders.p->graphics_update_pdu);
+        if (!this->input_event_and_graphics_update_disabled) {
+            ::compress_and_draw_bitmap_update(bitmap_data,
+                                              Bitmap(this->client_info.bpp, bmp),
+                                              this->client_info.bpp,
+                                              this->orders.p->graphics_update_pdu);
+        }
         //bitmap_data.log(LOG_INFO, "Front");
         //hexdump_d(data, size);
         if (  this->capture

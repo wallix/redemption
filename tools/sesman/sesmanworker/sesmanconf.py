@@ -32,10 +32,11 @@ class SesmanConfig(object):
         self.language = 'en'
         self.conf = {
           u'sesman' :
-            { u'record_warning'        : True
-            , u'debug'                 : False
-            , u'auth_mode_passthrough' : False
-            , u'default_login'         : u''
+            { u'record_warning'                  : True
+            , u'debug'                           : False
+            , u'auth_mode_passthrough'           : False
+            , u'default_login'                   : u''
+            , u'selector_filters_case_sensitive' : False
             }
         , u'fr':
             { # u'login'                  : u"Login"
