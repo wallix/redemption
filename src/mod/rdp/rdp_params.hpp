@@ -124,11 +124,11 @@ struct ModRDPParams {
         , enable_glyph_cache(false)
         , enable_wab_agent(false)
 
+        , disable_clipboard_log_syslog(false)
+
         , wab_agent_launch_timeout(0)
         , wab_agent_keepalive_timeout(0)
         , wab_agent_alternate_shell("")
-
-        , disable_clipboard_log_syslog(false)
 
         , enable_transparent_mode(false)
         , output_filename("")
