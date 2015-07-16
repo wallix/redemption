@@ -341,8 +341,8 @@ public:
                 }
             }
         }
-        if (this->wait_for_capture &&
-            mm.is_up_and_running()) {
+        if (this->wait_for_capture && mm.is_up_and_running()) {
+            this->ini.check_record_config();
             mm.record(this);
             this->wait_for_capture = false;
         }

@@ -209,17 +209,11 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "shell_working_directory")) {
             ::configs::parse(this->globals.shell_working_directory, value);
         }
-        else if (0 == strcmp(key, "codec_id")) {
-            ::configs::parse(this->globals.codec_id, value);
-        }
         else if (0 == strcmp(key, "movie")) {
             ::configs::parse(this->globals.movie, value);
         }
         else if (0 == strcmp(key, "movie_path")) {
             ::configs::parse(this->globals.movie_path, value);
-        }
-        else if (0 == strcmp(key, "video_quality")) {
-            ::configs::parse(this->globals.video_quality, value);
         }
         else if (0 == strcmp(key, "enable_bitmap_update")) {
             ::configs::parse(this->globals.enable_bitmap_update, value);
@@ -380,18 +374,6 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "capture_flags")) {
             ::configs::parse(this->video.capture_flags, value);
         }
-        else if (0 == strcmp(key, "ocr_locale")) {
-            ::configs::parse(this->video.ocr_locale, value);
-        }
-        else if (0 == strcmp(key, "ocr_interval")) {
-            ::configs::parse(this->video.ocr_interval, value);
-        }
-        else if (0 == strcmp(key, "ocr_on_title_bar_only")) {
-            ::configs::parse(this->video.ocr_on_title_bar_only, value);
-        }
-        else if (0 == strcmp(key, "ocr_max_unrecog_char_rate")) {
-            ::configs::parse(this->video.ocr_max_unrecog_char_rate, value);
-        }
         else if (0 == strcmp(key, "png_interval")) {
             ::configs::parse(this->video.png_interval, value);
         }
@@ -406,51 +388,6 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         }
         else if (0 == strcmp(key, "replay_path")) {
             ::configs::parse(this->video.replay_path, value);
-        }
-        else if (0 == strcmp(key, "l_bitrate")) {
-            ::configs::parse(this->video.l_bitrate, value);
-        }
-        else if (0 == strcmp(key, "l_framerate")) {
-            ::configs::parse(this->video.l_framerate, value);
-        }
-        else if (0 == strcmp(key, "l_height")) {
-            ::configs::parse(this->video.l_height, value);
-        }
-        else if (0 == strcmp(key, "l_width")) {
-            ::configs::parse(this->video.l_width, value);
-        }
-        else if (0 == strcmp(key, "l_qscale")) {
-            ::configs::parse(this->video.l_qscale, value);
-        }
-        else if (0 == strcmp(key, "m_bitrate")) {
-            ::configs::parse(this->video.m_bitrate, value);
-        }
-        else if (0 == strcmp(key, "m_framerate")) {
-            ::configs::parse(this->video.m_framerate, value);
-        }
-        else if (0 == strcmp(key, "m_height")) {
-            ::configs::parse(this->video.m_height, value);
-        }
-        else if (0 == strcmp(key, "m_width")) {
-            ::configs::parse(this->video.m_width, value);
-        }
-        else if (0 == strcmp(key, "m_qscale")) {
-            ::configs::parse(this->video.m_qscale, value);
-        }
-        else if (0 == strcmp(key, "h_bitrate")) {
-            ::configs::parse(this->video.h_bitrate, value);
-        }
-        else if (0 == strcmp(key, "h_framerate")) {
-            ::configs::parse(this->video.h_framerate, value);
-        }
-        else if (0 == strcmp(key, "h_height")) {
-            ::configs::parse(this->video.h_height, value);
-        }
-        else if (0 == strcmp(key, "h_width")) {
-            ::configs::parse(this->video.h_width, value);
-        }
-        else if (0 == strcmp(key, "h_qscale")) {
-            ::configs::parse(this->video.h_qscale, value);
         }
         else if (0 == strcmp(key, "hash_path")) {
             ::configs::parse(this->video.hash_path, value);

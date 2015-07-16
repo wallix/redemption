@@ -590,8 +590,8 @@ public:
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
-        // Recording or pattern dectection is enabled.
-        if (!ini.globals.movie.get() && ini.context.pattern_kill.is_empty() && ini.context.pattern_notify.is_empty()) {
+        // Recording is enabled.
+        if (!ini.globals.movie.get()) {
             return;
         }
 
@@ -601,18 +601,11 @@ public:
             return;
         }
 
-        if (!ini.globals.movie.get()) {
-            ini.video.capture_flags = CaptureFlags::ocr;
-            ini.video.png_limit     = 0;
-        }
-
         LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
         struct timeval now = tvtime();
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
-            LOG(LOG_INFO, "codec_id      = %s\n", ini.globals.codec_id.get_cstr());
-            LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_value());
             LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
             LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
             LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get_cstr());

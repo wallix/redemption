@@ -223,9 +223,12 @@ public:
 
         return n;
     }
+
+    void check_record_config();
 };
 
 #include "configs/config_initialize.tcc"
 #include "configs/config_set_value.tcc"
+#include "configs/config_check_record_config.tcc"
 
 #endif

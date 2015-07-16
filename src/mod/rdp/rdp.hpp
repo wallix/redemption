@@ -183,14 +183,13 @@ class mod_rdp : public mod_api {
     const bool enable_transparent_mode;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
-    const int  rdp_compression;
     const bool persist_bitmap_cache_on_disk;
+    const bool disable_clipboard_log_syslog;
+    const int  rdp_compression;
 
     const unsigned    wab_agent_launch_timeout;
     const unsigned    wab_agent_keepalive_timeout;
     const std::string wab_agent_alternate_shell;
-
-    const unsigned disable_clipboard_log;
 
     size_t recv_bmp_update;
 
@@ -347,12 +346,12 @@ public:
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
-        , rdp_compression(mod_rdp_params.rdp_compression)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
+        , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
+        , rdp_compression(mod_rdp_params.rdp_compression)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
         , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
-        , disable_clipboard_log(mod_rdp_params.disable_clipboard_log)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -946,7 +945,7 @@ private:
         }
         else if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) &&
                  (flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-                 (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+                 !this->disable_clipboard_log_syslog) {
             if (!chunk.in_check_rem(6 /* msgFlags(2) + dataLen(4) */)) {
                 LOG(LOG_INFO,
                     "mod_rdp::send_to_mod_cliprdr_channel: CB_FORMAT_DATA_RESPONSE truncated msgType, need=6 remains=%u",
@@ -6666,7 +6665,7 @@ public:
         if (!cencel_pdu) {
             if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) &&
                 (flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-                (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+                (!this->disable_clipboard_log_syslog)) {
 
                 stream.in_skip_bytes(2 /*msgFlags(2)*/);
 

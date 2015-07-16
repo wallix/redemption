@@ -786,7 +786,7 @@ public:
                 mod_rdp_params.wab_agent_launch_timeout            = this->ini.globals.wab_agent_launch_timeout.get();
                 mod_rdp_params.wab_agent_keepalive_timeout         = this->ini.globals.wab_agent_keepalive_timeout.get();
                 mod_rdp_params.wab_agent_alternate_shell           = this->ini.globals.wab_agent_alternate_shell;
-                mod_rdp_params.disable_clipboard_log               = underlying_cast(this->ini.video.disable_clipboard_log.get());
+                mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.video.disable_clipboard_log.get() & ClipboardLogFlags::syslog);
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.auth_channel                        = this->ini.globals.auth_channel;
                 mod_rdp_params.alternate_shell                     = this->ini.globals.alternate_shell.get_cstr();
@@ -906,7 +906,7 @@ public:
 
     // Check movie start/stop/pause
     void record(auth_api * acl) override {
-        if (this->ini.globals.movie.get() || !ini.context.pattern_kill.is_empty() || !ini.context.pattern_notify.is_empty()) {
+        if (this->ini.globals.movie.get()) {
             //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?
             if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
                 this->front.start_capture(this->front.client_info.width,
