@@ -162,10 +162,8 @@ void writer_config_spec(Writer && w)
         w.member(H, type_<StringField>(), "alternate_shell", attached);
         w.member(H, type_<StringField>(), "shell_working_directory", attached);
         w.sep();
-        w.member(A, type_<StringField>(), "codec_id", attached, set("flv"), def_authid{"opt_codec_id"});
         w.member(H, type_<BoolField>(), "movie", attached, set(false), def_authid{"opt_movie"}, str_authid{"is_rec"});
         w.member(A, type_<StringField>(), "movie_path", attached, def_authid{"opt_movie_path"}, str_authid{"rec_patch"});
-        w.member(A, type_<LevelField>(), "video_quality", rdp_level_desc, todo{"this could be some kind of enumeration"}, attached, set(Level::medium));
         w.member(A, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
         w.sep();
         w.member(V, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
@@ -308,48 +306,15 @@ void writer_config_spec(Writer && w)
         w.member(A, type_<CaptureFlags>{}, "capture_flags", desc{
             "Specifies the type of data to be captured:\n"
             "  1: PNG\n"
-            "  2: WRM\n"
-            "  4: FLV\n"
-            "  8: OCR\n"
-            " 16: OCR2"
+            "  2: WRM"
         }, set(CaptureFlags::png | CaptureFlags::wrm));
-        w.sep();
-        w.sep();
-        w.member(A, type_<std::string>(), "ocr_locale", desc{"latin (default) or cyrillic"});
-        w.member(A, type_<unsigned>(), "ocr_interval", desc{"Is in 1/100 s"}, set(100));
-        w.member(A, type_<bool>(), "ocr_on_title_bar_only", set(false));
-        w.member(A, type_<Range<unsigned, 0, 100>>{}, "ocr_max_unrecog_char_rate", desc{
-            "Expressed in percentage,\n"
-          "  0   - all of characters need be recognized\n"
-          "  100 - accept all results"
-        }, set(40));
         w.sep();
         w.member(A, type_<unsigned>(), "png_interval", desc{"Frame interval is in 1/10 s."}, set(3000));
         w.member(A, type_<unsigned>(), "frame_interval", desc{"Frame interval is in 1/100 s."}, set(40));
         w.member(A, type_<unsigned>(), "break_interval", desc{"Time between 2 wrm movies (in seconds)."}, set(600));
         w.member(A, type_<unsigned>(), "png_limit", desc{"Number of png captures to keep."}, set(5));
         w.sep();
-        w.member(type_<uint64_>(), "flv_break_interval", set(0));
-        w.sep();
         w.member(A, type_<StaticString<1024>>(), "replay_path", set("/tmp/"));
-        w.sep();
-        w.member(A, type_<unsigned>(), "l_bitrate", desc{"Bitrate for low quality."}, set(10000));
-        w.member(A, type_<unsigned>(), "l_framerate", desc{"Framerate for low quality."}, set(5));
-        w.member(A, type_<unsigned>(), "l_height", desc{"Height for low quality."}, set(480));
-        w.member(A, type_<unsigned>(), "l_width", desc{"Width for low quality."}, set(640));
-        w.member(A, type_<unsigned>(), "l_qscale", desc{"Qscale (parameter given to ffmpeg) for low quality."}, set(28));
-        w.sep();
-        w.member(A, type_<unsigned>(), "m_bitrate", desc{"Bitrate for medium quality."}, set(20000));
-        w.member(A, type_<unsigned>(), "m_framerate", desc{"Framerate for medium quality."}, set(5));
-        w.member(A, type_<unsigned>(), "m_height", desc{"Height for medium quality."}, set(768));
-        w.member(A, type_<unsigned>(), "m_width", desc{"Width for medium quality."}, set(1024));
-        w.member(A, type_<unsigned>(), "m_qscale", desc{"Qscale (parameter given to ffmpeg) for medium quality."}, set(14));
-        w.sep();
-        w.member(A, type_<unsigned>(), "h_bitrate", desc{"Bitrate for high quality."}, set(30000));
-        w.member(A, type_<unsigned>(), "h_framerate", desc{"Framerate for high quality."}, set(5));
-        w.member(A, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
-        w.member(A, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
-        w.member(A, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
         w.sep();
         w.member(A, type_<StaticPath<1024>>(), "hash_path", set(MACRO(HASH_PATH)));
         w.member(A, type_<StaticPath<1024>>(), "record_tmp_path", set(MACRO(RECORD_TMP_PATH)));
@@ -360,9 +325,7 @@ void writer_config_spec(Writer && w)
         w.sep();
         w.member(V, type_<KeyboardLogFlagsField>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
-            "  1: disable keyboard log in syslog\n"
-            "  2: disable keyboard log in recorded sessions\n"
-            "  4: disable keyboard log in META files"
+            "  1: disable keyboard log in recorded sessions\n"
         }, attached, linked);
         w.sep();
         w.member(V, type_<ClipboardLogFlagsField>(), "disable_clipboard_log", desc{

@@ -26,6 +26,9 @@
 #include "basefield.hpp"
 #include "underlying_cast.hpp"
 
+#include "configs/capture_flags.hpp"
+#include "configs/keyboard_log_flags.hpp"
+
 #include <iosfwd>
 #include <type_traits>
 
@@ -273,21 +276,7 @@ public:
 };
 
 
-#define MK_ENUM_IO(E)                                    \
-    template<class Ch, class Tr>                         \
-    std::basic_ostream<Ch, Tr> &                         \
-    operator << (std::basic_ostream<Ch, Tr> & os, E e) { \
-        return os << underlying_cast(e);                 \
-    }
-
-
-#define MK_ENUM_FLAG_FN(E)                                                                             \
-    MK_ENUM_IO(E)                                                                                      \
-    inline E operator | (E x, E y) { return static_cast<E>(underlying_cast(x) | underlying_cast(y)); } \
-    inline E operator & (E x, E y) { return static_cast<E>(underlying_cast(x) & underlying_cast(y)); } \
-    inline E & operator |= (E & x, E y) { return x = x | y; }                                          \
-    inline E & operator &= (E & x, E y) { return x = x | y; }
-
+#include "mk_enum_def.hpp"
 
 template<class E, class = void>
 struct enum_option
@@ -385,30 +374,10 @@ using LevelField = EnumField<Level, LevelFieldTraits>;
 enum class Language : unsigned { en, fr, NB };
 MK_ENUM_FIELD(Language, "en", "fr");
 
+
 enum class ClipboardEncodingType : unsigned { utf8, latin1, NB };
 MK_ENUM_FIELD(ClipboardEncodingType, "utf-8", "latin1");
 
-
-enum class CaptureFlags : unsigned {
-    none,
-    png = 1 << 0,
-    wrm = 1 << 1,
-    flv = 1 << 2,
-    ocr = 1 << 3,
-    ocr2 = 1 << 4,
-    FULL = ((1 << 5) - 1)
-};
-MK_ENUM_FLAG_FN(CaptureFlags)
-
-
-enum class KeyboardLogFlags : unsigned {
-    none,
-    syslog = 1 << 0,
-    wrm = 1 << 1,
-    ocr = 1 << 2,
-    FULL = ((1 << 3) - 1)
-};
-MK_ENUM_FLAG_FN(KeyboardLogFlags)
 
 using KeyboardLogFlagsField = FlagsField<KeyboardLogFlags>;
 
@@ -446,8 +415,7 @@ inline ColorDepth color_depth_from_cstr(char const * value) {
 }
 
 
-#undef MK_ENUM_IO
-#undef MK_ENUM_FLAG_FN
+#include "mk_enum_undef.hpp"
 #undef MK_ENUM_FIELD
 #undef ENUM_OPTION
 

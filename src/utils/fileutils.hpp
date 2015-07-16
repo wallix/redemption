@@ -285,12 +285,12 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             struct stat st;
             if (stat(buffer, &st) < 0){
                 if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to read file %s [%u: %s]\n", buffer, errno, strerror(errno));
+                    LOG(LOG_WARNING, "Failed to read file %s [%u: %s]", buffer, errno, strerror(errno));
                 }
                 continue;
             }
             if (unlink(buffer) < 0){
-                LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
+                LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", buffer, errno, strerror(errno));
             }
         }
     }

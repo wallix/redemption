@@ -285,15 +285,14 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool enable_transparent_mode;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
-    const int  rdp_compression;
     const bool persist_bitmap_cache_on_disk;
+    const bool disable_clipboard_log_syslog;
+    const int  rdp_compression;
 
     const unsigned    wab_agent_launch_timeout;
     const unsigned    wab_agent_on_launch_failure;
     const unsigned    wab_agent_keepalive_timeout;
     const std::string wab_agent_alternate_shell;
-
-    const unsigned disable_clipboard_log;
 
     size_t recv_bmp_update;
 
@@ -408,13 +407,13 @@ public:
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
-        , rdp_compression(mod_rdp_params.rdp_compression)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
+        , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
+        , rdp_compression(mod_rdp_params.rdp_compression)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
         , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
-        , disable_clipboard_log(mod_rdp_params.disable_clipboard_log)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)

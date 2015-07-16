@@ -25,13 +25,9 @@ inline void Inifile::initialize() {
     this->globals.alternate_shell.attach_ini(this, AUTHID_ALTERNATE_SHELL);
     this->globals.shell_working_directory.attach_ini(this, AUTHID_SHELL_WORKING_DIRECTORY);
 
-    this->globals.codec_id.attach_ini(this, AUTHID_OPT_CODEC_ID);
-    this->globals.codec_id.set("flv");
     this->globals.movie.attach_ini(this, AUTHID_OPT_MOVIE);
     this->globals.movie.set(0);
     this->globals.movie_path.attach_ini(this, AUTHID_OPT_MOVIE_PATH);
-    this->globals.video_quality.attach_ini(this, AUTHID_VIDEO_QUALITY);
-    this->globals.video_quality.set(static_cast<Level>(1));
 
 
     this->globals.enable_wab_agent.attach_ini(this, AUTHID_OPT_WABAGENT);
@@ -84,12 +80,6 @@ inline void Inifile::initialize() {
 
     this->mod_vnc.bogus_clipboard_infinite_loop.attach_ini(this, AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP);
     this->mod_vnc.bogus_clipboard_infinite_loop.set(0);
-
-
-
-
-
-
 
 
 

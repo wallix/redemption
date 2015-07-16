@@ -45,6 +45,7 @@ public:
     OutFilenameSequenceTransport * png_trans;
     StaticCapture                * psc;
 
+private:
     Transport                    * wrm_trans;
 
 private:
@@ -59,8 +60,7 @@ public:
     wait_obj capture_event;
 
 private:
-    std::string png_path;
-    std::string basename;
+    FilenameGenerator const * wrm_filename_generator;
 
     CryptoContext crypto_ctx;
 
@@ -94,8 +94,6 @@ public:
     , pnc_ptr_cache(nullptr)
     , pnc(nullptr)
     , drawable(nullptr)
-    , png_path(png_path)
-    , basename(basename)
     , gd(nullptr)
     , last_now(now)
     , last_x(width / 2)
@@ -150,13 +148,17 @@ public:
             this->pnc_ptr_cache = new PointerCache(pointerCacheSize);
 
             if (this->enable_file_encryption) {
-                this->wrm_trans = new CryptoOutMetaSequenceTransport( &this->crypto_ctx, wrm_path, hash_path, basename, now
-                                                                    , width, height, ini.video.capture_groupid
-                                                                    , authentifier);
+                auto * trans = new CryptoOutMetaSequenceTransport(
+                    &this->crypto_ctx, wrm_path, hash_path, basename, now
+                  , width, height, ini.video.capture_groupid, authentifier);
+                this->wrm_trans = trans;
+                this->wrm_filename_generator = trans->seqgen();
             }
             else {
-                this->wrm_trans = new OutMetaSequenceTransport( wrm_path, basename, now
-                                                              , width, height, ini.video.capture_groupid, authentifier);
+                auto * trans = new OutMetaSequenceTransport(
+                    wrm_path, basename, now, width, height, ini.video.capture_groupid, authentifier);
+                this->wrm_trans = trans;
+                this->wrm_filename_generator = trans->seqgen();
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
                                          , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
@@ -189,7 +191,13 @@ public:
         delete this->drawable;
 
         if (this->clear_png) {
-            clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+            auto i = this->wrm_trans->get_seqno();
+            while (i > 0) {
+                auto filename = this->wrm_filename_generator->get(--i);
+                if (::unlink(filename) < 0) {
+                    LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", filename, errno, strerror(errno));
+                }
+            }
         }
     }
 

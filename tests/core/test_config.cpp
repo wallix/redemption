@@ -45,8 +45,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -73,30 +71,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_PATH, sizeof(temp_path)), temp_path),
@@ -302,8 +279,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -330,30 +305,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
@@ -568,8 +521,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -596,30 +547,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
@@ -810,9 +739,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "hash_path=/mnt/wab/hash\n"
                           "record_path=/mnt/wab/recorded/rdp\n"
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp\n"
-                          "ocr_interval=50\n"
-                          "ocr_on_title_bar_only=yes\n"
-                          "ocr_max_unrecog_char_rate=50\n"
                           "disable_keyboard_log=1\n"
                           "disable_clipboard_log=0\n"
                           "\n"
@@ -825,7 +751,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "compression=256\n"
                           "cache=128\n"
                           "[translation]\n"
-                          "button_cancel=Annuler\n"
                           "\n"
                           );
 
@@ -835,8 +760,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(true,                             ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -862,36 +785,14 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(50,                               ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(true,                             ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(50,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL("/mnt/wab/hash/",                 ini.video.hash_path.c_str());
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.video.record_path.c_str());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,         ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::wrm,            ini.video.disable_keyboard_log.get());
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
@@ -1036,7 +937,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "bitmap_compression=on\n"
                           "fast_path=yes\n"
                           "[translation]\n"
-                          "connection_closed=Connexion fermée\n"
                           "[mod_rdp]\n"
                           "rdp_compression=2\n"
                           "disconnect_on_logon_user_change=no\n"
@@ -1056,7 +956,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "hash_path=/mnt/wab/hash/\n"
                           "record_path=/mnt/wab/recorded/rdp/\n"
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
-                          "disable_keyboard_log=2\n"
+                          "disable_keyboard_log=1\n"
                           "disable_clipboard_log=1\n"
                           "\n"
                           "[mod_vnc]\n"
@@ -1075,8 +975,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1103,30 +1001,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
     BOOST_CHECK_EQUAL("/mnt/wab/hash/",                 ini.video.hash_path.c_str());
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.video.record_path.c_str());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.video.record_tmp_path.c_str());
@@ -1272,7 +1149,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
                           "[video]\n"
-                          "disable_keyboard_log=4\n"
+                          "disable_keyboard_log=1\n"
                           "wrm_color_depth_selection_strategy=1\n"
                           "wrm_compression_algorithm=1\n"
                           "\n"
@@ -1285,8 +1162,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1313,30 +1188,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
@@ -1345,7 +1198,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::wrm,            ini.video.disable_keyboard_log.get());
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
@@ -1482,7 +1335,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "[mod_vnc]\n"
                           "bogus_clipboard_infinite_loop=2\n"
                           "[video]\n"
-                          "disable_keyboard_log=4\n"
+                          "disable_keyboard_log=1\n"
                           "wrm_color_depth_selection_strategy=1\n"
                           "wrm_compression_algorithm=1\n"
                           "disable_clipboard_log=0\n"
@@ -1499,8 +1352,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1527,30 +1378,8 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
@@ -1559,7 +1388,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.video.record_tmp_path.c_str());
 
-    BOOST_CHECK_EQUAL(KeyboardLogFlags::ocr,            ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::wrm,            ini.video.disable_keyboard_log.get());
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.video.disable_clipboard_log.get());
 
@@ -1688,8 +1517,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1716,30 +1543,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
@@ -1876,8 +1681,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -1904,30 +1707,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
@@ -2051,8 +1832,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     TODO("video related values should go to [video] section")
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -2079,30 +1858,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());
@@ -2226,8 +1983,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.movie_path.get_cstr());
-    BOOST_CHECK_EQUAL("flv",                            ini.globals.codec_id.get_cstr());
-    BOOST_CHECK_EQUAL(Level::medium,                    ini.globals.video_quality.get());
     BOOST_CHECK_EQUAL("",                               ini.globals.auth_user.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.host.get_cstr());
     BOOST_CHECK_EQUAL("",                               ini.globals.target_device.get_cstr());
@@ -2254,30 +2009,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
-    BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
-    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
-    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(5,                                ini.video.png_limit);
-
-    BOOST_CHECK_EQUAL(10000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
-    BOOST_CHECK_EQUAL(28,                               ini.video.l_qscale);
-
-    BOOST_CHECK_EQUAL(20000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
-    BOOST_CHECK_EQUAL(14,                               ini.video.m_qscale);
-
-    BOOST_CHECK_EQUAL(30000,                            ini.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_height);
-    BOOST_CHECK_EQUAL(2048,                             ini.video.h_width);
-    BOOST_CHECK_EQUAL(7,                                ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL((pathncpy(temp_path, HASH_PATH,  sizeof(temp_path)), temp_path),
                                                         ini.video.hash_path.c_str());

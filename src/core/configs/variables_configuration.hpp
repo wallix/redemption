@@ -220,12 +220,8 @@ struct VariablesConfiguration {
         StringField alternate_shell;  // AUTHID_ALTERNATE_SHELL
         StringField shell_working_directory;  // AUTHID_SHELL_WORKING_DIRECTORY
 
-        StringField codec_id;  // AUTHID_OPT_CODEC_ID
         BoolField movie;  // AUTHID_OPT_MOVIE
         StringField movie_path;  // AUTHID_OPT_MOVIE_PATH
-        TODO("this could be some kind of enumeration")
-        // low, medium or high.
-        LevelField video_quality;  // AUTHID_VIDEO_QUALITY
         // Support of Bitmap Update.
         bool enable_bitmap_update{1};
 
@@ -354,21 +350,7 @@ struct VariablesConfiguration {
         // Specifies the type of data to be captured:
         //   1: PNG
         //   2: WRM
-        //   4: FLV
-        //   8: OCR
-        //  16: OCR2
         CaptureFlags capture_flags{static_cast<CaptureFlags>(3)};
-
-
-        // latin (default) or cyrillic
-        std::string ocr_locale;
-        // Is in 1/100 s
-        unsigned ocr_interval{100};
-        bool ocr_on_title_bar_only{0};
-        // Expressed in percentage,
-        //   0   - all of characters need be recognized
-        //   100 - accept all results
-        Range<unsigned, 0, 100, 0> ocr_max_unrecog_char_rate{40};
 
         // Frame interval is in 1/10 s.
         unsigned png_interval{3000};
@@ -379,42 +361,7 @@ struct VariablesConfiguration {
         // Number of png captures to keep.
         unsigned png_limit{5};
 
-        uint64_t flv_break_interval{0};
-
         StaticString<1024> replay_path{"/tmp/"};
-
-        // Bitrate for low quality.
-        unsigned l_bitrate{10000};
-        // Framerate for low quality.
-        unsigned l_framerate{5};
-        // Height for low quality.
-        unsigned l_height{480};
-        // Width for low quality.
-        unsigned l_width{640};
-        // Qscale (parameter given to ffmpeg) for low quality.
-        unsigned l_qscale{28};
-
-        // Bitrate for medium quality.
-        unsigned m_bitrate{20000};
-        // Framerate for medium quality.
-        unsigned m_framerate{5};
-        // Height for medium quality.
-        unsigned m_height{768};
-        // Width for medium quality.
-        unsigned m_width{1024};
-        // Qscale (parameter given to ffmpeg) for medium quality.
-        unsigned m_qscale{14};
-
-        // Bitrate for high quality.
-        unsigned h_bitrate{30000};
-        // Framerate for high quality.
-        unsigned h_framerate{5};
-        // Height for high quality.
-        unsigned h_height{2048};
-        // Width for high quality.
-        unsigned h_width{2048};
-        // Qscale (parameter given to ffmpeg) for high quality.
-        unsigned h_qscale{7};
 
         StaticPath<1024> hash_path{HASH_PATH};
         StaticPath<1024> record_tmp_path{RECORD_TMP_PATH};
@@ -424,9 +371,8 @@ struct VariablesConfiguration {
         unsigned inactivity_timeout{300};
 
         // Disable keyboard log:
-        //   1: disable keyboard log in syslog
-        //   2: disable keyboard log in recorded sessions
-        //   4: disable keyboard log in META files
+        //   1: disable keyboard log in recorded sessions
+
         KeyboardLogFlagsField disable_keyboard_log;  // AUTHID_DISABLE_KEYBOARD_LOG
 
         // Disable clipboard log:
