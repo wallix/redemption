@@ -500,15 +500,14 @@ public:
                     );
                 ::chmod(this->full_path.c_str(), mode);
 
-                SendClientDriveSetInformationResponse(
-                        device_io_request,
-                        "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
-                        0x00000000, // STATUS_SUCCESS
-                        server_drive_set_information_request.Length(),
-                        to_server_sender,
-                        out_asynchronous_task,
-                        verbose
-                    );
+                this->SendClientDriveSetInformationResponse(
+                    device_io_request,
+                    "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
+                    0x00000000, // STATUS_SUCCESS
+                    server_drive_set_information_request.Length(),
+                    to_server_sender,
+                    out_asynchronous_task,
+                    verbose);
             }
             break;
 
@@ -527,15 +526,14 @@ public:
                 int truncate_result = ::ftruncate(this->fd, EndOfFile);
                 (void)truncate_result;
 
-                SendClientDriveSetInformationResponse(
-                        device_io_request,
-                        "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
-                        0x00000000, // STATUS_SUCCESS
-                        server_drive_set_information_request.Length(),
-                        to_server_sender,
-                        out_asynchronous_task,
-                        verbose
-                    );
+                this->SendClientDriveSetInformationResponse(
+                    device_io_request,
+                    "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
+                    0x00000000, // STATUS_SUCCESS
+                    server_drive_set_information_request.Length(),
+                    to_server_sender,
+                    out_asynchronous_task,
+                    verbose);
             }
             break;
 
@@ -548,15 +546,14 @@ public:
                             "DeletePending=yes");
                 }
 
-                SendClientDriveSetInformationResponse(
-                        device_io_request,
-                        "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
-                        0x00000000, // STATUS_SUCCESS
-                        server_drive_set_information_request.Length(),
-                        to_server_sender,
-                        out_asynchronous_task,
-                        verbose
-                    );
+                this->SendClientDriveSetInformationResponse(
+                    device_io_request,
+                    "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
+                    0x00000000, // STATUS_SUCCESS
+                    server_drive_set_information_request.Length(),
+                    to_server_sender,
+                    out_asynchronous_task,
+                    verbose);
             break;
 
             case rdpdr::FileRenameInformation:
@@ -594,15 +591,14 @@ public:
 
                 (void)::rename(this->full_path.c_str(), new_full_path.c_str());
 
-                SendClientDriveSetInformationResponse(
-                        device_io_request,
-                        "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
-                        0x00000000, // STATUS_SUCCESS
-                        server_drive_set_information_request.Length(),
-                        to_server_sender,
-                        out_asynchronous_task,
-                        verbose
-                    );
+                this->SendClientDriveSetInformationResponse(
+                    device_io_request,
+                    "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
+                    0x00000000, // STATUS_SUCCESS
+                    server_drive_set_information_request.Length(),
+                    to_server_sender,
+                    out_asynchronous_task,
+                    verbose);
             }
             break;
 
@@ -620,15 +616,14 @@ public:
                 int truncate_result = ::ftruncate(this->fd, AllocationSize);
                 (void)truncate_result;
 
-                SendClientDriveSetInformationResponse(
-                        device_io_request,
-                        "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
-                        0x00000000, // STATUS_SUCCESS
-                        server_drive_set_information_request.Length(),
-                        to_server_sender,
-                        out_asynchronous_task,
-                        verbose
-                    );
+                this->SendClientDriveSetInformationResponse(
+                    device_io_request,
+                    "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
+                    0x00000000, // STATUS_SUCCESS
+                    server_drive_set_information_request.Length(),
+                    to_server_sender,
+                    out_asynchronous_task,
+                    verbose);
             }
             break;
 
