@@ -253,7 +253,7 @@ void write_spec(std::ostream & os, SpecCppWriter & writer) {
 
 
 template<class SpecCppWriter>
-int write_spec_cpp_writer(int ac, char ** av)
+int write_spec_cpp_writer(int ac, char const ** av)
 {
     if (ac < 2) {
         std::cerr << av[0] << " out-spec.h";
