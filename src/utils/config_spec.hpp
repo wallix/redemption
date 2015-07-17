@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_SRC_UTILS_CONFIG_SPEC_HPP
 #define REDEMPTION_SRC_UTILS_CONFIG_SPEC_HPP
 
-#include "configs/types.hpp"
+#include "config_types.hpp"
 
 #include <type_traits>
 #include <sstream>

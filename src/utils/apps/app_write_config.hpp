@@ -328,8 +328,8 @@ template<class ConfigCppWriter>
 void write_variable_configuration(std::ostream & out_varconf, ConfigCppWriter & writer) {
     out_varconf <<
         "#include \"font.hpp\"\n"
-        "#include \"configs/types.hpp\"\n"
-        "#include \"configs/includes.hpp\"\n\n"
+        "#include \"config_types.hpp\"\n"
+        "#include \"config_includes.hpp\"\n\n"
         "namespace configs {\n\n"
         "struct VariablesConfiguration {\n"
         "    explicit VariablesConfiguration(char const * default_font_name)\n"
