@@ -600,11 +600,11 @@ using disable_if_basefield = typename std::enable_if<
     Result
 >::type;
 
-#define MK_PACK(Ts)                    \
-    struct Pack : ref<Ts>... {         \
-        explicit Pack(Ts const &... x) \
-        : ref<Ts>{x}...                \
-        {}                             \
+#define MK_PACK(Ts)                           \
+    struct Pack : ::config_spec::ref<Ts>... { \
+        explicit Pack(Ts const &... x)        \
+        : ::config_spec::ref<Ts>{x}...        \
+        {}                                    \
     }
 
 
