@@ -493,6 +493,13 @@ void writer_config_spec(Writer && w)
 }
 
 
+template<class T>
+struct ref
+{
+    T const & x;
+    operator T const & () const { return x; }
+};
+
 template<class Inherit>
 struct ConfigSpecBase
 {
@@ -528,13 +535,6 @@ struct ConfigSpecBase
 
     void sep() { this->inherit().do_sep(); }
     void tab() { this->inherit().do_tab(); }
-
-    template<class T>
-    struct ref
-    {
-        T const & x;
-        operator T const & () const { return x; }
-    };
 
     template<class Pack, class To>
     typename std::enable_if<std::is_convertible<Pack, To>::value>::type
@@ -575,11 +575,12 @@ struct ConfigSpecBase
         }
     }
 
-private:
+protected:
     Inherit & inherit() {
         return static_cast<Inherit&>(*this);
     }
 
+private:
     void do_start_section() {}
     void do_stop_section() {}
     void do_sep() {}
