@@ -36,8 +36,8 @@
 
 #include "authid.hpp"
 
-#include "configs/parse.hpp"
-#include "configs/variables_configuration.hpp"
+#include "config_parse.hpp"
+#include "config_variables_configuration.hpp"
 
 
 struct Inifile : FieldObserver, configs::VariablesConfiguration
@@ -227,8 +227,8 @@ public:
     void check_record_config();
 };
 
-#include "configs/config_initialize.tcc"
-#include "configs/config_set_value.tcc"
-#include "configs/config_check_record_config.tcc"
+#include "config_initialize.tcc"
+#include "config_set_value.tcc"
+#include "config_check_record_config.tcc"
 
 #endif

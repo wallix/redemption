@@ -90,6 +90,7 @@ project redemption
     : requirements
     <include>src/utils
     <include>src/core
+    <include>src/configs
     <include>src/mod
     <include>src/front
     <include>src/acl
@@ -452,7 +453,10 @@ exe make_spec
 
 if ! [ os.environ MAKE_CONFIG ]
 {
-    Echo [ SHELL "cd ./src/core/configs ; make" ] ;
+    if ! [ SHELL "cd ./src/configs && make" ]
+    {
+        exit ;
+    }
 }
 
 
