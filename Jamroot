@@ -493,10 +493,11 @@ exe make_spec
 ;
 
 
-if ! [ os.environ MAKE_CONFIG ]
+if ! [ os.environ NO_MAKE_CONFIG ]
 {
     if ! [ SHELL "cd ./src/configs && make" ]
     {
+        Echo [ SHELL "cd ./src/configs && make" ] ;
         exit ;
     }
 }
