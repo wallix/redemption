@@ -391,7 +391,7 @@ void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writ
 
 
 template<class ConfigCppWriter>
-int write_config_cpp_writer(int ac, char ** av)
+int write_config_cpp_writer(int ac, char const ** av)
 {
     if (ac < 5) {
         std::cerr << av[0] << " out-authid.h out-variables_configuration.h out-config_initialize.cpp out-config_set_value.cpp";
