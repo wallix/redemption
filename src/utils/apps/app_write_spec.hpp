@@ -271,4 +271,11 @@ int write_spec_cpp_writer(int ac, char const ** av)
     return 0;
 }
 
+
+template<class SpecCppWriter>
+int write_spec_cpp_writer(int ac, char ** av)
+{
+    return write_spec_cpp_writer<SpecCppWriter>(ac, const_cast<char const **>(av));
+}
+
 #endif

@@ -413,4 +413,11 @@ int write_config_cpp_writer(int ac, char const ** av)
     return 0;
 }
 
+
+template<class ConfigCppWriter>
+int write_config_cpp_writer(int ac, char ** av)
+{
+    return write_config_cpp_writer<ConfigCppWriter>(ac, const_cast<char const **>(av));
+}
+
 #endif
