@@ -229,7 +229,7 @@ class mod_rdp : public mod_api {
 
     const bool remote_program;
 
-    bool server_redirection_support;
+    const bool server_redirection_support;
 
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
@@ -265,6 +265,10 @@ class mod_rdp : public mod_api {
     bool        wab_agent_is_ready            = false;
     bool        wab_agent_keep_alive_received = true;
 
+    bool     clipboard_client_use_long_format_names = false;
+    bool     clipboard_server_use_long_format_names = false;
+    uint32_t clipboard_client_file_list_format_id = 0;
+    uint32_t clipboard_server_file_list_format_id = 0;
     uint32_t clipboard_requested_format_id = 0;
 
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
@@ -566,7 +570,7 @@ public:
         if (this->verbose & 128){
             this->redir_info.log(LOG_INFO, "Init with Redir_info");
             LOG(LOG_INFO, "ServerRedirectionSupport=%s",
-                this->server_redirection_support?"true":"false");
+                this->server_redirection_support ? "true" : "false");
         }
         if (this->server_redirection_support) {
             if (this->redir_info.valid && (this->redir_info.lb_info_length > 0)) {
@@ -906,7 +910,36 @@ private:
                 RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
-        if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
+        if ((msgType == RDPECLIP::CB_CLIP_CAPS)) {
+            const auto saved_stream_p = chunk.p;
+
+            chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+
+            const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
+
+            chunk.in_skip_bytes(2);    /* pad1(2) */
+
+            for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
+                RDPECLIP::CapabilitySetRecvFactory f(chunk);
+
+                if (f.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+                    RDPECLIP::GeneralCapabilitySet cb_general_caps;
+
+                    cb_general_caps.recv(chunk, f);
+
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp::send_to_mod_cliprdr_channel: Client Clipboard Capabilities PDU");
+                        cb_general_caps.log(LOG_INFO);
+                    }
+
+                    this->clipboard_client_use_long_format_names =
+                        (cb_general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                }
+            }
+
+            chunk.p = saved_stream_p;
+        }
+        else if ((msgType == RDPECLIP::CB_FORMAT_LIST)) {
             if (!this->authorization_channels.cliprdr_up_is_authorized() &&
                 !this->authorization_channels.cliprdr_down_is_authorized()) {
                 if (this->verbose & 1) {
@@ -1000,7 +1033,9 @@ private:
             chunk.p -= 6;   // msgFlags(2) + dataLen(4)
         }
 
-        this->update_total_clipboard_data(msgType, length);
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            this->update_total_clipboard_data(msgType, length);
+        }
 
         chunk.p -= 2;   // msgType(2)
 
@@ -6634,7 +6669,9 @@ public:
             LOG(LOG_INFO, "mod_rdp server clipboard PDU");
         }
 
-        const uint16_t msgType = stream.in_uint16_le();
+        const uint16_t msgType =
+            (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? stream.in_uint16_le() :
+            uint16_t(RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE);
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp server clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(msgType), msgType);
@@ -6642,7 +6679,36 @@ public:
 
         bool cencel_pdu = false;
 
-        if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+        if (msgType == RDPECLIP::CB_CLIP_CAPS) {
+            const auto saved_stream_p = stream.p;
+
+            stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+
+            const uint16_t cCapabilitiesSets = stream.in_uint16_le();
+
+            stream.in_skip_bytes(2);    /* pad1(2) */
+
+            for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
+                RDPECLIP::CapabilitySetRecvFactory f(stream);
+
+                if (f.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+                    RDPECLIP::GeneralCapabilitySet cb_general_caps;
+
+                    cb_general_caps.recv(stream, f);
+
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO, "mod_rdp Server Clipboard Capabilities PDU");
+                        cb_general_caps.log(LOG_INFO);
+                    }
+
+                    this->clipboard_server_use_long_format_names =
+                        (cb_general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                }
+            }
+
+            stream.p = saved_stream_p;
+        }
+        else if (msgType == RDPECLIP::CB_FORMAT_LIST) {
             if (!this->authorization_channels.cliprdr_up_is_authorized() &&
                 !this->authorization_channels.cliprdr_down_is_authorized()) {
                 if (this->verbose & 1) {
@@ -6661,6 +6727,54 @@ public:
                 );
 
                 cencel_pdu = true;
+            }
+            else {
+                const auto saved_stream_p = stream.p;
+
+                const uint16_t msgFlags = stream.in_uint16_le();
+                const uint32_t dataLen  = stream.in_uint32_le();
+
+                if (!this->clipboard_client_use_long_format_names ||
+                    !this->clipboard_server_use_long_format_names) {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO,
+                            "mod_rdp Clipboard: Short Format Name%s variant of Format List PDU is used for exchanging updated format names.",
+                            ((msgFlags & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)" : ""));
+                    }
+                }
+                else {
+                    if (this->verbose & 1) {
+                        LOG(LOG_INFO,
+                            "mod_rdp Clipboard: Long Format Name variant of Format List PDU is used for exchanging updated format names.");
+
+                        for (uint32_t remaining_data_length = dataLen; remaining_data_length; ) {
+                            uint32_t formatId = stream.in_uint32_le();
+                            size_t   format_name_length = UTF16StrLen(stream.p) + 1;
+
+                            const size_t size_of_utf8_string =
+                                format_name_length * maximum_length_of_utf8_character_in_bytes;
+                            uint8_t * const utf8_string = static_cast<uint8_t *>(
+                                ::alloca(size_of_utf8_string));
+                            const size_t length_of_utf8_string = ::UTF16toUTF8(
+                                stream.p, format_name_length, utf8_string, size_of_utf8_string);
+
+                            LOG(LOG_INFO,
+                                "mod_rdp Clipboard: formatId=%d wszFormatName=\"%s\"", formatId, utf8_string);
+
+                            remaining_data_length -=
+                                4 /* formatId(4) */ +
+                                format_name_length * 2 /* wszFormatName(variable) */;
+
+                            if (!memcmp("FileGroupDescriptorW", utf8_string, length_of_utf8_string)) {
+                                this->clipboard_server_file_list_format_id = formatId;
+                            }
+
+                            stream.in_skip_bytes(format_name_length * 2);
+                        }
+                    }
+                }
+
+                stream.p = saved_stream_p;
             }
         }
         else if (msgType == RDPECLIP::CB_FORMAT_DATA_REQUEST) {
@@ -6707,50 +6821,70 @@ public:
         }
 
         if (!cencel_pdu) {
-            if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) &&
-                (flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-                (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+            if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
+                if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+                    (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
 
-                stream.in_skip_bytes(2 /*msgFlags(2)*/);
+                    stream.in_skip_bytes(2 /* msgFlags(2) */);
 
-                const uint32_t dataLen = stream.in_uint32_le();
+                    const uint32_t dataLen = stream.in_uint32_le();
 
-                LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
-                    RDPECLIP::get_Format_name(this->clipboard_requested_format_id),
-                    this->clipboard_requested_format_id, dataLen,
-                    (((this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) ||
-                      (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT)) ? ":" : "."));
+                    LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
+                        RDPECLIP::get_Format_name(this->clipboard_requested_format_id),
+                        this->clipboard_requested_format_id, dataLen,
+                        (((this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) ||
+                          (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT)) ? ":" : "."));
 
-                const size_t max_length_of_data_to_dump = 256;
+                    const size_t max_length_of_data_to_dump = 256;
 
-                if (this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) {
-                    const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump);
-                    const std::string data_to_dump(::char_ptr_cast(stream.p), length_of_data_to_dump);
-                    LOG(LOG_INFO, data_to_dump.c_str());
+                    if (this->clipboard_requested_format_id == RDPECLIP::CF_TEXT) {
+                        const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump);
+                        const std::string data_to_dump(::char_ptr_cast(stream.p), length_of_data_to_dump);
+                        LOG(LOG_INFO, data_to_dump.c_str());
+                    }
+                    else if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
+                        REDASSERT(!(stream.in_remain() & 1));
+
+                        const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump * 2);
+
+                        const size_t maximum_length_of_utf8_character_in_bytes = 4;
+
+                        const size_t size_of_utf8_string =
+                            length_of_data_to_dump / 2 * maximum_length_of_utf8_character_in_bytes;
+
+                        uint8_t * const utf8_string = static_cast<uint8_t *>(
+                            ::alloca(size_of_utf8_string));
+                        const size_t length_of_utf8_string = ::UTF16toUTF8(
+                            stream.p, length_of_data_to_dump / 2, utf8_string, size_of_utf8_string);
+                        const std::string data_to_dump(::char_ptr_cast(utf8_string),
+                            length_of_utf8_string);
+                        LOG(LOG_INFO, data_to_dump.c_str());
+                    }
+
+                    stream.p -= 6;  // msgFlags(2) + dataLen(4)
                 }
-                else if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
-                    REDASSERT(!(stream.in_remain() & 1));
 
-                    const size_t length_of_data_to_dump = std::min(stream.in_remain(), max_length_of_data_to_dump * 2);
+                LOG(LOG_INFO,
+                    "clipboard_requested_format_id=%u clipboard_server_file_list_format_id=%u",
+                    this->clipboard_requested_format_id, this->clipboard_server_file_list_format_id);
 
-                    const size_t maximum_length_of_utf8_character_in_bytes = 4;
+                if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+                    (this->clipboard_requested_format_id == this->clipboard_server_file_list_format_id)) {
 
-                    const size_t size_of_utf8_string =
-                        length_of_data_to_dump / 2 * maximum_length_of_utf8_character_in_bytes;
+                    stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
 
-                    uint8_t * const utf8_string = static_cast<uint8_t *>(
-                        ::alloca(size_of_utf8_string));
-                    const size_t length_of_utf8_string = ::UTF16toUTF8(
-                        stream.p, length_of_data_to_dump / 2, utf8_string, size_of_utf8_string);
-                    const std::string data_to_dump(::char_ptr_cast(utf8_string),
-                        length_of_utf8_string);
-                    LOG(LOG_INFO, data_to_dump.c_str());
+                    uint32_t cItems = stream.in_uint32_le();
+
+                    LOG(LOG_INFO, "Sending FileGroupDescriptorW(%u) clipboard data to client. cItems=%u",
+                        this->clipboard_requested_format_id, cItems);
+
+                    stream.p -= 10; // msgFlags(2) + dataLen(4) + cItems(4)
                 }
-
-                stream.p -= 6;   // msgFlags(2) + dataLen(4)
             }
 
-            this->update_total_clipboard_data(msgType, length);
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                this->update_total_clipboard_data(msgType, length);
+            }
 
             stream.p -= 2;  // msgType(2)
             this->send_to_front_channel(

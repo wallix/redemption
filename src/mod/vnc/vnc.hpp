@@ -2185,16 +2185,16 @@ private:
 
         RDPECLIP::RecvFactory recv_factory(stream);
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%s(%d)",
-                RDPECLIP::get_msgType_name(recv_factory.msgType), recv_factory.msgType);
-        }
-
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
             recv_factory.msgType = RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE;
 
             // msgType is non msgType, is a part of data.
             stream.rewind();
+        }
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(recv_factory.msgType), recv_factory.msgType);
         }
 
         switch (recv_factory.msgType) {
