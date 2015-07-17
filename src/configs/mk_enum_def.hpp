@@ -18,9 +18,10 @@
 *   Author(s): Jonathan Poelen
 */
 
-#include "underlying_cast.hpp"
-
 #ifndef MK_ENUM_IO
+
+#include <iosfwd>
+#include "underlying_cast.hpp"
 
 #define MK_ENUM_IO(E)                                    \
     template<class Ch, class Tr>                         \
