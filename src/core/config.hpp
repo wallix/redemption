@@ -750,7 +750,7 @@ public:
         UnsignedField disable_keyboard_log;     // AUTHID_DISABLE_KEYBOARD_LOG
         bool disable_keyboard_log_syslog = false;
         bool disable_keyboard_log_wrm    = false;
-        bool disable_keyboard_log_ocr    = false;
+        bool disable_keyboard_log_meta   = false;
 
         // 1 - Disable clipboard event logging in syslog
         UnsignedField disable_clipboard_log;    // AUTHID_DISABLE_CLIPBOARD_LOG
@@ -1546,7 +1546,7 @@ public:
                 this->video.disable_keyboard_log.set_from_cstr(value);
                 this->video.disable_keyboard_log_syslog = 0 != (this->video.disable_keyboard_log.get() & 1);
                 this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
-                this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
+                this->video.disable_keyboard_log_meta   = 0 != (this->video.disable_keyboard_log.get() & 4);
             }
             else if (0 == strcmp(key, "disable_clipboard_log")) {
                 this->video.disable_clipboard_log.set_from_cstr(value);

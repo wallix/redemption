@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -650,7 +650,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -921,7 +921,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -1168,7 +1168,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(2,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(1,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_clipboard_log_syslog);
@@ -1391,7 +1391,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(4,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -1613,7 +1613,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(4,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -1810,7 +1810,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -2006,7 +2006,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -2189,7 +2189,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
@@ -2372,7 +2372,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_meta);
 
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
