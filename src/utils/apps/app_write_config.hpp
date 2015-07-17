@@ -399,7 +399,6 @@ int write_config_cpp_writer(int ac, char ** av)
     }
 
     ConfigCppWriter writer;
-    config_spec::writer_config_spec(writer);
 
     MultiFilenameWriter<ConfigCppWriter> sw(writer);
     sw.then(av[1], &write_authid_hpp<ConfigCppWriter>)

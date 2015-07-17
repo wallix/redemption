@@ -24,6 +24,10 @@ int main(int ac, char ** av)
 {
     struct SpecCppWriter
     : spec_writer::SpecCppWriterBase<SpecCppWriter>
-    {};
+    {
+        SpecCppWriter() {
+            config_spec::writer_config_spec(*this);
+        }
+    };
     return write_spec_cpp_writer<SpecCppWriter>(ac, av);
 }

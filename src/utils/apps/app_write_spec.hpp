@@ -261,7 +261,6 @@ int write_spec_cpp_writer(int ac, char ** av)
     }
 
     SpecCppWriter writer;
-    config_spec::writer_config_spec(writer);
 
     MultiFilenameWriter<SpecCppWriter> sw(writer);
     sw.then(av[1], &write_spec<SpecCppWriter>);
