@@ -18,6 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
+#include "underlying_cast.hpp"
+
 #ifndef MK_ENUM_IO
 
 #define MK_ENUM_IO(E)                                    \
