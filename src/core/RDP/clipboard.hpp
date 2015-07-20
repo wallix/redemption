@@ -21,7 +21,10 @@
 #ifndef _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
 #define _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
 
+#include <cinttypes>
+
 #include "stream.hpp"
+#include "cast.hpp"
 
 namespace RDPECLIP {
 
@@ -1124,7 +1127,6 @@ public:
                 LOG(LOG_ERR,
                     "Truncated FileDescriptor: expected=%u remains=%u",
                     expected, stream.in_remain());
-BOOM;
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
