@@ -921,7 +921,7 @@ private:
         size_t length = ::snprintf(buffer, size,
             "DeviceCreateRequest: DesiredAccess=0x%X AllocationSize=%" PRIu64 " "
                 "FileAttributes=0x%X SharedAccess=0x%X CreateDisposition=0x%X "
-                "CreateOptions=0x%X path=\"%s\"",
+                "CreateOptions=0x%X Path=\"%s\"",
             this->DesiredAccess_, this->AllocationSize, this->FileAttributes,
             this->SharedAccess, this->CreateDisposition_, this->CreateOptions_,
             this->path.c_str());
@@ -2078,7 +2078,7 @@ public:
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u path=\"%s\"",
+            "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u ComputerName=\"%s\"",
             this->UnicodeFlag, this->CodePage, this->computer_name.c_str());
         return ((length < size) ? length : size - 1);
     }
@@ -3398,7 +3398,7 @@ private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryDirectoryRequest: FsInformationClass=%s(0x%X) "
-                "InitialQuery=%u path=\"%s\"",
+                "InitialQuery=%u Path=\"%s\"",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->InitialQuery_, this->path.c_str());
         return ((length < size) ? length : size - 1);

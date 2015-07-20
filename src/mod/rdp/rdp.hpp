@@ -271,6 +271,9 @@ class mod_rdp : public mod_api {
     uint32_t clipboard_server_file_list_format_id = 0;
     uint32_t clipboard_requested_format_id = 0;
 
+    std::unique_ptr<uint8_t[]> clipboard_file_descriptor_byte;
+    FixedSizeStream            clipboard_file_descriptor_stream;
+
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
@@ -390,6 +393,8 @@ public:
         , chunked_virtual_channel_data_byte(std::make_unique<uint8_t[]>(mod_rdp::chunked_virtual_channel_data_default_length))
         , chunked_virtual_channel_data_stream(chunked_virtual_channel_data_byte.get(), mod_rdp::chunked_virtual_channel_data_default_length)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
+        , clipboard_file_descriptor_byte(std::make_unique<uint8_t[]>(RDPECLIP::FileDescriptor::size()))
+        , clipboard_file_descriptor_stream(clipboard_file_descriptor_byte.get(), RDPECLIP::FileDescriptor::size())
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -6510,6 +6515,8 @@ public:
 
     void process_auth_event(const CHANNELS::ChannelDef & auth_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        REDASSERT(stream.in_remain() == chunk_size);
+
         std::string auth_channel_message(char_ptr_cast(stream.p), stream.in_remain());
 
         LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
@@ -6524,6 +6531,8 @@ public:
 
     void process_wab_agent_event(const CHANNELS::ChannelDef & wab_agent_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        REDASSERT(stream.in_remain() == chunk_size);
+
         uint16_t message_length = stream.in_uint16_le();
         REDASSERT(message_length == stream.in_remain());
         (void)message_length; // disable -Wunused-variable if REDASSERT is disable
@@ -6665,6 +6674,8 @@ public:
     void process_cliprdr_event(
             const CHANNELS::ChannelDef & cliprdr_channel, Stream & stream,
             uint32_t length, uint32_t flags, size_t chunk_size) {
+        REDASSERT(stream.in_remain() == chunk_size);
+
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp server clipboard PDU");
         }
@@ -6765,7 +6776,11 @@ public:
                                 4 /* formatId(4) */ +
                                 format_name_length * 2 /* wszFormatName(variable) */;
 
-                            if (!memcmp("FileGroupDescriptorW", utf8_string, length_of_utf8_string)) {
+                            static const char * file_list_clipboard_format_name = "FileGroupDescriptorW";
+                            static size_t       file_list_clipboard_format_name_length = ::strlen(file_list_clipboard_format_name) + 1;
+
+                            if ((file_list_clipboard_format_name_length == length_of_utf8_string) &&
+                                !memcmp(file_list_clipboard_format_name, utf8_string, length_of_utf8_string)) {
                                 this->clipboard_server_file_list_format_id = formatId;
                             }
 
@@ -6821,7 +6836,8 @@ public:
         }
 
         if (!cencel_pdu) {
-            if (msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
+            if ((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) ||
+                (msgType == RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE)) {
                 if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
                     (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
 
@@ -6864,29 +6880,73 @@ public:
                     stream.p -= 6;  // msgFlags(2) + dataLen(4)
                 }
 
-                LOG(LOG_INFO,
-                    "clipboard_requested_format_id=%u clipboard_server_file_list_format_id=%u",
-                    this->clipboard_requested_format_id, this->clipboard_server_file_list_format_id);
+                //LOG(LOG_INFO,
+                //    "clipboard_requested_format_id=%u clipboard_server_file_list_format_id=%u",
+                //    this->clipboard_requested_format_id, this->clipboard_server_file_list_format_id);
 
-                if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-                    (this->clipboard_requested_format_id == this->clipboard_server_file_list_format_id)) {
+                if (this->clipboard_requested_format_id == this->clipboard_server_file_list_format_id) {
+                    const auto saved_stream_p = stream.p;
 
-                    stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+                    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                        stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
 
-                    uint32_t cItems = stream.in_uint32_le();
+                        uint32_t cItems = stream.in_uint32_le();
 
-                    LOG(LOG_INFO, "Sending FileGroupDescriptorW(%u) clipboard data to client. cItems=%u",
-                        this->clipboard_requested_format_id, cItems);
+                        LOG(LOG_INFO,
+                            "Sending %sFileGroupDescriptorW(%u) clipboard data to client. "
+                                "data_length=%u chunk_length=%u cItems=%u",
+                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ? "" : "(chunked) "),
+                            this->clipboard_requested_format_id, length, stream.size(),
+                            cItems);
+                    }
+                    else if (this->clipboard_file_descriptor_stream.get_offset()) {
+                        uint32_t complementary_data_length =
+                            RDPECLIP::FileDescriptor::size() - this->clipboard_file_descriptor_stream.get_offset();
 
-                    stream.p -= 10; // msgFlags(2) + dataLen(4) + cItems(4)
+                        REDASSERT(stream.in_remain() >= complementary_data_length);
+
+                        this->clipboard_file_descriptor_stream.out_copy_bytes(
+                            stream.p,
+                            complementary_data_length);
+
+                        this->clipboard_file_descriptor_stream.mark_end();
+                        this->clipboard_file_descriptor_stream.rewind();
+
+                        stream.in_skip_bytes(complementary_data_length);
+
+                        RDPECLIP::FileDescriptor fd;
+
+                        fd.receive(this->clipboard_file_descriptor_stream);
+                        fd.log(LOG_INFO);
+                    }
+
+                    while (stream.in_remain() > RDPECLIP::FileDescriptor::size()) {
+                        RDPECLIP::FileDescriptor fd;
+
+                        fd.receive(stream);
+                        fd.log(LOG_INFO);
+                    }
+
+                    if (stream.in_remain()) {
+                        this->clipboard_file_descriptor_stream.reset();
+
+                        this->clipboard_file_descriptor_stream.out_copy_bytes(stream.p, stream.in_remain());
+                    }
+
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        this->clipboard_requested_format_id = 0;
+                    }
+
+                    stream.p = saved_stream_p;
                 }
             }
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->update_total_clipboard_data(msgType, length);
+
+                stream.p -= 2;  // msgType(2)
             }
 
-            stream.p -= 2;  // msgType(2)
             this->send_to_front_channel(
                 cliprdr_channel.name, stream.p, length, chunk_size, flags
             );
@@ -6895,6 +6955,8 @@ public:
 
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        REDASSERT(stream.in_remain() == chunk_size);
+
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::process_rail_event: Server RAIL PDU.");
         }
@@ -6918,6 +6980,8 @@ public:
 
     void process_rdpdr_event(const CHANNELS::ChannelDef & rdpdr_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        REDASSERT(stream.in_remain() == chunk_size);
+
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::process_rdpdr_event: Server DR PDU.");
         }
