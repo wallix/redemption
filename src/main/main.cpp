@@ -27,6 +27,7 @@
 #include "parameters_holder.hpp"
 
 #include "apps/app_proxy.hpp"
+#include "apps/app_write_python_spec.hpp"
 
 #include "program_options.hpp"
 
@@ -41,6 +42,22 @@ int main(int argc, char** argv)
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."
-      , extra_option_list{}, [](po::variables_map const &, bool *) { return 0; }
+      , extra_option_list{{"print-config-spec", "Configuration file spec for rdpproxy.ini"}}
+      , [argv](po::variables_map const & options, bool * quit) {
+            if (options.count("print-config-spec")) {
+                *quit = true;
+                char const * av[] = {argv[0], "/dev/stdin", nullptr};
+                int ac = static_cast<int>(sizeof(av) / sizeof(av[0]) - 1);
+                struct Writer : python_spec_writer::PythonSpecWriterBase<Writer> {
+                    Writer() {
+                        config_spec::config_spec_definition(*this);
+                    };
+                };
+                if (int err = app_write_python_spec<Writer>(ac, av)) {
+                    return err;
+                }
+            }
+            return 0;
+        }
     );
 }
