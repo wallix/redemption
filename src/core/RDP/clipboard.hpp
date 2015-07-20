@@ -21,7 +21,10 @@
 #ifndef _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
 #define _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
 
+#include <cinttypes>
+
 #include "stream.hpp"
+#include "cast.hpp"
 
 namespace RDPECLIP {
 
@@ -924,47 +927,127 @@ struct PacketFileList {
     /*variable fileDescriptorArray*/
 };
 
+// [MS-RDPECLIP] - 2.2.5.2.3.1 File Descriptor (CLIPRDR_FILEDESCRIPTOR)
+// ====================================================================
 
-// +----------------------------------------------------------------------------------------------------+
-//  Value                                |  Meaning                                                     |
-// +----------------------------------------------------------------------------------------------------+
-// FD_ATTRIBUTES  0x00000004             | The fileAttributes field contains valid data.                |
-// +----------------------------------------------------------------------------------------------------+
-// FD_FILESIZE  0x00000040               | The fileSizeHigh and fileSizeLow fields contain valid data.  |
-// +----------------------------------------------------------------------------------------------------+
-// FD_WRITESTIME  0x00000020             | The lastWriteTime field contains valid data.                 |
-// +----------------------------------------------------------------------------------------------------+
-// FD_SHOWPROGRESSUI 0x00004000          | A progress indicator SHOULD be shown when copying the file.  |
-// +----------------------------------------------------------------------------------------------------+
+// The CLIPRDR_FILEDESCRIPTOR structure describes the properties of a file.
 
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             flags                             |
+// +---------------------------------------------------------------+
+// |                           reserved1                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         fileAttributes                        |
+// +---------------------------------------------------------------+
+// |                           reserved2                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         lastWriteTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                          fileSizeHigh                         |
+// +---------------------------------------------------------------+
+// |                          fileSizeLow                          |
+// +---------------------------------------------------------------+
+// |                            fileName                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 (fileName cont'd for 122 rows)                |
+// +---------------------------------------------------------------+
 
-enum FileDescriptorType : uint32_t {
+// flags (4 bytes): An unsigned 32-bit integer that specifies which fields
+//  contain valid data and the usage of progress UI during a copy operation.
+
+//  +-------------------+---------------------------------------------------+
+//  | Value             | Meaning                                           |
+//  +-------------------+---------------------------------------------------+
+//  | FD_ATTRIBUTES     | The fileAttributes field contains valid data.     |
+//  | 0x00000004        |                                                   |
+//  +-------------------+---------------------------------------------------+
+//  | FD_FILESIZE       | The fileSizeHigh and fileSizeLow fields contain   |
+//  | 0x00000040        | valid data.                                       |
+//  +-------------------+---------------------------------------------------+
+//  | FD_WRITESTIME     | The lastWriteTime field contains valid data.      |
+//  | 0x00000020        |                                                   |
+//  +-------------------+---------------------------------------------------+
+//  | FD_SHOWPROGRESSUI | A progress indicator SHOULD be shown when copying |
+//  | 0x00004000        | the file.                                         |
+//  +-------------------+---------------------------------------------------+
+
+enum {
     FD_ATTRIBUTES     = 0x0004,
     FD_FILESIZE       = 0x0040,
     FD_WRITESTIME     = 0x0020,
     FD_SHOWPROGRESSUI = 0x4000
 };
 
-// +---------------------------------------------------------------------------------------------------------------+
-//  Value                                |  Meaning                                                                |
-// +---------------------------------------------------------------------------------------------------------------+
-// FILE_ATTRIBUTE_READONLY  0x00000001   | A file that is read-only. Applications can read the file,               |
-//                                         but cannot write to it or delete it.                                    |
-// +---------------------------------------------------------------------------------------------------------------+
-// FILE_ATTRIBUTE_HIDDEN  0x00000002     | The file or directory is hidden.                                        |
-//                                         It is not included in an ordinary directory listing.                    |
-// +---------------------------------------------------------------------------------------------------------------+
-// FILE_ATTRIBUTE_SYSTEM  0x00000004     | A file or directory that the operating system uses a part of,           |
-//                                         or uses exclusively.                                                    |
-// +---------------------------------------------------------------------------------------------------------------+
-// FILE_ATTRIBUTE_DIRECTORY  0x00000010  | Identifies a directory.                                                 |
-// +---------------------------------------------------------------------------------------------------------------+
-// FILE_ATTRIBUTE_ARCHIVE  0x00000020    | A file or directory that is an archive file or directory. Applications  |
-//                                         typically use this attribute to mark files for backup or removal.       |
-// +---------------------------------------------------------------------------------------------------------------+
-// FILE_ATTRIBUTE_NORMAL  0x00000080     |  A file that does not have other attributes set.                        |
-//                                          This attribute is valid only when used alone.                          |
-// +---------------------------------------------------------------------------------------------------------------+
+// reserved1 (32 bytes): An array of 32 bytes. This field MUST be initialized
+//  with zeros when sent and MUST be ignored on receipt.
+
+// fileAttributes (4 bytes): An unsigned 32-bit integer that specifies file
+//  attribute flags.
+
+//  +--------------------------+-----------------------------------------------+
+//  | Value                    | Meaning                                       |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_READONLY  | A file that is read-only. Applications can    |
+//  | 0x00000001               | read the file, but cannot write to it or      |
+//  |                          | delete it.                                    |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_HIDDEN    | The file or directory is hidden. It is not    |
+//  | 0x00000002               | included in an ordinary directory listing.    |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_SYSTEM    | A file or directory that the operating system |
+//  | 0x00000004               | uses a part of, or uses exclusively.          |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_DIRECTORY | Identifies a directory.                       |
+//  | 0x00000010               |                                               |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_ARCHIVE   | A file or directory that is an archive file   |
+//  | 0x00000020               | or directory. Applications typically use this |
+//  |                          | attribute to mark files for backup or         |
+//  |                          | removal.                                      |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_NORMAL    | A file that does not have other attributes    |
+//  | 0x00000080               | set. This attribute is valid only when used   |
+//  |                          | alone.                                        |
+//  +--------------------------+-----------------------------------------------+
 
 enum FileAttributes : uint32_t {
     FILE_ATTRIBUTES_READONLY  = 0x0001,
@@ -975,16 +1058,130 @@ enum FileAttributes : uint32_t {
     FILE_ATTRIBUTES_NORMAL    = 0x0080
 };
 
-struct FileDescriptor {
-    FileDescriptorType flags;
-    //uint32_t reserved1 = 0;
-    FileAttributes fileAttributes;
-    //uint16_t reserved2 = 0;
+// reserved2 (16 bytes): An array of 16 bytes. This field MUST be initialized
+//  with zeros when sent and MUST be ignored on receipt.
+
+// lastWriteTime (8 bytes): An unsigned 64-bit integer that specifies the
+//  number of 100-nanoseconds intervals that have elapsed since 1 January
+//  1601 to the time of the last write operation on the file.
+
+// fileSizeHigh (4 bytes): An unsigned 32-bit integer that contains the most
+//  significant 4 bytes of the file size.
+
+// fileSizeLow (4 bytes): An unsigned 32-bit integer that contains the least
+//  significant 4 bytes of the file size.
+
+// fileName (520 bytes): A null-terminated 260 character Unicode string that
+//  contains the name of the file.
+
+class FileDescriptor {
+    uint32_t flags;
+    uint32_t fileAttributes;
     uint64_t lastWriteTime;
     uint32_t fileSizeHigh;
     uint32_t fileSizeLow;
-    char fileName[520];
-};
+
+    std::string file_name;
+
+public:
+    inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->flags);
+
+        stream.out_clear_bytes(32); // reserved1(32)
+
+        stream.out_uint32_le(this->fileAttributes);
+
+        stream.out_clear_bytes(16); // reserved2(16)
+
+        stream.out_uint64_le(this->lastWriteTime);
+        stream.out_uint32_le(this->fileSizeHigh);
+        stream.out_uint32_le(this->fileSizeLow);
+
+        // The null-terminator is included.
+        const size_t maximum_length_of_fileName_in_bytes =
+            (this->file_name.length() + 1) * 2;
+
+        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
+            maximum_length_of_fileName_in_bytes));
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, maximum_length_of_fileName_in_bytes);
+
+        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+
+        stream.out_clear_bytes(520 /* fileName(520) */ -
+            size_of_unicode_data);
+    }
+
+    void receive(Stream & stream) {
+        {
+            const unsigned expected = 592;  // flags(4) + reserved1(32) +
+                                            //     fileAttributes(4) +
+                                            //     reserved2(16) +
+                                            //     lastWriteTime(8) +
+                                            //     fileSizeHigh(4) +
+                                            //     fileSizeLow(4) +
+                                            //     fileName(520)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileDescriptor: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->flags = stream.in_uint32_le();
+
+        stream.in_skip_bytes(32);   // reserved1(32)
+
+        this->fileAttributes = stream.in_uint32_le();
+
+        stream.in_skip_bytes(16);   // reserved2(16)
+
+        this->lastWriteTime = stream.in_uint64_le();
+        this->fileSizeHigh  = stream.in_uint32_le();
+        this->fileSizeLow   = stream.in_uint32_le();
+
+        const size_t size_of_utf8_string =
+            520 /* fileName(520) */ / 2 * maximum_length_of_utf8_character_in_bytes;
+        uint8_t * const utf8_string = static_cast<uint8_t *>(
+            ::alloca(size_of_utf8_string));
+        const size_t length_of_utf8_string = ::UTF16toUTF8(
+            stream.p, 520 /* fileName(520) */ / 2, utf8_string,
+            size_of_utf8_string);
+        this->file_name.assign(::char_ptr_cast(utf8_string),
+            length_of_utf8_string);
+
+        stream.in_skip_bytes(520);  // fileName(520)
+    }
+
+    inline static size_t size() {
+        return 592; // flags(4) + reserved1(32) + fileAttributes(4) +
+                    //     reserved2(16) + lastWriteTime(8) +
+                    //     fileSizeHigh(4) + fileSizeLow(4) +
+                    //     fileName(520)
+    }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileDescriptor: flags=0x%X fileAttributes=0x%X lastWriteTime=%" PRIu64 " "
+                "fileSizeHigh=0x%X fileSizeLow=0x%X "
+                "fileName=\"%s\"",
+            this->flags, this->fileAttributes, this->lastWriteTime,
+            this->fileSizeHigh, this->fileSizeLow, this->file_name.c_str());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, buffer);
+    }
+};  // class FileDescriptor
 
 }   // namespace RDPECLIP
 

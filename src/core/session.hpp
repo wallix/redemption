@@ -276,8 +276,6 @@ public:
                             mm.mod->draw_event(now);
 
                             if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
-                                this->ini.context_ask(AUTHID_KEEPALIVE);
-
                                 signal = mm.mod->get_event().signal;
                                 mm.mod->get_event().reset();
                             }

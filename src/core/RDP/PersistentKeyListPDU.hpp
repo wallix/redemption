@@ -390,8 +390,6 @@ private:
     }
 };  // PersistentKeyListPDUData
 
-const size_t PersistentKeyListPDUData::MAXIMUM_ENCAPSULATED_BITMAP_KEYS;
-
 }   // namespace RDP
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_

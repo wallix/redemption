@@ -1099,9 +1099,6 @@ public:
 
                 case rdpdr::FileNamesInformation:
                 {
-                    LOG(LOG_INFO,
-                        "+ + + + + + + + + + ManagedDirectory::ProcessServerDriveQueryDirectoryRequest() - FileNamesInformation - Using ToServerSender + + + + + + + + + +");
-
                     this->MakeClientDriveIoResponse(
                         out_stream,
                         device_io_request,

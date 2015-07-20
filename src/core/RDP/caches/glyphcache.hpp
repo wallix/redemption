@@ -25,6 +25,9 @@
 #include "noncopyable.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
 
+#include <array>
+
+
 /* difference caches */
 class GlyphCache : noncopyable {
     class Glyph {

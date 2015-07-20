@@ -833,4 +833,13 @@ static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_
     return (current_utf16_target - utf16_target) * 2;
 }
 
+static inline size_t UTF16StrLen(const uint8_t * utf16_s) {
+    const uint16_t* utf16_str = reinterpret_cast<const uint16_t*>(utf16_s);
+
+    size_t length = 0;
+    for (; *utf16_str != 0; ++utf16_str, length++);
+
+    return length;
+}
+
 #endif
