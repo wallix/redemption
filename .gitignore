@@ -15,3 +15,5 @@ password.py
 /debian
 /tools/valgrind-filter/valgrind-filter
 *~
+*.ii
+*.s
