@@ -88,7 +88,7 @@ constexpr Attribute operator & (Attribute x, Attribute y) {
 }
 
 template<class Writer>
-void writer_config_spec(Writer && w)
+void config_spec_definition(Writer && w)
 {
     desc const rdp_compression_desc{
         "Specifies the highest compression package support available on the front side:\n"
@@ -501,7 +501,7 @@ struct ref
 };
 
 template<class Inherit>
-struct ConfigSpecBase
+struct ConfigSpecWriterBase
 {
     std::string section_name;
     unsigned depth = 0;

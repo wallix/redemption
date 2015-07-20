@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_UTILS_APPS_APP_WRITE_SPEC_HPP
-#define REDEMPTION_SRC_UTILS_APPS_APP_WRITE_SPEC_HPP
+#ifndef REDEMPTION_SRC_UTILS_APPS_APP_WRITE_PYTHON_SPEC_HPP
+#define REDEMPTION_SRC_UTILS_APPS_APP_WRITE_PYTHON_SPEC_HPP
 
 #include "config_spec.hpp"
 #include "multi_filename_writer.hpp"
@@ -34,12 +34,13 @@
 #include <cstring>
 
 
-namespace spec_writer {
+namespace python_spec_writer {
 
 using namespace config_spec;
 
 template<class Inherit>
-struct SpecCppWriterBase : ConfigSpecBase<Inherit> {
+struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
+{
     std::vector<std::string> sections_ordered;
 
     void do_stop_section() {
@@ -233,11 +234,9 @@ struct SpecCppWriterBase : ConfigSpecBase<Inherit> {
     }
 };
 
-}
 
-
-template<class SpecCppWriter>
-void write_spec(std::ostream & os, SpecCppWriter & writer) {
+template<class SpecWriter>
+void write_spec(std::ostream & os, SpecWriter & writer) {
     os << "## Config file for RDP proxy.\n\n\n";
     for (auto & section_name : writer.sections_ordered) {
         auto body = writer.sections_member.find(section_name)->second;
@@ -251,19 +250,21 @@ void write_spec(std::ostream & os, SpecCppWriter & writer) {
     }
 }
 
+}
 
-template<class SpecCppWriter>
-int write_spec_cpp_writer(int ac, char const ** av)
+
+template<class SpecWriter>
+int app_write_python_spec(int ac, char const ** av)
 {
     if (ac < 2) {
         std::cerr << av[0] << " out-spec.h";
         return 1;
     }
 
-    SpecCppWriter writer;
+    SpecWriter writer;
 
-    MultiFilenameWriter<SpecCppWriter> sw(writer);
-    sw.then(av[1], &write_spec<SpecCppWriter>);
+    MultiFilenameWriter<SpecWriter> sw(writer);
+    sw.then(av[1], &python_spec_writer::write_spec<SpecWriter>);
     if (sw.err) {
         std::cerr << av[0] << ": " << sw.filename << ": " << strerror(errno) << "\n";
         return sw.errnum;
@@ -272,10 +273,10 @@ int write_spec_cpp_writer(int ac, char const ** av)
 }
 
 
-template<class SpecCppWriter>
-int write_spec_cpp_writer(int ac, char ** av)
+template<class SpecWriter>
+int app_write_python_spec(int ac, char ** av)
 {
-    return write_spec_cpp_writer<SpecCppWriter>(ac, const_cast<char const **>(av));
+    return app_write_python_spec<SpecWriter>(ac, const_cast<char const **>(av));
 }
 
 #endif

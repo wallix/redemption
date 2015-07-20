@@ -1,8 +1,8 @@
 #!/bin/sh
 
-bin="$(cd ../.. && NO_MAKE_CONFIG=1 bjam -a make_config)"
+bin="$(cd ../.. && NO_MAKE_CONFIG=1 bjam -a make_cpp_config)"
 err=$?
-[ $? = 0 ] && ../../"$(echo "$bin" | grep -o '[^ ]*make_config')" \
+[ $? = 0 ] && ../../"$(echo "$bin" | grep -o '[^ ]*make_cpp_config')" \
   config_authid.hpp \
   config_variables_configuration.hpp \
   config_initialize.tcc \

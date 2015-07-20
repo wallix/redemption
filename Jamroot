@@ -482,13 +482,8 @@ exe tls_test_server
     <variant>coverage:<build>no
 ;
 
-exe make_config
-    : src/main/write_config.cpp
-    : <variant>coverage:<build>no
-;
-
-exe make_spec
-    : src/main/write_spec.cpp
+exe make_cpp_config
+    : src/main/write_cpp_config.cpp
     : <variant>coverage:<build>no
 ;
 

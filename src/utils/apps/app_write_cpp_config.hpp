@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_UTILS_APPS_APP_WRITE_CONFIG_HPP
-#define REDEMPTION_SRC_UTILS_APPS_APP_WRITE_CONFIG_HPP
+#ifndef REDEMPTION_SRC_UTILS_APPS_APP_WRITE_CPP_CONFIG_HPP
+#define REDEMPTION_SRC_UTILS_APPS_APP_WRITE_CPP_CONFIG_HPP
 
 #include "config_spec.hpp"
 #include "multi_filename_writer.hpp"
@@ -33,14 +33,14 @@
 #include <cstring>
 
 
-namespace config_writer {
+namespace cpp_config_writer {
 
 using namespace config_spec;
 
 using config_spec::link; // for ambiguousity
 
 template<class Inherit>
-struct ConfigCppWriterBase : ConfigSpecBase<Inherit> {
+struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     std::ostringstream out_body_ctor_;
     std::ostringstream out_body_parser_;
 
@@ -298,8 +298,6 @@ struct ConfigCppWriterBase : ConfigSpecBase<Inherit> {
     }
 };
 
-}
-
 
 template<class ConfigCppWriter>
 void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
@@ -354,7 +352,7 @@ void write_variable_configuration(std::ostream & out_varconf, ConfigCppWriter & 
 }
 
 template<class ConfigCppWriter>
-void config_initialize(std::ostream & out_body, ConfigCppWriter & writer) {
+void write_config_initialize(std::ostream & out_body, ConfigCppWriter & writer) {
     out_body <<
         "inline void Inifile::initialize() {\n" <<
         writer.out_body_ctor_.str() <<
@@ -389,9 +387,11 @@ void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writ
     ;
 }
 
+}
+
 
 template<class ConfigCppWriter>
-int write_config_cpp_writer(int ac, char const ** av)
+int app_write_cpp_config(int ac, char const ** av)
 {
     if (ac < 5) {
         std::cerr << av[0] << " out-authid.h out-variables_configuration.h out-config_initialize.cpp out-config_set_value.cpp";
@@ -401,10 +401,10 @@ int write_config_cpp_writer(int ac, char const ** av)
     ConfigCppWriter writer;
 
     MultiFilenameWriter<ConfigCppWriter> sw(writer);
-    sw.then(av[1], &write_authid_hpp<ConfigCppWriter>)
-      .then(av[2], &write_variable_configuration<ConfigCppWriter>)
-      .then(av[3], &config_initialize<ConfigCppWriter>)
-      .then(av[4], &write_config_set_value<ConfigCppWriter>)
+    sw.then(av[1], &cpp_config_writer::write_authid_hpp<ConfigCppWriter>)
+      .then(av[2], &cpp_config_writer::write_variable_configuration<ConfigCppWriter>)
+      .then(av[3], &cpp_config_writer::write_config_initialize<ConfigCppWriter>)
+      .then(av[4], &cpp_config_writer::write_config_set_value<ConfigCppWriter>)
     ;
     if (sw.err) {
         std::cerr << av[0] << ": " << sw.filename << ": " << strerror(errno) << "\n";
@@ -415,9 +415,9 @@ int write_config_cpp_writer(int ac, char const ** av)
 
 
 template<class ConfigCppWriter>
-int write_config_cpp_writer(int ac, char ** av)
+int app_write_cpp_config(int ac, char ** av)
 {
-    return write_config_cpp_writer<ConfigCppWriter>(ac, const_cast<char const **>(av));
+    return app_write_cpp_config<ConfigCppWriter>(ac, const_cast<char const **>(av));
 }
 
 #endif
