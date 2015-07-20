@@ -11,3 +11,7 @@ default_login=string(default='')
 # Debug Logs
 #_advanced
 debug=boolean(default=False)
+
+# Make device filters of selector case-sensitive.
+#_advanced
+selector_filters_case_sensitive=boolean(default=False)
