@@ -1464,6 +1464,7 @@ public:
             current_offset, in_stream.in_remain(), remaining_number_of_bytes_to_write);
 
         off64_t seek_result = ::lseek64(this->fd, current_offset, SEEK_SET);
+        (void)seek_result;
         REDASSERT(seek_result == current_offset);
         int write_result = ::write(this->fd, in_stream.p, in_stream.in_remain());
         (void)write_result;

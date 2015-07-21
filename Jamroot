@@ -45,6 +45,8 @@ constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
 
+constant PNG_DEBUG : <variant>debug:<library>png ;
+
 rule defines ( properties * )
 {
     local defs ;
@@ -523,8 +525,8 @@ unit-test test_share : tests/core/RDP/test_share.cpp libboost_unit_test : <varia
 unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
-unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test : $(PNG_DEBUG) <variant>coverage:<library>gcov ;
+unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test : $(PNG_DEBUG) <variant>coverage:<library>gcov ;
 unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_capture : tests/capture/test_capture.cpp src/utils/bitmap_data_allocator.cpp crypto dl png z snappy cryptofile libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp src/utils/bitmap_data_allocator.cpp png z snappy crypto libboost_unit_test : <variant>coverage:<library>gcov ;

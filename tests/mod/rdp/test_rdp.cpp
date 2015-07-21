@@ -477,11 +477,16 @@ BOOST_AUTO_TEST_CASE(TestRemoveRdpdrFileSystem)
 
     FileSystemDriveManager file_system_driver_manager;
 
+    bool server_user_logged_on_processed = true;
+    bool proxy_managed_drives_announced = false;
+
     bool     device_capability_version_02_supported = false;
     uint32_t verbose                                = 0;
 
     uint32_t real_device_count = mod_rdp::filter_unsupported_device(authorization_channels,
         source_stream, device_count, result, file_system_driver_manager,
+        server_user_logged_on_processed,
+        proxy_managed_drives_announced,
         device_capability_version_02_supported,
         verbose);
 
