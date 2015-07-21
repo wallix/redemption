@@ -158,10 +158,10 @@ static inline void hexdump(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "%.2x ", static_cast<unsigned char>(data[j+i]));
+            line += sprintf(line, "%.2x ", static_cast<unsigned>(data[j+i]));
         }
         if (i < 16){
-            line += sprintf(line, "%*c", static_cast<unsigned>((16-i)*3), ' ');
+            line += sprintf(line, "%*c", static_cast<int>((16-i)*3), ' ');
         }
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
@@ -194,10 +194,10 @@ static inline void hexdump_d(const char * data, size_t size, unsigned line_lengt
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "0x%.2x, ", static_cast<unsigned char>(data[j+i]));
+            line += sprintf(line, "0x%.2x, ", static_cast<unsigned>(data[j+i]));
         }
         if (i < line_length){
-            line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*3), ' ');
+            line += sprintf(line, "%*c", static_cast<int>((line_length-i)*3), ' ');
         }
 
         line += sprintf(line, " // ");
@@ -233,11 +233,11 @@ static inline void hexdump_c(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "\\x%.2x", static_cast<unsigned char>(data[j+i]));
+            line += sprintf(line, "\\x%.2x", static_cast<unsigned>(data[j+i]));
         }
         line += sprintf(line, "\"");
         if (i < 16){
-            line += sprintf(line, "%*c", static_cast<unsigned>((16-i)*4), ' ');
+            line += sprintf(line, "%*c", static_cast<int>((16-i)*4), ' ');
         }
         line += sprintf(line, " //");
         for (i = 0; i < 16; i++){
@@ -272,11 +272,11 @@ static inline void hexdump96_c(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "\\x%.2x", static_cast<unsigned char>(data[j+i]));
+            line += sprintf(line, "\\x%.2x", static_cast<unsigned>(data[j+i]));
         }
         line += sprintf(line, "\"");
         if (i < line_length){
-            line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*4), ' ');
+            line += sprintf(line, "%*c", static_cast<int>((line_length-i)*4), ' ');
         }
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){
@@ -311,11 +311,11 @@ static inline void hexdump8_c(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "\\x%.2x", static_cast<unsigned char>(data[j+i]));
+            line += sprintf(line, "\\x%.2x", static_cast<unsigned>(data[j+i]));
         }
         line += sprintf(line, "\"");
         if (i < line_length){
-            line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*4), ' ');
+            line += sprintf(line, "%*c", static_cast<int>((line_length-i)*4), ' ');
         }
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){

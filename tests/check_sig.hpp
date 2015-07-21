@@ -31,20 +31,20 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
    for (size_t y = 0; y < height; y++){
        sha1.update(data + y * len, len);
    }
-   sha1.final(sig, 20);
+   sha1.final(sig, sizeof(sig));
 
-   if (memcmp(shasig, sig, 20)){
+   if (memcmp(shasig, sig, sizeof(sig))){
        sprintf(message, "Expected signature: \""
        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-       sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-       sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-       sig[ 8], sig[ 9], sig[10], sig[11],
-       sig[12], sig[13], sig[14], sig[15],
-       sig[16], sig[17], sig[18], sig[19]);
+       unsigned(sig[ 0]), unsigned(sig[ 1]), unsigned(sig[ 2]), unsigned(sig[ 3]),
+       unsigned(sig[ 4]), unsigned(sig[ 5]), unsigned(sig[ 6]), unsigned(sig[ 7]),
+       unsigned(sig[ 8]), unsigned(sig[ 9]), unsigned(sig[10]), unsigned(sig[11]),
+       unsigned(sig[12]), unsigned(sig[13]), unsigned(sig[14]), unsigned(sig[15]),
+       unsigned(sig[16]), unsigned(sig[17]), unsigned(sig[18]), unsigned(sig[19]));
        return false;
    }
    return true;
@@ -55,54 +55,16 @@ inline bool check_sig(Drawable & data, char * message, const char * shasig)
    return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
 }
 
-
 inline bool check_sig(Stream & stream, char * message, const char * shasig)
 {
-   uint8_t sig[20];
-   SslSha1 sha1;
-   sha1.update(stream.get_data(), stream.size());
-   sha1.final(sig, sizeof(sig));
-
-   if (memcmp(shasig, sig, 20)){
-       sprintf(message, "Expected signature: \""
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-       sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-       sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-       sig[ 8], sig[ 9], sig[10], sig[11],
-       sig[12], sig[13], sig[14], sig[15],
-       sig[16], sig[17], sig[18], sig[19]);
-       return false;
-   }
-   return true;
+   return check_sig(stream.get_data(), 1, stream.size(), message, shasig);
 }
 
 inline bool check_sig(const uint8_t * data, size_t length, char * message, const char * shasig)
 {
-   uint8_t sig[20];
-   SslSha1 sha1;
-   sha1.update(data, length);
-   sha1.final(sig, sizeof(sig));
-
-   if (memcmp(shasig, sig, 20)){
-       sprintf(message, "Expected signature: \""
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-       sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-       sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-       sig[ 8], sig[ 9], sig[10], sig[11],
-       sig[12], sig[13], sig[14], sig[15],
-       sig[16], sig[17], sig[18], sig[19]);
-       return false;
-   }
-   return true;
+   return check_sig(data, 1, length, message, shasig);
 }
+
 
 inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig, size_t sig_length)
 {
