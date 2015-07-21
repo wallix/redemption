@@ -1456,8 +1456,8 @@ public:
     {
         this->p = nullptr;
         this->end = nullptr;
-        this->data = nullptr;
-        this->capacity = 0;
+        this->data = this->autobuffer;
+        this->capacity = AUTOSIZE;
         this->init(size);
     }
 
