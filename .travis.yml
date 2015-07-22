@@ -2,7 +2,6 @@ language: cpp
 
 compiler:
   - gcc
-  - clang
 
 before_install:
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -14,7 +13,7 @@ using gcc : 4.9 : /usr/bin/g++-4.9 ;
 using clang : : clang++ ;' > user-config.jam"
 
 install:
-  - sudo apt-get install -qq g++-4.9 g++-4.8 clang
+  - sudo apt-get install -qq g++-4.9 g++-4.8 clang libssl-dev, libpng12-dev, libboost-dev
 
 script:
   - bjam --toolset=gcc-4.8 -q
