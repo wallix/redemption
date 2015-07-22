@@ -37,7 +37,8 @@ except Exception, e:
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
     except Exception, e:
-        Logger().info(">>>>>> %s" % tracelog)
+        Logger().info("wengine>>>>>> %s" % tracelog)
+        Logger().info("fake>>>>>> %s" % traceback.format_exc(e))
 
 import time
 import socket
