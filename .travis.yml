@@ -13,7 +13,7 @@ using gcc : 4.9 : /usr/bin/g++-4.9 ;
 using clang : : clang++ ;' > user-config.jam"
 
 install:
-  - sudo apt-get install -qq g++-4.9 g++-4.8 clang libssl-dev libpng12-dev libboost-dev libsnappy-dev
+  - sudo apt-get install -qq g++-4.9 g++-4.8 clang++ libssl-dev libpng12-dev libboost-dev libsnappy-dev
 
 script:
   - bjam linkflags=-c --toolset=gcc-4.8 -q exe
