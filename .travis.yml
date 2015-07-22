@@ -7,7 +7,11 @@ compiler:
 before_install:
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
   - sudo apt-get update -qq
-  - echo -e 'using gcc : 4.8 : g++-4.8 ;\nusing gcc : 4.9 : /usr/bin/g++-4.9 ;\nusing clang : : clang++ ;'
+  - "echo -e 'using gcc : 4.8 : g++-4.8 ;
+
+using gcc : 4.9 : /usr/bin/g++-4.9 ;
+
+using clang : : clang++ ;' > user-config.jam"
 
 install:
   - sudo apt-get install -qq g++-4.9 g++-4.8 clang
@@ -20,9 +24,9 @@ script:
 os:
   - linux
 
-branches:
-  only:
-    - master
+#branches:
+#  only:
+#    - master
 
 notifications:
   email:
