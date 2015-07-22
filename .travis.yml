@@ -1,0 +1,34 @@
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+before_install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -qq
+  - echo -e 'using gcc : 4.8 : g++-4.8 ;\nusing gcc : 4.9 : /usr/bin/g++-4.9 ;\nusing clang : : clang++ ;'
+
+install:
+  - sudo apt-get install -qq g++-4.9 g++-4.8 clang
+
+script:
+  - bjam --toolset=gcc-4.8 -q
+  - bjam --toolset=gcc-4.9 -q
+  - bjam --toolset=clang -q
+
+os:
+  - linux
+
+branches:
+  only:
+    - master
+
+notifications:
+  email:
+    recipients:
+      - jpoelen@wallix.com
+      - rzhou@wallix.com
+      - cgrosjean@wallix.com
+    on_success: never
+    on_failure: always
