@@ -13,12 +13,12 @@ using gcc : 4.9 : /usr/bin/g++-4.9 ;" ; fi
 
 install:
   - sudo apt-get install -qq libssl-dev libpng12-dev libboost-dev libsnappy-dev
-  - if [ "$CXX" = 'g++' ] ; sudo apt-get install -qq g++-4.9 g++-4.8 ; fi
+  - if [ "$CXX" = 'g++' ] ; then sudo apt-get install -qq g++-4.9 g++-4.8 ; fi
 
 script:
   - if [ "$CC" = 'gcc' ] ; then bjam linkflags=-c --toolset=gcc-4.8 -q exe ; fi
   - if [ "$CC" = 'gcc' ] ; then bjam linkflags=-c --toolset=gcc-4.9 -q exe ; fi
-  - if [ "$CC" = 'clang' ] ; bjam linkflags=-c --toolset=clang -q exe ; fi
+  - if [ "$CC" = 'clang' ] ; then bjam linkflags=-c --toolset=clang -q exe ; fi
 
 os:
   - linux
