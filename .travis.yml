@@ -2,23 +2,23 @@ language: cpp
 
 compiler:
   - gcc
+  - clang
 
 before_install:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update -qq
+  - if [ "$CC" = 'gcc' ] ; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y ; fi
+  - if [ "$CC" = 'gcc' ] ; then sudo apt-get update -qq ; fi
   - "echo -e 'using gcc : 4.8 : g++-4.8 ;
 
-using gcc : 4.9 : /usr/bin/g++-4.9 ;
-
-using clang : : clang++ ;' > user-config.jam"
+using gcc : 4.9 : /usr/bin/g++-4.9 ;' > user-config.jam"
 
 install:
-  - sudo apt-get install -qq g++-4.9 g++-4.8 clang++ libssl-dev libpng12-dev libboost-dev libsnappy-dev
+  - sudo apt-get install -qq libssl-dev libpng12-dev libboost-dev libsnappy-dev
+  - if [ "$CXX" = 'g++' ] ; then sudo apt-get install -qq g++-4.9 g++-4.8 ; fi
 
 script:
-  - bjam linkflags=-c --toolset=gcc-4.8 -q exe
-  - bjam linkflags=-c --toolset=gcc-4.9 -q exe
-  - bjam linkflags=-c --toolset=clang -q exe
+  - if [ "$CC" = 'gcc' ] ; then bjam linkflags=-c --toolset=gcc-4.8 -q exe ; fi
+  - if [ "$CC" = 'gcc' ] ; then bjam linkflags=-c --toolset=gcc-4.9 -q exe ; fi
+  - if [ "$CC" = 'clang' ] ; then bjam linkflags=-c --toolset=clang -q exe ; fi
 
 os:
   - linux
