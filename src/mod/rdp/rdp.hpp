@@ -279,7 +279,7 @@ class mod_rdp : public mod_api {
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
-    class RdpdrToServerSender : public ToServerSender {
+    class RdpdrToServerSender : public VirtualChannelDataSender {
         Transport    & transport;
         CryptContext & encrypt;
         int            encryption_level;
@@ -306,7 +306,7 @@ class mod_rdp : public mod_api {
         }
     };
 
-    std::unique_ptr<ToServerSender> to_server_sender;
+   std::unique_ptr<VirtualChannelDataSender> rdpdr_to_server_sender;
 
 public:
     mod_rdp( Transport & trans
@@ -783,7 +783,7 @@ public:
     }
 
     virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
-                                        , size_t length, size_t chunk_size, int flags) {
+                                        , size_t length, size_t chunk_size, int flags) override {
         if (this->transparent_recorder) {
             this->transparent_recorder->send_to_front_channel( mod_channel_name, data, length
                                                              , chunk_size, flags);
@@ -1914,6 +1914,31 @@ private:
                                 general_capability_set.log(LOG_INFO);
                             }
 
+                            if (!(general_capability_set.extendedPDU() & rdpdr::RDPDR_USER_LOGGEDON_PDU)) {
+                                LOG(LOG_INFO,
+                                    "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
+                                        "Allow the server to send a Server User Logged On packet.");
+
+                                FixedSizeStream cap_stream(
+                                    saved_general_capability_set_p,
+                                    rdpdr::GeneralCapabilitySet::size(Version));
+
+                                cap_stream.out_skip_bytes(20);  // osType(4) + osVersion(4) +
+                                                                //     protocolMajorVersion(2) +
+                                                                //     protocolMinorVersion(2) +
+                                                                //     ioCode1(4) + ioCode2(4)
+                                cap_stream.out_uint32_le(
+                                    general_capability_set.extendedPDU() | rdpdr::RDPDR_USER_LOGGEDON_PDU); // extendedPDU(4)
+
+                                chunk.p = saved_general_capability_set_p;
+
+                                general_capability_set.receive(chunk, Version);
+
+                                if (this->verbose) {
+                                    general_capability_set.log(LOG_INFO);
+                                }
+                            }
+
                             if (general_capability_set.extraFlags1() & rdpdr::ENABLE_ASYNCIO) {
                                 LOG(LOG_INFO,
                                     "mod_rdp::send_unchunked_data_to_mod_rdpdr_channel: "
@@ -1940,7 +1965,6 @@ private:
                                     general_capability_set.log(LOG_INFO);
                                 }
                             }
-
                         }
                         break;
 
@@ -6711,10 +6735,10 @@ public:
 
             this->wab_agent_is_ready = true;
 
-            if (this->to_server_sender) {
-                this->file_system_drive_manager.DisableWABAgentDrive(*this->to_server_sender,
-                    this->verbose);
-            }
+            REDASSERT(this->rdpdr_to_server_sender);
+
+            this->file_system_drive_manager.DisableWABAgentDrive(*this->rdpdr_to_server_sender,
+                this->verbose);
 
             {
                 BStream out_s(32768);
@@ -7512,8 +7536,8 @@ public:
                     }
                 }
                 else {
-                    if (!this->to_server_sender) {
-                        this->to_server_sender = std::make_unique<RdpdrToServerSender>(
+                    if (!this->rdpdr_to_server_sender) {
+                        this->rdpdr_to_server_sender = std::make_unique<RdpdrToServerSender>(
                                 this->nego.trans,
                                 this->encrypt,
                                 this->encryptionLevel,
@@ -7527,7 +7551,7 @@ public:
                     this->file_system_drive_manager.ProcessDeviceIORequest(
                         device_io_request,
                         (flags & CHANNELS::CHANNEL_FLAG_FIRST),
-                        stream, *(this->to_server_sender.get()), returned_asynchronous_task,
+                        stream, *(this->rdpdr_to_server_sender.get()), returned_asynchronous_task,
                         this->verbose);
 
                     if (returned_asynchronous_task) {

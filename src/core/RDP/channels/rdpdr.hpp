@@ -2232,6 +2232,12 @@ public:
 //  | 0x00000004                    | Logged On packet.                      |
 //  +-------------------------------+----------------------------------------+
 
+enum {
+      RDPDR_DEVICE_REMOVE_PDUS      = 0x00000001
+    , RDPDR_CLIENT_DISPLAY_NAME_PDU = 0x00000002
+    , RDPDR_USER_LOGGEDON_PDU       = 0x00000004
+};
+
 // extraFlags1 (4 bytes): A 32-bit unsigned integer that specifies extended
 //  flags. The extraFlags1 field MUST be set as a bitmask of the following
 //  value.
@@ -2264,7 +2270,7 @@ class GeneralCapabilitySet {
     uint16_t protocolMinorVersion = 0;
     uint32_t ioCode1              = 0;
     uint32_t ioCode2              = 0;
-    uint32_t extendedPDU          = 0;
+    uint32_t extendedPDU_         = 0;
     uint32_t extraFlags1_         = 0;
     uint32_t extraFlags2          = 0;
     uint32_t SpecialTypeDeviceCap = 0;
@@ -2282,7 +2288,7 @@ public:
     , protocolMinorVersion(protocolMinorVersion)
     , ioCode1(ioCode1)
     , ioCode2(ioCode2)
-    , extendedPDU(extendedPDU)
+    , extendedPDU_(extendedPDU)
     , extraFlags1_(extraFlags1)
     , extraFlags2(extraFlags2)
     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
@@ -2294,7 +2300,7 @@ public:
         stream.out_uint16_le(this->protocolMinorVersion);
         stream.out_uint32_le(this->ioCode1);
         stream.out_uint32_le(this->ioCode2);
-        stream.out_uint32_le(this->extendedPDU);
+        stream.out_uint32_le(this->extendedPDU_);
         stream.out_uint32_le(this->extraFlags1_);
         stream.out_uint32_le(this->extraFlags2);
         if (version == GENERAL_CAPABILITY_VERSION_02) {
@@ -2323,13 +2329,15 @@ public:
         this->protocolMinorVersion = stream.in_uint16_le();
         this->ioCode1              = stream.in_uint32_le();
         this->ioCode2              = stream.in_uint32_le();
-        this->extendedPDU          = stream.in_uint32_le();
+        this->extendedPDU_         = stream.in_uint32_le();
         this->extraFlags1_         = stream.in_uint32_le();
         this->extraFlags2          = stream.in_uint32_le();
         if (version == GENERAL_CAPABILITY_VERSION_02) {
             this->SpecialTypeDeviceCap = stream.in_uint32_le();
         }
     }
+
+    inline uint32_t extendedPDU() const { return this->extendedPDU_; }
 
     inline uint32_t extraFlags1() const { return this->extraFlags1_; }
 
@@ -2349,7 +2357,7 @@ private:
                 "extraFlags2=0x%X SpecialTypeDeviceCap=%u",
             this->osType, this->osVersion, this->protocolMajorVersion,
             this->protocolMinorVersion, this->ioCode1, this->ioCode2,
-            this->extendedPDU, this->extraFlags1_, this->extraFlags2,
+            this->extendedPDU_, this->extraFlags1_, this->extraFlags2,
             this->SpecialTypeDeviceCap);
         return ((length < size) ? length : size - 1);
     }
