@@ -2,7 +2,7 @@ language: cpp
 
 compiler:
   - gcc
-  - clang
+#  - clang
 
 before_install:
   - if [ "$CC" = 'gcc' ] ; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y ; fi
@@ -13,7 +13,7 @@ using gcc : 4.9 : /usr/bin/g++-4.9 ;' > user-config.jam"
 
 install:
   - sudo apt-get install -qq libssl-dev libpng12-dev libboost-dev libsnappy-dev
-  - if [ "$CXX" = 'g++' ] ; then sudo apt-get install -qq g++-4.9 g++-4.8 ; fi
+  - if [ "$CC" = 'gcc' ] ; then sudo apt-get install -qq g++-4.9 g++-4.8 ; fi
 
 script:
   - if [ "$CC" = 'gcc' ] ; then bjam linkflags=-c --toolset=gcc-4.8 -q exe ; fi
