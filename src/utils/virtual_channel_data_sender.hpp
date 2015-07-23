@@ -29,4 +29,4 @@ public:
         const uint8_t * chunk_data, size_t chunk_data_length) = 0;
 };
 
- #endif // #ifndef _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
+#endif // #ifndef _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
