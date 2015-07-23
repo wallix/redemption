@@ -1,0 +1,37 @@
+language: cpp
+
+compiler:
+  - gcc
+
+before_install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -qq
+  - "echo -e 'using gcc : 4.8 : g++-4.8 ;
+
+using gcc : 4.9 : /usr/bin/g++-4.9 ;
+
+using clang : : clang++ ;' > user-config.jam"
+
+install:
+  - sudo apt-get install -qq g++-4.9 g++-4.8 clang++ libssl-dev libpng12-dev libboost-dev libsnappy-dev
+
+script:
+  - bjam linkflags=-c --toolset=gcc-4.8 -q exe
+  - bjam linkflags=-c --toolset=gcc-4.9 -q exe
+  - bjam linkflags=-c --toolset=clang -q exe
+
+os:
+  - linux
+
+#branches:
+#  only:
+#    - master
+
+notifications:
+  email:
+    recipients:
+      - jpoelen@wallix.com
+      - rzhou@wallix.com
+      - cgrosjean@wallix.com
+    on_success: never
+    on_failure: always
