@@ -35,7 +35,7 @@
 #include "socket_transport_utility.hpp"
 #include "test_transport.hpp"
 
-class TestToServerSender : public ToServerSender {
+class TestToServerSender : public VirtualChannelDataSender {
     Transport & transport;
 
 public:

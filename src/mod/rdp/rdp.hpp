@@ -279,7 +279,7 @@ class mod_rdp : public mod_api {
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
-    class RdpdrToServerSender : public VirtualChannelDataSender {
+    class ToServerSender : public VirtualChannelDataSender {
         Transport    & transport;
         CryptContext & encrypt;
         int            encryption_level;
@@ -287,7 +287,7 @@ class mod_rdp : public mod_api {
         uint16_t       channel_id;
 
     public:
-        RdpdrToServerSender( Transport & transport
+        ToServerSender( Transport & transport
                            , CryptContext & encrypt
                            , int encryption_level
                            , uint16_t user_id
@@ -306,7 +306,7 @@ class mod_rdp : public mod_api {
         }
     };
 
-   std::unique_ptr<VirtualChannelDataSender> rdpdr_to_server_sender;
+   std::unique_ptr<ToServerSender> rdpdr_to_server_sender;
 
 public:
     mod_rdp( Transport & trans
@@ -7537,7 +7537,7 @@ public:
                 }
                 else {
                     if (!this->rdpdr_to_server_sender) {
-                        this->rdpdr_to_server_sender = std::make_unique<RdpdrToServerSender>(
+                        this->rdpdr_to_server_sender = std::make_unique<ToServerSender>(
                                 this->nego.trans,
                                 this->encrypt,
                                 this->encryptionLevel,
