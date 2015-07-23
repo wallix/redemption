@@ -23,7 +23,7 @@
 
 #include "asynchronous_task_manager.hpp"
 #include "channel_list.hpp"
-#include "to_server_sender.hpp"
+#include "virtual_channel_data_sender.hpp"
 #include "RDP/channels/rdpdr.hpp"
 #include "transport.hpp"
 #include "wait_obj.hpp"
@@ -43,7 +43,7 @@ class RdpdrDriveReadTask : public AsynchronousTask {
 
     off64_t Offset;
 
-    ToServerSender & to_server_sender;
+    VirtualChannelDataSender & to_server_sender;
 
     const uint32_t verbose;
 
@@ -54,7 +54,7 @@ public:
                        uint32_t CompletionId,
                        uint32_t number_of_bytes_to_read,
                        off64_t Offset,
-                       ToServerSender & to_server_sender,
+                       VirtualChannelDataSender & to_server_sender,
                        uint32_t verbose = 0)
     : AsynchronousTask()
     , transport(transport)
@@ -177,7 +177,7 @@ class RdpdrSendDriveIOResponseTask : public AsynchronousTask {
 
     size_t remaining_number_of_bytes_to_send;
 
-    ToServerSender & to_server_sender;
+    VirtualChannelDataSender & to_server_sender;
 
     const uint32_t verbose;
 
@@ -185,7 +185,7 @@ public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
                                  uint8_t * data,
                                  size_t data_length,
-                                 ToServerSender & to_server_sender,
+                                 VirtualChannelDataSender & to_server_sender,
                                  uint32_t verbose = 0)
     : flags(flags)
     , data(std::make_unique<uint8_t[]>(data_length))

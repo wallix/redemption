@@ -473,7 +473,9 @@ protected:
         if (this->state == UP_AND_RUNNING) {
             if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
+                    if (this->verbose & 0x80) {
+                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
+                    }
 
                     const size_t utf8_data_length =
                         data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes;
@@ -484,7 +486,9 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
+                    if (this->verbose & 0x80) {
+                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
+                    }
 
                     const size_t latin1_data_length = data_length / sizeof(uint16_t);
                     std::unique_ptr<uint8_t[]> latin1_data(new uint8_t[latin1_data_length]);
@@ -496,7 +500,9 @@ protected:
             }
             else {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
+                    if (this->verbose & 0x80) {
+                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
+                    }
 
                     const size_t utf16_data_length = data_length * sizeof(uint16_t);
                     std::unique_ptr<uint8_t[]> utf16_data(new uint8_t[utf16_data_length]);
@@ -512,7 +518,9 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> Latin-1");
+                    if (this->verbose & 0x80) {
+                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> Latin-1");
+                    }
 
                     client_cut_text(::char_ptr_cast(data));
                 }

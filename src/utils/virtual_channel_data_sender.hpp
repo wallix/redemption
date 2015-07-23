@@ -18,14 +18,15 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_TO_SERVER_SENDER_HPP_
-#define _REDEMPTION_UTILS_TO_SERVER_SENDER_HPP_
+#ifndef _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
+#define _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
 
-class ToServerSender {
+class VirtualChannelDataSender {
 public:
-    virtual ~ToServerSender() = default;
+    virtual ~VirtualChannelDataSender() = default;
 
-    virtual void operator() (size_t total_length, uint32_t flags, const uint8_t * chunk_data, size_t chunk_data_length) = 0;
+    virtual void operator() (size_t total_length, uint32_t flags,
+        const uint8_t * chunk_data, size_t chunk_data_length) = 0;
 };
 
- #endif // #ifndef _REDEMPTION_UTILS_TO_SERVER_SENDER_HPP_
+ #endif // #ifndef _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
