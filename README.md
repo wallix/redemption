@@ -5,19 +5,18 @@ Dependencies
 ------------
 
 To compile ReDemPtion you need the following packages:
-
-boost-build
-libboost-dev (contains bjam : software build tool)
-libboost-test-dev
-libssl-dev
-locales
-libkrb5-dev
-libgssglue-dev
-libsnappy-dev
-libpng12-dev
+- boost-build
+- libboost-dev (contains bjam : software build tool)
+- libboost-test-dev
+- libssl-dev
+- locales
+- libkrb5-dev
+- libgssglue-dev
+- libsnappy-dev
+- libpng12-dev
 
 Optionally :
-python
+- python
 
 FAQ
 ---
@@ -90,18 +89,26 @@ more complex than bjam and not maintained, so was removed.
 Q - Fine, now how do I compile and run ReDemPtion ?
 ---------------------------------------------------
 Well, that's pretty easy once you installed the required dependencies.
+
 Just run (as user):
- $ bjam
+
+`$ bjam`
+
 Compile executables without tests (as user):
- $ bjam exe
+
+`$ bjam exe`
+
 and install (as administrator):
- # bjam install
+
+`# bjam install`
 
 Binaries are located in /usr/local/bin.
 
 To test it, executes:
- $ python tools/passthrough/passthrough.py
- # /usr/local/bin/rdpproxy -nf
+
+`$ python tools/passthrough/passthrough.py`
+
+`# /usr/local/bin/rdpproxy -nf`
 
 Now, at that point you'll just have two servers waiting for connections
 not much fun. You still have to run some RDP client to connect to proxy. Choose
@@ -111,7 +118,7 @@ occurs just report it to us so that we can correct it.
 
 Example with freerdp when the proxy runs on the same host as the client:
 
- $ xfreerdp 127.0.0.1
+`$ xfreerdp 127.0.0.1`
 
 A dialog box should open in which you can type a username and a password.
 With default authhook at least internal services should work. Try login: bouncer
@@ -124,7 +131,7 @@ to current authhook.py, please contribute it, it will be much appreciated.
 You can also bypass login dialog box and go directly to the RDP server by
 providing a login and a password from command line.
 
- $ xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1
+`$ xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
 
 
 Q - Why are there so many #pragma messages when compiling ReDemPtion ?
@@ -143,13 +150,13 @@ Our code contains more or less 250 of such warnings, inserted by hand.
 When compiling you see them several times as we choose a special "headers only"
 coding style. Why we did so is another question.
 
-You only see those messages if environment variable VERBOSE is defined. If not,
+You only see those messages if environment variable `VERBOSE` is defined. If not,
 then the compiling process will be quite silent (default mode used to be the
 other way, but now that has changed).
 
-If you want to see internal warnings, just define VERBOSE or compile using:
+If you want to see internal warnings, just define `VERBOSE` or compile using:
 
- $ VERBOSE=1 bjam
+`$ VERBOSE=1 bjam`
 
 
 Q - Why did you choose this special "headers only" coding style ?
