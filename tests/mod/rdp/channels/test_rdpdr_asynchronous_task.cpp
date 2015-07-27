@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPAsynchronousTask
+#define BOOST_TEST_MODULE TestRDPDRAsynchronousTask
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
@@ -31,7 +31,7 @@
 #include "in_file_transport.hpp"
 #include "log.hpp"
 #include "make_unique.hpp"
-#include "rdp/rdp_asynchronous_task.hpp"
+#include "rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "socket_transport_utility.hpp"
 #include "test_transport.hpp"
 
