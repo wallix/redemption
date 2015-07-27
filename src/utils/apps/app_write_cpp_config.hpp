@@ -37,8 +37,6 @@ namespace cpp_config_writer {
 
 using namespace config_spec;
 
-using config_spec::link; // for ambiguousity
-
 template<class Inherit>
 struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     std::ostringstream out_body_ctor_;
@@ -46,6 +44,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
 
     std::map<std::string, std::string> sections_parser;
     std::map<std::string, std::string> authids;
+    std::vector<std::string> variables;
+    std::vector<std::string> variables_acl;
 
     void do_tab() {
         this->out() << std::setw(this->depth*4+4) << " ";
@@ -66,44 +66,81 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         MK_PACK(Ts) pack{args...};
 
         std::string varname = get_name(pack);
+        auto const properties = this->default_or_get<PropertyFieldFlags>(PropertyFieldFlags::none, pack);
+        auto varname_with_section = this->section_name.empty() ? varname : this->section_name + "::" + varname;
+        if (PropertyFieldFlags::none == properties) {
+            this->variables_acl.emplace_back(varname_with_section);
+        }
+        this->variables.emplace_back(varname_with_section);
 
         this->out_ = &this->out_member_;
 
         this->write_if_convertible(pack, type_<todo>{});
         this->write_if_convertible(pack, type_<info>{});
         this->write_if_convertible(pack, type_<desc>{});
+        if (bool(PropertyFieldFlags::write & properties)) {
+            this->tab();
+            this->out() << "// AUTHID_";
+            auto str = this->get_def_authid(pack, varname);
+            for (auto & c : str) {
+                this->out() << char(std::toupper(c));
+            }
+            this->out() << "\n";
+            this->authids.emplace(str, this->get_str_authid(pack, varname));
+        }
         this->tab();
+        this->out() << "struct " << varname << " {\n";
+        this->tab();
+        this->out() << "    static constexpr ::configs::VariableProperties properties = ";
+        if (PropertyFieldFlags::none == properties) {
+            this->out() << "::configs::VariableProperties::none";
+        }
+        if (PropertyFieldFlags::read == properties) {
+            this->out() << "::configs::VariableProperties::read";
+        }
+        if (PropertyFieldFlags::write == properties) {
+            this->out() << "::configs::VariableProperties::write";
+        }
+        if ((PropertyFieldFlags::read | PropertyFieldFlags::write) == properties) {
+            this->out() << "::configs::VariableProperties::read | ::configs::VariableProperties::write";
+        }
+        this->out() << ";\n";
+        this->tab();
+        this->out() << "    using type = ";
         this->inherit().write_type(pack);
-        this->out() << " " << varname;
+        this->out() << ";\n";
+        this->tab();
+        this->out() << "    type value";
         void(std::initializer_list<int>{
             (this->write_assignable_default(pack, args), 1)...
         });
-        this->out() << ";";
-        if (std::is_convertible<Pack, attach>::value) {
-            this->out() << "  // AUTHID_";
-            for (auto & c : this->get_def_authid(pack, varname)) {
-                this->out() << char(std::toupper(c));
-            }
-        }
-        this->out() << "\n";
+        this->out() << ";\n";
+        this->tab();
+        this->out() << "};\n";
+
 
         this->out_ = &this->out_body_ctor_;
 
-        void(std::initializer_list<int>{
-            (this->write_body_constructor(pack, pack, varname, args), 1)...
-        });
+        if (PropertyFieldFlags::read == properties) {
+            this->out() << "    this->ask<cfg::" << varname_with_section << ">();\n";
+        }
+        if (PropertyFieldFlags::write == properties) {
+            this->out() << "    this->insert_index<cfg::" << varname_with_section << ">(std::true_type());\n";
+        }
 
         this->out_ = &this->out_body_parser_;
 
-        this->write_parser(this->get_attribute(pack), pack, varname);
+        this->write_parser(this->get_attribute(pack), pack, varname_with_section);
     }
 
+    template<class T> T const & default_or_get(T const &, T const & x) { return x; }
+    template<class T> T const & default_or_get(T const & default_, ...) { return default_; }
 
     void write_parser(Attribute a, const char * name, std::string const & varname)
     {
         if (bool(a)) {
             this->out() << "        else if (0 == strcmp(key, \"" << name << "\")) {\n"
-            "            ::configs::parse(this->" << this->section_name << "." << varname << ", value);\n"
+            "            ::configs::parse(static_cast<cfg::" << varname << "&>(this->variables).value, value);\n"
             "        }\n";
         }
     }
@@ -138,7 +175,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     void write(T const & r) { this->out() << r; }
     void write(const char * s) { this->out() << '"' << s << '"'; }
     void write(macro x) { this->out() << x.name; }
-    void write(null_fill x) { this->out() << "null_fill()"; }
+    void write(null_fill x) { this->out() << "::configs::null_fill()"; }
 
 #define WRITE_ENUM(E) \
     void write(E x) { this->out() << "static_cast<" #E ">(" << underlying_cast(x) << ")"; }
@@ -155,24 +192,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     void write(info x) { this->inherit().write(desc{x.value}); }
     void write(desc x) { this->write_comment("//", x.value); }
 
-    template<class T, class Pack, class U>
-    enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, default_<U> const & d)
-    {
-        this->out() << "    this->" << this->section_name << "." << varname << ".set(";
-        this->inherit().write(d.value);
-        this->out() << ");\n";
-    }
-
-    void write_authid(std::string authid, std::string s_authid)
-    {
-        for (auto & c : authid) {
-            c = char(std::toupper(c));
-        }
-        this->out() << authid;
-        this->authids.emplace(std::move(authid), std::move(s_authid));
-    }
-
     std::string get_def_authid(ref<def_authid> r, std::string const & varname)
     { return r.x.name; }
 
@@ -187,38 +206,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     std::string const & get_str_authid(ref<type_<T>>, std::string const & varname)
     { return varname; }
 
-    template<class T, class Pack>
-    enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, Pack & pack, std::string const & varname, link const & d)
-    {
-        this->out() << "    this->to_send_set.insert(AUTHID_";
-        this->write_authid(this->get_def_authid(pack, varname), this->get_str_authid(pack, varname));
-        this->out() << ");\n";
-    }
-
-    template<class T, class Pack>
-    enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, Pack & pack, std::string const & varname, attach const & d)
-    {
-        this->out() << "    this->" << this->section_name << "." << varname << ".attach_ini(this, AUTHID_";
-        this->write_authid(this->get_def_authid(pack, varname), this->get_str_authid(pack, varname));
-        this->out() << ");\n";
-    }
-
-    template<class T, class Pack>
-    enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, ask const & d)
-    { this->out() << "    this->" << this->section_name << "." << varname << ".ask();\n"; }
-
-    template<class T, class Pack>
-    enable_if_basefield<T>
-    write_body_constructor(ref<type_<T>>, Pack &, std::string const & varname, use const & d)
-    { this->out() << "    this->" << this->section_name << "." << varname << ".use();\n"; }
-
-    template<class T, class Pack, class U>
-    void write_body_constructor(ref<type_<T>>, Pack &, std::string const &, U const &)
-    { }
-
     template<class T, class U>
     void check_constructible(type_<T>, default_<U> const & d)
     { static_assert((void(type_<decltype(T(d.value))>{}), 1), "incompatible type"); }
@@ -228,8 +215,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     {}
 
     template<class T, class U>
-    disable_if_basefield<T>
-    write_assignable_default(ref<type_<T>>, default_<U> const & d)
+    void write_assignable_default(ref<type_<T>>, default_<U> const & d)
     {
         this->check_constructible(type_<T>{}, d);
         this->out() << "{";
@@ -256,24 +242,18 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     WRITE_TYPE(int)
     WRITE_TYPE(unsigned)
     WRITE_TYPE(std::string)
-    WRITE_TYPE(BoolField)
-    WRITE_TYPE(UnsignedField)
-    WRITE_TYPE(SignedField)
-    WRITE_TYPE(StringField)
     WRITE_TYPE(RedirectionInfo)
     WRITE_TYPE(Theme)
     WRITE_TYPE(Font)
-    WRITE_TYPE(IniAccounts)
-    WRITE_TYPE(StaticIpString)
-    WRITE_TYPE(Level)
-    WRITE_TYPE(LevelField)
-    WRITE_TYPE(LanguageField)
-    WRITE_TYPE(CaptureFlags)
-    WRITE_TYPE(ColorDepth)
-    WRITE_TYPE(KeyboardLogFlagsField)
-    WRITE_TYPE(ReadOnlyStringField)
-    WRITE_TYPE(ClipboardLogFlagsField)
-    WRITE_TYPE(ClipboardEncodingTypeField)
+    WRITE_TYPE(::configs::IniAccounts)
+    WRITE_TYPE(::configs::StaticIpString)
+    WRITE_TYPE(::configs::Level)
+    WRITE_TYPE(::configs::Language)
+    WRITE_TYPE(::configs::ColorDepth)
+    WRITE_TYPE(::configs::CaptureFlags)
+    WRITE_TYPE(::configs::KeyboardLogFlags)
+    WRITE_TYPE(::configs::ClipboardLogFlags)
+    WRITE_TYPE(::configs::ClipboardEncodingType)
 #undef WRITE_TYPE
 
 #define WRITE_STATIC_STRING(T)        \
@@ -281,10 +261,10 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     void write_type(ref<type_<T<N>>>) \
     { this->out() << #T "<" << N << ">"; }
 
-    WRITE_STATIC_STRING(StaticString)
-    WRITE_STATIC_STRING(StaticNilString)
-    WRITE_STATIC_STRING(StaticKeyString)
-    WRITE_STATIC_STRING(StaticPath)
+    WRITE_STATIC_STRING(::configs::StaticString)
+    WRITE_STATIC_STRING(::configs::StaticNilString)
+    WRITE_STATIC_STRING(::configs::StaticKeyString)
+    WRITE_STATIC_STRING(::configs::StaticPath)
 #undef WRITE_STATIC_STRING
 
     void write_type(type_<uint32_>) { this->out() << "uint32_t"; }
@@ -292,7 +272,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
 
     template<class T, T Min, T Max, T Default>
     void write_type(ref<type_<Range<T, Min, Max, Default>>>) {
-        this->out() << "Range<";
+        this->out() << "::configs::Range<";
         this->inherit().write_type(type_<T>{});
         this->out() << ", " << Min << ", " << Max << ", " << Default << ">";
     }
@@ -323,32 +303,59 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
 }
 
 template<class ConfigCppWriter>
-void write_variable_configuration(std::ostream & out_varconf, ConfigCppWriter & writer) {
+void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter & writer) {
     out_varconf <<
         "#include \"font.hpp\"\n"
         "#include \"config_types.hpp\"\n"
         "#include \"config_includes.hpp\"\n\n"
-        "namespace configs {\n\n"
-        "struct VariablesConfiguration {\n"
-        "    explicit VariablesConfiguration(char const * default_font_name)\n"
-        "    : font(default_font_name)\n"
-        "    {}\n\n"
+        "namespace cfg {\n"
     ;
-
     for (auto & body : writer.sections_member) {
         if (body.first.empty()) {
             out_varconf << body.second << "\n";
         }
         else {
             out_varconf <<
-                "    struct Inifile_" << body.first << " {\n" <<
+                "    namespace " << body.first << " {\n" <<
                          body.second <<
-                "        Inifile_" << body.first << "() = default;\n"
-                "    } " << body.first << ";\n\n"
+                "    };\n\n"
             ;
         }
     }
-    out_varconf << "};\n\n}\n";
+
+    auto join = [&](std::vector<std::string> const & cont) {
+        auto first = begin(cont);
+        auto last = end(cont);
+        if (first == last) {
+            return ;
+        }
+        out_varconf << "cfg::" << *first << "\n";
+        while (++first != last) {
+            out_varconf << ", cfg::" << *first << "\n";
+        }
+    };
+
+    out_varconf <<
+      "}\n\n"
+      "namespace configs {\n"
+      "namespace detail_ { struct none {}; }\n\n"
+      "struct VariablesConfiguration\n"
+      ": \n"
+    ;
+    join(writer.variables);
+    out_varconf <<
+      "{\n"
+      "    explicit VariablesConfiguration(char const * default_font_name)\n"
+      "    : cfg::font{Font{default_font_name}}\n"
+      "    {}\n"
+      "};\n\n"
+      "using VariablesAclPack = Pack<\n  "
+    ;
+    join(writer.variables_acl);
+    out_varconf <<
+      ">;\n"
+      "}\n"
+    ;
 }
 
 template<class ConfigCppWriter>
@@ -373,14 +380,14 @@ void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writ
         out_set_value <<
             "    else if (0 == strcmp(context, \"" << body.first << "\")) {\n"
             "        if (0) {}\n" << body.second << "\n"
-            "        else if (this->debug.config) {\n"
+            "        else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
             "            LOG(LOG_ERR, \"unknown parameter %s in section [%s]\", key, context);\n"
             "        }\n"
             "    }\n"
         ;
     }
     out_set_value <<
-        "    else if (this->debug.config) {\n"
+        "    else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
         "        LOG(LOG_ERR, \"unknown section [%s]\", context);\n"
         "    }\n"
         "}\n"
@@ -402,7 +409,7 @@ int app_write_cpp_config(int ac, char const ** av)
 
     MultiFilenameWriter<ConfigCppWriter> sw(writer);
     sw.then(av[1], &cpp_config_writer::write_authid_hpp<ConfigCppWriter>)
-      .then(av[2], &cpp_config_writer::write_variable_configuration<ConfigCppWriter>)
+      .then(av[2], &cpp_config_writer::write_variables_configuration<ConfigCppWriter>)
       .then(av[3], &cpp_config_writer::write_config_initialize<ConfigCppWriter>)
       .then(av[4], &cpp_config_writer::write_config_set_value<ConfigCppWriter>)
     ;

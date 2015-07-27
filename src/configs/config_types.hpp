@@ -297,39 +297,49 @@ struct enum_option
     enum_option<Enum, T>::value
 #endif
 
-#define MK_ENUM_FIELD(Enum, ...)                                   \
-    MK_ENUM_IO(Enum)                                               \
-    ENUM_OPTION(Enum, __VA_ARGS__);                                \
-                                                                   \
-    struct Enum##FieldTraits {                                     \
-        static Enum get_default() { return Enum::NB; }             \
-        static Enum get_valid() { return static_cast<Enum>(0); }   \
-        static bool valid(Enum x)                                  \
-        { return underlying_cast(x) < underlying_cast(Enum::NB); } \
-        static Enum cstr_to_enum(char const * cstr)  {             \
-            unsigned i = 0;                                        \
-            auto l{__VA_ARGS__};                                   \
-            for (auto s : l) {                                     \
-                if (0 == strcmp(cstr, s)) {                        \
-                    return static_cast<Enum>(i);                   \
-                }                                                  \
-                ++i;                                               \
-            }                                                      \
-            return get_valid();                                    \
-        }                                                          \
-        static char const * to_string(Enum x) {                    \
-            auto l{__VA_ARGS__};                                   \
-            if (!valid(x)) {                                       \
-                return *l.begin();                                 \
-            }                                                      \
-            return *(l.begin() + underlying_cast(x));              \
-        }                                                          \
-    };                                                             \
-                                                                   \
-    inline char const * enum_to_option(Enum e)                     \
-    { return Enum##FieldTraits::to_string(e); }                    \
-                                                                   \
-    using Enum##Field = EnumField<Enum, Enum##FieldTraits>
+#define MK_ENUM_FIELD(Enum, ...)                      \
+    MK_ENUM_IO(Enum)                                  \
+    ENUM_OPTION(Enum, __VA_ARGS__);                   \
+    inline void parse(Enum & e, char const * cstr)  { \
+        unsigned i = 0;                               \
+        auto l = {__VA_ARGS__};                       \
+        for (auto s : l) {                            \
+            if (0 == strcmp(cstr, s)) {               \
+                e = static_cast<Enum>(i);             \
+            }                                         \
+            ++i;                                      \
+        }                                             \
+        /*e = get_valid();*/                          \
+    }
+//                                                                    \
+//     struct Enum##FieldTraits {                                     \
+//         static Enum get_default() { return Enum::NB; }             \
+//         static Enum get_valid() { return static_cast<Enum>(0); }   \
+//         static bool valid(Enum x)                                  \
+//         { return underlying_cast(x) < underlying_cast(Enum::NB); } \
+//         static Enum cstr_to_enum(char const * cstr)  {             \
+//             unsigned i = 0;                                        \
+//             for (auto s : {__VA_ARGS__}) {                         \
+//                 if (0 == strcmp(cstr, s)) {                        \
+//                     return static_cast<Enum>(i);                   \
+//                 }                                                  \
+//                 ++i;                                               \
+//             }                                                      \
+//             return get_valid();                                    \
+//         }                                                          \
+//         static char const * to_string(Enum x) {                    \
+//             auto l{__VA_ARGS__};                                   \
+//             if (!valid(x)) {                                       \
+//                 return *l.begin();                                 \
+//             }                                                      \
+//             return *(l.begin() + underlying_cast(x));              \
+//         }                                                          \
+//     };                                                             \
+//                                                                    \
+//     inline char const * enum_to_option(Enum e)                     \
+//     { return Enum##FieldTraits::to_string(e); }                    \
+//                                                                    \
+//     using Enum##Field = EnumField<Enum, Enum##FieldTraits>
 
 
 
@@ -372,11 +382,11 @@ using LevelField = EnumField<Level, LevelFieldTraits>;
 
 
 enum class Language : unsigned { en, fr, NB };
-MK_ENUM_FIELD(Language, "en", "fr");
+MK_ENUM_FIELD(Language, "en", "fr")
 
 
 enum class ClipboardEncodingType : unsigned { utf8, latin1, NB };
-MK_ENUM_FIELD(ClipboardEncodingType, "utf-8", "latin1");
+MK_ENUM_FIELD(ClipboardEncodingType, "utf-8", "latin1")
 
 
 using KeyboardLogFlagsField = FlagsField<KeyboardLogFlags>;
@@ -388,6 +398,8 @@ enum class ClipboardLogFlags : unsigned {
     FULL = ((1 << 1) - 1)
 };
 MK_ENUM_FLAG_FN(ClipboardLogFlags)
+MK_PARSE_UNSIGNED_TO_ENUM_FLAGS(ClipboardLogFlags)
+
 
 using ClipboardLogFlagsField = FlagsField<ClipboardLogFlags>;
 

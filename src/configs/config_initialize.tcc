@@ -1,33 +1,25 @@
 inline void Inifile::initialize() {
+    this->ask<cfg::globals::capture_chunk>();
 
-    this->to_send_set.insert(AUTHID_AUTH_USER);
-    this->globals.auth_user.attach_ini(this, AUTHID_AUTH_USER);
-    this->globals.auth_user.ask();
-    this->to_send_set.insert(AUTHID_HOST);
-    this->globals.host.attach_ini(this, AUTHID_HOST);
-    this->to_send_set.insert(AUTHID_TARGET);
-    this->globals.target.attach_ini(this, AUTHID_TARGET);
-    this->to_send_set.insert(AUTHID_TARGET_DEVICE);
-    this->globals.target_device.attach_ini(this, AUTHID_TARGET_DEVICE);
-    this->globals.target_device.ask();
-    this->to_send_set.insert(AUTHID_TARGET_USER);
-    this->globals.target_user.attach_ini(this, AUTHID_TARGET_USER);
-    this->globals.target_user.ask();
-    this->globals.target_application.attach_ini(this, AUTHID_TARGET_APPLICATION);
-    this->globals.target_application_account.attach_ini(this, AUTHID_TARGET_APPLICATION_ACCOUNT);
-    this->globals.target_application_password.attach_ini(this, AUTHID_TARGET_APPLICATION_PASSWORD);
+    this->ask<cfg::globals::auth_user>();
+    this->insert_index<cfg::globals::host>(std::true_type());
+    this->insert_index<cfg::globals::target>(std::true_type());
+    this->ask<cfg::globals::target_device>();
+    this->ask<cfg::globals::target_user>();
+    this->insert_index<cfg::globals::target_application>(std::true_type());
+    this->insert_index<cfg::globals::target_application_account>(std::true_type());
+    this->insert_index<cfg::globals::target_application_password>(std::true_type());
 
 
 
-    this->globals.enable_file_encryption.attach_ini(this, AUTHID_OPT_FILE_ENCRYPTION);
+    this->insert_index<cfg::globals::enable_file_encryption>(std::true_type());
 
 
-    this->globals.alternate_shell.attach_ini(this, AUTHID_ALTERNATE_SHELL);
-    this->globals.shell_working_directory.attach_ini(this, AUTHID_SHELL_WORKING_DIRECTORY);
+    this->insert_index<cfg::globals::alternate_shell>(std::true_type());
+    this->insert_index<cfg::globals::shell_working_directory>(std::true_type());
 
-    this->globals.movie.attach_ini(this, AUTHID_OPT_MOVIE);
-    this->globals.movie.set(0);
-    this->globals.movie_path.attach_ini(this, AUTHID_OPT_MOVIE_PATH);
+    this->insert_index<cfg::globals::movie>(std::true_type());
+    this->insert_index<cfg::globals::movie_path>(std::true_type());
 
 
     this->globals.enable_wab_agent.attach_ini(this, AUTHID_OPT_WABAGENT);
@@ -39,14 +31,11 @@ inline void Inifile::initialize() {
 
 
 
-    this->client.keyboard_layout.attach_ini(this, AUTHID_KEYBOARD_LAYOUT);
-    this->client.keyboard_layout.set(0);
-    this->to_send_set.insert(AUTHID_KEYBOARD_LAYOUT);
+    this->insert_index<cfg::client::keyboard_layout>(std::true_type());
 
 
 
-    this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
-    this->client.disable_tsk_switch_shortcuts.set(0);
+    this->insert_index<cfg::client::disable_tsk_switch_shortcuts>(std::true_type());
 
 
 
@@ -63,172 +52,97 @@ inline void Inifile::initialize() {
 
 
 
-    this->mod_rdp.bogus_sc_net_size.attach_ini(this, AUTHID_RDP_BOGUS_SC_NET_SIZE);
-    this->mod_rdp.bogus_sc_net_size.set(1);
+    this->insert_index<cfg::mod_rdp::bogus_sc_net_size>(std::true_type());
 
-    this->mod_rdp.client_device_announce_timeout.attach_ini(this, AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT);
-    this->mod_rdp.client_device_announce_timeout.set(1000);
+    this->insert_index<cfg::mod_rdp::client_device_announce_timeout>(std::true_type());
 
-    this->mod_rdp.proxy_managed_drives.attach_ini(this, AUTHID_OPT_PROXY_MANAGED_DRIVES);
-    this->mod_vnc.clipboard_up.attach_ini(this, AUTHID_VNC_CLIPBOARD_UP);
-    this->mod_vnc.clipboard_down.attach_ini(this, AUTHID_VNC_CLIPBOARD_DOWN);
+    this->insert_index<cfg::mod_rdp::proxy_managed_drives>(std::true_type());
+    this->insert_index<cfg::mod_vnc::clipboard_up>(std::true_type());
+    this->insert_index<cfg::mod_vnc::clipboard_down>(std::true_type());
 
 
 
-    this->mod_vnc.server_clipboard_encoding_type.attach_ini(this, AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE);
-    this->mod_vnc.server_clipboard_encoding_type.set(static_cast<ClipboardEncodingType>(1));
+    this->insert_index<cfg::mod_vnc::server_clipboard_encoding_type>(std::true_type());
 
-    this->mod_vnc.bogus_clipboard_infinite_loop.attach_ini(this, AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP);
-    this->mod_vnc.bogus_clipboard_infinite_loop.set(0);
+    this->insert_index<cfg::mod_vnc::bogus_clipboard_infinite_loop>(std::true_type());
 
 
 
 
 
 
-    this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
-    this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
+    this->insert_index<cfg::video::disable_keyboard_log>(std::true_type());
 
-    this->video.disable_clipboard_log.attach_ini(this, AUTHID_DISABLE_CLIPBOARD_LOG);
+    this->insert_index<cfg::video::disable_clipboard_log>(std::true_type());
 
-    this->video.rt_display.attach_ini(this, AUTHID_RT_DISPLAY);
-    this->video.rt_display.set(0);
+    this->insert_index<cfg::video::rt_display>(std::true_type());
 
 
-    this->translation.language.set(static_cast<Language>(0));
-    this->translation.language.attach_ini(this, AUTHID_LANGUAGE);
+    this->insert_index<cfg::translation::language>(std::true_type());
 
-    this->context.opt_bitrate.set(40000);
-    this->context.opt_bitrate.attach_ini(this, AUTHID_OPT_BITRATE);
-    this->context.opt_framerate.set(5);
-    this->context.opt_framerate.attach_ini(this, AUTHID_OPT_FRAMERATE);
-    this->context.opt_qscale.set(15);
-    this->context.opt_qscale.attach_ini(this, AUTHID_OPT_QSCALE);
+    this->insert_index<cfg::context::opt_bitrate>(std::true_type());
+    this->insert_index<cfg::context::opt_framerate>(std::true_type());
+    this->insert_index<cfg::context::opt_qscale>(std::true_type());
 
-    this->to_send_set.insert(AUTHID_OPT_BPP);
-    this->context.opt_bpp.set(24);
-    this->context.opt_bpp.attach_ini(this, AUTHID_OPT_BPP);
-    this->to_send_set.insert(AUTHID_OPT_HEIGHT);
-    this->context.opt_height.set(600);
-    this->context.opt_height.attach_ini(this, AUTHID_OPT_HEIGHT);
-    this->to_send_set.insert(AUTHID_OPT_WIDTH);
-    this->context.opt_width.set(800);
-    this->context.opt_width.attach_ini(this, AUTHID_OPT_WIDTH);
+    this->insert_index<cfg::context::opt_bpp>(std::true_type());
+    this->insert_index<cfg::context::opt_height>(std::true_type());
+    this->insert_index<cfg::context::opt_width>(std::true_type());
 
-    this->context.auth_error_message.attach_ini(this, AUTHID_AUTH_ERROR_MESSAGE);
-    this->context.auth_error_message.use();
+    this->ask<cfg::context::auth_error_message>();
 
-    this->to_send_set.insert(AUTHID_SELECTOR);
-    this->context.selector.set(0);
-    this->context.selector.attach_ini(this, AUTHID_SELECTOR);
-    this->to_send_set.insert(AUTHID_SELECTOR_CURRENT_PAGE);
-    this->context.selector_current_page.set(1);
-    this->context.selector_current_page.attach_ini(this, AUTHID_SELECTOR_CURRENT_PAGE);
-    this->to_send_set.insert(AUTHID_SELECTOR_DEVICE_FILTER);
-    this->context.selector_device_filter.attach_ini(this, AUTHID_SELECTOR_DEVICE_FILTER);
-    this->to_send_set.insert(AUTHID_SELECTOR_GROUP_FILTER);
-    this->context.selector_group_filter.attach_ini(this, AUTHID_SELECTOR_GROUP_FILTER);
-    this->to_send_set.insert(AUTHID_SELECTOR_PROTO_FILTER);
-    this->context.selector_proto_filter.attach_ini(this, AUTHID_SELECTOR_PROTO_FILTER);
-    this->to_send_set.insert(AUTHID_SELECTOR_LINES_PER_PAGE);
-    this->context.selector_lines_per_page.set(0);
-    this->context.selector_lines_per_page.attach_ini(this, AUTHID_SELECTOR_LINES_PER_PAGE);
-    this->context.selector_number_of_pages.set(1);
-    this->context.selector_number_of_pages.attach_ini(this, AUTHID_SELECTOR_NUMBER_OF_PAGES);
+    this->insert_index<cfg::context::selector>(std::true_type());
+    this->insert_index<cfg::context::selector_current_page>(std::true_type());
+    this->insert_index<cfg::context::selector_device_filter>(std::true_type());
+    this->insert_index<cfg::context::selector_group_filter>(std::true_type());
+    this->insert_index<cfg::context::selector_proto_filter>(std::true_type());
+    this->insert_index<cfg::context::selector_lines_per_page>(std::true_type());
+    this->insert_index<cfg::context::selector_number_of_pages>(std::true_type());
 
-    this->to_send_set.insert(AUTHID_TARGET_PASSWORD);
-    this->context.target_password.ask();
-    this->context.target_password.attach_ini(this, AUTHID_TARGET_PASSWORD);
-    this->to_send_set.insert(AUTHID_TARGET_HOST);
-    this->context.target_host.set("");
-    this->context.target_host.ask();
-    this->context.target_host.attach_ini(this, AUTHID_TARGET_HOST);
-    this->context.target_port.set(3389);
-    this->context.target_port.ask();
-    this->context.target_port.attach_ini(this, AUTHID_TARGET_PORT);
-    this->to_send_set.insert(AUTHID_TARGET_PROTOCOL);
-    this->context.target_protocol.set("RDP");
-    this->context.target_protocol.ask();
-    this->context.target_protocol.attach_ini(this, AUTHID_TARGET_PROTOCOL);
+    this->ask<cfg::context::target_password>();
+    this->ask<cfg::context::target_host>();
+    this->ask<cfg::context::target_port>();
+    this->ask<cfg::context::target_protocol>();
 
-    this->to_send_set.insert(AUTHID_PASSWORD);
-    this->context.password.ask();
-    this->context.password.attach_ini(this, AUTHID_PASSWORD);
+    this->ask<cfg::context::password>();
 
-    this->to_send_set.insert(AUTHID_REPORTING);
-    this->context.reporting.attach_ini(this, AUTHID_REPORTING);
+    this->insert_index<cfg::context::reporting>(std::true_type());
 
-    this->context.auth_channel_answer.attach_ini(this, AUTHID_AUTH_CHANNEL_ANSWER);
-    this->to_send_set.insert(AUTHID_AUTH_CHANNEL_RESULT);
-    this->context.auth_channel_result.attach_ini(this, AUTHID_AUTH_CHANNEL_RESULT);
-    this->to_send_set.insert(AUTHID_AUTH_CHANNEL_TARGET);
-    this->context.auth_channel_target.attach_ini(this, AUTHID_AUTH_CHANNEL_TARGET);
+    this->insert_index<cfg::context::auth_channel_answer>(std::true_type());
+    this->insert_index<cfg::context::auth_channel_result>(std::true_type());
+    this->insert_index<cfg::context::auth_channel_target>(std::true_type());
 
-    this->context.message.attach_ini(this, AUTHID_MESSAGE);
-    this->context.pattern_kill.attach_ini(this, AUTHID_PATTERN_KILL);
-    this->context.pattern_notify.attach_ini(this, AUTHID_PATTERN_NOTIFY);
+    this->insert_index<cfg::context::message>(std::true_type());
+    this->insert_index<cfg::context::pattern_kill>(std::true_type());
+    this->insert_index<cfg::context::pattern_notify>(std::true_type());
 
-    this->to_send_set.insert(AUTHID_ACCEPT_MESSAGE);
-    this->context.accept_message.attach_ini(this, AUTHID_ACCEPT_MESSAGE);
-    this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
-    this->context.display_message.attach_ini(this, AUTHID_DISPLAY_MESSAGE);
+    this->insert_index<cfg::context::accept_message>(std::true_type());
+    this->insert_index<cfg::context::display_message>(std::true_type());
 
-    this->context.rejected.attach_ini(this, AUTHID_REJECTED);
+    this->insert_index<cfg::context::rejected>(std::true_type());
 
-    this->context.authenticated.set(0);
-    this->context.authenticated.attach_ini(this, AUTHID_AUTHENTICATED);
+    this->insert_index<cfg::context::authenticated>(std::true_type());
 
-    this->context.keepalive.set(0);
-    this->context.keepalive.attach_ini(this, AUTHID_KEEPALIVE);
-    this->to_send_set.insert(AUTHID_KEEPALIVE);
+    this->insert_index<cfg::context::keepalive>(std::true_type());
 
-    this->context.session_id.attach_ini(this, AUTHID_SESSION_ID);
+    this->insert_index<cfg::context::session_id>(std::true_type());
 
-    this->context.end_date_cnx.set(0);
-    this->context.end_date_cnx.attach_ini(this, AUTHID_END_DATE_CNX);
-    this->context.end_time.attach_ini(this, AUTHID_END_TIME);
+    this->insert_index<cfg::context::end_date_cnx>(std::true_type());
+    this->insert_index<cfg::context::end_time>(std::true_type());
 
-    this->context.mode_console.set("allow");
-    this->context.mode_console.attach_ini(this, AUTHID_MODE_CONSOLE);
-    this->context.timezone.set(-3600);
-    this->context.timezone.attach_ini(this, AUTHID_TIMEZONE);
+    this->insert_index<cfg::context::mode_console>(std::true_type());
+    this->insert_index<cfg::context::timezone>(std::true_type());
 
-    this->to_send_set.insert(AUTHID_REAL_TARGET_DEVICE);
-    this->context.real_target_device.attach_ini(this, AUTHID_REAL_TARGET_DEVICE);
+    this->insert_index<cfg::context::real_target_device>(std::true_type());
 
-    this->context.authentication_challenge.ask();
-    this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
+    this->ask<cfg::context::authentication_challenge>();
 
-    this->to_send_set.insert(AUTHID_TICKET);
-    this->context.ticket.set("");
-    this->context.ticket.attach_ini(this, AUTHID_TICKET);
-    this->context.ticket.use();
-    this->to_send_set.insert(AUTHID_COMMENT);
-    this->context.comment.set("");
-    this->context.comment.attach_ini(this, AUTHID_COMMENT);
-    this->context.comment.use();
-    this->to_send_set.insert(AUTHID_DURATION);
-    this->context.duration.set("");
-    this->context.duration.attach_ini(this, AUTHID_DURATION);
-    this->context.duration.use();
-    this->to_send_set.insert(AUTHID_WAITINFORETURN);
-    this->context.waitinforeturn.set("");
-    this->context.waitinforeturn.attach_ini(this, AUTHID_WAITINFORETURN);
-    this->context.waitinforeturn.use();
-    this->to_send_set.insert(AUTHID_SHOWFORM);
-    this->context.showform.set(0);
-    this->context.showform.attach_ini(this, AUTHID_SHOWFORM);
-    this->context.showform.use();
-    this->to_send_set.insert(AUTHID_FORMFLAG);
-    this->context.formflag.set(0);
-    this->context.formflag.attach_ini(this, AUTHID_FORMFLAG);
-    this->context.formflag.use();
+    this->insert_index<cfg::context::ticket>(std::true_type());
+    this->insert_index<cfg::context::comment>(std::true_type());
+    this->insert_index<cfg::context::duration>(std::true_type());
+    this->insert_index<cfg::context::waitinforeturn>(std::true_type());
+    this->ask<cfg::context::showform>();
+    this->ask<cfg::context::formflag>();
 
-    this->to_send_set.insert(AUTHID_MODULE);
-    this->context.module.set("login");
-    this->context.module.attach_ini(this, AUTHID_MODULE);
-    this->context.module.use();
-    this->context.forcemodule.set(0);
-    this->context.forcemodule.attach_ini(this, AUTHID_FORCEMODULE);
-    this->context.proxy_opt.attach_ini(this, AUTHID_PROXY_OPT);
+    this->insert_index<cfg::context::forcemodule>(std::true_type());
+    this->insert_index<cfg::context::proxy_opt>(std::true_type());
 }

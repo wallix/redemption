@@ -23,6 +23,10 @@
 
 #include "mk_enum_def.hpp"
 
+#include <cstdlib>
+#include <cerrno>
+
+
 namespace configs {
 
 enum class KeyboardLogFlags : unsigned {
@@ -31,6 +35,8 @@ enum class KeyboardLogFlags : unsigned {
     FULL = ((1 << 1) - 1)
 };
 MK_ENUM_FLAG_FN(KeyboardLogFlags)
+
+MK_PARSE_UNSIGNED_TO_ENUM_FLAGS(KeyboardLogFlags)
 
 }
 

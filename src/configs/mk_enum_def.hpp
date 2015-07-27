@@ -35,7 +35,20 @@
     MK_ENUM_IO(E)                                                                                      \
     inline E operator | (E x, E y) { return static_cast<E>(underlying_cast(x) | underlying_cast(y)); } \
     inline E operator & (E x, E y) { return static_cast<E>(underlying_cast(x) & underlying_cast(y)); } \
+    inline E operator ~ (E x) { return static_cast<E>(~underlying_cast(x)) & E::FULL; }                \
     inline E & operator |= (E & x, E y) { return x = x | y; }                                          \
     inline E & operator &= (E & x, E y) { return x = x | y; }
+
+#define MK_PARSE_UNSIGNED_TO_ENUM_FLAGS(Enum)          \
+    void parse(Enum & e, char const * cstr) {          \
+        char * end = 0;                                \
+        errno = 0;                                     \
+        auto n = std::strtoul(cstr, &end, 10);         \
+        if (!errno && end && *end                      \
+         && n < static_cast<unsigned long>(Enum::FULL) \
+        ) {                                            \
+            e = static_cast<Enum>(n);                  \
+        }                                              \
+    }
 
 #endif

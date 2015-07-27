@@ -255,7 +255,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     ini.video.png_interval   = png_interval;
     ini.video.frame_interval = wrm_frame_interval;
     ini.video.break_interval = wrm_break_interval;
-    ini.video.capture_flags  = CaptureFlags::none;
+    ini.video.capture_flags  &= ~(CaptureFlags::wrm | CaptureFlags::png);
     if (options.count("wrm") > 0) {
         ini.video.capture_flags |= CaptureFlags::wrm;
     }

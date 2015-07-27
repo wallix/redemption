@@ -1,238 +1,202 @@
 enum authid_t {
     AUTHID_UNKNOWN = 0,
-    AUTHID_ACCEPT_MESSAGE,
-#define STRAUTHID_ACCEPT_MESSAGE "accept_message"
-    AUTHID_ALTERNATE_SHELL,
-#define STRAUTHID_ALTERNATE_SHELL "alternate_shell"
-    AUTHID_AUTHENTICATED,
-#define STRAUTHID_AUTHENTICATED "authenticated"
-    AUTHID_AUTHENTICATION_CHALLENGE,
-#define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
-    AUTHID_AUTH_CHANNEL_ANSWER,
-#define STRAUTHID_AUTH_CHANNEL_ANSWER "auth_channel_answer"
-    AUTHID_AUTH_CHANNEL_RESULT,
-#define STRAUTHID_AUTH_CHANNEL_RESULT "auth_channel_result"
-    AUTHID_AUTH_CHANNEL_TARGET,
-#define STRAUTHID_AUTH_CHANNEL_TARGET "auth_channel_target"
-    AUTHID_AUTH_ERROR_MESSAGE,
-#define STRAUTHID_AUTH_ERROR_MESSAGE "auth_error_message"
-    AUTHID_AUTH_USER,
-#define STRAUTHID_AUTH_USER "login"
-    AUTHID_COMMENT,
-#define STRAUTHID_COMMENT "comment"
-    AUTHID_DISABLE_CLIPBOARD_LOG,
-#define STRAUTHID_DISABLE_CLIPBOARD_LOG "disable_clipboard_log"
-    AUTHID_DISABLE_KEYBOARD_LOG,
-#define STRAUTHID_DISABLE_KEYBOARD_LOG "disable_keyboard_log"
-    AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
-#define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS "disable_tsk_switch_shortcuts"
-    AUTHID_DISPLAY_MESSAGE,
-#define STRAUTHID_DISPLAY_MESSAGE "display_message"
-    AUTHID_DURATION,
-#define STRAUTHID_DURATION "duration"
-    AUTHID_END_DATE_CNX,
-#define STRAUTHID_END_DATE_CNX "timeclose"
-    AUTHID_END_TIME,
-#define STRAUTHID_END_TIME "end_time"
-    AUTHID_FORCEMODULE,
-#define STRAUTHID_FORCEMODULE "forcemodule"
-    AUTHID_FORMFLAG,
-#define STRAUTHID_FORMFLAG "formflag"
-    AUTHID_HOST,
-#define STRAUTHID_HOST "ip_client"
-    AUTHID_KEEPALIVE,
-#define STRAUTHID_KEEPALIVE "keepalive"
-    AUTHID_KEYBOARD_LAYOUT,
-#define STRAUTHID_KEYBOARD_LAYOUT "keyboard_layout"
-    AUTHID_LANGUAGE,
-#define STRAUTHID_LANGUAGE "language"
-    AUTHID_MESSAGE,
-#define STRAUTHID_MESSAGE "message"
-    AUTHID_MODE_CONSOLE,
-#define STRAUTHID_MODE_CONSOLE "mode_console"
-    AUTHID_MODULE,
-#define STRAUTHID_MODULE "module"
-    AUTHID_OPT_BITRATE,
-#define STRAUTHID_OPT_BITRATE "bitrate"
-    AUTHID_OPT_BPP,
-#define STRAUTHID_OPT_BPP "bpp"
-    AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT,
-#define STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT "client_device_announce_timeout"
-    AUTHID_OPT_FILE_ENCRYPTION,
-#define STRAUTHID_OPT_FILE_ENCRYPTION "file_encryption"
-    AUTHID_OPT_FRAMERATE,
-#define STRAUTHID_OPT_FRAMERATE "framerate"
-    AUTHID_OPT_HEIGHT,
-#define STRAUTHID_OPT_HEIGHT "height"
-    AUTHID_OPT_MOVIE,
-#define STRAUTHID_OPT_MOVIE "is_rec"
-    AUTHID_OPT_MOVIE_PATH,
-#define STRAUTHID_OPT_MOVIE_PATH "rec_patch"
-    AUTHID_OPT_PROXY_MANAGED_DRIVES,
-#define STRAUTHID_OPT_PROXY_MANAGED_DRIVES "proxy_managed_drives"
-    AUTHID_OPT_QSCALE,
-#define STRAUTHID_OPT_QSCALE "qscale"
-    AUTHID_OPT_WABAGENT,
-#define STRAUTHID_OPT_WABAGENT "wab_agent"
-    AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT,
-#define STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT "wab_agent_keepalive_timeout"
-    AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT,
-#define STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT "wab_agent_launch_timeout"
-    AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE,
-#define STRAUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE "wab_agent_on_launch_failure"
-    AUTHID_OPT_WIDTH,
-#define STRAUTHID_OPT_WIDTH "width"
-    AUTHID_PASSWORD,
-#define STRAUTHID_PASSWORD "password"
-    AUTHID_PATTERN_KILL,
-#define STRAUTHID_PATTERN_KILL "pattern_kill"
-    AUTHID_PATTERN_NOTIFY,
-#define STRAUTHID_PATTERN_NOTIFY "pattern_notify"
-    AUTHID_PROXY_OPT,
-#define STRAUTHID_PROXY_OPT "proxy_opt"
-    AUTHID_RDP_BOGUS_SC_NET_SIZE,
-#define STRAUTHID_RDP_BOGUS_SC_NET_SIZE "rdp_bogus_sc_net_size"
-    AUTHID_REAL_TARGET_DEVICE,
-#define STRAUTHID_REAL_TARGET_DEVICE "real_target_device"
-    AUTHID_REJECTED,
-#define STRAUTHID_REJECTED "rejected"
-    AUTHID_REPORTING,
-#define STRAUTHID_REPORTING "reporting"
-    AUTHID_RT_DISPLAY,
-#define STRAUTHID_RT_DISPLAY "rt_display"
-    AUTHID_SELECTOR,
-#define STRAUTHID_SELECTOR "selector"
-    AUTHID_SELECTOR_CURRENT_PAGE,
-#define STRAUTHID_SELECTOR_CURRENT_PAGE "selector_current_page"
-    AUTHID_SELECTOR_DEVICE_FILTER,
-#define STRAUTHID_SELECTOR_DEVICE_FILTER "selector_device_filter"
-    AUTHID_SELECTOR_GROUP_FILTER,
-#define STRAUTHID_SELECTOR_GROUP_FILTER "selector_group_filter"
-    AUTHID_SELECTOR_LINES_PER_PAGE,
-#define STRAUTHID_SELECTOR_LINES_PER_PAGE "selector_lines_per_page"
-    AUTHID_SELECTOR_NUMBER_OF_PAGES,
-#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
-    AUTHID_SELECTOR_PROTO_FILTER,
-#define STRAUTHID_SELECTOR_PROTO_FILTER "selector_proto_filter"
-    AUTHID_SESSION_ID,
-#define STRAUTHID_SESSION_ID "session_id"
-    AUTHID_SHELL_WORKING_DIRECTORY,
-#define STRAUTHID_SHELL_WORKING_DIRECTORY "shell_working_directory"
-    AUTHID_SHOWFORM,
-#define STRAUTHID_SHOWFORM "showform"
-    AUTHID_TARGET,
-#define STRAUTHID_TARGET "ip_target"
-    AUTHID_TARGET_APPLICATION,
-#define STRAUTHID_TARGET_APPLICATION "target_application"
-    AUTHID_TARGET_APPLICATION_ACCOUNT,
-#define STRAUTHID_TARGET_APPLICATION_ACCOUNT "target_application_account"
-    AUTHID_TARGET_APPLICATION_PASSWORD,
-#define STRAUTHID_TARGET_APPLICATION_PASSWORD "target_application_password"
-    AUTHID_TARGET_DEVICE,
-#define STRAUTHID_TARGET_DEVICE "target_device"
-    AUTHID_TARGET_HOST,
-#define STRAUTHID_TARGET_HOST "target_host"
-    AUTHID_TARGET_PASSWORD,
-#define STRAUTHID_TARGET_PASSWORD "target_password"
-    AUTHID_TARGET_PORT,
-#define STRAUTHID_TARGET_PORT "target_port"
-    AUTHID_TARGET_PROTOCOL,
-#define STRAUTHID_TARGET_PROTOCOL "proto_dest"
-    AUTHID_TARGET_USER,
-#define STRAUTHID_TARGET_USER "target_login"
-    AUTHID_TICKET,
-#define STRAUTHID_TICKET "ticket"
-    AUTHID_TIMEZONE,
-#define STRAUTHID_TIMEZONE "timezone"
-    AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP,
-#define STRAUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP "vnc_bogus_clipboard_infinite_loop"
-    AUTHID_VNC_CLIPBOARD_DOWN,
-#define STRAUTHID_VNC_CLIPBOARD_DOWN "clipboard_down"
-    AUTHID_VNC_CLIPBOARD_UP,
-#define STRAUTHID_VNC_CLIPBOARD_UP "clipboard_up"
-    AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
-#define STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE "vnc_server_clipboard_encoding_type"
-    AUTHID_WAITINFORETURN,
-#define STRAUTHID_WAITINFORETURN "waitinforeturn"
+    AUTHID_accept_message,
+#define STRAUTHID_accept_message "accept_message"
+    AUTHID_alternate_shell,
+#define STRAUTHID_alternate_shell "alternate_shell"
+    AUTHID_auth_channel_answer,
+#define STRAUTHID_auth_channel_answer "auth_channel_answer"
+    AUTHID_auth_channel_result,
+#define STRAUTHID_auth_channel_result "auth_channel_result"
+    AUTHID_auth_channel_target,
+#define STRAUTHID_auth_channel_target "auth_channel_target"
+    AUTHID_authenticated,
+#define STRAUTHID_authenticated "authenticated"
+    AUTHID_comment,
+#define STRAUTHID_comment "comment"
+    AUTHID_disable_clipboard_log,
+#define STRAUTHID_disable_clipboard_log "disable_clipboard_log"
+    AUTHID_disable_keyboard_log,
+#define STRAUTHID_disable_keyboard_log "disable_keyboard_log"
+    AUTHID_disable_tsk_switch_shortcuts,
+#define STRAUTHID_disable_tsk_switch_shortcuts "disable_tsk_switch_shortcuts"
+    AUTHID_display_message,
+#define STRAUTHID_display_message "display_message"
+    AUTHID_duration,
+#define STRAUTHID_duration "duration"
+    AUTHID_end_date_cnx,
+#define STRAUTHID_end_date_cnx "timeclose"
+    AUTHID_end_time,
+#define STRAUTHID_end_time "end_time"
+    AUTHID_forcemodule,
+#define STRAUTHID_forcemodule "forcemodule"
+    AUTHID_host,
+#define STRAUTHID_host "ip_client"
+    AUTHID_keepalive,
+#define STRAUTHID_keepalive "keepalive"
+    AUTHID_keyboard_layout,
+#define STRAUTHID_keyboard_layout "keyboard_layout"
+    AUTHID_language,
+#define STRAUTHID_language "language"
+    AUTHID_message,
+#define STRAUTHID_message "message"
+    AUTHID_mode_console,
+#define STRAUTHID_mode_console "mode_console"
+    AUTHID_module,
+#define STRAUTHID_module "module"
+    AUTHID_opt_bitrate,
+#define STRAUTHID_opt_bitrate "bitrate"
+    AUTHID_opt_bpp,
+#define STRAUTHID_opt_bpp "bpp"
+    AUTHID_opt_client_device_announce_timeout,
+#define STRAUTHID_opt_client_device_announce_timeout "client_device_announce_timeout"
+    AUTHID_opt_file_encryption,
+#define STRAUTHID_opt_file_encryption "file_encryption"
+    AUTHID_opt_framerate,
+#define STRAUTHID_opt_framerate "framerate"
+    AUTHID_opt_height,
+#define STRAUTHID_opt_height "height"
+    AUTHID_opt_movie,
+#define STRAUTHID_opt_movie "is_rec"
+    AUTHID_opt_movie_path,
+#define STRAUTHID_opt_movie_path "rec_patch"
+    AUTHID_opt_proxy_managed_drives,
+#define STRAUTHID_opt_proxy_managed_drives "proxy_managed_drives"
+    AUTHID_opt_qscale,
+#define STRAUTHID_opt_qscale "qscale"
+    AUTHID_opt_wabagent,
+#define STRAUTHID_opt_wabagent "wab_agent"
+    AUTHID_opt_wabagent_keepalive_timeout,
+#define STRAUTHID_opt_wabagent_keepalive_timeout "wab_agent_keepalive_timeout"
+    AUTHID_opt_wabagent_launch_timeout,
+#define STRAUTHID_opt_wabagent_launch_timeout "wab_agent_launch_timeout"
+    AUTHID_opt_wabagent_on_launch_failure,
+#define STRAUTHID_opt_wabagent_on_launch_failure "wab_agent_on_launch_failure"
+    AUTHID_opt_width,
+#define STRAUTHID_opt_width "width"
+    AUTHID_pattern_kill,
+#define STRAUTHID_pattern_kill "pattern_kill"
+    AUTHID_pattern_notify,
+#define STRAUTHID_pattern_notify "pattern_notify"
+    AUTHID_proxy_opt,
+#define STRAUTHID_proxy_opt "proxy_opt"
+    AUTHID_rdp_bogus_sc_net_size,
+#define STRAUTHID_rdp_bogus_sc_net_size "rdp_bogus_sc_net_size"
+    AUTHID_real_target_device,
+#define STRAUTHID_real_target_device "real_target_device"
+    AUTHID_rejected,
+#define STRAUTHID_rejected "rejected"
+    AUTHID_reporting,
+#define STRAUTHID_reporting "reporting"
+    AUTHID_rt_display,
+#define STRAUTHID_rt_display "rt_display"
+    AUTHID_selector,
+#define STRAUTHID_selector "selector"
+    AUTHID_selector_current_page,
+#define STRAUTHID_selector_current_page "selector_current_page"
+    AUTHID_selector_device_filter,
+#define STRAUTHID_selector_device_filter "selector_device_filter"
+    AUTHID_selector_group_filter,
+#define STRAUTHID_selector_group_filter "selector_group_filter"
+    AUTHID_selector_lines_per_page,
+#define STRAUTHID_selector_lines_per_page "selector_lines_per_page"
+    AUTHID_selector_number_of_pages,
+#define STRAUTHID_selector_number_of_pages "selector_number_of_pages"
+    AUTHID_selector_proto_filter,
+#define STRAUTHID_selector_proto_filter "selector_proto_filter"
+    AUTHID_session_id,
+#define STRAUTHID_session_id "session_id"
+    AUTHID_shell_working_directory,
+#define STRAUTHID_shell_working_directory "shell_working_directory"
+    AUTHID_target,
+#define STRAUTHID_target "ip_target"
+    AUTHID_target_application,
+#define STRAUTHID_target_application "target_application"
+    AUTHID_target_application_account,
+#define STRAUTHID_target_application_account "target_application_account"
+    AUTHID_target_application_password,
+#define STRAUTHID_target_application_password "target_application_password"
+    AUTHID_ticket,
+#define STRAUTHID_ticket "ticket"
+    AUTHID_timezone,
+#define STRAUTHID_timezone "timezone"
+    AUTHID_vnc_bogus_clipboard_infinite_loop,
+#define STRAUTHID_vnc_bogus_clipboard_infinite_loop "vnc_bogus_clipboard_infinite_loop"
+    AUTHID_vnc_clipboard_down,
+#define STRAUTHID_vnc_clipboard_down "clipboard_down"
+    AUTHID_vnc_clipboard_up,
+#define STRAUTHID_vnc_clipboard_up "clipboard_up"
+    AUTHID_vnc_server_clipboard_encoding_type,
+#define STRAUTHID_vnc_server_clipboard_encoding_type "vnc_server_clipboard_encoding_type"
+    AUTHID_waitinforeturn,
+#define STRAUTHID_waitinforeturn "waitinforeturn"
     MAX_AUTHID
 };
 constexpr char const * const authstr[] = {
-    STRAUTHID_ACCEPT_MESSAGE, // AUTHID_ACCEPT_MESSAGE
-    STRAUTHID_ALTERNATE_SHELL, // AUTHID_ALTERNATE_SHELL
-    STRAUTHID_AUTHENTICATED, // AUTHID_AUTHENTICATED
-    STRAUTHID_AUTHENTICATION_CHALLENGE, // AUTHID_AUTHENTICATION_CHALLENGE
-    STRAUTHID_AUTH_CHANNEL_ANSWER, // AUTHID_AUTH_CHANNEL_ANSWER
-    STRAUTHID_AUTH_CHANNEL_RESULT, // AUTHID_AUTH_CHANNEL_RESULT
-    STRAUTHID_AUTH_CHANNEL_TARGET, // AUTHID_AUTH_CHANNEL_TARGET
-    STRAUTHID_AUTH_ERROR_MESSAGE, // AUTHID_AUTH_ERROR_MESSAGE
-    STRAUTHID_AUTH_USER, // AUTHID_AUTH_USER
-    STRAUTHID_COMMENT, // AUTHID_COMMENT
-    STRAUTHID_DISABLE_CLIPBOARD_LOG, // AUTHID_DISABLE_CLIPBOARD_LOG
-    STRAUTHID_DISABLE_KEYBOARD_LOG, // AUTHID_DISABLE_KEYBOARD_LOG
-    STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS, // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS
-    STRAUTHID_DISPLAY_MESSAGE, // AUTHID_DISPLAY_MESSAGE
-    STRAUTHID_DURATION, // AUTHID_DURATION
-    STRAUTHID_END_DATE_CNX, // AUTHID_END_DATE_CNX
-    STRAUTHID_END_TIME, // AUTHID_END_TIME
-    STRAUTHID_FORCEMODULE, // AUTHID_FORCEMODULE
-    STRAUTHID_FORMFLAG, // AUTHID_FORMFLAG
-    STRAUTHID_HOST, // AUTHID_HOST
-    STRAUTHID_KEEPALIVE, // AUTHID_KEEPALIVE
-    STRAUTHID_KEYBOARD_LAYOUT, // AUTHID_KEYBOARD_LAYOUT
-    STRAUTHID_LANGUAGE, // AUTHID_LANGUAGE
-    STRAUTHID_MESSAGE, // AUTHID_MESSAGE
-    STRAUTHID_MODE_CONSOLE, // AUTHID_MODE_CONSOLE
-    STRAUTHID_MODULE, // AUTHID_MODULE
-    STRAUTHID_OPT_BITRATE, // AUTHID_OPT_BITRATE
-    STRAUTHID_OPT_BPP, // AUTHID_OPT_BPP
-    STRAUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT, // AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT
-    STRAUTHID_OPT_FILE_ENCRYPTION, // AUTHID_OPT_FILE_ENCRYPTION
-    STRAUTHID_OPT_FRAMERATE, // AUTHID_OPT_FRAMERATE
-    STRAUTHID_OPT_HEIGHT, // AUTHID_OPT_HEIGHT
-    STRAUTHID_OPT_MOVIE, // AUTHID_OPT_MOVIE
-    STRAUTHID_OPT_MOVIE_PATH, // AUTHID_OPT_MOVIE_PATH
-    STRAUTHID_OPT_PROXY_MANAGED_DRIVES, // AUTHID_OPT_PROXY_MANAGED_DRIVES
-    STRAUTHID_OPT_QSCALE, // AUTHID_OPT_QSCALE
-    STRAUTHID_OPT_WABAGENT, // AUTHID_OPT_WABAGENT
-    STRAUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT, // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
-    STRAUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT, // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT
-    STRAUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE, // AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE
-    STRAUTHID_OPT_WIDTH, // AUTHID_OPT_WIDTH
-    STRAUTHID_PASSWORD, // AUTHID_PASSWORD
-    STRAUTHID_PATTERN_KILL, // AUTHID_PATTERN_KILL
-    STRAUTHID_PATTERN_NOTIFY, // AUTHID_PATTERN_NOTIFY
-    STRAUTHID_PROXY_OPT, // AUTHID_PROXY_OPT
-    STRAUTHID_RDP_BOGUS_SC_NET_SIZE, // AUTHID_RDP_BOGUS_SC_NET_SIZE
-    STRAUTHID_REAL_TARGET_DEVICE, // AUTHID_REAL_TARGET_DEVICE
-    STRAUTHID_REJECTED, // AUTHID_REJECTED
-    STRAUTHID_REPORTING, // AUTHID_REPORTING
-    STRAUTHID_RT_DISPLAY, // AUTHID_RT_DISPLAY
-    STRAUTHID_SELECTOR, // AUTHID_SELECTOR
-    STRAUTHID_SELECTOR_CURRENT_PAGE, // AUTHID_SELECTOR_CURRENT_PAGE
-    STRAUTHID_SELECTOR_DEVICE_FILTER, // AUTHID_SELECTOR_DEVICE_FILTER
-    STRAUTHID_SELECTOR_GROUP_FILTER, // AUTHID_SELECTOR_GROUP_FILTER
-    STRAUTHID_SELECTOR_LINES_PER_PAGE, // AUTHID_SELECTOR_LINES_PER_PAGE
-    STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // AUTHID_SELECTOR_NUMBER_OF_PAGES
-    STRAUTHID_SELECTOR_PROTO_FILTER, // AUTHID_SELECTOR_PROTO_FILTER
-    STRAUTHID_SESSION_ID, // AUTHID_SESSION_ID
-    STRAUTHID_SHELL_WORKING_DIRECTORY, // AUTHID_SHELL_WORKING_DIRECTORY
-    STRAUTHID_SHOWFORM, // AUTHID_SHOWFORM
-    STRAUTHID_TARGET, // AUTHID_TARGET
-    STRAUTHID_TARGET_APPLICATION, // AUTHID_TARGET_APPLICATION
-    STRAUTHID_TARGET_APPLICATION_ACCOUNT, // AUTHID_TARGET_APPLICATION_ACCOUNT
-    STRAUTHID_TARGET_APPLICATION_PASSWORD, // AUTHID_TARGET_APPLICATION_PASSWORD
-    STRAUTHID_TARGET_DEVICE, // AUTHID_TARGET_DEVICE
-    STRAUTHID_TARGET_HOST, // AUTHID_TARGET_HOST
-    STRAUTHID_TARGET_PASSWORD, // AUTHID_TARGET_PASSWORD
-    STRAUTHID_TARGET_PORT, // AUTHID_TARGET_PORT
-    STRAUTHID_TARGET_PROTOCOL, // AUTHID_TARGET_PROTOCOL
-    STRAUTHID_TARGET_USER, // AUTHID_TARGET_USER
-    STRAUTHID_TICKET, // AUTHID_TICKET
-    STRAUTHID_TIMEZONE, // AUTHID_TIMEZONE
-    STRAUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP, // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
-    STRAUTHID_VNC_CLIPBOARD_DOWN, // AUTHID_VNC_CLIPBOARD_DOWN
-    STRAUTHID_VNC_CLIPBOARD_UP, // AUTHID_VNC_CLIPBOARD_UP
-    STRAUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE, // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
-    STRAUTHID_WAITINFORETURN, // AUTHID_WAITINFORETURN
+    STRAUTHID_accept_message, // AUTHID_accept_message
+    STRAUTHID_alternate_shell, // AUTHID_alternate_shell
+    STRAUTHID_auth_channel_answer, // AUTHID_auth_channel_answer
+    STRAUTHID_auth_channel_result, // AUTHID_auth_channel_result
+    STRAUTHID_auth_channel_target, // AUTHID_auth_channel_target
+    STRAUTHID_authenticated, // AUTHID_authenticated
+    STRAUTHID_comment, // AUTHID_comment
+    STRAUTHID_disable_clipboard_log, // AUTHID_disable_clipboard_log
+    STRAUTHID_disable_keyboard_log, // AUTHID_disable_keyboard_log
+    STRAUTHID_disable_tsk_switch_shortcuts, // AUTHID_disable_tsk_switch_shortcuts
+    STRAUTHID_display_message, // AUTHID_display_message
+    STRAUTHID_duration, // AUTHID_duration
+    STRAUTHID_end_date_cnx, // AUTHID_end_date_cnx
+    STRAUTHID_end_time, // AUTHID_end_time
+    STRAUTHID_forcemodule, // AUTHID_forcemodule
+    STRAUTHID_host, // AUTHID_host
+    STRAUTHID_keepalive, // AUTHID_keepalive
+    STRAUTHID_keyboard_layout, // AUTHID_keyboard_layout
+    STRAUTHID_language, // AUTHID_language
+    STRAUTHID_message, // AUTHID_message
+    STRAUTHID_mode_console, // AUTHID_mode_console
+    STRAUTHID_module, // AUTHID_module
+    STRAUTHID_opt_bitrate, // AUTHID_opt_bitrate
+    STRAUTHID_opt_bpp, // AUTHID_opt_bpp
+    STRAUTHID_opt_client_device_announce_timeout, // AUTHID_opt_client_device_announce_timeout
+    STRAUTHID_opt_file_encryption, // AUTHID_opt_file_encryption
+    STRAUTHID_opt_framerate, // AUTHID_opt_framerate
+    STRAUTHID_opt_height, // AUTHID_opt_height
+    STRAUTHID_opt_movie, // AUTHID_opt_movie
+    STRAUTHID_opt_movie_path, // AUTHID_opt_movie_path
+    STRAUTHID_opt_proxy_managed_drives, // AUTHID_opt_proxy_managed_drives
+    STRAUTHID_opt_qscale, // AUTHID_opt_qscale
+    STRAUTHID_opt_wabagent, // AUTHID_opt_wabagent
+    STRAUTHID_opt_wabagent_keepalive_timeout, // AUTHID_opt_wabagent_keepalive_timeout
+    STRAUTHID_opt_wabagent_launch_timeout, // AUTHID_opt_wabagent_launch_timeout
+    STRAUTHID_opt_wabagent_on_launch_failure, // AUTHID_opt_wabagent_on_launch_failure
+    STRAUTHID_opt_width, // AUTHID_opt_width
+    STRAUTHID_pattern_kill, // AUTHID_pattern_kill
+    STRAUTHID_pattern_notify, // AUTHID_pattern_notify
+    STRAUTHID_proxy_opt, // AUTHID_proxy_opt
+    STRAUTHID_rdp_bogus_sc_net_size, // AUTHID_rdp_bogus_sc_net_size
+    STRAUTHID_real_target_device, // AUTHID_real_target_device
+    STRAUTHID_rejected, // AUTHID_rejected
+    STRAUTHID_reporting, // AUTHID_reporting
+    STRAUTHID_rt_display, // AUTHID_rt_display
+    STRAUTHID_selector, // AUTHID_selector
+    STRAUTHID_selector_current_page, // AUTHID_selector_current_page
+    STRAUTHID_selector_device_filter, // AUTHID_selector_device_filter
+    STRAUTHID_selector_group_filter, // AUTHID_selector_group_filter
+    STRAUTHID_selector_lines_per_page, // AUTHID_selector_lines_per_page
+    STRAUTHID_selector_number_of_pages, // AUTHID_selector_number_of_pages
+    STRAUTHID_selector_proto_filter, // AUTHID_selector_proto_filter
+    STRAUTHID_session_id, // AUTHID_session_id
+    STRAUTHID_shell_working_directory, // AUTHID_shell_working_directory
+    STRAUTHID_target, // AUTHID_target
+    STRAUTHID_target_application, // AUTHID_target_application
+    STRAUTHID_target_application_account, // AUTHID_target_application_account
+    STRAUTHID_target_application_password, // AUTHID_target_application_password
+    STRAUTHID_ticket, // AUTHID_ticket
+    STRAUTHID_timezone, // AUTHID_timezone
+    STRAUTHID_vnc_bogus_clipboard_infinite_loop, // AUTHID_vnc_bogus_clipboard_infinite_loop
+    STRAUTHID_vnc_clipboard_down, // AUTHID_vnc_clipboard_down
+    STRAUTHID_vnc_clipboard_up, // AUTHID_vnc_clipboard_up
+    STRAUTHID_vnc_server_clipboard_encoding_type, // AUTHID_vnc_server_clipboard_encoding_type
+    STRAUTHID_waitinforeturn, // AUTHID_waitinforeturn
 };
 

@@ -22,5 +22,6 @@
 
 #undef MK_ENUM_IO
 #undef MK_ENUM_FLAG_FN
+#undef MK_PARSE_UNSIGNED_TO_ENUM_FLAGS
 
 #endif

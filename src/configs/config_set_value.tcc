@@ -3,422 +3,425 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
     else if (0 == strcmp(context, "client")) {
         if (0) {}
         else if (0 == strcmp(key, "ignore_logon_password")) {
-            ::configs::parse(this->client.ignore_logon_password, value);
+            ::configs::parse(static_cast<cfg::client::ignore_logon_password&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "performance_flags_default")) {
-            ::configs::parse(this->client.performance_flags_default, value);
+            ::configs::parse(static_cast<cfg::client::performance_flags_default&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "performance_flags_force_present")) {
-            ::configs::parse(this->client.performance_flags_force_present, value);
+            ::configs::parse(static_cast<cfg::client::performance_flags_force_present&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "performance_flags_force_not_present")) {
-            ::configs::parse(this->client.performance_flags_force_not_present, value);
+            ::configs::parse(static_cast<cfg::client::performance_flags_force_not_present&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "tls_fallback_legacy")) {
-            ::configs::parse(this->client.tls_fallback_legacy, value);
+            ::configs::parse(static_cast<cfg::client::tls_fallback_legacy&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "tls_support")) {
-            ::configs::parse(this->client.tls_support, value);
+            ::configs::parse(static_cast<cfg::client::tls_support&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "bogus_neg_request")) {
-            ::configs::parse(this->client.bogus_neg_request, value);
+            ::configs::parse(static_cast<cfg::client::bogus_neg_request&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "bogus_user_id")) {
-            ::configs::parse(this->client.bogus_user_id, value);
+            ::configs::parse(static_cast<cfg::client::bogus_user_id&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")) {
-            ::configs::parse(this->client.disable_tsk_switch_shortcuts, value);
+            ::configs::parse(static_cast<cfg::client::disable_tsk_switch_shortcuts&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "rdp_compression")) {
-            ::configs::parse(this->client.rdp_compression, value);
+            ::configs::parse(static_cast<cfg::client::rdp_compression&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "max_color_depth")) {
-            ::configs::parse(this->client.max_color_depth, value);
+            ::configs::parse(static_cast<cfg::client::max_color_depth&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
-            ::configs::parse(this->client.persistent_disk_bitmap_cache, value);
+            ::configs::parse(static_cast<cfg::client::persistent_disk_bitmap_cache&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "cache_waiting_list")) {
-            ::configs::parse(this->client.cache_waiting_list, value);
+            ::configs::parse(static_cast<cfg::client::cache_waiting_list&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
-            ::configs::parse(this->client.persist_bitmap_cache_on_disk, value);
+            ::configs::parse(static_cast<cfg::client::persist_bitmap_cache_on_disk&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "bitmap_compression")) {
-            ::configs::parse(this->client.bitmap_compression, value);
+            ::configs::parse(static_cast<cfg::client::bitmap_compression&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "fast_path")) {
-            ::configs::parse(this->client.fast_path, value);
+            ::configs::parse(static_cast<cfg::client::fast_path&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "crypto")) {
         if (0) {}
         else if (0 == strcmp(key, "key0")) {
-            ::configs::parse(this->crypto.key0, value);
+            ::configs::parse(static_cast<cfg::crypto::key0&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "key1")) {
-            ::configs::parse(this->crypto.key1, value);
+            ::configs::parse(static_cast<cfg::crypto::key1&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "debug")) {
         if (0) {}
         else if (0 == strcmp(key, "x224")) {
-            ::configs::parse(this->debug.x224, value);
+            ::configs::parse(static_cast<cfg::debug::x224&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "mcs")) {
-            ::configs::parse(this->debug.mcs, value);
+            ::configs::parse(static_cast<cfg::debug::mcs&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "sec")) {
-            ::configs::parse(this->debug.sec, value);
+            ::configs::parse(static_cast<cfg::debug::sec&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "rdp")) {
-            ::configs::parse(this->debug.rdp, value);
+            ::configs::parse(static_cast<cfg::debug::rdp&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "primary_orders")) {
-            ::configs::parse(this->debug.primary_orders, value);
+            ::configs::parse(static_cast<cfg::debug::primary_orders&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "secondary_orders")) {
-            ::configs::parse(this->debug.secondary_orders, value);
+            ::configs::parse(static_cast<cfg::debug::secondary_orders&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "bitmap")) {
-            ::configs::parse(this->debug.bitmap, value);
+            ::configs::parse(static_cast<cfg::debug::bitmap&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "capture")) {
-            ::configs::parse(this->debug.capture, value);
+            ::configs::parse(static_cast<cfg::debug::capture&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "auth")) {
-            ::configs::parse(this->debug.auth, value);
+            ::configs::parse(static_cast<cfg::debug::auth&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "session")) {
-            ::configs::parse(this->debug.session, value);
+            ::configs::parse(static_cast<cfg::debug::session&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "front")) {
-            ::configs::parse(this->debug.front, value);
+            ::configs::parse(static_cast<cfg::debug::front&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "mod_rdp")) {
-            ::configs::parse(this->debug.mod_rdp, value);
+            ::configs::parse(static_cast<cfg::debug::mod_rdp&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "mod_vnc")) {
-            ::configs::parse(this->debug.mod_vnc, value);
+            ::configs::parse(static_cast<cfg::debug::mod_vnc&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "mod_int")) {
-            ::configs::parse(this->debug.mod_int, value);
+            ::configs::parse(static_cast<cfg::debug::mod_int&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "mod_xup")) {
-            ::configs::parse(this->debug.mod_xup, value);
+            ::configs::parse(static_cast<cfg::debug::mod_xup&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "widget")) {
-            ::configs::parse(this->debug.widget, value);
+            ::configs::parse(static_cast<cfg::debug::widget&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "input")) {
-            ::configs::parse(this->debug.input, value);
+            ::configs::parse(static_cast<cfg::debug::input&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "password")) {
-            ::configs::parse(this->debug.password, value);
+            ::configs::parse(static_cast<cfg::debug::password&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "compression")) {
-            ::configs::parse(this->debug.compression, value);
+            ::configs::parse(static_cast<cfg::debug::compression&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "cache")) {
-            ::configs::parse(this->debug.cache, value);
+            ::configs::parse(static_cast<cfg::debug::cache&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "bitmap_update")) {
-            ::configs::parse(this->debug.bitmap_update, value);
+            ::configs::parse(static_cast<cfg::debug::bitmap_update&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "performance")) {
-            ::configs::parse(this->debug.performance, value);
+            ::configs::parse(static_cast<cfg::debug::performance&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "pass_dialog_box")) {
-            ::configs::parse(this->debug.pass_dialog_box, value);
+            ::configs::parse(static_cast<cfg::debug::pass_dialog_box&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "config")) {
-            ::configs::parse(this->debug.config, value);
+            ::configs::parse(static_cast<cfg::debug::config&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "globals")) {
         if (0) {}
         else if (0 == strcmp(key, "bitmap_cache")) {
-            ::configs::parse(this->globals.bitmap_cache, value);
+            ::configs::parse(static_cast<cfg::globals::bitmap_cache&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "glyph_cache")) {
-            ::configs::parse(this->globals.glyph_cache, value);
+            ::configs::parse(static_cast<cfg::globals::glyph_cache&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "port")) {
-            ::configs::parse(this->globals.port, value);
+            ::configs::parse(static_cast<cfg::globals::port&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "nomouse")) {
-            ::configs::parse(this->globals.nomouse, value);
+            ::configs::parse(static_cast<cfg::globals::nomouse&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "notimestamp")) {
-            ::configs::parse(this->globals.notimestamp, value);
+            ::configs::parse(static_cast<cfg::globals::notimestamp&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "encryptionLevel")) {
-            ::configs::parse(this->globals.encryptionLevel, value);
+            ::configs::parse(static_cast<cfg::globals::encryptionLevel&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "authip")) {
-            ::configs::parse(this->globals.authip, value);
+            ::configs::parse(static_cast<cfg::globals::authip&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "authport")) {
-            ::configs::parse(this->globals.authport, value);
+            ::configs::parse(static_cast<cfg::globals::authport&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "session_timeout")) {
-            ::configs::parse(this->globals.session_timeout, value);
+            ::configs::parse(static_cast<cfg::globals::session_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "keepalive_grace_delay")) {
-            ::configs::parse(this->globals.keepalive_grace_delay, value);
+            ::configs::parse(static_cast<cfg::globals::keepalive_grace_delay&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "close_timeout")) {
-            ::configs::parse(this->globals.close_timeout, value);
+            ::configs::parse(static_cast<cfg::globals::close_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "auth_channel")) {
-            ::configs::parse(this->globals.auth_channel, value);
+            ::configs::parse(static_cast<cfg::globals::auth_channel&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_file_encryption")) {
-            ::configs::parse(this->globals.enable_file_encryption, value);
+            ::configs::parse(static_cast<cfg::globals::enable_file_encryption&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "listen_address")) {
-            ::configs::parse(this->globals.listen_address, value);
+            ::configs::parse(static_cast<cfg::globals::listen_address&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_ip_transparent")) {
-            ::configs::parse(this->globals.enable_ip_transparent, value);
+            ::configs::parse(static_cast<cfg::globals::enable_ip_transparent&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "certificate_password")) {
-            ::configs::parse(this->globals.certificate_password, value);
+            ::configs::parse(static_cast<cfg::globals::certificate_password&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "png_path")) {
-            ::configs::parse(this->globals.png_path, value);
+            ::configs::parse(static_cast<cfg::globals::png_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "wrm_path")) {
-            ::configs::parse(this->globals.wrm_path, value);
+            ::configs::parse(static_cast<cfg::globals::wrm_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "alternate_shell")) {
-            ::configs::parse(this->globals.alternate_shell, value);
+            ::configs::parse(static_cast<cfg::globals::alternate_shell&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "shell_working_directory")) {
-            ::configs::parse(this->globals.shell_working_directory, value);
+            ::configs::parse(static_cast<cfg::globals::shell_working_directory&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "movie")) {
-            ::configs::parse(this->globals.movie, value);
+            ::configs::parse(static_cast<cfg::globals::movie&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "movie_path")) {
-            ::configs::parse(this->globals.movie_path, value);
+            ::configs::parse(static_cast<cfg::globals::movie_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_bitmap_update")) {
-            ::configs::parse(this->globals.enable_bitmap_update, value);
+            ::configs::parse(static_cast<cfg::globals::enable_bitmap_update&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_close_box")) {
-            ::configs::parse(this->globals.enable_close_box, value);
+            ::configs::parse(static_cast<cfg::globals::enable_close_box&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_osd")) {
-            ::configs::parse(this->globals.enable_osd, value);
+            ::configs::parse(static_cast<cfg::globals::enable_osd&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_osd_display_remote_target")) {
-            ::configs::parse(this->globals.enable_osd_display_remote_target, value);
+            ::configs::parse(static_cast<cfg::globals::enable_osd_display_remote_target&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_wab_agent")) {
-            ::configs::parse(this->globals.enable_wab_agent, value);
+            ::configs::parse(static_cast<cfg::globals::enable_wab_agent&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "wab_agent_launch_timeout")) {
-            ::configs::parse(this->globals.wab_agent_launch_timeout, value);
+            ::configs::parse(static_cast<cfg::globals::wab_agent_launch_timeout&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "wab_agent_on_launch_failure")) {
+            ::configs::parse(static_cast<cfg::globals::wab_agent_on_launch_failure&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "wab_agent_keepalive_timeout")) {
-            ::configs::parse(this->globals.wab_agent_keepalive_timeout, value);
+            ::configs::parse(static_cast<cfg::globals::wab_agent_keepalive_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "wab_agent_alternate_shell")) {
-            ::configs::parse(this->globals.wab_agent_alternate_shell, value);
+            ::configs::parse(static_cast<cfg::globals::wab_agent_alternate_shell&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "persistent_path")) {
-            ::configs::parse(this->globals.persistent_path, value);
+            ::configs::parse(static_cast<cfg::globals::persistent_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "disable_proxy_opt")) {
-            ::configs::parse(this->globals.disable_proxy_opt, value);
+            ::configs::parse(static_cast<cfg::globals::disable_proxy_opt&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "max_chunked_virtual_channel_data_length")) {
-            ::configs::parse(this->globals.max_chunked_virtual_channel_data_length, value);
+            ::configs::parse(static_cast<cfg::globals::max_chunked_virtual_channel_data_length&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "internal_mod")) {
         if (0) {}
         else if (0 == strcmp(key, "load_theme")) {
-            ::configs::parse(this->internal_mod.theme, value);
+            ::configs::parse(static_cast<cfg::internal_mod::theme&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "mod_rdp")) {
         if (0) {}
         else if (0 == strcmp(key, "rdp_compression")) {
-            ::configs::parse(this->mod_rdp.rdp_compression, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::rdp_compression&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "disconnect_on_logon_user_change")) {
-            ::configs::parse(this->mod_rdp.disconnect_on_logon_user_change, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::disconnect_on_logon_user_change&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "open_session_timeout")) {
-            ::configs::parse(this->mod_rdp.open_session_timeout, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::open_session_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "certificate_change_action")) {
-            ::configs::parse(this->mod_rdp.certificate_change_action, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::certificate_change_action&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "extra_orders")) {
-            ::configs::parse(this->mod_rdp.extra_orders, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::extra_orders&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_nla")) {
-            ::configs::parse(this->mod_rdp.enable_nla, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::enable_nla&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_kerberos")) {
-            ::configs::parse(this->mod_rdp.enable_kerberos, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::enable_kerberos&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
-            ::configs::parse(this->mod_rdp.persistent_disk_bitmap_cache, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::persistent_disk_bitmap_cache&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "cache_waiting_list")) {
-            ::configs::parse(this->mod_rdp.cache_waiting_list, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::cache_waiting_list&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
-            ::configs::parse(this->mod_rdp.persist_bitmap_cache_on_disk, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::persist_bitmap_cache_on_disk&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "allow_channels")) {
-            ::configs::parse(this->mod_rdp.allow_channels, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::allow_channels&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "deny_channels")) {
-            ::configs::parse(this->mod_rdp.deny_channels, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::deny_channels&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "fast_path")) {
-            ::configs::parse(this->mod_rdp.fast_path, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::fast_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "server_redirection_support")) {
-            ::configs::parse(this->mod_rdp.server_redirection_support, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::server_redirection_support&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "bogus_sc_net_size")) {
-            ::configs::parse(this->mod_rdp.bogus_sc_net_size, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::bogus_sc_net_size&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "client_device_announce_timeout")) {
-            ::configs::parse(this->mod_rdp.client_device_announce_timeout, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::client_device_announce_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "proxy_managed_drives")) {
-            ::configs::parse(this->mod_rdp.proxy_managed_drives, value);
+            ::configs::parse(static_cast<cfg::mod_rdp::proxy_managed_drives&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "mod_replay")) {
         if (0) {}
         else if (0 == strcmp(key, "on_end_of_data")) {
-            ::configs::parse(this->mod_replay.on_end_of_data, value);
+            ::configs::parse(static_cast<cfg::mod_replay::on_end_of_data&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "mod_vnc")) {
         if (0) {}
         else if (0 == strcmp(key, "clipboard_up")) {
-            ::configs::parse(this->mod_vnc.clipboard_up, value);
+            ::configs::parse(static_cast<cfg::mod_vnc::clipboard_up&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "clipboard_down")) {
-            ::configs::parse(this->mod_vnc.clipboard_down, value);
+            ::configs::parse(static_cast<cfg::mod_vnc::clipboard_down&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "encodings")) {
-            ::configs::parse(this->mod_vnc.encodings, value);
+            ::configs::parse(static_cast<cfg::mod_vnc::encodings&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "allow_authentification_retries")) {
-            ::configs::parse(this->mod_vnc.allow_authentification_retries, value);
+            ::configs::parse(static_cast<cfg::mod_vnc::allow_authentification_retries&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "server_clipboard_encoding_type")) {
-            ::configs::parse(this->mod_vnc.server_clipboard_encoding_type, value);
+            ::configs::parse(static_cast<cfg::mod_vnc::server_clipboard_encoding_type&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
-            ::configs::parse(this->mod_vnc.bogus_clipboard_infinite_loop, value);
+            ::configs::parse(static_cast<cfg::mod_vnc::bogus_clipboard_infinite_loop&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "translation")) {
         if (0) {}
         else if (0 == strcmp(key, "language")) {
-            ::configs::parse(this->translation.language, value);
+            ::configs::parse(static_cast<cfg::translation::language&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "video")) {
         if (0) {}
         else if (0 == strcmp(key, "capture_groupid")) {
-            ::configs::parse(this->video.capture_groupid, value);
+            ::configs::parse(static_cast<cfg::video::capture_groupid&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "capture_flags")) {
-            ::configs::parse(this->video.capture_flags, value);
+            ::configs::parse(static_cast<cfg::video::capture_flags&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "png_interval")) {
-            ::configs::parse(this->video.png_interval, value);
+            ::configs::parse(static_cast<cfg::video::png_interval&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "frame_interval")) {
-            ::configs::parse(this->video.frame_interval, value);
+            ::configs::parse(static_cast<cfg::video::frame_interval&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "break_interval")) {
-            ::configs::parse(this->video.break_interval, value);
+            ::configs::parse(static_cast<cfg::video::break_interval&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "png_limit")) {
-            ::configs::parse(this->video.png_limit, value);
+            ::configs::parse(static_cast<cfg::video::png_limit&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "replay_path")) {
-            ::configs::parse(this->video.replay_path, value);
+            ::configs::parse(static_cast<cfg::video::replay_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "hash_path")) {
-            ::configs::parse(this->video.hash_path, value);
+            ::configs::parse(static_cast<cfg::video::hash_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "record_tmp_path")) {
-            ::configs::parse(this->video.record_tmp_path, value);
+            ::configs::parse(static_cast<cfg::video::record_tmp_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "record_path")) {
-            ::configs::parse(this->video.record_path, value);
+            ::configs::parse(static_cast<cfg::video::record_path&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "disable_keyboard_log")) {
-            ::configs::parse(this->video.disable_keyboard_log, value);
+            ::configs::parse(static_cast<cfg::video::disable_keyboard_log&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "disable_clipboard_log")) {
-            ::configs::parse(this->video.disable_clipboard_log, value);
+            ::configs::parse(static_cast<cfg::video::disable_clipboard_log&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "rt_display")) {
-            ::configs::parse(this->video.rt_display, value);
+            ::configs::parse(static_cast<cfg::video::rt_display&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "wrm_color_depth_selection_strategy")) {
-            ::configs::parse(this->video.wrm_color_depth_selection_strategy, value);
+            ::configs::parse(static_cast<cfg::video::wrm_color_depth_selection_strategy&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "wrm_compression_algorithm")) {
-            ::configs::parse(this->video.wrm_compression_algorithm, value);
+            ::configs::parse(static_cast<cfg::video::wrm_compression_algorithm&>(this->variables).value, value);
         }
 
-        else if (this->debug.config) {
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
-    else if (this->debug.config) {
+    else if (static_cast<cfg::debug::config>(this->variables).value) {
         LOG(LOG_ERR, "unknown section [%s]", context);
     }
 }
