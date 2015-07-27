@@ -29,8 +29,8 @@
 
 #include "channel_list.hpp"
 #include "fileutils.hpp"
-#include "rdp/rdp_asynchronous_task.hpp"
-#include "rdpdr.hpp"
+#include "rdpdr_asynchronous_task.hpp"
+#include "RDP/channels/rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
 #include "make_unique.hpp"

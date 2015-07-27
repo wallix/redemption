@@ -72,9 +72,7 @@
 #include "RDP/capabilities/rail.hpp"
 #include "RDP/capabilities/window.hpp"
 #include "RDP/channels/rdpdr.hpp"
-#include "RDP/channels/rdpdr_file_system_drive_manager.hpp"
 #include "RDP/remote_programs.hpp"
-#include "rdp_asynchronous_task.hpp"
 #include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
 #include "FSCC/FileInformation.hpp"
@@ -88,6 +86,8 @@
 #include "finally.hpp"
 #include "apply_for_delim.hpp"
 #include "timeout.hpp"
+
+#include "channels/rdpdr_file_system_drive_manager.hpp"
 
 #define FILE_LIST_CLIPBOARD_FORMAT_NAME "FileGroupDescriptorW"
 
@@ -1657,9 +1657,9 @@ private:
                 for (uint32_t device_index = 0; device_index < DeviceCount; ++device_index) {
                     const uint32_t DeviceType       = chunk.in_uint32_le();
                     const uint32_t DeviceId         = chunk.in_uint32_le();
-                    chunk.in_skip_bytes(8);                   /* PreferredDosName(8) */
+                    chunk.in_skip_bytes(8);                   // PreferredDosName(8)
                     const uint32_t DeviceDataLength = chunk.in_uint32_le();
-                    chunk.in_skip_bytes(DeviceDataLength);    /* DeviceData(variable) */
+                    chunk.in_skip_bytes(DeviceDataLength);    // DeviceData(variable)
 
                     if (!this->authorization_channels.rdpdr_type_is_authorized(DeviceType)) {
                         rdpdr::ServerDeviceAnnounceResponse server_device_announce_response(

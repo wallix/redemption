@@ -2339,7 +2339,15 @@ public:
 
     inline uint32_t extendedPDU() const { return this->extendedPDU_; }
 
+    inline void set_extendedPDU(uint32_t extendedPDU) {
+        this->extendedPDU_ = extendedPDU;
+    }
+
     inline uint32_t extraFlags1() const { return this->extraFlags1_; }
+
+    inline void set_extraFlags1(uint32_t extraFlags1) {
+        this->extraFlags1_ = extraFlags1;
+    }
 
     inline static size_t size(uint32_t version) {
         return 32 + // osType(4) + osVersion(4) + protocolMajorVersion(2) +
