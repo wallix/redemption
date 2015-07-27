@@ -385,7 +385,7 @@ private:
             this->numEntriesCache[2] +
             this->numEntriesCache[3] +
             this->numEntriesCache[4],
-            MAXIMUM_ENCAPSULATED_BITMAP_KEYS
+            uint32_t(MAXIMUM_ENCAPSULATED_BITMAP_KEYS)
         );
     }
 };  // PersistentKeyListPDUData
