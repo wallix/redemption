@@ -159,7 +159,6 @@ struct SharedHeader {
         this->packet_id = static_cast<PacketId>(stream.in_uint16_le());
     }
 
-private:
     inline static const char * get_Component_name(Component component) {
         switch (component) {
             case Component::RDPDR_CTYP_CORE: return "RDPDR_CTYP_CORE";
@@ -189,6 +188,11 @@ private:
         return "<unknown>";
     }
 
+    inline static size_t size() {
+        return 4;   // Component(2) + PacketId(2)
+    }
+
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "SharedHeader: Component=%s(0x%X) PacketId=%s(0x%X)",
@@ -498,7 +502,6 @@ public:
             ;
     }
 
-private:
     inline static const char * get_DeviceType_name(uint32_t DeviceType) {
         switch (DeviceType) {
             case RDPDR_DTYP_SERIAL:     return "RDPDR_DTYP_SERIAL";
@@ -511,6 +514,7 @@ private:
         return "<unknown>";
     }
 
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceAnnounceHeader: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
@@ -690,7 +694,6 @@ public:
 
     inline uint32_t MinorFunction() const { return this->MinorFunction_; }
 
-private:
     inline static const char * get_MajorFunction_name(uint32_t MajorFunction) {
         switch (MajorFunction)
         {
@@ -720,6 +723,7 @@ private:
         return "<unknown>";
     }
 
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIORequest: "
@@ -1894,6 +1898,7 @@ public:
                 LOG(LOG_ERR,
                     "Truncated ClientAnnounceReply: expected=%u remains=%u",
                     expected, stream.in_remain());
+BOOM;
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
@@ -2869,7 +2874,6 @@ public:
 
     inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-private:
     inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileFsVolumeInformation:    return "FileFsVolumeInformation";
@@ -2882,6 +2886,7 @@ private:
         return "<unknown>";
     }
 
+private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
