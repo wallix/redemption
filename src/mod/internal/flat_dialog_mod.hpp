@@ -46,7 +46,7 @@ public:
                         0, ini.theme, ini.font, TR("OK", ini), cancel_text,
                         has_challenge)
         , ini(ini)
-        , timeout(now, ini.debug.pass_dialog_box)
+        , timeout(now, ini.get<cfg::debug::pass_dialog_box>())
     {
         this->screen.add_widget(&this->dialog_widget);
         this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget2::focus_reason_tabkey);
@@ -55,7 +55,7 @@ public:
 
         if (this->dialog_widget.challenge) {
             this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget2::focus_reason_tabkey);
-            // this->ini.to_send_set.insert(AUTHID_AUTHENTICATION_CHALLENGE);
+            // this->ini.get<cfg::to_send_set::insert>()(AUTHID_AUTHENTICATION_CHALLENGE);
         }
     }
 

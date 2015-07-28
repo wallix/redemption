@@ -33,6 +33,8 @@ enum class CaptureFlags : unsigned {
 };
 MK_ENUM_FLAG_FN(CaptureFlags)
 
+MK_PARSER_ENUM_FLAGS(CaptureFlags)
+
 }
 
 #include "mk_enum_undef.hpp"

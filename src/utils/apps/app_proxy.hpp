@@ -370,7 +370,7 @@ int app_proxy(
 
     OpenSSL_add_all_digests();
 
-    if (!ini.globals.enable_ip_transparent) {
+    if (!ini.get<cfg::globals::enable_ip_transparent>()) {
         if (setgid(egid) != 0){
             LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
             return 1;

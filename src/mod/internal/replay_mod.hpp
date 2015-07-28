@@ -81,7 +81,7 @@ public:
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
         this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true
-                                        , this->ini.debug.capture);
+                                        , this->ini.get<cfg::debug::capture>());
 
         switch (this->front.server_resize( this->reader->info_width
                                          , this->reader->info_height
@@ -154,7 +154,7 @@ public:
                 else {
                     this->front.flush();
 
-                    if (this->ini.mod_replay.on_end_of_data == 1) {
+                    if (this->ini.get<cfg::mod_replay::on_end_of_data>() == 1) {
                         this->event.signal = BACK_EVENT_STOP;
                         this->event.set(1);
                     }

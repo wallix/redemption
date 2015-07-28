@@ -82,10 +82,10 @@ public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
            , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
-    : capture_wrm(bool(ini.video.capture_flags & CaptureFlags::wrm))
-    , capture_drawable(this->capture_wrm || (ini.video.png_limit > 0))
-    , capture_png(ini.video.png_limit > 0)
-    , enable_file_encryption(ini.globals.enable_file_encryption.get())
+    : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
+    , capture_drawable(this->capture_wrm || (ini.get<cfg::video::png_limit>() > 0))
+    , capture_png(ini.get<cfg::video::png_limit>() > 0)
+    , enable_file_encryption(ini.get<cfg::globals::enable_file_encryption>())
     , png_trans(nullptr)
     , psc(nullptr)
     , wrm_trans(nullptr)
@@ -107,31 +107,31 @@ public:
         }
 
         if (this->capture_png) {
-            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.video.capture_groupid) != 0) {
+            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.get<cfg::video::capture_groupid>()) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
             }
 
 //            this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, png_path
             this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_path
-                                                              , basename, ".png", ini.video.capture_groupid, authentifier);
+                                                              , basename, ".png", ini.get<cfg::video::capture_groupid>(), authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
                                          , clear_png, ini, this->drawable->impl());
         }
 
         if (this->capture_wrm) {
             if (recursive_create_directory( wrm_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.video.capture_groupid) != 0) {
+                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
             }
 
             if (recursive_create_directory( hash_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.video.capture_groupid) != 0) {
+                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
             memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
-            memcpy(this->crypto_ctx.crypto_key, ini.crypto.key0, sizeof(this->crypto_ctx.crypto_key));
-            memcpy(this->crypto_ctx.hmac_key,   ini.crypto.key1, sizeof(this->crypto_ctx.hmac_key  ));
+            memcpy(this->crypto_ctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(this->crypto_ctx.crypto_key));
+            memcpy(this->crypto_ctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(this->crypto_ctx.hmac_key  ));
 
             TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
                  "Here is not the right level to manage anything related to encryption.")
@@ -150,13 +150,13 @@ public:
             if (this->enable_file_encryption) {
                 auto * trans = new CryptoOutMetaSequenceTransport(
                     &this->crypto_ctx, wrm_path, hash_path, basename, now
-                  , width, height, ini.video.capture_groupid, authentifier);
+                  , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
                 this->wrm_trans = trans;
                 this->wrm_filename_generator = trans->seqgen();
             }
             else {
                 auto * trans = new OutMetaSequenceTransport(
-                    wrm_path, basename, now, width, height, ini.video.capture_groupid, authentifier);
+                    wrm_path, basename, now, width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
                 this->wrm_trans = trans;
                 this->wrm_filename_generator = trans->seqgen();
             }

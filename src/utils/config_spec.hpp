@@ -128,22 +128,22 @@ void config_spec_definition(Writer && W)
     Attribute const A = Attribute::advanced;
     Attribute const IPT = Attribute::iptables;
 
-    PropertyFieldFlags const r = PropertyFieldFlags::read;
     PropertyFieldFlags const w = PropertyFieldFlags::write;
-    PropertyFieldFlags const rw = r | w;
+    PropertyFieldFlags const r = PropertyFieldFlags::read;
+    PropertyFieldFlags const rw = w | r;
 
     W.start_section("globals");
     {
-        W.member(type_<bool>(), "capture_chunk", r);
+        W.member(type_<bool>(), "capture_chunk", w);
         W.sep();
-        W.member(type_<std::string>(), "auth_user", str_authid{"login"}, r);
-        W.member(type_<std::string>(), "host", str_authid{"ip_client"}, w);
-        W.member(type_<std::string>(), "target", str_authid{"ip_target"}, w);
+        W.member(type_<std::string>(), "auth_user", str_authid{"login"}, rw);
+        W.member(type_<std::string>(), "host", str_authid{"ip_client"}, r);
+        W.member(type_<std::string>(), "target", str_authid{"ip_target"}, r);
         W.member(type_<std::string>(), "target_device", r);
         W.member(type_<std::string>(), "target_user", str_authid{"target_login"}, r);
-        W.member(type_<std::string>(), "target_application", w);
-        W.member(type_<std::string>(), "target_application_account", w);
-        W.member(type_<std::string>(), "target_application_password", w);
+        W.member(type_<std::string>(), "target_application", r);
+        W.member(type_<std::string>(), "target_application_account", r);
+        W.member(type_<std::string>(), "target_application_password", r);
         W.sep();
         W.member(A, type_<bool>(), "bitmap_cache", desc{"Support of Bitmap Cache."}, set(true));
         W.member(A, type_<bool>(), "glyph_cache", set(false));
@@ -159,7 +159,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
         W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()));
-        W.member(A, type_<bool>(), "enable_file_encryption", def_authid{"opt_file_encryption"}, str_authid{"file_encryption"}, w);
+        W.member(A, type_<bool>(), "enable_file_encryption", def_authid{"opt_file_encryption"}, str_authid{"file_encryption"}, r);
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
         W.member(V, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
@@ -167,21 +167,21 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StaticString<1024>>(), "png_path", set(MACRO(PNG_PATH)));
         W.member(A, type_<StaticString<1024>>(), "wrm_path", set(MACRO(WRM_PATH)));
         W.sep();
-        W.member(H, type_<std::string>(), "alternate_shell", w);
-        W.member(H, type_<std::string>(), "shell_working_directory", w);
+        W.member(H, type_<std::string>(), "alternate_shell", r);
+        W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
-        W.member(H, type_<bool>(), "movie", def_authid{"opt_movie"}, str_authid{"is_rec"}, set(false), w);
-        W.member(A, type_<std::string>(), "movie_path", def_authid{"opt_movie_path"}, str_authid{"rec_patch"}, w);
+        W.member(H, type_<bool>(), "movie", def_authid{"opt_movie"}, str_authid{"is_rec"}, set(false), r);
+        W.member(A, type_<std::string>(), "movie_path", def_authid{"opt_movie_path"}, str_authid{"rec_patch"}, r);
         W.member(A, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
         W.sep();
         W.member(V, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
         W.member(A, type_<bool>(), "enable_osd", set(true));
         W.member(A, type_<bool>(), "enable_osd_display_remote_target", set(true));
         W.sep();
-        W.member(A, type_<bool>(), "enable_wab_agent", def_authid{"opt_wabagent"}, str_authid{"wab_agent"}, set(false), w);
-        W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", def_authid{"opt_wabagent_launch_timeout"}, set(0), w);
-        W.member(A, type_<unsigned>(), "wab_agent_on_launch_failure", def_authid{"opt_wabagent_on_launch_failure"}, set(0), w);
-        W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", def_authid{"opt_wabagent_keepalive_timeout"}, set(0), w);
+        W.member(A, type_<bool>(), "enable_wab_agent", def_authid{"opt_wabagent"}, str_authid{"wab_agent"}, set(false), r);
+        W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", def_authid{"opt_wabagent_launch_timeout"}, set(0), r);
+        W.member(A, type_<unsigned>(), "wab_agent_on_launch_failure", def_authid{"opt_wabagent_on_launch_failure"}, set(0), r);
+        W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", def_authid{"opt_wabagent_keepalive_timeout"}, set(0), r);
         W.sep();
         W.member(H, type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));
         W.sep();
@@ -194,7 +194,7 @@ void config_spec_definition(Writer && W)
 
     W.start_section("client");
     {
-        W.member(type_<unsigned>(), "keyboard_layout", set(0), w);
+        W.member(type_<unsigned>(), "keyboard_layout", set(0), r);
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
         W.member(A | X, type_<uint32_>(), "performance_flags_default", set(0));
@@ -206,7 +206,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
         W.member(A, type_<bool>(), "bogus_user_id", desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."}, set(true));
         W.sep();
-        W.member(A, type_<bool>(), "disable_tsk_switch_shortcuts", desc{"If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences."}, set(false), w);
+        W.member(A, type_<bool>(), "disable_tsk_switch_shortcuts", desc{"If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences."}, set(false), r);
         W.sep();
         W.member(A, type_<rdp_compression_t>{}, "rdp_compression", rdp_compression_desc, set(4));
         W.sep();
@@ -269,18 +269,18 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<RedirectionInfo>(), "redir_info");
         W.sep();
-        W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, def_authid{"rdp_bogus_sc_net_size"}, str_authid{"rdp_bogus_sc_net_size"}, set(true), w);
+        W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, def_authid{"rdp_bogus_sc_net_size"}, str_authid{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
-        W.member(A, type_<unsigned>(), "client_device_announce_timeout", def_authid{"opt_client_device_announce_timeout"}, set(1000), w);
+        W.member(A, type_<unsigned>(), "client_device_announce_timeout", def_authid{"opt_client_device_announce_timeout"}, set(1000), r);
         W.sep();
-        W.member(V, type_<std::string>(), "proxy_managed_drives", def_authid{"opt_proxy_managed_drives"}, w);
+        W.member(V, type_<std::string>(), "proxy_managed_drives", def_authid{"opt_proxy_managed_drives"}, r);
     }
     W.stop_section();
 
     W.start_section("mod_vnc");
     {
-        W.member(V, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."}, def_authid{"vnc_clipboard_up"}, w);
-        W.member(V, type_<bool>(), "clipboard_down", desc{"Enable or disable the clipboard from server (server to client)."}, def_authid{"vnc_clipboard_down"}, w);
+        W.member(V, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."}, def_authid{"vnc_clipboard_up"}, r);
+        W.member(V, type_<bool>(), "clipboard_down", desc{"Enable or disable the clipboard from server (server to client)."}, def_authid{"vnc_clipboard_down"}, r);
         W.sep();
         W.member(A, type_<std::string>(), "encodings", desc{
             "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
@@ -296,9 +296,9 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<ClipboardEncodingType>(), "server_clipboard_encoding_type", desc{
             "VNC server clipboard data encoding type.\n"
             "  latin1 (default) or utf-8"
-        }, def_authid{"vnc_server_clipboard_encoding_type"}, str_authid{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1), w);
+        }, def_authid{"vnc_server_clipboard_encoding_type"}, str_authid{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1), r);
         W.sep();
-        W.member(A, type_<unsigned>(), user_type<Range<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", def_authid{"vnc_bogus_clipboard_infinite_loop"}, str_authid{"vnc_bogus_clipboard_infinite_loop"}, set(0), w);
+        W.member(A, type_<unsigned>(), user_type<Range<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", def_authid{"vnc_bogus_clipboard_infinite_loop"}, str_authid{"vnc_bogus_clipboard_infinite_loop"}, set(0), r);
     }
     W.stop_section();
 
@@ -335,14 +335,14 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
             "  1: disable keyboard log in recorded sessions\n"
-        }, w);
+        }, r);
         W.sep();
         W.member(V, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{
             "Disable clipboard log:\n"
             "  1: disable clipboard log in syslog"
-        }, w);
+        }, r);
         W.sep();
-        W.member(H, type_<unsigned>(), "rt_display", set(0), w);
+        W.member(H, type_<unsigned>(), "rt_display", set(0), r);
         W.sep();
         W.member(A, type_<Range<unsigned, 0, 1>>{}, "wrm_color_depth_selection_strategy", desc{
             "The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:\n"
@@ -407,7 +407,7 @@ void config_spec_definition(Writer && W)
 
     W.start_section("translation");
     {
-        W.member(A, type_<Language>{}, "language", set(Language::en), w);
+        W.member(A, type_<Language>{}, "language", set(Language::en), r);
     }
     W.stop_section();
 
@@ -421,76 +421,77 @@ void config_spec_definition(Writer && W)
     {
         W.member(type_<StaticString<1024>>(), "movie");
         W.sep();
-        W.member(type_<unsigned>(), "opt_bitrate", str_authid{"bitrate"}, set(40000), w);
-        W.member(type_<unsigned>(), "opt_framerate", str_authid{"framerate"}, set(5), w);
-        W.member(type_<unsigned>(), "opt_qscale", str_authid{"qscale"}, set(15), w);
+        W.member(type_<unsigned>(), "opt_bitrate", str_authid{"bitrate"}, set(40000), r);
+        W.member(type_<unsigned>(), "opt_framerate", str_authid{"framerate"}, set(5), r);
+        W.member(type_<unsigned>(), "opt_qscale", str_authid{"qscale"}, set(15), r);
         W.sep();
-        W.member(type_<unsigned>(), "opt_bpp", str_authid{"bpp"}, set(24), w);
-        W.member(type_<unsigned>(), "opt_height", str_authid{"height"}, set(600), w);
-        W.member(type_<unsigned>(), "opt_width", str_authid{"width"}, set(800), w);
+        W.member(type_<unsigned>(), "opt_bpp", str_authid{"bpp"}, set(24), r);
+        W.member(type_<unsigned>(), "opt_height", str_authid{"height"}, set(600), r);
+        W.member(type_<unsigned>(), "opt_width", str_authid{"width"}, set(800), r);
         W.sep();
         W.member(type_<std::string>(), "auth_error_message", info{
             "auth_error_message is left as std::string type\n"
             "because SocketTransport and ReplayMod take it as argument on\n"
             "constructor and modify it as a std::string"
-        }, r);
+        }, w);
         W.sep();
-        W.member(type_<bool>(), "selector", set(false), w);
-        W.member(type_<unsigned>(), "selector_current_page", set(1), w);
+        W.member(type_<bool>(), "selector", set(false), r);
+        W.member(type_<unsigned>(), "selector_current_page", set(1), rw);
         W.member(type_<std::string>(), "selector_device_filter", w);
         W.member(type_<std::string>(), "selector_group_filter", w);
         W.member(type_<std::string>(), "selector_proto_filter", w);
-        W.member(type_<unsigned>(), "selector_lines_per_page", set(0), w);
-        W.member(type_<unsigned>(), "selector_number_of_pages", set(1), w);
+        W.member(type_<unsigned>(), "selector_lines_per_page", set(0), rw);
+        W.member(type_<unsigned>(), "selector_number_of_pages", set(1), r);
         W.sep();
-        W.member(type_<std::string>(), "target_password", r);
-        W.member(type_<std::string>(), "target_host", set(""), r);
-        W.member(type_<unsigned>(), "target_port", set(3389), r);
+        W.member(type_<std::string>(), "target_password", w);
+        W.member(type_<std::string>(), "target_host", set(""), w);
+        W.member(type_<unsigned>(), "target_port", set(3389), w);
         W.member(type_<std::string>(), "target_protocol", str_authid{"proto_dest"}, set("RDP"), r);
         W.sep();
-        W.member(type_<std::string>(), "password", r);
+        W.member(type_<std::string>(), "password", rw);
         W.sep();
-        W.member(type_<std::string>(), "reporting", w);
+        W.member(type_<std::string>(), "reporting", r);
         W.sep();
-        W.member(type_<std::string>(), "auth_channel_answer", w);
-        W.member(type_<std::string>(), "auth_channel_result", w);
-        W.member(type_<std::string>(), "auth_channel_target", w);
+        W.member(type_<std::string>(), "auth_channel_answer", r);
+        W.member(type_<std::string>(), "auth_channel_result", r);
+        W.member(type_<std::string>(), "auth_channel_target", r);
         W.sep();
-        W.member(type_<std::string>(), "message", w);
-        W.member(type_<std::string>(), "pattern_kill", w);
-        W.member(type_<std::string>(), "pattern_notify", w);
+        W.member(type_<std::string>(), "message", r);
+        W.member(type_<std::string>(), "pattern_kill", r);
+        W.member(type_<std::string>(), "pattern_notify", r);
         W.sep();
-        W.member(type_<std::string>(), "accept_message", todo{"why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button"}, w);
-        W.member(type_<std::string>(), "display_message", w);
+        W.member(type_<std::string>(), "accept_message", todo{"why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button"}, r);
+        W.member(type_<std::string>(), "display_message", r);
         W.sep();
-        W.member(type_<std::string>(), "rejected", w);
+        W.member(type_<std::string>(), "rejected", r);
         W.sep();
-        W.member(type_<bool>(), "authenticated", set(false), w);
+        W.member(type_<bool>(), "authenticated", set(false), r);
         W.sep();
-        W.member(type_<bool>(), "keepalive", set(false), w);
+        W.member(type_<bool>(), "keepalive", set(false), r);
         W.sep();
-        W.member(type_<std::string>(), "session_id", w);
+        W.member(type_<std::string>(), "session_id", r);
         W.sep();
-        W.member(type_<unsigned>(), "end_date_cnx", str_authid{"timeclose"}, set(0), w);
-        W.member(type_<std::string>(), "end_time", w);
+        W.member(type_<unsigned>(), "end_date_cnx", str_authid{"timeclose"}, set(0), r);
+        W.member(type_<std::string>(), "end_time", r);
         W.sep();
-        W.member(type_<std::string>(), "mode_console", set("allow"), w);
-        W.member(type_<signed>(), "timezone", set(-3600), w);
+        W.member(type_<std::string>(), "mode_console", set("allow"), r);
+        W.member(type_<signed>(), "timezone", set(-3600), r);
         W.sep();
-        W.member(type_<std::string>(), "real_target_device", w);
+        W.member(type_<std::string>(), "real_target_device", r);
         W.sep();
-        W.member(type_<bool>(), "authentication_challenge", r);
-        W.sep();
-        W.member(type_<std::string>(), "ticket", set(""), w);
-        W.member(type_<std::string>(), "comment", set(""), w);
-        W.member(type_<std::string>(), "duration", set(""), w);
-        W.member(type_<std::string>(), "waitinforeturn", set(""), w);
+        // TODO
+        //W.member(type_<bool>(), "authentication_challenge", w);
+        //W.sep();
+        W.member(type_<std::string>(), "ticket", set(""), r);
+        W.member(type_<std::string>(), "comment", set(""), r);
+        W.member(type_<std::string>(), "duration", set(""), r);
+        W.member(type_<std::string>(), "waitinforeturn", set(""), r);
         W.member(type_<bool>(), "showform", set(false), r);
-        W.member(type_<unsigned>(), "formflag", set(0), r);
+        W.member(type_<unsigned>(), "formflag", set(0), w);
         W.sep();
         W.member(type_<std::string>(), "module", set("login"), rw);
-        W.member(type_<bool>(), "forcemodule", set(false), w);
-        W.member(type_<std::string>(), "proxy_opt", w);
+        W.member(type_<bool>(), "forcemodule", set(false), rw);
+        W.member(type_<std::string>(), "proxy_opt", r);
     }
     W.stop_section();
 

@@ -147,7 +147,7 @@ private:
             BmpCache::Front
           , client_info.bpp
           , client_info.number_of_cache
-          , ((client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) && ini.client.cache_waiting_list),
+          , ((client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) && ini.get<cfg::client::cache_waiting_list>()),
             BmpCache::CacheOption(
                 client_info.cache1_entries
               , client_info.cache1_size
@@ -168,18 +168,18 @@ private:
                 client_info.cache5_entries
               , client_info.cache5_size
               , client_info.cache5_persistent),
-            ini.debug.cache
+            ini.get<cfg::debug::cache>()
           )
         , bmp_cache_persister([&ini, verbose, this]() {
             BmpCachePersister * bmp_cache_persister = nullptr;
 
-            if (ini.client.persistent_disk_bitmap_cache &&
-                ini.client.persist_bitmap_cache_on_disk &&
+            if (ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
+                ini.get<cfg::client::persist_bitmap_cache_on_disk>() &&
                 bmp_cache.has_cache_persistent()) {
                 // Generates the name of file.
                 char cache_filename[2048];
                 ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
-                    PERSISTENT_PATH "/client", ini.globals.host.get_cstr(), this->bmp_cache.bpp);
+                    PERSISTENT_PATH "/client", ini.get<cfg::globals::host>().get_cstr(), this->bmp_cache.bpp);
                 cache_filename[sizeof(cache_filename) - 1] = '\0';
 
                 int fd = ::open(cache_filename, O_RDONLY);
@@ -216,12 +216,12 @@ private:
           , this->glyph_cache
           , this->pointer_cache
           , client_info.bitmap_cache_version
-          , ini.client.bitmap_compression
+          , ini.get<cfg::client::bitmap_compression>()
           , client_info.use_compact_packets
           , max_bitmap_size
           , fastpath_support
           , mppc_enc
-          , ini.client.rdp_compression ? client_info.rdp_compression : 0
+          , ini.get<cfg::client::rdp_compression>() ? client_info.rdp_compression : 0
           , verbose
           )
         {}
@@ -392,17 +392,17 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : FrontAPI(ini.globals.notimestamp, ini.globals.nomouse)
+    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , up_and_running(0)
     , share_id(65538)
-    , encryptionLevel(underlying_cast(ini.globals.encryptionLevel) + 1)
+    , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
     , trans(trans)
     , userid(0)
     , order_level(0)
     , ini(ini)
-    , verbose(this->ini.debug.front)
+    , verbose(this->ini.get<cfg::debug::front>())
     , font(default_font_name)
     , mod_bpp(0)
     , capture_bpp(0)
@@ -593,7 +593,7 @@ public:
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
         // Recording is enabled.
-        if (!ini.globals.movie.get()) {
+        if (!ini.get<cfg::globals::movie>()) {
             return;
         }
 
@@ -607,11 +607,11 @@ public:
         struct timeval now = tvtime();
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
-            LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
-            LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get_cstr());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.globals.target_user.get_cstr());
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>().get_cstr());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>().get_cstr());
+            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>().get_cstr());
+            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>().get_cstr());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().get_cstr());
         }
 
         char path[1024];
@@ -620,18 +620,18 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.globals.movie_path.get_cstr(), path,
+        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().get_cstr(), path,
                                         sizeof(path), basename, sizeof(basename), extension,
                                         sizeof(extension));
         if (!res) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
-        this->capture_bpp = ((ini.video.wrm_color_depth_selection_strategy == 1) ? 16 : 24);
+        this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
         this->capture = new Capture( now, width, height, this->capture_bpp, this->capture_bpp
-                                   , ini.video.record_path
-                                   , ini.video.record_tmp_path
-                                   , ini.video.hash_path, basename
+                                   , ini.get<cfg::video::record_path>()
+                                   , ini.get<cfg::video::record_tmp_path>()
+                                   , ini.get<cfg::video::hash_path>(), basename
                                    , true
                                    , false
                                    , authentifier
@@ -718,7 +718,7 @@ public:
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        if (!this->ini.client.persistent_disk_bitmap_cache || !this->ini.client.persist_bitmap_cache_on_disk)
+        if (!this->ini.get<cfg::client::persistent_disk_bitmap_cache>() || !this->ini.get<cfg::client::persist_bitmap_cache_on_disk>())
             return;
 
         const char * persistent_path = PERSISTENT_PATH "/client";
@@ -734,12 +734,12 @@ public:
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini.globals.host.get_cstr(), this->orders.bpp());
+            persistent_path, this->ini.get<cfg::globals::host>().get_cstr(), this->orders.bpp());
         filename[sizeof(filename) - 1] = '\0';
 
         char filename_temporary[2048];
         ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini.globals.host.get_cstr(), this->orders.bpp());
+            persistent_path, this->ini.get<cfg::globals::host>().get_cstr(), this->orders.bpp());
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
@@ -775,7 +775,7 @@ public:
 private:
     void reset() {
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->ini.client.bitmap_compression ? 1 : 0);
+            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->ini.get<cfg::client::bitmap_compression>() ? 1 : 0);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
         }
@@ -787,32 +787,32 @@ private:
 
         this->max_bitmap_size = 1024 * 64;
 
-        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
+        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.get<cfg::client::rdp_compression>() - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.1 Bulk compression");
             }
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
-            this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_RDP6:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_60_enc(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_60_enc(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_64K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 5.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_50_enc(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_50_enc(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_8K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_40_enc(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_40_enc(this->ini.get<cfg::debug::compression>());
             this->max_bitmap_size = 1024 * 8;
             break;
         }
@@ -946,7 +946,7 @@ public:
     //    const uint32_t log_condition = (128 | 8);
     //    ::send_share_data_ex( this->trans
     //                        , PDUTYPE2_SAVE_SESSION_INFO
-    //                        , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+    //                        , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
     //                        , this->mppc_enc
     //                        , this->share_id
     //                        , this->encryptionLevel
@@ -971,7 +971,7 @@ public:
 
             ::send_server_update( this->trans
                                 , this->server_fastpath_update_support
-                                , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                                , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
                                 , this->mppc_enc
                                 , this->share_id
                                 , this->encryptionLevel
@@ -1021,7 +1021,7 @@ public:
                 X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream stream(array, 0, 0, end - array.get_data());
 
-                X224::CR_TPDU_Recv x224(stream, this->ini.client.bogus_neg_request);
+                X224::CR_TPDU_Recv x224(stream, this->ini.get<cfg::client::bogus_neg_request>());
                 if (x224._header_size != stream.size()) {
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);
@@ -1029,9 +1029,9 @@ public:
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
                 if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-                    (!this->ini.client.tls_support || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
+                    (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
-                    && this->ini.client.tls_fallback_legacy) {
+                    && this->ini.get<cfg::client::tls_fallback_legacy>()) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
                     this->tls_client_active = false;
                 }
@@ -1065,7 +1065,7 @@ public:
                 this->trans.send(stream);
 
                 if (this->tls_client_active) {
-                    this->trans.enable_server_tls(this->ini.globals.certificate_password);
+                    this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>());
 
             // 2.2.10.2 Early User Authorization Result PDU
             // ============================================
@@ -1167,9 +1167,9 @@ public:
                         default:
                         break;
                         }
-                        if (bool(this->ini.client.max_color_depth)) {
+                        if (bool(this->ini.get<cfg::client::max_color_depth>())) {
                             this->client_info.bpp = std::min(
-                                this->client_info.bpp, static_cast<int>(this->ini.client.max_color_depth));
+                                this->client_info.bpp, static_cast<int>(this->ini.get<cfg::client::max_color_depth>()));
                         }
                     }
                     break;
@@ -1409,7 +1409,7 @@ public:
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
 
-            if (this->ini.client.bogus_user_id) {
+            if (this->ini.get<cfg::client::bogus_user_id>()) {
                 // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
                 //  when unexpected channel id is received.
                 this->userid = 32;
@@ -1646,11 +1646,11 @@ public:
 
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info( sec.payload
-                                                , ini.client.ignore_logon_password
-                                                , ini.client.performance_flags_default
-                                                , ini.client.performance_flags_force_present
-                                                , ini.client.performance_flags_force_not_present
-                                                , ini.debug.password
+                                                , ini.get<cfg::client::ignore_logon_password>()
+                                                , ini.get<cfg::client::performance_flags_default>()
+                                                , ini.get<cfg::client::performance_flags_force_present>()
+                                                , ini.get<cfg::client::performance_flags_force_not_present>()
+                                                , ini.get<cfg::debug::password>()
                                                 , (this->verbose & 128)
                                                 );
 
@@ -1661,7 +1661,7 @@ public:
 
             this->keymap.init_layout(this->client_info.keylayout);
             LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
-            this->ini.client.keyboard_layout.set(this->client_info.keylayout);
+            this->ini.get<cfg::client::keyboard_layout>().set(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2) {
                     LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
@@ -2105,7 +2105,7 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini.client.disable_tsk_switch_shortcuts.get()) {
+                                if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
@@ -2519,7 +2519,7 @@ public:
 
         ::send_server_update( this->trans
                             , this->server_fastpath_update_support
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -2626,7 +2626,7 @@ public:
         order_caps.emit(stream);
         caps_count++;
 
-        if (this->ini.client.persistent_disk_bitmap_cache) {
+        if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
             BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
             if (this->verbose) {
                 bitmap_cache_host_support_caps.log("Sending to client");
@@ -3429,7 +3429,7 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini.client.disable_tsk_switch_shortcuts.get()) {
+                                if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
@@ -3577,7 +3577,7 @@ public:
                 const uint32_t log_condition = (128 | 8);
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
-                                    , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                                    , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
                                     , this->mppc_enc
                                     , this->share_id
                                     , this->encryptionLevel
@@ -3664,9 +3664,9 @@ public:
                 this->up_and_running = 1;
                 cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
-                this->ini.context.opt_width.set(this->client_info.width);
-                this->ini.context.opt_height.set(this->client_info.height);
-                this->ini.context.opt_bpp.set(this->client_info.bpp);
+                this->ini.get<cfg::context::opt_width>().set(this->client_info.width);
+                this->ini.get<cfg::context::opt_height>().set(this->client_info.height);
+                this->ini.get<cfg::context::opt_bpp>().set(this->client_info.bpp);
 
                 if (!this->auth_info_sent) {
                     char         username_a_domain[512];
@@ -3709,7 +3709,7 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
 
-            if (this->ini.client.persistent_disk_bitmap_cache &&
+            if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
                 this->orders.bmp_cache_persister()) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
@@ -4587,7 +4587,7 @@ public:
                      , size_t size, const Bitmap & bmp) override {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
-        if (   !this->ini.globals.enable_bitmap_update
+        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
             // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
             || (bitmap_data.bits_per_pixel != this->client_info.bpp)
             || (bitmap_data.bitmap_size() > this->max_bitmap_size)

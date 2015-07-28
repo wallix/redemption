@@ -37,31 +37,35 @@
 
 #include "authid.hpp"
 
+#include "dynamic_buffer.hpp"
+
 #include "config_parse.hpp"
 
 namespace configs {
     template<class... Ts>
     struct Pack : Ts... {};
 
-    template<class Base, class Pack>
+    template<class Base, template<class> class Tpl, class Pack>
     struct PointerPackArray;
 
-    template<class Base, class... Ts>
-    struct PointerPackArray<Base, Pack<Ts...>>
+    template<class Base, template<class> class Tpl, class... Ts>
+    struct PointerPackArray<Base, Tpl, Pack<Ts...>>
+    : Tpl<Ts>...
     {
         Base * values[sizeof...(Ts)];
 
-        template<class TPack>
-        PointerPackArray(TPack & pack)
-        : values{&static_cast<Ts&>(pack)...}
+        PointerPackArray()
+        : values{&static_cast<Tpl<Ts>&>(*this)...}
         {}
 
         Base & operator[](std::size_t i) {
-            return this->values[i];
+            assert(i < sizeof...(Ts));
+            return *this->values[i];
         }
 
         Base const & operator[](std::size_t i) const {
-            return this->values[i];
+            assert(i < sizeof...(Ts));
+            return *this->values[i];
         }
     };
 
@@ -88,57 +92,94 @@ struct Inifile : ConfigurationHolder
 {
     explicit Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME)
     : variables(default_font_name)
-    , fields(this->variables)
     {
         this->initialize();
     }
 
     template<class T>
     typename T::type const & get() const noexcept {
-        static_assert(T::is_readable, "T isn't readable");
+        //static_assert(bool(T::properties() & VariableProperties::read), "T isn't readable");
         return static_cast<T const &>(this->variables).value;
     }
 
+    template<class T>
+    char const * c_str() const noexcept {
+        return ::configs::c_str(const_cast<DynamicBuffer&>(this->dynamic_buffer), this->get<T>());
+    }
+
+    // TODO authid_t authid
+    char const * get_cstr_from_key(const char * strauthid) {
+        authid_t authid = authid_from_string(strauthid);
+        if (authid != AUTHID_UNKNOWN) {
+            return this->fields[authid-1].c_str(this->variables, this->dynamic_buffer);
+        }
+        else {
+            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
+        }
+        return "";
+    }
+
+private:
+    using properties_t = configs::VariableProperties;
+
+public:
     template<class T, class U>
     void set(U && new_value) {
-        static_assert(T::is_writable, "T isn't writable");
+        static_assert(bool(T::properties() & properties_t::write), "T isn't writable");
         static_cast<T&>(this->variables).value = std::forward<U>(new_value);
-        this->insert_index<T>(std::integral_constant<bool, T::is_sendable>());
+        this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+    }
+
+    template<class T, class U>
+    void direct_set(U && new_value) {
+        static_cast<T&>(this->variables).value = std::forward<U>(new_value);
     }
 
 private:
     template<class T> void insert_index(std::false_type) {}
-    template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index); }
+    template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index()+1); }
 
     struct FieldBase
     {
-        bool asked = false;
+        bool is_asked() const { return this->asked_; }
         virtual void parse(configs::VariablesConfiguration & variables, char const * value) = 0;
+        virtual int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) = 0;
+        virtual char const * c_str(configs::VariablesConfiguration const & variables, DynamicBuffer &) = 0;
         virtual ~FieldBase() {}
+
+    private:
+        friend class Inifile;
+        bool asked_ = false;
     };
 
     template<class T>
-    struct Field final : FieldBase
+    struct Field : FieldBase
     {
-        void parse(configs::VariablesConfiguration & variables, char const * value) override {
-          ::configs::parse(static_cast<T&>(variables).value, value);
+        void parse(configs::VariablesConfiguration & variables, char const * value) final {
+            ::configs::parse(static_cast<T&>(variables).value, value);
         }
-        ~Field() final {}
+        int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) final {
+            return ::configs::copy_val(static_cast<T const &>(variables).value, buff, n);
+        }
+        char const * c_str(configs::VariablesConfiguration const & variables, DynamicBuffer & s) final {
+            return ::configs::c_str(s, static_cast<T const &>(variables).value);
+        }
+
     };
 
 public:
     template<class T>
     void ask() {
-        static_assert(T::is_sendable, "T isn't askable");
-        constexpr auto index = T::index;
+        static_assert(bool(T::properties() & properties_t::read), "T isn't askable");
+        constexpr auto index = T::index();
         this->to_send_index.insert(index);
-        const_cast<Field<T>&>(this->fields).asked = true;
+        static_cast<Field<T>&>(this->fields).asked_ = true;
     }
 
     template<class T>
-    void is_asked() const {
-        static_assert(T::is_sendable, "T isn't askable");
-        return const_cast<Field<T>const&>(this->fields).asked;
+    bool is_asked() const {
+        static_assert(bool(T::properties() & properties_t::read), "T isn't askable");
+        return static_cast<Field<T>const&>(this->fields).asked_;
     }
 
     void set_value(const char * context, const char * key, const char * value) override;
@@ -148,11 +189,12 @@ public:
     static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
     ///\brief  sets a value to corresponding field but does not mark it as changed
+    // TODO authid_t authid
     void set_from_acl(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            this->fields[authid].parse(this->variables, value);
-            this->fields[authid].asked = false;
+            this->fields[authid-1].parse(this->variables, value);
+            this->fields[authid-1].asked_ = false;
             this->new_from_acl = true;
         }
         else {
@@ -161,10 +203,11 @@ public:
     }
 
     ///\brief  sets a value to corresponding field but does not mark it as changed
+    // TODO authid_t authid
     void ask_from_acl(const char * strauthid) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            this->fields[authid].asked = true;
+            this->fields[authid-1].asked_ = true;
         }
         else {
             LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
@@ -179,13 +222,13 @@ public:
         return exchange(this->new_from_acl, false);
     }
 
-private:
-    std::set<unsigned> to_send_index;
-    configs::VariablesConfiguration variables;
-    configs::PointerPackArray<FieldBase, configs::VariablesAclPack> fields;
-    bool new_from_acl = false;
+    std::size_t changed_field_size() const {
+        return this->to_send_index.size();
+    }
 
-    void initialize();
+    void clear_send_index() {
+        this->to_send_index.clear();
+    }
 
     void parse_username(const char * username)
     {
@@ -198,32 +241,59 @@ private:
         this->ask<cfg::context::target_protocol>();
     }
 
-//     static int serialized(char * buff, std::size_t size, BaseField & bfield, uint32_t password_printing_mode)
-//     {
-//         const char * key = string_from_authid(static_cast<authid_t>(bfield.get_authid()));
-//         int n;
-//         if (bfield.is_asked()) {
-//             n = snprintf(buff, size, "%s\nASK\n",key);
-//             LOG(LOG_INFO, "sending %s=ASK", key);
-//         }
-//         else {
-//             const char * val         = bfield.get_value();
-//             const char * display_val = val;
-//             n = snprintf(buff, size, "%s\n!%s\n", key, val);
-//             if ((strncasecmp("password", key, 8) == 0)
-//                 ||(strncasecmp("target_password", key, 15) == 0)){
-//                 display_val = get_printable_password(val, password_printing_mode);
-//             }
-//             LOG(LOG_INFO, "sending %s=%s", key, display_val);
-//         }
-//         if (n < 0 || static_cast<std::size_t>(n) >= size ) {
-//             LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"
-//                 " should have write %u bytes but buffer size is %u bytes", n, size);
-//             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
-//         }
-//
-//         return n;
-//     }
+    template<class Fn>
+    void serialized(Fn writer, uint32_t password_printing_mode)
+    {
+        char buff[65536];
+        auto const size = sizeof(buff);
+
+        for (unsigned i : this->to_send_index) {
+            const char * key = string_from_authid(static_cast<authid_t>(i));
+            int n;
+            FieldBase & bfield = this->fields[i];
+            if (bfield.is_asked()) {
+                n = snprintf(buff, size, "%s\nASK\n",key);
+                LOG(LOG_INFO, "sending %s=ASK", key);
+            }
+            else {
+                n = snprintf(buff, size, "%s\n!", key);
+                auto val = buff + n;
+                int tmpn = bfield.copy_val(this->variables, buff + n, size);
+                if (tmpn >= 0) {
+                    const char * display_val = val;
+                    if ((strncasecmp("password", key, 8) == 0)
+                      ||(strncasecmp("target_password", key, 15) == 0)){
+                        display_val = get_printable_password(val, password_printing_mode);
+                    }
+                    LOG(LOG_INFO, "sending %s=%s", key, display_val);
+                    n += tmpn;
+                    if (std::size_t(n+1) < size) {
+                        buff[n] = '\n';
+                        buff[n+1] = 0;
+                        ++n;
+                    }
+                    else {
+                        n = -1;
+                    }
+                }
+                else {
+                    LOG(LOG_INFO, "Copy of %s fail", key);
+                    n = -1;
+                }
+            }
+
+            writer(buff, n, size);
+        }
+    }
+
+private:
+    std::set<unsigned> to_send_index;
+    configs::VariablesConfiguration variables;
+    configs::PointerPackArray<FieldBase, Field, configs::VariablesAclPack> fields;
+    DynamicBuffer dynamic_buffer;
+    bool new_from_acl = false;
+
+    void initialize();
 
     void check_record_config();
 };

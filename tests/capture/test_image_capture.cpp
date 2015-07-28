@@ -308,9 +308,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
     Inifile ini;
-    ini.video.rt_display.set(1);
-    ini.video.png_interval = 1;
-    ini.video.png_limit = 3;
+    ini.direct_set<cfg::video::rt_display>(1);
+    ini.direct_set<cfg::video::png_interval>(1);
+    ini.direct_set<cfg::video::png_limit>(3);
     RDPDrawable drawable(800, 600, 24);
 
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.impl());
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
-    ini.video.png_limit = 10;
+    ini.direct_set<cfg::video::png_limit>(10);
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
-    ini.video.png_limit = 2;
+    ini.direct_set<cfg::video::png_limit>(2);
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
@@ -370,7 +370,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
-    ini.video.png_limit = 0;
+    ini.direct_set<cfg::video::png_limit>(0);
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));

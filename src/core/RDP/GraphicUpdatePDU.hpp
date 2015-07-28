@@ -435,7 +435,7 @@ public:
     ~GraphicsUpdatePDU() override {}
 
     void init_orders() {
-        if (this->ini.debug.primary_orders > 3) {
+        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -444,7 +444,7 @@ public:
     }
 
     void init_bitmaps() {
-        if (this->ini.debug.primary_orders > 3) {
+        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -465,7 +465,7 @@ public:
 protected:
     void flush_orders() override {
         if (this->order_count > 0){
-            if (this->ini.debug.primary_orders > 3) {
+            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
                 LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d"
                    , this->order_count);
             }
@@ -484,7 +484,7 @@ protected:
 
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (this->ini.debug.primary_orders > 3) {
+            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
                 LOG( LOG_INFO
                    , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%d offset=%u"
                    , this->bitmap_count, this->offset_bitmap_count);

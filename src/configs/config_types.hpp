@@ -25,6 +25,7 @@
 #include "fileutils.hpp"
 #include "basefield.hpp"
 #include "underlying_cast.hpp"
+#include "dynamic_buffer.hpp"
 
 #include "config_capture_flags.hpp"
 #include "config_keyboard_log_flags.hpp"
@@ -117,6 +118,12 @@ protected:
     StaticStringBase(StaticStringBase &&);
 };
 
+
+template<std::size_t N, class Copier, bool NullableString>
+char const * c_str(DynamicBuffer&, StaticStringBase<N, Copier, NullableString> const & x) {
+    return x.c_str();
+}
+
 template<std::size_t N>
 using StaticString = StaticStringBase<N, StringCopier>;
 
@@ -182,6 +189,21 @@ struct Range {
 private:
     T x_;
 };
+
+
+
+template<std::size_t N>
+char const * c_str(DynamicBuffer& s, StaticKeyString<N> const & key) {
+    s.reserve(N*2+1);
+    s.get()[N*2] = 0;
+    copy_val(key, s.get(), s.size());
+    return s.get();
+}
+
+template<class T, T Min, T Max, T Default>
+char const * c_str(DynamicBuffer& s, Range<T, Min, Max, Default> const & x) {
+    return c_str(s, x.get());
+}
 
 
 
@@ -297,49 +319,35 @@ struct enum_option
     enum_option<Enum, T>::value
 #endif
 
-#define MK_ENUM_FIELD(Enum, ...)                      \
-    MK_ENUM_IO(Enum)                                  \
-    ENUM_OPTION(Enum, __VA_ARGS__);                   \
-    inline void parse(Enum & e, char const * cstr)  { \
-        unsigned i = 0;                               \
-        auto l = {__VA_ARGS__};                       \
-        for (auto s : l) {                            \
-            if (0 == strcmp(cstr, s)) {               \
-                e = static_cast<Enum>(i);             \
-            }                                         \
-            ++i;                                      \
-        }                                             \
-        /*e = get_valid();*/                          \
+#define MK_ENUM_FIELD(Enum, ...)                               \
+    MK_ENUM_IO(Enum)                                           \
+    ENUM_OPTION(Enum, __VA_ARGS__);                            \
+    inline void parse(Enum & e, char const * cstr)  {          \
+        unsigned i = 0;                                        \
+        auto l = {__VA_ARGS__};                                \
+        for (auto s : l) {                                     \
+            if (0 == strcmp(cstr, s)) {                        \
+                e = static_cast<Enum>(i);                      \
+            }                                                  \
+            ++i;                                               \
+        }                                                      \
+        /*e = get_valid();*/                                   \
+    }                                                          \
+    inline int copy_val(Enum e, char * buff, std::size_t n)  { \
+        char const * cstr;                                     \
+        auto l{__VA_ARGS__};                                   \
+        if (underlying_cast(e) >= underlying_cast(Enum::NB)) { \
+            cstr = *l.begin();                                 \
+        }                                                      \
+        cstr = *(l.begin() + underlying_cast(e));              \
+        return snprintf(buff, n, "%s", cstr);                  \
+    }                                                          \
+    inline char const * c_str(DynamicBuffer& s, Enum x) {      \
+        s.reserve(32);                                         \
+        s[s.size()-1] = 0;                                     \
+        copy_val(x, s.get(), s.size());                        \
+        return s.get();                                        \
     }
-//                                                                    \
-//     struct Enum##FieldTraits {                                     \
-//         static Enum get_default() { return Enum::NB; }             \
-//         static Enum get_valid() { return static_cast<Enum>(0); }   \
-//         static bool valid(Enum x)                                  \
-//         { return underlying_cast(x) < underlying_cast(Enum::NB); } \
-//         static Enum cstr_to_enum(char const * cstr)  {             \
-//             unsigned i = 0;                                        \
-//             for (auto s : {__VA_ARGS__}) {                         \
-//                 if (0 == strcmp(cstr, s)) {                        \
-//                     return static_cast<Enum>(i);                   \
-//                 }                                                  \
-//                 ++i;                                               \
-//             }                                                      \
-//             return get_valid();                                    \
-//         }                                                          \
-//         static char const * to_string(Enum x) {                    \
-//             auto l{__VA_ARGS__};                                   \
-//             if (!valid(x)) {                                       \
-//                 return *l.begin();                                 \
-//             }                                                      \
-//             return *(l.begin() + underlying_cast(x));              \
-//         }                                                          \
-//     };                                                             \
-//                                                                    \
-//     inline char const * enum_to_option(Enum e)                     \
-//     { return Enum##FieldTraits::to_string(e); }                    \
-//                                                                    \
-//     using Enum##Field = EnumField<Enum, Enum##FieldTraits>
 
 
 
@@ -358,6 +366,14 @@ inline Level level_from_cstr(char const * value) {
       : 0 == strcasecmp("high",value) ? Level::high
       : Level::low
     ;
+}
+
+inline char const * cstr_from_level(Level lvl) {
+    return lvl == Level::high
+        ? "high"
+        : lvl == Level::medium
+        ? "medium"
+        : "low";
 }
 
 struct LevelFieldTraits {
@@ -388,20 +404,13 @@ MK_ENUM_FIELD(Language, "en", "fr")
 enum class ClipboardEncodingType : unsigned { utf8, latin1, NB };
 MK_ENUM_FIELD(ClipboardEncodingType, "utf-8", "latin1")
 
-
-using KeyboardLogFlagsField = FlagsField<KeyboardLogFlags>;
-
-
 enum class ClipboardLogFlags : unsigned {
     none,
     syslog = 1 << 0,
     FULL = ((1 << 1) - 1)
 };
 MK_ENUM_FLAG_FN(ClipboardLogFlags)
-MK_PARSE_UNSIGNED_TO_ENUM_FLAGS(ClipboardLogFlags)
-
-
-using ClipboardLogFlagsField = FlagsField<ClipboardLogFlags>;
+MK_PARSER_ENUM_FLAGS(ClipboardLogFlags)
 
 
 enum class ColorDepth : unsigned {
@@ -422,6 +431,17 @@ inline ColorDepth color_depth_from_cstr(char const * value) {
         case 16: return ColorDepth::depth16;
         default:
         case 24: return ColorDepth::depth24;
+        //case 32: x = ColorDepth::depth32;
+    }
+}
+
+inline char const * cstr_from_color_depth(ColorDepth c) {
+    switch (c) {
+        case ColorDepth::depth8: return "8";
+        case ColorDepth::depth15: return "15";
+        case ColorDepth::depth16: return "16";
+        default:
+        case ColorDepth::depth24: return "24";
         //case 32: x = ColorDepth::depth32;
     }
 }

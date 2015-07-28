@@ -426,8 +426,8 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     Inifile ini;
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-    std::string hash_path      = ini.video.hash_path.c_str()  ;
-    std::string mwrm_path      = ini.video.record_path.c_str();
+    std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
+    std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
     std::string input_filename                                ;
     bool        quick_check    = false                        ;
     uint32_t    verbose        = 0                            ;

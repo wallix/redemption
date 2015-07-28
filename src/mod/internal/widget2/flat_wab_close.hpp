@@ -65,35 +65,35 @@ public:
                  const char * username, const char * target,
                  bool showtimer, Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-    , bg_color(ini.theme.global.bgcolor)
-    // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, nullptr, -10)
+    , bg_color(ini.get<cfg::theme::global>().bgcolor)
+    // , img(drawable, 0, 0, ini.get<cfg::theme::global>().logo_path, *this, nullptr, -10)
     , img(drawable, 0, 0,
-          ini.theme.global.logo ? ini.theme.global.logo_path :
+          ini.get<cfg::theme::global>().logo ? ini.get<cfg::theme::global>().logo_path :
           SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
     , username_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Username:", true, -11,
-                     ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                     ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , username_label_value(drawable, 0, 0, *this, nullptr, username, true, -11,
-                           ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                           ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , target_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Target:", true, -12,
-                   ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                   ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , target_label_value(drawable, 0, 0, *this, nullptr, target, true, -12,
-                         ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                         ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , connection_closed_label(drawable, 0, 0, *this, nullptr, TR("connection_closed", ini),
-                              true, -13, ini.theme.global.fgcolor,
-                              ini.theme.global.bgcolor, ini.font)
+                              true, -13, ini.get<cfg::theme::global>().fgcolor,
+                              ini.get<cfg::theme::global>().bgcolor, ini.font)
     , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14,
-             ini.theme.global.fgcolor, ini.theme.global.bgcolor,
-             ini.theme.global.focus_color, ini.font, 6, 2)
+             ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor,
+             ini.get<cfg::theme::global>().focus_color, ini.font, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, nullptr, "Diagnostic:", true, -15,
-                 ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                 ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , diagnostic_lines(drawable, 0, 0, *this, nullptr, diagnostic_text, true, -16,
-                       ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                       ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , timeleft_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Time left:", true, -12,
-                     ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                     ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , timeleft_value(drawable, 0, 0, *this, nullptr, nullptr, true, -12,
-                     ini.theme.global.fgcolor, ini.theme.global.bgcolor, ini.font)
+                     ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
     , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
-                ini.theme.global.separator_color)
+                ini.get<cfg::theme::global>().separator_color)
     , prev_time(0)
     , ini(ini)
     {

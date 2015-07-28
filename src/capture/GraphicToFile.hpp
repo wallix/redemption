@@ -145,7 +145,7 @@ public:
                    , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, gly_cache, ptr_cache,
                    0, 1, 1, 32 * 1024, ini)
     , RDPCaptureDevice()
-    , compression_wrapper(*trans, ini.video.wrm_compression_algorithm)
+    , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
     , buffer_stream_orders(65536)
@@ -164,9 +164,9 @@ public:
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
     //, verbose(verbose)
     {
-        if (this->ini.video.wrm_compression_algorithm != this->compression_wrapper.get_index_algorithm()) {
+        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_index_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , this->ini.video.wrm_compression_algorithm);
+               , this->ini.get<cfg::video::wrm_compression_algorithm>());
         }
 
         last_sent_timer.tv_sec = 0;

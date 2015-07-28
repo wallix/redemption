@@ -39,16 +39,24 @@
     inline E & operator |= (E & x, E y) { return x = x | y; }                                          \
     inline E & operator &= (E & x, E y) { return x = x | y; }
 
-#define MK_PARSE_UNSIGNED_TO_ENUM_FLAGS(Enum)          \
-    void parse(Enum & e, char const * cstr) {          \
-        char * end = 0;                                \
-        errno = 0;                                     \
-        auto n = std::strtoul(cstr, &end, 10);         \
-        if (!errno && end && *end                      \
-         && n < static_cast<unsigned long>(Enum::FULL) \
-        ) {                                            \
-            e = static_cast<Enum>(n);                  \
-        }                                              \
+#define MK_PARSER_ENUM_FLAGS(Enum)                                \
+    inline void parse(Enum & e, char const * cstr) {              \
+        char * end = 0;                                           \
+        errno = 0;                                                \
+        auto n = std::strtoul(cstr, &end, 10);                    \
+        if (!errno && end && *end                                 \
+         && n < static_cast<unsigned long>(Enum::FULL)            \
+        ) {                                                       \
+            e = static_cast<Enum>(n);                             \
+        }                                                         \
+    }                                                             \
+    inline int copy_val(Enum x, char * buff, std::size_t n) {     \
+        return snprintf(buff, n, "%u", static_cast<unsigned>(x)); \
+    }                                                             \
+    inline char const * c_str(DynamicBuffer& s, Enum x) {         \
+        s.reserve(32);                                            \
+        copy_val(x, s.get(), s.size());                           \
+        return s.get();                                           \
     }
 
 #endif

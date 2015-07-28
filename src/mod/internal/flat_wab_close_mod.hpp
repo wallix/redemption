@@ -41,19 +41,19 @@ private:
 
         explicit temporary_text(Inifile & ini)
         {
-            if (strcmp(ini.context.module.get_cstr(), "selector") == 0) {
+            if (strcmp(ini.get<cfg::context::module>().get_cstr(), "selector") == 0) {
                 snprintf(text, sizeof(text), "%s", TR("selector", ini));
             }
             else {
                 TODO("target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman")
-                if (::strlen(ini.globals.target_application.get_cstr())) {
+                if (::strlen(ini.get<cfg::globals::target_application>().get_cstr())) {
                     snprintf(text, sizeof(text), "%s",
-                             ini.globals.target_application.get_cstr());
+                             ini.get<cfg::globals::target_application>().get_cstr());
                 }
                 else {
                     snprintf(text, sizeof(text), "%s@%s",
-                             ini.globals.target_user.get_cstr(),
-                             ini.globals.target_device.get_cstr());
+                             ini.get<cfg::globals::target_user>().get_cstr(),
+                             ini.get<cfg::globals::target_device>().get_cstr());
                 }
             }
         }
@@ -63,18 +63,18 @@ public:
     FlatWabCloseMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
         : InternalMod(front, width, height, ini.font, &ini)
         , close_widget(*this, width, height, this->screen, this,
-                       ini.context.auth_error_message.get_cstr(), 0,
+                       ini.get<cfg::context::auth_error_message>().get_cstr(), 0,
                        (ini.context_is_asked(AUTHID_AUTH_USER)
                         || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-                       nullptr : ini.globals.auth_user.get_cstr(),
+                       nullptr : ini.get<cfg::globals::auth_user>().get_cstr(),
                        (ini.context_is_asked(AUTHID_TARGET_USER)
                         || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                        nullptr : temporary_text(ini).text,
                        showtimer, ini)
-        , timeout(now, ini.globals.close_timeout)
+        , timeout(now, ini.get<cfg::globals::close_timeout>())
         , showtimer(showtimer)
     {
-        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
+        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.get<cfg::globals::close_timeout>());
         this->front.set_mod_palette(BGRPalette::classic_332());
 
         this->screen.add_widget(&this->close_widget);

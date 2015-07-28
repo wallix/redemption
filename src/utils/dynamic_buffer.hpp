@@ -18,28 +18,36 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_CORE_CONFIGS_KEYBOARD_LOG_FLAGS_HPP
-#define REDEMPTION_SRC_CORE_CONFIGS_KEYBOARD_LOG_FLAGS_HPP
+#ifndef REDEMPTION_SRC_UTILS_DYNAMIC_BUFFER_HPP
+#define REDEMPTION_SRC_UTILS_DYNAMIC_BUFFER_HPP
 
-#include "mk_enum_def.hpp"
-
-#include <cstdlib>
-#include <cerrno>
+#include <memory>
 
 
-namespace configs {
+struct DynamicBuffer
+{
+    void reserve(std::size_t new_sz) {
+        if (new_sz > this->sz) {
+            this->buf.reset(new char[new_sz]);
+            this->sz = new_sz;
+        }
+    }
 
-enum class KeyboardLogFlags : unsigned {
-    none,
-    wrm = 1 << 0,
-    FULL = ((1 << 1) - 1)
+    char * get() const noexcept {
+        return this->buf.get();
+    }
+
+    char & operator[](std::size_t i) const noexcept {
+        return this->buf[i];
+    }
+
+    std::size_t size() const noexcept {
+        return this->sz;
+    }
+
+private:
+    std::unique_ptr<char[]> buf;
+    std::size_t sz = 0;
 };
-MK_ENUM_FLAG_FN(KeyboardLogFlags)
-
-MK_PARSER_ENUM_FLAGS(KeyboardLogFlags)
-
-}
-
-#include "mk_enum_undef.hpp"
 
 #endif

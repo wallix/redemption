@@ -198,7 +198,7 @@ static inline const char * TR(const char * key, Inifile & ini)
 
     if (!res || !*res || 0 == strcmp(res, "ASK")) {
         TRANSLATIONCONF.set_lang(
-            ini.translation.language.get() == Language::fr
+            ini.get<cfg::translation::language>() == Language::fr
           ? Translation::FR
           : Translation::EN
         );

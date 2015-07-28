@@ -212,16 +212,16 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     if (options.count("compression") > 0) {
              if (0 == strcmp(wrm_compression_algorithm.c_str(), "none"       )) {
-            ini.video.wrm_compression_algorithm = 0;
+            ini.get<cfg::video::wrm_compression_algorithm>() = 0;
         }
         else if (0 == strcmp(wrm_compression_algorithm.c_str(), "gzip"       )) {
-            ini.video.wrm_compression_algorithm = 1;
+            ini.get<cfg::video::wrm_compression_algorithm>() = 1;
         }
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"    )) {
-            ini.video.wrm_compression_algorithm = 2;
+            ini.get<cfg::video::wrm_compression_algorithm>() = 2;
         }
         else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original"  )) {
-            ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
+            ini.get<cfg::video::wrm_compression_algorithm>() = USE_ORIGINAL_COMPRESSION_ALGORITHM;
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
@@ -229,18 +229,18 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.video.wrm_compression_algorithm = USE_ORIGINAL_COMPRESSION_ALGORITHM;
+        ini.get<cfg::video::wrm_compression_algorithm>() = USE_ORIGINAL_COMPRESSION_ALGORITHM;
     }
 
     if (options.count("color-depth") > 0) {
              if (0 == strcmp(wrm_color_depth.c_str(), "16"       )) {
-            ini.video.wrm_color_depth_selection_strategy = 16;
+            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = 16;
         }
         else if (0 == strcmp(wrm_color_depth.c_str(), "24"       )) {
-            ini.video.wrm_color_depth_selection_strategy = 24;
+            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = 24;
         }
         else  if (0 == strcmp(wrm_color_depth.c_str(), "original")) {
-            ini.video.wrm_color_depth_selection_strategy = USE_ORIGINAL_COLOR_DEPTH;
+            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = USE_ORIGINAL_COLOR_DEPTH;
         }
         else {
             std::cerr << "Unknown wrm color depth\n\n";
@@ -248,26 +248,26 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.video.wrm_color_depth_selection_strategy = USE_ORIGINAL_COLOR_DEPTH;
+        ini.get<cfg::video::wrm_color_depth_selection_strategy>() = USE_ORIGINAL_COLOR_DEPTH;
     }
 
-    ini.video.png_limit      = png_limit;
-    ini.video.png_interval   = png_interval;
-    ini.video.frame_interval = wrm_frame_interval;
-    ini.video.break_interval = wrm_break_interval;
-    ini.video.capture_flags  &= ~(CaptureFlags::wrm | CaptureFlags::png);
+    ini.get<cfg::video::png_limit>()      = png_limit;
+    ini.get<cfg::video::png_interval>()   = png_interval;
+    ini.get<cfg::video::frame_interval>() = wrm_frame_interval;
+    ini.get<cfg::video::break_interval>() = wrm_break_interval;
+    ini.get<cfg::video::capture_flags>()  &= ~(CaptureFlags::wrm | CaptureFlags::png);
     if (options.count("wrm") > 0) {
-        ini.video.capture_flags |= CaptureFlags::wrm;
+        ini.get<cfg::video::capture_flags>() |= CaptureFlags::wrm;
     }
     if (options.count("png") > 0) {
-        ini.video.capture_flags |= CaptureFlags::png;
+        ini.get<cfg::video::capture_flags>() |= CaptureFlags::png;
     }
 
     if (int status = parse_format(ini, options, output_filename)) {
         return status;
     }
 
-    ini.video.rt_display.set(bool(ini.video.capture_flags & CaptureFlags::png));
+    ini.get<cfg::video::rt_display>().set(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
 
 /*
     {
@@ -278,7 +278,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
 
         if (!temp_path[0]) {
-            input_filename  = ini.video.record_path;
+            input_filename  = ini.get<cfg::video::record_path>();
             const size_t path_length = input_filename.length();
             if (path_length && (input_filename[path_length - 1] != '/')) {
                 input_filename += '/';
@@ -303,7 +303,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
             }
         }
         MakePath(input_filename, directory.c_str(), filename.c_str(), extension.c_str());
-    } (ini.video.record_path.c_str());
+    } (ini.get<cfg::video::record_path>().c_str());
     std::cout << "Input file is \"" << input_filename << "\".\n";
 
     bool infile_is_encrypted;
@@ -314,13 +314,13 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     if (options.count("encryption") > 0) {
              if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
-            ini.globals.enable_file_encryption.set(true);
+            ini.get<cfg::globals::enable_file_encryption>().set(true);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
-            ini.globals.enable_file_encryption.set(false);
+            ini.get<cfg::globals::enable_file_encryption>().set(false);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
-            ini.globals.enable_file_encryption.set(infile_is_encrypted);
+            ini.get<cfg::globals::enable_file_encryption>().set(infile_is_encrypted);
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
@@ -328,10 +328,10 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.globals.enable_file_encryption.set(infile_is_encrypted);
+        ini.get<cfg::globals::enable_file_encryption>().set(infile_is_encrypted);
     }
 
-    if (infile_is_encrypted || ini.globals.enable_file_encryption.get()) {
+    if (infile_is_encrypted || ini.get<cfg::globals::enable_file_encryption>()) {
         if (int status = init_crypto(ini.crypto)) {
             return status;
         }
@@ -434,8 +434,8 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
 
     CryptoContext cctx;
     memset(&cctx, 0, sizeof(cctx));
-    memcpy(cctx.crypto_key, ini.crypto.key0, sizeof(cctx.crypto_key));
-    memcpy(cctx.hmac_key,   ini.crypto.key1, sizeof(cctx.hmac_key  ));
+    memcpy(cctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(cctx.crypto_key));
+    memcpy(cctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(cctx.hmac_key  ));
 
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };
@@ -470,8 +470,8 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
         try {
             result = (
                 force_record
-             || bool(ini.video.capture_flags & CaptureFlags::png)
-             || ini.video.wrm_color_depth_selection_strategy != USE_ORIGINAL_COLOR_DEPTH
+             || bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
+             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
              || show_file_metadata
              || show_statistics
              || file_count > 1
@@ -497,13 +497,13 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
         if (!result && remove_input_file) {
             if (infile_is_encrypted == false) {
                 InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
-                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path.c_str()
+                remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
             }
             else {
                 CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
-                remove_file( in_wrm_trans_tmp, ini.video.hash_path, infile_path.c_str()
+                remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
             }
@@ -618,12 +618,12 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
     }
 
-    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.video.capture_groupid) != 0) {
+    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
         std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
     }
 
-    if (ini.video.wrm_compression_algorithm == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-        ini.video.wrm_compression_algorithm = player.info_compression_algorithm;
+    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+        ini.get<cfg::video::wrm_compression_algorithm>() = player.info_compression_algorithm;
     }
 
     int return_code = 0;
@@ -668,14 +668,14 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
             }
         };
 
-        if (ini.globals.enable_file_encryption.get()) {
-            run(CryptoOutMetaSequenceTransport( &cctx, outfile_path.c_str(), ini.video.hash_path, outfile_basename.c_str()
+        if (ini.get<cfg::globals::enable_file_encryption>()) {
+            run(CryptoOutMetaSequenceTransport( &cctx, outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str()
                                               , begin_record, player.info_width, player.info_height
-                                              , ini.video.capture_groupid));
+                                              , ini.get<cfg::video::capture_groupid>()));
         }
         else {
             run(OutMetaSequenceTransport( outfile_path.c_str(), outfile_basename.c_str(), begin_record
-                                        , player.info_width, player.info_height, ini.video.capture_groupid));
+                                        , player.info_width, player.info_height, ini.get<cfg::video::capture_groupid>()));
         }
     }
     catch (...) {
@@ -828,12 +828,12 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             clear_files_flv_meta_png(outfile_path, outfile_basename);
         }
 
-        if (ini.video.wrm_compression_algorithm == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-            ini.video.wrm_compression_algorithm = player.info_compression_algorithm;
+        if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+            ini.get<cfg::video::wrm_compression_algorithm>() = player.info_compression_algorithm;
         }
 
-        if (ini.video.wrm_color_depth_selection_strategy == USE_ORIGINAL_COLOR_DEPTH) {
-            ini.video.wrm_color_depth_selection_strategy = player.info_bpp;
+        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
+            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = player.info_bpp;
         }
 
         {

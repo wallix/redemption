@@ -51,10 +51,10 @@ public:
                  , GlyphCache & gly_cache, PointerCache & ptr_cache, RDPDrawable & drawable, const Inifile & ini
                  , bool externally_generated_breakpoint = false, SendInput send_input = SendInput::NO)
     : recorder( now, &trans, width, height, capture_bpp, bmp_cache, gly_cache, ptr_cache, drawable, ini, send_input
-              , ini.debug.capture)
+              , ini.get<cfg::debug::capture>())
     , nb_file(0)
     , time_to_wait(0)
-    , disable_keyboard_log_wrm(bool(ini.video.disable_keyboard_log.get() & KeyboardLogFlags::wrm))
+    , disable_keyboard_log_wrm(bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm))
     , externally_generated_breakpoint(externally_generated_breakpoint)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
@@ -75,14 +75,14 @@ public:
 
     void update_config(const Inifile & ini)
     {
-        if (ini.video.frame_interval != this->frame_interval){
+        if (ini.get<cfg::video::frame_interval>() != this->frame_interval){
             // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
-            this->frame_interval = ini.video.frame_interval;
+            this->frame_interval = ini.get<cfg::video::frame_interval>();
             this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
         }
 
-        if (ini.video.break_interval != this->break_interval){
-            this->break_interval = ini.video.break_interval; // break interval is in s, default value 1 break every 10 minutes
+        if (ini.get<cfg::video::break_interval>() != this->break_interval){
+            this->break_interval = ini.get<cfg::video::break_interval>(); // break interval is in s, default value 1 break every 10 minutes
             this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
         }
     }

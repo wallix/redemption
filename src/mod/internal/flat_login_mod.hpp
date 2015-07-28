@@ -42,19 +42,19 @@ public:
     FlatLoginMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height, ini.font, &ini)
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
-                ini.account.username[0] != 0,
+                ini.get<cfg::account::username>()[0] != 0,
                 0, nullptr, nullptr, TR("login", ini), TR("password", ini), ini)
         , ini(ini)
     {
         this->screen.add_widget(&this->login);
 
-        this->login.login_edit.set_text(this->ini.account.username);
-        this->login.password_edit.set_text(this->ini.account.password);
+        this->login.login_edit.set_text(this->ini.get<cfg::account::username>());
+        this->login.password_edit.set_text(this->ini.get<cfg::account::password>());
 
         this->screen.set_widget_focus(&this->login, Widget2::focus_reason_tabkey);
 
         this->login.set_widget_focus(&this->login.login_edit, Widget2::focus_reason_tabkey);
-        if (ini.account.username[0] != 0){
+        if (ini.get<cfg::account::username>()[0] != 0){
             this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
         }
 

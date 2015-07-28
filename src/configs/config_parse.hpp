@@ -22,6 +22,8 @@
 #define REDEMPTION_SRC_UTILS_CONFIG_TYPES_PARSE_HPP
 
 #include <type_traits>
+#include <limits>
+#include <string>
 
 #include "theme.hpp"
 #include "config_types.hpp"
@@ -29,6 +31,7 @@
 #include "parser.hpp"
 #include "defines.hpp"
 #include "fileutils.hpp"
+#include "dynamic_buffer.hpp"
 
 #include <cstdio>
 
@@ -42,7 +45,6 @@ inline void parse(std::string & x, char const * value) { x = value; }
 
 inline void parse(Level & x, char const * value) { x = level_from_cstr(value); }
 inline void parse(ColorDepth & x, char const * value) { x = color_depth_from_cstr(value); }
-inline void parse(CaptureFlags & x, char const * value) { x = static_cast<CaptureFlags>(ulong_from_cstr(value)); }
 
 template<std::size_t N, class Copier, bool NullableString>
 void parse(StaticStringBase<N, Copier, NullableString> & x, char const * value) { x = value; }
@@ -60,19 +62,8 @@ void parse(StaticKeyString<N> & key, char const * value) {
     }
 }
 
-inline void parse(BoolField & x, char const * value) { x.set_from_cstr(value); }
-inline void parse(UnsignedField & x, char const * value) { x.set_from_cstr(value); }
-inline void parse(SignedField & x, char const * value) { x.set_from_cstr(value); }
-inline void parse(StringField & x, char const * value) { x.set_from_cstr(value); }
-
 template<class T, T Min, T Max, T Default>
 void parse(Range<T, Min, Max, Default> & x, char const * value) { x = long_from_cstr(value); }
-
-template<class Enum>
-void parse(FlagsField<Enum> & x, char const * value) { x.set_from_cstr(value); }
-
-template<class Enum, class Traits>
-void parse(EnumField<Enum, Traits> & x, char const * value) { x.set_from_cstr(value); }
 
 inline void parse(Theme & theme, char const * value) {
     if (value && *value) {
@@ -97,6 +88,110 @@ inline void parse(Theme & theme, char const * value) {
             theme.set_logo_path(logo_path);
         }
     }
+}
+
+
+inline int copy_val(unsigned x, char * buff, std::size_t n) { return snprintf(buff, n, "%u", x); }
+inline int copy_val(int x, char * buff, std::size_t n) { return snprintf(buff, n, "%d", x); }
+inline int copy_val(bool x, char * buff, std::size_t n) {
+    if (n > 1) {
+        *buff++ = x ? '1' :'0';
+        return 1;
+    }
+    return -1;
+}
+
+inline int copy_val(std::string const & x, char * buff, std::size_t n) {
+    if (x.size() < n) {
+        memcpy(buff, x.data(), x.size());
+    }
+    return int(x.size());
+}
+
+inline int copy_val(Level x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%s", cstr_from_level(x));
+}
+inline int copy_val(ColorDepth x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%s", cstr_from_color_depth(x));
+}
+
+template<std::size_t N, class Copier, bool NullableString>
+int copy_val(StaticStringBase<N, Copier, NullableString> const & x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%s", x.c_str());
+}
+
+template<std::size_t N>
+int copy_val(StaticKeyString<N> const & key, char * buff, std::size_t n) {
+    if (N * 2 < n) {
+        auto first = key.c_str();
+        auto last = key.c_str() + sizeof(key);
+        for (; first != last; ++buff, ++first) {
+            auto x = unsigned(*first) & 0xf;
+            *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
+            ++buff;
+            *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
+        }
+    }
+    return int(N*2);
+}
+
+template<int Min, int Max, int Default>
+int copy_val(Range<int, Min, Max, Default> const & x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%d", int(x));
+}
+
+template<unsigned Min, unsigned Max, unsigned Default>
+int copy_val(Range<unsigned, Min, Max, Default> const & x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%u", unsigned(x));
+}
+
+inline int copy_val(Theme const & , char * , std::size_t ) {
+    assert(false);
+    return 0;
+}
+
+inline char const * c_str(DynamicBuffer& s, unsigned x) {
+    s.reserve(std::numeric_limits<unsigned>::digits10 + 2);
+    snprintf(s.get(), s.size(), "%u", x);
+    return s.get();
+}
+
+inline char const * c_str(DynamicBuffer& s, int x) {
+    s.reserve(std::numeric_limits<unsigned>::digits10 + 2);
+    snprintf(s.get(), s.size(), "%d", x);
+    return s.get();
+}
+
+inline char const * c_str(DynamicBuffer& s, bool x) {
+    s.reserve(32);
+    s[0] = x ? '1' : '0';
+    s[1] = 0;
+    return s.get();
+}
+
+inline char const * c_str(DynamicBuffer&, std::string const & x) {
+    return x.c_str();
+}
+
+inline char const * c_str(DynamicBuffer& s, Level x) {
+    auto cstr = cstr_from_level(x);
+    s.reserve(32);
+    s[s.size()-1] = 0;
+    strncpy(s.get(), cstr, s.size()-1);
+    return s.get();
+}
+
+inline char const * c_str(DynamicBuffer& s, ColorDepth x, char const * value) {
+    auto cstr = cstr_from_color_depth(x);
+    s.reserve(32);
+    s[s.size()-1] = 0;
+    strncpy(s.get(), cstr, s.size()-1);
+    return s.get();
+}
+
+inline char const * c_str(DynamicBuffer& s, Theme const & theme) {
+    assert(false);
+    return "";
 }
 
 }

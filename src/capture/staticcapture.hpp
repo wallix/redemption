@@ -90,18 +90,18 @@ private:
 
 public:
     void update_config(const Inifile & ini){
-        if (ini.video.png_limit < this->conf.png_limit) {
-            this->unlink_filegen(ini.video.png_limit);
+        if (ini.get<cfg::video::png_limit>() < this->conf.png_limit) {
+            this->unlink_filegen(ini.get<cfg::video::png_limit>());
         }
-        this->conf.png_limit = ini.video.png_limit;
+        this->conf.png_limit = ini.get<cfg::video::png_limit>();
 
-        if (ini.video.png_interval != this->conf.png_interval) {
+        if (ini.get<cfg::video::png_interval>() != this->conf.png_interval) {
             // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
-            this->conf.png_interval = ini.video.png_interval;
+            this->conf.png_interval = ini.get<cfg::video::png_interval>();
             this->inter_frame_interval_static_capture = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         }
         uint32_t displayed = this->rt_display;
-        this->rt_display = ini.video.rt_display.get();
+        this->rt_display = ini.get<cfg::video::rt_display>();
         if (displayed && (this->rt_display == 0)) {
             this->unlink_filegen(0);
         }

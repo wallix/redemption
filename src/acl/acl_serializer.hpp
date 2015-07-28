@@ -90,7 +90,7 @@ public:
 
                 if ((0 == strncasecmp(value, "ask", 3))) {
                     this->ini->ask_from_acl(keyword);
-                    LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
+                    LOG(LOG_INFO, "receiving ASK '%s'", keyword);
                 }
                 else {
                     // BASE64 TRY
@@ -102,13 +102,13 @@ public:
                     // this->ini->set_from_acl((char *)keyword,
                     //                         (char *)output);
                     this->ini->set_from_acl(keyword, value + (value[0] == '!' ? 1 : 0));
-                    const char * val         = this->ini->context_get_value_by_string(keyword);
+                    const char * val         = this->ini->get_cstr_from_key(keyword);
                     const char * display_val = val;
                     if ((strncasecmp("password", keyword, 9 ) == 0) ||
                         (strncasecmp("target_application_password", keyword, 27) == 0) ||
                         (strncasecmp("target_password", keyword, 16) == 0) ||
                         ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != nullptr))) {
-                        display_val = ::get_printable_password(val, this->ini->debug.password);
+                        display_val = ::get_printable_password(val, this->ini->get<cfg::debug::password>());
                     }
                     LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
                 }
@@ -142,63 +142,54 @@ public:
         if (this->verbose & 0x40){
             LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
         }
-        bool flag = this->ini->context.session_id.get().empty();
+        bool flag = this->ini->get<cfg::context::session_id>().empty();
         this->in_items(stream);
-        if (flag && !this->ini->context.session_id.get().empty()) {
+        if (flag && !this->ini->get<cfg::context::session_id>().empty()) {
             int child_pid = getpid();
             char old_session_file[256];
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
             sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                    this->ini->context.session_id.get_cstr());
+                    this->ini->c_str<cfg::context::session_id>());
             rename(old_session_file, new_session_file);
         }
         if (this->verbose & 0x40){
-            LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.get_cstr());
-        }
-    }
-
-    void out_item_new(Stream & stream, Inifile::BaseField * bfield)
-    {
-        char buff[65536];
-        int const n = this->ini->serialized(buff, sizeof(buff), *bfield, this->ini->debug.password);
-        bfield->use();
-        stream.out_copy_bytes(buff, n);
-    }
-
-    //void send_new(std::set<Inifile::BaseField *>& list)
-    void send(Inifile::SetField const & list)
-    {
-        try {
-            BStream stream(8192);
-            stream.out_uint32_be(0);
-
-            Inifile::SetField(list).foreach([&stream, this](Inifile::BaseField * bfield) {
-                this->out_item_new(stream, bfield);
-            });
-
-            stream.mark_end();
-            int total_length = stream.get_offset();
-            if (this->verbose & 0x40){
-                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
-            }
-            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
-            this->auth_trans.send(stream.get_data(), total_length);
-        } catch (Error const &) {
-            this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr(TR("acl_fail", *(this->ini)));
-            // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+            LOG(LOG_INFO, "SESSION_ID = %s", this->ini->c_str<cfg::context::session_id>());
         }
     }
 
     void send_acl_data() {
-        const Inifile::SetField & list = this->ini->get_changed_set();
         if (this->verbose & 0x01){
-            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u",list.size());
+            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u", this->ini->changed_field_size());
         }
-        if (!list.empty())
-            this->send(list);
-        this->ini->reset();
+        if (this->ini->changed_field_size()) {
+            try {
+                StaticFixedSizeStream<AUTOSIZE> stream;
+                stream.out_uint32_be(0);
+
+                this->ini->serialized([&](char const * buff, int n, std::size_t size) {
+                    if (n < 0 || static_cast<std::size_t>(n) >= size || stream.in_remain() < size_t(n)) {
+                        LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"
+                            " should have write %d bytes but buffer size is %u bytes", n, size);
+                        throw Error(ERR_ACL_MESSAGE_TOO_BIG);
+                    }
+                    stream.out_copy_bytes(buff, n);
+                }, this->ini->get<cfg::debug::password>());
+
+                stream.mark_end();
+                int total_length = stream.get_offset();
+                if (this->verbose & 0x40){
+                    LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+                }
+                stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+                this->auth_trans.send(stream.get_data(), total_length);
+            } catch (Error const &) {
+                this->ini->direct_set<cfg::context::authenticated>(false);
+                this->ini->direct_set<cfg::context::rejected>(TR("acl_fail", *(this->ini)));
+                // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+            }
+        }
+        this->ini->clear_send_index();
     }
 };
 

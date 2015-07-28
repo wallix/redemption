@@ -42,7 +42,7 @@ public:
     : InternalMod(front, width, height, ini.font, &ini)
     , drawing_policy(*this, ini.font)
     , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0,
-          ini.theme.global.fgcolor, ini.theme.global.bgcolor)
+          ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor)
     , wedit_on_first_tab(nullptr)
     , wbutton_on_first_tab(nullptr) {
         this->screen.add_widget(&this->tab);

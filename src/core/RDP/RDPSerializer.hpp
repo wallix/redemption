@@ -253,7 +253,7 @@ public:
         // To support 64x64 32-bit bitmap.
         size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(MAX_ORDERS_SIZE));
         size_t used_size = this->stream_orders.get_offset();
-        if (this->ini.debug.primary_orders > 3) {
+        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
                , "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u"
                , this
@@ -289,7 +289,7 @@ public:
         this->common = newcommon;
         this->opaquerect = cmd;
 
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect done");
@@ -301,7 +301,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -312,7 +312,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -323,7 +323,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->multidstblt);
         this->common      = newcommon;
         this->multidstblt = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -334,7 +334,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->multiopaquerect);
         this->common          = newcommon;
         this->multiopaquerect = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -345,7 +345,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->multipatblt);
         this->common      = newcommon;
         this->multipatblt = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -356,7 +356,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->multiscrblt);
         this->common      = newcommon;
         this->multiscrblt = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -368,7 +368,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->patblt);
         this->common = newcommon;
         this->patblt = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -385,12 +385,12 @@ protected:
         }
         RDPBmpCache cmd_cache(bmp, cache_id, cache_idx,
             this->bmp_cache.is_cache_persistent(cache_id), in_wait_list,
-            this->ini.debug.secondary_orders);
+            this->ini.get<cfg::debug::secondary_orders>());
         this->reserve_order(cmd_cache.bmp.bmp_size() + 16);
         cmd_cache.emit( this->bpp, this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
                       , this->op2);
 
-        if (this->ini.debug.secondary_orders) {
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
             cmd_cache.log(LOG_INFO);
         }
     }
@@ -405,7 +405,7 @@ protected:
         this->reserve_order(cmd.total_order_size());
         cmd.emit(this->stream_orders);
 
-        if (this->ini.debug.secondary_orders) {
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
             cmd.log(LOG_INFO);
         }
     }
@@ -446,7 +446,7 @@ public:
         newcmd.emit(this->stream_orders, newcommon, this->common, this_memblt);
         this->common = newcommon;
         this_memblt = newcmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             newcmd.log(LOG_INFO, common.clip);
         }
     }
@@ -466,7 +466,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -510,7 +510,7 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    if (this->ini.debug.primary_orders & 0x80) {
+                    if (this->ini.get<cfg::debug::primary_orders>() & 0x80) {
                         LOG(LOG_INFO,
                             "RDPSerializer::draw(RDPGlyphIndex, ...): "
                                 "Experimental support of "
@@ -530,7 +530,7 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    if (this->ini.debug.primary_orders & 0x80) {
+                    if (this->ini.get<cfg::debug::primary_orders>() & 0x80) {
                         LOG(LOG_INFO,
                             "RDPSerializer::draw(RDPGlyphIndex, ...): "
                                 "Experimental support of "
@@ -542,7 +542,7 @@ public:
                     }
                 }
 
-                if (this->ini.debug.primary_orders & 0x80) {
+                if (this->ini.get<cfg::debug::primary_orders>() & 0x80) {
                     LOG(LOG_INFO,
                         "RDPSerializer::draw(RDPGlyphIndex, ...): "
                             "Experimental support of USE (0xFE) operation byte in "
@@ -557,7 +557,7 @@ public:
                 const uint8_t fragment_index = new_cmd.data[i++];
                 const uint8_t fragment_size  = new_cmd.data[i++];
 
-                if (this->ini.debug.primary_orders & 0x80) {
+                if (this->ini.get<cfg::debug::primary_orders>() & 0x80) {
                     LOG(LOG_INFO,
                         "RDPSerializer::draw(RDPGlyphIndex, ...): "
                             "Experimental support of ADD (0xFF) operation byte in "
@@ -575,7 +575,7 @@ public:
         new_cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
         this->common = newcommon;
         this->glyphindex = new_cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             new_cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -612,7 +612,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->polyline);
         this->common   = newcommon;
         this->polyline = cmd;
-        if (this->ini.debug.primary_orders) {
+        if (this->ini.get<cfg::debug::primary_orders>()) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -636,7 +636,7 @@ public:
     void draw(const RDP::FrameMarker & order) override {
         this->reserve_order(5);
         order.emit(this->stream_orders);
-        if (this->ini.debug.secondary_orders) {
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
             order.log(LOG_INFO);
         }
     }
@@ -644,7 +644,7 @@ public:
     void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (this->ini.debug.secondary_orders) {
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
             order.log(LOG_INFO);
         }
     }
@@ -652,7 +652,7 @@ public:
     void draw(const RDP::RAIL::WindowIcon & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (this->ini.debug.secondary_orders) {
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
             order.log(LOG_INFO);
         }
     }
@@ -660,7 +660,7 @@ public:
     void draw(const RDP::RAIL::CachedIcon & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (this->ini.debug.secondary_orders) {
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
             order.log(LOG_INFO);
         }
     }
@@ -668,7 +668,7 @@ public:
     void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (this->ini.debug.secondary_orders) {
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
             order.log(LOG_INFO);
         }
     }
@@ -679,7 +679,7 @@ public:
         size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), this->max_bitmap_size + 300u);
         TODO("QuickFix, should set a max packet size according to RDP compression version of client, proxy and server");
         size_t used_size       = this->stream_bitmaps.get_offset();
-        if (this->ini.debug.primary_orders > 3) {
+        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
                , "<Serializer %p> RDPSerializer::reserve_bitmap[%u](%u) used=%u free=%u"
                , this
@@ -713,7 +713,7 @@ public:
 
         bitmap_data.emit(this->stream_bitmaps);
         this->stream_bitmaps.out_copy_bytes(data, size);
-        if (this->ini.debug.bitmap_update) {
+        if (this->ini.get<cfg::debug::bitmap_update>()) {
             bitmap_data.log(LOG_INFO, "RDPSerializer");
         }
     }

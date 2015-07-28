@@ -43,9 +43,10 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     std::ostringstream out_body_parser_;
 
     std::map<std::string, std::string> sections_parser;
-    std::map<std::string, std::string> authids;
+    std::vector<std::pair<std::string, std::string>> authids;
     std::vector<std::string> variables;
     std::vector<std::string> variables_acl;
+    unsigned index_authid = 0;
 
     void do_tab() {
         this->out() << std::setw(this->depth*4+4) << " ";
@@ -68,7 +69,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         std::string varname = get_name(pack);
         auto const properties = this->default_or_get<PropertyFieldFlags>(PropertyFieldFlags::none, pack);
         auto varname_with_section = this->section_name.empty() ? varname : this->section_name + "::" + varname;
-        if (PropertyFieldFlags::none == properties) {
+        if (bool(/*PropertyFieldFlags::read & */properties)) {
             this->variables_acl.emplace_back(varname_with_section);
         }
         this->variables.emplace_back(varname_with_section);
@@ -78,20 +79,20 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         this->write_if_convertible(pack, type_<todo>{});
         this->write_if_convertible(pack, type_<info>{});
         this->write_if_convertible(pack, type_<desc>{});
-        if (bool(PropertyFieldFlags::write & properties)) {
+        if (bool(properties)) {
             this->tab();
             this->out() << "// AUTHID_";
             auto str = this->get_def_authid(pack, varname);
             for (auto & c : str) {
-                this->out() << char(std::toupper(c));
+                c = char(std::toupper(c));
             }
-            this->out() << "\n";
-            this->authids.emplace(str, this->get_str_authid(pack, varname));
+            this->out() << str << "\n";
+            this->authids.emplace_back(str, this->get_str_authid(pack, varname));
         }
         this->tab();
         this->out() << "struct " << varname << " {\n";
         this->tab();
-        this->out() << "    static constexpr ::configs::VariableProperties properties = ";
+        this->out() << "    static constexpr ::configs::VariableProperties properties() { return ";
         if (PropertyFieldFlags::none == properties) {
             this->out() << "::configs::VariableProperties::none";
         }
@@ -104,7 +105,11 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         if ((PropertyFieldFlags::read | PropertyFieldFlags::write) == properties) {
             this->out() << "::configs::VariableProperties::read | ::configs::VariableProperties::write";
         }
-        this->out() << ";\n";
+        this->out() << "; }\n";
+        if (bool(properties)) {
+            this->tab();
+            this->out() << "    static constexpr unsigned index() { return " << this->index_authid++ << "; }\n";
+        }
         this->tab();
         this->out() << "    using type = ";
         this->inherit().write_type(pack);
@@ -286,9 +291,10 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
       "    AUTHID_UNKNOWN = 0,\n"
     ;
     for (auto & body : writer.authids) {
-        out_authid <<
-          "    AUTHID_" << body.first << ",\n"
-          "#define STRAUTHID_" << body.first << " \"" << body.second << "\"\n"
+        out_authid
+          << "    AUTHID_" << body.first << ",\n"
+             "#define STRAUTHID_" << body.first
+          << " \"" << body.second << "\"\n"
         ;
     }
     out_authid <<
@@ -297,7 +303,7 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
       "constexpr char const * const authstr[] = {\n"
     ;
     for (auto & body : writer.authids) {
-        out_authid << "    STRAUTHID_" << body.first << ", // AUTHID_" << body.first << "\n";
+        out_authid << "    STRAUTHID_" << body.first << ",\n";
     }
     out_authid << "};\n\n";
 }
@@ -318,7 +324,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
             out_varconf <<
                 "    namespace " << body.first << " {\n" <<
                          body.second <<
-                "    };\n\n"
+                "    }\n\n"
             ;
         }
     }
