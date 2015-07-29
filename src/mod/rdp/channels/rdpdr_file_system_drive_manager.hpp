@@ -33,6 +33,7 @@
 #include "RDP/channels/rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
+#include "in_file_transport.hpp"
 #include "make_unique.hpp"
 #include "SMB2/MessageSyntax.hpp"
 #include "virtual_channel_data_sender.hpp"

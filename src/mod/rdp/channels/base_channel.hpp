@@ -24,6 +24,9 @@
 #include "asynchronous_task_manager.hpp"
 #include "virtual_channel_data_sender.hpp"
 
+#define MODRDP_LOGLEVEL_RDPDR      0x00000001
+#define MODRDP_LOGLEVEL_RDPDR_DUMP 0x80000000
+
 typedef int_fast32_t data_size_type;
 
 class BaseVirtualChannel
@@ -88,6 +91,20 @@ protected:
     {
         if (this->to_client_sender)
         {
+            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+                LOG(LOG_INFO, "Sending on channel (-1) n bytes");
+                const uint32_t dest = 0;    // Client
+                hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+                    sizeof(dest));
+                hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
+                    sizeof(total_length));
+                hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
+                hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
+                    sizeof(chunk_data_length));
+                hexdump_c(chunk_data, chunk_data_length);
+                LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
+            }
+
             (*this->to_client_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }
@@ -98,6 +115,20 @@ protected:
     {
         if (this->to_server_sender)
         {
+            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+                LOG(LOG_INFO, "Sending on channel (-1) n bytes");
+                const uint32_t dest = 1;    // Server
+                hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+                    sizeof(dest));
+                hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
+                    sizeof(total_length));
+                hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
+                hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
+                    sizeof(chunk_data_length));
+                hexdump_c(chunk_data, chunk_data_length);
+                LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
+            }
+
             (*this->to_server_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }

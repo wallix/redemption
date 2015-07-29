@@ -25,8 +25,6 @@
 #include "base_channel.hpp"
 #include "rdpdr_file_system_drive_manager.hpp"
 
-#define MODRDP_LOGLEVEL_RDPDR 1
-
 class FileSystemVirtualChannel : public BaseVirtualChannel
 {
 public:
@@ -50,6 +48,7 @@ private:
     const char* const param_client_name;
     const bool        param_file_system_read_authorized;
     const bool        param_file_system_write_authorized;
+    const uint32_t    param_random_number;                  // For ClientId.
 
     bool proxy_managed_drives_announced = false;
 
@@ -362,6 +361,8 @@ public:
         bool print_authorized;
         bool serial_port_authorized;
         bool smart_card_authorized;
+
+        uint32_t random_number;
     };
 
     FileSystemVirtualChannel(
@@ -377,6 +378,7 @@ public:
     , param_client_name(params.client_name)
     , param_file_system_read_authorized(params.file_system_read_authorized)
     , param_file_system_write_authorized(params.file_system_write_authorized)
+    , param_random_number(params.random_number)
     , client_device_list_announce_request_processor(
           to_client_sender_,
           to_server_sender_,
@@ -717,6 +719,20 @@ public:
                 total_length, flags, chunk_data_length);
         }
 
+        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
+            const uint32_t dest = 0;    // Client
+            hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+                sizeof(dest));
+            hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
+                sizeof(total_length));
+            hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
+            hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
+                sizeof(chunk_data_length));
+            hexdump_c(chunk_data, chunk_data_length);
+            LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
+        }
+
         ReadOnlyStream chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -867,7 +883,8 @@ public:
                 // [MS-RDPEFS] - 3.2.5.1.3 Sending a Client Announce
                 //     Reply Message.
                 ((server_announce_request.VersionMinor() >= 12) ?
-                 ::getpid() : server_announce_request.ClientId()));
+                 this->param_random_number :
+                 server_announce_request.ClientId()));
             if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_server_announce_request:");
@@ -1269,6 +1286,20 @@ public:
                 "FileSystemVirtualChannel::process_server_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
+        }
+
+        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
+            const uint32_t dest = 1;    // Server
+            hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+                sizeof(dest));
+            hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
+                sizeof(total_length));
+            hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
+            hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
+                sizeof(chunk_data_length));
+            hexdump_c(chunk_data, chunk_data_length);
+            LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
         }
 
         ReadOnlyStream chunk(chunk_data, chunk_data_length);

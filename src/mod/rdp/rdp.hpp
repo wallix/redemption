@@ -114,8 +114,8 @@ protected:
         : front(front)
         , channel(channel) {}
 
-        virtual void operator()(size_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, size_t chunk_data_length)
+        virtual void operator()(uint32_t total_length, uint32_t flags,
+            const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override
         {
             this->front.send_to_channel(this->channel,
@@ -144,9 +144,9 @@ protected:
         , user_id(user_id)
         , channel_id(channel_id) {}
 
-        virtual void operator()(size_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, size_t chunk_data_length)
-                    override {
+        virtual void operator()(uint32_t total_length, uint32_t flags,
+            const uint8_t* chunk_data, uint32_t chunk_data_length)
+                override {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server(this->transport,
@@ -780,6 +780,8 @@ protected:
         file_system_virtual_channel_params.smart_card_authorized           =
             this->authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_SMARTCARD);
+        file_system_virtual_channel_params.random_number                   =
+            ::getpid();
 
         return file_system_virtual_channel_params;
     }
