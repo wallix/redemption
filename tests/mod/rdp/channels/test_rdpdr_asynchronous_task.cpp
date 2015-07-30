@@ -41,8 +41,8 @@ class TestToServerSender : public VirtualChannelDataSender {
 public:
     TestToServerSender(Transport & transport) : transport(transport) {}
 
-    virtual void operator() (size_t total_length, uint32_t flags,
-        const uint8_t * chunk_data, size_t chunk_data_length) override {
+    virtual void operator() (uint32_t total_length, uint32_t flags,
+        const uint8_t * chunk_data, uint32_t chunk_data_length) override {
         LOG(LOG_INFO, "total_length=%u flags=0x%X chunk_data=<%p> chunk_data_length=%u",
             static_cast<uint32_t>(total_length), flags,
             chunk_data, static_cast<uint32_t>(chunk_data_length));

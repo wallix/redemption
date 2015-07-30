@@ -241,7 +241,9 @@ namespace CHANNELS {
     //  Virtual Channel Capability Set (section 2.2.7.1.10).
 
     enum {
-          CHANNEL_CHUNK_LENGTH = 1600
+          CHANNEL_CHUNK_LENGTH = 1600,
+
+          MAX_CHANNEL_CHUNK_LENGTH = 16256
     };
 
     // [MS-RDPBCGR] 2.2.6.1.1 Channel PDU Header (CHANNEL_PDU_HEADER)

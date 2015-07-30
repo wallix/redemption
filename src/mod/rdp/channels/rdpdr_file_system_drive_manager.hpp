@@ -33,6 +33,7 @@
 #include "RDP/channels/rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
+#include "in_file_transport.hpp"
 #include "make_unique.hpp"
 #include "SMB2/MessageSyntax.hpp"
 #include "virtual_channel_data_sender.hpp"
@@ -1553,42 +1554,70 @@ class FileSystemDriveManager {
     uint32_t wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
 
 public:
-    uint32_t AnnounceDrivePartially(Stream & client_device_list_announce,
-            bool device_capability_version_02_supported, uint32_t verbose) {
-        uint32_t announced_drive_count = 0;
+    void AnnounceDrive(bool device_capability_version_02_supported,
+            VirtualChannelDataSender& to_server_sender, uint32_t verbose) {
+        uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+        WriteOnlyStream virtual_channel_stream(virtual_channel_data,
+                                               sizeof(virtual_channel_data));
 
-        for (managed_drive_collection_type::iterator iter = this->managed_drives.begin();
+        for (managed_drive_collection_type::iterator iter =
+                 this->managed_drives.begin();
              iter != this->managed_drives.end(); ++iter) {
-            rdpdr::DeviceAnnounceHeader device_announce_header(rdpdr::RDPDR_DTYP_FILESYSTEM,
-                                                               std::get<0>(*iter),
-                                                               std::get<1>(*iter).c_str(),
-                                                               reinterpret_cast<uint8_t const *>(
-                                                                   std::get<1>(*iter).c_str()),
-                                                               std::get<1>(*iter).length() + 1
-                                                              );
+
+            rdpdr::SharedHeader client_message_header(
+                rdpdr::Component::RDPDR_CTYP_CORE,
+                rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
+
+            client_message_header.emit(virtual_channel_stream);
+
+            virtual_channel_stream.out_uint32_le(
+                 1  // DeviceCount(4)
+                );
+
+            rdpdr::DeviceAnnounceHeader device_announce_header(
+                    rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
+                    std::get<0>(*iter),             // DeviceId
+                    std::get<1>(*iter).c_str(),     // PreferredDosName
+//                    nullptr,
+//                    0
+                    reinterpret_cast<uint8_t const *>(
+                        std::get<1>(*iter).c_str()),
+                    std::get<1>(*iter).length() + 1
+                );
 
             if (verbose) {
-                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrivePartially");
+                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrive");
                 device_announce_header.log(LOG_INFO);
             }
 
-            if (client_device_list_announce.has_room(device_announce_header.size())) {
-                device_announce_header.emit(client_device_list_announce);
+            device_announce_header.emit(virtual_channel_stream);
 
-                announced_drive_count++;
+            virtual_channel_stream.mark_end();
+
+            if (verbose & 0x80000000) {
+                LOG(LOG_INFO, "Sending on channel (-1) n bytes");
+                const uint32_t dest = 1;    // Server
+                hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+                    sizeof(dest));
+                const uint32_t total_length = virtual_channel_stream.size();
+                hexdump_c(reinterpret_cast<const uint8_t*>(&total_length),
+                    sizeof(total_length));
+                const uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+                hexdump_c(reinterpret_cast<const uint8_t*>(&flags), sizeof(flags));
+                const uint32_t chunk_data_length = virtual_channel_stream.size();
+                hexdump_c(reinterpret_cast<const uint8_t*>(&chunk_data_length),
+                    sizeof(chunk_data_length));
+                hexdump_c(virtual_channel_data, chunk_data_length);
+                LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
             }
-            else {
-                LOG(LOG_ERR,
-                    "FileSystemDriveManager::AnnounceDrivePartially: "
-                        "Too much data for Announce Driver buffer! "
-                        "length=%u limite=%u",
-                    client_device_list_announce.get_offset() + device_announce_header.size(),
-                    client_device_list_announce.get_capacity());
-                throw Error(ERR_RDP_PROTOCOL);
-            }
+
+            to_server_sender(virtual_channel_stream.size(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                virtual_channel_data,
+                virtual_channel_stream.size());
+
+            virtual_channel_stream.rewind();
         }
-
-        return announced_drive_count;
     }
 
 private:

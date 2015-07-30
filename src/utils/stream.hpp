@@ -1684,4 +1684,7 @@ public:
     virtual void init(size_t) {}
 };
 
+typedef StaticStream ReadOnlyStream;
+typedef FixedSizeStream WriteOnlyStream;
+
 #endif
