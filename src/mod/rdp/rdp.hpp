@@ -174,7 +174,7 @@ public:
             this->file_system_to_client_sender =
                 this->create_to_client_sender(channel_names::rdpdr);
             this->file_system_to_server_sender =
-                std::move(this->create_to_server_sender(channel_names::rdpdr));
+                this->create_to_server_sender(channel_names::rdpdr);
 
             this->file_system_virtual_channel =
                 std::make_unique<FileSystemVirtualChannel>(

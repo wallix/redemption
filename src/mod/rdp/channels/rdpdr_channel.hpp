@@ -247,11 +247,12 @@ private:
                             this->chunked_virtual_channel_data,
                             this->chunked_virtual_channel_stream.size());
 
-                        this->chunked_virtual_channel_stream.rewind();
+                        this->chunked_virtual_channel_stream.reset();
                     }
                 }   // if (!this->length_of_remaining_device_data_to_be_processed &&
 
-                if (this->length_of_remaining_device_data_to_be_processed) {
+                if (this->chunked_virtual_channel_stream.get_offset() ||
+                    this->length_of_remaining_device_data_to_be_processed) {
                     uint32_t length_of_device_data_can_be_processed =
                         std::min<uint32_t>(
                             std::min<uint32_t>(
@@ -290,7 +291,9 @@ private:
                         this->channel_control_flags &=
                             ~CHANNELS::CHANNEL_FLAG_FIRST;
 
-                        this->chunked_virtual_channel_stream.rewind();
+                        this->chunked_virtual_channel_stream.reset();
+
+                        this->total_virtual_channel_data_length = 0;
                     }
                 }
                 else if (this->length_of_remaining_device_data_to_be_skipped) {
@@ -326,12 +329,12 @@ private:
 
                     REDASSERT(this->to_server_sender);
 
-                    (*this->to_server_sender)(
-                        this->chunked_virtual_channel_stream.size(),
-                        CHANNELS::CHANNEL_FLAG_FIRST |
-                            CHANNELS::CHANNEL_FLAG_LAST,
-                        this->chunked_virtual_channel_data,
-                        this->chunked_virtual_channel_stream.size());
+//                    (*this->to_server_sender)(
+//                        this->chunked_virtual_channel_stream.size(),
+//                        CHANNELS::CHANNEL_FLAG_FIRST |
+//                            CHANNELS::CHANNEL_FLAG_LAST,
+//                        this->chunked_virtual_channel_data,
+//                        this->chunked_virtual_channel_stream.size());
 
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
@@ -340,7 +343,7 @@ private:
                                 "DeviceCount=0");
                     }
 
-                    this->chunked_virtual_channel_stream.rewind();
+                    this->chunked_virtual_channel_stream.reset();
                 }
                 else {
                     this->has_device_announced = false;

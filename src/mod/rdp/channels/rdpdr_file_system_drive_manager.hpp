@@ -1578,19 +1578,38 @@ public:
                     rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
                     std::get<0>(*iter),             // DeviceId
                     std::get<1>(*iter).c_str(),     // PreferredDosName
-                   reinterpret_cast<uint8_t const *>(
-                       std::get<1>(*iter).c_str()),
-                   std::get<1>(*iter).length() + 1
+//                    nullptr,
+//                    0
+                    reinterpret_cast<uint8_t const *>(
+                        std::get<1>(*iter).c_str()),
+                    std::get<1>(*iter).length() + 1
                 );
 
             if (verbose) {
-                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrivePartially");
+                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrive");
                 device_announce_header.log(LOG_INFO);
             }
 
             device_announce_header.emit(virtual_channel_stream);
 
             virtual_channel_stream.mark_end();
+
+            if (verbose & 0x80000000) {
+                LOG(LOG_INFO, "Sending on channel (-1) n bytes");
+                const uint32_t dest = 1;    // Server
+                hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+                    sizeof(dest));
+                const uint32_t total_length = virtual_channel_stream.size();
+                hexdump_c(reinterpret_cast<const uint8_t*>(&total_length),
+                    sizeof(total_length));
+                const uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+                hexdump_c(reinterpret_cast<const uint8_t*>(&flags), sizeof(flags));
+                const uint32_t chunk_data_length = virtual_channel_stream.size();
+                hexdump_c(reinterpret_cast<const uint8_t*>(&chunk_data_length),
+                    sizeof(chunk_data_length));
+                hexdump_c(virtual_channel_data, chunk_data_length);
+                LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
+            }
 
             to_server_sender(virtual_channel_stream.size(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
