@@ -179,7 +179,7 @@ private:
                 // Generates the name of file.
                 char cache_filename[2048];
                 ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
-                    PERSISTENT_PATH "/client", ini.c_str<cfg::globals::host>(), this->bmp_cache.bpp);
+                    PERSISTENT_PATH "/client", ini.get<cfg::globals::host>().c_str(), this->bmp_cache.bpp);
                 cache_filename[sizeof(cache_filename) - 1] = '\0';
 
                 int fd = ::open(cache_filename, O_RDONLY);
@@ -607,11 +607,11 @@ public:
         struct timeval now = tvtime();
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.c_str<cfg::globals::movie_path>());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.c_str<cfg::globals::auth_user>());
-            LOG(LOG_INFO, "host          = %s\n", ini.c_str<cfg::globals::host>());
-            LOG(LOG_INFO, "target_device = %s\n", ini.c_str<cfg::globals::target_device>());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.c_str<cfg::globals::target_user>());
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>().c_str());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>().c_str());
+            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>().c_str());
+            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>().c_str());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
         }
 
         char path[1024];
@@ -620,7 +620,7 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.c_str<cfg::globals::movie_path>(), path,
+        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(), path,
                                         sizeof(path), basename, sizeof(basename), extension,
                                         sizeof(extension));
         if (!res) {
@@ -734,12 +734,12 @@ public:
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini.c_str<cfg::globals::host>(), this->orders.bpp());
+            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
         filename[sizeof(filename) - 1] = '\0';
 
         char filename_temporary[2048];
         ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini.c_str<cfg::globals::host>(), this->orders.bpp());
+            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);

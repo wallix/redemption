@@ -2146,9 +2146,9 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ConfigurationLoader cfg_loader(ini);
 
     // bitrate, framerate, qscale
-    ini.set_by_id(AUTHID_OPT_BITRATE,           "80000");
-    ini.set_by_id(AUTHID_OPT_FRAMERATE,         "6");
-    ini.set_by_id(AUTHID_OPT_QSCALE,            "16");
+    ini.get_acl_field(AUTHID_OPT_BITRATE).set(           "80000");
+    ini.get_acl_field(AUTHID_OPT_FRAMERATE).set(         "6");
+    ini.get_acl_field(AUTHID_OPT_QSCALE).set(            "16");
 
     BOOST_CHECK_EQUAL(80000,                          ini.get<cfg::context::opt_bitrate>());
     BOOST_CHECK_EQUAL(6,                              ini.get<cfg::context::opt_framerate>());
@@ -2160,17 +2160,17 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // bpp, height, width
-    ini.ask_by_id(AUTHID_OPT_BPP);
-    ini.ask_by_id(AUTHID_OPT_HEIGHT);
-    ini.ask_by_id(AUTHID_OPT_WIDTH);
+    ini.get_acl_field(AUTHID_OPT_BPP).ask();
+    ini.get_acl_field(AUTHID_OPT_HEIGHT).ask();
+    ini.get_acl_field(AUTHID_OPT_WIDTH).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::opt_bpp>());
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::opt_height>());
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::opt_width>());
 
-    ini.set_by_id(AUTHID_OPT_BPP,               "16");
-    ini.set_by_id(AUTHID_OPT_HEIGHT,            "1024");
-    ini.set_by_id(AUTHID_OPT_WIDTH,             "1280");
+    ini.get_acl_field(AUTHID_OPT_BPP).set(               "16");
+    ini.get_acl_field(AUTHID_OPT_HEIGHT).set(            "1024");
+    ini.get_acl_field(AUTHID_OPT_WIDTH).set(             "1280");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::opt_bpp>());
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::opt_height>());
@@ -2185,17 +2185,17 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(16,                               ini.get<cfg::context::opt_bpp>());
 
 
-    ini.set_by_id(AUTHID_AUTH_ERROR_MESSAGE,     "Message d'erreur.");
+    ini.get_acl_field(AUTHID_AUTH_ERROR_MESSAGE).set(     "Message d'erreur.");
 
     BOOST_CHECK_EQUAL("Message d'erreur.", ini.get<cfg::context::auth_error_message>());
 
 
     // selector, ...
-    ini.ask_by_id(AUTHID_SELECTOR);
-    ini.ask_by_id(AUTHID_SELECTOR_CURRENT_PAGE);
-    ini.ask_by_id(AUTHID_SELECTOR_DEVICE_FILTER);
-    ini.ask_by_id(AUTHID_SELECTOR_GROUP_FILTER);
-    ini.ask_by_id(AUTHID_SELECTOR_LINES_PER_PAGE);
+    ini.get_acl_field(AUTHID_SELECTOR).ask();
+    ini.get_acl_field(AUTHID_SELECTOR_CURRENT_PAGE).ask();
+    ini.get_acl_field(AUTHID_SELECTOR_DEVICE_FILTER).ask();
+    ini.get_acl_field(AUTHID_SELECTOR_GROUP_FILTER).ask();
+    ini.get_acl_field(AUTHID_SELECTOR_LINES_PER_PAGE).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector>());
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector_current_page>());
@@ -2203,12 +2203,12 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector_group_filter>());
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector_lines_per_page>());
 
-    ini.set_by_id(AUTHID_SELECTOR,                  "True");
-    ini.set_by_id(AUTHID_SELECTOR_CURRENT_PAGE,     "2");
-    ini.set_by_id(AUTHID_SELECTOR_DEVICE_FILTER,    "Windows");
-    ini.set_by_id(AUTHID_SELECTOR_GROUP_FILTER,     "RDP");
-    ini.set_by_id(AUTHID_SELECTOR_LINES_PER_PAGE,   "25");
-    ini.set_by_id(AUTHID_SELECTOR_NUMBER_OF_PAGES,  "2");
+    ini.get_acl_field(AUTHID_SELECTOR).set(                  "True");
+    ini.get_acl_field(AUTHID_SELECTOR_CURRENT_PAGE).set(     "2");
+    ini.get_acl_field(AUTHID_SELECTOR_DEVICE_FILTER).set(    "Windows");
+    ini.get_acl_field(AUTHID_SELECTOR_GROUP_FILTER).set(     "RDP");
+    ini.get_acl_field(AUTHID_SELECTOR_LINES_PER_PAGE).set(   "25");
+    ini.get_acl_field(AUTHID_SELECTOR_NUMBER_OF_PAGES).set(  "2");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector>());
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector_current_page>());
@@ -2232,12 +2232,12 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // target_xxxx
-    ini.set_by_id(AUTHID_TARGET_DEVICE,         "127.0.0.1");
-    ini.set_by_id(AUTHID_TARGET_PASSWORD,       "12345678");
-    ini.set_by_id(AUTHID_TARGET_PORT,           "3390");
-    ini.set_by_id(AUTHID_TARGET_PROTOCOL,       "RDP");
-    ini.set_by_id(AUTHID_TARGET_USER,           "admin");
-    ini.set_by_id(AUTHID_TARGET_APPLICATION,    "wallix@putty");
+    ini.get_acl_field(AUTHID_TARGET_DEVICE).set(         "127.0.0.1");
+    ini.get_acl_field(AUTHID_TARGET_PASSWORD).set(       "12345678");
+    ini.get_acl_field(AUTHID_TARGET_PORT).set(           "3390");
+    ini.get_acl_field(AUTHID_TARGET_PROTOCOL).set(       "RDP");
+    ini.get_acl_field(AUTHID_TARGET_USER).set(           "admin");
+    ini.get_acl_field(AUTHID_TARGET_APPLICATION).set(    "wallix@putty");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::target_password>());
@@ -2261,251 +2261,251 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // host
-    ini.ask_by_id(AUTHID_HOST);
+    ini.get_acl_field(AUTHID_HOST).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::globals::host>());
 
-    ini.set_by_id(AUTHID_HOST,                   "127.0.0.1");
+    ini.get_acl_field(AUTHID_HOST).set(                   "127.0.0.1");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::host>());
 
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::host>());
 
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get_by_id(AUTHID_HOST));
+    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get_acl_field(AUTHID_HOST).c_str());
 
 
     // target
-    ini.ask_by_id(AUTHID_TARGET);
+    ini.get_acl_field(AUTHID_TARGET).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::globals::target>());
 
-    ini.set_by_id(AUTHID_TARGET,                 "192.168.0.1");
+    ini.get_acl_field(AUTHID_TARGET).set(                 "192.168.0.1");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::target>());
 
     BOOST_CHECK_EQUAL("192.168.0.1",                    ini.get<cfg::globals::target>());
 
-    BOOST_CHECK_EQUAL("192.168.0.1",                    ini.get_by_id(AUTHID_TARGET));
+    BOOST_CHECK_EQUAL("192.168.0.1",                    ini.get_acl_field(AUTHID_TARGET).c_str());
 
 
     // auth_user
-    ini.set_by_id(AUTHID_AUTH_USER,             "admin");
+    ini.get_acl_field(AUTHID_AUTH_USER).set(             "admin");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::auth_user>());
 
     BOOST_CHECK_EQUAL("admin",                          ini.get<cfg::globals::auth_user>());
 
-    BOOST_CHECK_EQUAL("admin",                          ini.get_by_id(AUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("admin",                          ini.get_acl_field(AUTHID_AUTH_USER).c_str());
 
 
     // password
-    ini.ask_by_id(AUTHID_PASSWORD);
+    ini.get_acl_field(AUTHID_PASSWORD).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::password>());
 
-    ini.set_by_id(AUTHID_PASSWORD,              "12345678");
+    ini.get_acl_field(AUTHID_PASSWORD).set(              "12345678");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::password>());
 
     BOOST_CHECK_EQUAL("12345678",                       ini.get<cfg::context::password>());
 
-    BOOST_CHECK_EQUAL("12345678",                       ini.get_by_id(AUTHID_PASSWORD));
+    BOOST_CHECK_EQUAL("12345678",                       ini.get_acl_field(AUTHID_PASSWORD).c_str());
 
 
     // answer
-    ini.set_by_id(AUTHID_AUTH_CHANNEL_ANSWER,    "answer");
+    ini.get_acl_field(AUTHID_AUTH_CHANNEL_ANSWER).set(    "answer");
 
     BOOST_CHECK_EQUAL("answer",                         ini.get<cfg::context::auth_channel_answer>());
 
-    BOOST_CHECK_EQUAL("answer",                         ini.get_by_id(AUTHID_AUTH_CHANNEL_ANSWER));
+    BOOST_CHECK_EQUAL("answer",                         ini.get_acl_field(AUTHID_AUTH_CHANNEL_ANSWER).c_str());
 
 
     // authchannel_target
-    ini.ask_by_id(AUTHID_AUTH_CHANNEL_TARGET);
+    ini.get_acl_field(AUTHID_AUTH_CHANNEL_TARGET).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::auth_channel_target>());
 
-    ini.set_by_id(AUTHID_AUTH_CHANNEL_TARGET,    "target");
+    ini.get_acl_field(AUTHID_AUTH_CHANNEL_TARGET).set(    "target");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::auth_channel_target>());
 
     BOOST_CHECK_EQUAL("target",                         ini.get<cfg::context::auth_channel_target>());
 
-    BOOST_CHECK_EQUAL("target",                         ini.get_by_id(AUTHID_AUTH_CHANNEL_TARGET));
+    BOOST_CHECK_EQUAL("target",                         ini.get_acl_field(AUTHID_AUTH_CHANNEL_TARGET).c_str());
 
 
     // authchannel_result
-    ini.ask_by_id(AUTHID_AUTH_CHANNEL_RESULT);
+    ini.get_acl_field(AUTHID_AUTH_CHANNEL_RESULT).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::auth_channel_result>());
 
-    ini.set_by_id(AUTHID_AUTH_CHANNEL_RESULT,    "result");
+    ini.get_acl_field(AUTHID_AUTH_CHANNEL_RESULT).set(    "result");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::auth_channel_result>());
 
     BOOST_CHECK_EQUAL("result",                         ini.get<cfg::context::auth_channel_result>());
 
-    BOOST_CHECK_EQUAL("result",                         ini.get_by_id(AUTHID_AUTH_CHANNEL_RESULT));
+    BOOST_CHECK_EQUAL("result",                         ini.get_acl_field(AUTHID_AUTH_CHANNEL_RESULT).c_str());
 
     // regex
-    ini.set_by_id(AUTHID_PATTERN_KILL,          "Explorer");
+    ini.get_acl_field(AUTHID_PATTERN_KILL).set(          "Explorer");
     BOOST_CHECK_EQUAL("Explorer",                       ini.get<cfg::context::pattern_kill>());
-    BOOST_CHECK_EQUAL("Explorer",                       ini.get_by_id(AUTHID_PATTERN_KILL));
+    BOOST_CHECK_EQUAL("Explorer",                       ini.get_acl_field(AUTHID_PATTERN_KILL).c_str());
 
-    ini.set_by_id(AUTHID_PATTERN_NOTIFY,        "Word");
+    ini.get_acl_field(AUTHID_PATTERN_NOTIFY).set(        "Word");
     BOOST_CHECK_EQUAL("Word",                           ini.get<cfg::context::pattern_notify>());
-    BOOST_CHECK_EQUAL("Word",                           ini.get_by_id(AUTHID_PATTERN_NOTIFY));
+    BOOST_CHECK_EQUAL("Word",                           ini.get_acl_field(AUTHID_PATTERN_NOTIFY).c_str());
 
 
     // message
-    ini.set_by_id(AUTHID_MESSAGE,               "message");
+    ini.get_acl_field(AUTHID_MESSAGE).set(               "message");
 
     BOOST_CHECK_EQUAL("message",                        ini.get<cfg::context::message>());
 
-    BOOST_CHECK_EQUAL("message",                        ini.get_by_id(AUTHID_MESSAGE));
+    BOOST_CHECK_EQUAL("message",                        ini.get_acl_field(AUTHID_MESSAGE).c_str());
 
 
     // accept_message
-    ini.ask_by_id(AUTHID_ACCEPT_MESSAGE);
+    ini.get_acl_field(AUTHID_ACCEPT_MESSAGE).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::accept_message>());
 
-    ini.set_by_id(AUTHID_ACCEPT_MESSAGE,        "accept_message");
+    ini.get_acl_field(AUTHID_ACCEPT_MESSAGE).set(        "accept_message");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::accept_message>());
 
     BOOST_CHECK_EQUAL("accept_message",                 ini.get<cfg::context::accept_message>());
 
-    BOOST_CHECK_EQUAL("accept_message",                 ini.get_by_id(AUTHID_ACCEPT_MESSAGE));
+    BOOST_CHECK_EQUAL("accept_message",                 ini.get_acl_field(AUTHID_ACCEPT_MESSAGE).c_str());
 
 
     // display_message
-    ini.ask_by_id(AUTHID_DISPLAY_MESSAGE);
+    ini.get_acl_field(AUTHID_DISPLAY_MESSAGE).ask();
 
     BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::display_message>());
 
-    ini.set_by_id(AUTHID_DISPLAY_MESSAGE,       "display_message");
+    ini.get_acl_field(AUTHID_DISPLAY_MESSAGE).set(       "display_message");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::display_message>());
 
     BOOST_CHECK_EQUAL("display_message",                ini.get<cfg::context::display_message>());
 
-    BOOST_CHECK_EQUAL("display_message",                ini.get_by_id(AUTHID_DISPLAY_MESSAGE));
+    BOOST_CHECK_EQUAL("display_message",                ini.get_acl_field(AUTHID_DISPLAY_MESSAGE).c_str());
 
 
     // rejected
-    ini.set_by_id(AUTHID_REJECTED,              "rejected");
+    ini.get_acl_field(AUTHID_REJECTED).set(              "rejected");
 
     BOOST_CHECK_EQUAL("rejected",                       ini.get<cfg::context::rejected>());
 
-    BOOST_CHECK_EQUAL("rejected",                       ini.get_by_id(AUTHID_REJECTED));
+    BOOST_CHECK_EQUAL("rejected",                       ini.get_acl_field(AUTHID_REJECTED).c_str());
 
 
     // authenticated
-    ini.set_by_id(AUTHID_AUTHENTICATED,         "True");
+    ini.get_acl_field(AUTHID_AUTHENTICATED).set(         "True");
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::authenticated>());
 
-    BOOST_CHECK_EQUAL("True",                           ini.get_by_id(AUTHID_AUTHENTICATED));
+    BOOST_CHECK_EQUAL("True",                           ini.get_acl_field(AUTHID_AUTHENTICATED).c_str());
 
 
     // keepalive
-    ini.set_by_id(AUTHID_KEEPALIVE,             "True");
+    ini.get_acl_field(AUTHID_KEEPALIVE).set(             "True");
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::keepalive>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::keepalive>());
 
-    BOOST_CHECK_EQUAL("True",                           ini.get_by_id(AUTHID_KEEPALIVE));
+    BOOST_CHECK_EQUAL("True",                           ini.get_acl_field(AUTHID_KEEPALIVE).c_str());
 
 
     // session_id
-    ini.set_by_id(AUTHID_SESSION_ID,            "0123456789");
+    ini.get_acl_field(AUTHID_SESSION_ID).set(            "0123456789");
 
     BOOST_CHECK_EQUAL("0123456789",                     ini.get<cfg::context::session_id>());
 
-    BOOST_CHECK_EQUAL("0123456789",                     ini.get_by_id(AUTHID_SESSION_ID));
+    BOOST_CHECK_EQUAL("0123456789",                     ini.get_acl_field(AUTHID_SESSION_ID).c_str());
 
 
     // end_date_cnx
-    ini.set_by_id(AUTHID_END_DATE_CNX,          "12345678");
+    ini.get_acl_field(AUTHID_END_DATE_CNX).set(          "12345678");
 
     BOOST_CHECK_EQUAL(12345678,                         ini.get<cfg::context::end_date_cnx>());
 
-    BOOST_CHECK_EQUAL("12345678",                       ini.get_by_id(AUTHID_END_DATE_CNX));
+    BOOST_CHECK_EQUAL("12345678",                       ini.get_acl_field(AUTHID_END_DATE_CNX).c_str());
 
 
     // end_time
-    ini.set_by_id(AUTHID_END_TIME,              "end_time");
+    ini.get_acl_field(AUTHID_END_TIME).set(              "end_time");
 
     BOOST_CHECK_EQUAL("end_time",                       ini.get<cfg::context::end_time>());
 
-    BOOST_CHECK_EQUAL("end_time",                       ini.get_by_id(AUTHID_END_TIME));
+    BOOST_CHECK_EQUAL("end_time",                       ini.get_acl_field(AUTHID_END_TIME).c_str());
 
 
     // mode_console
-    ini.set_by_id(AUTHID_MODE_CONSOLE,          "deny");
+    ini.get_acl_field(AUTHID_MODE_CONSOLE).set(          "deny");
 
     BOOST_CHECK_EQUAL("deny",                           ini.get<cfg::context::mode_console>());
 
-    BOOST_CHECK_EQUAL("deny",                           ini.get_by_id(AUTHID_MODE_CONSOLE));
+    BOOST_CHECK_EQUAL("deny",                           ini.get_acl_field(AUTHID_MODE_CONSOLE).c_str());
 
 
     // timezone
-    ini.set_by_id(AUTHID_TIMEZONE,              "-7200");
+    ini.get_acl_field(AUTHID_TIMEZONE).set(              "-7200");
 
     BOOST_CHECK_EQUAL(-7200,                            ini.get<cfg::context::timezone>());
 
-    BOOST_CHECK_EQUAL("-7200",                          ini.get_by_id(AUTHID_TIMEZONE));
+    BOOST_CHECK_EQUAL("-7200",                          ini.get_acl_field(AUTHID_TIMEZONE).c_str());
 
 
     // real_target_device
-    ini.set_by_id(AUTHID_REAL_TARGET_DEVICE,     "10.0.0.1");
+    ini.get_acl_field(AUTHID_REAL_TARGET_DEVICE).set(     "10.0.0.1");
 
     BOOST_CHECK_EQUAL("10.0.0.1",                       ini.get<cfg::context::real_target_device>());
 
-    BOOST_CHECK_EQUAL("10.0.0.1",                       ini.get_by_id(AUTHID_REAL_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("10.0.0.1",                       ini.get_acl_field(AUTHID_REAL_TARGET_DEVICE).c_str());
 
 
     // authentication_challenge
-    ini.set_by_id(AUTHID_AUTHENTICATION_CHALLENGE,     "true");
+    ini.get_acl_field(AUTHID_AUTHENTICATION_CHALLENGE).set(     "true");
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::authentication_challenge>());
 
-    BOOST_CHECK_EQUAL("True",                           ini.get_by_id(AUTHID_AUTHENTICATION_CHALLENGE));
+    BOOST_CHECK_EQUAL("True",                           ini.get_acl_field(AUTHID_AUTHENTICATION_CHALLENGE).c_str());
 }
 
 
 BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
 {
    BOOST_CHECK_EQUAL(AUTHID_UNKNOWN, authid_from_string("unknown"));
-   BOOST_CHECK_EQUAL(AUTHID_TARGET_USER, authid_from_string(STRAUTHID_TARGET_USER));
-   BOOST_CHECK_EQUAL(AUTHID_TARGET_PASSWORD, authid_from_string(STRAUTHID_TARGET_PASSWORD));
-   BOOST_CHECK_EQUAL(AUTHID_HOST, authid_from_string(STRAUTHID_HOST));
-   BOOST_CHECK_EQUAL(AUTHID_PASSWORD, authid_from_string(STRAUTHID_PASSWORD));
-   BOOST_CHECK_EQUAL(AUTHID_AUTH_USER, authid_from_string(STRAUTHID_AUTH_USER));
-   BOOST_CHECK_EQUAL(AUTHID_TARGET_DEVICE, authid_from_string(STRAUTHID_TARGET_DEVICE));
-   BOOST_CHECK_EQUAL(AUTHID_TARGET_PORT, authid_from_string(STRAUTHID_TARGET_PORT));
-   BOOST_CHECK_EQUAL(AUTHID_TARGET_PROTOCOL, authid_from_string(STRAUTHID_TARGET_PROTOCOL));
-   BOOST_CHECK_EQUAL(AUTHID_REJECTED, authid_from_string(STRAUTHID_REJECTED));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_MOVIE, authid_from_string(STRAUTHID_OPT_MOVIE));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_MOVIE_PATH, authid_from_string(STRAUTHID_OPT_MOVIE_PATH));
-   BOOST_CHECK_EQUAL(AUTHID_MESSAGE, authid_from_string(STRAUTHID_MESSAGE));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_BITRATE, authid_from_string(STRAUTHID_OPT_BITRATE));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_FRAMERATE, authid_from_string(STRAUTHID_OPT_FRAMERATE));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_QSCALE, authid_from_string(STRAUTHID_OPT_QSCALE));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_WIDTH, authid_from_string(STRAUTHID_OPT_WIDTH));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_HEIGHT, authid_from_string(STRAUTHID_OPT_HEIGHT));
-   BOOST_CHECK_EQUAL(AUTHID_OPT_BPP, authid_from_string(STRAUTHID_OPT_BPP));
-   BOOST_CHECK_EQUAL(AUTHID_AUTHENTICATED, authid_from_string(STRAUTHID_AUTHENTICATED));
-   BOOST_CHECK_EQUAL(AUTHID_SELECTOR, authid_from_string(STRAUTHID_SELECTOR));
-   BOOST_CHECK_EQUAL(AUTHID_KEEPALIVE, authid_from_string(STRAUTHID_KEEPALIVE));
+   BOOST_CHECK_EQUAL(AUTHID_TARGET_USER, authid_from_string(string_from_authid(AUTHID_TARGET_USER)));
+   BOOST_CHECK_EQUAL(AUTHID_TARGET_PASSWORD, authid_from_string(string_from_authid(AUTHID_TARGET_PASSWORD)));
+   BOOST_CHECK_EQUAL(AUTHID_HOST, authid_from_string(string_from_authid(AUTHID_HOST)));
+   BOOST_CHECK_EQUAL(AUTHID_PASSWORD, authid_from_string(string_from_authid(AUTHID_PASSWORD)));
+   BOOST_CHECK_EQUAL(AUTHID_AUTH_USER, authid_from_string(string_from_authid(AUTHID_AUTH_USER)));
+   BOOST_CHECK_EQUAL(AUTHID_TARGET_DEVICE, authid_from_string(string_from_authid(AUTHID_TARGET_DEVICE)));
+   BOOST_CHECK_EQUAL(AUTHID_TARGET_PORT, authid_from_string(string_from_authid(AUTHID_TARGET_PORT)));
+   BOOST_CHECK_EQUAL(AUTHID_TARGET_PROTOCOL, authid_from_string(string_from_authid(AUTHID_TARGET_PROTOCOL)));
+   BOOST_CHECK_EQUAL(AUTHID_REJECTED, authid_from_string(string_from_authid(AUTHID_REJECTED)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_MOVIE, authid_from_string(string_from_authid(AUTHID_OPT_MOVIE)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_MOVIE_PATH, authid_from_string(string_from_authid(AUTHID_OPT_MOVIE_PATH)));
+   BOOST_CHECK_EQUAL(AUTHID_MESSAGE, authid_from_string(string_from_authid(AUTHID_MESSAGE)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_BITRATE, authid_from_string(string_from_authid(AUTHID_OPT_BITRATE)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_FRAMERATE, authid_from_string(string_from_authid(AUTHID_OPT_FRAMERATE)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_QSCALE, authid_from_string(string_from_authid(AUTHID_OPT_QSCALE)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_WIDTH, authid_from_string(string_from_authid(AUTHID_OPT_WIDTH)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_HEIGHT, authid_from_string(string_from_authid(AUTHID_OPT_HEIGHT)));
+   BOOST_CHECK_EQUAL(AUTHID_OPT_BPP, authid_from_string(string_from_authid(AUTHID_OPT_BPP)));
+   BOOST_CHECK_EQUAL(AUTHID_AUTHENTICATED, authid_from_string(string_from_authid(AUTHID_AUTHENTICATED)));
+   BOOST_CHECK_EQUAL(AUTHID_SELECTOR, authid_from_string(string_from_authid(AUTHID_SELECTOR)));
+   BOOST_CHECK_EQUAL(AUTHID_KEEPALIVE, authid_from_string(string_from_authid(AUTHID_KEEPALIVE)));
    BOOST_CHECK_EQUAL(AUTHID_UNKNOWN, authid_from_string("8899676"));
-   BOOST_CHECK_EQUAL(AUTHID_DISPLAY_MESSAGE, authid_from_string(STRAUTHID_DISPLAY_MESSAGE));
-   BOOST_CHECK_EQUAL(AUTHID_ACCEPT_MESSAGE, authid_from_string(STRAUTHID_ACCEPT_MESSAGE));
-   BOOST_CHECK_EQUAL(AUTHID_AUTH_ERROR_MESSAGE, authid_from_string(STRAUTHID_AUTH_ERROR_MESSAGE));
-   BOOST_CHECK_EQUAL(AUTHID_MODE_CONSOLE, authid_from_string(STRAUTHID_MODE_CONSOLE));
-   BOOST_CHECK_EQUAL(AUTHID_TIMEZONE, authid_from_string(STRAUTHID_TIMEZONE));
+   BOOST_CHECK_EQUAL(AUTHID_DISPLAY_MESSAGE, authid_from_string(string_from_authid(AUTHID_DISPLAY_MESSAGE)));
+   BOOST_CHECK_EQUAL(AUTHID_ACCEPT_MESSAGE, authid_from_string(string_from_authid(AUTHID_ACCEPT_MESSAGE)));
+   BOOST_CHECK_EQUAL(AUTHID_AUTH_ERROR_MESSAGE, authid_from_string(string_from_authid(AUTHID_AUTH_ERROR_MESSAGE)));
+   BOOST_CHECK_EQUAL(AUTHID_MODE_CONSOLE, authid_from_string(string_from_authid(AUTHID_MODE_CONSOLE)));
+   BOOST_CHECK_EQUAL(AUTHID_TIMEZONE, authid_from_string(string_from_authid(AUTHID_TIMEZONE)));
 }
 
 

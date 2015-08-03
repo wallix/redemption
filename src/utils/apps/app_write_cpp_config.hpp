@@ -42,6 +42,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     std::ostringstream out_body_ctor_;
     std::ostringstream out_body_parser_;
 
+    //std::map<std::string, std::vector<std::string>> variables_by_sections;
     std::map<std::string, std::string> sections_parser;
     std::vector<std::pair<std::string, std::string>> authids;
     std::vector<std::string> variables;
@@ -73,6 +74,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
             this->variables_acl.emplace_back(varname_with_section);
         }
         this->variables.emplace_back(varname_with_section);
+        //this->variables_by_sections[this->section_name].emplace_back(varname);
 
         this->out_ = &this->out_member_;
 
@@ -297,11 +299,7 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
       "    AUTHID_UNKNOWN = 0,\n"
     ;
     for (auto & body : writer.authids) {
-        out_authid
-          << "    AUTHID_" << body.first << ",\n"
-             "#define STRAUTHID_" << body.first
-          << " \"" << body.second << "\"\n"
-        ;
+        out_authid << "    AUTHID_" << body.first << ",\n";
     }
     out_authid <<
       "    MAX_AUTHID\n"
@@ -309,7 +307,7 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
       "constexpr char const * const authstr[] = {\n"
     ;
     for (auto & body : writer.authids) {
-        out_authid << "    STRAUTHID_" << body.first << ",\n";
+        out_authid << "    \"" << body.second << "\",\n";
     }
     out_authid << "};\n\n";
 }
@@ -335,41 +333,58 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         }
     }
 
-    auto join = [&](std::vector<std::string> const & cont, char const * before = "", char const * after = "") {
+    auto join = [&](
+        std::vector<std::string> const & cont,
+        std::string const & before = "",
+        std::string const & after = ""
+    ) {
         auto first = begin(cont);
         auto last = end(cont);
         if (first == last) {
             return ;
         }
-        out_varconf << before << "cfg::" << *first << after << "\n";
+        out_varconf << before << *first << after << "\n";
         while (++first != last) {
-            out_varconf << ", " << before << "cfg::" << *first << after << "\n";
+            out_varconf << ", " << before << *first << after << "\n";
         }
     };
 
+    //std::vector<std::string> section_names;
+
     out_varconf <<
       "}\n\n"
+      //"namespace cfg_section {\n"
+    ;
+    //for (auto & body : writer.variables_by_sections) {
+    //    if (!body.first.empty()) {
+    //        section_names.emplace_back("cfg_section::" + body.first);
+    //        out_varconf << "struct " << body.first << "\n: ";
+    //        join(body.second, "cfg::" + body.first + "::");
+    //        out_varconf << "{ static bool constexpr is_section = true; };\n\n";
+    //    }
+    //}
+    out_varconf << //"}\n\n"
       "namespace configs {\n"
-      "namespace detail_ { struct none {}; }\n\n"
       "struct VariablesConfiguration\n"
       ": "
     ;
-    join(writer.variables);
+    join(writer.variables, "cfg::");
+    //join(section_names);
+    //auto it = writer.variables_by_sections.find("");
+    //if (it != writer.variables_by_sections.end()) {
+    //    for (auto & s : it->second) {
+    //        out_varconf << ", cfg::" << s << "\n";
+    //    }
+    //}
     out_varconf <<
       "{\n"
       "    explicit VariablesConfiguration(char const * default_font_name)\n"
       "    : cfg::font{default_font_name}\n"
       "    {}\n"
       "};\n\n"
-      "struct Buffers\n"
-      ": "
+      "using VariablesAclPack = Pack<\n"
     ;
-    join(writer.variables, "CBuf<", ">");
-    out_varconf <<
-      "{};\n\n"
-      "using VariablesAclPack = Pack<\n  "
-    ;
-    join(writer.variables_acl);
+    join(writer.variables_acl, "cfg::");
     out_varconf <<
       ">;\n"
       "}\n"

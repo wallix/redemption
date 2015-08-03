@@ -596,18 +596,6 @@ private:
     void do_tab() {}
 };
 
-template<class T, class Result = void>
-using enable_if_basefield = typename std::enable_if<
-    std::is_base_of<FieldObserver::BaseField, T>::value,
-    Result
->::type;
-
-template<class T, class Result = void>
-using disable_if_basefield = typename std::enable_if<
-    !std::is_base_of<FieldObserver::BaseField, T>::value,
-    Result
->::type;
-
 #define MK_PACK(Ts)                           \
     struct Pack : ::config_spec::ref<Ts>... { \
         explicit Pack(Ts const &... x)        \

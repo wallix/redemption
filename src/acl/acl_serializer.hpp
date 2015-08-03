@@ -88,30 +88,34 @@ public:
             if (*stream.p == '\n') {
                 *stream.p = 0;
 
-                if ((0 == strncasecmp(value, "ask", 3))) {
-                    this->ini->ask_from_acl(keyword);
-                    LOG(LOG_INFO, "receiving ASK '%s'", keyword);
+                if (auto field = ini->get_acl_field(authid_from_string(keyword))) {
+                    if ((0 == strncasecmp(value, "ask", 3))) {
+                        field.ask();
+                        LOG(LOG_INFO, "receiving ASK '%s'", keyword);
+                    }
+                    else {
+                        // BASE64 TRY
+                        // unsigned char output[32000];
+                        // if (value[0] == '!') value++;
+                        // size_t value_len = strlen((const char*)value);
+                        // size_t out_len = this->ini->b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
+                        // output[out_len] = 0;
+                        // this->ini->set_from_acl((char *)keyword,
+                        //                         (char *)output);
+                        field.set(value + (value[0] == '!' ? 1 : 0));
+                        const char * val         = field.c_str();
+                        const char * display_val = val;
+                        if ((strncasecmp("password", keyword, 9 ) == 0) ||
+                            (strncasecmp("target_application_password", keyword, 27) == 0) ||
+                            (strncasecmp("target_password", keyword, 16) == 0) ||
+                            ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != nullptr))) {
+                            display_val = ::get_printable_password(val, this->ini->get<cfg::debug::password>());
+                        }
+                        LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
+                    }
                 }
                 else {
-                    // BASE64 TRY
-                    // unsigned char output[32000];
-                    // if (value[0] == '!') value++;
-                    // size_t value_len = strlen((const char*)value);
-                    // size_t out_len = this->ini->b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
-                    // output[out_len] = 0;
-                    // this->ini->set_from_acl((char *)keyword,
-                    //                         (char *)output);
-                    this->ini->set_from_acl(keyword, value + (value[0] == '!' ? 1 : 0));
-                    //const char * val         = this->ini->get_cstr_from_key(keyword);
-                    const char * val         = this->ini->get_value(authid_from_string(keyword));
-                    const char * display_val = val;
-                    if ((strncasecmp("password", keyword, 9 ) == 0) ||
-                        (strncasecmp("target_application_password", keyword, 27) == 0) ||
-                        (strncasecmp("target_password", keyword, 16) == 0) ||
-                        ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != nullptr))) {
-                        display_val = ::get_printable_password(val, this->ini->get<cfg::debug::password>());
-                    }
-                    LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
+                    LOG(LOG_WARNING, "AclSerializer::in_item(stream): unknown strauthid=\"%s\"", keyword);
                 }
 
                 stream.p = stream.p+1;
@@ -151,11 +155,11 @@ public:
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
             sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                    this->ini->c_str<cfg::context::session_id>());
+                    this->ini->get<cfg::context::session_id>().c_str());
             rename(old_session_file, new_session_file);
         }
         if (this->verbose & 0x40){
-            LOG(LOG_INFO, "SESSION_ID = %s", this->ini->c_str<cfg::context::session_id>());
+            LOG(LOG_INFO, "SESSION_ID = %s", this->ini->get<cfg::context::session_id>().c_str());
         }
     }
 

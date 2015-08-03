@@ -23,9 +23,7 @@
 
 #include "parser.hpp"
 #include "fileutils.hpp"
-#include "basefield.hpp"
 #include "underlying_cast.hpp"
-#include "dynamic_buffer.hpp"
 
 #include "config_capture_flags.hpp"
 #include "config_keyboard_log_flags.hpp"
@@ -37,12 +35,6 @@
 #include <cstddef>
 
 namespace configs {
-
-using BaseField = FieldObserver::BaseField;
-using StringField = FieldObserver::StringField;
-using BoolField = FieldObserver::BoolField;
-using UnsignedField = FieldObserver::UnsignedField;
-using SignedField = FieldObserver::SignedField;
 
 struct IniAccounts {
     char username[255]; // should use string
@@ -128,6 +120,17 @@ char const * c_str(
     return x.c_str();
 }
 
+template<std::size_t N, class Copier, bool NullableString>
+void parse(StaticStringBase<N, Copier, NullableString> & x, char const * value) {
+    x = value;
+}
+
+template<std::size_t N, class Copier, bool NullableString>
+int copy_val(StaticStringBase<N, Copier, NullableString> const & x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%s", x.c_str());
+}
+
+
 template<std::size_t N>
 using StaticString = StaticStringBase<N, StringCopier>;
 
@@ -155,6 +158,36 @@ template<std::size_t N>
 struct CStrBuf<StaticKeyString<N>> {
     char buf[N*2 + 1];
 };
+
+
+template<std::size_t N>
+void parse(StaticKeyString<N> & key, char const * value) {
+    if (strlen(value) >= N * 2) {
+        char   hexval[3] = { 0 };
+        char * end;
+        for (std::size_t i = 0; i < sizeof(key); i++) {
+            memcpy(hexval, value + i * 2, 2);
+
+            key.data()[i] = strtol(hexval, &end, 16);
+        }
+    }
+}
+
+template<std::size_t N>
+int copy_val(StaticKeyString<N> const & key, char * buff, std::size_t n) {
+    if (N * 2 < n) {
+        auto first = key.c_str();
+        auto last = key.c_str() + sizeof(key);
+        for (; first != last; ++buff, ++first) {
+            auto x = unsigned(*first) & 0xf;
+            *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
+            ++buff;
+            *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
+        }
+    }
+    return int(N*2);
+}
+
 
 struct Ipv4Copier : StringCopier {};
 using StaticIpString = StaticStringBase<16, Ipv4Copier>;
@@ -218,97 +251,6 @@ char const * c_str(CStrBuf<Range<T, Min, Max, Default>>& s, Range<T, Min, Max, D
 
 
 
-template<class Enum>
-class FlagsField : public BaseField
-{
-    Enum data;
-    char buff[20];
-
-public:
-    FlagsField() : data(Enum::none) {
-    }
-
-    void set(Enum that) {
-        if (this->data != that || this->asked) {
-            this->modify();
-            this->data = that;
-        }
-        this->asked = false;
-    }
-
-    void set_from_acl(const char * cstr) override {
-        this->modify_from_acl();
-        this->data = static_cast<Enum>(ulong_from_cstr(cstr)) & Enum::FULL;
-        this->asked = false;
-    }
-    void set_from_cstr(const char * cstr) override {
-        this->set(static_cast<Enum>(ulong_from_cstr(cstr)) & Enum::FULL);
-    }
-
-    Enum get() const {
-        return this->data;
-    }
-
-    const char * get_value() override {
-        if (this->is_asked()) {
-            return "ASK";
-        }
-        snprintf(buff, sizeof(buff), "%u", static_cast<unsigned>(this->data));
-        return buff;
-    }
-};
-
-
-template<class Enum, class Traits>
-class EnumField : public BaseField
-{
-protected:
-    Enum data;
-
-public:
-    EnumField() : data(Traits::get_default()) {
-    }
-
-    void set(Enum lang) {
-        if (!Traits::valid(lang)) {
-            return ;
-        }
-        if (this->asked || this->data != lang) {
-            this->modify();
-            this->data = lang;
-        }
-        this->asked = false;
-    }
-    void set(const char * cstr) {
-        this->set(Traits::cstr_to_enum(cstr));
-    }
-
-    void set_from_acl(const char * cstr) override {
-        Enum lang = Traits::cstr_to_enum(cstr);
-        if (!Traits::valid(lang)) {
-            return ;
-        }
-        this->modify_from_acl();
-        this->data = lang;
-        this->asked = false;
-    }
-    void set_from_cstr(const char * cstr) override {
-        this->set(Traits::cstr_to_enum(cstr));
-    }
-
-    Enum get() const {
-        return Traits::valid(this->data) ? this->data : Traits::get_valid();
-    }
-
-    const char * get_value() override {
-        if (this->is_asked()) {
-            return "ASK";
-        }
-        return Traits::to_string(this->data);
-    }
-};
-
-
 #include "mk_enum_def.hpp"
 
 template<class E, class = void>
@@ -339,10 +281,10 @@ struct enum_option
         for (auto s : l) {                                     \
             if (0 == strcmp(cstr, s)) {                        \
                 e = static_cast<Enum>(i);                      \
+                break;                                         \
             }                                                  \
             ++i;                                               \
         }                                                      \
-        /*e = get_valid();*/                                   \
     }                                                          \
     inline int copy_val(Enum e, char * buff, std::size_t n)  { \
         char const * cstr;                                     \
@@ -388,25 +330,19 @@ inline char const * cstr_from_level(Level lvl) {
         : "low";
 }
 
-struct LevelFieldTraits {
-    static Level get_default() { return Level::low; }
-    static Level get_valid() { return Level::low; }
-    static bool valid(Level) { return true; }
-    static Level cstr_to_enum(char const * cstr) { return level_from_cstr(cstr); }
-    static char const * to_string(Level e) {
-        switch (e) {
-            case Level::medium: return "medium";
-            case Level::high: return "high";
-            default: return "low";
-        }
-    }
-};
-
 inline char const * enum_to_option(Level e) {
-    return LevelFieldTraits::to_string(e);
+    return cstr_from_level(e);
 }
 
-using LevelField = EnumField<Level, LevelFieldTraits>;
+inline void parse(Level & x, char const * value) { x = level_from_cstr(value); }
+
+inline int copy_val(Level x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%s", cstr_from_level(x));
+}
+
+inline char const * c_str(CStrBuf<Level>&, Level x) {
+    return cstr_from_level(x);
+}
 
 
 enum class Language : unsigned { en, fr, NB };
@@ -458,56 +394,22 @@ inline char const * cstr_from_color_depth(ColorDepth c) {
     }
 }
 
+inline void parse(ColorDepth & x, char const * value) {
+    x = color_depth_from_cstr(value);
+}
+
+inline int copy_val(ColorDepth x, char * buff, std::size_t n) {
+    return snprintf(buff, n, "%s", cstr_from_color_depth(x));
+}
+
+inline char const * c_str(CStrBuf<ColorDepth>&, ColorDepth x) {
+    return cstr_from_color_depth(x);
+}
+
 
 #include "mk_enum_undef.hpp"
 #undef MK_ENUM_FIELD
 #undef ENUM_OPTION
-
-
-class ReadOnlyStringField : public BaseField {
-protected:
-    std::string data;
-public:
-    ReadOnlyStringField() = default;
-
-    void set(std::string const & string) {
-        this->set_from_cstr(string.c_str());
-    }
-    void set_empty() {
-        if (!this->data.empty()){
-            this->modify();
-            this->data.clear();
-        }
-    }
-    void set_from_acl(const char * cstr) override {
-        this->modify_from_acl();
-        this->data = cstr;
-        this->asked = false;
-    }
-    void set_from_cstr(const char * cstr) override {
-        this->data = cstr;
-    }
-    bool is_empty(){
-        return this->data.empty();
-    }
-    const std::string & get() const {
-        return this->data;
-    }
-    std::string & get() {
-        return this->data;
-    }
-
-    const char * get_cstr() const {
-        return this->get().c_str();
-    }
-
-    const char * get_value() override {
-        if (this->is_asked()) {
-            return "ASK";
-        }
-        return this->get().c_str();
-    }
-};
 
 }
 

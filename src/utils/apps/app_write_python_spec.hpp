@@ -92,14 +92,8 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
 
     template<class T>
-    enable_if_basefield<T, decltype(std::declval<T>().get())>
-    get_value(T const & x)
-    { return x.get(); }
-
-    template<class T>
-    disable_if_basefield<T, T const &>
-    get_value(T const & d)
-    { return d; }
+    T const & get_value(T const & x)
+    { return x; }
 
     const char * get_value(macro const & m) { return m.value; }
     const char * get_value(null_fill) { return ""; }
@@ -200,15 +194,6 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     typename std::enable_if<std::is_enum<T>::value>::type
     write_type(type_<T> t, U const & x) {
         this->write_enum(typename config_spec::enum_option<T>::type(), t, x);
-    }
-
-    template<class T, class U>
-    typename std::enable_if<std::is_base_of<BaseField, T>::value>::type
-    write_type(type_<T>, U const & x) {
-        using type = type_<typename std::remove_cv<typename std::remove_reference<
-            decltype(std::declval<T>().get())
-        >::type>::type>;
-        this->write_type(type{}, this->inherit().get_value(x));
     }
 
     template<class T, T Min, T Max, T Default, class U>

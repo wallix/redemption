@@ -280,8 +280,8 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
             mod_rdp_params.cache_verbose                       = ini.get<cfg::debug::cache>();
 
-            mod_rdp_params.allow_channels                      = &(ini.get_ref<cfg::mod_rdp::allow_channels>());
-            mod_rdp_params.deny_channels                       = &(ini.get_ref<cfg::mod_rdp::deny_channels>());
+            mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
+            mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
                         gen, mod_rdp_params);

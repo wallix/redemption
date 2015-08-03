@@ -44,7 +44,9 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
         explicit temporary_login(Inifile & ini) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
-                     "%s@%s", ini.c_str<cfg::globals::auth_user>(), ini.c_str<cfg::globals::host>());
+                     "%s@%s",
+                     ini.get<cfg::globals::auth_user>().c_str(),
+                     ini.get<cfg::globals::host>().c_str());
         }
     };
 
@@ -52,11 +54,13 @@ public:
     FlatSelector2Mod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
         , selector(*this, temporary_login(ini).buffer, width, height, this->screen, this,
-                   ini.get_value<cfg::context::selector_current_page>(),
-                   ini.get_value<cfg::context::selector_number_of_pages>(),
-                   ini.c_str<cfg::context::selector_group_filter>(),
-                   ini.c_str<cfg::context::selector_device_filter>(),
-                   ini.c_str<cfg::context::selector_proto_filter>(),
+                    ini.is_asked<cfg::context::selector_current_page>()
+                        ? "" : configs::make_c_str_buf(ini.get<cfg::context::selector_current_page>()).get(),
+                    ini.is_asked<cfg::context::selector_number_of_pages>()
+                        ? "" : configs::make_c_str_buf(ini.get<cfg::context::selector_number_of_pages>()).get(),
+                   ini.get<cfg::context::selector_group_filter>().c_str(),
+                   ini.get<cfg::context::selector_device_filter>().c_str(),
+                   ini.get<cfg::context::selector_proto_filter>().c_str(),
                    ini)
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
@@ -117,7 +121,7 @@ public:
                 snprintf(group_buffer, sizeof(group_buffer), "%s", groups);
                 group_buffer[pos] = 0;
                 snprintf(buffer, sizeof(buffer), "%s:%s:%s",
-                         target, group_buffer, this->ini.c_str<cfg::globals::auth_user>());
+                         target, group_buffer, this->ini.get<cfg::globals::auth_user>().c_str());
                 this->ini.parse_username(buffer);
 
 
@@ -191,9 +195,9 @@ public:
 
     void refresh_device()
     {
-        char * groups    = const_cast<char *>(this->ini.c_str<cfg::globals::target_user>());
-        char * targets   = const_cast<char *>(this->ini.c_str<cfg::globals::target_device>());
-        char * protocols = const_cast<char *>(this->ini.c_str<cfg::context::target_protocol>());
+        char * groups    = const_cast<char *>(this->ini.get<cfg::globals::target_user>().c_str());
+        char * targets   = const_cast<char *>(this->ini.get<cfg::globals::target_device>().c_str());
+        char * protocols = const_cast<char *>(this->ini.get<cfg::context::target_protocol>().c_str());
         for (unsigned index = 0; index < this->ini.get<cfg::context::selector_lines_per_page>();
              index++) {
             size_t size_groups = proceed_item(groups, '\x01');
@@ -226,7 +230,6 @@ public:
             groups += size_groups + 1;
             targets += size_targets + 1;
             protocols += size_protocols + 1;
-
         }
 
         if (this->selector.selector_lines.get_nb_rows() == 0) {

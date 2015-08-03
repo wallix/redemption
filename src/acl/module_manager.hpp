@@ -640,7 +640,6 @@ public:
                 else {
                     strncpy(this->ini.get_ref<cfg::account>().username,
                             this->ini.get<cfg::globals::auth_user>().c_str(),
-                            // this->ini.context_get_value(AUTHID_AUTH_USER, nullptr, 0),
                             sizeof(this->ini.get<cfg::account>().username));
                     this->ini.get_ref<cfg::account>().username[sizeof(this->ini.get<cfg::account>().username) - 1] = 0;
                 }
@@ -855,7 +854,6 @@ public:
 
 
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
-                                            //this->ini.context_get_value(AUTHID_TARGET_HOST, nullptr, 0),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
                                             this->ini.get<cfg::debug::mod_vnc>());

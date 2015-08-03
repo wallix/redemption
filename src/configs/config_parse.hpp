@@ -27,7 +27,6 @@
 
 #include "theme.hpp"
 #include "config_types.hpp"
-#include "basefield.hpp"
 #include "parser.hpp"
 #include "defines.hpp"
 #include "fileutils.hpp"
@@ -42,25 +41,6 @@ inline void parse(int & x, char const * value) { x = long_from_cstr(value); }
 inline void parse(bool & x, char const * value) { x = bool_from_cstr(value); }
 
 inline void parse(std::string & x, char const * value) { x = value; }
-
-inline void parse(Level & x, char const * value) { x = level_from_cstr(value); }
-inline void parse(ColorDepth & x, char const * value) { x = color_depth_from_cstr(value); }
-
-template<std::size_t N, class Copier, bool NullableString>
-void parse(StaticStringBase<N, Copier, NullableString> & x, char const * value) { x = value; }
-
-template<std::size_t N>
-void parse(StaticKeyString<N> & key, char const * value) {
-    if (strlen(value) >= N * 2) {
-        char   hexval[3] = { 0 };
-        char * end;
-        for (std::size_t i = 0; i < sizeof(key); i++) {
-            memcpy(hexval, value + i * 2, 2);
-
-            key.data()[i] = strtol(hexval, &end, 16);
-        }
-    }
-}
 
 template<class T, T Min, T Max, T Default>
 void parse(Range<T, Min, Max, Default> & x, char const * value) { x = long_from_cstr(value); }
@@ -123,33 +103,6 @@ inline int copy_val(std::string const & x, char * buff, std::size_t n) {
     return int(x.size());
 }
 
-inline int copy_val(Level x, char * buff, std::size_t n) {
-    return snprintf(buff, n, "%s", cstr_from_level(x));
-}
-inline int copy_val(ColorDepth x, char * buff, std::size_t n) {
-    return snprintf(buff, n, "%s", cstr_from_color_depth(x));
-}
-
-template<std::size_t N, class Copier, bool NullableString>
-int copy_val(StaticStringBase<N, Copier, NullableString> const & x, char * buff, std::size_t n) {
-    return snprintf(buff, n, "%s", x.c_str());
-}
-
-template<std::size_t N>
-int copy_val(StaticKeyString<N> const & key, char * buff, std::size_t n) {
-    if (N * 2 < n) {
-        auto first = key.c_str();
-        auto last = key.c_str() + sizeof(key);
-        for (; first != last; ++buff, ++first) {
-            auto x = unsigned(*first) & 0xf;
-            *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
-            ++buff;
-            *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
-        }
-    }
-    return int(N*2);
-}
-
 template<int Min, int Max, int Default>
 int copy_val(Range<int, Min, Max, Default> const & x, char * buff, std::size_t n) {
     return snprintf(buff, n, "%d", int(x));
@@ -181,19 +134,6 @@ inline char const * c_str(CStrBuf<bool>&, bool x) {
 
 inline char const * c_str(CStrBuf<std::string>&, std::string const & x) {
     return x.c_str();
-}
-
-inline char const * c_str(CStrBuf<Level>&, Level x) {
-    return cstr_from_level(x);
-}
-
-inline char const * c_str(CStrBuf<ColorDepth>&, ColorDepth x) {
-    return cstr_from_color_depth(x);
-}
-
-inline char const * c_str(CStrBuf<ColorDepth>&, Theme const & theme) {
-    assert(false);
-    return "";
 }
 
 }

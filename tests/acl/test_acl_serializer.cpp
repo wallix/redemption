@@ -65,10 +65,10 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     BStream stream(1024);
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_string(STRAUTHID_AUTH_USER "\nASK\n");
-    stream.out_string(STRAUTHID_PASSWORD "\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
 
-    stream.out_string(STRAUTHID_SESSION_ID "\n!6455\n");
+    stream.out_string(string_from_authid(AUTHID_SESSION_ID)); stream.out_string("\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
@@ -90,8 +90,8 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     // try exception
     stream.reset();
     stream.out_uint32_be(0xFFFFFFFF);
-    stream.out_string(STRAUTHID_AUTH_USER "\nASK\n");
-    stream.out_string(STRAUTHID_PASSWORD "\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
 
     GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
     AclSerializer aclexcpt(&ini, transexcpt, 0);
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
 
     ini.set<cfg::context::password>("VerySecurePassword");
     BOOST_CHECK(!ini.is_asked<cfg::context::password>());
-    stream.out_copy_bytes(STRAUTHID_PASSWORD "\nASK\n", strlen(STRAUTHID_PASSWORD "\nASK\n"));
+    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
     stream.mark_end();
     stream.rewind();
     acl.in_items(stream);

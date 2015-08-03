@@ -29,6 +29,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <set>
 
 #include "log.hpp"
 #include "font.hpp"
@@ -37,7 +38,7 @@
 
 #include "authid.hpp"
 
-#include "dynamic_buffer.hpp"
+#include "get_printable_password.hpp"
 
 #include "config_parse.hpp"
 #include "config_c_str_buf.hpp"
@@ -74,6 +75,14 @@ namespace configs {
     struct CBuf : CStrBuf<typename Config::type> {
     };
 
+    template<class>
+    struct BufferPack;
+
+    template<class... Ts>
+    struct BufferPack<Pack<Ts...>>
+    : CBuf<Ts>...
+    {};
+
     enum class VariableProperties {
         none,
         read  = 1 << 0,
@@ -98,6 +107,9 @@ class Inifile : public ConfigurationHolder
     using properties_t = configs::VariableProperties;
 
 public:
+    using authid_t = ::authid_t;
+
+
     explicit Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME)
     : variables(default_font_name)
     {
@@ -111,43 +123,11 @@ public:
     }
 
     template<class T>
-    char const * get_value() const noexcept {
-        if (this->is_asked<T>()) {
-            return "";
-        }
-        return this->c_str<T>();
-    }
-
-    template<class T>
     typename T::type & get_ref() noexcept {
         static_assert(!bool(T::properties() & properties_t::write), "reference on write variable isn't safe");
         return static_cast<T&>(this->variables).value;
     }
 
-    template<class T>
-    char const * c_str() const {
-        return ::configs::c_str(
-            const_cast<configs::CStrBuf<typename T::type> &>(
-                static_cast<configs::CStrBuf<typename T::type> const &>(
-                    static_cast<configs::CBuf<T> const &>(this->buffers)
-                )
-            ), this->get<T>()
-        );
-    }
-
-    // TODO authid_t authid
-    char const * get_cstr_from_key(const char * strauthid) const {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            return this->fields[authid-1].c_str(this->variables, this->buffers);
-        }
-        else {
-            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-        return "";
-    }
-
-public:
     template<class T, class U>
     void set(U && new_value) {
         //static_assert(bool(T::properties() & properties_t::write), "T isn't writable");
@@ -156,48 +136,6 @@ public:
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
     }
 
-private:
-    template<class T> void insert_index(std::false_type) {}
-    template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index()); }
-
-    template<class T> void unask(std::false_type) {}
-    template<class T> void unask(std::true_type) { this->fields[T::index()].asked_ = false; }
-
-    struct FieldBase
-    {
-        bool is_asked() const { return this->asked_; }
-        virtual void parse(configs::VariablesConfiguration & variables, char const * value) const = 0;
-        virtual int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const = 0;
-        virtual char const * c_str(configs::VariablesConfiguration const & variables, configs::Buffers const & buffers) const = 0;
-        virtual ~FieldBase() {}
-
-    private:
-        friend class Inifile;
-        bool asked_ = false;
-    };
-
-    template<class T>
-    struct Field : FieldBase
-    {
-        void parse(configs::VariablesConfiguration & variables, char const * value) const final {
-            ::configs::parse(static_cast<T&>(variables).value, value);
-        }
-        int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const final {
-            return ::configs::copy_val(static_cast<T const &>(variables).value, buff, n);
-        }
-        char const * c_str(configs::VariablesConfiguration const & variables, configs::Buffers const & buffers) const final {
-            return ::configs::c_str(
-                const_cast<configs::CStrBuf<typename T::type> &>(
-                    static_cast<configs::CStrBuf<typename T::type> const &>(
-                        static_cast<configs::CBuf<T> const &>(buffers)
-                    )
-                ), static_cast<T const &>(variables).value
-            );
-        }
-
-    };
-
-public:
     template<class T>
     void ask() {
         static_assert(bool(T::properties() & properties_t::read), "T isn't askable");
@@ -211,81 +149,102 @@ public:
         return static_cast<Field<T>const&>(this->fields).asked_;
     }
 
-    void set_value(const char * context, const char * key, const char * value) override;
+private:
+    template<class T> void insert_index(std::false_type) {}
+    template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index()); }
 
-    using authid_t = ::authid_t;
+    template<class T> void unask(std::false_type) {}
+    template<class T> void unask(std::true_type) { this->fields[T::index()].asked_ = false; }
+
+    using Buffers = configs::BufferPack<configs::VariablesAclPack>;
+
+    struct FieldBase
+    {
+        bool is_asked() const { return this->asked_; }
+        virtual void parse(configs::VariablesConfiguration & variables, char const * value) = 0;
+        virtual int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const = 0;
+        virtual char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const = 0;
+        virtual ~FieldBase() {}
+
+    private:
+        friend class Inifile;
+        bool asked_ = false;
+    };
+
+    template<class T>
+    struct Field : FieldBase
+    {
+        void parse(configs::VariablesConfiguration & variables, char const * value) final {
+            ::configs::parse(static_cast<T&>(variables).value, value);
+        }
+
+        int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const final {
+            return ::configs::copy_val(static_cast<T const &>(variables).value, buff, n);
+        }
+
+        char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const final {
+            return ::configs::c_str(
+                const_cast<configs::CStrBuf<typename T::type> &>(
+                    static_cast<configs::CStrBuf<typename T::type> const &>(
+                        static_cast<configs::CBuf<T> const &>(buffers)
+                    )
+                ), static_cast<T const &>(variables).value
+            );
+        }
+    };
+
+public:
+    void set_value(const char * context, const char * key, const char * value) override;
 
     static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
-    char const * get_by_id(authid_t authid) const {
-        if (authid != AUTHID_UNKNOWN) {
-            return this->fields[authid-1].c_str(this->variables, this->buffers);
+    struct FieldReference
+    {
+        bool is_asked() const {
+            return this->field->asked_;
         }
-        else {
-            auto const & strauthid = string_from_authid(authid);
-            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-        return "";
-    }
 
-    char const * get_value(authid_t authid) const {
-        if (authid != AUTHID_UNKNOWN) {
-            if (!this->fields[authid-1].asked_) {
-                return this->fields[authid-1].c_str(this->variables, this->buffers);
-            }
+        void ask() {
+            this->field->asked_ = true;
         }
-        else {
-            auto const & strauthid = string_from_authid(authid);
-            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-        return "";
-    }
 
-    void set_by_id(authid_t authid, char const * value) {
-        if (authid != AUTHID_UNKNOWN) {
-            this->fields[authid-1].parse(this->variables, value);
-            this->fields[authid-1].asked_ = false;
+        void set(char const * value) {
+            this->field->parse(this->ini.variables, value);
+            this->field->asked_ = false;
+            this->ini.new_from_acl = true;
         }
-        else {
-            auto const & strauthid = string_from_authid(authid);
-            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
 
-    void ask_by_id(authid_t authid) {
-        if (authid != AUTHID_UNKNOWN) {
-            this->fields[authid-1].asked_ = true;
+        int copy(char * buff, std::size_t n) const {
+            return this->field->copy_val(this->ini.variables, buff, n);
         }
-        else {
-            auto const & strauthid = string_from_authid(authid);
-            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
 
-    ///\brief  sets a value to corresponding field but does not mark it as changed
-    // TODO authid_t authid
-    void set_from_acl(const char * strauthid, const char * value) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            this->fields[authid-1].parse(this->variables, value);
-            this->fields[authid-1].asked_ = false;
-            this->new_from_acl = true;
+        char const * c_str() const {
+            return this->field->c_str(this->ini.variables, this->ini.buffers);
         }
-        else {
-            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
-    }
 
-    ///\brief  sets a value to corresponding field but does not mark it as changed
-    // TODO authid_t authid
-    void ask_from_acl(const char * strauthid) {
-        authid_t authid = authid_from_string(strauthid);
-        if (authid != AUTHID_UNKNOWN) {
-            this->fields[authid-1].asked_ = true;
+        explicit operator bool () const {
+            return this->field;
         }
-        else {
-            LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
-        }
+
+        FieldReference(FieldReference &&) = default;
+
+    private:
+        FieldBase * field;
+        Inifile & ini;
+
+        FieldReference(FieldReference const &) = delete;
+        FieldReference & operator=(FieldReference const &) = delete;
+
+        FieldReference(FieldBase * field_ptr, Inifile & ini)
+        : field(field_ptr)
+        , ini(ini)
+        {}
+
+        friend class Inifile;
+    };
+
+    FieldReference get_acl_field(authid_t authid) {
+        return {authid == AUTHID_UNKNOWN ? nullptr : &this->fields[authid-1], *this};
     }
 
     void notify_from_acl() {
@@ -366,7 +325,7 @@ private:
     std::set<unsigned> to_send_index;
     configs::VariablesConfiguration variables;
     configs::PointerPackArray<FieldBase, Field, configs::VariablesAclPack> fields;
-    configs::Buffers buffers;
+    Buffers buffers;
     bool new_from_acl = false;
 
     void initialize() {

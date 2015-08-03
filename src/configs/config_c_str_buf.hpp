@@ -26,22 +26,45 @@
 
 namespace configs {
 
+namespace detail {
+    template<class T, bool = std::is_integral<T>::value, bool = std::is_enum<T>::value>
+    struct TaggedCStrBuf;
+
+    template<class T>
+    struct TaggedCStrBuf<T, true, false>
+    {
+        static constexpr std::size_t size() {
+            return std::numeric_limits<T>::digits10 + 2;
+        }
+        char buf[std::numeric_limits<T>::digits10 + 2];
+        char * get() { return this->buf; }
+    };
+
+    template<class T>
+    struct TaggedCStrBuf<T, false, true>
+    : TaggedCStrBuf<typename std::underlying_type<T>::type, true, false>
+    {};
+
+    template<class T>
+    struct TaggedCStrBuf<T, false, false>
+    {};
+
+    struct dummy {};
+}
+
 template<class T>
-struct CStrBuf {};
+struct CStrBuf : detail::TaggedCStrBuf<T>
+{};
 
-#define DECLARE_BUF(T)                                  \
-    template<> struct CStrBuf<T> {                      \
-        static constexpr std::size_t size() {           \
-          return std::numeric_limits<T>::digits10 + 2;  \
-        }                                               \
-        char buf[std::numeric_limits<T>::digits10 + 2]; \
-        char * get() { return this->buf; }        \
-    }
+template<class T>
+inline char const * c_str(CStrBuf<T>& , T const &);
 
-DECLARE_BUF(int);
-DECLARE_BUF(unsigned);
-
-template<> struct CStrBuf<std::string> {};
+template<class T>
+CStrBuf<T> make_c_str_buf(T const & x) {
+    CStrBuf<T> buf;
+    c_str(buf, x);
+    return buf;
+}
 
 }
 
