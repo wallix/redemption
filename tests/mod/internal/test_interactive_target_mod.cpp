@@ -49,20 +49,18 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     FakeFront front(info, 0);
 
     Inifile             ini;
-    ini.context_set_value(AUTHID_TARGET_HOST, "somehost");
-    ini.context_set_value(AUTHID_TARGET_USER, "someuser");
-    ini.context_ask(AUTHID_TARGET_PASSWORD);
+    ini.set<cfg::context::target_host>("somehost");
+    ini.set<cfg::globals::target_user>("someuser");
+    ini.ask<cfg::context::target_password>();
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
     InteractiveTargetMod d(ini, front, 800, 600);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
+    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enter to validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    const char * res = ini.context_get_value(AUTHID_DISPLAY_MESSAGE);
-    LOG(LOG_INFO, "%s\n", res);
-    BOOST_CHECK(0 == strcmp("True", res));
+    BOOST_CHECK_EQUAL("True", ini.get<cfg::context::display_message>());
 }
 
 
@@ -87,9 +85,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    const char * res = ini.context_get_value(AUTHID_DISPLAY_MESSAGE);
-    LOG(LOG_INFO, "%s\n", res);
-    BOOST_CHECK(0 == strcmp("False", res));
+    BOOST_CHECK_EQUAL("False", ini.get<cfg::context::display_message>());
 }
 
 BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
@@ -105,9 +101,9 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     FakeFront front(info, 0);
 
     Inifile ini;
-    ini.context_set_value(AUTHID_TARGET_HOST, "somehost");
-    ini.context_set_value(AUTHID_TARGET_USER, "someuser");
-    ini.context_ask(AUTHID_TARGET_PASSWORD);
+    ini.set<cfg::context::target_host>("somehost");
+    ini.set<cfg::globals::target_user>("someuser");
+    ini.ask<cfg::context::target_password>();
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
@@ -136,11 +132,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    const char * res = ini.context_get_value(AUTHID_TARGET_PASSWORD);
-    LOG(LOG_INFO, "%s\n", res);
-    BOOST_CHECK(0 == strcmp("zeaaaa", res));
-    res = ini.context_get_value(AUTHID_DISPLAY_MESSAGE);
-    LOG(LOG_INFO, "%s\n", res);
-    BOOST_CHECK(0 == strcmp("True", res));
+    BOOST_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::target_password>());
+    BOOST_CHECK_EQUAL("True", ini.get<cfg::context::display_message>());
 
 }

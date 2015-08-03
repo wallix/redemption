@@ -201,13 +201,13 @@ public:
            , uint32_t verbose
            )
     //==============================================================================================================
-    : InternalMod(front, front_width, front_height, ini.font, &ini)
+    : InternalMod(front, front_width, front_height, ini.get<cfg::font>(), &ini)
     , challenge(*this, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
-                0, nullptr, ini.theme,
+                0, nullptr, ini.get<cfg::theme>(),
                 TR("Authentification required", ini),
                 TR("VNC password", ini),
-                ini.font)
+                ini.get<cfg::font>())
     , mod_name{0}
     , palette(nullptr)
     , vnc_desktop(0)
@@ -465,7 +465,7 @@ protected:
 
         if (this->state == UP_AND_RUNNING) {
             if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
-                if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
+                if (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8) {
                     if (this->verbose & 0x80) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
                     }
@@ -492,7 +492,7 @@ protected:
                 }
             }
             else {
-                if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
+                if (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8) {
                     if (this->verbose & 0x80) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
                     }
@@ -2675,8 +2675,7 @@ public:
     void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.context_set_value(AUTHID_TARGET_PASSWORD,
-                                        this->challenge.password_edit.get_text());
+            this->ini.set<cfg::context::target_password>(this->challenge.password_edit.get_text());
 
             this->screen.clear();
 

@@ -49,19 +49,19 @@ public:
     FlatWait(DrawApi& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id, Inifile & ini,
-             Theme & theme, bool showform = false, int required = FlatForm::NONE)
+             Theme const & theme, bool showform = false, int required = FlatForm::NONE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption, -6,
-                   theme.global.fgcolor, theme.global.bgcolor, ini.font)
+                   theme.global.fgcolor, theme.global.bgcolor, ini.get<cfg::font>())
         , bg_color(theme.global.bgcolor)
         , dialog(drawable, 0, 0, this->groupbox, nullptr, text, true, -10,
-                 theme.global.fgcolor, theme.global.bgcolor, ini.font, 10, 2)
+                 theme.global.fgcolor, theme.global.bgcolor, ini.get<cfg::font>(), 10, 2)
         , form(drawable, width - 80, 150, *this, this, -20, ini, theme, required)
         , goselector(drawable, 0, 0, this->groupbox, this, TR("back_selector", ini), true, -12,
                      theme.global.fgcolor, theme.global.bgcolor,
-                     theme.global.focus_color, ini.font, 6, 2)
+                     theme.global.focus_color, ini.get<cfg::font>(), 6, 2)
         , exit(drawable, 0, 0, this->groupbox, this, TR("exit", ini), true, -11,
-               theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, ini.font,
+               theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, ini.get<cfg::font>(),
                6, 2)
         , hasform(showform)
     {

@@ -200,9 +200,12 @@ struct Font
 
     FontChar font_items[NUM_GLYPHS];
     char name[32];
-    int size;
-    int style;
+    int size = 0;
+    int style = 0;
 
+    Font() {
+        this->name[0] = 0;
+    }
 
     // Constructor
     // Params :

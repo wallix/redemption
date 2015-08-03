@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //listener.run();
 
     Inifile ini;
-    ini.debug.front = 511;
+    ini.set<cfg::debug::front>(511);
 
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     //}
     //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-    //                           , ini.debug.front, 0);
+    //                           , ini.get<cfg::debug::front,>() 0);
 
     LCGRandom gen(0);
 
@@ -102,10 +102,10 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata),
         verbose);
 
-    ini.client.tls_support         = true;
-    ini.client.tls_fallback_legacy = false;
-    ini.client.bogus_user_id       = false;
-    ini.client.rdp_compression     = 0;
+    ini.set<cfg::client::tls_support>(true);
+    ini.set<cfg::client::tls_fallback_legacy>(false);
+    ini.set<cfg::client::bogus_user_id>(false);
+    ini.set<cfg::client::rdp_compression>(0);
 
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     BOOST_CHECK_EQUAL(1, front.up_and_running);
-    TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.font);
+    TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.get<cfg::font>());
     mod.draw_event(time(nullptr));
 
     // Uncomment the code block below to generate testing data.

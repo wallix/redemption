@@ -86,13 +86,13 @@ public:
             }
 
             // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
-            //     ini.context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
-            //     ini.context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
+            //     ini.is_asked<cfg::context::keepalive>()?"Y":"N",
+            //     ini.get<cfg::context::keepalive>()?"Y":"N");
 
             // Keepalive received positive response
             if (this->wait_answer
-                && !ini.context_is_asked(AUTHID_KEEPALIVE)
-                && ini.context_get_bool(AUTHID_KEEPALIVE)) {
+                && !ini.is_asked<cfg::context::keepalive>()
+                && ini.get<cfg::context::keepalive>()) {
                 if (this->verbose & 0x10) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
@@ -107,7 +107,7 @@ public:
 
                 this->wait_answer = true;
 
-                ini.context_ask(AUTHID_KEEPALIVE);
+                ini.ask<cfg::context::keepalive>();
             }
         }
         return false;
@@ -227,10 +227,10 @@ public:
         }
 
         // Close by rejeted message received
-        if (!this->ini.get<cfg::context::rejected>().is_empty()) {
-            this->ini.get<cfg::context::auth_error_message>().get() = this->ini.get<cfg::context::rejected>();
-            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>().get_cstr());
-            this->ini.get<cfg::context::rejected>().set_empty();
+        if (!this->ini.get<cfg::context::rejected>().empty()) {
+            this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
+            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>().c_str());
+            this->ini.get_ref<cfg::context::rejected>().clear();
             mm.invoke_close_box(nullptr, signal, now);
             return true;
         }
@@ -248,7 +248,7 @@ public:
         }
 
         // Manage module (refresh or next)
-        if (this->ini.check()) {
+        if (this->ini.changed_field_size()) {
             if (mm.connected) {
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc, xup ...) and something changed.
@@ -293,8 +293,7 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini.get<cfg::context::module>().set_from_cstr(
-                            STRMODULE_TRANSITORY);
+                        this->ini.set<cfg::context::module>(STRMODULE_TRANSITORY);
 
                         signal = BACK_EVENT_NEXT;
 
@@ -316,15 +315,15 @@ public:
                         if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
                             (username[0] != 0)) {
                             LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                            this->ini.get<cfg::globals::target_user>().set_from_cstr(username);
+                            this->ini.set<cfg::globals::target_user>(username);
                             change_user = username;
                         }
                         if (password[0] != 0) {
                             LOG(LOG_INFO, "SrvRedir: Change target password");
-                            this->ini.get<cfg::context::target_password>().set_from_cstr(password);
+                            this->ini.set<cfg::context::target_password>(password);
                         }
                         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                        this->ini.get<cfg::context::target_host>().set_from_cstr(host);
+                        this->ini.set<cfg::context::target_host>(host);
                         char message[768] = {};
                         sprintf(message, "%s@%s", change_user, host);
                         this->report("SERVER_REDIRECTION", message);
@@ -357,10 +356,9 @@ public:
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
                 // If set, transmit to auth_channel channel
-                mm.mod->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().get_cstr());
-                this->ini.get<cfg::context::auth_channel_answer>().use();
+                mm.mod->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
                 // Erase the context variable
-                this->ini.get<cfg::context::auth_channel_answer>().set_empty();
+                this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
             }
         }
         return true;
@@ -373,8 +371,8 @@ public:
             this->remote_answer = true;
         } catch (...) {
             // acl connection lost
-            this->ini.get<cfg::context::authenticated>().set(false);
-            this->ini.get<cfg::context::rejected>().set_from_cstr(TR("manager_close_cnx", this->ini));
+            this->ini.set<cfg::context::authenticated>(false);
+            this->ini.set<cfg::context::rejected>(TR("manager_close_cnx", this->ini));
         }
     }
 
@@ -384,7 +382,7 @@ public:
     }
 
     void set_auth_channel_target(const char * target) override {
-        this->ini.get<cfg::context::auth_channel_target>().set_from_cstr(target);
+        this->ini.set<cfg::context::auth_channel_target>(target);
     }
 
     //virtual void set_auth_channel_result(const char * result)
@@ -393,12 +391,12 @@ public:
     //}
 
     void report(const char * reason, const char * message) override {
-        this->ini.context_ask(AUTHID_KEEPALIVE);
+        this->ini.ask<cfg::context::keepalive>();
 
         char report[1024];
         snprintf(report, sizeof(report), "%s:%s:%s", reason,
-            this->ini.get<cfg::globals::target_device>().get_cstr(), message);
-        this->ini.get<cfg::context::reporting>().set_from_cstr(report);
+            this->ini.get<cfg::globals::target_device>().c_str(), message);
+        this->ini.set<cfg::context::reporting>(report);
 
         this->ask_acl();
     }

@@ -60,7 +60,7 @@ public:
                           Widget2 & parent, NotifyApi* notifier,
                           int group_id, bool ask_device,
                           bool ask_login, bool ask_password,
-                          Theme & theme, const char* caption,
+                          Theme const & theme, const char* caption,
                           const char * text_device,
                           const char * device_str,
                           const char * text_login,

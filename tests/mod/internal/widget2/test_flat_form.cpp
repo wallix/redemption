@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;

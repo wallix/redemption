@@ -18,9 +18,10 @@ int main(int argc, char ** argv) {
         "Copyright (C) Wallix 2010-2015.\n"
         "Christophe Grosjean, Raphael Zhou."
       , [](CryptoContext & cctx) {
-            Inifile::Inifile_crypto ini_crypto;
-            memcpy(cctx.crypto_key, ini_crypto.key0, sizeof(cctx.crypto_key));
-            memcpy(cctx.hmac_key,   ini_crypto.key1, sizeof(cctx.hmac_key  ));
+            cfg::crypto::key0 key0;
+            cfg::crypto::key1 key1;
+            memcpy(cctx.crypto_key, key0.value, sizeof(cctx.crypto_key));
+            memcpy(cctx.hmac_key,   key1.value, sizeof(cctx.hmac_key  ));
             return 0;
         }
     );

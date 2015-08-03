@@ -179,7 +179,7 @@ private:
                 // Generates the name of file.
                 char cache_filename[2048];
                 ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
-                    PERSISTENT_PATH "/client", ini.get<cfg::globals::host>().get_cstr(), this->bmp_cache.bpp);
+                    PERSISTENT_PATH "/client", ini.c_str<cfg::globals::host>(), this->bmp_cache.bpp);
                 cache_filename[sizeof(cache_filename) - 1] = '\0';
 
                 int fd = ::open(cache_filename, O_RDONLY);
@@ -607,11 +607,11 @@ public:
         struct timeval now = tvtime();
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>().get_cstr());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>().get_cstr());
-            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>().get_cstr());
-            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>().get_cstr());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().get_cstr());
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.c_str<cfg::globals::movie_path>());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.c_str<cfg::globals::auth_user>());
+            LOG(LOG_INFO, "host          = %s\n", ini.c_str<cfg::globals::host>());
+            LOG(LOG_INFO, "target_device = %s\n", ini.c_str<cfg::globals::target_device>());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.c_str<cfg::globals::target_user>());
         }
 
         char path[1024];
@@ -620,7 +620,7 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().get_cstr(), path,
+        const bool res = canonical_path(ini.c_str<cfg::globals::movie_path>(), path,
                                         sizeof(path), basename, sizeof(basename), extension,
                                         sizeof(extension));
         if (!res) {
@@ -734,12 +734,12 @@ public:
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini.get<cfg::globals::host>().get_cstr(), this->orders.bpp());
+            persistent_path, this->ini.c_str<cfg::globals::host>(), this->orders.bpp());
         filename[sizeof(filename) - 1] = '\0';
 
         char filename_temporary[2048];
         ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini.get<cfg::globals::host>().get_cstr(), this->orders.bpp());
+            persistent_path, this->ini.c_str<cfg::globals::host>(), this->orders.bpp());
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
@@ -1661,7 +1661,7 @@ public:
 
             this->keymap.init_layout(this->client_info.keylayout);
             LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
-            this->ini.get<cfg::client::keyboard_layout>().set(this->client_info.keylayout);
+            this->ini.set<cfg::client::keyboard_layout>(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2) {
                     LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
@@ -3664,9 +3664,9 @@ public:
                 this->up_and_running = 1;
                 cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
-                this->ini.get<cfg::context::opt_width>().set(this->client_info.width);
-                this->ini.get<cfg::context::opt_height>().set(this->client_info.height);
-                this->ini.get<cfg::context::opt_bpp>().set(this->client_info.bpp);
+                this->ini.set<cfg::context::opt_width>(this->client_info.width);
+                this->ini.set<cfg::context::opt_height>(this->client_info.height);
+                this->ini.set<cfg::context::opt_bpp>(this->client_info.bpp);
 
                 if (!this->auth_info_sent) {
                     char         username_a_domain[512];
@@ -3682,7 +3682,7 @@ public:
                     }
                     this->ini.parse_username(username);
                     if (this->client_info.password[0]) {
-                        this->ini.context_set_value(AUTHID_PASSWORD, this->client_info.password);
+                        this->ini.set<cfg::context::password>(this->client_info.password);
                     }
 
                     this->auth_info_sent = true;

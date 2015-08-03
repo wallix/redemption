@@ -1154,7 +1154,7 @@ private:
         }
         else if (((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) ||
                   (msgType == RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE)) &&
-                 (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+                 (!this->disable_clipboard_log_syslog)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (!chunk.in_check_rem(6 /* msgFlags(2) + dataLen(4) */)) {
                     LOG(LOG_ERR,
@@ -4751,7 +4751,7 @@ public:
                 "Unauthorized logon user change detected on %s (%s%s%s) -> (%s%s%s). "
                     "The session will be disconnected.",
                 this->hostname, this->domain,
-                ((this->domain && (*this->domain)) ? "\\" : ""),
+                (*this->domain ? "\\" : ""),
                 this->username, domain,
                 ((domain && (*domain)) ? "\\" : ""),
                 username);
@@ -6480,7 +6480,7 @@ public:
 
         if (((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) ||
              (msgType == RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE)) &&
-            (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+            (!this->disable_clipboard_log_syslog)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 stream.in_skip_bytes(2 /* msgFlags(2) */);
 

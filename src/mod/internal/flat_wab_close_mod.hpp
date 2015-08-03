@@ -41,19 +41,19 @@ private:
 
         explicit temporary_text(Inifile & ini)
         {
-            if (strcmp(ini.get<cfg::context::module>().get_cstr(), "selector") == 0) {
+            if (ini.get<cfg::context::module>() == "selector") {
                 snprintf(text, sizeof(text), "%s", TR("selector", ini));
             }
             else {
                 TODO("target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman")
-                if (::strlen(ini.get<cfg::globals::target_application>().get_cstr())) {
+                if (!ini.get<cfg::globals::target_application>().empty()) {
                     snprintf(text, sizeof(text), "%s",
-                             ini.get<cfg::globals::target_application>().get_cstr());
+                             ini.get<cfg::globals::target_application>().c_str());
                 }
                 else {
                     snprintf(text, sizeof(text), "%s@%s",
-                             ini.get<cfg::globals::target_user>().get_cstr(),
-                             ini.get<cfg::globals::target_device>().get_cstr());
+                             ini.get<cfg::globals::target_user>().c_str(),
+                             ini.get<cfg::globals::target_device>().c_str());
                 }
             }
         }
@@ -61,14 +61,14 @@ private:
 
 public:
     FlatWabCloseMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
-        : InternalMod(front, width, height, ini.font, &ini)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
         , close_widget(*this, width, height, this->screen, this,
-                       ini.get<cfg::context::auth_error_message>().get_cstr(), 0,
-                       (ini.context_is_asked(AUTHID_AUTH_USER)
-                        || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-                       nullptr : ini.get<cfg::globals::auth_user>().get_cstr(),
-                       (ini.context_is_asked(AUTHID_TARGET_USER)
-                        || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
+                       ini.get<cfg::context::auth_error_message>().c_str(), 0,
+                       (ini.is_asked<cfg::globals::auth_user>()
+                        || ini.is_asked<cfg::globals::target_device>()) ?
+                       nullptr : ini.get<cfg::globals::auth_user>().c_str(),
+                       (ini.is_asked<cfg::globals::auth_user>()
+                        || ini.is_asked<cfg::globals::target_device>()) ?
                        nullptr : temporary_text(ini).text,
                        showtimer, ini)
         , timeout(now, ini.get<cfg::globals::close_timeout>())

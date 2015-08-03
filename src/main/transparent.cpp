@@ -211,7 +211,7 @@ int main(int argc, char * argv[]) {
     try {
         if (target_device.empty()) {
             TransparentReplayMod mod(front, play_filename.c_str(),
-                front.client_info.width, front.client_info.height, nullptr, ini.font);
+                front.client_info.width, front.client_info.height, nullptr, ini.get<cfg::font>());
 
             run_mod(mod, front, front_event, nullptr, &front_trans);
         }
@@ -245,7 +245,7 @@ int main(int argc, char * argv[]) {
 
             int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.get<cfg::debug::mod_rdp>());
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
-                                     , ini.get<cfg::debug::mod_rdp>(), &ini.get<cfg::context::auth_error_message>());
+                                     , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
 
             ClientInfo client_info = front.client_info;
 
@@ -268,8 +268,8 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.persistent_key_list_transport       = persistent_key_list_ift;
             mod_rdp_params.transparent_recorder_transport      = record_oft;
             mod_rdp_params.auth_channel                        = ini.get<cfg::globals::auth_channel>();
-            mod_rdp_params.alternate_shell                     = ini.get<cfg::globals::alternate_shell>().get_cstr();
-            mod_rdp_params.shell_working_directory             = ini.get<cfg::globals::shell_working_directory>().get_cstr();
+            mod_rdp_params.alternate_shell                     = ini.get<cfg::globals::alternate_shell>().c_str();
+            mod_rdp_params.shell_working_directory             = ini.get<cfg::globals::shell_working_directory>().c_str();
             mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
             mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
             mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
@@ -280,10 +280,10 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
             mod_rdp_params.cache_verbose                       = ini.get<cfg::debug::cache>();
 
-            mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
-            mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
+            mod_rdp_params.allow_channels                      = &(ini.get_ref<cfg::mod_rdp::allow_channels>());
+            mod_rdp_params.deny_channels                       = &(ini.get_ref<cfg::mod_rdp::deny_channels>());
 
-            mod_rdp mod(mod_trans, front, client_info, ini.get<cfg::mod_rdp::redir_info>(),
+            mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
                         gen, mod_rdp_params);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);

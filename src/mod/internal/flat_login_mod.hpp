@@ -40,21 +40,21 @@ public:
     Inifile & ini;
 
     FlatLoginMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, ini.font, &ini)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
-                ini.get<cfg::account::username>()[0] != 0,
+                ini.get<cfg::account>().username[0] != 0,
                 0, nullptr, nullptr, TR("login", ini), TR("password", ini), ini)
         , ini(ini)
     {
         this->screen.add_widget(&this->login);
 
-        this->login.login_edit.set_text(this->ini.get<cfg::account::username>());
-        this->login.password_edit.set_text(this->ini.get<cfg::account::password>());
+        this->login.login_edit.set_text(this->ini.get<cfg::account>().username);
+        this->login.password_edit.set_text(this->ini.get<cfg::account>().password);
 
         this->screen.set_widget_focus(&this->login, Widget2::focus_reason_tabkey);
 
         this->login.set_widget_focus(&this->login.login_edit, Widget2::focus_reason_tabkey);
-        if (ini.get<cfg::account::username>()[0] != 0){
+        if (ini.get<cfg::account>().username[0] != 0){
             this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
         }
 
@@ -69,7 +69,7 @@ public:
         switch (event) {
         case NOTIFY_SUBMIT:
             this->ini.parse_username(this->login.login_edit.get_text());
-            this->ini.context_set_value(AUTHID_PASSWORD, this->login.password_edit.get_text());
+            this->ini.set<cfg::context::password>(this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
             break;

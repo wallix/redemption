@@ -102,7 +102,8 @@ public:
                     // this->ini->set_from_acl((char *)keyword,
                     //                         (char *)output);
                     this->ini->set_from_acl(keyword, value + (value[0] == '!' ? 1 : 0));
-                    const char * val         = this->ini->get_cstr_from_key(keyword);
+                    //const char * val         = this->ini->get_cstr_from_key(keyword);
+                    const char * val         = this->ini->get_value(authid_from_string(keyword));
                     const char * display_val = val;
                     if ((strncasecmp("password", keyword, 9 ) == 0) ||
                         (strncasecmp("target_application_password", keyword, 27) == 0) ||
@@ -184,8 +185,8 @@ public:
                 stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
                 this->auth_trans.send(stream.get_data(), total_length);
             } catch (Error const &) {
-                this->ini->direct_set<cfg::context::authenticated>(false);
-                this->ini->direct_set<cfg::context::rejected>(TR("acl_fail", *(this->ini)));
+                this->ini->set<cfg::context::authenticated>(false);
+                this->ini->set<cfg::context::rejected>(TR("acl_fail", *(this->ini)));
                 // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
             }
         }

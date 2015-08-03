@@ -37,7 +37,7 @@ public:
                 Inifile * ini = nullptr)
         : mod_api(front_width, front_height)
         , front(front)
-        , screen(*this, front_width, front_height, font, nullptr, ini ? &(ini->theme): nullptr)
+        , screen(*this, front_width, front_height, font, nullptr, ini ? &(ini->get<cfg::theme>()) : nullptr)
     {
         this->front.server_resize(front_width, front_height, 24);
     }

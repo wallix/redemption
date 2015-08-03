@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen wscreen(drawable, drawable.gd.width(), drawable.gd.height(), ini.font);
+    WidgetScreen wscreen(drawable, drawable.gd.width(), drawable.gd.height(), ini.get<cfg::font>());
 
     wscreen.refresh(wscreen.rect);
     wscreen.tab_flag = Widget2::NORMAL_TAB;
@@ -69,13 +69,13 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     Notify notifier4;
 
     WidgetFlatButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.get<cfg::font>());
     WidgetFlatButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.get<cfg::font>());
     WidgetFlatButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.get<cfg::font>());
     WidgetFlatButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.font);
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, ini.get<cfg::font>());
 
     wscreen.add_widget(&wbutton1);
     wscreen.add_widget(&wbutton2);

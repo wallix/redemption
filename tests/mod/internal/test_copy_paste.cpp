@@ -140,8 +140,8 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(front, info.width, info.height, ini.font);
-    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, ini.font);
+    WidgetScreen parent(front, info.width, info.height, ini.get<cfg::font>());
+    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, ini.get<cfg::font>());
 
     BOOST_REQUIRE(copy_paste.ready(front));
 

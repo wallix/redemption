@@ -41,9 +41,9 @@ public:
     FlatDialogMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
                   const char * caption, const char * message, const char * cancel_text,
                   time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
-        : InternalMod(front, width, height, ini.font, &ini)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
         , dialog_widget(*this, width, height, this->screen, this, caption, message,
-                        0, ini.theme, ini.font, TR("OK", ini), cancel_text,
+                        0, ini.get<cfg::theme>(), ini.get<cfg::font>(), TR("OK", ini), cancel_text,
                         has_challenge)
         , ini(ini)
         , timeout(now, ini.get<cfg::debug::pass_dialog_box>())
@@ -76,14 +76,13 @@ private:
     void accepted()
     {
         if (this->dialog_widget.challenge) {
-            this->ini.context_set_value(AUTHID_PASSWORD,
-                                        this->dialog_widget.challenge->get_text());
+            this->ini.set<cfg::context::password>(this->dialog_widget.challenge->get_text());
+        }
+        else if (this->dialog_widget.cancel) {
+            this->ini.set<cfg::context::accept_message>("True");
         }
         else {
-            this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE
-                                         : AUTHID_DISPLAY_MESSAGE),
-                                        "True");
+            this->ini.set<cfg::context::display_message>("True");
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
@@ -93,10 +92,12 @@ private:
     void refused()
     {
         if (!this->dialog_widget.challenge) {
-            this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE
-                                         : AUTHID_DISPLAY_MESSAGE),
-                                        "False");
+            if (this->dialog_widget.cancel) {
+                this->ini.set<cfg::context::accept_message>("False");
+            }
+            else {
+                this->ini.set<cfg::context::display_message>("False");
+            }
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();

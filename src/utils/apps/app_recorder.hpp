@@ -211,17 +211,17 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     ConfigurationLoader cfg_loader_full(ini, CFG_PATH "/" RDPPROXY_INI);
 
     if (options.count("compression") > 0) {
-             if (0 == strcmp(wrm_compression_algorithm.c_str(), "none"       )) {
-            ini.get<cfg::video::wrm_compression_algorithm>() = 0;
+             if (wrm_compression_algorithm == "none") {
+            ini.set<cfg::video::wrm_compression_algorithm>(0);
         }
-        else if (0 == strcmp(wrm_compression_algorithm.c_str(), "gzip"       )) {
-            ini.get<cfg::video::wrm_compression_algorithm>() = 1;
+        else if (wrm_compression_algorithm == "gzip") {
+            ini.set<cfg::video::wrm_compression_algorithm>(1);
         }
-        else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "snappy"    )) {
-            ini.get<cfg::video::wrm_compression_algorithm>() = 2;
+        else if (wrm_compression_algorithm == "snappy") {
+            ini.set<cfg::video::wrm_compression_algorithm>(2);
         }
-        else  if (0 == strcmp(wrm_compression_algorithm.c_str(), "original"  )) {
-            ini.get<cfg::video::wrm_compression_algorithm>() = USE_ORIGINAL_COMPRESSION_ALGORITHM;
+        else if (wrm_compression_algorithm == "original") {
+            ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
@@ -229,18 +229,18 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.get<cfg::video::wrm_compression_algorithm>() = USE_ORIGINAL_COMPRESSION_ALGORITHM;
+        ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
     }
 
     if (options.count("color-depth") > 0) {
-             if (0 == strcmp(wrm_color_depth.c_str(), "16"       )) {
-            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = 16;
+             if (wrm_color_depth == "16") {
+            ini.set<cfg::video::wrm_color_depth_selection_strategy>(16);
         }
-        else if (0 == strcmp(wrm_color_depth.c_str(), "24"       )) {
-            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = 24;
+        else if (wrm_color_depth == "24") {
+            ini.set<cfg::video::wrm_color_depth_selection_strategy>(24);
         }
-        else  if (0 == strcmp(wrm_color_depth.c_str(), "original")) {
-            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = USE_ORIGINAL_COLOR_DEPTH;
+        else if (wrm_color_depth == "original") {
+            ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
         }
         else {
             std::cerr << "Unknown wrm color depth\n\n";
@@ -248,26 +248,26 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.get<cfg::video::wrm_color_depth_selection_strategy>() = USE_ORIGINAL_COLOR_DEPTH;
+        ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
     }
 
-    ini.get<cfg::video::png_limit>()      = png_limit;
-    ini.get<cfg::video::png_interval>()   = png_interval;
-    ini.get<cfg::video::frame_interval>() = wrm_frame_interval;
-    ini.get<cfg::video::break_interval>() = wrm_break_interval;
-    ini.get<cfg::video::capture_flags>()  &= ~(CaptureFlags::wrm | CaptureFlags::png);
+    ini.set<cfg::video::png_limit>(png_limit);
+    ini.set<cfg::video::png_interval>(png_interval);
+    ini.set<cfg::video::frame_interval>(wrm_frame_interval);
+    ini.set<cfg::video::break_interval>(wrm_break_interval);
+    ini.get_ref<cfg::video::capture_flags>() &= ~(CaptureFlags::wrm | CaptureFlags::png);
     if (options.count("wrm") > 0) {
-        ini.get<cfg::video::capture_flags>() |= CaptureFlags::wrm;
+        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::wrm;
     }
     if (options.count("png") > 0) {
-        ini.get<cfg::video::capture_flags>() |= CaptureFlags::png;
+        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::png;
     }
 
     if (int status = parse_format(ini, options, output_filename)) {
         return status;
     }
 
-    ini.get<cfg::video::rt_display>().set(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
+    ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
 
 /*
     {
@@ -314,13 +314,13 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     if (options.count("encryption") > 0) {
              if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
-            ini.get<cfg::globals::enable_file_encryption>().set(true);
+            ini.set<cfg::globals::enable_file_encryption>(true);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
-            ini.get<cfg::globals::enable_file_encryption>().set(false);
+            ini.set<cfg::globals::enable_file_encryption>(false);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
-            ini.get<cfg::globals::enable_file_encryption>().set(infile_is_encrypted);
+            ini.set<cfg::globals::enable_file_encryption>(infile_is_encrypted);
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
@@ -328,11 +328,11 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.get<cfg::globals::enable_file_encryption>().set(infile_is_encrypted);
+        ini.set<cfg::globals::enable_file_encryption>(infile_is_encrypted);
     }
 
     if (infile_is_encrypted || ini.get<cfg::globals::enable_file_encryption>()) {
-        if (int status = init_crypto(ini.crypto)) {
+        if (int status = init_crypto(ini.get<cfg::crypto::key0>(), ini.get<cfg::crypto::key1>())) {
             return status;
         }
         OpenSSL_add_all_digests();
@@ -623,7 +623,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
     }
 
     if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-        ini.get<cfg::video::wrm_compression_algorithm>() = player.info_compression_algorithm;
+        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
     }
 
     int return_code = 0;
@@ -829,11 +829,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         }
 
         if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-            ini.get<cfg::video::wrm_compression_algorithm>() = player.info_compression_algorithm;
+            ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
         }
 
         if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
-            ini.get<cfg::video::wrm_color_depth_selection_strategy>() = player.info_bpp;
+            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
         }
 
         {

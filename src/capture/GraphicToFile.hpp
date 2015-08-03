@@ -200,7 +200,7 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    void input(const timeval & now, Stream & input_data_32) override {
+    bool input(const timeval & now, Stream & input_data_32) override {
         uint32_t count  = input_data_32.size() / sizeof(uint32_t);
 
         size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));

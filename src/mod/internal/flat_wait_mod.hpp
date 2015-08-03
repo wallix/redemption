@@ -44,9 +44,9 @@ public:
     FlatWaitMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
-        : InternalMod(front, width, height, ini.font, &ini)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
         , wait_widget(*this, width, height, this->screen, this, caption, message,
-                      0, ini,  ini.theme, showform, flag)
+                      0, ini,  ini.get<cfg::theme>(), showform, flag)
         , ini(ini)
         , timeout(now, 600)
     {
@@ -80,22 +80,17 @@ public:
 private:
     void confirm()
     {
-        this->ini.context_set_value(AUTHID_WAITINFORETURN,
-                                    "confirm");
-        this->ini.context_set_value(AUTHID_COMMENT,
-                                    this->wait_widget.form.comment_edit.get_text());
-        this->ini.context_set_value(AUTHID_TICKET,
-                                    this->wait_widget.form.ticket_edit.get_text());
-        this->ini.context_set_value(AUTHID_DURATION,
-                                    this->wait_widget.form.duration_edit.get_text());
+        this->ini.set<cfg::context::waitinforeturn>("confirm");
+        this->ini.set<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
+        this->ini.set<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
+        this->ini.set<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void accepted()
     {
-        this->ini.context_set_value(AUTHID_WAITINFORETURN,
-                                    "backselector");
+        this->ini.set<cfg::context::waitinforeturn>("backselector");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -103,8 +98,7 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->ini.context_set_value(AUTHID_WAITINFORETURN,
-                                    "exit");
+        this->ini.set<cfg::context::waitinforeturn>("exit");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

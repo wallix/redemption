@@ -425,27 +425,27 @@ void config_spec_definition(Writer && W)
         W.member(type_<unsigned>(), "opt_framerate", str_authid{"framerate"}, set(5), r);
         W.member(type_<unsigned>(), "opt_qscale", str_authid{"qscale"}, set(15), r);
         W.sep();
-        W.member(type_<unsigned>(), "opt_bpp", str_authid{"bpp"}, set(24), r);
-        W.member(type_<unsigned>(), "opt_height", str_authid{"height"}, set(600), r);
-        W.member(type_<unsigned>(), "opt_width", str_authid{"width"}, set(800), r);
+        W.member(type_<unsigned>(), "opt_bpp", str_authid{"bpp"}, set(24), rw);
+        W.member(type_<unsigned>(), "opt_height", str_authid{"height"}, set(600), rw);
+        W.member(type_<unsigned>(), "opt_width", str_authid{"width"}, set(800), rw);
         W.sep();
         W.member(type_<std::string>(), "auth_error_message", info{
             "auth_error_message is left as std::string type\n"
             "because SocketTransport and ReplayMod take it as argument on\n"
             "constructor and modify it as a std::string"
-        }, w);
+        }, r);
         W.sep();
         W.member(type_<bool>(), "selector", set(false), r);
         W.member(type_<unsigned>(), "selector_current_page", set(1), rw);
-        W.member(type_<std::string>(), "selector_device_filter", w);
-        W.member(type_<std::string>(), "selector_group_filter", w);
-        W.member(type_<std::string>(), "selector_proto_filter", w);
+        W.member(type_<std::string>(), "selector_device_filter", r);
+        W.member(type_<std::string>(), "selector_group_filter", r);
+        W.member(type_<std::string>(), "selector_proto_filter", r);
         W.member(type_<unsigned>(), "selector_lines_per_page", set(0), rw);
         W.member(type_<unsigned>(), "selector_number_of_pages", set(1), r);
         W.sep();
-        W.member(type_<std::string>(), "target_password", w);
-        W.member(type_<std::string>(), "target_host", set(""), w);
-        W.member(type_<unsigned>(), "target_port", set(3389), w);
+        W.member(type_<std::string>(), "target_password", rw);
+        W.member(type_<std::string>(), "target_host", set(""), rw);
+        W.member(type_<unsigned>(), "target_port", set(3389), rw);
         W.member(type_<std::string>(), "target_protocol", str_authid{"proto_dest"}, set("RDP"), r);
         W.sep();
         W.member(type_<std::string>(), "password", rw);
@@ -479,9 +479,8 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "real_target_device", r);
         W.sep();
-        // TODO
-        //W.member(type_<bool>(), "authentication_challenge", w);
-        //W.sep();
+        W.member(type_<bool>(), "authentication_challenge", r);
+        W.sep();
         W.member(type_<std::string>(), "ticket", set(""), r);
         W.member(type_<std::string>(), "comment", set(""), r);
         W.member(type_<std::string>(), "duration", set(""), r);
@@ -490,7 +489,7 @@ void config_spec_definition(Writer && W)
         W.member(type_<unsigned>(), "formflag", set(0), w);
         W.sep();
         W.member(type_<std::string>(), "module", set("login"), rw);
-        W.member(type_<bool>(), "forcemodule", set(false), rw);
+        W.member(type_<bool>(), "forcemodule", set(false), r);
         W.member(type_<std::string>(), "proxy_opt", r);
     }
     W.stop_section();

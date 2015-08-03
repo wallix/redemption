@@ -31,7 +31,7 @@
 #include "parser.hpp"
 #include "defines.hpp"
 #include "fileutils.hpp"
-#include "dynamic_buffer.hpp"
+#include "config_c_str_buf.hpp"
 
 #include <cstdio>
 
@@ -94,9 +94,24 @@ inline void parse(Theme & theme, char const * value) {
 inline int copy_val(unsigned x, char * buff, std::size_t n) { return snprintf(buff, n, "%u", x); }
 inline int copy_val(int x, char * buff, std::size_t n) { return snprintf(buff, n, "%d", x); }
 inline int copy_val(bool x, char * buff, std::size_t n) {
-    if (n > 1) {
-        *buff++ = x ? '1' :'0';
-        return 1;
+    if (x) {
+        if (n > 4) {
+            *buff++ = 'T';
+            *buff++ = 'r';
+            *buff++ = 'u';
+            *buff++ = 'e';
+            return 4;
+        }
+    }
+    else {
+        if (n > 5) {
+            *buff++ = 'F';
+            *buff++ = 'a';
+            *buff++ = 'l';
+            *buff++ = 's';
+            *buff++ = 'e';
+            return 5;
+        }
     }
     return -1;
 }
@@ -150,46 +165,33 @@ inline int copy_val(Theme const & , char * , std::size_t ) {
     return 0;
 }
 
-inline char const * c_str(DynamicBuffer& s, unsigned x) {
-    s.reserve(std::numeric_limits<unsigned>::digits10 + 2);
+inline char const * c_str(CStrBuf<unsigned>& s, unsigned x) {
     snprintf(s.get(), s.size(), "%u", x);
     return s.get();
 }
 
-inline char const * c_str(DynamicBuffer& s, int x) {
-    s.reserve(std::numeric_limits<unsigned>::digits10 + 2);
+inline char const * c_str(CStrBuf<int>& s, int x) {
     snprintf(s.get(), s.size(), "%d", x);
     return s.get();
 }
 
-inline char const * c_str(DynamicBuffer& s, bool x) {
-    s.reserve(32);
-    s[0] = x ? '1' : '0';
-    s[1] = 0;
-    return s.get();
+inline char const * c_str(CStrBuf<bool>&, bool x) {
+    return x ? "True" : "False";
 }
 
-inline char const * c_str(DynamicBuffer&, std::string const & x) {
+inline char const * c_str(CStrBuf<std::string>&, std::string const & x) {
     return x.c_str();
 }
 
-inline char const * c_str(DynamicBuffer& s, Level x) {
-    auto cstr = cstr_from_level(x);
-    s.reserve(32);
-    s[s.size()-1] = 0;
-    strncpy(s.get(), cstr, s.size()-1);
-    return s.get();
+inline char const * c_str(CStrBuf<Level>&, Level x) {
+    return cstr_from_level(x);
 }
 
-inline char const * c_str(DynamicBuffer& s, ColorDepth x, char const * value) {
-    auto cstr = cstr_from_color_depth(x);
-    s.reserve(32);
-    s[s.size()-1] = 0;
-    strncpy(s.get(), cstr, s.size()-1);
-    return s.get();
+inline char const * c_str(CStrBuf<ColorDepth>&, ColorDepth x) {
+    return cstr_from_color_depth(x);
 }
 
-inline char const * c_str(DynamicBuffer& s, Theme const & theme) {
+inline char const * c_str(CStrBuf<ColorDepth>&, Theme const & theme) {
     assert(false);
     return "";
 }

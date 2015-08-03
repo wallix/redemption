@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
         // To always get the same client random, in tests
         LCGRandom gen(0);
-        mod_rdp mod_(t, front, info, ini.mod_rdp.redir_info, gen, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
         mod_api * mod = &mod_;
 
         if (verbose > 2){
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.mod_rdp.redir_info, gen, mod_rdp_params);
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.mod_rdp.redir_info, gen, mod_rdp_params);
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
@@ -369,7 +369,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.mod_rdp.redir_info, gen, mod_rdp_params);
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2){

@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
     NotifyApi * notifier = nullptr;
     int id = 0;
     int16_t x = 10;
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     WidgetLabelGrid wgrid(drawable, Rect(x, y, 640, 480), parent, notifier,
                           line_number, column_number,
                           PALE_BLUE, BLACK, LIGHT_BLUE, BLACK,
-                          WINBLUE, WHITE, MEDIUM_BLUE, WHITE, ini.font,
+                          WINBLUE, WHITE, MEDIUM_BLUE, WHITE, ini.get<cfg::font>(),
                           grid_border, id);
 
     const char * texts0[] = { "target_group", "target", "protocol", "timeframe" };

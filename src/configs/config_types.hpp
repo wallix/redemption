@@ -29,6 +29,7 @@
 
 #include "config_capture_flags.hpp"
 #include "config_keyboard_log_flags.hpp"
+#include "config_c_str_buf.hpp"
 
 #include <iosfwd>
 #include <type_traits>
@@ -120,7 +121,10 @@ protected:
 
 
 template<std::size_t N, class Copier, bool NullableString>
-char const * c_str(DynamicBuffer&, StaticStringBase<N, Copier, NullableString> const & x) {
+char const * c_str(
+    CStrBuf<StaticStringBase<N, Copier, NullableString>>&,
+    StaticStringBase<N, Copier, NullableString> const & x
+) {
     return x.c_str();
 }
 
@@ -147,6 +151,11 @@ struct StaticKeyString : StaticStringBase<N+1, null_fill, true>
     }
 };
 
+template<std::size_t N>
+struct CStrBuf<StaticKeyString<N>> {
+    char buf[N*2 + 1];
+};
+
 struct Ipv4Copier : StringCopier {};
 using StaticIpString = StaticStringBase<16, Ipv4Copier>;
 
@@ -159,7 +168,6 @@ struct PathCopier
 
 template<std::size_t N>
 using StaticPath = StaticStringBase<N, PathCopier>;
-
 
 
 template<class T, T Min, T Max, T Default = Min>
@@ -190,18 +198,21 @@ private:
     T x_;
 };
 
+template<class T, T Min, T Max, T Default>
+struct CStrBuf<Range<T, Min, Max, Default>>
+: CStrBuf<T>
+{};
 
 
 template<std::size_t N>
-char const * c_str(DynamicBuffer& s, StaticKeyString<N> const & key) {
-    s.reserve(N*2+1);
+char const * c_str(CStrBuf<StaticKeyString<N>>& s, StaticKeyString<N> const & key) {
     s.get()[N*2] = 0;
     copy_val(key, s.get(), s.size());
     return s.get();
 }
 
 template<class T, T Min, T Max, T Default>
-char const * c_str(DynamicBuffer& s, Range<T, Min, Max, Default> const & x) {
+char const * c_str(CStrBuf<Range<T, Min, Max, Default>>& s, Range<T, Min, Max, Default> const & x) {
     return c_str(s, x.get());
 }
 
@@ -342,11 +353,12 @@ struct enum_option
         cstr = *(l.begin() + underlying_cast(e));              \
         return snprintf(buff, n, "%s", cstr);                  \
     }                                                          \
-    inline char const * c_str(DynamicBuffer& s, Enum x) {      \
-        s.reserve(32);                                         \
-        s[s.size()-1] = 0;                                     \
-        copy_val(x, s.get(), s.size());                        \
-        return s.get();                                        \
+    inline char const * c_str(CStrBuf<Enum>& , Enum e) {       \
+        auto l{__VA_ARGS__};                                   \
+        if (underlying_cast(e) >= underlying_cast(Enum::NB)) { \
+            return *l.begin();                                 \
+        }                                                      \
+        return *(l.begin() + underlying_cast(e));              \
     }
 
 

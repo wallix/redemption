@@ -44,7 +44,7 @@ public:
     Font const & font;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, Font const & font,
-                 NotifyApi * notifier = nullptr, Theme * theme = nullptr)
+                 NotifyApi * notifier = nullptr, Theme const * theme = nullptr)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme ? *theme : Theme())
         , tooltip(nullptr)

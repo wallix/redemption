@@ -81,21 +81,15 @@ inline void Inifile::initialize() {
     this->ask<cfg::context::opt_framerate>();
     this->ask<cfg::context::opt_qscale>();
 
-    this->ask<cfg::context::opt_bpp>();
-    this->ask<cfg::context::opt_height>();
-    this->ask<cfg::context::opt_width>();
 
-    this->insert_index<cfg::context::auth_error_message>(std::true_type());
+    this->ask<cfg::context::auth_error_message>();
 
     this->ask<cfg::context::selector>();
-    this->insert_index<cfg::context::selector_device_filter>(std::true_type());
-    this->insert_index<cfg::context::selector_group_filter>(std::true_type());
-    this->insert_index<cfg::context::selector_proto_filter>(std::true_type());
+    this->ask<cfg::context::selector_device_filter>();
+    this->ask<cfg::context::selector_group_filter>();
+    this->ask<cfg::context::selector_proto_filter>();
     this->ask<cfg::context::selector_number_of_pages>();
 
-    this->insert_index<cfg::context::target_password>(std::true_type());
-    this->insert_index<cfg::context::target_host>(std::true_type());
-    this->insert_index<cfg::context::target_port>(std::true_type());
     this->ask<cfg::context::target_protocol>();
 
 
@@ -128,6 +122,8 @@ inline void Inifile::initialize() {
 
     this->ask<cfg::context::real_target_device>();
 
+    this->ask<cfg::context::authentication_challenge>();
+
     this->ask<cfg::context::ticket>();
     this->ask<cfg::context::comment>();
     this->ask<cfg::context::duration>();
@@ -135,5 +131,6 @@ inline void Inifile::initialize() {
     this->ask<cfg::context::showform>();
     this->insert_index<cfg::context::formflag>(std::true_type());
 
+    this->ask<cfg::context::forcemodule>();
     this->ask<cfg::context::proxy_opt>();
 }

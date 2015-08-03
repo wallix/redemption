@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1, 511);
     Inifile ini;
-    ini.debug.primary_orders = 1;
+    ini.set<cfg::debug::primary_orders>(1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),

@@ -61,7 +61,7 @@ int main(int argc, char** argv)
             }
             return 0;
       }
-      , [](Inifile::Inifile_crypto const &) { return 0; }
+      , [](cfg::crypto::key0::type const &, cfg::crypto::key1::type const &) { return 0; }
       , [](Inifile const &) { return false; }/*has_extra_capture*/
     );
 }

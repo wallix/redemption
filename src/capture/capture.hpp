@@ -265,7 +265,7 @@ public:
         }
     }
 
-    void input(const timeval & now, Stream & input_data_32) override {
+    bool input(const timeval & now, Stream & input_data_32) override {
         if (this->capture_wrm) {
             return this->pnc->input(now, input_data_32);
         }

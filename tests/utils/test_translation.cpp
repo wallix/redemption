@@ -36,7 +36,7 @@
 BOOST_AUTO_TEST_CASE(TestTranslation)
 {
     Inifile ini;
-    ini.translation.language.set_from_cstr("en");
+    ini.set<cfg::translation::language>(Language::en);
 
     BOOST_CHECK_EQUAL(TR("login", ini),             std::string("Login"));
     BOOST_CHECK_EQUAL(TR("password", ini),          std::string("Password"));
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(TR("unknown text made for tests", ini),  std::string("unknown text made for tests"));
 
     Translation::getInstance().set_lang(Translation::FR);
-    ini.translation.language.set_from_cstr("fr");
+    ini.set<cfg::translation::language>(Language::fr);
 
     BOOST_CHECK_EQUAL(TR("login", ini),              std::string("Login"));
     BOOST_CHECK_EQUAL(TR("password", ini),           std::string("Mot de passe"));

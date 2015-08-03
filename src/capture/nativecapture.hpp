@@ -111,7 +111,7 @@ public:
         this->recorder.flush();
     }
 
-    void input(const timeval & now, Stream & input_data_32) override {
+    bool input(const timeval & now, Stream & input_data_32) override {
         if (!this->disable_keyboard_log_wrm) {
             return this->recorder.input(now, input_data_32);
         }

@@ -216,6 +216,7 @@ project redemption
     : requirements
     <include>src/utils
     <include>src/core
+    <include>src/configs
     <include>src/mod
     <include>src/front
     <include>src/acl
@@ -490,9 +491,10 @@ exe make_cpp_config
 
 if ! [ os.environ NO_MAKE_CONFIG ]
 {
-    if ! [ SHELL "cd ./src/configs && make" ]
+    local result = [ SHELL "cd ./src/configs && make" : exit-status ] ;
+    if $(result[2]) != 0
     {
-        Echo [ SHELL "cd ./src/configs && make" ] ;
+        Echo $(result[1]) ;
         exit ;
     }
 }

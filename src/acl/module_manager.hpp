@@ -123,7 +123,7 @@ public:
                                   BackEvent_t & signal, time_t now) override {
         this->last_module = true;
         if (auth_error_message) {
-            this->ini.get<cfg::context::auth_error_message>().set_from_cstr(auth_error_message);
+            this->ini.set<cfg::context::auth_error_message>(auth_error_message);
         }
         if (this->mod) {
             this->mod->disconnect();
@@ -140,94 +140,94 @@ public:
 
     int next_module() override {
         LOG(LOG_INFO, "----------> ACL next_module <--------");
-        const char * module_cstr = this->ini.get<cfg::context::module>().get_cstr();
+        auto & module_cstr = this->ini.get<cfg::context::module>();
 
         if (this->connected &&
-            (!strcmp(module_cstr, STRMODULE_RDP) ||
-             !strcmp(module_cstr, STRMODULE_VNC))) {
+            (module_cstr == STRMODULE_RDP ||
+             module_cstr == STRMODULE_VNC)) {
             LOG(LOG_INFO, "===========> MODULE_CLOSE");
             if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                this->ini.get<cfg::context::auth_error_message>().set_from_cstr(TR("end_connection", this->ini));
+                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", this->ini));
             }
             return MODULE_INTERNAL_CLOSE;
         }
-        if (!strcmp(module_cstr, STRMODULE_LOGIN)) {
+        if (module_cstr == STRMODULE_LOGIN) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET2_LOGIN;
         }
-        else if (!strcmp(module_cstr, STRMODULE_SELECTOR)) {
+        else if (module_cstr == STRMODULE_SELECTOR) {
             LOG(LOG_INFO, "===============> MODULE_SELECTOR");
             return MODULE_INTERNAL_WIDGET2_SELECTOR;
         }
-        else if (!strcmp(module_cstr, STRMODULE_SELECTOR_LEGACY)) {
+        else if (module_cstr == STRMODULE_SELECTOR_LEGACY) {
             LOG(LOG_INFO, "===============> MODULE_SELECTOR_LEGACY");
             return MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY;
         }
-        else if (!strcmp(module_cstr, STRMODULE_CONFIRM)) {
+        else if (module_cstr == STRMODULE_CONFIRM) {
             LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
             return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
         }
-        else if (!strcmp(module_cstr, STRMODULE_CHALLENGE)) {
+        else if (module_cstr == STRMODULE_CHALLENGE) {
             LOG(LOG_INFO, "===========> MODULE_DIALOG_CHALLENGE");
             return MODULE_INTERNAL_DIALOG_CHALLENGE;
         }
-        else if (!strcmp(module_cstr, STRMODULE_VALID)) {
+        else if (module_cstr == STRMODULE_VALID) {
             LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
             return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
         }
-        else if (!strcmp(module_cstr, STRMODULE_WAITINFO)) {
+        else if (module_cstr == STRMODULE_WAITINFO) {
             LOG(LOG_INFO, "===========> MODULE_WAITINFO");
             return MODULE_INTERNAL_WAIT_INFO;
         }
-        else if (!strcmp(module_cstr, STRMODULE_TARGET)) {
+        else if (module_cstr == STRMODULE_TARGET) {
             LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_TARGET");
             return MODULE_INTERNAL_TARGET;
         }
-        else if (!strcmp(module_cstr, STRMODULE_TRANSITORY)) {
+        else if (module_cstr == STRMODULE_TRANSITORY) {
             LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
             return MODULE_TRANSITORY;
         }
-        else if (!strcmp(module_cstr, STRMODULE_CLOSE)) {
+        else if (module_cstr == STRMODULE_CLOSE) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE");
             return MODULE_INTERNAL_CLOSE;
         }
-        else if (!strcmp(module_cstr, STRMODULE_RDP)) {
+        else if (module_cstr == STRMODULE_RDP) {
             LOG(LOG_INFO, "===========> MODULE_RDP");
             return MODULE_RDP;
         }
-        else if (!strcmp(module_cstr, STRMODULE_VNC)) {
+        else if (module_cstr == STRMODULE_VNC) {
             LOG(LOG_INFO, "===========> MODULE_VNC");
             return MODULE_VNC;
         }
-        else if (!strcmp(module_cstr, STRMODULE_INTERNAL)) {
+        else if (module_cstr == STRMODULE_INTERNAL) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL");
             int res = MODULE_EXIT;
-            const char * target = this->ini.get<cfg::context::target_host>().get_cstr();
-            if (0 == strcmp(target, "bouncer2")) {
+            auto & target = this->ini.get<cfg::context::target_host>();
+            if (target == "bouncer2") {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "==========> INTERNAL bouncer2");
                 }
                 res = MODULE_INTERNAL_BOUNCER2;
             }
-            else if (0 == strncmp(target, "autotest", 8)) {
+            else if (target == "autotest") {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "==========> INTERNAL test");
                 }
-                const char * user = this->ini.get<cfg::globals::target_user>().get_cstr();
-                this->ini.get<cfg::context::movie>() = user;
-                const size_t len_user = strlen(user);
-                if (0 != strcmp(".mwrm", user + len_user - 5) && len_user + 5 < this->ini.get<cfg::context::movie>().max_size()) {
-                    strcpy(this->ini.get<cfg::context::movie>().data() + len_user, ".mwrm");
+                auto & user = this->ini.get<cfg::globals::target_user>();
+                this->ini.set<cfg::context::movie>(user.c_str());
+                const size_t len_user = user.size();
+                if ((len_user < 5 || !std::equal(user.end() - 5u, user.end(), ".mwrm")) && len_user + 5 < this->ini.get<cfg::context::movie>().max_size()) {
+                    strcpy(this->ini.get_ref<cfg::context::movie>().data() + len_user, ".mwrm");
                 }
                 res = MODULE_INTERNAL_TEST;
             }
-            else if (0 == strcmp(target, "widget2_message")) {
+            else if (target == "widget2_message") {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
                 }
                 res = MODULE_INTERNAL_WIDGET2_MESSAGE;
             }
-            else if (0 == strcmp(target, "widgettest")) {
+            else if (target == "widgettest") {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widgettest");
                 }
@@ -250,7 +250,7 @@ public:
             !this->is_connected()) {
             this->mod->get_event().signal = BACK_EVENT_NEXT;
             this->mod->get_event().set();
-            this->ini.get<cfg::context::forcemodule>().set(false);
+            this->ini.set<cfg::context::forcemodule>(false);
             // Do not send back the value to sesman.
         }
     }
@@ -335,7 +335,7 @@ class ModuleManager : public MMIni
         ModWithSocket( ModuleManager & mm, const char * name, int sck, uint32_t verbose
                      , std::string * error_message, sock_mod_barrier, Args && ... mod_args)
         : SocketTransport( name, sck
-                         , mm.ini.get<cfg::context::target_host>().get_cstr()
+                         , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
                          , verbose, error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
@@ -350,7 +350,7 @@ class ModuleManager : public MMIni
             //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
             Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-            if (this->mm.ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
+            if (this->mm.ini.template get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
                 bool f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
                 if (targer_info_is_shown && f12_released) {
                     //LOG(LOG_INFO, "Hide info");
@@ -359,7 +359,7 @@ class ModuleManager : public MMIni
                 }
                 else if (!f12_released) {
                     //LOG(LOG_INFO, "Show info");
-                    this->mm.osd_message(this->mm.ini.get<cfg::globals::target_device>().get_cstr(), true);
+                    this->mm.osd_message(this->mm.ini.template get<cfg::globals::target_device>(), true);
                     targer_info_is_shown = true;
                 }
             }
@@ -380,7 +380,7 @@ public:
             message += "  ";
             message += TR("disable_osd", this->ini);
         }
-        this->mod->text_metrics(this->ini.font, message.c_str(), w, h);
+        this->mod->text_metrics(this->ini.get<cfg::font>(), message.c_str(), w, h);
         w += padw * 2;
         h += padh * 2;
         uint32_t color = BLACK;
@@ -419,7 +419,7 @@ public:
                 mod.draw(polyline_box, r);
 
 
-                mod.server_draw_text(this->ini.font, clip.x + padw, padh, message.c_str(), color, background_color, r);
+                mod.server_draw_text(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
                 mod.end_update();
             },
             external_deleting
@@ -464,7 +464,7 @@ public:
             this->mod = new Bouncer2Mod(this->front,
                                         this->front.client_info.width,
                                         this->front.client_info.height,
-                                        this->ini.font
+                                        this->ini.get<cfg::font>()
                                         );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
@@ -477,7 +477,7 @@ public:
                                      , this->ini.get<cfg::context::movie>()
                                      , this->front.client_info.width
                                      , this->front.client_info.height
-                                     , this->ini.get<cfg::context::auth_error_message>()
+                                     , this->ini.get_ref<cfg::context::auth_error_message>()
                                      , this->ini
                                      );
             if (this->verbose){
@@ -498,7 +498,7 @@ public:
             this->mod = new TestCardMod(this->front,
                                         this->front.client_info.width,
                                         this->front.client_info.height,
-                                        this->ini.font,
+                                        this->ini.get<cfg::font>(),
                                         false
                                         );
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
@@ -521,7 +521,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
                 if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                    this->ini.get<cfg::context::auth_error_message>().set_from_cstr("Connection to server ended");
+                    this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
                 }
                 this->mod = new FlatWabCloseMod(this->ini,
                             // new WabCloseMod(this->ini,
@@ -548,7 +548,7 @@ public:
         case MODULE_INTERNAL_WIDGET2_DIALOG:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
-                const char * message = this->ini.get<cfg::context::message>().get_cstr();
+                const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * button = TR("refused", this->ini);
                 const char * caption = "Information";
                 this->mod = new FlatDialogMod(
@@ -568,7 +568,7 @@ public:
         case MODULE_INTERNAL_WIDGET2_MESSAGE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
-                const char * message = this->ini.get<cfg::context::message>().get_cstr();
+                const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * button = nullptr;
                 const char * caption = "Information";
                 this->mod = new FlatDialogMod(
@@ -587,15 +587,15 @@ public:
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
-                const char * message = this->ini.get<cfg::context::message>().get_cstr();
+                const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * button = nullptr;
                 const char * caption = "Challenge";
                 ChallengeOpt challenge = CHALLENGE_HIDE;
-                if (this->ini.context_get_bool(AUTHID_AUTHENTICATION_CHALLENGE)) {
+                if (this->ini.get<cfg::context::authentication_challenge>()) {
                     challenge = CHALLENGE_ECHO;
                 }
-                this->ini.context_ask(AUTHID_AUTHENTICATION_CHALLENGE);
-                this->ini.context_ask(AUTHID_PASSWORD);
+                this->ini.ask<cfg::context::authentication_challenge>();
+                this->ini.ask<cfg::context::password>();
                 this->mod = new FlatDialogMod(
                                               this->ini,
                                               this->front,
@@ -613,7 +613,7 @@ public:
         case MODULE_INTERNAL_WAIT_INFO:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
-                const char * message = this->ini.get<cfg::context::message>().get_cstr();
+                const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * caption = TR("information", this->ini);
                 bool showform = this->ini.get<cfg::context::showform>();
                 uint flag = this->ini.get<cfg::context::formflag>();
@@ -632,34 +632,34 @@ public:
             break;
         case MODULE_INTERNAL_WIDGET2_LOGIN:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-            if (this->ini.context_is_asked(AUTHID_TARGET_USER)
-                ||  this->ini.context_is_asked(AUTHID_TARGET_DEVICE)){
-                if (this->ini.context_is_asked(AUTHID_AUTH_USER)){
-                    this->ini.get<cfg::account::username>()[0] = 0;
+            if (this->ini.is_asked<cfg::globals::target_user>()
+                ||  this->ini.is_asked<cfg::globals::target_device>()){
+                if (this->ini.is_asked<cfg::globals::auth_user>()){
+                    this->ini.get_ref<cfg::account>().username[0] = 0;
                 }
                 else {
-                    strncpy(this->ini.get<cfg::account::username>(),
-                            this->ini.get<cfg::globals::auth_user>().get_cstr(),
+                    strncpy(this->ini.get_ref<cfg::account>().username,
+                            this->ini.get<cfg::globals::auth_user>().c_str(),
                             // this->ini.context_get_value(AUTHID_AUTH_USER, nullptr, 0),
-                            sizeof(this->ini.get<cfg::account::username>()));
-                    this->ini.get<cfg::account::username>()[sizeof(this->ini.get<cfg::account::username>()) - 1] = 0;
+                            sizeof(this->ini.get<cfg::account>().username));
+                    this->ini.get_ref<cfg::account>().username[sizeof(this->ini.get<cfg::account>().username) - 1] = 0;
                 }
             }
-            else if (this->ini.context_is_asked(AUTHID_AUTH_USER)) {
-                this->ini.get<cfg::account::username>()[0] = 0;
+            else if (this->ini.is_asked<cfg::globals::auth_user>()) {
+                this->ini.get_ref<cfg::account>().username[0] = 0;
             }
             else {
                 TODO("check this! Assembling parts to get user login with target is not obvious"
                      "method used below il likely to show @: if target fields are empty")
                 char buffer[255];
                 snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
-                        , this->ini.get<cfg::globals::target_user>().get_cstr()
-                        , this->ini.get<cfg::globals::target_device>().get_cstr()
-                        , this->ini.get<cfg::context::target_protocol>().get_cstr()
-                        , (!this->ini.get<cfg::context::target_protocol>().is_empty() ? ":" : "")
-                        , this->ini.get<cfg::globals::auth_user>().get_cstr()
+                        , this->ini.get<cfg::globals::target_user>().c_str()
+                        , this->ini.get<cfg::globals::target_device>().c_str()
+                        , this->ini.get<cfg::context::target_protocol>().c_str()
+                        , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
+                        , this->ini.get<cfg::globals::auth_user>().c_str()
                         );
-                strcpy(this->ini.get<cfg::account::username>(), buffer);
+                strcpy(this->ini.get_ref<cfg::account>().username, buffer);
             }
 
             this->mod = new FlatLoginMod(
@@ -678,17 +678,17 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
-                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().get_cstr(),
+                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             4, 1000,
                                             this->ini.get<cfg::debug::mod_xup>());
 
                 if (client_sck == -1){
-                    this->ini.get<cfg::context::auth_error_message>().set_from_cstr("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.get<cfg::context::auth_error_message>().set_from_cstr("failed authentification on remote X host");
+                this->ini.set<cfg::context::auth_error_message>("failed authentification on remote X host");
 
                 this->mod = new ModWithSocket<xup_mod>( *this
                                                       , name
@@ -704,7 +704,7 @@ public:
                                                       , this->ini.get<cfg::context::opt_bpp>()
                 );
 
-                this->ini.get<cfg::context::auth_error_message>().clear();
+                this->ini.get_ref<cfg::context::auth_error_message>().clear();
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                 this->connected = true;
             }
@@ -726,11 +726,11 @@ public:
 
                 ClientInfo client_info = this->front.client_info;
 
-                if (strcmp(ini.get<cfg::context::mode_console>().get_cstr(), "force") == 0) {
+                if (ini.get<cfg::context::mode_console>() == "force") {
                     client_info.console_session = true;
                     LOG(LOG_INFO, "Session::mode console : force");
                 }
-                else if (strcmp(ini.get<cfg::context::mode_console>().get_cstr(), "forbid") == 0) {
+                else if (ini.get<cfg::context::mode_console>() == "forbid") {
                     client_info.console_session = false;
                     LOG(LOG_INFO, "Session::mode console : forbid");
                 }
@@ -740,29 +740,29 @@ public:
 
                 static const char * name = "RDP Target";
 
-                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().get_cstr(),
+                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
                                             this->ini.get<cfg::debug::mod_rdp>());
 
                 if (client_sck == -1){
-                    this->ini.get<cfg::context::auth_error_message>().set_from_cstr("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.get<cfg::context::auth_error_message>().set_from_cstr("failed authentification on remote RDP host");
+                this->ini.set<cfg::context::auth_error_message>("failed authentification on remote RDP host");
 
                 // BEGIN READ PROXY_OPT
                 if (!this->ini.get<cfg::globals::disable_proxy_opt>()) {
-                    update_authorized_channels(this->ini.get<cfg::mod_rdp::allow_channels>(),
-                                               this->ini.get<cfg::mod_rdp::deny_channels>(),
+                    update_authorized_channels(this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
+                                               this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
                                                this->ini.get<cfg::context::proxy_opt>());
                 }
                 // END READ PROXY_OPT
 
-                ModRDPParams mod_rdp_params( this->ini.get<cfg::globals::target_user>().get_cstr()
-                                           , this->ini.get<cfg::context::target_password>().get_cstr()
-                                           , this->ini.get<cfg::context::target_host>().get_cstr()
+                ModRDPParams mod_rdp_params( this->ini.get<cfg::globals::target_user>().c_str()
+                                           , this->ini.get<cfg::context::target_password>().c_str()
+                                           , this->ini.get<cfg::context::target_host>().c_str()
                                            , "0.0.0.0"   // client ip is silenced
                                            , this->front.keymap.key_flags
                                            , this->ini.get<cfg::debug::mod_rdp>()
@@ -790,12 +790,12 @@ public:
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::globals::auth_channel>();
-                mod_rdp_params.alternate_shell                     = this->ini.get<cfg::globals::alternate_shell>().get_cstr();
-                mod_rdp_params.shell_working_directory             = this->ini.get<cfg::globals::shell_working_directory>().get_cstr();
-                mod_rdp_params.target_application_account          = this->ini.get<cfg::globals::target_application_account>().get_cstr();
-                mod_rdp_params.target_application_password         = this->ini.get<cfg::globals::target_application_password>().get_cstr();
+                mod_rdp_params.alternate_shell                     = this->ini.get<cfg::globals::alternate_shell>().c_str();
+                mod_rdp_params.shell_working_directory             = this->ini.get<cfg::globals::shell_working_directory>().c_str();
+                mod_rdp_params.target_application_account          = this->ini.get<cfg::globals::target_application_account>().c_str();
+                mod_rdp_params.target_application_password         = this->ini.get<cfg::globals::target_application_password>().c_str();
                 mod_rdp_params.rdp_compression                     = this->ini.get<cfg::mod_rdp::rdp_compression>();
-                mod_rdp_params.error_message                       = &this->ini.get<cfg::context::auth_error_message>();
+                mod_rdp_params.error_message                       = &this->ini.get_ref<cfg::context::auth_error_message>();
                 mod_rdp_params.disconnect_on_logon_user_change     = this->ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
                 mod_rdp_params.open_session_timeout                = this->ini.get<cfg::mod_rdp::open_session_timeout>();
                 mod_rdp_params.certificate_change_action           = this->ini.get<cfg::mod_rdp::certificate_change_action>();
@@ -820,7 +820,7 @@ public:
 
                 mod_rdp_params.client_device_announce_timeout      = this->ini.get<cfg::mod_rdp::client_device_announce_timeout>();
 
-                mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().get_cstr();
+                mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
 
                 UdevRandom gen;
 
@@ -829,11 +829,11 @@ public:
                                                       , name
                                                       , client_sck
                                                       , this->ini.get<cfg::debug::mod_rdp>()
-                                                      , &this->ini.get<cfg::context::auth_error_message>()
+                                                      , &this->ini.get_ref<cfg::context::auth_error_message>()
                                                       , sock_mod_barrier()
                                                       , this->front
                                                       , client_info
-                                                      , ini.get<cfg::mod_rdp::redir_info>()
+                                                      , ini.get_ref<cfg::mod_rdp::redir_info>()
                                                       , gen
                                                       , mod_rdp_params
                                                       );
@@ -843,7 +843,7 @@ public:
                 // this->mod->rdp_input_invalidate2(rects);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
-                this->ini.get<cfg::context::auth_error_message>().clear();
+                this->ini.get_ref<cfg::context::auth_error_message>().clear();
                 this->connected = true;
             }
             break;
@@ -854,18 +854,18 @@ public:
                 static const char * name = "VNC Target";
 
 
-                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().get_cstr(),
+                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             //this->ini.context_get_value(AUTHID_TARGET_HOST, nullptr, 0),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
                                             this->ini.get<cfg::debug::mod_vnc>());
 
                 if (client_sck == -1){
-                    this->ini.get<cfg::context::auth_error_message>().set_from_cstr("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.get<cfg::context::auth_error_message>().set_from_cstr("failed authentification on remote VNC host");
+                this->ini.set<cfg::context::auth_error_message>("failed authentification on remote VNC host");
 
                 this->mod = new ModWithSocket<mod_vnc>( *this
                                                       , name
@@ -874,8 +874,8 @@ public:
                                                       , nullptr
                                                       , sock_mod_barrier()
                                                       , this->ini
-                                                      , this->ini.get<cfg::globals::target_user>().get_cstr()
-                                                      , this->ini.get<cfg::context::target_password>().get_cstr()
+                                                      , this->ini.get<cfg::globals::target_user>().c_str()
+                                                      , this->ini.get<cfg::context::target_password>().c_str()
                                                       , this->front
                                                       , this->front.client_info.width
                                                       , this->front.client_info.height
@@ -892,7 +892,7 @@ public:
                 );
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
-                this->ini.get<cfg::context::auth_error_message>().clear();
+                this->ini.get_ref<cfg::context::auth_error_message>().clear();
                 this->connected = true;
             }
             break;

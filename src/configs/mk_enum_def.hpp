@@ -22,6 +22,7 @@
 
 #include <iosfwd>
 #include "underlying_cast.hpp"
+#include "config_c_str_buf.hpp"
 
 #define MK_ENUM_IO(E)                                    \
     template<class Ch, class Tr>                         \
@@ -44,8 +45,8 @@
         char * end = 0;                                           \
         errno = 0;                                                \
         auto n = std::strtoul(cstr, &end, 10);                    \
-        if (!errno && end && *end                                 \
-         && n < static_cast<unsigned long>(Enum::FULL)            \
+        if (!errno && end && !*end                                \
+         && n <= static_cast<unsigned long>(Enum::FULL)           \
         ) {                                                       \
             e = static_cast<Enum>(n);                             \
         }                                                         \
@@ -53,8 +54,8 @@
     inline int copy_val(Enum x, char * buff, std::size_t n) {     \
         return snprintf(buff, n, "%u", static_cast<unsigned>(x)); \
     }                                                             \
-    inline char const * c_str(DynamicBuffer& s, Enum x) {         \
-        s.reserve(32);                                            \
+    template<> struct CStrBuf<Enum> : CStrBuf<unsigned> {};       \
+    inline char const * c_str(CStrBuf<Enum>& s, Enum x) {         \
         copy_val(x, s.get(), s.size());                           \
         return s.get();                                           \
     }

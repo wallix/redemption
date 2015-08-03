@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 
     drawable.show_mouse_cursor(false);
 
-    ini.video.frame_interval = 100; // one snapshot by second
-    ini.video.break_interval = 5;   // one WRM file every 5 seconds
+    ini.set<cfg::video::frame_interval>(100); // one snapshot by second
+    ini.set<cfg::video::break_interval>(5);   // one WRM file every 5 seconds
     consumer.update_config(ini);
 
     bool ignore_frame_in_timeval = false;

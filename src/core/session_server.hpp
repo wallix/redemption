@@ -73,16 +73,17 @@ public:
                 close(incoming_sck);
 
                 Inifile ini;
-                ini.get<cfg::debug::config>() = this->debug_config;
+                ini.set<cfg::debug::config>(this->debug_config);
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
                 if (ini.get<cfg::globals::wab_agent_alternate_shell>().empty()) {
-                    ini.get<cfg::globals::wab_agent_alternate_shell>() =
-                        this->parametersHldr.get_agent_alternate_shell();
+                    ini.set<cfg::globals::wab_agent_alternate_shell>(
+                        this->parametersHldr.get_agent_alternate_shell()
+                    );
                 }
 
-                ini.get<cfg::crypto::key0>().setmem(this->parametersHldr.get_crypto_key_0());
-                ini.get<cfg::crypto::key1>().setmem(this->parametersHldr.get_crypto_key_1());
+                ini.get_ref<cfg::crypto::key0>().setmem(this->parametersHldr.get_crypto_key_0());
+                ini.get_ref<cfg::crypto::key1>().setmem(this->parametersHldr.get_crypto_key_1());
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
@@ -165,12 +166,12 @@ public:
                             "New session on %u (pid=%u) from %s to %s",
                             (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                     }
-                    ini.context_set_value(AUTHID_HOST, source_ip);
+                    ini.set<cfg::globals::host>(source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
-                    ini.context_set_value(AUTHID_TARGET, target_ip);
+                    ini.set<cfg::globals::target>(target_ip);
                     if (ini.get<cfg::globals::enable_ip_transparent>()
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
-                        ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
+                        ini.set<cfg::context::real_target_device>(real_target_ip);
                     }
                     Session session(sck, ini);
 

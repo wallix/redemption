@@ -64,28 +64,31 @@ public:
               const char * label_text_password,
               Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , bg_color(ini.get<cfg::theme::global>().bgcolor)
+        , bg_color(ini.get<cfg::theme>().global.bgcolor)
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                        password, -14, ini.get<cfg::theme::edit>().fgcolor,
-                        ini.get<cfg::theme::edit>().bgcolor, ini.get<cfg::theme::edit>().focus_color, ini.font,
+                        password, -14, ini.get<cfg::theme>().edit.fgcolor,
+                        ini.get<cfg::theme>().edit.bgcolor, ini.get<cfg::theme>().edit.focus_color,
+                        ini.get<cfg::font>(),
                         -1u, 1, 1, true, (width <= 640) ? label_text_password : nullptr)
         , login_label(drawable, 0, 0, *this, nullptr, label_text_login, true, -11,
-                      ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
+                      ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
         , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                     login, -12, ini.get<cfg::theme::edit>().fgcolor, ini.get<cfg::theme::edit>().bgcolor,
-                     ini.get<cfg::theme::edit>().focus_color, ini.font, -1u, 1, 1, false,
+                     login, -12, ini.get<cfg::theme>().edit.fgcolor, ini.get<cfg::theme>().edit.bgcolor,
+                     ini.get<cfg::theme>().edit.focus_color, ini.get<cfg::font>(), -1u, 1, 1, false,
                      (width <= 640) ? label_text_login : nullptr)
-        // , img(drawable, 0, 0, ini.get<cfg::theme::global>().logo_path, *this, nullptr, -10)
+        // , img(drawable, 0, 0, ini.get<cfg::theme>().global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
-              ini.get<cfg::theme::global>().logo ? ini.get<cfg::theme::global>().logo_path :
+              ini.get<cfg::theme>().global.logo ? ini.get<cfg::theme>().global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
         , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
-                         ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
+                         ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
+                         ini.get<cfg::font>())
         , version_label(drawable, 0, 0, *this, nullptr, caption, true, -15,
-                        ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor, ini.font)
+                        ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
+                        ini.get<cfg::font>())
         , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
-                   ini.get<cfg::theme::global>().fgcolor, ini.get<cfg::theme::global>().bgcolor,
-                   ini.get<cfg::theme::global>().focus_color, ini.font, 6, 2)
+                   ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
+                   ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2)
         , ini(ini)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",

@@ -41,18 +41,18 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
 
 public:
     InteractiveTargetMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, ini.font, &ini)
-        , ask_device(ini.context_is_asked(AUTHID_TARGET_HOST))
-        , ask_login(ini.context_is_asked(AUTHID_TARGET_USER))
-        , ask_password((this->ask_login || ini.context_is_asked(AUTHID_TARGET_PASSWORD)))
+        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
+        , ask_device(ini.is_asked<cfg::context::target_host>())
+        , ask_login(ini.is_asked<cfg::globals::target_user>())
+        , ask_password((this->ask_login || ini.is_asked<cfg::context::target_password>()))
         , challenge(*this, width, height, this->screen, this, 0,
-                    ini.context_is_asked(AUTHID_TARGET_HOST),
-                    ini.context_is_asked(AUTHID_TARGET_USER),
-                    ini.context_is_asked(AUTHID_TARGET_PASSWORD),
-                    ini.theme, TR("target_info_required", ini),
-                    TR("device", ini), ini.context_get_value(AUTHID_TARGET_DEVICE),
-                    TR("login", ini), ini.context_get_value(AUTHID_TARGET_USER),
-                    TR("password", ini), ini.font)
+                    ini.is_asked<cfg::context::target_host>(),
+                    ini.is_asked<cfg::globals::target_user>(),
+                    ini.is_asked<cfg::context::target_password>(),
+                    ini.get<cfg::theme>(), TR("target_info_required", ini),
+                    TR("device", ini), ini.get<cfg::globals::target_device>().c_str(),
+                    TR("login", ini), ini.get<cfg::globals::target_user>().c_str(),
+                    TR("password", ini), ini.get<cfg::font>())
         , ini(ini)
     {
         this->screen.add_widget(&this->challenge);
@@ -91,18 +91,15 @@ private:
     void accepted()
     {
         if (this->ask_device) {
-            this->ini.context_set_value(AUTHID_TARGET_HOST,
-                                        this->challenge.device_edit.get_text());
+            this->ini.set<cfg::context::target_host>(this->challenge.device_edit.get_text());
         }
         if (this->ask_login) {
-            this->ini.context_set_value(AUTHID_TARGET_USER,
-                                        this->challenge.login_edit.get_text());
+            this->ini.set<cfg::globals::target_user>(this->challenge.login_edit.get_text());
         }
         if (this->ask_password) {
-            this->ini.context_set_value(AUTHID_TARGET_PASSWORD,
-                                        this->challenge.password_edit.get_text());
+            this->ini.set<cfg::context::target_password>(this->challenge.password_edit.get_text());
         }
-        this->ini.context_set_value(AUTHID_DISPLAY_MESSAGE, "True");
+        this->ini.set<cfg::context::display_message>("True");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -110,8 +107,8 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->ini.context_set_value(AUTHID_TARGET_PASSWORD, "");
-        this->ini.context_set_value(AUTHID_DISPLAY_MESSAGE, "False");
+        this->ini.set<cfg::context::target_password>("");
+        this->ini.set<cfg::context::display_message>("False");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

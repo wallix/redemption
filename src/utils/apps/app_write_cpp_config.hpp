@@ -89,10 +89,9 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
             this->out() << str << "\n";
             this->authids.emplace_back(str, this->get_str_authid(pack, varname));
         }
-        this->tab();
-        this->out() << "struct " << varname << " {\n";
-        this->tab();
-        this->out() << "    static constexpr ::configs::VariableProperties properties() { return ";
+        this->tab(); this->out() << "struct " << varname << " {\n";
+        this->tab(); this->out() << "    static constexpr ::configs::VariableProperties properties() {\n";
+        this->tab(); this->out() << "        return ";
         if (PropertyFieldFlags::none == properties) {
             this->out() << "::configs::VariableProperties::none";
         }
@@ -105,7 +104,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         if ((PropertyFieldFlags::read | PropertyFieldFlags::write) == properties) {
             this->out() << "::configs::VariableProperties::read | ::configs::VariableProperties::write";
         }
-        this->out() << "; }\n";
+        this->out() << ";\n";
+        this->tab(); this->out() << "    }\n";
         if (bool(properties)) {
             this->tab();
             this->out() << "    static constexpr unsigned index() { return " << this->index_authid++ << "; }\n";
@@ -115,11 +115,19 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         this->inherit().write_type(pack);
         this->out() << ";\n";
         this->tab();
-        this->out() << "    type value";
-        void(std::initializer_list<int>{
-            (this->write_assignable_default(pack, args), 1)...
-        });
-        this->out() << ";\n";
+        if (std::is_convertible<Pack, type_<Font>>::value) {
+            this->out()
+              << "    font(char const * filename) : value(filename) {}\n"
+              << "    type value;\n"
+            ;
+        }
+        else {
+            this->out() << "    type value{";
+            void(std::initializer_list<int>{
+                (this->write_assignable_default(pack, args), 1)...
+            });
+            this->out() << "};\n";
+        }
         this->tab();
         this->out() << "};\n";
 
@@ -223,18 +231,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     void write_assignable_default(ref<type_<T>>, default_<U> const & d)
     {
         this->check_constructible(type_<T>{}, d);
-        this->out() << "{";
         this->inherit().write(d.value);
-        this->out() << "}";
     }
 
     template<std::size_t N, class U>
     void write_assignable_default(ref<type_<StaticKeyString<N>>>, default_<U> const & d)
     {
         this->check_constructible(type_<StaticKeyString<N>>{}, d);
-        this->out() << "{\"";
+        this->out() << "\"";
         this->write_key(d.value, N, "\\x");
-        this->out() << "\"}";
+        this->out() << "\"";
     }
 
     template<class T>
@@ -329,15 +335,15 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         }
     }
 
-    auto join = [&](std::vector<std::string> const & cont) {
+    auto join = [&](std::vector<std::string> const & cont, char const * before = "", char const * after = "") {
         auto first = begin(cont);
         auto last = end(cont);
         if (first == last) {
             return ;
         }
-        out_varconf << "cfg::" << *first << "\n";
+        out_varconf << before << "cfg::" << *first << after << "\n";
         while (++first != last) {
-            out_varconf << ", cfg::" << *first << "\n";
+            out_varconf << ", " << before << "cfg::" << *first << after << "\n";
         }
     };
 
@@ -346,15 +352,21 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
       "namespace configs {\n"
       "namespace detail_ { struct none {}; }\n\n"
       "struct VariablesConfiguration\n"
-      ": \n"
+      ": "
     ;
     join(writer.variables);
     out_varconf <<
       "{\n"
       "    explicit VariablesConfiguration(char const * default_font_name)\n"
-      "    : cfg::font{Font{default_font_name}}\n"
+      "    : cfg::font{default_font_name}\n"
       "    {}\n"
       "};\n\n"
+      "struct Buffers\n"
+      ": "
+    ;
+    join(writer.variables, "CBuf<", ">");
+    out_varconf <<
+      "{};\n\n"
       "using VariablesAclPack = Pack<\n  "
     ;
     join(writer.variables_acl);

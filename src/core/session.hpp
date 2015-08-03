@@ -79,7 +79,6 @@ enum {
 
 class Session {
     Inifile  & ini;
-    uint32_t & verbose;
 
     int internal_state;
 
@@ -131,7 +130,6 @@ class Session {
 public:
     Session(int sck, Inifile & ini)
             : ini(ini)
-            , verbose(this->ini.get<cfg::debug::session>())
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
             , perf_file(nullptr) {
@@ -154,7 +152,7 @@ public:
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
             PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>());
 
-            if (this->verbose) {
+            if (this->ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
@@ -379,7 +377,7 @@ public:
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
-        if (0 != strcmp("127.0.0.1", this->ini.context_get_value(AUTHID_HOST))) {
+        if (strcmp(this->ini.get_value<cfg::globals::host>(), "127.0.0.1") == 0) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
         this->front->stop_capture();
@@ -400,7 +398,7 @@ public:
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
             snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"
-                    , PID_PATH , this->ini.get<cfg::context::session_id>().get_cstr());
+                    , PID_PATH , this->ini.get<cfg::context::session_id>().c_str());
             unlink(new_session_file);
         }
         else {

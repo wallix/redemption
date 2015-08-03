@@ -27,7 +27,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "authentifier.hpp"
 #include "module_manager.hpp"
@@ -48,15 +48,20 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     Inifile ini;
 
-    ini.globals.keepalive_grace_delay = 30;
-    ini.globals.session_timeout = 900;
-    ini.debug.auth = 255;
+    ini.set<cfg::globals::keepalive_grace_delay>(30);
+    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
 
     char outdata[] =
         // Time: 10011
            "\x00\x00\x01\xA1"
+           "login\nASK\n"
+           "ip_client\n!\n"
+           "ip_target\n!\n"
+           "target_device\nASK\n"
+           "target_login\nASK\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -76,11 +81,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "accept_message\n!\n"
            "display_message\n!\n"
            "real_target_device\n!\n"
-           "login\nASK\n"
-           "ip_client\n!\n"
-           "ip_target\n!\n"
-           "target_device\nASK\n"
-           "target_login\nASK\n"
 
         // Time: 10043
            "\x00\x00\x00\x0E"
@@ -144,15 +144,20 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     Inifile ini;
 
-    ini.globals.keepalive_grace_delay = 30;
-    ini.globals.session_timeout = 900;
-    ini.debug.auth = 255;
+    ini.set<cfg::globals::keepalive_grace_delay>(30);
+    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
 
     char outdata[] =
         // Time 10011
            "\x00\x00\x01\xA1"
+           "login\nASK\n"
+           "ip_client\n!\n"
+           "ip_target\n!\n"
+           "target_device\nASK\n"
+           "target_login\nASK\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -172,11 +177,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
            "accept_message\n!\n"
            "display_message\n!\n"
            "real_target_device\n!\n"
-           "login\nASK\n"
-           "ip_client\n!\n"
-           "ip_target\n!\n"
-           "target_device\nASK\n"
-           "target_login\nASK\n"
 
         // Time 10043
            "\x00\x00\x00\x0E"
@@ -264,14 +264,19 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     BackEvent_t signal = BACK_EVENT_NONE;
 
     Inifile ini;
-    ini.globals.keepalive_grace_delay = 30;
-    ini.globals.session_timeout = 240; // => 8*30 = 240secs inactivity
-    ini.debug.auth = 255;
+    ini.set<cfg::globals::keepalive_grace_delay>(30);
+    ini.set<cfg::globals::session_timeout>(240); // = 8*30 = 240secs inactivity>
+    ini.set<cfg::debug::auth>(255);
     MMIni mm(ini);
 
     char outdata[] =
         // Time 10011
            "\x00\x00\x01\xA1"
+           "login\nASK\n"
+           "ip_client\n!\n"
+           "ip_target\n!\n"
+           "target_device\nASK\n"
+           "target_login\nASK\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -291,11 +296,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
            "accept_message\n!\n"
            "display_message\n!\n"
            "real_target_device\n!\n"
-           "login\nASK\n"
-           "ip_client\n!\n"
-           "ip_target\n!\n"
-           "target_device\nASK\n"
-           "target_login\nASK\n"
 
            "\x00\x00\x00\x0E"
             "keepalive\nASK\n"
