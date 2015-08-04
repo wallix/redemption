@@ -44,7 +44,7 @@ public:
     FlatWaitMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
         , wait_widget(*this, width, height, this->screen, this, caption, message,
                       0, ini,  ini.get<cfg::theme>(), showform, flag)
         , ini(ini)

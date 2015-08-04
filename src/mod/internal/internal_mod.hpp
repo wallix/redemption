@@ -34,12 +34,20 @@ public:
     WidgetScreen screen;
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
-                Inifile * ini = nullptr)
+                Theme const & theme = Theme())
         : mod_api(front_width, front_height)
         , front(front)
-        , screen(*this, front_width, front_height, font, nullptr, ini ? &(ini->get<cfg::theme>()) : nullptr)
+        , screen(*this, front_width, front_height, font, nullptr, theme)
     {
         this->front.server_resize(front_width, front_height, 24);
+    }
+
+    Font const & font() const {
+        return this->screen.font;
+    }
+
+    Theme const & theme() const {
+        return this->screen.theme;
     }
 
     ~InternalMod() override {}

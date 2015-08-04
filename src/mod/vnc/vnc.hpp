@@ -158,8 +158,6 @@ public:
 private:
     int state;
 
-    Inifile & ini;
-
     bool allow_authentification_retries;
 
 private:
@@ -183,12 +181,14 @@ private:
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
-           , Inifile & ini
            , const char * username
            , const char * password
            , FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
+           , Font const & font
+           , Translator const & tr
+           , Theme const & theme
            , int keylayout
            , int key_flags
            , bool clipboard_up
@@ -201,13 +201,13 @@ public:
            , uint32_t verbose
            )
     //==============================================================================================================
-    : InternalMod(front, front_width, front_height, ini.get<cfg::font>(), &ini)
+    : InternalMod(front, front_width, front_height, font, theme)
     , challenge(*this, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
-                0, nullptr, ini.get<cfg::theme>(),
-                TR("Authentification required", ini),
-                TR("VNC password", ini),
-                ini.get<cfg::font>())
+                0, nullptr, this->theme(),
+                tr("Authentification required"),
+                tr("VNC password"),
+                this->font())
     , mod_name{0}
     , palette(nullptr)
     , vnc_desktop(0)
@@ -224,7 +224,6 @@ public:
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
-    , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_socket_transport(is_socket_transport)
     , clipboard_server_encoding_type(clipboard_server_encoding_type == ClipboardEncodingType::latin1 ?
@@ -2675,14 +2674,11 @@ public:
     void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.set<cfg::context::target_password>(this->challenge.password_edit.get_text());
-
             this->screen.clear();
 
-            memset(this->password, 0, 256);
-
-            memcpy(this->password, this->challenge.password_edit.get_text(),
-                   sizeof(this->password) - 1);
+            memset(this->password, 0, sizeof(this->password));
+            strncpy(this->password, this->challenge.password_edit.get_text(),
+                    sizeof(this->password) - 1);
             this->password[sizeof(this->password) - 1] = 0;
 
             this->state = RETRY_CONNECTION;

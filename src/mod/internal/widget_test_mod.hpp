@@ -39,7 +39,7 @@ class WidgetTestMod : public InternalMod, public NotifyApi {
 
 public:
     WidgetTestMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-    : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
+    : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
     , drawing_policy(*this, ini.get<cfg::font>())
     , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0,
           ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor)

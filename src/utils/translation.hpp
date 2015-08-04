@@ -192,13 +192,13 @@ public:
 };
 
 #define TRANSLATIONCONF Translation::getInstance()
-static inline const char * TR(const char * key, Inifile & ini)
+static inline const char * TR(const char * key, Language lang)
 {
     const char * res = nullptr;
 
     if (!res || !*res || 0 == strcmp(res, "ASK")) {
         TRANSLATIONCONF.set_lang(
-            ini.get<cfg::translation::language>() == Language::fr
+            lang == Language::fr
           ? Translation::FR
           : Translation::EN
         );
@@ -210,5 +210,23 @@ static inline const char * TR(const char * key, Inifile & ini)
     }
     return res;
 }
+
+static inline const char * TR(const char * key, Inifile & ini)
+{
+    return TR(key, ini.get<cfg::translation::language>());
+}
+
+struct Translator {
+    explicit Translator(Language lang = Language::en)
+      : lang(lang)
+    {}
+
+    char const * operator()(char const * key) const {
+        return TR(key, this->lang);
+    }
+
+private:
+    Language lang;
+};
 
 #endif

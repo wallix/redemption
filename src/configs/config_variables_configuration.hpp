@@ -10,13 +10,6 @@ namespace cfg {
         using type = Theme;
         type value{};
     };
-    struct account {
-        static constexpr ::configs::VariableProperties properties() {
-            return ::configs::VariableProperties::none;
-        }
-        using type = ::configs::IniAccounts;
-        type value{};
-    };
     struct font {
         static constexpr ::configs::VariableProperties properties() {
             return ::configs::VariableProperties::none;
@@ -833,7 +826,7 @@ namespace cfg {
         // AUTHID_CAPTURE_CHUNK
         struct capture_chunk {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::write;
+                return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 0; }
             using type = bool;
@@ -1803,7 +1796,6 @@ struct VariablesConfiguration
 , cfg::context::forcemodule
 , cfg::context::proxy_opt
 , cfg::theme
-, cfg::account
 , cfg::font
 {
     explicit VariablesConfiguration(char const * default_font_name)

@@ -23,12 +23,13 @@
 
 #include "version.hpp"
 #include "front_api.hpp"
-#include "config.hpp"
 #include "widget2/flat_login.hpp"
 #include "internal_mod.hpp"
 #include "widget2/notify_api.hpp"
 #include "translation.hpp"
 #include "copy_paste.hpp"
+
+#include <functional>
 
 class FlatLoginMod : public InternalMod, public NotifyApi
 {
@@ -37,24 +38,34 @@ class FlatLoginMod : public InternalMod, public NotifyApi
     CopyPaste copy_paste;
 
 public:
-    Inifile & ini;
+    using submit_signature_type = void(char const * username, char const * password);
+    using submit_function_type = std::function<submit_signature_type>;
 
-    FlatLoginMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
+private:
+    submit_function_type submit_notify;
+
+public:
+    FlatLoginMod(
+        submit_function_type submit_notify,
+        char const * username, char const * password,
+        FrontAPI & front, uint16_t width, uint16_t height,
+        Translator const & tr, Font const & font, Theme const & theme = Theme()
+    )
+        : InternalMod(front, width, height, font, theme)
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
-                ini.get<cfg::account>().username[0] != 0,
-                0, nullptr, nullptr, TR("login", ini), TR("password", ini), ini)
-        , ini(ini)
+                username[0] != 0,
+                0, nullptr, nullptr, tr("login"), tr("password"), this->font(), tr, this->theme())
+        , submit_notify(std::move(submit_notify))
     {
         this->screen.add_widget(&this->login);
 
-        this->login.login_edit.set_text(this->ini.get<cfg::account>().username);
-        this->login.password_edit.set_text(this->ini.get<cfg::account>().password);
+        this->login.login_edit.set_text(username);
+        this->login.password_edit.set_text(password);
 
         this->screen.set_widget_focus(&this->login, Widget2::focus_reason_tabkey);
 
         this->login.set_widget_focus(&this->login.login_edit, Widget2::focus_reason_tabkey);
-        if (ini.get<cfg::account>().username[0] != 0){
+        if (username[0] != 0){
             this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
         }
 
@@ -68,8 +79,8 @@ public:
     void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.parse_username(this->login.login_edit.get_text());
-            this->ini.set<cfg::context::password>(this->login.password_edit.get_text());
+            LOG(LOG_INFO, "asking for selector");
+            this->submit_notify(this->login.login_edit.get_text(), this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
             break;

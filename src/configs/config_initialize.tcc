@@ -1,5 +1,5 @@
 inline void Inifile::initialize() {
-    this->insert_index<cfg::globals::capture_chunk>(std::true_type());
+    this->ask<cfg::globals::capture_chunk>();
 
     this->ask<cfg::globals::host>();
     this->ask<cfg::globals::target>();

@@ -258,7 +258,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     WRITE_TYPE(RedirectionInfo)
     WRITE_TYPE(Theme)
     WRITE_TYPE(Font)
-    WRITE_TYPE(::configs::IniAccounts)
     WRITE_TYPE(::configs::StaticIpString)
     WRITE_TYPE(::configs::Level)
     WRITE_TYPE(::configs::Language)

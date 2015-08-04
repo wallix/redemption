@@ -36,17 +36,6 @@
 
 namespace configs {
 
-struct IniAccounts {
-    char username[255]; // should use string
-    char password[255]; // should use string
-
-    IniAccounts()
-    {
-        this->username[0] = 0;
-        this->password[0] = 0;
-    }
-};
-
 struct null_fill { null_fill() {}; };
 
 struct StringCopier

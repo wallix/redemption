@@ -46,12 +46,21 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
 
-    Inifile             ini;
-
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, front, 800, 600);
+    Font font;
+
+    std::string kuser;
+    std::string kpass;
+
+    FlatLoginMod d([&](char const * user, char const * pass) {
+        kuser = user;
+        kpass = pass;
+    }, "user", "pass", front, 800, 600, Translator(), font);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    BOOST_CHECK_EQUAL(kuser, "user");
+    BOOST_CHECK_EQUAL(kpass, "pass");
 }

@@ -52,7 +52,7 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
 
 public:
     FlatSelector2Mod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
         , selector(*this, temporary_login(ini).buffer, width, height, this->screen, this,
                     ini.is_asked<cfg::context::selector_current_page>()
                         ? "" : configs::make_c_str_buf(ini.get<cfg::context::selector_current_page>()).get(),

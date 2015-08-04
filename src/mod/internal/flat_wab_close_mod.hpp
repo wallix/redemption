@@ -61,7 +61,7 @@ private:
 
 public:
     FlatWabCloseMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), &ini)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
         , close_widget(*this, width, height, this->screen, this,
                        ini.get<cfg::context::auth_error_message>().c_str(), 0,
                        (ini.is_asked<cfg::globals::auth_user>()

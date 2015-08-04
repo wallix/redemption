@@ -134,7 +134,7 @@ void config_spec_definition(Writer && W)
 
     W.start_section("globals");
     {
-        W.member(type_<bool>(), "capture_chunk", w);
+        W.member(type_<bool>(), "capture_chunk", r);
         W.sep();
         W.member(type_<std::string>(), "auth_user", str_authid{"login"}, rw);
         W.member(type_<std::string>(), "host", str_authid{"ip_client"}, r);
@@ -496,7 +496,6 @@ void config_spec_definition(Writer && W)
 
     W.start_section("");
     W.member(type_<Theme>(), "theme");
-    W.member(type_<IniAccounts>(), "account");
     W.member(type_<Font>(), "font");
     W.stop_section();
 }

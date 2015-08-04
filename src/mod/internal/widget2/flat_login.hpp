@@ -47,49 +47,51 @@ public:
     WidgetLabel version_label;
 
     WidgetFlatButton helpicon;
-    Inifile & ini;
 
     CompositeArray composite_array;
+
+private:
+    Translator tr;
 
     // WidgetFrame frame;
     // WidgetImage wimage;
     // WidgetVScrollBar vbar;
     // WidgetHScrollBar hbar;
 
+public:
     FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
               const char * login, const char * password,
               const char * label_text_login,
               const char * label_text_password,
-              Inifile & ini)
+              Font const & font, Translator tr = Translator(), Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , bg_color(ini.get<cfg::theme>().global.bgcolor)
+        , bg_color(theme.global.bgcolor)
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                        password, -14, ini.get<cfg::theme>().edit.fgcolor,
-                        ini.get<cfg::theme>().edit.bgcolor, ini.get<cfg::theme>().edit.focus_color,
-                        ini.get<cfg::font>(),
+                        password, -14, theme.edit.fgcolor,
+                        theme.edit.bgcolor, theme.edit.focus_color,
+                        font,
                         -1u, 1, 1, true, (width <= 640) ? label_text_password : nullptr)
         , login_label(drawable, 0, 0, *this, nullptr, label_text_login, true, -11,
-                      ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                      theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                     login, -12, ini.get<cfg::theme>().edit.fgcolor, ini.get<cfg::theme>().edit.bgcolor,
-                     ini.get<cfg::theme>().edit.focus_color, ini.get<cfg::font>(), -1u, 1, 1, false,
+                     login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
+                     theme.edit.focus_color, font, -1u, 1, 1, false,
                      (width <= 640) ? label_text_login : nullptr)
-        // , img(drawable, 0, 0, ini.get<cfg::theme>().global.logo_path, *this, nullptr, -10)
+        // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
-              ini.get<cfg::theme>().global.logo ? ini.get<cfg::theme>().global.logo_path :
+              theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
         , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
-                         ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                         ini.get<cfg::font>())
+                         theme.global.fgcolor, theme.global.bgcolor,
+                         font)
         , version_label(drawable, 0, 0, *this, nullptr, caption, true, -15,
-                        ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                        ini.get<cfg::font>())
+                        theme.global.fgcolor, theme.global.bgcolor,
+                        font)
         , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
-                   ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                   ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2)
-        , ini(ini)
+                   theme.global.fgcolor, theme.global.bgcolor,
+                   theme.global.focus_color, font, 6, 2)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
         //          parent, notifier, -17)
@@ -97,6 +99,7 @@ public:
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
+        , tr(tr)
     {
         this->impl = &composite_array;
 
@@ -200,7 +203,7 @@ public:
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {
-                this->show_tooltip(wid, TR("help_message", this->ini), x, y);
+                this->show_tooltip(wid, this->tr("help_message"), x, y);
             }
         }
 

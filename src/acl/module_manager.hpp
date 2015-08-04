@@ -259,6 +259,17 @@ public:
 
 class ModuleManager : public MMIni
 {
+    struct IniAccounts {
+        char username[255]; // should use string
+        char password[255]; // should use string
+
+        IniAccounts()
+        {
+            this->username[0] = 0;
+            this->password[0] = 0;
+        }
+    } accounts;
+
     struct module_osd
     : public mod_osd
     {
@@ -537,10 +548,37 @@ public:
         case MODULE_INTERNAL_TARGET:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
-                this->mod = new InteractiveTargetMod(this->ini,
-                                                     this->front,
-                                                     this->front.client_info.width,
-                                                     this->front.client_info.height);
+                this->mod = new InteractiveTargetMod(
+                    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+                    /*accepted*/[this](char const * device, char const * login, char const * password) {
+                        if (device) {
+                            this->ini.set<cfg::context::target_host>(device);
+                        }
+                        if (login) {
+                            this->ini.set<cfg::globals::target_user>(login);
+                        }
+                        if (password) {
+                            this->ini.set<cfg::context::target_password>(password);
+                        }
+                        this->ini.set<cfg::context::display_message>("True");
+                    },
+                    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+                    /*refused*/[this] {
+                        this->ini.set<cfg::context::target_password>("");
+                        this->ini.set<cfg::context::display_message>("False");
+                    },
+                    this->front,
+                    this->front.client_info.width,
+                    this->front.client_info.height,
+                    Translator(this->ini.get<cfg::translation::language>()),
+                    this->ini.get<cfg::font>(),
+                    this->ini.get<cfg::theme>(),
+                    this->ini.is_asked<cfg::context::target_host>(),
+                    this->ini.is_asked<cfg::globals::target_user>(),
+                    this->ini.is_asked<cfg::context::target_password>(),
+                    this->ini.get<cfg::globals::target_device>().c_str(),
+                    this->ini.get<cfg::globals::target_user>().c_str()
+                );
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
             break;
@@ -635,17 +673,17 @@ public:
             if (this->ini.is_asked<cfg::globals::target_user>()
                 ||  this->ini.is_asked<cfg::globals::target_device>()){
                 if (this->ini.is_asked<cfg::globals::auth_user>()){
-                    this->ini.get_ref<cfg::account>().username[0] = 0;
+                    accounts.username[0] = 0;
                 }
                 else {
-                    strncpy(this->ini.get_ref<cfg::account>().username,
+                    strncpy(accounts.username,
                             this->ini.get<cfg::globals::auth_user>().c_str(),
-                            sizeof(this->ini.get<cfg::account>().username));
-                    this->ini.get_ref<cfg::account>().username[sizeof(this->ini.get<cfg::account>().username) - 1] = 0;
+                            sizeof(accounts.username));
+                    accounts.username[sizeof(accounts.username) - 1] = 0;
                 }
             }
             else if (this->ini.is_asked<cfg::globals::auth_user>()) {
-                this->ini.get_ref<cfg::account>().username[0] = 0;
+                accounts.username[0] = 0;
             }
             else {
                 TODO("check this! Assembling parts to get user login with target is not obvious"
@@ -658,15 +696,23 @@ public:
                         , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
                         , this->ini.get<cfg::globals::auth_user>().c_str()
                         );
-                strcpy(this->ini.get_ref<cfg::account>().username, buffer);
+                strcpy(accounts.username, buffer);
             }
 
             this->mod = new FlatLoginMod(
-                        // new LoginMod(
-                                     this->ini,
-                                     this->front,
-                                     this->front.client_info.width,
-                                     this->front.client_info.height);
+                [this](char const * username, char const * password) {
+                    this->ini.set<cfg::globals::auth_user>(username);
+                    this->ini.set<cfg::context::password>(password);
+                },
+                accounts.username,
+                accounts.password,
+                this->front,
+                this->front.client_info.width,
+                this->front.client_info.height,
+                Translator(this->ini.get<cfg::translation::language>()),
+                this->ini.get<cfg::font>(),
+                this->ini.get<cfg::theme>()
+            );
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
 
@@ -871,12 +917,14 @@ public:
                                                       , this->ini.get<cfg::debug::mod_vnc>()
                                                       , nullptr
                                                       , sock_mod_barrier()
-                                                      , this->ini
                                                       , this->ini.get<cfg::globals::target_user>().c_str()
                                                       , this->ini.get<cfg::context::target_password>().c_str()
                                                       , this->front
                                                       , this->front.client_info.width
                                                       , this->front.client_info.height
+                                                      , this->ini.get<cfg::font>()
+                                                      , Translator(this->ini.get<cfg::translation::language>())
+                                                      , this->ini.get<cfg::theme>()
                                                       , this->front.client_info.keylayout
                                                       , this->front.keymap.key_flags
                                                       , this->ini.get<cfg::mod_vnc::clipboard_up>()

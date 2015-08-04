@@ -29,7 +29,6 @@
 
 #define LOGNULL
 
-#include "config.hpp"
 #include "internal/widget2/flat_login.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -43,15 +42,15 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int id = 0;
 
     FlatLogin flat_login(drawable, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         false, id, "rec", "rec", "Login", "Password", ini);
+                         false, id, "rec", "rec", "Login", "Password", font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.rect);
@@ -70,14 +69,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2",
-                         false, 0, nullptr, nullptr, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -111,13 +110,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
         }
     } notifier;
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
-                         false, 0, nullptr, nullptr, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", font);
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
 
@@ -159,15 +158,15 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
-                         false, 0, nullptr, nullptr, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -200,14 +199,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -229,14 +228,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -259,9 +258,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
@@ -276,7 +275,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     } notifier;
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", ini);
+                         false, 0, nullptr, nullptr, "Login", "Password", font);
 
     BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);

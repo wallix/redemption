@@ -44,9 +44,9 @@ public:
     Font const & font;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, Font const & font,
-                 NotifyApi * notifier = nullptr, Theme const * theme = nullptr)
+                 NotifyApi * notifier = nullptr, Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
-        , theme(theme ? *theme : Theme())
+        , theme(theme)
         , tooltip(nullptr)
         , current_over(nullptr)
         , normal_pointer(Pointer::POINTER_NORMAL)
