@@ -132,6 +132,7 @@ class Engine(object):
         self.displaytargets = []
         self.proxyrightsinput = None
         self.pidhandler = None
+        self.subprotocol = None
 
         self.session_result = True
         self.session_diag = u'Success'
@@ -489,15 +490,17 @@ class Engine(object):
         rights = prights.rights
         # Logger().info("VALID DEVICE NAME Rights = '%s', len = %s" % (rights, len(rights)))
         if rights:
+            self.proxy_rights = prights
             return True
         return False
 
     def get_proxy_rights(self, protocols, target_device=None, check_timeframes=False,
                          target_context=None):
-        if self.proxy_rights is not None:
+        if self.proxy_rights is None:
+            self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
+                                                                check_timeframes=check_timeframes)
+        if self.rights is not None:
             return
-        self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
-                                                            check_timeframes=check_timeframes)
         self.rights = self.proxy_rights.rights
         self.targets = {}
         self.displaytargets = []
@@ -558,7 +561,7 @@ class Engine(object):
                               check_timeframes=False)
         if target_login == MAGIC_AM:
             target_login = self.get_username()
-        results = self.targets.get((target_login, target_device))
+        results = self.targets.get((target_login, target_device), [])
         right = None
         filtered = []
         for (r_service, r_groups, r) in results:
