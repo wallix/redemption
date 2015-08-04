@@ -1457,10 +1457,10 @@ public:
 
                     server_device_announce_response.receive(chunk);
                     server_device_announce_response.log(LOG_INFO);
-
-                    this->device_redirection_manager.process_server_device_announce_response(
-                        total_length, flags, chunk);
                 }
+
+                this->device_redirection_manager.process_server_device_announce_response(
+                    total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
