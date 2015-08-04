@@ -93,7 +93,7 @@ public:
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 {
-    int verbose = 1;
+    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -115,10 +115,12 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 
     FileSystemDriveManager file_system_drive_manager;
 
-    file_system_drive_manager.EnableDrive("/var/wab/drive_redirection/export",
-        verbose);
-    file_system_drive_manager.EnableDrive("/var/wab/drive_redirection/share",
-        verbose);
+    bool ignore_existence_check__for_test_only = true;
+
+    file_system_drive_manager.EnableDrive("export", verbose,
+        ignore_existence_check__for_test_only);
+    file_system_drive_manager.EnableDrive("share", verbose,
+        ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel.hpp"
     TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
@@ -128,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
     TestToServerSender to_server_sender(t);
 
     FileSystemVirtualChannel file_system_virtual_channel(
-        /*&to_client_sender*/nullptr, &to_server_sender, file_system_drive_manager,
+        &to_client_sender, &to_server_sender, file_system_drive_manager,
         file_system_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];

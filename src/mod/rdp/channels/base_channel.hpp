@@ -24,7 +24,7 @@
 #include "asynchronous_task_manager.hpp"
 #include "virtual_channel_data_sender.hpp"
 
-#define MODRDP_LOGLEVEL_RDPDR      0x00000001
+#define MODRDP_LOGLEVEL_RDPDR      0x08000000
 #define MODRDP_LOGLEVEL_RDPDR_DUMP 0x80000000
 
 typedef int_fast32_t data_size_type;
@@ -39,6 +39,7 @@ class BaseVirtualChannel
           data_size_type exchanged_data                        = 0;
           bool           exchanged_data_limit_reached_reported = false;
 
+protected:
     const uint32_t verbose;
 
 public:
@@ -67,11 +68,6 @@ public:
         const = 0;
 
 protected:
-    inline uint32_t get_verbose() const
-    {
-        return this->verbose;
-    }
-
     inline bool has_valid_to_client_sender() const
     {
         return (bool)this->to_client_sender;
@@ -79,19 +75,21 @@ protected:
 
 public:
     virtual void process_client_message(uint32_t total_length,
-        uint32_t flags, uint8_t* chunk_data, uint32_t chunk_data_length) = 0;
+        uint32_t flags, const uint8_t* chunk_data,
+        uint32_t chunk_data_length) = 0;
 
     virtual void process_server_message(uint32_t total_length,
-        uint32_t flags, uint8_t* chunk_data, uint32_t chunk_data_length,
+        uint32_t flags, const uint8_t* chunk_data,
+        uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
 
 protected:
     inline void send_message_to_client(uint32_t total_length,
-        uint32_t flags, uint8_t* chunk_data, uint32_t chunk_data_length)
+        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_client_sender)
         {
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
                 LOG(LOG_INFO, "Sending on channel (-1) n bytes");
                 const uint32_t dest = 0;    // Client
                 hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
@@ -111,11 +109,11 @@ protected:
     }
 
     inline void send_message_to_server(uint32_t total_length,
-        uint32_t flags, uint8_t* chunk_data, uint32_t chunk_data_length)
+        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_server_sender)
         {
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
                 LOG(LOG_INFO, "Sending on channel (-1) n bytes");
                 const uint32_t dest = 1;    // Server
                 hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
