@@ -72,6 +72,7 @@ rule defines ( properties * )
 }
 variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
 
+
 constant CXXFLAGS-COMMON :
 #     <cxxflags>-Weffc++
 #     <cxxflags>-Wswitch-enum
@@ -226,6 +227,7 @@ project redemption
     <include>src/regex
     <include>src/headers
     <include>src/main
+    <include>src/configs
     <include>/usr/include
     <include>tests
 

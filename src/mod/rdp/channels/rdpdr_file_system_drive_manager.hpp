@@ -1333,12 +1333,12 @@ public:
         out_drive_created = (this->fd != -1);
     }   // ProcessServerCreateDriveRequest
 
-    virtual void ProcessServerCloseDriveRequest(
+    void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
             Stream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose) override {
         REDASSERT(this->fd > -1);
 
         //LOG(LOG_INFO, "ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd=%d",
@@ -1371,13 +1371,13 @@ public:
         REDASSERT(this->fd == -1);
     }
 
-    virtual void ProcessServerDriveReadRequest(
+    void ProcessServerDriveReadRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceReadRequest const & device_read_request,
             const char * path, Stream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose) override {
         REDASSERT(this->fd > -1);
 
         const uint32_t Length = device_read_request.Length();
@@ -1393,7 +1393,7 @@ public:
             verbose);
     }
 
-    virtual void ProcessServerDriveControlRequest(
+    void ProcessServerDriveControlRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceControlRequest const & device_control_request,
             const char * path, Stream & in_stream,
