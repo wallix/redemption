@@ -101,12 +101,12 @@ public:
 
     virtual void notify(Widget2* widget, notify_event_t event)
     {
-        if (this->waiting_for_next_module) {
-            LOG(LOG_INFO, "FlatSelector2Mod::notify: Waiting for next module.");
-            return;
-        }
-
         if (NOTIFY_CANCEL == event) {
+            if (this->waiting_for_next_module) {
+                LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_CANCEL - Waiting for next module.");
+                return;
+            }
+
             this->ini.context_ask(AUTHID_AUTH_USER);
             this->ini.context_ask(AUTHID_PASSWORD);
             this->ini.context.selector.set(false);
@@ -116,6 +116,11 @@ public:
             this->waiting_for_next_module = true;
         }
         else if (NOTIFY_SUBMIT == event) {
+            if (this->waiting_for_next_module) {
+                LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_SUBMIT - Waiting for next module.");
+                return;
+            }
+
             if (widget == &this->selector.connect) {
                 char buffer[1024] = {};
                 uint16_t row_index = 0;
