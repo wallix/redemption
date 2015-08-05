@@ -38,6 +38,8 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
 
     CopyPaste copy_paste;
 
+    bool waiting_for_next_module = false;
+
     struct temporary_login {
         char buffer[256];
 
@@ -99,12 +101,19 @@ public:
 
     virtual void notify(Widget2* widget, notify_event_t event)
     {
+        if (this->waiting_for_next_module) {
+            LOG(LOG_INFO, "FlatSelector2Mod::notify: Waiting for next module.");
+            return;
+        }
+
         if (NOTIFY_CANCEL == event) {
             this->ini.context_ask(AUTHID_AUTH_USER);
             this->ini.context_ask(AUTHID_PASSWORD);
             this->ini.context.selector.set(false);
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
+
+            this->waiting_for_next_module = true;
         }
         else if (NOTIFY_SUBMIT == event) {
             if (widget == &this->selector.connect) {
@@ -128,6 +137,8 @@ public:
 
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
+
+                this->waiting_for_next_module = true;
             }
             else if (widget->group_id == this->selector.apply.group_id) {
                 this->ask_page();
