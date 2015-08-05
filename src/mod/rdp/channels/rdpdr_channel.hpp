@@ -153,18 +153,18 @@ private:
         }
 
     protected:
-        void announce_drive() {
+        void announce_device() {
             if (!this->waiting_for_server_device_announce_response &&
                 this->device_announces.size()) {
                 REDASSERT(this->to_server_sender);
 
                 const uint32_t data_length =
-                    std::get<0>(device_announces.front());
+                    std::get<0>(this->device_announces.front());
 
                 uint32_t remaining_data_length = data_length;
 
                 uint8_t const * data =
-                    std::get<1>(device_announces.front()).get();
+                    std::get<1>(this->device_announces.front()).get();
 
                 uint32_t flags_ = CHANNELS::CHANNEL_FLAG_FIRST;
 
@@ -435,19 +435,138 @@ private:
                 }
             }   // while (chunk.in_remain())
 
-            this->announce_drive();
+            this->announce_device();
         }   // process_client_device_list_announce_request()
+
+        void process_client_drive_device_list_remove(uint32_t total_length,
+                uint32_t flags, Stream& chunk) {
+            const uint32_t DeviceCount = chunk.in_uint32_le();
+
+            auto remove_device =
+                    [](device_announce_collection_type& device_announces,
+                        const uint32_t DeviceId) -> bool {
+                bool device_removed = false;
+
+                for (device_announce_collection_type::const_iterator iter =
+                         device_announces.cbegin();
+                     iter != device_announces.cend(); ++iter) {
+                    uint8_t const * data =
+                        std::get<1>(*iter).get();
+
+                    ReadOnlyStream header_stream(data,
+                            rdpdr::SharedHeader::size() +
+                            12  // DeviceCount(4) + DeviceType(4) + DeviceId(4)
+                        );
+
+                    header_stream.in_skip_bytes(
+                            rdpdr::SharedHeader::size() +
+                            8  // DeviceCount(4) + DeviceType(4)
+                        );
+
+                    const uint32_t current_device_id =
+                        header_stream.in_uint32_le();
+
+                    if (DeviceId == current_device_id) {
+                        device_announces.erase(iter);
+                        device_removed = true;
+                        break;
+                    }
+                }
+
+                return device_removed;
+            };
+
+            const uint32_t max_number_of_removable_device = 128;
+
+            uint8_t client_drive_device_list_remove_data[
+                      64    // > rdpdr::SharedHeader::size()
+                    + 4     // DeviceCount(4)
+                    + 4     // DeviceId(4)
+                    * max_number_of_removable_device
+                ];
+            WriteOnlyStream client_drive_device_list_remove_stream(
+                client_drive_device_list_remove_data,
+                sizeof(client_drive_device_list_remove_data));
+
+            uint32_t number_of_removable_device = 0;
+
+            rdpdr::SharedHeader client_message_header(
+                rdpdr::Component::RDPDR_CTYP_CORE,
+                rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
+
+            client_message_header.emit(client_drive_device_list_remove_stream);
+
+            const auto device_count_offset =
+                client_drive_device_list_remove_stream.get_offset();
+
+            client_drive_device_list_remove_stream.out_clear_bytes(
+                    4   // DeviceCount(4)
+                );
+
+            for (uint32_t device_index = 0; device_index < DeviceCount;
+                 device_index++) {
+                const uint32_t DeviceId = chunk.in_uint32_le();
+
+                if (!remove_device(this->device_announces, DeviceId) &&
+                    (number_of_removable_device < max_number_of_removable_device)) {
+                    client_drive_device_list_remove_stream.out_uint32_le(
+                        DeviceId);
+                    number_of_removable_device++;
+                }
+            }
+
+            if (number_of_removable_device) {
+                client_drive_device_list_remove_stream.mark_end();
+
+                client_drive_device_list_remove_stream.set_out_uint32_le(
+                    number_of_removable_device, device_count_offset);
+
+                REDASSERT(this->to_server_sender);
+
+                const uint32_t total_length_ =
+                    client_drive_device_list_remove_stream.size();
+                const uint32_t flags_ =
+                    CHANNELS::CHANNEL_FLAG_FIRST |
+                    CHANNELS::CHANNEL_FLAG_LAST;
+                const uint32_t chunk_data_length_ = total_length_;
+
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+                    LOG(LOG_INFO, "Sending on channel (-1) n bytes");
+                    const uint32_t dest = 1;    // Server
+                    hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+                        sizeof(dest));
+                    hexdump_c(
+                        reinterpret_cast<const uint8_t*>(&total_length_),
+                        sizeof(total_length_));
+                    hexdump_c(
+                        reinterpret_cast<const uint8_t*>(&flags_),
+                        sizeof(flags_));
+                    hexdump_c(
+                        reinterpret_cast<const uint8_t*>(&chunk_data_length_),
+                        sizeof(chunk_data_length_));
+                    hexdump_c(client_drive_device_list_remove_data,
+                        chunk_data_length_);
+                    LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
+                }
+
+                (*this->to_server_sender)(
+                    total_length_,
+                    flags_,
+                    client_drive_device_list_remove_data,
+                    chunk_data_length_);
+            }
+        }
 
         void process_server_user_logged_on(uint32_t total_length,
                 uint32_t flags, Stream& chunk) {
-            this->announce_drive();
+            this->announce_device();
         }
 
         void process_server_device_announce_response(uint32_t total_length,
                 uint32_t flags, Stream& chunk) {
             this->waiting_for_server_device_announce_response = false;
 
-            this->announce_drive();
+            this->announce_device();
         }
     } device_redirection_manager;
 
@@ -887,6 +1006,28 @@ public:
                 send_message_to_server =
                     this->process_client_device_list_announce_request(
                         total_length, flags, chunk);
+
+                //{
+                //    uint8_t out_data[256];
+                //    WriteOnlyStream out_stream(out_data, sizeof(out_data));
+                //
+                //    rdpdr::SharedHeader client_message_header(
+                //        rdpdr::Component::RDPDR_CTYP_CORE,
+                //        rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
+                //
+                //    client_message_header.emit(out_stream);
+                //
+                //    out_stream.out_uint32_le(1);    // DeviceCount(4)
+                //
+                //    out_stream.out_uint32_le(1);    // DeviceId(4)
+                //
+                //    out_stream.mark_end();
+                //
+                //    this->process_client_message(out_stream.size(),
+                //        CHANNELS::CHANNEL_FLAG_FIRST |
+                //            CHANNELS::CHANNEL_FLAG_LAST,
+                //        out_data, out_stream.size());
+                //}
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
@@ -927,6 +1068,11 @@ public:
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Drive Device List Remove");
                 }
+
+                this->device_redirection_manager.process_client_drive_device_list_remove(
+                    total_length, flags, chunk);
+
+                send_message_to_server = false;
             break;
 
             default:
