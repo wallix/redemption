@@ -40,17 +40,17 @@ const char outdata[] =
 // /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
 // /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
-// /* 0000 */ "\x72\x44\x4e\x43\xf9\x7f\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
+// /* 0000 */ "\x72\x44\x4e\x43\x01\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
 // /* 0010 */ "\x54\x00\x45\x00\x53\x00\x54\x00\x4b\x00\x52\x00\x42\x00\x00\x00" //T.E.S.T.K.R.B... |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Name Request |
-// ClientNameRequest: UnicodeFlag=0x7FF9 CodePage=0 ComputerName="TESTKRB" |
+// ClientNameRequest: UnicodeFlag=0x1 CodePage=0 ComputerName="TESTKRB" |
 // Sending on channel (-1) n bytes |
 /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
 /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
-/* 0000 */ "\x72\x44\x4e\x43\xf9\x7f\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
+/* 0000 */ "\x72\x44\x4e\x43\x01\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
 /* 0010 */ "\x54\x00\x45\x00\x53\x00\x54\x00\x4b\x00\x52\x00\x42\x00\x00\x00" //T.E.S.T.K.R.B... |
 // Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: total_length=84 flags=0x00000003 chunk_data_length=84 |
@@ -162,7 +162,7 @@ const char outdata[] =
 // process save session info : Logon extended info |
 // process save session info : Auto-reconnect cookie |
 // LogonId=2 |
-// 0000 f6 f6 ed ef 2d 2c 2f d2 9a 08 65 c3 1e 16 fc c1 ....-,/...e..... |
+// 0000 3a 5b db a8 ce 6a f4 85 b2 4c 8e e0 56 75 96 c4 :[...j...L..Vu.. |
 // +++++++++++> ACL receive <++++++++++++++++ |
 // receiving 'keepalive'='True' |
 // FileSystemVirtualChannel::process_server_message: total_length=4 flags=0x00000003 chunk_data_length=4 |
@@ -196,16 +196,6 @@ const char outdata[] =
 /* 0000 */ "\x04\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x72\x44\x4c\x55"                                                 //rDLU |
 // Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_client_message: total_length=8 flags=0x00000003 chunk_data_length=8 |
-// Recv done on rdpdr (-1) n bytes |
-// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x41\x44\x00\x00\x00\x00"                                 //rDAD.... |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
-// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceCount=0 |
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |
 // /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
@@ -232,6 +222,16 @@ const char outdata[] =
 /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x72\x44\x72\x64\xff\x7f\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
 // Sent dumped on channel (-1) n bytes |
+// FileSystemVirtualChannel::process_client_message: total_length=8 flags=0x00000003 chunk_data_length=8 |
+// Recv done on rdpdr (-1) n bytes |
+// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x72\x44\x41\x44\x00\x00\x00\x00"                                 //rDAD.... |
+// Dump done on rdpdr (-1) n bytes |
+// FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
+// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceCount=0 |
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |
 // /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
@@ -1169,6 +1169,23 @@ const char outdata[] =
 // /* 0030 */ "\x79\x00\x73\x00\x61\x00\x67\x00\x65\x00\x00\x00\x45\x00\x6e\x00" //y.s.a.g.e...E.n. |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
+// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
+// Recv done on rdpdr (-1) n bytes |
+// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
+// Dump done on rdpdr (-1) n bytes |
+// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
+// ServerDeviceAnnounceResponse: DeviceId=5 ResultCode=0x00000000 |
+// Sending on channel (-1) n bytes |
+/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
+// Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: total_length=19498 flags=0x00000000 chunk_data_length=1600 |
 // Recv done on rdpdr (-1) n bytes |
 // /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
@@ -1277,23 +1294,6 @@ const char outdata[] =
 // /* 0030 */ "\x74\x00\x20\x00\x57\x00\x72\x00\x69\x00\x74\x00\x65\x00\x72\x00" //t. .W.r.i.t.e.r. |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
-// ServerDeviceAnnounceResponse: DeviceId=5 ResultCode=0x00000000 |
-// Sending on channel (-1) n bytes |
-/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: total_length=19498 flags=0x00000000 chunk_data_length=1600 |
 // Recv done on rdpdr (-1) n bytes |
 // /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
@@ -1646,7 +1646,25 @@ const char outdata[] =
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
 // FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=2 PreferredDosName="D:" DeviceDataLength=0 |
+// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: Server Device Announce Response |
+// ServerDeviceAnnounceResponse: DeviceId=2 ResultCode=0xC0000001 |
+// Sending on channel (-1) n bytes |
+/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x72\x44\x72\x64\x02\x00\x00\x00\x01\x00\x00\xc0"                 //rDrd........ |
+// Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=1 PreferredDosName="C:" DeviceDataLength=0 |
+// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: Server Device Announce Response |
+// ServerDeviceAnnounceResponse: DeviceId=1 ResultCode=0xC0000001 |
+// Sending on channel (-1) n bytes |
+/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x72\x44\x72\x64\x01\x00\x00\x00\x01\x00\x00\xc0"                 //rDrd........ |
+// Sent dumped on channel (-1) n bytes |
 // Sending on channel (-1) n bytes |
 /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\xba\x4a\x00\x00"                                                 //.J.. |
@@ -2926,77 +2944,11 @@ const char outdata[] =
 // FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
 // ServerDeviceAnnounceResponse: DeviceId=3 ResultCode=0x00000000 |
 // Sending on channel (-1) n bytes |
-/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x41\x44\x01\x00\x00\x00\x08\x00\x00\x00\x02\x00\x00\x00" //rDAD............ |
-/* 0010 */ "\x44\x3a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"                 //D:.......... |
-// Sent dumped on channel (-1) n bytes |
-// Sending on channel (-1) n bytes |
 /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x72\x44\x72\x64\x03\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x72\x64\x02\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
-// ServerDeviceAnnounceResponse: DeviceId=2 ResultCode=0x00000000 |
-// Sending on channel (-1) n bytes |
-/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x41\x44\x01\x00\x00\x00\x08\x00\x00\x00\x01\x00\x00\x00" //rDAD............ |
-/* 0010 */ "\x43\x3a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"                 //C:.......... |
-// Sent dumped on channel (-1) n bytes |
-// Sending on channel (-1) n bytes |
-/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x72\x64\x02\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x72\x64\x01\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
-// ServerDeviceAnnounceResponse: DeviceId=1 ResultCode=0x00000000 |
-// Sending on channel (-1) n bytes |
-/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x72\x64\x01\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Printer Set XPS Mode |
-// Sending on channel (-1) n bytes |
-/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
 // Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |
@@ -3020,6 +2972,22 @@ const char outdata[] =
 // /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
+// Dump done on rdpdr (-1) n bytes |
+// FileSystemVirtualChannel::process_server_message: Server Printer Set XPS Mode |
+// Sending on channel (-1) n bytes |
+/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
+// Sent dumped on channel (-1) n bytes |
+// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
+// Recv done on rdpdr (-1) n bytes |
+// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x52\x50\x43\x55\x03\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: Server Printer Set XPS Mode |
@@ -3030,8 +2998,6 @@ const char outdata[] =
 /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x52\x50\x43\x55\x03\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
 // Sent dumped on channel (-1) n bytes |
-// shutting down : signal 2 pid=22358 |
-// shutting down : signal 2 pid=22349 |
 } /* end outdata */;
 
 const char indata[] =
@@ -3076,17 +3042,17 @@ const char indata[] =
 /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
 /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
-/* 0000 */ "\x72\x44\x4e\x43\xf9\x7f\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
+/* 0000 */ "\x72\x44\x4e\x43\x01\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
 /* 0010 */ "\x54\x00\x45\x00\x53\x00\x54\x00\x4b\x00\x52\x00\x42\x00\x00\x00" //T.E.S.T.K.R.B... |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Name Request |
-// ClientNameRequest: UnicodeFlag=0x7FF9 CodePage=0 ComputerName="TESTKRB" |
+// ClientNameRequest: UnicodeFlag=0x1 CodePage=0 ComputerName="TESTKRB" |
 // Sending on channel (-1) n bytes |
 // /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
 // /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x20\x00\x00\x00"                                                 // ... |
-// /* 0000 */ "\x72\x44\x4e\x43\xf9\x7f\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
+// /* 0000 */ "\x72\x44\x4e\x43\x01\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //rDNC............ |
 // /* 0010 */ "\x54\x00\x45\x00\x53\x00\x54\x00\x4b\x00\x52\x00\x42\x00\x00\x00" //T.E.S.T.K.R.B... |
 // Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: total_length=84 flags=0x00000003 chunk_data_length=84 |
@@ -3198,7 +3164,7 @@ const char indata[] =
 // process save session info : Logon extended info |
 // process save session info : Auto-reconnect cookie |
 // LogonId=2 |
-// 0000 f6 f6 ed ef 2d 2c 2f d2 9a 08 65 c3 1e 16 fc c1 ....-,/...e..... |
+// 0000 3a 5b db a8 ce 6a f4 85 b2 4c 8e e0 56 75 96 c4 :[...j...L..Vu.. |
 // +++++++++++> ACL receive <++++++++++++++++ |
 // receiving 'keepalive'='True' |
 // FileSystemVirtualChannel::process_server_message: total_length=4 flags=0x00000003 chunk_data_length=4 |
@@ -3232,16 +3198,6 @@ const char indata[] =
 // /* 0000 */ "\x04\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x72\x44\x4c\x55"                                                 //rDLU |
 // Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_client_message: total_length=8 flags=0x00000003 chunk_data_length=8 |
-// Recv done on rdpdr (-1) n bytes |
-/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x41\x44\x00\x00\x00\x00"                                 //rDAD.... |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
-// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceCount=0 |
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |
 /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
@@ -3268,6 +3224,16 @@ const char indata[] =
 // /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x72\x44\x72\x64\xff\x7f\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
 // Sent dumped on channel (-1) n bytes |
+// FileSystemVirtualChannel::process_client_message: total_length=8 flags=0x00000003 chunk_data_length=8 |
+// Recv done on rdpdr (-1) n bytes |
+/* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x08\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x72\x44\x41\x44\x00\x00\x00\x00"                                 //rDAD.... |
+// Dump done on rdpdr (-1) n bytes |
+// FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
+// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceCount=0 |
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |
 /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
@@ -4205,6 +4171,23 @@ const char indata[] =
 /* 0030 */ "\x79\x00\x73\x00\x61\x00\x67\x00\x65\x00\x00\x00\x45\x00\x6e\x00" //y.s.a.g.e...E.n. |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
+// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
+// Recv done on rdpdr (-1) n bytes |
+/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
+// Dump done on rdpdr (-1) n bytes |
+// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
+// ServerDeviceAnnounceResponse: DeviceId=5 ResultCode=0x00000000 |
+// Sending on channel (-1) n bytes |
+// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
+// Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: total_length=19498 flags=0x00000000 chunk_data_length=1600 |
 // Recv done on rdpdr (-1) n bytes |
 /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
@@ -4313,23 +4296,6 @@ const char indata[] =
 /* 0030 */ "\x74\x00\x20\x00\x57\x00\x72\x00\x69\x00\x74\x00\x65\x00\x72\x00" //t. .W.r.i.t.e.r. |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
-// ServerDeviceAnnounceResponse: DeviceId=5 ResultCode=0x00000000 |
-// Sending on channel (-1) n bytes |
-// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x72\x64\x05\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: total_length=19498 flags=0x00000000 chunk_data_length=1600 |
 // Recv done on rdpdr (-1) n bytes |
 /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
@@ -4682,7 +4648,25 @@ const char indata[] =
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_client_message: Client Device List Announce Request |
 // FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=2 PreferredDosName="D:" DeviceDataLength=0 |
+// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: Server Device Announce Response |
+// ServerDeviceAnnounceResponse: DeviceId=2 ResultCode=0xC0000001 |
+// Sending on channel (-1) n bytes |
+// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x72\x44\x72\x64\x02\x00\x00\x00\x01\x00\x00\xc0"                 //rDrd........ |
+// Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=1 PreferredDosName="C:" DeviceDataLength=0 |
+// FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: Server Device Announce Response |
+// ServerDeviceAnnounceResponse: DeviceId=1 ResultCode=0xC0000001 |
+// Sending on channel (-1) n bytes |
+// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x72\x44\x72\x64\x01\x00\x00\x00\x01\x00\x00\xc0"                 //rDrd........ |
+// Sent dumped on channel (-1) n bytes |
 // Sending on channel (-1) n bytes |
 // /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\xba\x4a\x00\x00"                                                 //.J.. |
@@ -5962,77 +5946,11 @@ const char indata[] =
 // FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
 // ServerDeviceAnnounceResponse: DeviceId=3 ResultCode=0x00000000 |
 // Sending on channel (-1) n bytes |
-// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x41\x44\x01\x00\x00\x00\x08\x00\x00\x00\x02\x00\x00\x00" //rDAD............ |
-// /* 0010 */ "\x44\x3a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"                 //D:.......... |
-// Sent dumped on channel (-1) n bytes |
-// Sending on channel (-1) n bytes |
 // /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x72\x44\x72\x64\x03\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x72\x64\x02\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
-// ServerDeviceAnnounceResponse: DeviceId=2 ResultCode=0x00000000 |
-// Sending on channel (-1) n bytes |
-// /* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x1c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x41\x44\x01\x00\x00\x00\x08\x00\x00\x00\x01\x00\x00\x00" //rDAD............ |
-// /* 0010 */ "\x43\x3a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"                 //C:.......... |
-// Sent dumped on channel (-1) n bytes |
-// Sending on channel (-1) n bytes |
-// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x72\x64\x02\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x72\x44\x72\x64\x01\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Device Announce Response |
-// ServerDeviceAnnounceResponse: DeviceId=1 ResultCode=0x00000000 |
-// Sending on channel (-1) n bytes |
-// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x72\x44\x72\x64\x01\x00\x00\x00\x00\x00\x00\x00"                 //rDrd........ |
-// Sent dumped on channel (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
-// Recv done on rdpdr (-1) n bytes |
-/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-/* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
-// Dump done on rdpdr (-1) n bytes |
-// FileSystemVirtualChannel::process_server_message: Server Printer Set XPS Mode |
-// Sending on channel (-1) n bytes |
-// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
-// /* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
 // Sent dumped on channel (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |
@@ -6056,6 +5974,22 @@ const char indata[] =
 /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
+// Dump done on rdpdr (-1) n bytes |
+// FileSystemVirtualChannel::process_server_message: Server Printer Set XPS Mode |
+// Sending on channel (-1) n bytes |
+// /* 0000 */ "\x00\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+// /* 0000 */ "\x52\x50\x43\x55\x04\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
+// Sent dumped on channel (-1) n bytes |
+// FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
+// Recv done on rdpdr (-1) n bytes |
+/* 0000 */ "\x01\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x03\x00\x00\x00"                                                 //.... |
+/* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 /* 0000 */ "\x52\x50\x43\x55\x03\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: Server Printer Set XPS Mode |
@@ -6066,7 +6000,5 @@ const char indata[] =
 // /* 0000 */ "\x0c\x00\x00\x00"                                                 //.... |
 // /* 0000 */ "\x52\x50\x43\x55\x03\x00\x00\x00\x00\x00\x00\x00"                 //RPCU........ |
 // Sent dumped on channel (-1) n bytes |
-// shutting down : signal 2 pid=22358 |
-// shutting down : signal 2 pid=22349 |
 } /* end indata */;
 

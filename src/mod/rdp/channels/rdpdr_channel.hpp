@@ -21,6 +21,8 @@
 #ifndef REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
 #define REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
 
+#include <deque>
+
 #include "apply_for_delim.hpp"
 #include "base_channel.hpp"
 #include "rdpdr_file_system_drive_manager.hpp"
@@ -52,7 +54,66 @@ private:
 
     bool proxy_managed_drives_announced = false;
 
-    class ClientDeviceListAnnounceRequestProcessor {
+    class DeviceRedirectionManager {
+        typedef std::tuple<uint32_t, std::unique_ptr<uint8_t[]>>
+            device_announce_type;    // data_length, data.
+        typedef std::deque<device_announce_type>
+            device_announce_collection_type;
+        device_announce_collection_type device_announces;
+
+    public:
+        class ToDeviceAnnounceCollectionSender :
+            public VirtualChannelDataSender
+        {
+            device_announce_collection_type& device_announces;
+
+            std::unique_ptr<uint8_t[]> device_announce_data;
+            WriteOnlyStream            device_announce_stream;
+
+        public:
+            ToDeviceAnnounceCollectionSender(
+                device_announce_collection_type& device_announces)
+            : device_announces(device_announces) {}
+
+            virtual void operator()(uint32_t total_length, uint32_t flags,
+                const uint8_t* chunk_data, uint32_t chunk_data_length)
+                    override {
+                REDASSERT((flags & CHANNELS::CHANNEL_FLAG_FIRST) ||
+                          (bool)this->device_announce_data);
+
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    this->device_announce_data =
+                        std::make_unique<uint8_t[]>(total_length);
+
+                    this->device_announce_stream.~WriteOnlyStream();
+                    new (&this->device_announce_stream) WriteOnlyStream(
+                        this->device_announce_data.get(), total_length);
+                }
+
+                REDASSERT(this->device_announce_stream.tailroom() >=
+                    chunk_data_length);
+
+                this->device_announce_stream.out_copy_bytes(chunk_data,
+                    chunk_data_length);
+
+                if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                    this->device_announce_stream.mark_end();
+                    this->device_announces.push_back(
+                        std::make_tuple(
+                            this->device_announce_stream.size(),
+                            std::move(this->device_announce_data)));
+
+                    this->device_announce_stream.~WriteOnlyStream();
+                    new (&this->device_announce_stream) WriteOnlyStream(
+                        nullptr, 0);
+                }
+            }
+        } to_device_announce_collection_sender;
+
+    private:
+        std::unique_ptr<uint8_t[]> current_device_announce_data;
+        WriteOnlyStream            current_device_announce_stream;
+
         VirtualChannelDataSender* to_client_sender;
         VirtualChannelDataSender* to_server_sender;
 
@@ -62,24 +123,15 @@ private:
         const bool param_serial_port_authorized;
         const bool param_smart_card_authorized;
 
-        uint32_t DeviceCount = 0;
-
         uint32_t length_of_remaining_device_data_to_be_processed = 0;
         uint32_t length_of_remaining_device_data_to_be_skipped   = 0;
 
-        bool has_device_announced = false;
-
-        uint8_t         chunked_virtual_channel_data[
-            CHANNELS::MAX_CHANNEL_CHUNK_LENGTH];
-        WriteOnlyStream chunked_virtual_channel_stream;
-
-        uint32_t total_virtual_channel_data_length = 0;
-        uint32_t channel_control_flags             = 0;
+        bool waiting_for_server_device_announce_response = false;
 
         const uint32_t verbose;
 
     public:
-        ClientDeviceListAnnounceRequestProcessor(
+        DeviceRedirectionManager(
             VirtualChannelDataSender* to_client_sender_,
             VirtualChannelDataSender* to_server_sender_,
             bool file_system_authorized,
@@ -89,37 +141,85 @@ private:
             bool smart_card_authorized,
             uint32_t channel_chunk_length,
             uint32_t verbose)
-        : to_client_sender(to_client_sender_)
+        : to_device_announce_collection_sender(device_announces)
+        , to_client_sender(to_client_sender_)
         , to_server_sender(to_server_sender_)
         , param_file_system_authorized(file_system_authorized)
         , param_parallel_port_authorized(parallel_port_authorized)
         , param_print_authorized(print_authorized)
         , param_serial_port_authorized(serial_port_authorized)
         , param_smart_card_authorized(smart_card_authorized)
-        , chunked_virtual_channel_stream(
-              chunked_virtual_channel_data,
-              std::min<uint32_t>(sizeof(chunked_virtual_channel_data),
-                                 channel_chunk_length))
-        , verbose(verbose) {}
+        , verbose(verbose) {
+        }
 
-        void operator()(uint32_t total_length, uint32_t flags, Stream& chunk)
+    protected:
+        void announce_device() {
+            if (!this->waiting_for_server_device_announce_response &&
+                this->device_announces.size()) {
+                REDASSERT(this->to_server_sender);
+
+                const uint32_t total_length =
+                    std::get<0>(this->device_announces.front());
+
+                uint32_t remaining_data_length = total_length;
+
+                uint8_t const * chunk_data =
+                    std::get<1>(this->device_announces.front()).get();
+
+                uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST;
+
+                do {
+                    uint32_t chunk_data_length = std::min<uint32_t>(
+                        CHANNELS::CHANNEL_CHUNK_LENGTH,
+                        remaining_data_length);
+
+                    if (chunk_data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+                        flags |= CHANNELS::CHANNEL_FLAG_LAST;
+                    }
+
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+                        const bool send              = true;
+                        const bool from_or_to_client = false;
+                        BaseVirtualChannel::msgdump_c(send, from_or_to_client,
+                            total_length, flags, chunk_data,
+                            chunk_data_length);
+                    }
+
+                    (*this->to_server_sender)(
+                        total_length,
+                        flags,
+                        chunk_data,
+                        chunk_data_length);
+
+                    chunk_data            += chunk_data_length;
+                    remaining_data_length -= chunk_data_length;
+
+                    flags &= ~CHANNELS::CHANNEL_FLAG_FIRST;
+                }
+                while (remaining_data_length);
+
+                this->device_announces.pop_front();
+
+                this->waiting_for_server_device_announce_response = true;
+            }
+        }
+
+    public:
+        void process_client_device_list_announce_request(
+            uint32_t total_length, uint32_t flags, Stream& chunk)
         {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
             {
-                REDASSERT(!this->DeviceCount);
                 REDASSERT(
                     !this->length_of_remaining_device_data_to_be_processed);
                 REDASSERT(
                     !this->length_of_remaining_device_data_to_be_skipped);
-                REDASSERT(!this->chunked_virtual_channel_stream.get_offset());
-                REDASSERT(!this->total_virtual_channel_data_length);
-                REDASSERT(!this->has_device_announced);
 
-                this->DeviceCount = chunk.in_uint32_le();
+                uint32_t DeviceCount = chunk.in_uint32_le();
 
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::ClientDeviceListAnnounceRequestProcessor::(): "
+                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                             "DeviceCount=%u",
                         DeviceCount);
                 }
@@ -148,7 +248,7 @@ private:
 
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::ClientDeviceListAnnounceRequestProcessor::(): "
+                            "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                                 "DeviceType=%s(%u) DeviceId=%u "
                                 "PreferredDosName=\"%s\" DeviceDataLength=%u",
                             rdpdr::DeviceAnnounceHeader::get_DeviceType_name(
@@ -156,10 +256,6 @@ private:
                             DeviceType, DeviceId, PreferredDosName,
                             DeviceDataLength);
                     }
-
-                    REDASSERT(
-                        !this->chunked_virtual_channel_stream.get_offset());
-                    REDASSERT(!this->total_virtual_channel_data_length);
 
                     if (((DeviceType == rdpdr::RDPDR_DTYP_FILESYSTEM) &&
                          this->param_file_system_authorized) ||
@@ -172,53 +268,68 @@ private:
                         ((DeviceType == rdpdr::RDPDR_DTYP_SMARTCARD) &&
                          this->param_smart_card_authorized))
                     {
+                        REDASSERT(!(bool)this->current_device_announce_data);
+
+                        const uint32_t current_device_announce_data_length =
+                              rdpdr::SharedHeader::size()
+                            + 24                // DeviceCount(4) +
+                                                //     DeviceType(4) +
+                                                //     DeviceId(4) +
+                                                //     PreferredDosName(8) +
+                                                //     DeviceDataLength(4)
+                            + DeviceDataLength;
+
+                        this->current_device_announce_data =
+                            std::make_unique<uint8_t[]>(
+                                current_device_announce_data_length);
+
+                        this->current_device_announce_stream.~WriteOnlyStream();
+                        new (&this->current_device_announce_stream)
+                            WriteOnlyStream(
+                                this->current_device_announce_data.get(),
+                                current_device_announce_data_length);
+
                         this->length_of_remaining_device_data_to_be_processed =
                             DeviceDataLength;
                         this->length_of_remaining_device_data_to_be_skipped   = 0;
-
-                        this->total_virtual_channel_data_length =
-                              rdpdr::SharedHeader::size()
-                            + 24    // DeviceCount(4)+ DeviceType(4) +
-                                    //     DeviceId(4) + PreferredDosName(8) +
-                                    //     DeviceDataLength(4)
-                            + DeviceDataLength;
-                        this->channel_control_flags             =
-                            CHANNELS::CHANNEL_FLAG_FIRST;
 
                         rdpdr::SharedHeader client_message_header(
                             rdpdr::Component::RDPDR_CTYP_CORE,
                             rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
 
                         client_message_header.emit(
-                            this->chunked_virtual_channel_stream);
+                            this->current_device_announce_stream);
 
-                        this->chunked_virtual_channel_stream.out_uint32_le(
+                        this->current_device_announce_stream.out_uint32_le(
                              1  // DeviceCount(4)
                             );
 
-                        this->chunked_virtual_channel_stream.out_uint32_le(
+                        this->current_device_announce_stream.out_uint32_le(
                             DeviceType);        // DeviceType(4)
-                        this->chunked_virtual_channel_stream.out_uint32_le(
+                        this->current_device_announce_stream.out_uint32_le(
                             DeviceId);          // DeviceId(4)
-                        this->chunked_virtual_channel_stream.out_copy_bytes(
+                        this->current_device_announce_stream.out_copy_bytes(
                              PreferredDosName,
                              8                  // PreferredDosName(8)
                             );
-                        this->chunked_virtual_channel_stream.out_uint32_le(
+                        this->current_device_announce_stream.out_uint32_le(
                             DeviceDataLength);  // DeviceDataLength(4)
-                    }
+                    }   // if (((DeviceType == rdpdr::RDPDR_DTYP_FILESYSTEM) &&
                     else
                     {
                         this->length_of_remaining_device_data_to_be_processed = 0;
                         this->length_of_remaining_device_data_to_be_skipped   =
                             DeviceDataLength;
 
+                        uint8_t out_data[512];
+                        WriteOnlyStream out_stream(out_data,
+                                                   sizeof(out_data));
+
                         rdpdr::SharedHeader server_message_header(
                             rdpdr::Component::RDPDR_CTYP_CORE,
                             rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY);
 
-                        server_message_header.emit(
-                            this->chunked_virtual_channel_stream);
+                        server_message_header.emit(out_stream);
 
                         rdpdr::ServerDeviceAnnounceResponse
                             server_device_announce_response(
@@ -226,74 +337,72 @@ private:
                                     0xC0000001  // STATUS_UNSUCCESSFUL
                                 );
 
-                        server_device_announce_response.emit(
-                            this->chunked_virtual_channel_stream);
+                        server_device_announce_response.emit(out_stream);
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                             LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::ClientDeviceListAnnounceRequestProcessor::(): "
+                                "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                                     "Server Device Announce Response");
                             server_device_announce_response.log(LOG_INFO);
                         }
 
-                        this->chunked_virtual_channel_stream.mark_end();
+                        out_stream.mark_end();
 
                         REDASSERT(this->to_client_sender);
 
-                        (*this->to_client_sender)(
-                            this->chunked_virtual_channel_stream.size(),
+                        const uint32_t total_length_      = out_stream.size();
+                        const uint32_t flags_             =
                             CHANNELS::CHANNEL_FLAG_FIRST |
-                                CHANNELS::CHANNEL_FLAG_LAST,
-                            this->chunked_virtual_channel_data,
-                            this->chunked_virtual_channel_stream.size());
+                            CHANNELS::CHANNEL_FLAG_LAST;
+                        const uint8_t* chunk_data_        = out_data;
+                        const uint32_t chunk_data_length_ = total_length_;
 
-                        this->chunked_virtual_channel_stream.reset();
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+                            const bool send              = true;
+                            const bool from_or_to_client = true;
+                            BaseVirtualChannel::msgdump_c(send,
+                                from_or_to_client, total_length_, flags_,
+                                chunk_data_, chunk_data_length_);
+                        }
+
+                        (*this->to_client_sender)(
+                            total_length_,
+                            flags_,
+                            chunk_data_,
+                            chunk_data_length_);
                     }
                 }   // if (!this->length_of_remaining_device_data_to_be_processed &&
 
-                if (this->chunked_virtual_channel_stream.get_offset() ||
+                if (this->current_device_announce_stream.get_offset() ||
                     this->length_of_remaining_device_data_to_be_processed) {
+
                     uint32_t length_of_device_data_can_be_processed =
                         std::min<uint32_t>(
-                            std::min<uint32_t>(
-                                this->length_of_remaining_device_data_to_be_processed,
-                                chunk.in_remain()),
-                            this->chunked_virtual_channel_stream.tailroom());
+                            this->length_of_remaining_device_data_to_be_processed,
+                            chunk.in_remain());
 
-                    this->chunked_virtual_channel_stream.out_copy_bytes(
+                    this->current_device_announce_stream.out_copy_bytes(
                         chunk.p, length_of_device_data_can_be_processed);
-                    this->chunked_virtual_channel_stream.mark_end();
+                    this->current_device_announce_stream.mark_end();
 
                     chunk.in_skip_bytes(
                         length_of_device_data_can_be_processed);
                     this->length_of_remaining_device_data_to_be_processed -=
                         length_of_device_data_can_be_processed;
 
-                    if (!this->length_of_remaining_device_data_to_be_processed ||
-                        (this->chunked_virtual_channel_stream.size() ==
-                         this->chunked_virtual_channel_stream.get_capacity()))
+                    if (!this->length_of_remaining_device_data_to_be_processed)
                     {
-                        if (!this->length_of_remaining_device_data_to_be_processed) {
-                            this->channel_control_flags |=
-                                CHANNELS::CHANNEL_FLAG_LAST;
-                        }
+                        const uint32_t data_length =
+                            this->current_device_announce_stream.size();
 
-                        REDASSERT(this->to_server_sender);
+                        this->current_device_announce_stream.~WriteOnlyStream();
+                        new (&this->current_device_announce_stream)
+                            WriteOnlyStream(nullptr, 0);
 
-                        (*this->to_server_sender)(
-                            this->total_virtual_channel_data_length,
-                            this->channel_control_flags,
-                            this->chunked_virtual_channel_data,
-                            this->chunked_virtual_channel_stream.size());
-
-                        this->has_device_announced = true;
-
-                        this->channel_control_flags &=
-                            ~CHANNELS::CHANNEL_FLAG_FIRST;
-
-                        this->chunked_virtual_channel_stream.reset();
-
-                        this->total_virtual_channel_data_length = 0;
+                        this->device_announces.push_back(
+                            std::make_tuple(
+                                data_length,
+                                std::move(this->current_device_announce_data)));
                     }
                 }
                 else if (this->length_of_remaining_device_data_to_be_skipped) {
@@ -308,49 +417,131 @@ private:
                 }
             }   // while (chunk.in_remain())
 
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST)
-            {
-                if (!this->has_device_announced)
-                {
-                    REDASSERT(
-                        !this->chunked_virtual_channel_stream.get_offset());
+            this->announce_device();
+        }   // process_client_device_list_announce_request()
 
-                    rdpdr::SharedHeader client_message_header(
-                        rdpdr::Component::RDPDR_CTYP_CORE,
-                        rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
+        void process_client_drive_device_list_remove(uint32_t total_length,
+                uint32_t flags, Stream& chunk) {
+            const uint32_t DeviceCount = chunk.in_uint32_le();
 
-                    client_message_header.emit(
-                        this->chunked_virtual_channel_stream);
+            auto remove_device =
+                    [](device_announce_collection_type& device_announces,
+                        const uint32_t DeviceId) -> bool {
+                bool device_removed = false;
 
-                    this->chunked_virtual_channel_stream.out_uint32_le(
-                         0  // DeviceCount(4)
+                for (device_announce_collection_type::const_iterator iter =
+                         device_announces.cbegin();
+                     iter != device_announces.cend(); ++iter) {
+                    uint8_t const * data =
+                        std::get<1>(*iter).get();
+
+                    ReadOnlyStream header_stream(data,
+                            rdpdr::SharedHeader::size() +
+                            12  // DeviceCount(4) + DeviceType(4) + DeviceId(4)
                         );
-                    this->chunked_virtual_channel_stream.mark_end();
 
-                    REDASSERT(this->to_server_sender);
+                    header_stream.in_skip_bytes(
+                            rdpdr::SharedHeader::size() +
+                            8  // DeviceCount(4) + DeviceType(4)
+                        );
 
-//                    (*this->to_server_sender)(
-//                        this->chunked_virtual_channel_stream.size(),
-//                        CHANNELS::CHANNEL_FLAG_FIRST |
-//                            CHANNELS::CHANNEL_FLAG_LAST,
-//                        this->chunked_virtual_channel_data,
-//                        this->chunked_virtual_channel_stream.size());
+                    const uint32_t current_device_id =
+                        header_stream.in_uint32_le();
 
-                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                        LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::ClientDeviceListAnnounceRequestProcessor::(): "
-                                "Client Device List Announce Request. "
-                                "DeviceCount=0");
+                    if (DeviceId == current_device_id) {
+                        device_announces.erase(iter);
+                        device_removed = true;
+                        break;
                     }
-
-                    this->chunked_virtual_channel_stream.reset();
                 }
-                else {
-                    this->has_device_announced = false;
+
+                return device_removed;
+            };
+
+            const uint32_t max_number_of_removable_device = 128;
+
+            uint8_t client_drive_device_list_remove_data[
+                      64    // > rdpdr::SharedHeader::size()
+                    + 4     // DeviceCount(4)
+                    + 4     // DeviceId(4)
+                    * max_number_of_removable_device
+                ];
+            WriteOnlyStream client_drive_device_list_remove_stream(
+                client_drive_device_list_remove_data,
+                sizeof(client_drive_device_list_remove_data));
+
+            uint32_t number_of_removable_device = 0;
+
+            rdpdr::SharedHeader client_message_header(
+                rdpdr::Component::RDPDR_CTYP_CORE,
+                rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
+
+            client_message_header.emit(client_drive_device_list_remove_stream);
+
+            const auto device_count_offset =
+                client_drive_device_list_remove_stream.get_offset();
+
+            client_drive_device_list_remove_stream.out_clear_bytes(
+                    4   // DeviceCount(4)
+                );
+
+            for (uint32_t device_index = 0; device_index < DeviceCount;
+                 device_index++) {
+                const uint32_t DeviceId = chunk.in_uint32_le();
+
+                if (!remove_device(this->device_announces, DeviceId) &&
+                    (number_of_removable_device < max_number_of_removable_device)) {
+                    client_drive_device_list_remove_stream.out_uint32_le(
+                        DeviceId);
+                    number_of_removable_device++;
                 }
             }
-        }   // operator()
-    } client_device_list_announce_request_processor;
+
+            if (number_of_removable_device) {
+                client_drive_device_list_remove_stream.mark_end();
+
+                client_drive_device_list_remove_stream.set_out_uint32_le(
+                    number_of_removable_device, device_count_offset);
+
+                REDASSERT(this->to_server_sender);
+
+                const uint32_t total_length_      =
+                    client_drive_device_list_remove_stream.size();
+                const uint32_t flags_             =
+                    CHANNELS::CHANNEL_FLAG_FIRST |
+                    CHANNELS::CHANNEL_FLAG_LAST;
+                const uint8_t* chunk_data_        =
+                    client_drive_device_list_remove_data;
+                const uint32_t chunk_data_length_ = total_length_;
+
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+                    const bool send              = true;
+                    const bool from_or_to_client = false;
+                    BaseVirtualChannel::msgdump_c(send, from_or_to_client,
+                        total_length_, flags_, chunk_data_,
+                        chunk_data_length_);
+                }
+
+                (*this->to_server_sender)(
+                    total_length_,
+                    flags_,
+                    chunk_data_,
+                    chunk_data_length_);
+            }
+        }
+
+        void process_server_user_logged_on(uint32_t total_length,
+                uint32_t flags, Stream& chunk) {
+            this->announce_device();
+        }
+
+        void process_server_device_announce_response(uint32_t total_length,
+                uint32_t flags, Stream& chunk) {
+            this->waiting_for_server_device_announce_response = false;
+
+            this->announce_device();
+        }
+    } device_redirection_manager;
 
 public:
     struct Params : public BaseVirtualChannel::Params
@@ -382,7 +573,7 @@ public:
     , param_file_system_read_authorized(params.file_system_read_authorized)
     , param_file_system_write_authorized(params.file_system_write_authorized)
     , param_random_number(params.random_number)
-    , client_device_list_announce_request_processor(
+    , device_redirection_manager(
           to_client_sender_,
           to_server_sender_,
           (params.file_system_read_authorized ||
@@ -446,10 +637,10 @@ public:
         const bool need_deny_asyncio =
             (general_capability_set.extraFlags1() & rdpdr::ENABLE_ASYNCIO);
 
-        if ((this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) ||
+        if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) ||
             need_enable_user_loggedon_pdu || need_deny_asyncio) {
             LOG(LOG_INFO,
-                "FileSystemVirtualChannel::process_client_general_capability_set: ");
+                "FileSystemVirtualChannel::process_client_general_capability_set:");
             general_capability_set.log(LOG_INFO);
         }
 
@@ -460,7 +651,7 @@ public:
 
             if (need_enable_user_loggedon_pdu) {
                 LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_general_capability_set: "
+                    "FileSystemVirtualChannel::process_client_general_capability_set:"
                         "Allow the server to send a "
                         "Server User Logged On packet.");
 
@@ -471,7 +662,7 @@ public:
 
             if (need_deny_asyncio) {
                 LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_general_capability_set: "
+                    "FileSystemVirtualChannel::process_client_general_capability_set:"
                         "Deny user to send multiple simultaneous "
                         "read or write requests on the same file from "
                         "a redirected file system.");
@@ -487,7 +678,7 @@ public:
 
             general_capability_set.receive(chunk, Version);
 
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 general_capability_set.log(LOG_INFO);
             }
         }
@@ -500,7 +691,7 @@ public:
             (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
         const uint16_t numCapabilities = chunk.in_uint16_le();
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             LOG(LOG_INFO,
                 "FileSystemVirtualChannel::process_client_core_capability_response: "
                     "numCapabilities=%u", numCapabilities);
@@ -514,7 +705,7 @@ public:
             const uint16_t CapabilityLength = chunk.in_uint16_le();
             const uint32_t Version          = chunk.in_uint32_le();
 
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_client_core_capability_response: "
                         "CapabilityType=0x%04X CapabilityLength=%u "
@@ -539,7 +730,7 @@ public:
             if ((CapabilityType == rdpdr::CAP_DRIVE_TYPE) &&
                 (Version == rdpdr::DRIVE_CAPABILITY_VERSION_02)) {
                 this->device_capability_version_02_supported = true;
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_core_capability_response: "
                             "Client supports DRIVE_CAPABILITY_VERSION_02.");
@@ -553,8 +744,8 @@ public:
     bool process_client_device_list_announce_request(uint32_t total_length,
         uint32_t flags, Stream& chunk)
     {
-        this->client_device_list_announce_request_processor(total_length,
-            flags, chunk);
+        this->device_redirection_manager.process_client_device_list_announce_request(
+            total_length, flags, chunk);
 
         return false;
     }
@@ -622,7 +813,7 @@ public:
         uint32_t flags, Stream& chunk)
     {
         REDASSERT(flags & CHANNELS::CHANNEL_FLAG_FIRST);
-        REDASSERT(this->get_verbose() & MODRDP_LOGLEVEL_RDPDR);
+        REDASSERT(this->verbose & MODRDP_LOGLEVEL_RDPDR);
 
         rdpdr::DeviceIOResponse device_io_response;
 
@@ -712,28 +903,21 @@ public:
     }   // process_client_drive_io_response
 
     virtual void process_client_message(uint32_t total_length,
-        uint32_t flags, uint8_t* chunk_data, uint32_t chunk_data_length)
+        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
             override
     {
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             LOG(LOG_INFO,
                 "FileSystemVirtualChannel::process_client_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
         }
 
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
-            LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
-            const uint32_t dest = 0;    // Client
-            hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                sizeof(dest));
-            hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-                sizeof(total_length));
-            hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-            hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-                sizeof(chunk_data_length));
-            hexdump_c(chunk_data, chunk_data_length);
-            LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            const bool send              = false;
+            const bool from_or_to_client = true;
+            this->msgdump_c(send, from_or_to_client, total_length, flags,
+                chunk_data, chunk_data_length);
         }
 
         ReadOnlyStream chunk(chunk_data, chunk_data_length);
@@ -750,7 +934,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Announce Reply");
@@ -766,7 +950,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Name Request");
@@ -779,7 +963,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Device List Announce Request");
@@ -788,10 +972,32 @@ public:
                 send_message_to_server =
                     this->process_client_device_list_announce_request(
                         total_length, flags, chunk);
+
+                //{
+                //    uint8_t out_data[256];
+                //    WriteOnlyStream out_stream(out_data, sizeof(out_data));
+                //
+                //    rdpdr::SharedHeader client_message_header(
+                //        rdpdr::Component::RDPDR_CTYP_CORE,
+                //        rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
+                //
+                //    client_message_header.emit(out_stream);
+                //
+                //    out_stream.out_uint32_le(1);    // DeviceCount(4)
+                //
+                //    out_stream.out_uint32_le(1);    // DeviceId(4)
+                //
+                //    out_stream.mark_end();
+                //
+                //    this->process_client_message(out_stream.size(),
+                //        CHANNELS::CHANNEL_FLAG_FIRST |
+                //            CHANNELS::CHANNEL_FLAG_LAST,
+                //        out_data, out_stream.size());
+                //}
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Drive I/O Response");
@@ -808,7 +1014,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Core Capability Response");
@@ -823,15 +1029,20 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Drive Device List Remove");
                 }
+
+                this->device_redirection_manager.process_client_drive_device_list_remove(
+                    total_length, flags, chunk);
+
+                send_message_to_server = false;
             break;
 
             default:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Undecoded PDU - "
@@ -861,13 +1072,14 @@ public:
 
         server_announce_request.receive(chunk);
 
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             server_announce_request.log(LOG_INFO);
         }
 
         // Virtual channel is opened at client side and is authorized.
-        if (this->has_valid_to_client_sender())
+        if (this->has_valid_to_client_sender()) {
             return true;
+        }
 
         uint8_t message_buffer[1024];
 
@@ -888,7 +1100,7 @@ public:
                 ((server_announce_request.VersionMinor() >= 12) ?
                  this->param_random_number :
                  server_announce_request.ClientId()));
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_server_announce_request:");
                 client_announce_reply.log(LOG_INFO);
@@ -916,7 +1128,7 @@ public:
 
             rdpdr::ClientNameRequest client_name_request(
                 this->param_client_name);
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_server_announce_request:");
                 client_name_request.log(LOG_INFO);
@@ -985,7 +1197,7 @@ public:
                     0x0,        // extraFlags2
                     0           // SpecialTypeDeviceCap
                 );
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_server_client_id_confirm:");
                 general_capability_set.log(LOG_INFO);
@@ -1045,7 +1257,7 @@ public:
 
         device_create_request.receive(chunk);
 
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             device_create_request.log(LOG_INFO);
         }
 
@@ -1085,14 +1297,14 @@ public:
                     0xC0000022  // STATUS_ACCESS_DENIED
                 );
 
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 device_io_response.log(LOG_INFO);
             }
             device_io_response.emit(out_stream);
 
             const rdpdr::DeviceCreateResponse device_create_response(
                 static_cast<uint32_t>(-1), 0);
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 device_create_response.log(LOG_INFO);
             }
             device_create_response.emit(out_stream);
@@ -1118,7 +1330,7 @@ public:
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->server_device_io_request.receive(chunk);
-            if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 this->server_device_io_request.log(LOG_INFO);
             }
         }
@@ -1132,7 +1344,7 @@ public:
                 chunk,
                 this->to_server_sender,
                 out_asynchronous_task,
-                this->get_verbose());
+                this->verbose);
 
             return false;
         }
@@ -1148,7 +1360,7 @@ public:
         switch (this->server_device_io_request.MajorFunction())
         {
             case rdpdr::IRP_MJ_CREATE:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Device Create Request");
@@ -1160,7 +1372,7 @@ public:
             break;
 
             case rdpdr::IRP_MJ_CLOSE:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Device Close Request");
@@ -1168,7 +1380,7 @@ public:
             break;
 
             case rdpdr::IRP_MJ_WRITE:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     uint32_t Length = chunk.in_uint32_le();
                     uint64_t Offset = chunk.in_uint64_le();
 
@@ -1182,7 +1394,7 @@ public:
             break;
 
             case rdpdr::IRP_MJ_DEVICE_CONTROL:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Device control request");
@@ -1195,7 +1407,7 @@ public:
             break;
 
             case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Query volume information request");
@@ -1214,7 +1426,7 @@ public:
             break;
 
             case rdpdr::IRP_MJ_QUERY_INFORMATION:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Server Drive Query Information Request");
@@ -1233,7 +1445,7 @@ public:
             case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
                 if (this->server_device_io_request.MinorFunction() ==
                     rdpdr::IRP_MN_QUERY_DIRECTORY) {
-                    if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::process_server_drive_io_request: "
                                 "Server Drive Query Directory Request");
@@ -1251,7 +1463,7 @@ public:
             break;
 
             default:
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Undecoded Drive I/O Request - "
@@ -1267,7 +1479,7 @@ public:
             break;
         }   // switch (this->server_device_io_request.MajorFunction())
 
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             this->device_io_request_info_inventory.push_back(
                 std::make_tuple(
                     this->server_device_io_request.DeviceId(),
@@ -1280,29 +1492,22 @@ public:
     }   // process_server_drive_io_request
 
     virtual void process_server_message(uint32_t total_length,
-        uint32_t flags, uint8_t* chunk_data, uint32_t chunk_data_length,
+        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
             override
     {
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             LOG(LOG_INFO,
                 "FileSystemVirtualChannel::process_server_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
         }
 
-        if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR_DUMP) {
-            LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
-            const uint32_t dest = 1;    // Server
-            hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                sizeof(dest));
-            hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-                sizeof(total_length));
-            hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-            hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-                sizeof(chunk_data_length));
-            hexdump_c(chunk_data, chunk_data_length);
-            LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            const bool send              = false;
+            const bool from_or_to_client = false;
+            this->msgdump_c(send, from_or_to_client, total_length, flags,
+                chunk_data, chunk_data_length);
         }
 
         ReadOnlyStream chunk(chunk_data, chunk_data_length);
@@ -1317,7 +1522,7 @@ public:
         {
             case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                 if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-                    (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR)) {
+                    (this->verbose & MODRDP_LOGLEVEL_RDPDR)) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Server Announce Request");
@@ -1332,7 +1537,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Server Client ID Confirm");
@@ -1347,7 +1552,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Server Device Announce Response");
@@ -1358,13 +1563,16 @@ public:
                     server_device_announce_response.receive(chunk);
                     server_device_announce_response.log(LOG_INFO);
                 }
+
+                this->device_redirection_manager.process_server_device_announce_response(
+                    total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Server Drive I/O Request");
@@ -1379,7 +1587,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Server Core Capability Request");
@@ -1390,7 +1598,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Server User Logged On");
@@ -1399,10 +1607,13 @@ public:
                 if (!this->proxy_managed_drives_announced) {
                     this->file_system_drive_manager.AnnounceDrive(
                         this->device_capability_version_02_supported,
-                        this->to_server_sender,
-                        this->get_verbose());
+                        this->device_redirection_manager.to_device_announce_collection_sender,
+                        this->verbose);
 
                     this->proxy_managed_drives_announced = true;
+
+                    this->device_redirection_manager.process_server_user_logged_on(
+                        total_length, flags, chunk);
                 }
             break;
 
@@ -1410,7 +1621,7 @@ public:
                 REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Server Printer Set XPS Mode");
@@ -1419,7 +1630,7 @@ public:
 
             default:
                 if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-                    (this->get_verbose() & MODRDP_LOGLEVEL_RDPDR)) {
+                    (this->verbose & MODRDP_LOGLEVEL_RDPDR)) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Undecoded PDU - "

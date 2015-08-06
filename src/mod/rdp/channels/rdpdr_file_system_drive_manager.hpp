@@ -1578,8 +1578,6 @@ public:
                     rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
                     std::get<0>(*iter),             // DeviceId
                     std::get<1>(*iter).c_str(),     // PreferredDosName
-//                    nullptr,
-//                    0
                     reinterpret_cast<uint8_t const *>(
                         std::get<1>(*iter).c_str()),
                     std::get<1>(*iter).length() + 1
@@ -1594,23 +1592,6 @@ public:
 
             virtual_channel_stream.mark_end();
 
-            if (verbose & 0x80000000) {
-                LOG(LOG_INFO, "Sending on channel (-1) n bytes");
-                const uint32_t dest = 1;    // Server
-                hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                    sizeof(dest));
-                const uint32_t total_length = virtual_channel_stream.size();
-                hexdump_c(reinterpret_cast<const uint8_t*>(&total_length),
-                    sizeof(total_length));
-                const uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-                hexdump_c(reinterpret_cast<const uint8_t*>(&flags), sizeof(flags));
-                const uint32_t chunk_data_length = virtual_channel_stream.size();
-                hexdump_c(reinterpret_cast<const uint8_t*>(&chunk_data_length),
-                    sizeof(chunk_data_length));
-                hexdump_c(virtual_channel_data, chunk_data_length);
-                LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
-            }
-
             to_server_sender(virtual_channel_stream.size(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                 virtual_channel_data,
@@ -1622,7 +1603,8 @@ public:
 
 private:
     uint32_t EnableDrive(const char * drive_name, const char * relative_directory_path,
-                         bool read_only, uint32_t verbose) {
+                         bool read_only, uint32_t verbose,
+                         bool ignore_existence_check__for_test_only) {
         uint32_t drive_id = INVALID_MANAGED_DRIVE_ID;
 
         std::string absolute_directory_path = DRIVE_REDIRECTION_PATH "/";
@@ -1630,8 +1612,9 @@ private:
 
         struct stat sb;
 
-        if ((::stat(absolute_directory_path.c_str(), &sb) == 0) &&
-            S_ISDIR(sb.st_mode)) {
+        if (((::stat(absolute_directory_path.c_str(), &sb) == 0) &&
+             S_ISDIR(sb.st_mode)) ||
+            ignore_existence_check__for_test_only) {
             if (verbose) {
                 LOG(LOG_INFO,
                     "FileSystemDriveManager::EnableDrive: "
@@ -1660,7 +1643,8 @@ private:
     }
 
 public:
-    bool EnableDrive(const char * relative_directory_path, uint32_t verbose) {
+    bool EnableDrive(const char * relative_directory_path, uint32_t verbose,
+            bool ignore_existence_check__for_test_only = false) {
         bool read_only = false;
         if (*relative_directory_path == '*') {
             read_only = true;
@@ -1692,8 +1676,9 @@ public:
         return (this->EnableDrive(
                     drive_name,
                     relative_directory_path,
-                    read_only,      // read-only
-                    verbose
+                    read_only,
+                    verbose,
+                    ignore_existence_check__for_test_only
                 ) != INVALID_MANAGED_DRIVE_ID);
     }
 
@@ -1702,8 +1687,9 @@ public:
             this->wab_agent_drive_id = this->EnableDrive(
                     "WABAGT",
                     "wabagt",
-                    true,   // read-only
-                    verbose
+                    true,       // read-only
+                    verbose,
+                    false       // ignore existence check
                 );
         }
 

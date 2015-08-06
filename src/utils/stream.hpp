@@ -1629,7 +1629,12 @@ class SubStreamArray : public Stream {
 // FixedSizeStream does not allocate/reallocate any buffer
 class FixedSizeStream : public Stream {
     public:
-    FixedSizeStream(){}  // not yet initialized
+    FixedSizeStream(){
+        // not yet initialized
+        this->p = this->data = nullptr;
+        this->capacity = 0;
+        this->end = 0;
+    }
 
     FixedSizeStream(uint8_t * data, size_t len){
         this->p = this->data = data;
