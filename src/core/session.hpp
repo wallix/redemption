@@ -255,8 +255,8 @@ public:
                             mm.check_module();
                         }
 
-                                   asynchronous_task_fd    = -1;
-                                   asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
+                        asynchronous_task_fd    = -1;
+                        asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                         const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
                                                                      is_set(*asynchronous_task_event,
                                                                             asynchronous_task_fd,

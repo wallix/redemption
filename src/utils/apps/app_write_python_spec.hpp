@@ -242,7 +242,7 @@ template<class SpecWriter>
 int app_write_python_spec(int ac, char const ** av)
 {
     if (ac < 2) {
-        std::cerr << av[0] << " out-spec.h";
+        std::cerr << av[0] << " out-spec.h\n";
         return 1;
     }
 

@@ -3680,7 +3680,12 @@ public:
                     else {
                         username = this->client_info.username;
                     }
-                    this->ini.parse_username(username);
+                    this->ini.ask<cfg::context::selector>();
+                    LOG(LOG_INFO, "asking for selector");
+                    this->ini.set<cfg::globals::auth_user>(username);
+                    this->ini.ask<cfg::globals::target_user>();
+                    this->ini.ask<cfg::globals::target_device>();
+                    this->ini.ask<cfg::context::target_protocol>();
                     if (this->client_info.password[0]) {
                         this->ini.set<cfg::context::password>(this->client_info.password);
                     }

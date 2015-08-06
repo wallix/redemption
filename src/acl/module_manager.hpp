@@ -548,37 +548,10 @@ public:
         case MODULE_INTERNAL_TARGET:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
-                this->mod = new InteractiveTargetMod(
-                    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
-                    /*accepted*/[this](char const * device, char const * login, char const * password) {
-                        if (device) {
-                            this->ini.set<cfg::context::target_host>(device);
-                        }
-                        if (login) {
-                            this->ini.set<cfg::globals::target_user>(login);
-                        }
-                        if (password) {
-                            this->ini.set<cfg::context::target_password>(password);
-                        }
-                        this->ini.set<cfg::context::display_message>("True");
-                    },
-                    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
-                    /*refused*/[this] {
-                        this->ini.set<cfg::context::target_password>("");
-                        this->ini.set<cfg::context::display_message>("False");
-                    },
-                    this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
-                    Translator(this->ini.get<cfg::translation::language>()),
-                    this->ini.get<cfg::font>(),
-                    this->ini.get<cfg::theme>(),
-                    this->ini.is_asked<cfg::context::target_host>(),
-                    this->ini.is_asked<cfg::globals::target_user>(),
-                    this->ini.is_asked<cfg::context::target_password>(),
-                    this->ini.get<cfg::globals::target_device>().c_str(),
-                    this->ini.get<cfg::globals::target_user>().c_str()
-                );
+                this->mod = new InteractiveTargetMod(this->ini,
+                                                     this->front,
+                                                     this->front.client_info.width,
+                                                     this->front.client_info.height);
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
             break;
@@ -699,19 +672,12 @@ public:
                 strcpy(accounts.username, buffer);
             }
 
-            this->mod = new FlatLoginMod(
-                [this](char const * username, char const * password) {
-                    this->ini.set<cfg::globals::auth_user>(username);
-                    this->ini.set<cfg::context::password>(password);
-                },
-                accounts.username,
-                accounts.password,
-                this->front,
-                this->front.client_info.width,
-                this->front.client_info.height,
-                Translator(this->ini.get<cfg::translation::language>()),
-                this->ini.get<cfg::font>(),
-                this->ini.get<cfg::theme>()
+            this->mod = new FlatLoginMod(this->ini,
+                                         accounts.username,
+                                         accounts.password,
+                                         this->front,
+                                         this->front.client_info.width,
+                                         this->front.client_info.height
             );
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;

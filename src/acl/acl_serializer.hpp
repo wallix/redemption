@@ -172,14 +172,48 @@ public:
                 StaticFixedSizeStream<AUTOSIZE> stream;
                 stream.out_uint32_be(0);
 
-                this->ini->serialized([&](char const * buff, int n, std::size_t size) {
+                char buff[65536];
+                auto const size = sizeof(buff);
+                uint32_t const password_printing_mode = this->ini->get<cfg::debug::password>();
+
+                this->ini->for_each_changed_field([&](Inifile::FieldReference bfield, authid_t authid){
+                    const char * key = string_from_authid(authid);
+                    int n;
+                    if (bfield.is_asked()) {
+                        n = snprintf(buff, size, "%s\nASK\n",key);
+                        LOG(LOG_INFO, "sending %s=ASK", key);
+                    }
+                    else {
+                        n = snprintf(buff, size, "%s\n!", key);
+                        auto val = buff + n;
+                        int tmpn = bfield.copy(buff + n, size);
+                        [&]{
+                            if (tmpn >= 0) {
+                                const char * display_val = val;
+                                if ((strncasecmp("password", key, 8) == 0)
+                                ||(strncasecmp("target_password", key, 15) == 0)){
+                                    display_val = get_printable_password(val, password_printing_mode);
+                                }
+                                LOG(LOG_INFO, "sending %s=%s", key, display_val);
+                                n += tmpn;
+                                if (std::size_t(n+1) < size) {
+                                    buff[n] = '\n';
+                                    buff[n+1] = 0;
+                                    ++n;
+                                    return;
+                                }
+                            }
+                            n = -1;
+                        }();
+                    }
+
                     if (n < 0 || static_cast<std::size_t>(n) >= size || stream.in_remain() < size_t(n)) {
                         LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"
                             " should have write %d bytes but buffer size is %u bytes", n, size);
                         throw Error(ERR_ACL_MESSAGE_TOO_BIG);
                     }
                     stream.out_copy_bytes(buff, n);
-                }, this->ini->get<cfg::debug::password>());
+                });
 
                 stream.mark_end();
                 int total_length = stream.get_offset();
@@ -193,8 +227,8 @@ public:
                 this->ini->set<cfg::context::rejected>(TR("acl_fail", *(this->ini)));
                 // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
             }
+            this->ini->clear_send_index();
         }
-        this->ini->clear_send_index();
     }
 };
 

@@ -29,7 +29,6 @@
 #include "translation.hpp"
 #include "copy_paste.hpp"
 
-#include <functional>
 
 class FlatLoginMod : public InternalMod, public NotifyApi
 {
@@ -37,25 +36,20 @@ class FlatLoginMod : public InternalMod, public NotifyApi
 
     CopyPaste copy_paste;
 
-public:
-    using submit_signature_type = void(char const * username, char const * password);
-    using submit_function_type = std::function<submit_signature_type>;
-
-private:
-    submit_function_type submit_notify;
+    Inifile & ini;
 
 public:
     FlatLoginMod(
-        submit_function_type submit_notify,
+        Inifile & ini,
         char const * username, char const * password,
-        FrontAPI & front, uint16_t width, uint16_t height,
-        Translator const & tr, Font const & font, Theme const & theme = Theme()
+        FrontAPI & front, uint16_t width, uint16_t height
     )
-        : InternalMod(front, width, height, font, theme)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 username[0] != 0,
-                0, nullptr, nullptr, tr("login"), tr("password"), this->font(), tr, this->theme())
-        , submit_notify(std::move(submit_notify))
+                0, nullptr, nullptr, TR("login", ini), TR("password", ini),
+                this->font(), Translator(ini.get<cfg::translation::language>()), this->theme())
+        , ini(ini)
     {
         this->screen.add_widget(&this->login);
 
@@ -80,7 +74,8 @@ public:
         switch (event) {
         case NOTIFY_SUBMIT:
             LOG(LOG_INFO, "asking for selector");
-            this->submit_notify(this->login.login_edit.get_text(), this->login.password_edit.get_text());
+            this->ini.set<cfg::globals::auth_user>(this->login.login_edit.get_text());
+            this->ini.set<cfg::context::password>(this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
             break;

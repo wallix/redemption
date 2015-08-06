@@ -63,13 +63,11 @@ BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)
     ini.set<cfg::globals::target_device>("redjenkins-vbox@127::0>.0.1 internal@display_message replay@autotest");
     ini.set<cfg::globals::target_user>("rdp internal internal");
     ini.set<cfg::context::selector>(false);
-    ini.ask<cfg::context::display_message>();
     ini.set<cfg::context::module>("confirm");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE);
 
     ini.set<cfg::context::display_message>("message");
-    ini.ask<cfg::context::accept_message>();
     ini.set<cfg::context::module>("valid");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_DIALOG_VALID_MESSAGE);

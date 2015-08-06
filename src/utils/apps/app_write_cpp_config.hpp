@@ -39,7 +39,6 @@ using namespace config_spec;
 
 template<class Inherit>
 struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
-    std::ostringstream out_body_ctor_;
     std::ostringstream out_body_parser_;
 
     //std::map<std::string, std::vector<std::string>> variables_by_sections;
@@ -60,7 +59,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
 
     void do_sep() {
         this->out_member_ << "\n";
-        this->out_body_ctor_ << "\n";
     }
 
     template<class... Ts>
@@ -132,16 +130,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         }
         this->tab();
         this->out() << "};\n";
-
-
-        this->out_ = &this->out_body_ctor_;
-
-        if (PropertyFieldFlags::read == properties) {
-            this->out() << "    this->ask<cfg::" << varname_with_section << ">();\n";
-        }
-        if (PropertyFieldFlags::write == properties) {
-            this->out() << "    this->insert_index<cfg::" << varname_with_section << ">(std::true_type());\n";
-        }
 
         this->out_ = &this->out_body_parser_;
 
@@ -334,8 +322,8 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
 
     auto join = [&](
         std::vector<std::string> const & cont,
-        std::string const & before = "",
-        std::string const & after = ""
+        std::string const & before,
+        std::string const & after
     ) {
         auto first = begin(cont);
         auto last = end(cont);
@@ -358,7 +346,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     //    if (!body.first.empty()) {
     //        section_names.emplace_back("cfg_section::" + body.first);
     //        out_varconf << "struct " << body.first << "\n: ";
-    //        join(body.second, "cfg::" + body.first + "::");
+    //        join(body.second, "cfg::" + body.first + "::", "");
     //        out_varconf << "{ static bool constexpr is_section = true; };\n\n";
     //    }
     //}
@@ -367,8 +355,8 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
       "struct VariablesConfiguration\n"
       ": "
     ;
-    join(writer.variables, "cfg::");
-    //join(section_names);
+    join(writer.variables, "cfg::", "");
+    //join(section_names, "", "");
     //auto it = writer.variables_by_sections.find("");
     //if (it != writer.variables_by_sections.end()) {
     //    for (auto & s : it->second) {
@@ -383,19 +371,10 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
       "};\n\n"
       "using VariablesAclPack = Pack<\n"
     ;
-    join(writer.variables_acl, "cfg::");
+    join(writer.variables_acl, "cfg::", "");
     out_varconf <<
       ">;\n"
       "}\n"
-    ;
-}
-
-template<class ConfigCppWriter>
-void write_config_initialize(std::ostream & out_body, ConfigCppWriter & writer) {
-    out_body <<
-        "inline void Inifile::initialize() {\n" <<
-        writer.out_body_ctor_.str() <<
-        "}\n"
     ;
 }
 
@@ -432,8 +411,8 @@ void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writ
 template<class ConfigCppWriter>
 int app_write_cpp_config(int ac, char const ** av)
 {
-    if (ac < 5) {
-        std::cerr << av[0] << " out-authid.h out-variables_configuration.h out-config_initialize.cpp out-config_set_value.cpp";
+    if (ac < 4) {
+        std::cerr << av[0] << " out-authid.h out-variables_configuration.h out-config_set_value.cpp\n";
         return 1;
     }
 
@@ -442,8 +421,7 @@ int app_write_cpp_config(int ac, char const ** av)
     MultiFilenameWriter<ConfigCppWriter> sw(writer);
     sw.then(av[1], &cpp_config_writer::write_authid_hpp<ConfigCppWriter>)
       .then(av[2], &cpp_config_writer::write_variables_configuration<ConfigCppWriter>)
-      .then(av[3], &cpp_config_writer::write_config_initialize<ConfigCppWriter>)
-      .then(av[4], &cpp_config_writer::write_config_set_value<ConfigCppWriter>)
+      .then(av[3], &cpp_config_writer::write_config_set_value<ConfigCppWriter>)
     ;
     if (sw.err) {
         std::cerr << av[0] << ": " << sw.filename << ": " << strerror(errno) << "\n";

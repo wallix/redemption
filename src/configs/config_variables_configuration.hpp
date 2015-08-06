@@ -435,7 +435,7 @@ namespace cfg {
         // AUTHID_ACCEPT_MESSAGE
         struct accept_message {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 57; }
             using type = std::string;
@@ -444,7 +444,7 @@ namespace cfg {
         // AUTHID_DISPLAY_MESSAGE
         struct display_message {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 58; }
             using type = std::string;

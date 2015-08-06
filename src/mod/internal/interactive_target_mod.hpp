@@ -29,43 +29,30 @@
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 
-#include <functional>
 
 class InteractiveTargetMod : public InternalMod, public NotifyApi
 {
-    using accepted_notify_type = std::function<void(char const * device, char const * login, char const * password)>;
-    using refused_notify_type = std::function<void()>;
-
-    accepted_notify_type accepted_notify;
-    refused_notify_type refused_notify;
-
     bool ask_device;
     bool ask_login;
     bool ask_password;
 
     FlatInteractiveTarget challenge;
 
+    Inifile & ini;
+
 public:
-    InteractiveTargetMod(
-        std::function<void(char const * device, char const * login, char const * password)> accepted_notify,
-        std::function<void()> refused_notify,
-        FrontAPI & front, uint16_t width, uint16_t height,
-        Translator const & tr, Font const & font, Theme const & theme,
-        bool ask_device, bool ask_login, bool ask_password,
-        const char * device_str, const char * login_str
-    )
-        : InternalMod(front, width, height, font, theme)
-        , accepted_notify(std::move(accepted_notify))
-        , refused_notify(std::move(refused_notify))
-        , ask_device(ask_device)
-        , ask_login(ask_login)
-        , ask_password(this->ask_login || ask_password)
+    InteractiveTargetMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
+        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
+        , ask_device(ini.is_asked<cfg::context::target_host>())
+        , ask_login(ini.is_asked<cfg::globals::target_user>())
+        , ask_password((this->ask_login || ini.is_asked<cfg::context::target_password>()))
         , challenge(*this, width, height, this->screen, this, 0,
                     this->ask_device, this->ask_login, this->ask_password,
-                    theme, tr("target_info_required"),
-                    tr("device"), device_str,
-                    tr("login"), login_str,
-                    tr("password"), font)
+                    ini.get<cfg::theme>(), TR("target_info_required", ini),
+                    TR("device", ini), ini.get<cfg::globals::target_device>().c_str(),
+                    TR("login", ini), ini.get<cfg::globals::target_user>().c_str(),
+                    TR("password", ini), ini.get<cfg::font>())
+        , ini(ini)
     {
         this->screen.add_widget(&this->challenge);
         this->challenge.password_edit.set_text("");
@@ -102,11 +89,16 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void accepted()
     {
-        this->accepted_notify(
-            this->ask_device ? this->challenge.device_edit.get_text() : nullptr,
-            this->ask_login ? this->challenge.login_edit.get_text() : nullptr,
-            this->ask_password ? this->challenge.password_edit.get_text() : nullptr
-        );
+        if (this->ask_device) {
+            this->ini.set<cfg::context::target_host>(this->challenge.device_edit.get_text());
+        }
+        if (this->ask_login) {
+            this->ini.set<cfg::globals::target_user>(this->challenge.login_edit.get_text());
+        }
+        if (this->ask_password) {
+            this->ini.set<cfg::context::target_password>(this->challenge.password_edit.get_text());
+        }
+        this->ini.set<cfg::context::display_message>("True");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -114,7 +106,8 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->refused_notify();
+        this->ini.set<cfg::context::target_password>("");
+        this->ini.set<cfg::context::display_message>("False");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

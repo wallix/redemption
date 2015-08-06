@@ -122,8 +122,10 @@ public:
                 group_buffer[pos] = 0;
                 snprintf(buffer, sizeof(buffer), "%s:%s:%s",
                          target, group_buffer, this->ini.get<cfg::globals::auth_user>().c_str());
-                this->ini.parse_username(buffer);
-
+                this->ini.set<cfg::globals::auth_user>(buffer);
+                this->ini.ask<cfg::globals::target_user>();
+                this->ini.ask<cfg::globals::target_device>();
+                this->ini.ask<cfg::context::target_protocol>();
 
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();

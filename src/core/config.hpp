@@ -263,59 +263,11 @@ public:
         this->to_send_index.clear();
     }
 
-    void parse_username(const char * username)
-    {
-        this->ask<cfg::context::selector>();
-        LOG(LOG_INFO, "asking for selector");
-
-        this->set<cfg::globals::auth_user>(username);
-        this->ask<cfg::globals::target_user>();
-        this->ask<cfg::globals::target_device>();
-        this->ask<cfg::context::target_protocol>();
-    }
-
     template<class Fn>
-    void serialized(Fn writer, uint32_t password_printing_mode)
+    void for_each_changed_field(Fn fn)
     {
-        char buff[65536];
-        auto const size = sizeof(buff);
-
         for (unsigned i : this->to_send_index) {
-            const char * key = string_from_authid(static_cast<authid_t>(i+1));
-            int n;
-            FieldBase & bfield = this->fields[i];
-            if (bfield.is_asked()) {
-                n = snprintf(buff, size, "%s\nASK\n",key);
-                LOG(LOG_INFO, "sending %s=ASK", key);
-            }
-            else {
-                n = snprintf(buff, size, "%s\n!", key);
-                auto val = buff + n;
-                int tmpn = bfield.copy_val(this->variables, buff + n, size);
-                if (tmpn >= 0) {
-                    const char * display_val = val;
-                    if ((strncasecmp("password", key, 8) == 0)
-                      ||(strncasecmp("target_password", key, 15) == 0)){
-                        display_val = get_printable_password(val, password_printing_mode);
-                    }
-                    LOG(LOG_INFO, "sending %s=%s", key, display_val);
-                    n += tmpn;
-                    if (std::size_t(n+1) < size) {
-                        buff[n] = '\n';
-                        buff[n+1] = 0;
-                        ++n;
-                    }
-                    else {
-                        n = -1;
-                    }
-                }
-                else {
-                    LOG(LOG_INFO, "Copy of %s fail", key);
-                    n = -1;
-                }
-            }
-
-            writer(buff, n, size);
+            fn(FieldReference{&this->fields[i], *this}, static_cast<authid_t>(i+1));
         }
     }
 
@@ -358,7 +310,6 @@ private:
     }
 };
 
-// #include "config_initialize.tcc"
 #include "config_set_value.tcc"
 #include "config_check_record_config.tcc"
 

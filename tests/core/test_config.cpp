@@ -238,9 +238,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_result>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_target>());
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::accept_message>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::display_message>());
-
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::message>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::accept_message>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::display_message>());
@@ -467,9 +464,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_answer>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_result>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_target>());
-
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::accept_message>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::display_message>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::pattern_kill>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::pattern_notify>());
@@ -2363,34 +2357,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL("message",                        ini.get<cfg::context::message>());
 
     BOOST_CHECK_EQUAL("message",                        ini.get_acl_field(AUTHID_MESSAGE).c_str());
-
-
-    // accept_message
-    ini.get_acl_field(AUTHID_ACCEPT_MESSAGE).ask();
-
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::accept_message>());
-
-    ini.get_acl_field(AUTHID_ACCEPT_MESSAGE).set(        "accept_message");
-
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::accept_message>());
-
-    BOOST_CHECK_EQUAL("accept_message",                 ini.get<cfg::context::accept_message>());
-
-    BOOST_CHECK_EQUAL("accept_message",                 ini.get_acl_field(AUTHID_ACCEPT_MESSAGE).c_str());
-
-
-    // display_message
-    ini.get_acl_field(AUTHID_DISPLAY_MESSAGE).ask();
-
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::display_message>());
-
-    ini.get_acl_field(AUTHID_DISPLAY_MESSAGE).set(       "display_message");
-
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::display_message>());
-
-    BOOST_CHECK_EQUAL("display_message",                ini.get<cfg::context::display_message>());
-
-    BOOST_CHECK_EQUAL("display_message",                ini.get_acl_field(AUTHID_DISPLAY_MESSAGE).c_str());
 
 
     // rejected
