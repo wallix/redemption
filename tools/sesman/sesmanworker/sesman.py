@@ -859,7 +859,8 @@ class Sesman():
             info_message = infos.get('message')
             refresh_page = (got_signal
                             or (status != previous_status)
-                            or (previous_info_message != info_message))
+                            or (previous_info_message != info_message)
+                            or (status == APPROVAL_NONE))
             Logger().info(u"End check_target ... refresh : %s" % refresh_page)
             if refresh_page:
                 self.send_data({u'forcemodule' : True})
@@ -871,7 +872,7 @@ class Sesman():
             r = []
             try:
                 Logger().info(u"Start Select ...")
-                timeout = None if status == APPROVAL_REJECTED else 10
+                timeout = None if status != APPROVAL_PENDING else 10
                 r, w, x = select([self.proxy_conx], [], [], timeout)
             except Exception as e:
                 if DEBUG:
@@ -1445,6 +1446,7 @@ class Sesman():
         except Exception, e:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
+
     def update_session_parameters(self):
         params = self.engine.read_session_parameters()
         res = params.get("rt_display")
