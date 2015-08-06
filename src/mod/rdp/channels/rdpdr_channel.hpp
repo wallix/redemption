@@ -158,15 +158,15 @@ private:
                 this->device_announces.size()) {
                 REDASSERT(this->to_server_sender);
 
-                const uint32_t data_length =
+                const uint32_t total_length =
                     std::get<0>(this->device_announces.front());
 
-                uint32_t remaining_data_length = data_length;
+                uint32_t remaining_data_length = total_length;
 
-                uint8_t const * data =
+                uint8_t const * chunk_data =
                     std::get<1>(this->device_announces.front()).get();
 
-                uint32_t flags_ = CHANNELS::CHANNEL_FLAG_FIRST;
+                uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST;
 
                 do {
                     uint32_t chunk_data_length = std::min<uint32_t>(
@@ -174,36 +174,27 @@ private:
                         remaining_data_length);
 
                     if (chunk_data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
-                        flags_ |= CHANNELS::CHANNEL_FLAG_LAST;
+                        flags |= CHANNELS::CHANNEL_FLAG_LAST;
                     }
 
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
-                        LOG(LOG_INFO, "Sending on channel (-1) n bytes");
-                        const uint32_t dest = 1;    // Server
-                        hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                            sizeof(dest));
-                        hexdump_c(
-                            reinterpret_cast<const uint8_t*>(&data_length),
-                            sizeof(data_length));
-                        hexdump_c(reinterpret_cast<uint8_t*>(&flags_),
-                            sizeof(flags_));
-                        hexdump_c(
-                            reinterpret_cast<uint8_t*>(&chunk_data_length),
-                            sizeof(chunk_data_length));
-                        hexdump_c(data, chunk_data_length);
-                        LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
+                        const bool send              = true;
+                        const bool from_or_to_client = false;
+                        BaseVirtualChannel::msgdump_c(send, from_or_to_client,
+                            total_length, flags, chunk_data,
+                            chunk_data_length);
                     }
 
                     (*this->to_server_sender)(
-                        data_length,
-                        flags_,
-                        data,
+                        total_length,
+                        flags,
+                        chunk_data,
                         chunk_data_length);
 
-                    data                  += chunk_data_length;
+                    chunk_data            += chunk_data_length;
                     remaining_data_length -= chunk_data_length;
 
-                    flags_ &= ~CHANNELS::CHANNEL_FLAG_FIRST;
+                    flags &= ~CHANNELS::CHANNEL_FLAG_FIRST;
                 }
                 while (remaining_data_length);
 
@@ -359,34 +350,25 @@ private:
 
                         REDASSERT(this->to_client_sender);
 
-                        const uint32_t total_length_ = out_stream.size();
-                        const uint32_t flags_ =
+                        const uint32_t total_length_      = out_stream.size();
+                        const uint32_t flags_             =
                             CHANNELS::CHANNEL_FLAG_FIRST |
                             CHANNELS::CHANNEL_FLAG_LAST;
+                        const uint8_t* chunk_data_        = out_data;
                         const uint32_t chunk_data_length_ = total_length_;
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
-                            LOG(LOG_INFO, "Sending on channel (-1) n bytes");
-                            const uint32_t dest = 0;    // Client
-                            hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                                sizeof(dest));
-                            hexdump_c(
-                                reinterpret_cast<const uint8_t*>(&total_length_),
-                                sizeof(total_length_));
-                            hexdump_c(
-                                reinterpret_cast<const uint8_t*>(&flags_),
-                                sizeof(flags_));
-                            hexdump_c(
-                                reinterpret_cast<const uint8_t*>(&chunk_data_length_),
-                                sizeof(chunk_data_length_));
-                            hexdump_c(out_data, chunk_data_length_);
-                            LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
+                            const bool send              = true;
+                            const bool from_or_to_client = true;
+                            BaseVirtualChannel::msgdump_c(send,
+                                from_or_to_client, total_length_, flags_,
+                                chunk_data_, chunk_data_length_);
                         }
 
                         (*this->to_client_sender)(
                             total_length_,
                             flags_,
-                            out_data,
+                            chunk_data_,
                             chunk_data_length_);
                     }
                 }   // if (!this->length_of_remaining_device_data_to_be_processed &&
@@ -523,36 +505,27 @@ private:
 
                 REDASSERT(this->to_server_sender);
 
-                const uint32_t total_length_ =
+                const uint32_t total_length_      =
                     client_drive_device_list_remove_stream.size();
-                const uint32_t flags_ =
+                const uint32_t flags_             =
                     CHANNELS::CHANNEL_FLAG_FIRST |
                     CHANNELS::CHANNEL_FLAG_LAST;
+                const uint8_t* chunk_data_        =
+                    client_drive_device_list_remove_data;
                 const uint32_t chunk_data_length_ = total_length_;
 
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
-                    LOG(LOG_INFO, "Sending on channel (-1) n bytes");
-                    const uint32_t dest = 1;    // Server
-                    hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                        sizeof(dest));
-                    hexdump_c(
-                        reinterpret_cast<const uint8_t*>(&total_length_),
-                        sizeof(total_length_));
-                    hexdump_c(
-                        reinterpret_cast<const uint8_t*>(&flags_),
-                        sizeof(flags_));
-                    hexdump_c(
-                        reinterpret_cast<const uint8_t*>(&chunk_data_length_),
-                        sizeof(chunk_data_length_));
-                    hexdump_c(client_drive_device_list_remove_data,
+                    const bool send              = true;
+                    const bool from_or_to_client = false;
+                    BaseVirtualChannel::msgdump_c(send, from_or_to_client,
+                        total_length_, flags_, chunk_data_,
                         chunk_data_length_);
-                    LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
                 }
 
                 (*this->to_server_sender)(
                     total_length_,
                     flags_,
-                    client_drive_device_list_remove_data,
+                    chunk_data_,
                     chunk_data_length_);
             }
         }
@@ -941,17 +914,10 @@ public:
         }
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
-            LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
-            const uint32_t dest = 0;    // Client
-            hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                sizeof(dest));
-            hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-                sizeof(total_length));
-            hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-            hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-                sizeof(chunk_data_length));
-            hexdump_c(chunk_data, chunk_data_length);
-            LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
+            const bool send              = false;
+            const bool from_or_to_client = true;
+            this->msgdump_c(send, from_or_to_client, total_length, flags,
+                chunk_data, chunk_data_length);
         }
 
         ReadOnlyStream chunk(chunk_data, chunk_data_length);
@@ -1538,17 +1504,10 @@ public:
         }
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
-            LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
-            const uint32_t dest = 1;    // Server
-            hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-                sizeof(dest));
-            hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-                sizeof(total_length));
-            hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-            hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-                sizeof(chunk_data_length));
-            hexdump_c(chunk_data, chunk_data_length);
-            LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
+            const bool send              = false;
+            const bool from_or_to_client = false;
+            this->msgdump_c(send, from_or_to_client, total_length, flags,
+                chunk_data, chunk_data_length);
         }
 
         ReadOnlyStream chunk(chunk_data, chunk_data_length);
