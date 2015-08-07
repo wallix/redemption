@@ -759,8 +759,8 @@ public:
         const bool need_deny_asyncio =
             (general_capability_set.extraFlags1() & rdpdr::ENABLE_ASYNCIO);
 
-        if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) ||
-            need_enable_user_loggedon_pdu || need_deny_asyncio) {
+        if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
+            (need_enable_user_loggedon_pdu || need_deny_asyncio)) {
             LOG(LOG_INFO,
                 "FileSystemVirtualChannel::process_client_general_capability_set:");
             general_capability_set.log(LOG_INFO);
@@ -771,7 +771,8 @@ public:
                 saved_general_capability_set_p,
                 rdpdr::GeneralCapabilitySet::size(Version));
 
-            if (need_enable_user_loggedon_pdu) {
+            if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
+                need_enable_user_loggedon_pdu) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_client_general_capability_set:"
                         "Allow the server to send a "
@@ -782,7 +783,8 @@ public:
                     rdpdr::RDPDR_USER_LOGGEDON_PDU);
             }
 
-            if (need_deny_asyncio) {
+            if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
+                need_deny_asyncio) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_client_general_capability_set:"
                         "Deny user to send multiple simultaneous "
@@ -800,7 +802,8 @@ public:
 
             general_capability_set.receive(chunk, Version);
 
-            if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+            if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
+                (need_enable_user_loggedon_pdu || need_deny_asyncio)) {
                 general_capability_set.log(LOG_INFO);
             }
         }
@@ -879,22 +882,39 @@ public:
         switch (FsInformationClass) {
             case rdpdr::FileBasicInformation:
             {
-                chunk.in_skip_bytes(4); // Length(4)
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    chunk.in_skip_bytes(4); // Length(4)
 
-                fscc::FileBasicInformation file_basic_information;
+                    fscc::FileBasicInformation file_basic_information;
 
-                file_basic_information.receive(chunk);
-                file_basic_information.log(LOG_INFO);
+                    file_basic_information.receive(chunk);
+                    file_basic_information.log(LOG_INFO);
+                }
+            }
+            break;
+
+            case rdpdr::FileStandardInformation:
+            {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    chunk.in_skip_bytes(4); // Length(4)
+
+                    fscc::FileStandardInformation file_standard_information;
+
+                    file_standard_information.receive(chunk);
+                    file_standard_information.log(LOG_INFO);
+                }
             }
             break;
 
             default:
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_drive_query_information_response: "
-                        "Undecoded FsInformationClass - %s(0x%X)",
-                    rdpdr::ServerDriveQueryInformationRequest::get_FsInformationClass_name(
-                        FsInformationClass),
-                    FsInformationClass);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_WARNING,
+                        "FileSystemVirtualChannel::process_client_drive_query_information_response: "
+                            "Undecoded FsInformationClass - %s(0x%X)",
+                        rdpdr::ServerDriveQueryInformationRequest::get_FsInformationClass_name(
+                            FsInformationClass),
+                        FsInformationClass);
+                }
             break;
         }
 
@@ -919,12 +939,14 @@ public:
             break;
 
             default:
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
-                        "Undecoded FsInformationClass - %s(0x%X)",
-                    rdpdr::ServerDriveQueryVolumeInformationRequest::get_FsInformationClass_name(
-                        FsInformationClass),
-                    FsInformationClass);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_WARNING,
+                        "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
+                            "Undecoded FsInformationClass - %s(0x%X)",
+                        rdpdr::ServerDriveQueryVolumeInformationRequest::get_FsInformationClass_name(
+                            FsInformationClass),
+                        FsInformationClass);
+                }
             break;
         }
 
@@ -935,12 +957,13 @@ public:
         uint32_t flags, Stream& chunk)
     {
         REDASSERT(flags & CHANNELS::CHANNEL_FLAG_FIRST);
-        REDASSERT(this->verbose & MODRDP_LOGLEVEL_RDPDR);
 
         rdpdr::DeviceIOResponse device_io_response;
 
         device_io_response.receive(chunk);
-        device_io_response.log(LOG_INFO);
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+            device_io_response.log(LOG_INFO);
+        }
 
         device_io_request_info_inventory_type::iterator iter;
         for (iter = this->device_io_request_info_inventory.begin();
@@ -970,26 +993,32 @@ public:
                                         std::get<5>(*iter).get()->c_str() :
                                         "");
 
-        LOG(LOG_INFO,
-            "FileSystemVirtualChannel::process_client_drive_io_response: "
-                "FileId=%u MajorFunction=%s(0x%08X) extra_data=0x%X "
-                "file_path=\"%s\"",
-            FileId,
-            rdpdr::DeviceIORequest::get_MajorFunction_name(MajorFunction),
-            MajorFunction, extra_data, file_path);
+        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+            LOG(LOG_INFO,
+                "FileSystemVirtualChannel::process_client_drive_io_response: "
+                    "FileId=%u MajorFunction=%s(0x%08X) extra_data=0x%X "
+                    "file_path=\"%s\"",
+                FileId,
+                rdpdr::DeviceIORequest::get_MajorFunction_name(MajorFunction),
+                MajorFunction, extra_data, file_path);
+        }
 
         switch (MajorFunction)
         {
             case rdpdr::IRP_MJ_CREATE:
             {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_drive_io_response: "
-                        "Create request.");
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_drive_io_response: "
+                            "Create request.");
+                }
 
                 rdpdr::DeviceCreateResponse device_create_response;
 
                 device_create_response.receive(chunk);
-                device_create_response.log(LOG_INFO);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    device_create_response.log(LOG_INFO);
+                }
 
                 if (device_io_response.IoStatus() ==
                     0x00000000  // STATUS_SUCCESS
@@ -1004,13 +1033,15 @@ public:
 
                         (*target_file_name.get()) += file_path;
 
-                        LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                "Add \"%s\" to known file list. "
-                                "DeviceId=%u FileId=%u",
-                            target_file_name.get()->c_str(),
-                            device_io_response.DeviceId(),
-                            device_create_response.FileId());
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                    "Add \"%s\" to known file list. "
+                                    "DeviceId=%u FileId=%u",
+                                target_file_name.get()->c_str(),
+                                device_io_response.DeviceId(),
+                                device_create_response.FileId());
+                        }
 
                         this->device_io_target_info_inventory.push_back(
                             std::make_tuple(
@@ -1035,9 +1066,11 @@ public:
 
             case rdpdr::IRP_MJ_CLOSE:
             {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_drive_io_response: "
-                        "Close request.");
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_drive_io_response: "
+                            "Close request.");
+                }
 
                 for (device_io_request_info_inventory_type::const_iterator
                          request_iter =
@@ -1059,13 +1092,15 @@ public:
                             if ((std::get<0>(*target_iter) == device_io_response.DeviceId()) &&
                                 (std::get<1>(*target_iter) == FileId)) {
 
-                                LOG(LOG_INFO,
-                                    "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                        "Remove \"%s\" from known file list. "
-                                        "DeviceId=%u FileId=%u",
-                                    std::get<2>(*target_iter).get()->c_str(),
-                                    device_io_response.DeviceId(),
-                                    FileId);
+                                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                                    LOG(LOG_INFO,
+                                        "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                            "Remove \"%s\" from known file list. "
+                                            "DeviceId=%u FileId=%u",
+                                        std::get<2>(*target_iter).get()->c_str(),
+                                        device_io_response.DeviceId(),
+                                        FileId);
+                                }
 
                                 this->device_io_target_info_inventory.erase(target_iter);
 
@@ -1083,10 +1118,12 @@ public:
             {
                 const uint32_t Length = chunk.in_uint32_le();
 
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_drive_io_response: "
-                        "Read request. Length=%u",
-                    Length);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_drive_io_response: "
+                            "Read request. Length=%u",
+                        Length);
+                }
 
                 if (device_io_response.IoStatus() ==
                     0x00000000  // STATUS_SUCCESS
@@ -1148,9 +1185,11 @@ public:
             break;
 
             case rdpdr::IRP_MJ_WRITE:
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_drive_io_response: "
-                        "Write request.");
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_drive_io_response: "
+                            "Write request.");
+                }
 
                 if (device_io_response.IoStatus() ==
                     0x00000000  // STATUS_SUCCESS
@@ -1212,13 +1251,15 @@ public:
             break;
 
             default:
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_drive_io_response: "
-                        "Undecoded Drive I/O Response - "
-                        "MajorFunction=%s(0x%08X)",
-                    rdpdr::DeviceIORequest::get_MajorFunction_name(
-                        this->server_device_io_request.MajorFunction()),
-                    this->server_device_io_request.MajorFunction());
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_WARNING,
+                        "FileSystemVirtualChannel::process_client_drive_io_response: "
+                            "Undecoded Drive I/O Response - "
+                            "MajorFunction=%s(0x%08X)",
+                        rdpdr::DeviceIORequest::get_MajorFunction_name(
+                            this->server_device_io_request.MajorFunction()),
+                        this->server_device_io_request.MajorFunction());
+                }
             break;
         }   // switch (MajorFunction)
 
@@ -1326,12 +1367,12 @@ public:
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Client Drive I/O Response");
+                }
 
-                    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                        send_message_to_server =
-                            this->process_client_drive_io_response(
-                                total_length, flags, chunk);
-                    }
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    send_message_to_server =
+                        this->process_client_drive_io_response(
+                            total_length, flags, chunk);
                 }
             break;
 
@@ -1367,8 +1408,9 @@ public:
             break;
 
             default:
-                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    LOG(LOG_INFO,
+                if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
+                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Undecoded PDU - "
                             "Component=%s(0x%X) PacketId=0x%X",
@@ -1711,17 +1753,20 @@ public:
             break;
 
             case rdpdr::IRP_MJ_WRITE:
+            {
+                const uint32_t Length = chunk.in_uint32_le();
+
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    uint32_t Length = chunk.in_uint32_le();
-                    uint64_t Offset = chunk.in_uint64_le();
+                    const uint64_t Offset = chunk.in_uint64_le();
 
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Write Request. Length=%u Offset=%" PRIu64,
                         Length, Offset);
-
-                    this->update_exchanged_data(Length);
                 }
+
+                this->update_exchanged_data(Length);
+            }
             break;
 
             case rdpdr::IRP_MJ_DEVICE_CONTROL:
@@ -1738,39 +1783,47 @@ public:
             break;
 
             case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
+            {
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Query volume information request");
+                }
 
-                    rdpdr::ServerDriveQueryVolumeInformationRequest
-                        server_drive_query_volume_information_request;
+                rdpdr::ServerDriveQueryVolumeInformationRequest
+                    server_drive_query_volume_information_request;
 
-                    server_drive_query_volume_information_request.receive(
-                        chunk);
+                server_drive_query_volume_information_request.receive(
+                    chunk);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     server_drive_query_volume_information_request.log(
                         LOG_INFO);
-
-                    extra_data =
-                        server_drive_query_volume_information_request.FsInformationClass();
                 }
+
+                extra_data =
+                    server_drive_query_volume_information_request.FsInformationClass();
+            }
             break;
 
             case rdpdr::IRP_MJ_QUERY_INFORMATION:
+            {
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Server Drive Query Information Request");
-
-                    rdpdr::ServerDriveQueryInformationRequest
-                        server_drive_query_information_request;
-
-                    server_drive_query_information_request.receive(chunk);
-                    server_drive_query_information_request.log(LOG_INFO);
-
-                    extra_data =
-                        server_drive_query_information_request.FsInformationClass();
                 }
+
+                rdpdr::ServerDriveQueryInformationRequest
+                    server_drive_query_information_request;
+
+                server_drive_query_information_request.receive(chunk);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    server_drive_query_information_request.log(LOG_INFO);
+                }
+
+                extra_data =
+                    server_drive_query_information_request.FsInformationClass();
+            }
             break;
 
             case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
@@ -1780,22 +1833,24 @@ public:
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::process_server_drive_io_request: "
                                 "Server Drive Query Directory Request");
-
-                        rdpdr::ServerDriveQueryDirectoryRequest
-                            server_drive_query_directory_request;
-
-                        server_drive_query_directory_request.receive(chunk);
-                        server_drive_query_directory_request.log(LOG_INFO);
-
-                        extra_data =
-                            server_drive_query_directory_request.FsInformationClass();
                     }
+
+                    rdpdr::ServerDriveQueryDirectoryRequest
+                        server_drive_query_directory_request;
+
+                    server_drive_query_directory_request.receive(chunk);
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        server_drive_query_directory_request.log(LOG_INFO);
+                    }
+
+                    extra_data =
+                        server_drive_query_directory_request.FsInformationClass();
                 }
             break;
 
             default:
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    LOG(LOG_INFO,
+                    LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Undecoded Drive I/O Request - "
                             "MajorFunction=%s(0x%08X) "
@@ -1810,8 +1865,7 @@ public:
             break;
         }   // switch (this->server_device_io_request.MajorFunction())
 
-        if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
-            send_message_to_client) {
+        if (send_message_to_client) {
             this->device_io_request_info_inventory.push_back(
                 std::make_tuple(
                     this->server_device_io_request.DeviceId(),
@@ -1957,9 +2011,9 @@ public:
             break;
 
             default:
-                if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-                    (this->verbose & MODRDP_LOGLEVEL_RDPDR)) {
-                    LOG(LOG_INFO,
+                if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
+                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Undecoded PDU - "
                             "Component=%s(0x%X) PacketId=0x%X",
