@@ -28,12 +28,15 @@
 //#define LOGPRINT
 
 #include "channel_list.hpp"
+#include "client_info.hpp"
 #include "make_unique.hpp"
 #include "stream.hpp"
 #include "test_transport.hpp"
 #include "virtual_channel_data_sender.hpp"
 #include "rdp/channels/rdpdr_channel.hpp"
 #include "rdp/channels/rdpdr_file_system_drive_manager.hpp"
+
+#include "../../../front/fake_front.hpp"
 
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;
@@ -93,6 +96,17 @@ public:
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info, /*verbose = */511);
+
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
@@ -131,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 
     FileSystemVirtualChannel file_system_virtual_channel(
         &to_client_sender, &to_server_sender, file_system_drive_manager,
-        file_system_virtual_channel_params);
+        front, file_system_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
@@ -203,6 +217,17 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info, /*verbose = */511);
+
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
@@ -241,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 
     FileSystemVirtualChannel file_system_virtual_channel(
         &to_client_sender, &to_server_sender, file_system_drive_manager,
-        file_system_virtual_channel_params);
+        front, file_system_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
@@ -313,6 +338,17 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info, /*verbose = */511);
+
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
@@ -351,7 +387,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
     FileSystemVirtualChannel file_system_virtual_channel(
         &to_client_sender, &to_server_sender, file_system_drive_manager,
-        file_system_virtual_channel_params);
+        front, file_system_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
@@ -423,6 +459,17 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info, /*verbose = */511);
+
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
@@ -461,7 +508,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 
     FileSystemVirtualChannel file_system_virtual_channel(
         &to_client_sender, &to_server_sender, file_system_drive_manager,
-        file_system_virtual_channel_params);
+        front, file_system_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
@@ -533,6 +580,17 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info, /*verbose = */511);
+
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
@@ -571,7 +629,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
     FileSystemVirtualChannel file_system_virtual_channel(
         &to_client_sender, &to_server_sender, file_system_drive_manager,
-        file_system_virtual_channel_params);
+        front, file_system_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,

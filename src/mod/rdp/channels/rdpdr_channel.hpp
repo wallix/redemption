@@ -25,6 +25,7 @@
 
 #include "apply_for_delim.hpp"
 #include "base_channel.hpp"
+#include "front_api.hpp"
 #include "rdpdr_file_system_drive_manager.hpp"
 
 class FileSystemVirtualChannel : public BaseVirtualChannel
@@ -657,6 +658,8 @@ private:
         }
     } device_redirection_manager;
 
+    FrontAPI& front;
+
 public:
     struct Params : public BaseVirtualChannel::Params
     {
@@ -677,6 +680,7 @@ public:
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,
+        FrontAPI& front,
         const Params& params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
@@ -698,6 +702,7 @@ public:
           params.smart_card_authorized,
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           params.verbose)
+    , front(front)
     {}
 
     virtual ~FileSystemVirtualChannel()
@@ -1164,6 +1169,11 @@ public:
                                                 "Reads \"%s\".",
                                             std::get<2>(*target_iter).get()->c_str());
 
+                                        std::string message("ReadRedirectedFileSystem=");
+                                        message += std::get<2>(*target_iter).get()->c_str();
+
+                                        this->front.session_update(message.c_str());
+
                                         std::get<3>(*target_iter) = true;
 
                                         if (std::get<3>(*target_iter) ==
@@ -1218,6 +1228,11 @@ public:
                                             "FileSystemVirtualChannel::process_client_drive_io_response: "
                                                 "Writes \"%s\".",
                                             std::get<2>(*target_iter).get()->c_str());
+
+                                        std::string message("WriteRedirectedFileSystem=");
+                                        message += std::get<2>(*target_iter).get()->c_str();
+
+                                        this->front.session_update(message.c_str());
 
                                         std::get<4>(*target_iter) = true;
 
