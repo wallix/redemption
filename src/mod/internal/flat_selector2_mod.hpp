@@ -26,6 +26,27 @@
 #include "widget2/flat_selector2.hpp"
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
+#include "config_access.hpp"
+
+
+using FlatSelector2ModVariables = vcfg::variables<
+    vcfg::var<cfg::globals::auth_user,          vcfg::ask | vcfg::write | vcfg::read>,
+    vcfg::var<cfg::context::selector,           vcfg::ask | vcfg::write>,
+    vcfg::var<cfg::context::target_protocol,    vcfg::ask | vcfg::read>,
+    vcfg::var<cfg::globals::target_device,      vcfg::ask | vcfg::read>,
+    vcfg::var<cfg::globals::target_user,        vcfg::ask | vcfg::read>,
+    vcfg::var<cfg::context::password,           vcfg::ask>,
+    vcfg::var<cfg::context::selector_current_page,      vcfg::wait | vcfg::read | vcfg::write>,
+    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::wait | vcfg::read>,
+    vcfg::var<cfg::context::selector_device_filter,     vcfg::read | vcfg::write>,
+    vcfg::var<cfg::context::selector_group_filter,      vcfg::read | vcfg::write>,
+    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::read | vcfg::write>,
+    vcfg::var<cfg::context::selector_proto_filter,      vcfg::read | vcfg::write>,
+    vcfg::var<cfg::globals::host>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
 
 class FlatSelector2Mod : public InternalMod, public NotifyApi
 {
@@ -34,37 +55,39 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
     int current_page;
     int number_page;
 
-    Inifile & ini;
+    FlatSelector2ModVariables vars;
 
     CopyPaste copy_paste;
 
     struct temporary_login {
         char buffer[256];
 
-        explicit temporary_login(Inifile & ini) {
+        explicit temporary_login(FlatSelector2ModVariables vars) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
                      "%s@%s",
-                     ini.get<cfg::globals::auth_user>().c_str(),
-                     ini.get<cfg::globals::host>().c_str());
+                     vars.get<cfg::globals::auth_user>().c_str(),
+                     vars.get<cfg::globals::host>().c_str());
         }
     };
 
 public:
-    FlatSelector2Mod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
-        , selector(*this, temporary_login(ini).buffer, width, height, this->screen, this,
-                    ini.is_asked<cfg::context::selector_current_page>()
-                        ? "" : configs::make_c_str_buf(ini.get<cfg::context::selector_current_page>()).get(),
-                    ini.is_asked<cfg::context::selector_number_of_pages>()
-                        ? "" : configs::make_c_str_buf(ini.get<cfg::context::selector_number_of_pages>()).get(),
-                   ini.get<cfg::context::selector_group_filter>().c_str(),
-                   ini.get<cfg::context::selector_device_filter>().c_str(),
-                   ini.get<cfg::context::selector_proto_filter>().c_str(),
-                   ini)
+    FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height)
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        , selector(*this, temporary_login(vars).buffer, width, height, this->screen, this,
+                    vars.is_asked<cfg::context::selector_current_page>()
+                        ? "" : configs::make_c_str_buf(vars.get<cfg::context::selector_current_page>()).get(),
+                    vars.is_asked<cfg::context::selector_number_of_pages>()
+                        ? "" : configs::make_c_str_buf(vars.get<cfg::context::selector_number_of_pages>()).get(),
+                   vars.get<cfg::context::selector_group_filter>().c_str(),
+                   vars.get<cfg::context::selector_device_filter>().c_str(),
+                   vars.get<cfg::context::selector_proto_filter>().c_str(),
+                   vars.get<cfg::font>(),
+                   vars.get<cfg::theme>(),
+                   vars.get<cfg::translation::language>())
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
-        , ini(ini)
+        , vars(vars)
     {
         this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         this->screen.add_widget(&this->selector);
@@ -72,10 +95,10 @@ public:
 
         uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
         int w, h = 0;
-        this->text_metrics(this->ini.get<cfg::font>(), "Édp", w, h);
+        this->text_metrics(this->vars.get<cfg::font>(), "Édp", w, h);
         uint16_t line_height = h + 2 * (this->selector.selector_lines.border + this->selector.selector_lines.y_padding_label);
 
-        this->ini.set<cfg::context::selector_lines_per_page>(available_height / line_height);
+        this->vars.set<cfg::context::selector_lines_per_page>(available_height / line_height);
         this->ask_page();
         this->selector.refresh(this->selector.rect);
     }
@@ -86,22 +109,22 @@ public:
 
     void ask_page()
     {
-    	this->ini.set<cfg::context::selector_current_page>((uint32_t)this->current_page);
-        this->ini.set<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
-        this->ini.set<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
-        this->ini.set<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
-        this->ini.ask<cfg::globals::target_user>();
-        this->ini.ask<cfg::globals::target_device>();
-        this->ini.ask<cfg::context::selector>();
+    	this->vars.set<cfg::context::selector_current_page>((uint32_t)this->current_page);
+        this->vars.set<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
+        this->vars.set<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
+        this->vars.set<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
+        this->vars.ask<cfg::globals::target_user>();
+        this->vars.ask<cfg::globals::target_device>();
+        this->vars.ask<cfg::context::selector>();
         this->event.signal = BACK_EVENT_REFRESH;
         this->event.set();
     }
 
     void notify(Widget2* widget, notify_event_t event) override {
         if (NOTIFY_CANCEL == event) {
-            this->ini.ask<cfg::globals::auth_user>();
-            this->ini.ask<cfg::context::password>();
-            this->ini.set<cfg::context::selector>(false);
+            this->vars.ask<cfg::globals::auth_user>();
+            this->vars.ask<cfg::context::password>();
+            this->vars.set<cfg::context::selector>(false);
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
         }
@@ -121,11 +144,11 @@ public:
                 snprintf(group_buffer, sizeof(group_buffer), "%s", groups);
                 group_buffer[pos] = 0;
                 snprintf(buffer, sizeof(buffer), "%s:%s:%s",
-                         target, group_buffer, this->ini.get<cfg::globals::auth_user>().c_str());
-                this->ini.set<cfg::globals::auth_user>(buffer);
-                this->ini.ask<cfg::globals::target_user>();
-                this->ini.ask<cfg::globals::target_device>();
-                this->ini.ask<cfg::context::target_protocol>();
+                         target, group_buffer, this->vars.get<cfg::globals::auth_user>().c_str());
+                this->vars.set<cfg::globals::auth_user>(buffer);
+                this->vars.ask<cfg::globals::target_user>();
+                this->vars.ask<cfg::globals::target_device>();
+                this->vars.ask<cfg::context::target_protocol>();
 
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
@@ -170,14 +193,14 @@ public:
         }
     }
 
-    void refresh_context(Inifile& ini) override {
+    void refresh_context(Inifile&) override {
         char buffer[16];
 
-        this->current_page = ini.get<cfg::context::selector_current_page>();
+        this->current_page = vars.get<cfg::context::selector_current_page>();
         snprintf(buffer, sizeof(buffer), "%u", this->current_page);
         this->selector.current_page.set_text(buffer);
 
-        this->number_page = ini.get<cfg::context::selector_number_of_pages>();
+        this->number_page = vars.get<cfg::context::selector_number_of_pages>();
         snprintf(buffer, sizeof(buffer), "%u", this->number_page);
         this->selector.number_page.set_text(WidgetSelectorFlat2::temporary_number_of_page(buffer).buffer);
 
@@ -195,12 +218,13 @@ public:
         this->event.reset();
     }
 
+private:
     void refresh_device()
     {
-        char * groups    = const_cast<char *>(this->ini.get<cfg::globals::target_user>().c_str());
-        char * targets   = const_cast<char *>(this->ini.get<cfg::globals::target_device>().c_str());
-        char * protocols = const_cast<char *>(this->ini.get<cfg::context::target_protocol>().c_str());
-        for (unsigned index = 0; index < this->ini.get<cfg::context::selector_lines_per_page>();
+        char * groups    = const_cast<char *>(this->vars.get<cfg::globals::target_user>().c_str());
+        char * targets   = const_cast<char *>(this->vars.get<cfg::globals::target_device>().c_str());
+        char * protocols = const_cast<char *>(this->vars.get<cfg::context::target_protocol>().c_str());
+        for (unsigned index = 0; index < this->vars.get<cfg::context::selector_lines_per_page>();
              index++) {
             size_t size_groups = proceed_item(groups, '\x01');
             if (!size_groups)
@@ -237,7 +261,7 @@ public:
         if (this->selector.selector_lines.get_nb_rows() == 0) {
             this->selector.selector_lines.tab_flag = Widget2::IGNORE_TAB;
             this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
-            this->selector.add_device("", TR("no_results", this->ini), "");
+            this->selector.add_device("", TR("no_results", this->vars.get<cfg::translation::language>()), "");
         } else {
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
@@ -247,6 +271,7 @@ public:
         this->selector.rearrange();
     }
 
+public:
     static inline size_t proceed_item(const char * list, char sep = ' ')
     {
         const char * p = list;

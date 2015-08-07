@@ -57,56 +57,56 @@ public:
 private:
     long prev_time;
 
-    Inifile & ini;
+    Language lang;
 
 public:
     FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
                  NotifyApi* notifier, const char * diagnostic_text, int group_id,
                  const char * username, const char * target,
-                 bool showtimer, Inifile & ini)
+                 bool showtimer, Font const & font, Theme const & theme, Language lang)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-    , bg_color(ini.get<cfg::theme>().global.bgcolor)
-    // , img(drawable, 0, 0, ini.get<cfg::theme>().global.logo_path, *this, nullptr, -10)
+    , bg_color(theme.global.bgcolor)
+    // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
     , img(drawable, 0, 0,
-          ini.get<cfg::theme>().global.logo ? ini.get<cfg::theme>().global.logo_path :
+          theme.global.logo ? theme.global.logo_path :
           SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
     , username_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Username:", true, -11,
-                     ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                     theme.global.fgcolor, theme.global.bgcolor, font)
     , username_label_value(drawable, 0, 0, *this, nullptr, username, true, -11,
-                           ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                           theme.global.fgcolor, theme.global.bgcolor, font)
     , target_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Target:", true, -12,
-                   ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                   theme.global.fgcolor, theme.global.bgcolor, font)
     , target_label_value(drawable, 0, 0, *this, nullptr, target, true, -12,
-                         ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
-    , connection_closed_label(drawable, 0, 0, *this, nullptr, TR("connection_closed", ini),
-                              true, -13, ini.get<cfg::theme>().global.fgcolor,
-                              ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
-    , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14,
-             ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-             ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2)
+                         theme.global.fgcolor, theme.global.bgcolor, font)
+    , connection_closed_label(drawable, 0, 0, *this, nullptr, TR("connection_closed", lang),
+                              true, -13, theme.global.fgcolor,
+                              theme.global.bgcolor, font)
+    , cancel(drawable, 0, 0, *this, this, TR("close", lang), true, -14,
+             theme.global.fgcolor, theme.global.bgcolor,
+             theme.global.focus_color, font, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, nullptr, "Diagnostic:", true, -15,
-                 ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                 theme.global.fgcolor, theme.global.bgcolor, font)
     , diagnostic_lines(drawable, 0, 0, *this, nullptr, diagnostic_text, true, -16,
-                       ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                       theme.global.fgcolor, theme.global.bgcolor, font)
     , timeleft_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Time left:", true, -12,
-                     ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                     theme.global.fgcolor, theme.global.bgcolor, font)
     , timeleft_value(drawable, 0, 0, *this, nullptr, nullptr, true, -12,
-                     ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                     theme.global.fgcolor, theme.global.bgcolor, font)
     , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
-                ini.get<cfg::theme>().global.separator_color)
+                theme.global.separator_color)
     , prev_time(0)
-    , ini(ini)
+    , lang(lang)
     {
         this->impl = &composite_array;
 
         char label[255];
-        snprintf(label, sizeof(label), "%s:", TR("username", ini));
+        snprintf(label, sizeof(label), "%s:", TR("username", lang));
         this->username_label.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("target", ini));
+        snprintf(label, sizeof(label), "%s:", TR("target", lang));
         this->target_label.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("diagnostic", ini));
+        snprintf(label, sizeof(label), "%s:", TR("diagnostic", lang));
         this->diagnostic.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("timeleft", ini));
+        snprintf(label, sizeof(label), "%s:", TR("timeleft", lang));
         this->timeleft_label.set_text(label);
 
         // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
@@ -208,9 +208,9 @@ public:
             char buff[256];
             snprintf(buff, sizeof(buff), "%2ld %s%s %s. ",
                      tl,
-                     seconds?TR("second", this->ini):TR("minute", this->ini),
+                     seconds?TR("second", this->lang):TR("minute", this->lang),
                      (tl <= 1)?"":"s",
-                     TR("before_closing", this->ini)
+                     TR("before_closing", this->lang)
                      );
 
             Rect old = this->timeleft_value.rect;

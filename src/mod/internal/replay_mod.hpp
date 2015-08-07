@@ -39,8 +39,7 @@ class ReplayMod : public InternalMod {
     FileToGraphic           * reader;
 
     bool end_of_data;
-
-    const Inifile & ini;
+    bool wait_for_escape;
 
 public:
     ReplayMod( FrontAPI & front
@@ -49,11 +48,13 @@ public:
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
-             , Inifile & ini)
-    : InternalMod(front, width, height, ini.get<cfg::font>())
+             , Font const & font
+             , bool wait_for_escape
+             , uint32_t debug_capture)
+    : InternalMod(front, width, height, font)
     , auth_error_message(auth_error_message)
     , end_of_data(false)
-    , ini(ini)
+    , wait_for_escape(wait_for_escape)
     {
         strncpy(this->movie, replay_path, sizeof(this->movie)-1);
         strncat(this->movie, movie, sizeof(this->movie)-1);
@@ -80,8 +81,7 @@ public:
         this->in_trans = new InMetaSequenceTransport(prefix, extension);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-        this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true
-                                        , this->ini.get<cfg::debug::capture>());
+        this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true, debug_capture);
 
         switch (this->front.server_resize( this->reader->info_width
                                          , this->reader->info_height
@@ -154,7 +154,7 @@ public:
                 else {
                     this->front.flush();
 
-                    if (this->ini.get<cfg::mod_replay::on_end_of_data>() == 1) {
+                    if (!this->wait_for_escape) {
                         this->event.signal = BACK_EVENT_STOP;
                         this->event.set(1);
                     }

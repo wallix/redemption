@@ -28,6 +28,16 @@
 #include "widget2/notify_api.hpp"
 #include "translation.hpp"
 #include "copy_paste.hpp"
+#include "config_access.hpp"
+
+
+using FlatLoginModVariables = vcfg::variables<
+    vcfg::var<cfg::context::password,   vcfg::write>,
+    vcfg::var<cfg::globals::auth_user,  vcfg::write>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
 
 
 class FlatLoginMod : public InternalMod, public NotifyApi
@@ -36,20 +46,22 @@ class FlatLoginMod : public InternalMod, public NotifyApi
 
     CopyPaste copy_paste;
 
-    Inifile & ini;
+    FlatLoginModVariables vars;
 
 public:
     FlatLoginMod(
-        Inifile & ini,
+        FlatLoginModVariables vars,
         char const * username, char const * password,
         FrontAPI & front, uint16_t width, uint16_t height
     )
-        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 username[0] != 0,
-                0, nullptr, nullptr, TR("login", ini), TR("password", ini),
-                this->font(), Translator(ini.get<cfg::translation::language>()), this->theme())
-        , ini(ini)
+                0, nullptr, nullptr,
+                TR("login", vars.get<cfg::translation::language>()),
+                TR("password", vars.get<cfg::translation::language>()),
+                this->font(), Translator(vars.get<cfg::translation::language>()), this->theme())
+        , vars(vars)
     {
         this->screen.add_widget(&this->login);
 
@@ -74,8 +86,8 @@ public:
         switch (event) {
         case NOTIFY_SUBMIT:
             LOG(LOG_INFO, "asking for selector");
-            this->ini.set<cfg::globals::auth_user>(this->login.login_edit.get_text());
-            this->ini.set<cfg::context::password>(this->login.password_edit.get_text());
+            this->vars.set<cfg::globals::auth_user>(this->login.login_edit.get_text());
+            this->vars.set<cfg::context::password>(this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
             break;

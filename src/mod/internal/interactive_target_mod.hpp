@@ -28,7 +28,19 @@
 #include "widget2/flat_interactive_target.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
+#include "config_access.hpp"
 
+
+using InteractiveTargetModVariables = vcfg::variables<
+    vcfg::var<cfg::globals::target_user,     vcfg::wait | vcfg::write | vcfg::read>,
+    vcfg::var<cfg::context::target_password, vcfg::wait | vcfg::write>,
+    vcfg::var<cfg::context::target_host,     vcfg::wait | vcfg::write>,
+    vcfg::var<cfg::globals::target_device,   vcfg::read>,
+    vcfg::var<cfg::context::display_message, vcfg::write>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
 
 class InteractiveTargetMod : public InternalMod, public NotifyApi
 {
@@ -38,21 +50,25 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
 
     FlatInteractiveTarget challenge;
 
-    Inifile & ini;
+    InteractiveTargetModVariables vars;
 
 public:
-    InteractiveTargetMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
-        , ask_device(ini.is_asked<cfg::context::target_host>())
-        , ask_login(ini.is_asked<cfg::globals::target_user>())
-        , ask_password((this->ask_login || ini.is_asked<cfg::context::target_password>()))
+    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height)
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        , ask_device(vars.is_asked<cfg::context::target_host>())
+        , ask_login(vars.is_asked<cfg::globals::target_user>())
+        , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
         , challenge(*this, width, height, this->screen, this, 0,
                     this->ask_device, this->ask_login, this->ask_password,
-                    ini.get<cfg::theme>(), TR("target_info_required", ini),
-                    TR("device", ini), ini.get<cfg::globals::target_device>().c_str(),
-                    TR("login", ini), ini.get<cfg::globals::target_user>().c_str(),
-                    TR("password", ini), ini.get<cfg::font>())
-        , ini(ini)
+                    vars.get<cfg::theme>(),
+                    TR("target_info_required", vars.get<cfg::translation::language>()),
+                    TR("device", vars.get<cfg::translation::language>()),
+                    vars.get<cfg::globals::target_device>().c_str(),
+                    TR("login", vars.get<cfg::translation::language>()),
+                    vars.get<cfg::globals::target_user>().c_str(),
+                    TR("password", vars.get<cfg::translation::language>()),
+                    vars.get<cfg::font>())
+        , vars(vars)
     {
         this->screen.add_widget(&this->challenge);
         this->challenge.password_edit.set_text("");
@@ -90,15 +106,15 @@ private:
     void accepted()
     {
         if (this->ask_device) {
-            this->ini.set<cfg::context::target_host>(this->challenge.device_edit.get_text());
+            this->vars.set<cfg::context::target_host>(this->challenge.device_edit.get_text());
         }
         if (this->ask_login) {
-            this->ini.set<cfg::globals::target_user>(this->challenge.login_edit.get_text());
+            this->vars.set<cfg::globals::target_user>(this->challenge.login_edit.get_text());
         }
         if (this->ask_password) {
-            this->ini.set<cfg::context::target_password>(this->challenge.password_edit.get_text());
+            this->vars.set<cfg::context::target_password>(this->challenge.password_edit.get_text());
         }
-        this->ini.set<cfg::context::display_message>("True");
+        this->vars.set<cfg::context::display_message>("True");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -106,8 +122,8 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->ini.set<cfg::context::target_password>("");
-        this->ini.set<cfg::context::display_message>("False");
+        this->vars.set<cfg::context::target_password>("");
+        this->vars.set<cfg::context::display_message>("False");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

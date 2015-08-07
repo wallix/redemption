@@ -1373,7 +1373,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<int, 0, 1, 0>;
+            using type = bool;
             type value{0};
         };
     }

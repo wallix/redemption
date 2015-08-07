@@ -43,10 +43,10 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
     flag += FlatForm::DURATION_MANDATORY;
 
-    FlatForm form(drawable, 600, 150, parent, notifier, 0, ini, colors, flag);
+    FlatForm form(drawable, 600, 150, parent, notifier, 0, font, colors, Language::en, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.rect);

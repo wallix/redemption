@@ -22,7 +22,6 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 
-#include "translation.hpp"
 #include "front_api.hpp"
 #include "config.hpp"
 #include "widget2/flat_wait.hpp"
@@ -31,23 +30,39 @@
 #include "copy_paste.hpp"
 #include "timeout.hpp"
 
+#include "config_access.hpp"
+
+
+using FlatWaitModVariables = vcfg::variables<
+    vcfg::var<cfg::context::comment,        vcfg::write>,
+    vcfg::var<cfg::context::duration,       vcfg::write>,
+    vcfg::var<cfg::context::ticket,         vcfg::write>,
+    vcfg::var<cfg::context::waitinforeturn, vcfg::write>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
+
 class FlatWaitMod : public InternalMod, public NotifyApi
 {
     FlatWait wait_widget;
 
-    Inifile          & ini;
+    FlatWaitModVariables vars;
     TimeoutT<time_t>   timeout;
 
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
+    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
-        , wait_widget(*this, width, height, this->screen, this, caption, message,
-                      0, ini,  ini.get<cfg::theme>(), showform, flag)
-        , ini(ini)
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        , wait_widget(*this, width, height, this->screen, this, caption, message, 0,
+                      vars.get<cfg::font>(),
+                      vars.get<cfg::theme>(),
+                      vars.get<cfg::translation::language>(),
+                      showform, flag)
+        , vars(vars)
         , timeout(now, 600)
     {
         this->screen.add_widget(&this->wait_widget);
@@ -80,17 +95,17 @@ public:
 private:
     void confirm()
     {
-        this->ini.set<cfg::context::waitinforeturn>("confirm");
-        this->ini.set<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
-        this->ini.set<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
-        this->ini.set<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
+        this->vars.set<cfg::context::waitinforeturn>("confirm");
+        this->vars.set<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
+        this->vars.set<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
+        this->vars.set<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void accepted()
     {
-        this->ini.set<cfg::context::waitinforeturn>("backselector");
+        this->vars.set<cfg::context::waitinforeturn>("backselector");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -98,7 +113,7 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->ini.set<cfg::context::waitinforeturn>("exit");
+        this->vars.set<cfg::context::waitinforeturn>("exit");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

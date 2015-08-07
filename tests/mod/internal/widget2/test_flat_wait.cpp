@@ -43,10 +43,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 
 
     FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Invalid Target",
-                         text_invalid, 0, ini, colors);
+                         text_invalid, 0, font, colors, Language::en);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",

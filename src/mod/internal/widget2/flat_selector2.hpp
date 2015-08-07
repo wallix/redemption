@@ -87,7 +87,7 @@ public:
     enum {
         IDX_TARGETGROUP,
         IDX_TARGET,
-        IDX_PROTOCOL,
+IDX_PROTOCOL,
         IDX_CLOSETIME
     };
 
@@ -103,75 +103,75 @@ public:
                         uint16_t height, Widget2 & parent, NotifyApi* notifier,
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,
-                        const char * filter_protocol, Inifile & ini)
+                        const char * filter_protocol, Font const & font, Theme const & theme, Language lang)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , bg_color(ini.get<cfg::theme>().global.bgcolor)
+        , bg_color(theme.global.bgcolor)
         , less_than_800(this->rect.cx < 800)
         , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, nullptr, device_name,
-                       true, -10, ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
-        , target_group_label(drawable, 0, 0, *this, nullptr, TR("target_group", ini), true,
-                              -10, ini.get<cfg::theme>().selector_label.fgcolor,
-                             ini.get<cfg::theme>().selector_label.bgcolor, ini.get<cfg::font>(), 5)
-        , target_label(drawable, 0, 0, *this, nullptr, TR("target", ini), true, -10,
-                       ini.get<cfg::theme>().selector_label.fgcolor,
-                       ini.get<cfg::theme>().selector_label.bgcolor, ini.get<cfg::font>(), 5)
-        , protocol_label(drawable, 0, 0, *this, nullptr, TR("protocol", ini), true, -10,
-                         ini.get<cfg::theme>().selector_label.fgcolor,
-                         ini.get<cfg::theme>().selector_label.bgcolor, ini.get<cfg::font>(), 5)
+                       true, -10, theme.global.fgcolor, theme.global.bgcolor, font)
+        , target_group_label(drawable, 0, 0, *this, nullptr, TR("target_group", lang), true,
+                              -10, theme.selector_label.fgcolor,
+                             theme.selector_label.bgcolor, font, 5)
+        , target_label(drawable, 0, 0, *this, nullptr, TR("target", lang), true, -10,
+                       theme.selector_label.fgcolor,
+                       theme.selector_label.bgcolor, font, 5)
+        , protocol_label(drawable, 0, 0, *this, nullptr, TR("protocol", lang), true, -10,
+                         theme.selector_label.fgcolor,
+                         theme.selector_label.bgcolor, font, 5)
         , selector_lines(drawable, Rect(0, 0, width - (this->less_than_800 ? 0 : 30), 1),
                          *this, this, 0, 3,
-                         ini.get<cfg::theme>().selector_line1.bgcolor,
-                         ini.get<cfg::theme>().selector_line1.fgcolor,
-                         ini.get<cfg::theme>().selector_line2.bgcolor,
-                         ini.get<cfg::theme>().selector_line2.fgcolor,
-                         ini.get<cfg::theme>().selector_focus.bgcolor,
-                         ini.get<cfg::theme>().selector_focus.fgcolor,
-                         ini.get<cfg::theme>().selector_selected.bgcolor,
-                         ini.get<cfg::theme>().selector_selected.fgcolor,
-                         ini.get<cfg::font>(), 2, -11)
+                         theme.selector_line1.bgcolor,
+                         theme.selector_line1.fgcolor,
+                         theme.selector_line2.bgcolor,
+                         theme.selector_line2.fgcolor,
+                         theme.selector_focus.bgcolor,
+                         theme.selector_focus.fgcolor,
+                         theme.selector_selected.bgcolor,
+                         theme.selector_selected.fgcolor,
+                         font, 2, -11)
         , filter_target_group(drawable, 0, 0, 120, *this, this,
                               filter_target_group?filter_target_group:nullptr, -12,
-                              ini.get<cfg::theme>().edit.fgcolor, ini.get<cfg::theme>().edit.bgcolor,
-                              ini.get<cfg::theme>().edit.focus_color, ini.get<cfg::font>(), -1, 1, 1)
+                              theme.edit.fgcolor, theme.edit.bgcolor,
+                              theme.edit.focus_color, font, -1, 1, 1)
         , filter_target(drawable, 0, 0, 340, *this, this, filter_target?filter_target:nullptr,
-                        -12, ini.get<cfg::theme>().edit.fgcolor, ini.get<cfg::theme>().edit.bgcolor,
-                        ini.get<cfg::theme>().edit.focus_color, ini.get<cfg::font>(), -1, 1, 1)
+                        -12, theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, font, -1, 1, 1)
         , filter_protocol(drawable, 0, 0, 110, *this, this,
                           filter_protocol?filter_protocol:nullptr, -12,
-                          ini.get<cfg::theme>().edit.fgcolor, ini.get<cfg::theme>().edit.bgcolor,
-                          ini.get<cfg::theme>().edit.focus_color, ini.get<cfg::font>(), -1, 1, 1)
+                          theme.edit.fgcolor, theme.edit.bgcolor,
+                          theme.edit.focus_color, font, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
-                     ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                     ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2, true)
+                     theme.global.fgcolor, theme.global.bgcolor,
+                     theme.global.focus_color, font, 6, 2, true)
         , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15,
-                    ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                    ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2, true)
+                    theme.global.fgcolor, theme.global.bgcolor,
+                    theme.global.focus_color, font, 6, 2, true)
         , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
                        current_page ? current_page : "XXXX", -15,
-                       ini.get<cfg::theme>().edit.fgcolor, ini.get<cfg::theme>().edit.bgcolor,
-                       ini.get<cfg::theme>().edit.focus_color, ini.get<cfg::font>(), -1, 1, 1)
+                       theme.edit.fgcolor, theme.edit.bgcolor,
+                       theme.edit.focus_color, font, -1, 1, 1)
         , number_page(drawable, 0, 0, *this, nullptr,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer
-                      : "/XXX", true, -100, ini.get<cfg::theme>().global.fgcolor,
-                      ini.get<cfg::theme>().global.bgcolor, ini.get<cfg::font>())
+                      : "/XXX", true, -100, theme.global.fgcolor,
+                      theme.global.bgcolor, font)
         , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
-                    ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                    ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2, true)
+                    theme.global.fgcolor, theme.global.bgcolor,
+                    theme.global.focus_color, font, 6, 2, true)
         , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
-                    ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                    ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2, true)
+                    theme.global.fgcolor, theme.global.bgcolor,
+                    theme.global.focus_color, font, 6, 2, true)
           //END WidgetPager
-        , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16,
-                 ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                 ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2)
-        , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12,
-                ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2)
-        , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18,
-                  ini.get<cfg::theme>().global.fgcolor, ini.get<cfg::theme>().global.bgcolor,
-                  ini.get<cfg::theme>().global.focus_color, ini.get<cfg::font>(), 6, 2)
-        , font(ini.get<cfg::font>())
+        , logout(drawable, 0, 0, *this, this, TR("logout", lang), true, -16,
+                 theme.global.fgcolor, theme.global.bgcolor,
+                 theme.global.focus_color, font, 6, 2)
+        , apply(drawable, 0, 0, *this, this, TR("filter", lang), true, -12,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, font, 6, 2)
+        , connect(drawable, 0, 0, *this, this, TR("connect", lang), true, -18,
+                  theme.global.fgcolor, theme.global.bgcolor,
+                  theme.global.focus_color, font, 6, 2)
+        , font(font)
     {
         this->impl = &composite_array;
 

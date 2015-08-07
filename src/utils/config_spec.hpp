@@ -304,7 +304,7 @@ void config_spec_definition(Writer && W)
 
     W.start_section("mod_replay");
     {
-        W.member(A, type_<Range<int, 0, 1>>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
+        W.member(H, type_<bool>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
     }
     W.stop_section();
 

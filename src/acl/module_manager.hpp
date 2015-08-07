@@ -489,7 +489,9 @@ public:
                                      , this->front.client_info.width
                                      , this->front.client_info.height
                                      , this->ini.get_ref<cfg::context::auth_error_message>()
-                                     , this->ini
+                                     , this->ini.get<cfg::font>()
+                                     , !this->ini.get<cfg::mod_replay::on_end_of_data>()
+                                     , this->ini.get<cfg::debug::capture>()
                                      );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
@@ -497,10 +499,11 @@ public:
             break;
         case MODULE_INTERNAL_WIDGETTEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-            this->mod = new WidgetTestMod(this->ini,
-                                          this->front,
+            this->mod = new WidgetTestMod(this->front,
                                           this->front.client_info.width,
-                                          this->front.client_info.height
+                                          this->front.client_info.height,
+                                          this->ini.get<cfg::font>(),
+                                          this->ini.get<cfg::theme>()
                                           );
             LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             break;

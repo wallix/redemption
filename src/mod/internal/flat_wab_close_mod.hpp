@@ -28,6 +28,21 @@
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "timeout.hpp"
+#include "config_access.hpp"
+
+
+using FlatWabCloseModVariables = vcfg::variables<
+    vcfg::var<cfg::globals::auth_user,      vcfg::wait | vcfg::read>,
+    vcfg::var<cfg::globals::target_device,  vcfg::wait | vcfg::read>,
+    vcfg::var<cfg::globals::close_timeout>,
+    vcfg::var<cfg::globals::target_application>,
+    vcfg::var<cfg::globals::target_user>,
+    vcfg::var<cfg::context::auth_error_message>,
+    vcfg::var<cfg::context::module>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
 
 class FlatWabCloseMod : public InternalMod, public NotifyApi
 {
@@ -39,42 +54,46 @@ private:
     struct temporary_text {
         char text[255];
 
-        explicit temporary_text(Inifile & ini)
+        explicit temporary_text(FlatWabCloseModVariables vars)
         {
-            if (ini.get<cfg::context::module>() == "selector") {
-                snprintf(text, sizeof(text), "%s", TR("selector", ini));
+            if (vars.get<cfg::context::module>() == "selector") {
+                snprintf(text, sizeof(text), "%s", TR("selector", vars.get<cfg::translation::language>()));
             }
             else {
                 TODO("target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman")
-                if (!ini.get<cfg::globals::target_application>().empty()) {
+                if (!vars.get<cfg::globals::target_application>().empty()) {
                     snprintf(text, sizeof(text), "%s",
-                             ini.get<cfg::globals::target_application>().c_str());
+                             vars.get<cfg::globals::target_application>().c_str());
                 }
                 else {
                     snprintf(text, sizeof(text), "%s@%s",
-                             ini.get<cfg::globals::target_user>().c_str(),
-                             ini.get<cfg::globals::target_device>().c_str());
+                             vars.get<cfg::globals::target_user>().c_str(),
+                             vars.get<cfg::globals::target_device>().c_str());
                 }
             }
         }
     };
 
 public:
-    FlatWabCloseMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
-        : InternalMod(front, width, height, ini.get<cfg::font>(), ini.get<cfg::theme>())
+    FlatWabCloseMod(FlatWabCloseModVariables vars,
+                    FrontAPI & front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , close_widget(*this, width, height, this->screen, this,
-                       ini.get<cfg::context::auth_error_message>().c_str(), 0,
-                       (ini.is_asked<cfg::globals::auth_user>()
-                        || ini.is_asked<cfg::globals::target_device>()) ?
-                       nullptr : ini.get<cfg::globals::auth_user>().c_str(),
-                       (ini.is_asked<cfg::globals::auth_user>()
-                        || ini.is_asked<cfg::globals::target_device>()) ?
-                       nullptr : temporary_text(ini).text,
-                       showtimer, ini)
-        , timeout(now, ini.get<cfg::globals::close_timeout>())
+                       vars.get<cfg::context::auth_error_message>().c_str(), 0,
+                       (vars.is_asked<cfg::globals::auth_user>()
+                        || vars.is_asked<cfg::globals::target_device>()) ?
+                       nullptr : vars.get<cfg::globals::auth_user>().c_str(),
+                       (vars.is_asked<cfg::globals::auth_user>()
+                        || vars.is_asked<cfg::globals::target_device>()) ?
+                       nullptr : temporary_text(vars).text,
+                       showtimer,
+                       vars.get<cfg::font>(),
+                       vars.get<cfg::theme>(),
+                       vars.get<cfg::translation::language>())
+        , timeout(now, vars.get<cfg::globals::close_timeout>())
         , showtimer(showtimer)
     {
-        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.get<cfg::globals::close_timeout>());
+        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", vars.get<cfg::globals::close_timeout>());
         this->front.set_mod_palette(BGRPalette::classic_332());
 
         this->screen.add_widget(&this->close_widget);
