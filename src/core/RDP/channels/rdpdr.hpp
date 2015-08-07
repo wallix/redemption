@@ -426,7 +426,7 @@ class DeviceAnnounceHeader {
     uint32_t DeviceType_ = RDPDR_DTYP_SERIAL;
     uint32_t DeviceId_   = 0;
 
-    uint8_t  PreferredDosName[8 /* PreferredDosName(8) */ + 1] = { 0 };
+    uint8_t  PreferredDosName_[8 /* PreferredDosName(8) */ + 1] = { 0 };
 
     StaticStream device_data;
 
@@ -439,8 +439,13 @@ public:
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
     , device_data(device_data_p, device_data_size) {
-        ::memcpy(this->PreferredDosName, preferred_dos_name,
-            std::min<size_t>(::strlen(preferred_dos_name), 8 /*PreferredDosName(8)*/));
+        ::memcpy(this->PreferredDosName_, preferred_dos_name,
+                 8 // PreferredDosName(8)
+                 );
+        for (size_t i = ::strlen(::char_ptr_cast(this->PreferredDosName_));
+             i < sizeof(this->PreferredDosName_); ++i) {
+            this->PreferredDosName_[i] = '\0';
+        }
     }
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
@@ -449,7 +454,7 @@ public:
         stream.out_uint32_le(this->DeviceType_);
         stream.out_uint32_le(this->DeviceId_);
 
-        stream.out_copy_bytes(this->PreferredDosName, 8 /* PreferredDosName(8) */);
+        stream.out_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
 
         stream.out_uint32_le(this->device_data.get_capacity()); // DeviceDataLength(4)
 
@@ -471,8 +476,8 @@ public:
         this->DeviceType_ = stream.in_uint32_le();
         this->DeviceId_   = stream.in_uint32_le();
 
-        stream.in_copy_bytes(this->PreferredDosName, 8 /* PreferredDosName(8) */);
-        this->PreferredDosName[8 /* PreferredDosName(8) */ ] = '\0';
+        stream.in_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
+        this->PreferredDosName_[8 /* PreferredDosName(8) */ ] = '\0';
 
         const uint32_t DeviceDataLength = stream.in_uint32_le();
 
@@ -494,6 +499,10 @@ public:
     inline uint32_t DeviceType() const { return this->DeviceType_; }
 
     inline uint32_t DeviceId() const { return this->DeviceId_; }
+
+    inline const char * PreferredDosName() const {
+        return ::char_ptr_cast(this->PreferredDosName_);
+    }
 
     inline size_t size() const {
         return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
@@ -519,7 +528,7 @@ private:
         size_t length = ::snprintf(buffer, size,
             "DeviceAnnounceHeader: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
             this->get_DeviceType_name(this->DeviceType_),
-            this->DeviceType_, this->DeviceId_, this->PreferredDosName);
+            this->DeviceType_, this->DeviceId_, this->PreferredDosName_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -1368,7 +1377,7 @@ public:
 class DeviceIOResponse {
     uint32_t DeviceId_     = 0;
     uint32_t CompletionId_ = 0;
-    uint32_t IoStatus      = 0;
+    uint32_t IoStatus_     = 0;
 
 public:
     DeviceIOResponse() = default;
@@ -1376,12 +1385,12 @@ public:
     DeviceIOResponse(uint32_t DeviceId, uint32_t CompletionId, uint32_t IoStatus)
     : DeviceId_(DeviceId)
     , CompletionId_(CompletionId)
-    , IoStatus(IoStatus) {}
+    , IoStatus_(IoStatus) {}
 
     inline void emit(Stream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->CompletionId_);
-        stream.out_uint32_le(this->IoStatus);
+        stream.out_uint32_le(this->IoStatus_);
     }
 
     inline void receive(Stream & stream) {
@@ -1398,12 +1407,14 @@ public:
 
         this->DeviceId_     = stream.in_uint32_le();
         this->CompletionId_ = stream.in_uint32_le();
-        this->IoStatus      = stream.in_uint32_le();
+        this->IoStatus_     = stream.in_uint32_le();
     }
 
     inline uint32_t DeviceId() const { return this->DeviceId_; }
 
     inline uint32_t CompletionId() const { return this->CompletionId_; }
+
+    inline uint32_t IoStatus() const { return this->IoStatus_; }
 
     inline static size_t size() {
         return 12;  // DeviceId(4) + CompletionId(4) + IoStatus(4)
@@ -1413,7 +1424,7 @@ private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIOResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
-            this->DeviceId_, this->CompletionId_, this->IoStatus);
+            this->DeviceId_, this->CompletionId_, this->IoStatus_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -1504,18 +1515,18 @@ enum {
 //  +-------------------------+-------------------------------+
 
 class DeviceCreateResponse {
-    uint32_t FileId      = 0;
+    uint32_t FileId_     = 0;
     uint8_t  Information = 0;
 
 public:
     DeviceCreateResponse() = default;
 
     DeviceCreateResponse(uint32_t FileId, uint8_t Information)
-    : FileId(FileId)
+    : FileId_(FileId)
     , Information(Information) {}
 
     inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->FileId);
+        stream.out_uint32_le(this->FileId_);
         stream.out_uint8(this->Information);
     }
 
@@ -1531,9 +1542,11 @@ public:
             }
         }
 
-        this->FileId      = stream.in_uint32_le();
+        this->FileId_     = stream.in_uint32_le();
         this->Information = stream.in_uint8();
     }
+
+    inline uint32_t FileId() const { return this->FileId_; }
 
 private:
     inline static const char * get_Information_name(uint8_t Information) {
@@ -1549,7 +1562,7 @@ private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
-            this->FileId, this->get_Information_name(this->Information),
+            this->FileId_, this->get_Information_name(this->Information),
             this->Information);
         return ((length < size) ? length : size - 1);
     }
@@ -1699,18 +1712,18 @@ public:
 //  initialization. NTSTATUS codes are specified in [MS-ERREF] section 2.3.
 
 class ServerDeviceAnnounceResponse {
-    uint32_t DeviceId   = 0;
-    uint32_t ResultCode = 0;
+    uint32_t DeviceId_   = 0;
+    uint32_t ResultCode_ = 0;
 
 public:
     ServerDeviceAnnounceResponse() = default;
 
     ServerDeviceAnnounceResponse(uint32_t device_id, uint32_t result_code) :
-        DeviceId(device_id), ResultCode(result_code) {}
+        DeviceId_(device_id), ResultCode_(result_code) {}
 
     inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->DeviceId);
-        stream.out_uint32_le(this->ResultCode);
+        stream.out_uint32_le(this->DeviceId_);
+        stream.out_uint32_le(this->ResultCode_);
     }
 
     inline void receive(Stream & stream) {
@@ -1725,15 +1738,19 @@ public:
             }
         }
 
-        this->DeviceId   = stream.in_uint32_le();
-        this->ResultCode = stream.in_uint32_le();
+        this->DeviceId_   = stream.in_uint32_le();
+        this->ResultCode_ = stream.in_uint32_le();
     }
+
+    inline uint32_t DeviceId() const { return this->DeviceId_; }
+
+    inline uint32_t ResultCode() const { return this->ResultCode_; }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDeviceAnnounceResponse: DeviceId=%u ResultCode=0x%08X",
-            this->DeviceId, this->ResultCode);
+            this->DeviceId_, this->ResultCode_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -1898,7 +1915,7 @@ public:
                 LOG(LOG_ERR,
                     "Truncated ClientAnnounceReply: expected=%u remains=%u",
                     expected, stream.in_remain());
-BOOM;
+
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
