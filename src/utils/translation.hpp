@@ -23,7 +23,7 @@
 
 #include <array>
 #include <algorithm>
-#include "config.hpp"
+#include "log.hpp"
 
 struct Translation
 {
@@ -192,16 +192,12 @@ public:
 };
 
 #define TRANSLATIONCONF Translation::getInstance()
-static inline const char * TR(const char * key, Language lang)
+static inline const char * TR(const char * key, Translation::language_t lang)
 {
     const char * res = nullptr;
 
     if (!res || !*res || 0 == strcmp(res, "ASK")) {
-        TRANSLATIONCONF.set_lang(
-            lang == Language::fr
-          ? Translation::FR
-          : Translation::EN
-        );
+        TRANSLATIONCONF.set_lang(lang);
         res = TRANSLATIONCONF.translate(key);
         if (!res) {
             LOG(LOG_INFO, "Translation not found for '%s'", key);
@@ -211,13 +207,8 @@ static inline const char * TR(const char * key, Language lang)
     return res;
 }
 
-static inline const char * TR(const char * key, Inifile & ini)
-{
-    return TR(key, ini.get<cfg::translation::language>());
-}
-
 struct Translator {
-    explicit Translator(Language lang = Language::en)
+    explicit Translator(Translation::language_t lang = Translation::EN)
       : lang(lang)
     {}
 
@@ -226,7 +217,7 @@ struct Translator {
     }
 
 private:
-    Language lang;
+    Translation::language_t lang;
 };
 
 #endif

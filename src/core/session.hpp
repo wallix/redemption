@@ -334,13 +334,13 @@ public:
                                     const unsigned minutes = (enddate - now + 30) / 60;
                                     mes += std::to_string(minutes);
                                     mes += ' ';
-                                    mes += TR("minute", this->ini);
+                                    mes += TR("minute", language(this->ini));
                                     if (minutes > 1) {
                                         mes += "s ";
                                     } else {
                                         mes += ' ';
                                     }
-                                    mes += TR("before_closing", this->ini);
+                                    mes += TR("before_closing", language(this->ini));
                                     mm.osd_message(std::move(mes), false);
                                     ++osd_state;
                                 }

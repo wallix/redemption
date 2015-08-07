@@ -49,7 +49,7 @@ public:
     FlatWait(DrawApi& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
-             Font const & font, Theme const & theme, Language lang,
+             Font const & font, Theme const & theme, Translation::language_t lang,
              bool showform = false, int required = FlatForm::NONE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption, -6,

@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/widget2/widget2_rect.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
@@ -73,10 +73,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -104,10 +104,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -135,10 +135,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -166,10 +166,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -197,10 +197,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -228,10 +228,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -259,10 +259,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini;
+    Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */

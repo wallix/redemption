@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     try {
         FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def", id, "rec", "rec",
-                                    false, font, Theme(), Language::en);
+                                    false, font, Theme(), Translation::EN);
 
         // ask to widget to redraw at it's current position
         flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
             "erat ut ligula. Fusce sit amet mauris neque.<br>"
             "Sed orci augue, luctus in ornare sed,<br>"
             "adipiscing et arcu.",
-            0, nullptr, nullptr, false, font, Theme(), Language::en);
+            0, nullptr, nullptr, false, font, Theme(), Translation::EN);
 
         flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
     }
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, nullptr, nullptr, false, font, Theme(), Language::en);
+                                    0, nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, nullptr, nullptr, false, font, Theme(), Language::en);
+                                    0, nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect.offset(20,0));
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, nullptr, nullptr, false, font, Theme(), Language::en);
+                                    0, nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.dx(),
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, &notifier,
                                 "abc<br>def", 0, "tartempion", "caufield",
-                                true, font, Theme(), Language::en);
+                                true, font, Theme(), Translation::EN);
 
     flat_wab_close.refresh_timeleft(183);
 

@@ -27,7 +27,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/widget2/label.hpp"
 #include "internal/widget2/grid.hpp"
 #include "internal/widget2/screen.hpp"
@@ -43,10 +43,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -84,11 +84,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
             snprintf(text, sizeof(text), "Label %ux%u", line_index, column_index);
             if ((line_index == 2) && (column_index == 3)) {
                 widgetTable[widget_count] = new WidgetFlatButton(drawable, 0, 0, wgrid, notifier,
-                                                            text, auto_resize, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, ini.get<cfg::font>(), 2, 2);
+                                                            text, auto_resize, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, font, 2, 2);
             }
             else {
                 widgetTable[widget_count] = new WidgetLabel(drawable, 0, 0, wgrid, notifier,
-                                                            text, auto_resize, id, fg_color, bg_color, ini.get<cfg::font>());
+                                                            text, auto_resize, id, fg_color, bg_color, font);
             }
             wgrid.set_widget(line_index, column_index, widgetTable[widget_count]);
             widget_count++;

@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/widget2/flat_wait.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 
 
     FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Invalid Target",
-                         text_invalid, 0, font, colors, Language::en);
+                         text_invalid, 0, font, colors, Translation::EN);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",

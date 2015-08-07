@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
     Inifile ini;
     LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
+    AclSerializer acl(ini, trans, 0);
     ini.set<cfg::context::forcemodule>(true);
     try {
         acl.send_acl_data();
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     // try exception
     CheckTransport transexcpt("something very wrong",21);
-    AclSerializer aclexcpt(&ini, transexcpt, 0);
+    AclSerializer aclexcpt(ini, transexcpt, 0);
     ini.set<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
     BOOST_CHECK(!ini.get<cfg::context::authenticated>());
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
-    AclSerializer acl(&ini, trans, 0);
+    AclSerializer acl(ini, trans, 0);
     ini.set<cfg::context::session_id>("");
     ini.set<cfg::globals::auth_user>("testuser");
     BOOST_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
 
     GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
-    AclSerializer aclexcpt(&ini, transexcpt, 0);
+    AclSerializer aclexcpt(ini, transexcpt, 0);
     try {
         aclexcpt.incoming();
     } catch (const Error & e){
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
     Inifile ini;
     BStream stream(1);
     LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
+    AclSerializer acl(ini, trans, 0);
 
     // SOME NORMAL CASE
     test_initem_ask<cfg::context::password>(ini,acl, AUTHID_PASSWORD, "SecureLinux");
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
     Inifile ini;
     BStream stream(1024);
     LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
+    AclSerializer acl(ini, trans, 0);
 
     ini.set<cfg::context::password>("VerySecurePassword");
     BOOST_CHECK(!ini.is_asked<cfg::context::password>());

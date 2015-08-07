@@ -72,7 +72,7 @@ enum {
 
     FlatForm(DrawApi& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
-             Font const & font, Theme const & theme, Language lang,
+             Font const & font, Theme const & theme, Translation::language_t lang,
              int flags = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
         , generic_warning(TR("%s field_required", lang))

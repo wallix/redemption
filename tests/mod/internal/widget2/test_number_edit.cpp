@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/widget2/number_edit.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -54,15 +54,15 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         }
     } notifier;
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetNumberEdit wnumber_edit(drawable, x, y, cx, parent, &notifier, "123456", 0, GREEN, RED, RED, ini.get<cfg::font>());
+    WidgetNumberEdit wnumber_edit(drawable, x, y, cx, parent, &notifier, "123456", 0, GREEN, RED, RED, font);
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
     //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");

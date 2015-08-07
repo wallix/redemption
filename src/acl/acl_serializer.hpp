@@ -39,12 +39,12 @@ class AclSerializer{
         HEADER_SIZE = 4
     };
 
-    Inifile * ini;
+    Inifile & ini;
     Transport & auth_trans;
     uint32_t verbose;
 
 public:
-    AclSerializer(Inifile * ini, Transport & auth_trans, uint32_t verbose)
+    AclSerializer(Inifile & ini, Transport & auth_trans, uint32_t verbose)
         : ini(ini)
         , auth_trans(auth_trans)
         , verbose(verbose)
@@ -88,7 +88,7 @@ public:
             if (*stream.p == '\n') {
                 *stream.p = 0;
 
-                if (auto field = ini->get_acl_field(authid_from_string(keyword))) {
+                if (auto field = this->ini.get_acl_field(authid_from_string(keyword))) {
                     if ((0 == strncasecmp(value, "ask", 3))) {
                         field.ask();
                         LOG(LOG_INFO, "receiving ASK '%s'", keyword);
@@ -98,9 +98,9 @@ public:
                         // unsigned char output[32000];
                         // if (value[0] == '!') value++;
                         // size_t value_len = strlen((const char*)value);
-                        // size_t out_len = this->ini->b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
+                        // size_t out_len = this->ini.b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
                         // output[out_len] = 0;
-                        // this->ini->set_from_acl((char *)keyword,
+                        // this->ini.set_from_acl((char *)keyword,
                         //                         (char *)output);
                         field.set(value + (value[0] == '!' ? 1 : 0));
                         const char * val         = field.c_str();
@@ -109,7 +109,7 @@ public:
                             (strncasecmp("target_application_password", keyword, 27) == 0) ||
                             (strncasecmp("target_password", keyword, 16) == 0) ||
                             ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != nullptr))) {
-                            display_val = ::get_printable_password(val, this->ini->get<cfg::debug::password>());
+                            display_val = ::get_printable_password(val, this->ini.get<cfg::debug::password>());
                         }
                         LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
                     }
@@ -147,36 +147,36 @@ public:
         if (this->verbose & 0x40){
             LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
         }
-        bool flag = this->ini->get<cfg::context::session_id>().empty();
+        bool flag = this->ini.get<cfg::context::session_id>().empty();
         this->in_items(stream);
-        if (flag && !this->ini->get<cfg::context::session_id>().empty()) {
+        if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
             int child_pid = getpid();
             char old_session_file[256];
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
             sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                    this->ini->get<cfg::context::session_id>().c_str());
+                    this->ini.get<cfg::context::session_id>().c_str());
             rename(old_session_file, new_session_file);
         }
         if (this->verbose & 0x40){
-            LOG(LOG_INFO, "SESSION_ID = %s", this->ini->get<cfg::context::session_id>().c_str());
+            LOG(LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>().c_str());
         }
     }
 
     void send_acl_data() {
         if (this->verbose & 0x01){
-            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u", this->ini->changed_field_size());
+            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u", this->ini.changed_field_size());
         }
-        if (this->ini->changed_field_size()) {
+        if (this->ini.changed_field_size()) {
             try {
                 StaticFixedSizeStream<AUTOSIZE> stream;
                 stream.out_uint32_be(0);
 
                 char buff[65536];
                 auto const size = sizeof(buff);
-                uint32_t const password_printing_mode = this->ini->get<cfg::debug::password>();
+                uint32_t const password_printing_mode = this->ini.get<cfg::debug::password>();
 
-                this->ini->for_each_changed_field([&](Inifile::FieldReference bfield, authid_t authid){
+                this->ini.for_each_changed_field([&](Inifile::FieldReference bfield, authid_t authid){
                     const char * key = string_from_authid(authid);
                     int n;
                     if (bfield.is_asked()) {
@@ -223,11 +223,11 @@ public:
                 stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
                 this->auth_trans.send(stream.get_data(), total_length);
             } catch (Error const &) {
-                this->ini->set<cfg::context::authenticated>(false);
-                this->ini->set<cfg::context::rejected>(TR("acl_fail", *(this->ini)));
-                // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+                this->ini.set<cfg::context::authenticated>(false);
+                this->ini.set<cfg::context::rejected>(TR("acl_fail", language(this->ini)));
+                // this->ini.context.rejected.set_from_cstr("Authentifier service failed");
             }
-            this->ini->clear_send_index();
+            this->ini.clear_send_index();
         }
     }
 };

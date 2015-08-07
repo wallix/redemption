@@ -31,6 +31,7 @@
 #include "translation.hpp"
 #include "widget2_rect.hpp"
 #include "theme.hpp"
+#include "defines.hpp"
 
 #include <vector>
 
@@ -57,13 +58,13 @@ public:
 private:
     long prev_time;
 
-    Language lang;
+    Translation::language_t lang;
 
 public:
     FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
                  NotifyApi* notifier, const char * diagnostic_text, int group_id,
                  const char * username, const char * target,
-                 bool showtimer, Font const & font, Theme const & theme, Language lang)
+                 bool showtimer, Font const & font, Theme const & theme, Translation::language_t lang)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
     , bg_color(theme.global.bgcolor)
     // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)

@@ -60,7 +60,7 @@ public:
         , wait_widget(*this, width, height, this->screen, this, caption, message, 0,
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),
-                      vars.get<cfg::translation::language>(),
+                      language(vars),
                       showform, flag)
         , vars(vars)
         , timeout(now, 600)

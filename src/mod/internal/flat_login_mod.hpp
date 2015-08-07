@@ -58,9 +58,9 @@ public:
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 username[0] != 0,
                 0, nullptr, nullptr,
-                TR("login", vars.get<cfg::translation::language>()),
-                TR("password", vars.get<cfg::translation::language>()),
-                this->font(), Translator(vars.get<cfg::translation::language>()), this->theme())
+                TR("login", language(vars)),
+                TR("password", language(vars)),
+                this->font(), Translator(language(vars)), this->theme())
         , vars(vars)
     {
         this->screen.add_widget(&this->login);

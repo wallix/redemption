@@ -103,7 +103,8 @@ public:
                         uint16_t height, Widget2 & parent, NotifyApi* notifier,
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,
-                        const char * filter_protocol, Font const & font, Theme const & theme, Language lang)
+                        const char * filter_protocol,
+                        Font const & font, Theme const & theme, Translation::language_t lang)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
         , less_than_800(this->rect.cx < 800)

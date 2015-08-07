@@ -98,6 +98,14 @@ public:
     }
 };
 
+
+template<class... Cfg>
+Translation::language_t language(variables<Cfg...> const & vars) {
+    return ::language(vars.template get<cfg::translation::language>());
 }
+
+}
+
+using vcfg::language;
 
 #endif

@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
 
     // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    Inifile ini;
+    Font font;
 
 
     WidgetRadioButton radio0(drawable, 10, 300, parent, nullptr,

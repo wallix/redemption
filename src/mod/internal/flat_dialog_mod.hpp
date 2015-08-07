@@ -56,7 +56,7 @@ public:
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , dialog_widget(*this, width, height, this->screen, this, caption, message,
                         0, vars.get<cfg::theme>(), vars.get<cfg::font>(),
-                        TR("OK", vars.get<cfg::translation::language>()),
+                        TR("OK", language(vars)),
                         cancel_text, has_challenge)
         , vars(vars)
         , timeout(now, vars.get<cfg::debug::pass_dialog_box>())

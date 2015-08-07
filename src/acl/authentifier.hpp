@@ -179,7 +179,7 @@ class SessionManager : public auth_api {
 public:
     SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(&ini, _auth_trans, ini.get<cfg::debug::auth>())
+        , acl_serial(ini, _auth_trans, ini.get<cfg::debug::auth>())
         , remote_answer(false)
         //, start_time(start_time)
         //, acl_start_time(acl_start_time)
@@ -220,7 +220,7 @@ public:
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && ((uint32_t)now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            const char * message = TR("session_out_time", this->ini);
+            const char * message = TR("session_out_time", language(this->ini));
             mm.invoke_close_box(message, signal, now);
 
             return true;
@@ -237,13 +237,13 @@ public:
 
         // Keep Alive
         if (this->keepalive.check(now, this->ini)) {
-            mm.invoke_close_box(TR("miss_keepalive", this->ini), signal, now);
+            mm.invoke_close_box(TR("miss_keepalive", language(this->ini)), signal, now);
             return true;
         }
 
         // Inactivity management
         if (this->inactivity.check(now)) {
-            mm.invoke_close_box(TR("close_inactivity", this->ini), signal, now);
+            mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now);
             return true;
         }
 
@@ -372,7 +372,7 @@ public:
         } catch (...) {
             // acl connection lost
             this->ini.set<cfg::context::authenticated>(false);
-            this->ini.set<cfg::context::rejected>(TR("manager_close_cnx", this->ini));
+            this->ini.set<cfg::context::rejected>(TR("manager_close_cnx", language(this->ini)));
         }
     }
 

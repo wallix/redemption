@@ -37,6 +37,7 @@
 #include "exchange.hpp"
 
 #include "authid.hpp"
+#include "translation.hpp"
 
 #include "get_printable_password.hpp"
 
@@ -312,5 +313,13 @@ private:
 
 #include "config_set_value.tcc"
 #include "config_check_record_config.tcc"
+
+inline Translation::language_t language(Inifile const & ini) {
+    return static_cast<Translation::language_t>(ini.get<cfg::translation::language>());
+}
+
+inline Translation::language_t language(Language lang) {
+    return static_cast<Translation::language_t>(lang);
+}
 
 #endif

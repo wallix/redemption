@@ -61,12 +61,12 @@ public:
         , challenge(*this, width, height, this->screen, this, 0,
                     this->ask_device, this->ask_login, this->ask_password,
                     vars.get<cfg::theme>(),
-                    TR("target_info_required", vars.get<cfg::translation::language>()),
-                    TR("device", vars.get<cfg::translation::language>()),
+                    TR("target_info_required", language(vars)),
+                    TR("device", language(vars)),
                     vars.get<cfg::globals::target_device>().c_str(),
-                    TR("login", vars.get<cfg::translation::language>()),
+                    TR("login", language(vars)),
                     vars.get<cfg::globals::target_user>().c_str(),
-                    TR("password", vars.get<cfg::translation::language>()),
+                    TR("password", language(vars)),
                     vars.get<cfg::font>())
         , vars(vars)
     {

@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , info.width
         , info.height
         , font
-        , Translator(Language::en)
+        , Translator(Translation::EN)
         , Theme()
         , info.keylayout
         , 0             /* key_flags */

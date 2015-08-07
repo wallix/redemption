@@ -21,6 +21,8 @@
 #ifndef MK_ENUM_IO
 
 #include <iosfwd>
+#include <cstdio>
+#include <cstdlib>
 #include "underlying_cast.hpp"
 #include "config_c_str_buf.hpp"
 

@@ -57,7 +57,7 @@ private:
         explicit temporary_text(FlatWabCloseModVariables vars)
         {
             if (vars.get<cfg::context::module>() == "selector") {
-                snprintf(text, sizeof(text), "%s", TR("selector", vars.get<cfg::translation::language>()));
+                snprintf(text, sizeof(text), "%s", TR("selector", language(vars)));
             }
             else {
                 TODO("target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman")
@@ -89,7 +89,7 @@ public:
                        showtimer,
                        vars.get<cfg::font>(),
                        vars.get<cfg::theme>(),
-                       vars.get<cfg::translation::language>())
+                       language(vars))
         , timeout(now, vars.get<cfg::globals::close_timeout>())
         , showtimer(showtimer)
     {

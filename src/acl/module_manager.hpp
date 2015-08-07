@@ -147,7 +147,7 @@ public:
              module_cstr == STRMODULE_VNC)) {
             LOG(LOG_INFO, "===========> MODULE_CLOSE");
             if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", this->ini));
+                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", language(this->ini)));
             }
             return MODULE_INTERNAL_CLOSE;
         }
@@ -389,7 +389,7 @@ public:
         int w, h;
         if (!external_deleting) {
             message += "  ";
-            message += TR("disable_osd", this->ini);
+            message += TR("disable_osd", language(this->ini));
         }
         this->mod->text_metrics(this->ini.get<cfg::font>(), message.c_str(), w, h);
         w += padw * 2;
@@ -563,7 +563,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * button = TR("refused", this->ini);
+                const char * button = TR("refused", language(this->ini));
                 const char * caption = "Information";
                 this->mod = new FlatDialogMod(
                             // new DialogMod(
@@ -628,7 +628,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * caption = TR("information", this->ini);
+                const char * caption = TR("information", language(this->ini));
                 bool showform = this->ini.get<cfg::context::showform>();
                 uint flag = this->ini.get<cfg::context::formflag>();
                 this->mod = new FlatWaitMod(
@@ -892,7 +892,7 @@ public:
                                                       , this->front.client_info.width
                                                       , this->front.client_info.height
                                                       , this->ini.get<cfg::font>()
-                                                      , Translator(this->ini.get<cfg::translation::language>())
+                                                      , Translator(language(this->ini))
                                                       , this->ini.get<cfg::theme>()
                                                       , this->front.client_info.keylayout
                                                       , this->front.keymap.key_flags

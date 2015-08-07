@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/widget2/edit.hpp"
 #include "internal/widget2/screen.hpp"
 #include "fake_draw.hpp"
@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     size_t edit_pos = 2;
 
     WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test1", id,
-                     fg_color, bg_color, bg_color, ini.get<cfg::font>(), edit_pos, xtext, ytext);
+                     fg_color, bg_color, bg_color, font, edit_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -81,10 +81,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -116,10 +116,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -151,10 +151,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -186,10 +186,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -221,10 +221,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -256,10 +256,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
@@ -291,10 +291,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
@@ -355,15 +355,15 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
         }
     } notifier;
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
 
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEdit wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED, RED, ini.get<cfg::font>());
+    WidgetEdit wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED, RED, font);
     wedit.focus(Widget2::focus_reason_tabkey);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
@@ -546,26 +546,26 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetEdit wedit1(drawable, 0,0, 50, wcomposite, notifier,
-                      "abababab", 4, YELLOW, BLACK, BLACK, ini.get<cfg::font>());
+                      "abababab", 4, YELLOW, BLACK, BLACK, font);
     WidgetEdit wedit2(drawable, 0,100, 50, wcomposite, notifier,
-                        "ggghdgh", 2, WHITE, RED, RED, ini.get<cfg::font>());
+                        "ggghdgh", 2, WHITE, RED, RED, font);
     WidgetEdit wedit3(drawable, 100,100, 50, wcomposite, notifier,
-                        "lldlslql", 1, BLUE, RED, RED, ini.get<cfg::font>());
+                        "lldlslql", 1, BLUE, RED, RED, font);
     WidgetEdit wedit4(drawable, 300,300, 50, wcomposite, notifier,
-                        "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN, ini.get<cfg::font>());
+                        "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN, font);
     WidgetEdit wedit5(drawable, 700,-10, 50, wcomposite, notifier,
-                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, ini.get<cfg::font>());
+                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, font);
     WidgetEdit wedit6(drawable, -10,550, 50, wcomposite, notifier,
-                        "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN, ini.get<cfg::font>());
+                        "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN, font);
 
     wcomposite.add_widget(&wedit1);
     wcomposite.add_widget(&wedit2);
@@ -605,13 +605,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
-    WidgetEdit wedit(drawable, x, y, cx, parent, &parent, "abcde", 0, BLACK, WHITE, WHITE, ini.get<cfg::font>(),
+    WidgetEdit wedit(drawable, x, y, cx, parent, &parent, "abcde", 0, BLACK, WHITE, WHITE, font,
                      -1u, 1, 1);
     wedit.focus(Widget2::focus_reason_tabkey);
     parent.add_widget(&wedit);

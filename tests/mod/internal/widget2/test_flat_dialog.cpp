@@ -30,7 +30,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/widget2/flat_dialog.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -44,10 +44,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
@@ -77,10 +77,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -114,10 +114,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -151,10 +151,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
 {
     TestDraw drawable(1280, 1024);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 1280, 1024, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 1280, 1024, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -188,10 +188,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
 {
     TestDraw drawable(640, 480);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 640, 480, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 640, 480, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -225,10 +225,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
 {
     TestDraw drawable(350, 500);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 300, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 300, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -262,10 +262,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
@@ -299,10 +299,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
@@ -336,9 +336,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, ini.get<cfg::font>());
+                           0, colors, font);
 
 //    BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.sender == &flat_dialog);
@@ -442,9 +442,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, ini.get<cfg::font>());
+    WidgetScreen parent(drawable, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
@@ -474,7 +474,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
                            "porttitor tortor, sit amet tincidunt odio<br>"
                            "erat ut ligula. Fusce sit amet mauris neque.<br>"
                            "Sed orci augue, luctus in ornare sed,<br>"
-                           "adipiscing et arcu.", 0, colors, ini.get<cfg::font>(),
+                           "adipiscing et arcu.", 0, colors, font,
                            "Ok", "Cancel", CHALLENGE_ECHO);
 
 //    BOOST_CHECK(notifier.sender == 0);

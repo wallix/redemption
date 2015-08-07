@@ -31,7 +31,7 @@
 
 #define LOGNULL
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/copy_paste.hpp"
 #include "internal/widget2/edit.hpp"
 #include "internal/widget2/screen.hpp"
@@ -138,10 +138,10 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     CopyPasteProcess notifier(copy_paste);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(front, info.width, info.height, ini.get<cfg::font>());
-    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, ini.get<cfg::font>());
+    WidgetScreen parent(front, info.width, info.height, font);
+    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
 
     BOOST_REQUIRE(copy_paste.ready(front));
 

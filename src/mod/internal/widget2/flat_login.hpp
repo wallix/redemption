@@ -32,6 +32,7 @@
 #include "translation.hpp"
 #include "ellipse.hpp"
 #include "theme.hpp"
+#include "defines.hpp"
 
 // #include "scroll.hpp"
 
