@@ -4757,7 +4757,7 @@ public:
                 "Unauthorized logon user change detected on %s (%s%s%s) -> (%s%s%s). "
                     "The session will be disconnected.",
                 this->hostname, this->domain,
-                ((this->domain && (*this->domain)) ? "\\" : ""),
+                (*this->domain ? "\\" : ""),
                 this->username, domain,
                 ((domain && (*domain)) ? "\\" : ""),
                 username);
