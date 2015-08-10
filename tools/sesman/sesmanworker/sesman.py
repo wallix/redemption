@@ -760,6 +760,7 @@ class Sesman():
                         os.mkdir(RECORD_PATH)
                     except Exception:
                         Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
+                        self.send_data({u'rejected': TR(u'error_creating_record_path')})
                         _status, _error = False, TR(u'error_creating_record_path %s') % RECORD_PATH
                 if _status:
                     # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
@@ -859,7 +860,8 @@ class Sesman():
             info_message = infos.get('message')
             refresh_page = (got_signal
                             or (status != previous_status)
-                            or (previous_info_message != info_message))
+                            or (previous_info_message != info_message)
+                            or (status == APPROVAL_NONE))
             Logger().info(u"End check_target ... refresh : %s" % refresh_page)
             if refresh_page:
                 self.send_data({u'forcemodule' : True})
@@ -871,7 +873,7 @@ class Sesman():
             r = []
             try:
                 Logger().info(u"Start Select ...")
-                timeout = None if status == APPROVAL_REJECTED else 10
+                timeout = None if status != APPROVAL_PENDING else 10
                 r, w, x = select([self.proxy_conx], [], [], timeout)
             except Exception as e:
                 if DEBUG:
@@ -1120,239 +1122,239 @@ class Sesman():
 
             try_next = False
 
-            for physical_target in self.engine.get_effective_target(selected_target):
-                physical_info = self.engine.get_physical_target_info(physical_target)
-                if not _status:
-                    physical_target = None
-                    break
+            if _status:
+                for physical_target in self.engine.get_effective_target(selected_target):
+                    physical_info = self.engine.get_physical_target_info(physical_target)
+                    if not _status:
+                        physical_target = None
+                        break
 
-                kv[u'disable_tsk_switch_shortcuts'] = u'no'
-                application = self.engine.get_application(selected_target)
-                if application:
-                    app_params = self.engine.get_app_params(selected_target, physical_target)
-                    if not app_params:
-                        continue
-                    if app_params.params is not None:
-                        kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
-                    else:
-                        kv[u'alternate_shell'] = app_params.program
-                    kv[u'shell_working_directory'] = app_params.workingdir
-
-                    kv[u'target_application'] = "%s@%s" % \
-                        (target_login_info.account_login,
-                         target_login_info.target_name)
-                    if app_params.params is not None:
-                        if app_params.params.find(u'${USER}') != -1:
-                            kv[u'target_application_account'] = \
-                                target_login_info.account_login
-                        if app_params.params.find(u'${PASSWORD}') != -1:
-                            kv[u'target_application_password'] = \
-                                self.engine.get_target_password(selected_target)
-
-                    # kv[u'target_application'] = selected_target.service_login
-                    kv[u'disable_tsk_switch_shortcuts'] = u'yes'
-                self.cn = target_login_info.target_name
-
-                if self.target_context:
-                    kv[u'target_host'] = self.target_context.host
-                    kv[u'target_device'] = self.target_context.showname()
-                else:
-                    kv[u'target_host'] = physical_info.device_host
-                    kv[u'target_port'] = physical_info.service_port
-
-                if not self.passthrough_mode:
-                    kv[u'target_login'] = physical_info.account_login
-
-                release_reason = u''
-
-                try:
-                    Logger().info("auth_mode_passthrough=%s" % self.passthrough_mode)
-
-                    if self.passthrough_mode:
-                        kv[u'target_login'] = self.passthrough_target_login
-                        if self.shared.get(u'password') == MAGICASK:
-                            target_password = u''
+                    kv[u'disable_tsk_switch_shortcuts'] = u'no'
+                    application = self.engine.get_application(selected_target)
+                    if application:
+                        app_params = self.engine.get_app_params(selected_target, physical_target)
+                        if not app_params:
+                            continue
+                        if app_params.params is not None:
+                            kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                         else:
-                            target_password = self.shared.get(u'password')
-                        #Logger().info("auth_mode_passthrough target_password=%s" % target_password)
-                        kv[u'password'] = u'password'
-                    else:
-                        target_password = self.engine.get_target_password(physical_target)
+                            kv[u'alternate_shell'] = app_params.program
+                        kv[u'shell_working_directory'] = app_params.workingdir
 
-                    kv[u'target_password'] = target_password
-                    extra_kv, _status, _error = self.complete_target_info(kv)
-                    kv.update(extra_kv)
+                        kv[u'target_application'] = "%s@%s" % \
+                            (target_login_info.account_login,
+                             target_login_info.target_name)
+                        if app_params.params is not None:
+                            if app_params.params.find(u'${USER}') != -1:
+                                kv[u'target_application_account'] = \
+                                    target_login_info.account_login
+                            if app_params.params.find(u'${PASSWORD}') != -1:
+                                kv[u'target_application_password'] = \
+                                    self.engine.get_target_password(selected_target)
+
+                        # kv[u'target_application'] = selected_target.service_login
+                        kv[u'disable_tsk_switch_shortcuts'] = u'yes'
+                    self.cn = target_login_info.target_name
 
                     if self.target_context:
-                        self._physical_target_host = self.target_context.host
-                    elif ('/' in physical_info.device_host and
-                          extra_kv.get(u'target_host') != MAGICASK):
-                        self._physical_target_host = extra_kv.get(u'target_host')
+                        kv[u'target_host'] = self.target_context.host
+                        kv[u'target_device'] = self.target_context.showname()
                     else:
-                        self._physical_target_host = physical_info.device_host
+                        kv[u'target_host'] = physical_info.device_host
+                        kv[u'target_port'] = physical_info.service_port
 
-                    Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
-                    if extra_info.is_critical:
-                        Logger().info("CRITICAL CONNECTION")
-                        import socket
-                        self.engine.NotifyConnectionToCriticalEquipment(
-                            (u'APP' if application else proto_info.protocol),
-                            self.shared.get(u'login'),
-                            socket.getfqdn(self.shared.get(u'ip_client')),
-                            self.shared.get(u'ip_client'),
-                            self.shared.get(u'target_login'),
-#                            self.shared.get(u'target_host'),
-                            self.shared.get(u'target_device'),
-                            self._physical_target_host,
-                            ctime(),
-                            None
-                            )
+                    if not self.passthrough_mode:
+                        kv[u'target_login'] = physical_info.account_login
 
-
-                    self.engine.update_session(physical_target,
-                                               target_host=self._physical_target_host)
-
-                    if not _status:
-                        Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""
-                                       % ( mundane(self.shared.get(u'ip_client'))
-                                         , mundane(self.shared.get(u'login'))
-                                         , _error
-                                         )
-                                     )
-
-                        kv = { u"login": u""
-                             , u'password': u""
-                             , u'target_login': u""
-                             , u'target_password': u""
-                             , u'target_device': u""
-                             , u'target_host': u""
-                             , u'rejected': _error
-                             }
-
-                    try_next = False
+                    release_reason = u''
 
                     try:
-                        ###########
-                        # SEND KV #
-                        ###########
-                        self.send_data(kv)
+                        Logger().info("auth_mode_passthrough=%s" % self.passthrough_mode)
 
-                        Logger().info(u"Added connection to active WAB services")
+                        if self.passthrough_mode:
+                            kv[u'target_login'] = self.passthrough_target_login
+                            if self.shared.get(u'password') == MAGICASK:
+                                target_password = u''
+                            else:
+                                target_password = self.shared.get(u'password')
+                            #Logger().info("auth_mode_passthrough target_password=%s" % target_password)
+                            kv[u'password'] = u'password'
+                        else:
+                            target_password = self.engine.get_target_password(physical_target)
 
-                        # Looping on keepalived socket
-                        while True:
-                            r = []
-                            Logger().info(u"Waiting on proxy")
-                            got_signal = False
-                            try:
-                                r, w, x = select([self.proxy_conx], [], [], 60)
-                            except Exception as e:
-                                if DEBUG:
-                                    Logger().info("exception: '%s'" % e)
-                                    import traceback
-                                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-                                if e[0] != 4:
-                                    raise
-                                Logger().info("Got Signal %s" % e)
-                                got_signal = True
-                            if self.check_session_parameters:
-                                self.update_session_parameters()
-                                self.check_session_parameters = False
-                            if self.proxy_conx in r:
-                                _status, _error = self.receive_data();
+                        kv[u'target_password'] = target_password
+                        extra_kv, _status, _error = self.complete_target_info(kv)
+                        kv.update(extra_kv)
 
-                                if self.shared.get(u'keepalive') == MAGICASK:
-                                    self.send_data({u'keepalive': u'True'})
+                        if self.target_context:
+                            self._physical_target_host = self.target_context.host
+                        elif ('/' in physical_info.device_host and
+                              extra_kv.get(u'target_host') != MAGICASK):
+                            self._physical_target_host = extra_kv.get(u'target_host')
+                        else:
+                            self._physical_target_host = physical_info.device_host
 
-                                if self.shared.get(u'reporting'):
-                                    _reporting      = self.shared.get(u'reporting')
-                                    _reporting_reason, _, _remains = \
-                                        _reporting.partition(':')
-                                    _reporting_target, _, _reporting_message = \
-                                        _remains.partition(':')
-                                    self.shared[u'reporting'] = u''
+                        Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
+                        if extra_info.is_critical:
+                            Logger().info("CRITICAL CONNECTION")
+                            import socket
+                            self.engine.NotifyConnectionToCriticalEquipment(
+                                (u'APP' if application else proto_info.protocol),
+                                self.shared.get(u'login'),
+                                socket.getfqdn(self.shared.get(u'ip_client')),
+                                self.shared.get(u'ip_client'),
+                                self.shared.get(u'target_login'),
+    #                            self.shared.get(u'target_host'),
+                                self.shared.get(u'target_device'),
+                                self._physical_target_host,
+                                ctime(),
+                                None
+                                )
 
-                                    Logger().info(u"Reporting: reason=\"%s\" "
-                                                  "target=\"%s\" message=\"%s\"" %
-                                                  (_reporting_reason,
-                                                   _reporting_target,
-                                                   _reporting_message))
 
-                                    self.process_report(_reporting_reason,
-                                                        _reporting_target,
-                                                        _reporting_message)
+                        self.engine.update_session(physical_target,
+                                                   target_host=self._physical_target_host)
 
-                                    if _reporting_reason == u'CONNECTION_FAILED':
-                                        self.reporting_reason  = _reporting_reason
-                                        self.reporting_target  = _reporting_target
-                                        self.reporting_message = _reporting_message
+                        if not _status:
+                            Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""
+                                           % ( mundane(self.shared.get(u'ip_client'))
+                                             , mundane(self.shared.get(u'login'))
+                                             , _error
+                                             )
+                                         )
 
-                                        try_next = True
-                                        release_reason = u'Connexion failed'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
+                            kv = { u"login": u""
+                                 , u'password': u""
+                                 , u'target_login': u""
+                                 , u'target_password': u""
+                                 , u'target_device': u""
+                                 , u'target_host': u""
+                                 , u'rejected': _error
+                                 }
+
+                        try_next = False
+
+                        try:
+                            ###########
+                            # SEND KV #
+                            ###########
+                            self.send_data(kv)
+
+                            Logger().info(u"Added connection to active WAB services")
+
+                            # Looping on keepalived socket
+                            while True:
+                                r = []
+                                Logger().info(u"Waiting on proxy")
+                                got_signal = False
+                                try:
+                                    r, w, x = select([self.proxy_conx], [], [], 60)
+                                except Exception as e:
+                                    if DEBUG:
+                                        Logger().info("exception: '%s'" % e)
+                                        import traceback
+                                        Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                                    if e[0] != 4:
+                                        raise
+                                    Logger().info("Got Signal %s" % e)
+                                    got_signal = True
+                                if self.check_session_parameters:
+                                    self.update_session_parameters()
+                                    self.check_session_parameters = False
+                                if self.proxy_conx in r:
+                                    _status, _error = self.receive_data();
+
+                                    if self.shared.get(u'keepalive') == MAGICASK:
+                                        self.send_data({u'keepalive': u'True'})
+
+                                    if self.shared.get(u'reporting'):
+                                        _reporting      = self.shared.get(u'reporting')
+                                        _reporting_reason, _, _remains = \
+                                            _reporting.partition(':')
+                                        _reporting_target, _, _reporting_message = \
+                                            _remains.partition(':')
+                                        self.shared[u'reporting'] = u''
+
+                                        Logger().info(u"Reporting: reason=\"%s\" "
+                                                      "target=\"%s\" message=\"%s\"" %
+                                                      (_reporting_reason,
+                                                       _reporting_target,
+                                                       _reporting_message))
+
+                                        self.process_report(_reporting_reason,
+                                                            _reporting_target,
+                                                            _reporting_message)
+
+                                        if _reporting_reason == u'CONNECTION_FAILED':
+                                            self.reporting_reason  = _reporting_reason
+                                            self.reporting_target  = _reporting_target
+                                            self.reporting_message = _reporting_message
+
+                                            try_next = True
+                                            release_reason = u'Connexion failed'
+                                            self.engine.set_session_status(
+                                                result=False, diag=release_reason)
+                                            break
+                                        elif _reporting_reason == u'FINDPATTERN_KILL':
+                                            Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
+                                            release_reason = u'Kill pattern detected'
+                                            self.engine.set_session_status(
+                                                result=False, diag=release_reason)
+                                            break
+                                        elif _reporting_reason == u'SERVER_REDIRECTION':
+                                            (redir_login, _, redir_host) = \
+                                                _reporting_message.rpartition('@')
+                                            update_args = {}
+                                            if redir_host:
+                                                update_args["target_host"] = redir_host
+                                            if redir_login:
+                                                update_args["target_account"] = redir_login
+                                            self.engine.update_session(physical_target,
+                                                                       **update_args)
+
+                                    if self.shared.get(u'auth_channel_target'):
+                                        Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
+
+                                        if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
+                                            account_login = selected_target.account.login
+                                            application_password = self.engine.get_target_password(selected_target)
+
+                                            _message = { 'user' : account_login, 'password' : application_password }
+
+                                            #Logger().info(u"GetWabSessionParameters (response):" % json.dumps(_message))
+                                            self.send_data({u'auth_channel_answer': json.dumps(_message)})
+
+                                            Logger().info(u"Sending of auth channel answer ok (GetWabSessionParameters)")
+
+                                    self.shared[u'auth_channel_target'] = u''
+                                # r can be empty
+                                else: # (if self.proxy_conx in r)
+                                    if not self.internal_target and not got_signal:
+                                        Logger().info(u'Missing Keepalive')
+                                        Logger().error(u'break connection')
+                                        release_reason = u'Break connection'
                                         break
-                                    elif _reporting_reason == u'FINDPATTERN_KILL':
-                                        Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
-                                        release_reason = u'Kill pattern detected'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        break
-                                    elif _reporting_reason == u'SERVER_REDIRECTION':
-                                        (redir_login, _, redir_host) = \
-                                            _reporting_message.rpartition('@')
-                                        update_args = {}
-                                        if redir_host:
-                                            update_args["target_host"] = redir_host
-                                        if redir_login:
-                                            update_args["target_account"] = redir_login
-                                        self.engine.update_session(physical_target,
-                                                                   **update_args)
+                            Logger().debug(u"End Of Keep Alive")
 
-                                if self.shared.get(u'auth_channel_target'):
-                                    Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
+                        except AuthentifierSocketClosed, e:
+                            if DEBUG:
+                                import traceback
+                                Logger().info(u"RDP/VNC connection terminated by client")
+                                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                            release_reason = u"RDP/VNC connection terminated by client"
+                        except Exception, e:
+                            if DEBUG:
+                                import traceback
+                                Logger().info(u"RDP/VNC connection terminated by client")
+                                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                            release_reason = u"RDP/VNC connection terminated by client: Exception"
 
-                                    if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
-                                        account_login = selected_target.account.login
-                                        application_password = self.engine.get_target_password(selected_target)
-
-                                        _message = { 'user' : account_login, 'password' : application_password }
-
-                                        #Logger().info(u"GetWabSessionParameters (response):" % json.dumps(_message))
-                                        self.send_data({u'auth_channel_answer': json.dumps(_message)})
-
-                                        Logger().info(u"Sending of auth channel answer ok (GetWabSessionParameters)")
-
-                                self.shared[u'auth_channel_target'] = u''
-                            # r can be empty
-                            else: # (if self.proxy_conx in r)
-                                if not self.internal_target and not got_signal:
-                                    Logger().info(u'Missing Keepalive')
-                                    Logger().error(u'break connection')
-                                    release_reason = u'Break connection'
-                                    break
-                        Logger().debug(u"End Of Keep Alive")
-
-
-                    except AuthentifierSocketClosed, e:
-                        if DEBUG:
-                            import traceback
-                            Logger().info(u"RDP/VNC connection terminated by client")
-                            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-                        release_reason = u"RDP/VNC connection terminated by client"
-                    except Exception, e:
-                        if DEBUG:
-                            import traceback
-                            Logger().info(u"RDP/VNC connection terminated by client")
-                            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-                        release_reason = u"RDP/VNC connection terminated by client: Exception"
-
-                    if not try_next:
-                        release_reason = u"RDP/VNC connection terminated by client"
-                        break;
-                finally:
-                    if not (physical_target is None):
-                        self.engine.release_target_password(physical_target, release_reason, selected_target)
+                        if not try_next:
+                            release_reason = u"RDP/VNC connection terminated by client"
+                            break;
+                    finally:
+                        if not (physical_target is None):
+                            self.engine.release_target_password(physical_target, release_reason, selected_target)
 
             Logger().info(u"Stop session ...")
 
@@ -1445,6 +1447,7 @@ class Sesman():
         except Exception, e:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
+
     def update_session_parameters(self):
         params = self.engine.read_session_parameters()
         res = params.get("rt_display")

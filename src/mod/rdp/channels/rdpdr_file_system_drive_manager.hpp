@@ -33,6 +33,7 @@
 #include "RDP/channels/rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
+#include "in_file_transport.hpp"
 #include "make_unique.hpp"
 #include "SMB2/MessageSyntax.hpp"
 #include "virtual_channel_data_sender.hpp"
@@ -1577,13 +1578,13 @@ public:
                     rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
                     std::get<0>(*iter),             // DeviceId
                     std::get<1>(*iter).c_str(),     // PreferredDosName
-                   reinterpret_cast<uint8_t const *>(
-                       std::get<1>(*iter).c_str()),
-                   std::get<1>(*iter).length() + 1
+                    reinterpret_cast<uint8_t const *>(
+                        std::get<1>(*iter).c_str()),
+                    std::get<1>(*iter).length() + 1
                 );
 
             if (verbose) {
-                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrivePartially");
+                LOG(LOG_INFO, "FileSystemDriveManager::AnnounceDrive");
                 device_announce_header.log(LOG_INFO);
             }
 
@@ -1602,7 +1603,8 @@ public:
 
 private:
     uint32_t EnableDrive(const char * drive_name, const char * relative_directory_path,
-                         bool read_only, uint32_t verbose) {
+                         bool read_only, uint32_t verbose,
+                         bool ignore_existence_check__for_test_only) {
         uint32_t drive_id = INVALID_MANAGED_DRIVE_ID;
 
         std::string absolute_directory_path = DRIVE_REDIRECTION_PATH "/";
@@ -1610,8 +1612,9 @@ private:
 
         struct stat sb;
 
-        if ((::stat(absolute_directory_path.c_str(), &sb) == 0) &&
-            S_ISDIR(sb.st_mode)) {
+        if (((::stat(absolute_directory_path.c_str(), &sb) == 0) &&
+             S_ISDIR(sb.st_mode)) ||
+            ignore_existence_check__for_test_only) {
             if (verbose) {
                 LOG(LOG_INFO,
                     "FileSystemDriveManager::EnableDrive: "
@@ -1640,7 +1643,8 @@ private:
     }
 
 public:
-    bool EnableDrive(const char * relative_directory_path, uint32_t verbose) {
+    bool EnableDrive(const char * relative_directory_path, uint32_t verbose,
+            bool ignore_existence_check__for_test_only = false) {
         bool read_only = false;
         if (*relative_directory_path == '*') {
             read_only = true;
@@ -1672,8 +1676,9 @@ public:
         return (this->EnableDrive(
                     drive_name,
                     relative_directory_path,
-                    read_only,      // read-only
-                    verbose
+                    read_only,
+                    verbose,
+                    ignore_existence_check__for_test_only
                 ) != INVALID_MANAGED_DRIVE_ID);
     }
 
@@ -1682,8 +1687,9 @@ public:
             this->wab_agent_drive_id = this->EnableDrive(
                     "WABAGT",
                     "wabagt",
-                    true,   // read-only
-                    verbose
+                    true,       // read-only
+                    verbose,
+                    false       // ignore existence check
                 );
         }
 

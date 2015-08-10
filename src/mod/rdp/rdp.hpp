@@ -102,6 +102,8 @@ private:
 protected:
     FileSystemDriveManager file_system_drive_manager;
 
+    FrontAPI& front;
+
     class ToClientSender : public VirtualChannelDataSender
     {
         FrontAPI& front;
@@ -114,8 +116,8 @@ protected:
         : front(front)
         , channel(channel) {}
 
-        virtual void operator()(size_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, size_t chunk_data_length)
+        virtual void operator()(uint32_t total_length, uint32_t flags,
+            const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override
         {
             this->front.send_to_channel(this->channel,
@@ -144,9 +146,9 @@ protected:
         , user_id(user_id)
         , channel_id(channel_id) {}
 
-        virtual void operator()(size_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, size_t chunk_data_length)
-                    override {
+        virtual void operator()(uint32_t total_length, uint32_t flags,
+            const uint8_t* chunk_data, uint32_t chunk_data_length)
+                override {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server(this->transport,
@@ -157,7 +159,9 @@ protected:
     };
 
     RDPChannelManagerMod(const uint16_t front_width,
-        const uint16_t front_height) : mod_api(front_width, front_height) {}
+        const uint16_t front_height, FrontAPI& front)
+    : mod_api(front_width, front_height)
+    , front(front) {}
 
     virtual std::unique_ptr<ToClientSender> create_to_client_sender(
         const char* channel_name) const = 0;
@@ -174,13 +178,14 @@ public:
             this->file_system_to_client_sender =
                 this->create_to_client_sender(channel_names::rdpdr);
             this->file_system_to_server_sender =
-                std::move(this->create_to_server_sender(channel_names::rdpdr));
+                this->create_to_server_sender(channel_names::rdpdr);
 
             this->file_system_virtual_channel =
                 std::make_unique<FileSystemVirtualChannel>(
                     this->file_system_to_client_sender.get(),
                     this->file_system_to_server_sender.get(),
                     this->file_system_drive_manager,
+                    this->front,
                     this->get_file_system_virtual_channel_params());
         }
 
@@ -193,8 +198,6 @@ protected:
 };  // RDPChannelManagerMod
 
 class mod_rdp : public RDPChannelManagerMod {
-    FrontAPI & front;
-
     CHANNELS::ChannelDefArray mod_channel_list;
 
     const AuthorizationChannels authorization_channels;
@@ -366,8 +369,8 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : RDPChannelManagerMod(info.width - (info.width % 4), info.height)
-        , front(front)
+        : RDPChannelManagerMod(info.width - (info.width % 4), info.height,
+                               front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -779,6 +782,8 @@ protected:
         file_system_virtual_channel_params.smart_card_authorized           =
             this->authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_SMARTCARD);
+        file_system_virtual_channel_params.random_number                   =
+            ::getpid();
 
         return file_system_virtual_channel_params;
     }
