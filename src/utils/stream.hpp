@@ -1625,7 +1625,7 @@ class FixedSizeStream : public Stream {
         // not yet initialized
         this->p = this->data = nullptr;
         this->capacity = 0;
-        this->end = 0;
+        this->end = nullptr;
     }
 
     FixedSizeStream(uint8_t * data, size_t len){
