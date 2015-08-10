@@ -1,3 +1,3 @@
 #!/bin/sh
 
-LD_LIBRARY_PATH=/usr/lib/gcc-snapshot/lib exec bjam cxxflags=-fsanitize=address linkflags=-lasan "$@"
+LD_LIBRARY_PATH=/usr/lib/gcc-snapshot/lib exec bjam asan "$@"

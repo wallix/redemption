@@ -41,7 +41,7 @@ template<class Inherit>
 struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     std::ostringstream out_body_parser_;
 
-    //std::map<std::string, std::vector<std::string>> variables_by_sections;
+    std::map<std::string, std::vector<std::string>> variables_by_sections;
     std::map<std::string, std::string> sections_parser;
     std::vector<std::pair<std::string, std::string>> authids;
     std::vector<std::string> variables;
@@ -72,7 +72,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
             this->variables_acl.emplace_back(varname_with_section);
         }
         this->variables.emplace_back(varname_with_section);
-        //this->variables_by_sections[this->section_name].emplace_back(varname);
+        this->variables_by_sections[this->section_name].emplace_back(varname);
 
         this->out_ = &this->out_member_;
 
@@ -313,9 +313,9 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         }
         else {
             out_varconf <<
-                "    namespace " << body.first << " {\n" <<
+                "    struct " << body.first << " {\n" <<
                          body.second <<
-                "    }\n\n"
+                "    };\n\n"
             ;
         }
     }
@@ -336,40 +336,39 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         }
     };
 
-    //std::vector<std::string> section_names;
+    std::vector<std::string> section_names;
 
     out_varconf <<
       "}\n\n"
-      //"namespace cfg_section {\n"
+      "namespace cfg_section {\n"
     ;
-    //for (auto & body : writer.variables_by_sections) {
-    //    if (!body.first.empty()) {
-    //        section_names.emplace_back("cfg_section::" + body.first);
-    //        out_varconf << "struct " << body.first << "\n: ";
-    //        join(body.second, "cfg::" + body.first + "::", "");
-    //        out_varconf << "{ static bool constexpr is_section = true; };\n\n";
-    //    }
-    //}
-    out_varconf << //"}\n\n"
+    for (auto & body : writer.variables_by_sections) {
+       if (!body.first.empty()) {
+           section_names.emplace_back("cfg_section::" + body.first);
+           out_varconf << "struct " << body.first << "\n: ";
+           join(body.second, "cfg::" + body.first + "::", "");
+           out_varconf << "{ static constexpr bool is_section = true; };\n\n";
+       }
+    }
+    out_varconf << "};\n\n"
       "namespace configs {\n"
       "struct VariablesConfiguration\n"
       ": "
     ;
-    join(writer.variables, "cfg::", "");
-    //join(section_names, "", "");
-    //auto it = writer.variables_by_sections.find("");
-    //if (it != writer.variables_by_sections.end()) {
-    //    for (auto & s : it->second) {
-    //        out_varconf << ", cfg::" << s << "\n";
-    //    }
-    //}
+    join(section_names, "", "");
+    auto it = writer.variables_by_sections.find("");
+    if (it != writer.variables_by_sections.end()) {
+       for (auto & s : it->second) {
+           out_varconf << ", cfg::" << s << "\n";
+       }
+    }
     out_varconf <<
       "{\n"
       "    explicit VariablesConfiguration(char const * default_font_name)\n"
       "    : cfg::font{default_font_name}\n"
       "    {}\n"
       "};\n\n"
-      "using VariablesAclPack = Pack<\n"
+      "using VariablesAclPack = Pack<\n  "
     ;
     join(writer.variables_acl, "cfg::", "");
     out_varconf <<

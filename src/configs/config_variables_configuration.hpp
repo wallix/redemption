@@ -19,7 +19,7 @@ namespace cfg {
     type value;
     };
 
-    namespace client {
+    struct client {
         // AUTHID_KEYBOARD_LAYOUT
         struct keyboard_layout {
             static constexpr ::configs::VariableProperties properties() {
@@ -174,9 +174,9 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
-    }
+    };
 
-    namespace context {
+    struct context {
         struct movie {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -631,9 +631,9 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-    }
+    };
 
-    namespace crypto {
+    struct crypto {
         struct key0 {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -648,9 +648,9 @@ namespace cfg {
             using type = ::configs::StaticKeyString<32>;
             type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
         };
-    }
+    };
 
-    namespace debug {
+    struct debug {
         struct x224 {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -820,9 +820,9 @@ namespace cfg {
             using type = ::configs::Range<unsigned, 0, 2, 0>;
             type value{2};
         };
-    }
+    };
 
-    namespace globals {
+    struct globals {
         // AUTHID_CAPTURE_CHUNK
         struct capture_chunk {
             static constexpr ::configs::VariableProperties properties() {
@@ -1182,9 +1182,9 @@ namespace cfg {
             using type = uint32_t;
             type value{2097152};
         };
-    }
+    };
 
-    namespace internal_mod {
+    struct internal_mod {
         struct theme {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -1192,9 +1192,9 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-    }
+    };
 
-    namespace mod_rdp {
+    struct mod_rdp {
         // Specifies the highest compression package support available on the front side:
         //   0: the RDP bulk compression is disabled
         //   1: RDP 4.0 bulk compression
@@ -1365,9 +1365,9 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-    }
+    };
 
-    namespace mod_replay {
+    struct mod_replay {
         // 0 - Wait for Escape, 1 - End session
         struct on_end_of_data {
             static constexpr ::configs::VariableProperties properties() {
@@ -1376,9 +1376,9 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-    }
+    };
 
-    namespace mod_vnc {
+    struct mod_vnc {
         // Enable or disable the clipboard from client (client to server).
         // AUTHID_VNC_CLIPBOARD_UP
         struct clipboard_up {
@@ -1443,9 +1443,9 @@ namespace cfg {
             using type = unsigned;
             type value{0};
         };
-    }
+    };
 
-    namespace translation {
+    struct translation {
         // AUTHID_LANGUAGE
         struct language {
             static constexpr ::configs::VariableProperties properties() {
@@ -1455,9 +1455,9 @@ namespace cfg {
             using type = ::configs::Language;
             type value{static_cast<Language>(0)};
         };
-    }
+    };
 
-    namespace video {
+    struct video {
         struct capture_groupid {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -1611,56 +1611,13 @@ namespace cfg {
             using type = ::configs::Range<unsigned, 0, 2, 0>;
             type value{0};
         };
-    }
+    };
 
 }
 
-namespace configs {
-struct VariablesConfiguration
-: cfg::globals::capture_chunk
-, cfg::globals::auth_user
-, cfg::globals::host
-, cfg::globals::target
-, cfg::globals::target_device
-, cfg::globals::target_user
-, cfg::globals::target_application
-, cfg::globals::target_application_account
-, cfg::globals::target_application_password
-, cfg::globals::bitmap_cache
-, cfg::globals::glyph_cache
-, cfg::globals::port
-, cfg::globals::nomouse
-, cfg::globals::notimestamp
-, cfg::globals::encryptionLevel
-, cfg::globals::authip
-, cfg::globals::authport
-, cfg::globals::session_timeout
-, cfg::globals::keepalive_grace_delay
-, cfg::globals::close_timeout
-, cfg::globals::auth_channel
-, cfg::globals::enable_file_encryption
-, cfg::globals::listen_address
-, cfg::globals::enable_ip_transparent
-, cfg::globals::certificate_password
-, cfg::globals::png_path
-, cfg::globals::wrm_path
-, cfg::globals::alternate_shell
-, cfg::globals::shell_working_directory
-, cfg::globals::movie
-, cfg::globals::movie_path
-, cfg::globals::enable_bitmap_update
-, cfg::globals::enable_close_box
-, cfg::globals::enable_osd
-, cfg::globals::enable_osd_display_remote_target
-, cfg::globals::enable_wab_agent
-, cfg::globals::wab_agent_launch_timeout
-, cfg::globals::wab_agent_on_launch_failure
-, cfg::globals::wab_agent_keepalive_timeout
-, cfg::globals::wab_agent_alternate_shell
-, cfg::globals::persistent_path
-, cfg::globals::disable_proxy_opt
-, cfg::globals::max_chunked_virtual_channel_data_length
-, cfg::client::keyboard_layout
+namespace cfg_section {
+struct client
+: cfg::client::keyboard_layout
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
 , cfg::client::performance_flags_force_present
@@ -1677,77 +1634,10 @@ struct VariablesConfiguration
 , cfg::client::persist_bitmap_cache_on_disk
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
-, cfg::mod_rdp::rdp_compression
-, cfg::mod_rdp::disconnect_on_logon_user_change
-, cfg::mod_rdp::open_session_timeout
-, cfg::mod_rdp::certificate_change_action
-, cfg::mod_rdp::extra_orders
-, cfg::mod_rdp::enable_nla
-, cfg::mod_rdp::enable_kerberos
-, cfg::mod_rdp::persistent_disk_bitmap_cache
-, cfg::mod_rdp::cache_waiting_list
-, cfg::mod_rdp::persist_bitmap_cache_on_disk
-, cfg::mod_rdp::allow_channels
-, cfg::mod_rdp::deny_channels
-, cfg::mod_rdp::fast_path
-, cfg::mod_rdp::server_redirection_support
-, cfg::mod_rdp::redir_info
-, cfg::mod_rdp::bogus_sc_net_size
-, cfg::mod_rdp::client_device_announce_timeout
-, cfg::mod_rdp::proxy_managed_drives
-, cfg::mod_vnc::clipboard_up
-, cfg::mod_vnc::clipboard_down
-, cfg::mod_vnc::encodings
-, cfg::mod_vnc::allow_authentification_retries
-, cfg::mod_vnc::server_clipboard_encoding_type
-, cfg::mod_vnc::bogus_clipboard_infinite_loop
-, cfg::mod_replay::on_end_of_data
-, cfg::video::capture_groupid
-, cfg::video::capture_flags
-, cfg::video::png_interval
-, cfg::video::frame_interval
-, cfg::video::break_interval
-, cfg::video::png_limit
-, cfg::video::replay_path
-, cfg::video::hash_path
-, cfg::video::record_tmp_path
-, cfg::video::record_path
-, cfg::video::inactivity_pause
-, cfg::video::inactivity_timeout
-, cfg::video::disable_keyboard_log
-, cfg::video::disable_clipboard_log
-, cfg::video::rt_display
-, cfg::video::wrm_color_depth_selection_strategy
-, cfg::video::wrm_compression_algorithm
-, cfg::crypto::key0
-, cfg::crypto::key1
-, cfg::debug::x224
-, cfg::debug::mcs
-, cfg::debug::sec
-, cfg::debug::rdp
-, cfg::debug::primary_orders
-, cfg::debug::secondary_orders
-, cfg::debug::bitmap
-, cfg::debug::capture
-, cfg::debug::auth
-, cfg::debug::session
-, cfg::debug::front
-, cfg::debug::mod_rdp
-, cfg::debug::mod_vnc
-, cfg::debug::mod_int
-, cfg::debug::mod_xup
-, cfg::debug::widget
-, cfg::debug::input
-, cfg::debug::password
-, cfg::debug::compression
-, cfg::debug::cache
-, cfg::debug::bitmap_update
-, cfg::debug::performance
-, cfg::debug::pass_dialog_box
-, cfg::debug::config
-, cfg::translation::language
-, cfg::internal_mod::theme
-, cfg::context::movie
+{ static constexpr bool is_section = true; };
+
+struct context
+: cfg::context::movie
 , cfg::context::opt_bitrate
 , cfg::context::opt_framerate
 , cfg::context::opt_qscale
@@ -1795,6 +1685,163 @@ struct VariablesConfiguration
 , cfg::context::module
 , cfg::context::forcemodule
 , cfg::context::proxy_opt
+{ static constexpr bool is_section = true; };
+
+struct crypto
+: cfg::crypto::key0
+, cfg::crypto::key1
+{ static constexpr bool is_section = true; };
+
+struct debug
+: cfg::debug::x224
+, cfg::debug::mcs
+, cfg::debug::sec
+, cfg::debug::rdp
+, cfg::debug::primary_orders
+, cfg::debug::secondary_orders
+, cfg::debug::bitmap
+, cfg::debug::capture
+, cfg::debug::auth
+, cfg::debug::session
+, cfg::debug::front
+, cfg::debug::mod_rdp
+, cfg::debug::mod_vnc
+, cfg::debug::mod_int
+, cfg::debug::mod_xup
+, cfg::debug::widget
+, cfg::debug::input
+, cfg::debug::password
+, cfg::debug::compression
+, cfg::debug::cache
+, cfg::debug::bitmap_update
+, cfg::debug::performance
+, cfg::debug::pass_dialog_box
+, cfg::debug::config
+{ static constexpr bool is_section = true; };
+
+struct globals
+: cfg::globals::capture_chunk
+, cfg::globals::auth_user
+, cfg::globals::host
+, cfg::globals::target
+, cfg::globals::target_device
+, cfg::globals::target_user
+, cfg::globals::target_application
+, cfg::globals::target_application_account
+, cfg::globals::target_application_password
+, cfg::globals::bitmap_cache
+, cfg::globals::glyph_cache
+, cfg::globals::port
+, cfg::globals::nomouse
+, cfg::globals::notimestamp
+, cfg::globals::encryptionLevel
+, cfg::globals::authip
+, cfg::globals::authport
+, cfg::globals::session_timeout
+, cfg::globals::keepalive_grace_delay
+, cfg::globals::close_timeout
+, cfg::globals::auth_channel
+, cfg::globals::enable_file_encryption
+, cfg::globals::listen_address
+, cfg::globals::enable_ip_transparent
+, cfg::globals::certificate_password
+, cfg::globals::png_path
+, cfg::globals::wrm_path
+, cfg::globals::alternate_shell
+, cfg::globals::shell_working_directory
+, cfg::globals::movie
+, cfg::globals::movie_path
+, cfg::globals::enable_bitmap_update
+, cfg::globals::enable_close_box
+, cfg::globals::enable_osd
+, cfg::globals::enable_osd_display_remote_target
+, cfg::globals::enable_wab_agent
+, cfg::globals::wab_agent_launch_timeout
+, cfg::globals::wab_agent_on_launch_failure
+, cfg::globals::wab_agent_keepalive_timeout
+, cfg::globals::wab_agent_alternate_shell
+, cfg::globals::persistent_path
+, cfg::globals::disable_proxy_opt
+, cfg::globals::max_chunked_virtual_channel_data_length
+{ static constexpr bool is_section = true; };
+
+struct internal_mod
+: cfg::internal_mod::theme
+{ static constexpr bool is_section = true; };
+
+struct mod_rdp
+: cfg::mod_rdp::rdp_compression
+, cfg::mod_rdp::disconnect_on_logon_user_change
+, cfg::mod_rdp::open_session_timeout
+, cfg::mod_rdp::certificate_change_action
+, cfg::mod_rdp::extra_orders
+, cfg::mod_rdp::enable_nla
+, cfg::mod_rdp::enable_kerberos
+, cfg::mod_rdp::persistent_disk_bitmap_cache
+, cfg::mod_rdp::cache_waiting_list
+, cfg::mod_rdp::persist_bitmap_cache_on_disk
+, cfg::mod_rdp::allow_channels
+, cfg::mod_rdp::deny_channels
+, cfg::mod_rdp::fast_path
+, cfg::mod_rdp::server_redirection_support
+, cfg::mod_rdp::redir_info
+, cfg::mod_rdp::bogus_sc_net_size
+, cfg::mod_rdp::client_device_announce_timeout
+, cfg::mod_rdp::proxy_managed_drives
+{ static constexpr bool is_section = true; };
+
+struct mod_replay
+: cfg::mod_replay::on_end_of_data
+{ static constexpr bool is_section = true; };
+
+struct mod_vnc
+: cfg::mod_vnc::clipboard_up
+, cfg::mod_vnc::clipboard_down
+, cfg::mod_vnc::encodings
+, cfg::mod_vnc::allow_authentification_retries
+, cfg::mod_vnc::server_clipboard_encoding_type
+, cfg::mod_vnc::bogus_clipboard_infinite_loop
+{ static constexpr bool is_section = true; };
+
+struct translation
+: cfg::translation::language
+{ static constexpr bool is_section = true; };
+
+struct video
+: cfg::video::capture_groupid
+, cfg::video::capture_flags
+, cfg::video::png_interval
+, cfg::video::frame_interval
+, cfg::video::break_interval
+, cfg::video::png_limit
+, cfg::video::replay_path
+, cfg::video::hash_path
+, cfg::video::record_tmp_path
+, cfg::video::record_path
+, cfg::video::inactivity_pause
+, cfg::video::inactivity_timeout
+, cfg::video::disable_keyboard_log
+, cfg::video::disable_clipboard_log
+, cfg::video::rt_display
+, cfg::video::wrm_color_depth_selection_strategy
+, cfg::video::wrm_compression_algorithm
+{ static constexpr bool is_section = true; };
+
+};
+
+namespace configs {
+struct VariablesConfiguration
+: cfg_section::client
+, cfg_section::context
+, cfg_section::crypto
+, cfg_section::debug
+, cfg_section::globals
+, cfg_section::internal_mod
+, cfg_section::mod_rdp
+, cfg_section::mod_replay
+, cfg_section::mod_vnc
+, cfg_section::translation
+, cfg_section::video
 , cfg::theme
 , cfg::font
 {
@@ -1804,7 +1851,7 @@ struct VariablesConfiguration
 };
 
 using VariablesAclPack = Pack<
-cfg::globals::capture_chunk
+  cfg::globals::capture_chunk
 , cfg::globals::auth_user
 , cfg::globals::host
 , cfg::globals::target
