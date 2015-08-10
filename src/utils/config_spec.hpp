@@ -137,10 +137,10 @@ void config_spec_definition(Writer && W)
         W.member(type_<bool>(), "capture_chunk", r);
         W.sep();
         W.member(type_<std::string>(), "auth_user", str_authid{"login"}, rw);
-        W.member(type_<std::string>(), "host", str_authid{"ip_client"}, r);
-        W.member(type_<std::string>(), "target", str_authid{"ip_target"}, r);
+        W.member(type_<std::string>(), "host", str_authid{"ip_client"}, rw);
+        W.member(type_<std::string>(), "target", str_authid{"ip_target"}, rw);
         W.member(type_<std::string>(), "target_device", r);
-        W.member(type_<std::string>(), "target_user", str_authid{"target_login"}, r);
+        W.member(type_<std::string>(), "target_user", str_authid{"target_login"}, rw);
         W.member(type_<std::string>(), "target_application", r);
         W.member(type_<std::string>(), "target_application_account", r);
         W.member(type_<std::string>(), "target_application_password", r);
@@ -159,7 +159,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
         W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()));
-        W.member(A, type_<bool>(), "enable_file_encryption", def_authid{"opt_file_encryption"}, str_authid{"file_encryption"}, r);
+        W.member(A, type_<bool>(), "enable_file_encryption", def_authid{"opt_file_encryption"}, str_authid{"file_encryption"}, rw);
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
         W.member(V, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
@@ -194,7 +194,7 @@ void config_spec_definition(Writer && W)
 
     W.start_section("client");
     {
-        W.member(type_<unsigned>(), "keyboard_layout", set(0), r);
+        W.member(type_<unsigned>(), "keyboard_layout", set(0), w);
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
         W.member(A | X, type_<uint32_>(), "performance_flags_default", set(0));
@@ -450,11 +450,11 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "password", rw);
         W.sep();
-        W.member(type_<std::string>(), "reporting", r);
+        W.member(type_<std::string>(), "reporting", rw);
         W.sep();
         W.member(type_<std::string>(), "auth_channel_answer", r);
         W.member(type_<std::string>(), "auth_channel_result", r);
-        W.member(type_<std::string>(), "auth_channel_target", r);
+        W.member(type_<std::string>(), "auth_channel_target", rw);
         W.sep();
         W.member(type_<std::string>(), "message", r);
         W.member(type_<std::string>(), "pattern_kill", r);
@@ -463,9 +463,9 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "accept_message", todo{"why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button"}, w);
         W.member(type_<std::string>(), "display_message", w);
         W.sep();
-        W.member(type_<std::string>(), "rejected", r);
+        W.member(type_<std::string>(), "rejected", rw);
         W.sep();
-        W.member(type_<bool>(), "authenticated", set(false), r);
+        W.member(type_<bool>(), "authenticated", set(false), rw);
         W.sep();
         W.member(type_<bool>(), "keepalive", set(false), r);
         W.sep();
@@ -477,14 +477,14 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "mode_console", set("allow"), r);
         W.member(type_<signed>(), "timezone", set(-3600), r);
         W.sep();
-        W.member(type_<std::string>(), "real_target_device", r);
+        W.member(type_<std::string>(), "real_target_device", rw);
         W.sep();
         W.member(type_<bool>(), "authentication_challenge", r);
         W.sep();
-        W.member(type_<std::string>(), "ticket", set(""), r);
-        W.member(type_<std::string>(), "comment", set(""), r);
-        W.member(type_<std::string>(), "duration", set(""), r);
-        W.member(type_<std::string>(), "waitinforeturn", set(""), r);
+        W.member(type_<std::string>(), "ticket", set(""), rw);
+        W.member(type_<std::string>(), "comment", set(""), rw);
+        W.member(type_<std::string>(), "duration", set(""), rw);
+        W.member(type_<std::string>(), "waitinforeturn", set(""), rw);
         W.member(type_<bool>(), "showform", set(false), r);
         W.member(type_<unsigned>(), "formflag", set(0), w);
         W.sep();

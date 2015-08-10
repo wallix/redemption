@@ -1661,7 +1661,7 @@ public:
 
             this->keymap.init_layout(this->client_info.keylayout);
             LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
-            this->ini.set<cfg::client::keyboard_layout>(this->client_info.keylayout);
+            this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2) {
                     LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
@@ -3664,9 +3664,9 @@ public:
                 this->up_and_running = 1;
                 cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
-                this->ini.set<cfg::context::opt_width>(this->client_info.width);
-                this->ini.set<cfg::context::opt_height>(this->client_info.height);
-                this->ini.set<cfg::context::opt_bpp>(this->client_info.bpp);
+                this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
+                this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
+                this->ini.set_acl<cfg::context::opt_bpp>(this->client_info.bpp);
 
                 if (!this->auth_info_sent) {
                     char         username_a_domain[512];
@@ -3682,12 +3682,12 @@ public:
                     }
                     this->ini.ask<cfg::context::selector>();
                     LOG(LOG_INFO, "asking for selector");
-                    this->ini.set<cfg::globals::auth_user>(username);
+                    this->ini.set_acl<cfg::globals::auth_user>(username);
                     this->ini.ask<cfg::globals::target_user>();
                     this->ini.ask<cfg::globals::target_device>();
                     this->ini.ask<cfg::context::target_protocol>();
                     if (this->client_info.password[0]) {
-                        this->ini.set<cfg::context::password>(this->client_info.password);
+                        this->ini.set_acl<cfg::context::password>(this->client_info.password);
                     }
 
                     this->auth_info_sent = true;

@@ -106,15 +106,15 @@ private:
     void accepted()
     {
         if (this->ask_device) {
-            this->vars.set<cfg::context::target_host>(this->challenge.device_edit.get_text());
+            this->vars.set_acl<cfg::context::target_host>(this->challenge.device_edit.get_text());
         }
         if (this->ask_login) {
-            this->vars.set<cfg::globals::target_user>(this->challenge.login_edit.get_text());
+            this->vars.set_acl<cfg::globals::target_user>(this->challenge.login_edit.get_text());
         }
         if (this->ask_password) {
-            this->vars.set<cfg::context::target_password>(this->challenge.password_edit.get_text());
+            this->vars.set_acl<cfg::context::target_password>(this->challenge.password_edit.get_text());
         }
-        this->vars.set<cfg::context::display_message>("True");
+        this->vars.set_acl<cfg::context::display_message>("True");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -122,8 +122,8 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->vars.set<cfg::context::target_password>("");
-        this->vars.set<cfg::context::display_message>("False");
+        this->vars.set_acl<cfg::context::target_password>("");
+        this->vars.set_acl<cfg::context::display_message>("False");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

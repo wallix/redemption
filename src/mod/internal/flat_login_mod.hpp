@@ -86,8 +86,8 @@ public:
         switch (event) {
         case NOTIFY_SUBMIT:
             LOG(LOG_INFO, "asking for selector");
-            this->vars.set<cfg::globals::auth_user>(this->login.login_edit.get_text());
-            this->vars.set<cfg::context::password>(this->login.password_edit.get_text());
+            this->vars.set_acl<cfg::globals::auth_user>(this->login.login_edit.get_text());
+            this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
             break;

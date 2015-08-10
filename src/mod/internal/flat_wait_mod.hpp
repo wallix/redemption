@@ -95,17 +95,17 @@ public:
 private:
     void confirm()
     {
-        this->vars.set<cfg::context::waitinforeturn>("confirm");
-        this->vars.set<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
-        this->vars.set<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
-        this->vars.set<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
+        this->vars.set_acl<cfg::context::waitinforeturn>("confirm");
+        this->vars.set_acl<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
+        this->vars.set_acl<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
+        this->vars.set_acl<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void accepted()
     {
-        this->vars.set<cfg::context::waitinforeturn>("backselector");
+        this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -113,7 +113,7 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->vars.set<cfg::context::waitinforeturn>("exit");
+        this->vars.set_acl<cfg::context::waitinforeturn>("exit");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

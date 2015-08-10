@@ -83,6 +83,13 @@ public:
         return this->ini.template set<T>(std::forward<U>(new_value));
     }
 
+    template<class T, class U>
+    void set_acl(U && new_value) {
+//         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
+        static_assert(has_access<T>(accessmode::write), "T isn't writable");
+        return this->ini.template set_acl<T>(std::forward<U>(new_value));
+    }
+
     template<class T>
     void ask() {
 //         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");

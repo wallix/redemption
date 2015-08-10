@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     FakeFront front(info, 0);
 
     Inifile             ini;
-    ini.set<cfg::context::target_host>("somehost");
-    ini.set<cfg::globals::target_user>("someuser");
+    ini.set_acl<cfg::context::target_host>("somehost");
+    ini.set_acl<cfg::globals::target_user>("someuser");
     ini.ask<cfg::context::target_password>();
 
     Keymap2 keymap;
@@ -101,8 +101,8 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     FakeFront front(info, 0);
 
     Inifile ini;
-    ini.set<cfg::context::target_host>("somehost");
-    ini.set<cfg::globals::target_user>("someuser");
+    ini.set_acl<cfg::context::target_host>("somehost");
+    ini.set_acl<cfg::globals::target_user>("someuser");
     ini.ask<cfg::context::target_password>();
 
     Keymap2 keymap;

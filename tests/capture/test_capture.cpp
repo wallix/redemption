@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::png_interval>(10); // one snapshot by second
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-        ini.set<cfg::globals::enable_file_encryption>(false);
+        ini.set_acl<cfg::globals::enable_file_encryption>(false);
 
         Capture capture(
             now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.set<cfg::video::png_interval>(10); // one snapshot by second
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::png);
-        ini.set<cfg::globals::enable_file_encryption>(false);
+        ini.set_acl<cfg::globals::enable_file_encryption>(false);
         Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini);
 
         Pointer pointer1(Pointer::POINTER_EDIT);

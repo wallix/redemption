@@ -223,8 +223,8 @@ public:
                 stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
                 this->auth_trans.send(stream.get_data(), total_length);
             } catch (Error const &) {
-                this->ini.set<cfg::context::authenticated>(false);
-                this->ini.set<cfg::context::rejected>(TR("acl_fail", language(this->ini)));
+                this->ini.set_acl<cfg::context::authenticated>(false);
+                this->ini.set_acl<cfg::context::rejected>(TR("acl_fail", language(this->ini)));
                 // this->ini.context.rejected.set_from_cstr("Authentifier service failed");
             }
             this->ini.clear_send_index();

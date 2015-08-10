@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     // try exception
     CheckTransport transexcpt("something very wrong",21);
     AclSerializer aclexcpt(ini, transexcpt, 0);
-    ini.set<cfg::globals::auth_user>("Newuser");
+    ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
     BOOST_CHECK(!ini.get<cfg::context::authenticated>());
     BOOST_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
     AclSerializer acl(ini, trans, 0);
     ini.set<cfg::context::session_id>("");
-    ini.set<cfg::globals::auth_user>("testuser");
+    ini.set_acl<cfg::globals::auth_user>("testuser");
     BOOST_CHECK(ini.get<cfg::context::session_id>().empty());
     BOOST_CHECK(!ini.is_asked<cfg::globals::auth_user>());
 
@@ -121,7 +121,7 @@ inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t a
     BStream stream(2048);
 
     // Set defaut value to strauthid key
-    ini.set<Cfg>(defaut);
+    ini.set_acl<Cfg>(defaut);
     BOOST_CHECK(!ini.is_asked<Cfg>());
 
     execute_test_initem(stream, acl, authid, "\nASK\n");
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
     LogTransport trans;
     AclSerializer acl(ini, trans, 0);
 
-    ini.set<cfg::context::password>("VerySecurePassword");
+    ini.set_acl<cfg::context::password>("VerySecurePassword");
     BOOST_CHECK(!ini.is_asked<cfg::context::password>());
     stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
     stream.mark_end();

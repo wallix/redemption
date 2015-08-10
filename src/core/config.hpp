@@ -131,7 +131,14 @@ public:
 
     template<class T, class U>
     void set(U && new_value) {
-        //static_assert(bool(T::properties() & properties_t::write), "T isn't writable");
+        static_assert(!bool(T::properties() & properties_t::write), "T is writable, used set_acl<T>().");
+        static_cast<T&>(this->variables).value = std::forward<U>(new_value);
+        this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+    }
+
+    template<class T, class U>
+    void set_acl(U && new_value) {
+        static_assert(bool(T::properties() & properties_t::write), "T isn't writable, used set<T>().");
         static_cast<T&>(this->variables).value = std::forward<U>(new_value);
         this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::write)>());
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());

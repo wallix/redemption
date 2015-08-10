@@ -100,7 +100,7 @@ public:
         this->text_metrics(this->vars.get<cfg::font>(), "Édp", w, h);
         uint16_t line_height = h + 2 * (this->selector.selector_lines.border + this->selector.selector_lines.y_padding_label);
 
-        this->vars.set<cfg::context::selector_lines_per_page>(available_height / line_height);
+        this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
         this->ask_page();
         this->selector.refresh(this->selector.rect);
     }
@@ -111,7 +111,7 @@ public:
 
     void ask_page()
     {
-    	this->vars.set<cfg::context::selector_current_page>((uint32_t)this->current_page);
+        this->vars.set_acl<cfg::context::selector_current_page>((uint32_t)this->current_page);
         this->vars.set<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
         this->vars.set<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
         this->vars.set<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
@@ -159,7 +159,7 @@ public:
                 group_buffer[pos] = 0;
                 snprintf(buffer, sizeof(buffer), "%s:%s:%s",
                          target, group_buffer, this->vars.get<cfg::globals::auth_user>().c_str());
-                this->vars.set<cfg::globals::auth_user>(buffer);
+                this->vars.set_acl<cfg::globals::auth_user>(buffer);
                 this->vars.ask<cfg::globals::target_user>();
                 this->vars.ask<cfg::globals::target_device>();
                 this->vars.ask<cfg::context::target_protocol>();

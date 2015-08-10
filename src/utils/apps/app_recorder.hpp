@@ -314,13 +314,13 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     if (options.count("encryption") > 0) {
              if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
-            ini.set<cfg::globals::enable_file_encryption>(true);
+            ini.set_acl<cfg::globals::enable_file_encryption>(true);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
-            ini.set<cfg::globals::enable_file_encryption>(false);
+            ini.set_acl<cfg::globals::enable_file_encryption>(false);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
-            ini.set<cfg::globals::enable_file_encryption>(infile_is_encrypted);
+            ini.set_acl<cfg::globals::enable_file_encryption>(infile_is_encrypted);
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
@@ -328,7 +328,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.set<cfg::globals::enable_file_encryption>(infile_is_encrypted);
+        ini.set_acl<cfg::globals::enable_file_encryption>(infile_is_encrypted);
     }
 
     if (infile_is_encrypted || ini.get<cfg::globals::enable_file_encryption>()) {

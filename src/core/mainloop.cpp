@@ -211,8 +211,8 @@ void redemption_new_session()
     }
 
 
-    ini.set<cfg::globals::host>(source_ip);
-    ini.set<cfg::globals::target>(real_target_ip);
+    ini.set_acl<cfg::globals::host>(source_ip);
+    ini.set_acl<cfg::globals::target>(real_target_ip);
 
     if (ini.get<cfg::debug::session>()){
         LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

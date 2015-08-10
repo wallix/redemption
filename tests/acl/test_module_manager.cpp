@@ -38,49 +38,49 @@ BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)
     MMIni mm(ini);
     int res;
 
-    ini.set<cfg::context::module>("login");
+    ini.set_acl<cfg::context::module>("login");
 
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_WIDGET2_LOGIN);
 
-    ini.set<cfg::globals::auth_user>("user");
-    ini.set<cfg::context::password>("securepassword");
+    ini.set_acl<cfg::globals::auth_user>("user");
+    ini.set_acl<cfg::context::password>("securepassword");
 
     ini.set<cfg::context::selector>(true);
     ini.set<cfg::globals::target_device>("redjenkins-vbox@127::0>.0.1 internal@display_message replay@autotest");
-    ini.set<cfg::globals::target_user>("rdp internal internal");
-    ini.set<cfg::context::module>("selector");
+    ini.set_acl<cfg::globals::target_user>("rdp internal internal");
+    ini.set_acl<cfg::context::module>("selector");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_WIDGET2_SELECTOR);
 
     ini.ask<cfg::context::password>();
-    ini.set<cfg::context::module>("login");
+    ini.set_acl<cfg::context::module>("login");
     res = mm.next_module();
     BOOST_CHECK_EQUAL(res, (int)MODULE_INTERNAL_WIDGET2_LOGIN);
 
-    ini.set<cfg::globals::auth_user>("user");
-    ini.set<cfg::context::password>("securepassword");
+    ini.set_acl<cfg::globals::auth_user>("user");
+    ini.set_acl<cfg::context::password>("securepassword");
     ini.set<cfg::globals::target_device>("redjenkins-vbox@127::0>.0.1 internal@display_message replay@autotest");
-    ini.set<cfg::globals::target_user>("rdp internal internal");
+    ini.set_acl<cfg::globals::target_user>("rdp internal internal");
     ini.set<cfg::context::selector>(false);
-    ini.set<cfg::context::module>("confirm");
+    ini.set_acl<cfg::context::module>("confirm");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE);
 
-    ini.set<cfg::context::display_message>("message");
-    ini.set<cfg::context::module>("valid");
+    ini.set_acl<cfg::context::display_message>("message");
+    ini.set_acl<cfg::context::module>("valid");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_DIALOG_VALID_MESSAGE);
-    ini.set<cfg::context::accept_message>("message");
+    ini.set_acl<cfg::context::accept_message>("message");
 
-    ini.set<cfg::context::target_password>("securepassword");
-    ini.set<cfg::context::module>("close");
+    ini.set_acl<cfg::context::target_password>("securepassword");
+    ini.set_acl<cfg::context::module>("close");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_CLOSE);
 
-    ini.set<cfg::context::authenticated>(true);
+    ini.set_acl<cfg::context::authenticated>(true);
     ini.set<cfg::context::target_protocol>("RDP");
-    ini.set<cfg::context::module>("RDP");
+    ini.set_acl<cfg::context::module>("RDP");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_RDP);
 }

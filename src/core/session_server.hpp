@@ -166,12 +166,12 @@ public:
                             "New session on %u (pid=%u) from %s to %s",
                             (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                     }
-                    ini.set<cfg::globals::host>(source_ip);
+                    ini.set_acl<cfg::globals::host>(source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
-                    ini.set<cfg::globals::target>(target_ip);
+                    ini.set_acl<cfg::globals::target>(target_ip);
                     if (ini.get<cfg::globals::enable_ip_transparent>()
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
-                        ini.set<cfg::context::real_target_device>(real_target_ip);
+                        ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
                     Session session(sck, ini);
 

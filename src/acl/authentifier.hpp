@@ -230,7 +230,7 @@ public:
         if (!this->ini.get<cfg::context::rejected>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
             LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>().c_str());
-            this->ini.get_ref<cfg::context::rejected>().clear();
+            this->ini.set_acl<cfg::context::rejected>("");
             mm.invoke_close_box(nullptr, signal, now);
             return true;
         }
@@ -293,7 +293,7 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini.set<cfg::context::module>(STRMODULE_TRANSITORY);
+                        this->ini.set_acl<cfg::context::module>(STRMODULE_TRANSITORY);
 
                         signal = BACK_EVENT_NEXT;
 
@@ -315,15 +315,15 @@ public:
                         if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
                             (username[0] != 0)) {
                             LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                            this->ini.set<cfg::globals::target_user>(username);
+                            this->ini.set_acl<cfg::globals::target_user>(username);
                             change_user = username;
                         }
                         if (password[0] != 0) {
                             LOG(LOG_INFO, "SrvRedir: Change target password");
-                            this->ini.set<cfg::context::target_password>(password);
+                            this->ini.set_acl<cfg::context::target_password>(password);
                         }
                         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                        this->ini.set<cfg::context::target_host>(host);
+                        this->ini.set_acl<cfg::context::target_host>(host);
                         char message[768] = {};
                         sprintf(message, "%s@%s", change_user, host);
                         this->report("SERVER_REDIRECTION", message);
@@ -371,8 +371,8 @@ public:
             this->remote_answer = true;
         } catch (...) {
             // acl connection lost
-            this->ini.set<cfg::context::authenticated>(false);
-            this->ini.set<cfg::context::rejected>(TR("manager_close_cnx", language(this->ini)));
+            this->ini.set_acl<cfg::context::authenticated>(false);
+            this->ini.set_acl<cfg::context::rejected>(TR("manager_close_cnx", language(this->ini)));
         }
     }
 
@@ -382,7 +382,7 @@ public:
     }
 
     void set_auth_channel_target(const char * target) override {
-        this->ini.set<cfg::context::auth_channel_target>(target);
+        this->ini.set_acl<cfg::context::auth_channel_target>(target);
     }
 
     //virtual void set_auth_channel_result(const char * result)
@@ -396,7 +396,7 @@ public:
         char report[1024];
         snprintf(report, sizeof(report), "%s:%s:%s", reason,
             this->ini.get<cfg::globals::target_device>().c_str(), message);
-        this->ini.set<cfg::context::reporting>(report);
+        this->ini.set_acl<cfg::context::reporting>(report);
 
         this->ask_acl();
     }

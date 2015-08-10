@@ -23,7 +23,7 @@ namespace cfg {
         // AUTHID_KEYBOARD_LAYOUT
         struct keyboard_layout {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 18; }
             using type = unsigned;
@@ -368,7 +368,7 @@ namespace cfg {
         // AUTHID_REPORTING
         struct reporting {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 50; }
             using type = std::string;
@@ -396,7 +396,7 @@ namespace cfg {
         // AUTHID_AUTH_CHANNEL_TARGET
         struct auth_channel_target {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 53; }
             using type = std::string;
@@ -454,7 +454,7 @@ namespace cfg {
         // AUTHID_REJECTED
         struct rejected {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 59; }
             using type = std::string;
@@ -464,7 +464,7 @@ namespace cfg {
         // AUTHID_AUTHENTICATED
         struct authenticated {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 60; }
             using type = bool;
@@ -532,7 +532,7 @@ namespace cfg {
         // AUTHID_REAL_TARGET_DEVICE
         struct real_target_device {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 67; }
             using type = std::string;
@@ -552,7 +552,7 @@ namespace cfg {
         // AUTHID_TICKET
         struct ticket {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 69; }
             using type = std::string;
@@ -561,7 +561,7 @@ namespace cfg {
         // AUTHID_COMMENT
         struct comment {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 70; }
             using type = std::string;
@@ -570,7 +570,7 @@ namespace cfg {
         // AUTHID_DURATION
         struct duration {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 71; }
             using type = std::string;
@@ -579,7 +579,7 @@ namespace cfg {
         // AUTHID_WAITINFORETURN
         struct waitinforeturn {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 72; }
             using type = std::string;
@@ -845,7 +845,7 @@ namespace cfg {
         // AUTHID_HOST
         struct host {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 2; }
             using type = std::string;
@@ -854,7 +854,7 @@ namespace cfg {
         // AUTHID_TARGET
         struct target {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 3; }
             using type = std::string;
@@ -872,7 +872,7 @@ namespace cfg {
         // AUTHID_TARGET_USER
         struct target_user {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 5; }
             using type = std::string;
@@ -1000,7 +1000,7 @@ namespace cfg {
         // AUTHID_OPT_FILE_ENCRYPTION
         struct enable_file_encryption {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 9; }
             using type = bool;
