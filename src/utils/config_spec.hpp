@@ -457,8 +457,6 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "auth_channel_target", rw);
         W.sep();
         W.member(type_<std::string>(), "message", r);
-        W.member(type_<std::string>(), "pattern_kill", r);
-        W.member(type_<std::string>(), "pattern_notify", r);
         W.sep();
         W.member(type_<std::string>(), "accept_message", todo{"why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button"}, w);
         W.member(type_<std::string>(), "display_message", w);

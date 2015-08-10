@@ -350,7 +350,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
            out_varconf << "{ static constexpr bool is_section = true; };\n\n";
        }
     }
-    out_varconf << "};\n\n"
+    out_varconf << "}\n\n"
       "namespace configs {\n"
       "struct VariablesConfiguration\n"
       ": "

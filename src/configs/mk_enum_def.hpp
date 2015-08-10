@@ -44,7 +44,7 @@
 
 #define MK_PARSER_ENUM_FLAGS(Enum)                                \
     inline void parse(Enum & e, char const * cstr) {              \
-        char * end = 0;                                           \
+        char * end = nullptr;                                     \
         errno = 0;                                                \
         auto n = std::strtoul(cstr, &end, 10);                    \
         if (!errno && end && !*end                                \

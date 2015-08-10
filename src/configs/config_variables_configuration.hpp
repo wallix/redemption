@@ -412,24 +412,6 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_PATTERN_KILL
-        struct pattern_kill {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 55; }
-            using type = std::string;
-            type value{};
-        };
-        // AUTHID_PATTERN_NOTIFY
-        struct pattern_notify {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 56; }
-            using type = std::string;
-            type value{};
-        };
 
         TODO("why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button")
         // AUTHID_ACCEPT_MESSAGE
@@ -437,7 +419,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 57; }
+            static constexpr unsigned index() { return 55; }
             using type = std::string;
             type value{};
         };
@@ -446,7 +428,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 58; }
+            static constexpr unsigned index() { return 56; }
             using type = std::string;
             type value{};
         };
@@ -456,7 +438,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 59; }
+            static constexpr unsigned index() { return 57; }
             using type = std::string;
             type value{};
         };
@@ -466,7 +448,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 60; }
+            static constexpr unsigned index() { return 58; }
             using type = bool;
             type value{0};
         };
@@ -476,7 +458,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 61; }
+            static constexpr unsigned index() { return 59; }
             using type = bool;
             type value{0};
         };
@@ -486,7 +468,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 62; }
+            static constexpr unsigned index() { return 60; }
             using type = std::string;
             type value{};
         };
@@ -496,7 +478,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 63; }
+            static constexpr unsigned index() { return 61; }
             using type = unsigned;
             type value{0};
         };
@@ -505,7 +487,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 64; }
+            static constexpr unsigned index() { return 62; }
             using type = std::string;
             type value{};
         };
@@ -515,7 +497,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 65; }
+            static constexpr unsigned index() { return 63; }
             using type = std::string;
             type value{"allow"};
         };
@@ -524,7 +506,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 66; }
+            static constexpr unsigned index() { return 64; }
             using type = int;
             type value{-3600};
         };
@@ -534,7 +516,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 67; }
+            static constexpr unsigned index() { return 65; }
             using type = std::string;
             type value{};
         };
@@ -544,7 +526,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 68; }
+            static constexpr unsigned index() { return 66; }
             using type = bool;
             type value{};
         };
@@ -554,7 +536,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 69; }
+            static constexpr unsigned index() { return 67; }
             using type = std::string;
             type value{""};
         };
@@ -563,7 +545,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 70; }
+            static constexpr unsigned index() { return 68; }
             using type = std::string;
             type value{""};
         };
@@ -572,7 +554,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 71; }
+            static constexpr unsigned index() { return 69; }
             using type = std::string;
             type value{""};
         };
@@ -581,7 +563,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 72; }
+            static constexpr unsigned index() { return 70; }
             using type = std::string;
             type value{""};
         };
@@ -590,7 +572,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 73; }
+            static constexpr unsigned index() { return 71; }
             using type = bool;
             type value{0};
         };
@@ -599,7 +581,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 74; }
+            static constexpr unsigned index() { return 72; }
             using type = unsigned;
             type value{0};
         };
@@ -609,7 +591,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 75; }
+            static constexpr unsigned index() { return 73; }
             using type = std::string;
             type value{"login"};
         };
@@ -618,7 +600,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 76; }
+            static constexpr unsigned index() { return 74; }
             using type = bool;
             type value{0};
         };
@@ -627,7 +609,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 77; }
+            static constexpr unsigned index() { return 75; }
             using type = std::string;
             type value{};
         };
@@ -1662,8 +1644,6 @@ struct context
 , cfg::context::auth_channel_result
 , cfg::context::auth_channel_target
 , cfg::context::message
-, cfg::context::pattern_kill
-, cfg::context::pattern_notify
 , cfg::context::accept_message
 , cfg::context::display_message
 , cfg::context::rejected
@@ -1827,7 +1807,7 @@ struct video
 , cfg::video::wrm_compression_algorithm
 { static constexpr bool is_section = true; };
 
-};
+}
 
 namespace configs {
 struct VariablesConfiguration
@@ -1906,8 +1886,6 @@ using VariablesAclPack = Pack<
 , cfg::context::auth_channel_result
 , cfg::context::auth_channel_target
 , cfg::context::message
-, cfg::context::pattern_kill
-, cfg::context::pattern_notify
 , cfg::context::accept_message
 , cfg::context::display_message
 , cfg::context::rejected

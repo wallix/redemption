@@ -465,9 +465,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_result>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_target>());
 
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::pattern_kill>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::pattern_notify>());
-
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::message>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::accept_message>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::display_message>());
@@ -2340,15 +2337,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL("result",                         ini.get<cfg::context::auth_channel_result>());
 
     BOOST_CHECK_EQUAL("result",                         ini.get_acl_field(AUTHID_AUTH_CHANNEL_RESULT).c_str());
-
-    // regex
-    ini.get_acl_field(AUTHID_PATTERN_KILL).set(          "Explorer");
-    BOOST_CHECK_EQUAL("Explorer",                       ini.get<cfg::context::pattern_kill>());
-    BOOST_CHECK_EQUAL("Explorer",                       ini.get_acl_field(AUTHID_PATTERN_KILL).c_str());
-
-    ini.get_acl_field(AUTHID_PATTERN_NOTIFY).set(        "Word");
-    BOOST_CHECK_EQUAL("Word",                           ini.get<cfg::context::pattern_notify>());
-    BOOST_CHECK_EQUAL("Word",                           ini.get_acl_field(AUTHID_PATTERN_NOTIFY).c_str());
 
 
     // message
