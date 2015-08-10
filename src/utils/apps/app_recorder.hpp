@@ -332,7 +332,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     if (infile_is_encrypted || ini.get<cfg::globals::enable_file_encryption>()) {
-        if (int status = init_crypto(ini.get<cfg::crypto::key0>(), ini.get<cfg::crypto::key1>())) {
+        if (int status = init_crypto(ini.get_ref<cfg::crypto::key0>(), ini.get_ref<cfg::crypto::key1>())) {
             return status;
         }
         OpenSSL_add_all_digests();
