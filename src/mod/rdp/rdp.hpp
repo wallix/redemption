@@ -86,6 +86,7 @@
 #include "finally.hpp"
 #include "timeout.hpp"
 
+#include "channels/cliprdr_channel.hpp"
 #include "channels/rdpdr_channel.hpp"
 #include "channels/rdpdr_file_system_drive_manager.hpp"
 
@@ -98,6 +99,11 @@ private:
     std::unique_ptr<VirtualChannelDataSender> file_system_to_server_sender;
 
     std::unique_ptr<FileSystemVirtualChannel> file_system_virtual_channel;
+
+    std::unique_ptr<VirtualChannelDataSender> clipboard_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender> clipboard_to_server_sender;
+
+    std::unique_ptr<ClipboardVirtualChannel>  clipboard_virtual_channel;
 
 protected:
     FileSystemDriveManager file_system_drive_manager;
@@ -170,6 +176,26 @@ protected:
         const char* channel_name) = 0;
 
 public:
+    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
+        if (!this->clipboard_virtual_channel) {
+            REDASSERT(!this->clipboard_to_client_sender &&
+                !this->clipboard_to_server_sender);
+
+            this->clipboard_to_client_sender =
+                this->create_to_client_sender(channel_names::cliprdr);
+            this->clipboard_to_server_sender =
+                this->create_to_server_sender(channel_names::cliprdr);
+
+            this->clipboard_virtual_channel =
+                std::make_unique<ClipboardVirtualChannel>(
+                    this->clipboard_to_client_sender.get(),
+                    this->clipboard_to_server_sender.get(),
+                    this->get_clipboard_virtual_channel_params());
+        }
+
+        return *this->clipboard_virtual_channel.get();
+    }
+
     inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
         if (!this->file_system_virtual_channel) {
             REDASSERT(!this->file_system_to_client_sender &&
@@ -193,6 +219,9 @@ public:
     }
 
 protected:
+    virtual const ClipboardVirtualChannel::Params
+        get_clipboard_virtual_channel_params() const = 0;
+
     virtual const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const = 0;
 };  // RDPChannelManagerMod
@@ -205,7 +234,6 @@ class mod_rdp : public RDPChannelManagerMod {
     data_size_type max_clipboard_data = 0;
     data_size_type total_clipboard_data = 0;
     data_size_type max_rdpdr_data = 0;
-    data_size_type total_rdpdr_data = 0;
 
     int  use_rdp5;
 
@@ -754,6 +782,28 @@ protected:
                                                 channel->chanid);
     }
 
+    inline virtual const ClipboardVirtualChannel::Params
+        get_clipboard_virtual_channel_params() const override
+    {
+        ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+
+        clipboard_virtual_channel_params.authentifier                    =
+            this->acl;
+        clipboard_virtual_channel_params.exchanged_data_limit            =
+            this->max_clipboard_data;
+        clipboard_virtual_channel_params.verbose                         =
+            this->verbose;
+
+        clipboard_virtual_channel_params.clipboard_down_authorized       =
+            this->authorization_channels.cliprdr_down_is_authorized();
+        clipboard_virtual_channel_params.clipboard_up_authorized         =
+            this->authorization_channels.cliprdr_up_is_authorized();
+        clipboard_virtual_channel_params.clipboard_file_authorized       =
+            this->authorization_channels.cliprdr_file_is_authorized();
+
+        return clipboard_virtual_channel_params;
+    }
+
     inline virtual const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const override
     {
@@ -765,6 +815,7 @@ protected:
             this->max_rdpdr_data;
         file_system_virtual_channel_params.verbose                         =
             this->verbose;
+
         file_system_virtual_channel_params.client_name                     =
             this->client_name;
         file_system_virtual_channel_params.file_system_read_authorized     =
