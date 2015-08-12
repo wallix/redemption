@@ -6187,7 +6187,9 @@ public:
         bool dont_send_to_front = false;
 
         if (!wab_agent_channel_message.compare("Request=Get startup application")) {
-            LOG(LOG_INFO, "Agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+            }
 
             //LOG(LOG_INFO, "<<<Get startup application>>>");
 
@@ -6196,8 +6198,10 @@ public:
             }
 
             if (this->front.disable_input_event_and_graphics_update(false)) {
-                LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
-                    this->front_width, this->front_height);
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
+                        this->front_width, this->front_height);
+                }
                 this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
             }
 
@@ -6300,6 +6304,12 @@ public:
                 else if (!order.compare("ProcessName")) {
                 }
                 else if (!order.compare("WindowText")) {
+                }
+                else if (!order.compare("WindowText")) {
+                }
+                else if (!order.compare("Button.Clicked")) {
+                }
+                else if (!order.compare("Edit.Changed")) {
                 }
                 else {
                     LOG(LOG_WARNING, "mod_rdp::process_wab_agent_event: Unexpected order.");
