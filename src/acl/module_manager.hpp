@@ -819,9 +819,6 @@ public:
                 mod_rdp_params.remote_program                      = this->front.client_info.remote_program;
                 mod_rdp_params.server_redirection_support          = this->ini.mod_rdp.server_redirection_support;
 
-                mod_rdp_params.chunked_virtual_channel_data_max_length =
-                                                                     this->ini.globals.max_chunked_virtual_channel_data_length;
-
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.mod_rdp.bogus_sc_net_size.get();
 
                 mod_rdp_params.client_device_announce_timeout      = this->ini.mod_rdp.client_device_announce_timeout.get();

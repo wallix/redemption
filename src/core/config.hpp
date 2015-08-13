@@ -577,9 +577,6 @@ public:
 
         bool disable_proxy_opt = false;
 
-        // The maximum length of the chunked virtual channel data.
-        uint32_t max_chunked_virtual_channel_data_length = 2 * 1024 * 1024;
-
         Inifile_globals() = default;
     } globals;
 
@@ -1269,9 +1266,6 @@ public:
             }
             else if (0 == strcmp(key, "disable_proxy_opt")) {
                 this->globals.disable_proxy_opt = bool_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "max_chunked_virtual_channel_data_length")) {
-                this->globals.max_chunked_virtual_channel_data_length = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "enable_wab_agent")) {
                 this->globals.enable_wab_agent.set_from_cstr(value);
