@@ -122,7 +122,8 @@ protected:
     {
         if (this->to_client_sender)
         {
-            if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
+                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
                 const bool send              = true;
                 const bool from_or_to_client = true;
                 this->msgdump_c(send, from_or_to_client, total_length, flags,
@@ -139,7 +140,8 @@ protected:
     {
         if (this->to_server_sender)
         {
-            if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
+            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
+                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
                 const bool send              = true;
                 const bool from_or_to_client = false;
                 this->msgdump_c(send, from_or_to_client, total_length, flags,
@@ -147,6 +149,27 @@ protected:
             }
 
             (*this->to_server_sender)(total_length, flags, chunk_data,
+                chunk_data_length);
+        }
+    }
+
+    inline void send_message(bool to_client, uint32_t total_length,
+        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
+    {
+        VirtualChannelDataSender* sender =
+            (to_client ? this->to_client_sender : this->to_server_sender);
+
+        if (sender)
+        {
+            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
+                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
+                const bool send              = true;
+                const bool from_or_to_client = to_client;
+                this->msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
+            }
+
+            (*sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }
     }

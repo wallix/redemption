@@ -139,23 +139,30 @@ protected:
         int             encryption_level;
         uint16_t        user_id;
         uint16_t        channel_id;
+        bool            show_protocol;
 
     public:
         ToServerSender(Transport& transport,
                        CryptContext& encrypt,
                        int encryption_level,
                        uint16_t user_id,
-                       uint16_t channel_id)
+                       uint16_t channel_id,
+                       bool show_protocol)
         : transport(transport)
         , encrypt(encrypt)
         , encryption_level(encryption_level)
         , user_id(user_id)
-        , channel_id(channel_id) {}
+        , channel_id(channel_id)
+        , show_protocol(show_protocol) {}
 
         virtual void operator()(uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+            if (this->show_protocol) {
+                flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+            }
 
             virtual_channel_pdu.send_to_server(this->transport,
                 this->encrypt, this->encryption_level, this->user_id,
@@ -775,11 +782,14 @@ protected:
             return nullptr;
         }
 
-        return std::make_unique<ToServerSender>(this->nego.trans,
-                                                this->encrypt,
-                                                this->encryptionLevel,
-                                                this->userid,
-                                                channel->chanid);
+        return std::make_unique<ToServerSender>(
+            this->nego.trans,
+            this->encrypt,
+            this->encryptionLevel,
+            this->userid,
+            channel->chanid,
+            (channel->flags &
+             GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL));
     }
 
     inline virtual const ClipboardVirtualChannel::Params
@@ -800,6 +810,10 @@ protected:
             this->authorization_channels.cliprdr_up_is_authorized();
         clipboard_virtual_channel_params.clipboard_file_authorized       =
             this->authorization_channels.cliprdr_file_is_authorized();
+
+        clipboard_virtual_channel_params.dont_log_data_into_syslog       =
+            // disable_clipboard_log_syslog
+            (this->disable_clipboard_log & 1);
 
         return clipboard_virtual_channel_params;
     }
@@ -1059,6 +1073,12 @@ public:
 private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
                                      Stream & chunk, size_t length, uint32_t flags) {
+/*
+        BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+
+        channel.process_client_message(length, flags, chunk.p, chunk.in_remain());
+*/
+
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp client clipboard PDU");
         }
@@ -1066,7 +1086,8 @@ private:
         const uint16_t msgType =
             [](Stream & chunk, uint32_t flags) -> uint16_t {
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                    if (!chunk.in_check_rem(2 /* msgType(2) */)) {
+                    if (!chunk.in_check_rem(2 // msgType(2)
+                                           )) {
                         LOG(LOG_ERR, "mod_rdp::send_to_mod_cliprdr_channel: truncated msgType, need=2 remains=%u",
                             chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
@@ -1090,7 +1111,7 @@ private:
 
             const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
 
-            chunk.in_skip_bytes(2);    /* pad1(2) */
+            chunk.in_skip_bytes(2);    // pad1(2)
 
             for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
                 RDPECLIP::CapabilitySetRecvFactory f(chunk);
@@ -1160,8 +1181,9 @@ private:
                         }
 
                         remaining_data_length -=
-                            4 /* formatId(4) */ +
-                            format_name_length * 2 /* wszFormatName(variable) */;
+                              4                         // formatId(4)
+                            + format_name_length * 2    // wszFormatName(variable)
+                            ;
 
                         if ((sizeof(FILE_LIST_CLIPBOARD_FORMAT_NAME) == length_of_utf8_string) &&
                             !memcmp(FILE_LIST_CLIPBOARD_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
@@ -1186,14 +1208,16 @@ private:
                 return;
             }
 
-            if (!chunk.in_check_rem(10 /* msgFlags(2) + dataLen(4) + requestedFormatId(4) */)) {
+            if (!chunk.in_check_rem(10 // msgFlags(2) + dataLen(4) + requestedFormatId(4)
+                                   )) {
                 LOG(LOG_ERR,
                     "mod_rdp::send_to_mod_cliprdr_channel: CB_FORMAT_DATA_REQUEST truncated msgType, need=10 remains=%u",
                     chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
-            chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+            chunk.in_skip_bytes(6 // msgFlags(2) + dataLen(4)
+                );
 
             this->clipboard_requested_format_id = chunk.in_uint32_le();
 
@@ -1211,16 +1235,19 @@ private:
         }
         else if (((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) ||
                   (msgType == RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE)) &&
-                 (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+                 (!(this->disable_clipboard_log & 1 // disable_clipboard_log_syslog
+                   ))) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                if (!chunk.in_check_rem(6 /* msgFlags(2) + dataLen(4) */)) {
+                if (!chunk.in_check_rem(6 // msgFlags(2) + dataLen(4)
+                                       )) {
                     LOG(LOG_ERR,
                         "mod_rdp::send_to_mod_cliprdr_channel: CB_FORMAT_DATA_RESPONSE truncated msgType, need=6 remains=%u",
                         chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
 
-                chunk.in_skip_bytes(2 /*msgFlags(2)*/);
+                chunk.in_skip_bytes(2 // msgFlags(2)
+                    );
 
                 const uint32_t dataLen = chunk.in_uint32_le();
 
@@ -1270,7 +1297,8 @@ private:
                 const auto saved_stream_p = chunk.p;
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                    chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+                    chunk.in_skip_bytes(6 // msgFlags(2) + dataLen(4)
+                        );
 
                     uint32_t cItems = chunk.in_uint32_le();
 
@@ -6381,6 +6409,26 @@ public:
     void process_cliprdr_event(
             const CHANNELS::ChannelDef & cliprdr_channel, Stream & stream,
             uint32_t length, uint32_t flags, size_t chunk_size) {
+/*
+        BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+
+        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+        channel.process_server_message(length, flags, stream.p, chunk_size,
+            out_asynchronous_task);
+
+        if (out_asynchronous_task) {
+            if (this->asynchronous_tasks.empty()) {
+                this->asynchronous_task_event.~wait_obj();
+                new (&this->asynchronous_task_event) wait_obj();
+
+                out_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
+            }
+
+            this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
+        }
+*/
+
         REDASSERT(stream.in_remain() == chunk_size);
 
         if (this->verbose & 1) {
@@ -6400,11 +6448,12 @@ public:
         if (msgType == RDPECLIP::CB_CLIP_CAPS) {
             const auto saved_stream_p = stream.p;
 
-            stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+            stream.in_skip_bytes(6 // msgFlags(2) + dataLen(4)
+                );
 
             const uint16_t cCapabilitiesSets = stream.in_uint16_le();
 
-            stream.in_skip_bytes(2);    /* pad1(2) */
+            stream.in_skip_bytes(2);    // pad1(2)
 
             for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
                 RDPECLIP::CapabilitySetRecvFactory f(stream);
@@ -6483,8 +6532,9 @@ public:
                         }
 
                         remaining_data_length -=
-                            4 /* formatId(4) */ +
-                            format_name_length * 2 /* wszFormatName(variable) */;
+                              4                         // formatId(4)
+                            + format_name_length * 2    // wszFormatName(variable)
+                            ;
 
                         if ((sizeof(FILE_LIST_CLIPBOARD_FORMAT_NAME) == length_of_utf8_string) &&
                             !memcmp(FILE_LIST_CLIPBOARD_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
@@ -6515,7 +6565,8 @@ public:
                 cencel_pdu = true;
             }
             else {
-                stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+                stream.in_skip_bytes(6 // msgFlags(2) + dataLen(4)
+                    );
 
                 this->clipboard_requested_format_id = stream.in_uint32_le();
 
@@ -6547,9 +6598,11 @@ public:
 
         if (((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) ||
              (msgType == RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE)) &&
-            (!(this->disable_clipboard_log & 1 /* disable_clipboard_log_syslog */))) {
+            (!(this->disable_clipboard_log & 1 // disable_clipboard_log_syslog
+              ))) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                stream.in_skip_bytes(2 /* msgFlags(2) */);
+                stream.in_skip_bytes(2 // msgFlags(2)
+                    );
 
                 const uint32_t dataLen = stream.in_uint32_le();
 
@@ -6599,7 +6652,8 @@ public:
                 const auto saved_stream_p = stream.p;
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                    stream.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+                    stream.in_skip_bytes(6 // msgFlags(2) + dataLen(4)
+                        );
 
                     uint32_t cItems = stream.in_uint32_le();
 
