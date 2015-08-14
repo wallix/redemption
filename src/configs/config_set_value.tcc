@@ -248,9 +248,6 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "disable_proxy_opt")) {
             ::configs::parse(static_cast<cfg::globals::disable_proxy_opt&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "max_chunked_virtual_channel_data_length")) {
-            ::configs::parse(static_cast<cfg::globals::max_chunked_virtual_channel_data_length&>(this->variables).value, value);
-        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

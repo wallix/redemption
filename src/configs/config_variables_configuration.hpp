@@ -138,7 +138,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = bool;
-            type value{0};
+            type value{1};
         };
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
         struct cache_waiting_list {
@@ -146,7 +146,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = bool;
-            type value{1};
+            type value{0};
         };
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
         struct persist_bitmap_cache_on_disk {
@@ -1156,14 +1156,6 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        //  The maximum length of the chunked virtual channel data.
-        struct max_chunked_virtual_channel_data_length {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::none;
-            }
-            using type = uint32_t;
-            type value{2097152};
-        };
     };
 
     struct internal_mod {
@@ -1214,7 +1206,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::Range<unsigned, 0, 1, 0>;
-            type value{0};
+            type value{1};
         };
 
         // Enables support of additional drawing orders:
@@ -1255,7 +1247,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = bool;
-            type value{0};
+            type value{1};
         };
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
         struct cache_waiting_list {
@@ -1465,7 +1457,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = unsigned;
-            type value{3000};
+            type value{10};
         };
         // Frame interval is in 1/100 s.
         struct frame_interval {
@@ -1580,7 +1572,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::Range<unsigned, 0, 1, 0>;
-            type value{0};
+            type value{1};
         };
         // The compression method of native video capture:
         //   0: No compression
@@ -1591,7 +1583,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::Range<unsigned, 0, 2, 0>;
-            type value{0};
+            type value{1};
         };
     };
 
@@ -1742,7 +1734,6 @@ struct globals
 , cfg::globals::wab_agent_alternate_shell
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
-, cfg::globals::max_chunked_virtual_channel_data_length
 { static constexpr bool is_section = true; };
 
 struct internal_mod

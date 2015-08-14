@@ -2052,15 +2052,15 @@ public:
 
         this->wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
 
-        managed_drive_collection_type::iterator iter;
-        for (iter = this->managed_drives.begin();
-             iter != this->managed_drives.end(); ++iter) {
-            if (old_wab_agent_drive_id == std::get<0>(*iter)) {
-                this->managed_drives.erase(iter);
-
-                break;
-            }
-        }
+        //managed_drive_collection_type::iterator iter;
+        //for (iter = this->managed_drives.begin();
+        //     iter != this->managed_drives.end(); ++iter) {
+        //    if (old_wab_agent_drive_id == std::get<0>(*iter)) {
+        //        this->managed_drives.erase(iter);
+        //
+        //        break;
+        //    }
+        //}
 
         BStream out_stream(1024);
 

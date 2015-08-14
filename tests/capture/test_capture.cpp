@@ -39,6 +39,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     const int groupid = 0;
     {
         // Timestamps are applied only when flushing

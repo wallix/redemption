@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -84,8 +84,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -152,8 +152,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
@@ -162,9 +162,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -380,8 +380,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
@@ -390,9 +390,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
@@ -527,7 +527,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -544,8 +544,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -612,8 +612,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
@@ -622,9 +622,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
@@ -765,7 +765,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -779,8 +779,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -981,7 +981,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -994,8 +994,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,        ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -1168,7 +1168,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -1253,9 +1253,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
@@ -1358,7 +1358,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -1443,9 +1443,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
@@ -1523,7 +1523,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -1540,8 +1540,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -1597,8 +1597,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
@@ -1607,7 +1607,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -1687,7 +1687,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -1704,8 +1704,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -1761,8 +1761,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
@@ -1771,7 +1771,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -1838,7 +1838,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -1855,8 +1855,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -1912,8 +1912,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
@@ -1922,9 +1922,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
@@ -1947,7 +1947,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     BOOST_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
-
 
     std::stringstream ifs2(
                            "# Here we put global values\n"
@@ -1989,7 +1988,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::video::png_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
 
@@ -2006,8 +2005,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
 
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::video::wrm_compression_algorithm>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -2063,8 +2062,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
@@ -2073,9 +2072,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::certificate_change_action>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::certificate_change_action>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());

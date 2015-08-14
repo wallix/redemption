@@ -61,6 +61,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     Inifile ini;
     ini.set<cfg::debug::primary_orders>(0);
     ini.set<cfg::debug::secondary_orders>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);

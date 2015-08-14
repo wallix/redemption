@@ -188,7 +188,6 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StaticPath<1024>>(), "persistent_path", set(MACRO(PERSISTENT_PATH)));
         W.sep();
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
-        W.member(A, type_<uint32_>(), "max_chunked_virtual_channel_data_length", desc{" The maximum length of the chunked virtual channel data."}, set(2 * 1024 * 1024));
     }
     W.stop_section();
 
@@ -218,8 +217,8 @@ void config_spec_definition(Writer && W)
             "  24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)"
         }, set(ColorDepth::depth24));
         W.sep();
-        W.member(A, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the front side."}, set(false));
-        W.member(A, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
+        W.member(A, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the front side."}, set(true));
+        W.member(A, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(false));
         W.member(A, type_<bool>(), "persist_bitmap_cache_on_disk", desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
         W.sep();
         W.member(A, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
@@ -239,7 +238,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<Range<unsigned, 0, 1>>(), "certificate_change_action", desc{
             "0: Cancel connection and reports error.\n"
             "1: Replace existing certificate and continue connection."
-        }, set(0));
+        }, set(1));
         W.sep();
         W.member(A, type_<std::string>(), "extra_orders", desc{
             "Enables support of additional drawing orders:\n"
@@ -256,7 +255,7 @@ void config_spec_definition(Writer && W)
             "(if enable_nla is disabled, this value is ignored)."
         }, set(false));
         W.sep();
-        W.member(A, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the mod side."}, set(false));
+        W.member(A, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the mod side."}, set(true));
         W.member(A, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
         W.member(A, type_<bool>(), "persist_bitmap_cache_on_disk", desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
         W.sep();
@@ -318,7 +317,7 @@ void config_spec_definition(Writer && W)
             "  2: WRM"
         }, set(CaptureFlags::png | CaptureFlags::wrm));
         W.sep();
-        W.member(A, type_<unsigned>(), "png_interval", desc{"Frame interval is in 1/10 s."}, set(3000));
+        W.member(A, type_<unsigned>(), "png_interval", desc{"Frame interval is in 1/10 s."}, set(10));
         W.member(A, type_<unsigned>(), "frame_interval", desc{"Frame interval is in 1/100 s."}, set(40));
         W.member(A, type_<unsigned>(), "break_interval", desc{"Time between 2 wrm movies (in seconds)."}, set(600));
         W.member(A, type_<unsigned>(), "png_limit", desc{"Number of png captures to keep."}, set(5));
@@ -348,13 +347,13 @@ void config_spec_definition(Writer && W)
             "The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:\n"
             "  0: 24-bit\n"
             "  1: 16-bit"
-        }, set(0));
+        }, set(1));
         W.member(A, type_<Range<unsigned, 0, 2>>{}, "wrm_compression_algorithm", desc{
             "The compression method of native video capture:\n"
             "  0: No compression\n"
             "  1: GZip\n"
             "  2: Snappy"
-        }, set(0));
+        }, set(1));
     }
     W.stop_section();
 
