@@ -54,6 +54,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     Inifile ini;
+    ini.video.wrm_compression_algorithm = 0;
     RDPDrawable drawable(800, 600, 24);
     NativeCapture consumer(now, trans, 800, 600, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
 
