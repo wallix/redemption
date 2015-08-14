@@ -432,6 +432,13 @@ public:
                 total_length, flags, chunk_data_length);
         }
 
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+            const bool send              = false;
+            const bool from_or_to_client = true;
+            this->msgdump_c(send, from_or_to_client, total_length, flags,
+                chunk_data, chunk_data_length);
+        }
+
         ReadOnlyStream chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -802,6 +809,13 @@ public:
                 "ClipboardVirtualChannel::process_server_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
+        }
+
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+            const bool send              = false;
+            const bool from_or_to_client = false;
+            this->msgdump_c(send, from_or_to_client, total_length, flags,
+                chunk_data, chunk_data_length);
         }
 
         ReadOnlyStream chunk(chunk_data, chunk_data_length);

@@ -600,8 +600,8 @@ public:
 
         uint32_t max_color_depth = 24; // 8-bit, 15-bit, 16-bit, 24-bit, 32-bit (not yet supported) Default (24-bit)
 
-        bool persistent_disk_bitmap_cache   = false;
-        bool cache_waiting_list             = true;
+        bool persistent_disk_bitmap_cache   = true;
+        bool cache_waiting_list             = false;
         bool persist_bitmap_cache_on_disk   = false;
 
         bool bitmap_compression = true;
@@ -618,7 +618,7 @@ public:
 
         uint32_t open_session_timeout        = 0;
 
-        unsigned certificate_change_action   = 0; // 0 - Interrupt connection, 1 - Replace certificate then continue
+        unsigned certificate_change_action   = 1; // 0 - Interrupt connection, 1 - Replace certificate then continue
 
         // +----+-----------------+
         // | Id | Meaning         |
@@ -638,7 +638,7 @@ public:
         bool enable_nla      = true;
         bool enable_kerberos = false;
 
-        bool persistent_disk_bitmap_cache   = false;
+        bool persistent_disk_bitmap_cache   = true;
         bool cache_waiting_list             = true;
         bool persist_bitmap_cache_on_disk   = false;
 
@@ -704,7 +704,7 @@ public:
                                                   //     0   - all of characters need be recognized
                                                   //     100 - accept all results
 
-        unsigned png_interval       = 3000; // time between 2 png captures (in 1/10 seconds)
+        unsigned png_interval       = 10; // time between 2 png captures (in 1/10 seconds)
         unsigned capture_groupid    = 33;
         unsigned frame_interval     = 40;   // time between 2 frame captures (in 1/100 seconds) (default: 2,5 frame per second)
         unsigned break_interval     = 600;  // time between 2 wrm movies (in seconds)
@@ -756,9 +756,9 @@ public:
         UnsignedField rt_display;   // AUTHID_RT_DISPLAY
                                     // 0: disable, 1: enable
 
-        unsigned wrm_color_depth_selection_strategy = 0; // 0: 24-bit, 1: 16-bit
+        unsigned wrm_color_depth_selection_strategy = 1; // 0: 24-bit, 1: 16-bit
 
-        unsigned wrm_compression_algorithm = 0; // 0: uncompressed, 1: GZip, 2: Snappy
+        unsigned wrm_compression_algorithm = 1; // 0: uncompressed, 1: GZip, 2: Snappy
 
         Inifile_video() = default;
     } video;

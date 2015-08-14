@@ -178,6 +178,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
+            virtual_channel_stream.reset();
+
             uint8_t * chunk_data = virtual_channel_stream.end;
 
             t.recv(&virtual_channel_stream.end, chunk_data_length);
@@ -298,6 +300,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
             //    ", flags=" <<  flags <<
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
+
+            virtual_channel_stream.reset();
 
             uint8_t * chunk_data = virtual_channel_stream.end;
 
@@ -420,6 +424,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
+            virtual_channel_stream.reset();
+
             uint8_t * chunk_data = virtual_channel_stream.end;
 
             t.recv(&virtual_channel_stream.end, chunk_data_length);
@@ -541,6 +547,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
+            virtual_channel_stream.reset();
+
             uint8_t * chunk_data = virtual_channel_stream.end;
 
             t.recv(&virtual_channel_stream.end, chunk_data_length);
@@ -661,6 +669,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
             //    ", flags=" <<  flags <<
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
+
+            virtual_channel_stream.reset();
 
             uint8_t * chunk_data = virtual_channel_stream.end;
 

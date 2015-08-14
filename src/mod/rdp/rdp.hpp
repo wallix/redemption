@@ -990,6 +990,15 @@ private:
 
         pdu.emit(out_s, args...);
 
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+            const bool send              = true;
+            const bool from_or_to_client = true;
+            BaseVirtualChannel::msgdump_c(send, from_or_to_client,
+                out_s.size(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                out_s.get_data(), out_s.size());
+        }
+
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , out_s.size()
@@ -1078,6 +1087,13 @@ private:
 
         channel.process_client_message(length, flags, chunk.p, chunk.in_remain());
 */
+
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+            const bool send              = false;
+            const bool from_or_to_client = true;
+            BaseVirtualChannel::msgdump_c(send, from_or_to_client, length, flags,
+                chunk.p, chunk.in_remain());
+        }
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp client clipboard PDU");
@@ -1356,6 +1372,13 @@ private:
             chunk.p -= 2;   // msgType(2)
 
             this->update_total_clipboard_data(msgType, length);
+        }
+
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+            const bool send              = true;
+            const bool from_or_to_client = false;
+            BaseVirtualChannel::msgdump_c(send, from_or_to_client, length, flags,
+                chunk.p, chunk.in_remain());
         }
 
         this->send_to_channel(*cliprdr_channel, chunk, length, flags);
@@ -6428,6 +6451,12 @@ public:
             this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
         }
 */
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+            const bool send              = false;
+            const bool from_or_to_client = false;
+            BaseVirtualChannel::msgdump_c(send, from_or_to_client, length, flags,
+                stream.p, chunk_size);
+        }
 
         REDASSERT(stream.in_remain() == chunk_size);
 
@@ -6487,6 +6516,14 @@ public:
                 BStream out_s(256);
                 const bool response_ok = true;
                 RDPECLIP::FormatListResponsePDU(response_ok).emit(out_s);
+
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+                    const bool send              = true;
+                    const bool from_or_to_client = false;
+                    BaseVirtualChannel::msgdump_c(send, from_or_to_client, out_s.size(),
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                        out_s.get_data(), out_s.size());
+                }
 
                 this->send_to_channel(
                     cliprdr_channel, out_s, out_s.size(),
@@ -6557,6 +6594,14 @@ public:
                 BStream out_s(256);
                 RDPECLIP::FormatDataResponsePDU(false).emit(out_s, static_cast<uint8_t *>(nullptr), 0);
 
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+                    const bool send              = true;
+                    const bool from_or_to_client = false;
+                    BaseVirtualChannel::msgdump_c(send, from_or_to_client, out_s.size(),
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                        out_s.get_data(), out_s.size());
+                }
+
                 this->send_to_channel(
                     cliprdr_channel, out_s, out_s.size(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
@@ -6582,6 +6627,14 @@ public:
                 BStream out_s(256);
                 const bool response_ok = false;
                 RDPECLIP::FileContentsResponse(response_ok).emit(out_s);
+
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+                    const bool send              = true;
+                    const bool from_or_to_client = false;
+                    BaseVirtualChannel::msgdump_c(send, from_or_to_client, out_s.size(),
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                        out_s.get_data(), out_s.size());
+                }
 
                 this->send_to_channel(
                     cliprdr_channel, out_s, out_s.size(),
@@ -6711,6 +6764,13 @@ public:
             stream.p -= 2;  // msgType(2)
 
             this->update_total_clipboard_data(msgType, length);
+        }
+
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
+            const bool send              = true;
+            const bool from_or_to_client = true;
+            BaseVirtualChannel::msgdump_c(send, from_or_to_client, length, flags,
+                stream.p, chunk_size);
         }
 
         this->send_to_front_channel(

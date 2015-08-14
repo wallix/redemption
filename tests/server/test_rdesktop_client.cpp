@@ -81,6 +81,13 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     Inifile ini;
     ini.debug.front = 511;
+    ini.client.persistent_disk_bitmap_cache = false;
+    ini.client.cache_waiting_list = true;
+    ini.mod_rdp.certificate_change_action = 0;
+    ini.mod_rdp.persistent_disk_bitmap_cache = false;
+    ini.video.png_interval = 3000;
+    ini.video.wrm_color_depth_selection_strategy = 0;
+    ini.video.wrm_compression_algorithm = 0;
 
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
