@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -114,8 +114,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -182,8 +182,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
-    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
@@ -192,9 +192,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -446,8 +446,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
-    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
@@ -456,9 +456,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
@@ -612,7 +612,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -655,8 +655,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -723,8 +723,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
-    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
@@ -733,9 +733,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
@@ -886,7 +886,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -926,8 +926,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1135,7 +1135,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(6000,                             ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -1173,8 +1173,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1353,7 +1353,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -1464,9 +1464,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
@@ -1575,7 +1575,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(3000,                             ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -1686,9 +1686,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
@@ -1772,7 +1772,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -1815,8 +1815,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1872,8 +1872,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
-    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
@@ -1882,7 +1882,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
@@ -1968,7 +1968,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(7000,                             ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -2011,8 +2011,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -2068,8 +2068,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
-    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(true,                             ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
@@ -2078,7 +2078,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.cache_waiting_list);
@@ -2151,7 +2151,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -2194,8 +2194,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -2251,8 +2251,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
-    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
@@ -2261,9 +2261,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
@@ -2334,7 +2334,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.wab_agent_keepalive_timeout.get());
 
     BOOST_CHECK_EQUAL(3,                                ini.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(10,                               ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(0,                                ini.video.flv_break_interval);
@@ -2377,8 +2377,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_clipboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_clipboard_log_syslog);
 
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_color_depth_selection_strategy);
-    BOOST_CHECK_EQUAL(0,                                ini.video.wrm_compression_algorithm);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_color_depth_selection_strategy);
+    BOOST_CHECK_EQUAL(1,                                ini.video.wrm_compression_algorithm);
 
     BOOST_CHECK_EQUAL(900,                              ini.globals.session_timeout);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -2434,8 +2434,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(4,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
-    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.client.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.fast_path);
@@ -2444,9 +2444,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.mod_rdp.extra_orders.c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                            ini.mod_rdp.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.cache_waiting_list);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persist_bitmap_cache_on_disk);
     BOOST_CHECK_EQUAL("*",                              ini.mod_rdp.allow_channels);
