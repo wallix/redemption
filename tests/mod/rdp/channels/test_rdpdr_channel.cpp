@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestRDPDRChannel
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "channel_list.hpp"
 #include "client_info.hpp"
@@ -94,6 +94,7 @@ public:
     }
 };
 
+/*
 BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 {
     ClientInfo info;
@@ -105,7 +106,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
     info.height                = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info, /*verbose = */511);
+    FakeFront front(info,
+                    511 //verbose =
+                   );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
@@ -228,7 +231,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     info.height                = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info, /*verbose = */511);
+    FakeFront front(info,
+                    511 //verbose =
+                   );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
@@ -351,7 +356,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     info.height                = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info, /*verbose = */511);
+    FakeFront front(info,
+                    511 //verbose =
+                   );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
@@ -474,7 +481,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     info.height                = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info, /*verbose = */511);
+    FakeFront front(info,
+                    511 //verbose =
+                   );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
@@ -597,7 +606,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     info.height                = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info, /*verbose = */511);
+    FakeFront front(info,
+                    511 //verbose =
+                   );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
 
@@ -629,6 +640,132 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_device_remove.hpp"
+    TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
+        verbose);
+
+    TestToClientSender to_client_sender(t);
+    TestToServerSender to_server_sender(t);
+
+    FileSystemVirtualChannel file_system_virtual_channel(
+        &to_client_sender, &to_server_sender, file_system_drive_manager,
+        front, file_system_virtual_channel_params);
+
+    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
+                                           sizeof(virtual_channel_data));
+
+    virtual_channel_stream.reset();
+
+    bool end_of_file_reached = false;
+
+    try
+    {
+        while (true) {
+            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+                   16    // dest(4) + total_length(4) + flags(4) +
+                         //     chunk_length(4)
+                );
+
+            const uint32_t dest              =
+                virtual_channel_stream.in_uint32_le();
+            const uint32_t total_length      =
+                virtual_channel_stream.in_uint32_le();
+            const uint32_t flags             =
+                virtual_channel_stream.in_uint32_le();
+            const uint32_t chunk_data_length =
+                virtual_channel_stream.in_uint32_le();
+
+            //std::cout << "dest=" << dest <<
+            //    ", total_length=" << total_length <<
+            //    ", flags=" <<  flags <<
+            //    ", chunk_data_length=" << chunk_data_length <<
+            //    std::endl;
+
+            virtual_channel_stream.reset();
+
+            uint8_t * chunk_data = virtual_channel_stream.end;
+
+            t.recv(&virtual_channel_stream.end, chunk_data_length);
+
+            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
+
+            if (!dest)  // Client
+            {
+                file_system_virtual_channel.process_client_message(
+                    total_length, flags, chunk_data, chunk_data_length);
+            }
+            else
+            {
+                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+                file_system_virtual_channel.process_server_message(
+                    total_length, flags, chunk_data, chunk_data_length,
+                    out_asynchronous_task);
+
+                BOOST_CHECK(false == (bool)out_asynchronous_task);
+            }
+
+            virtual_channel_stream.reset();
+        }
+    }
+    catch (Error & e) {
+        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+            LOG(LOG_ERR, "Exception=%d", e.id);
+            throw;
+        }
+
+        end_of_file_reached = true;
+    }
+
+    BOOST_CHECK(end_of_file_reached || t.get_status());
+}
+*/
+
+BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
+{
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info,
+                    511 //verbose =
+                   );
+
+    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+
+    file_system_virtual_channel_params.authentifier                 = nullptr;
+    file_system_virtual_channel_params.exchanged_data_limit         = 0;
+    file_system_virtual_channel_params.verbose                      = verbose;
+
+    file_system_virtual_channel_params.client_name                  = "rzh";
+
+    file_system_virtual_channel_params.file_system_read_authorized  = true;
+    file_system_virtual_channel_params.file_system_write_authorized = true;
+
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
+    file_system_virtual_channel_params.print_authorized             = true;
+    file_system_virtual_channel_params.serial_port_authorized       = true;
+    file_system_virtual_channel_params.smart_card_authorized        = true;
+
+    file_system_virtual_channel_params.random_number                = 5245;
+
+    FileSystemDriveManager file_system_drive_manager;
+
+    bool ignore_existence_check__for_test_only = true;
+
+    file_system_drive_manager.EnableDrive("export", verbose,
+        ignore_existence_check__for_test_only);
+    file_system_drive_manager.EnableDrive("share", verbose,
+        ignore_existence_check__for_test_only);
+
+    #include "fixtures/test_rdpdr_channel_fragmented_header.hpp"
     TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
         verbose);
 
