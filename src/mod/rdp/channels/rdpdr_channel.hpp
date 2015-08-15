@@ -141,12 +141,12 @@ private:
 
         bool waiting_for_server_device_announce_response = false;
 
-        uint8_t         remaining_device_announce_request_data[
+        uint8_t         remaining_device_announce_request_header_data[
                 20  // DeviceType(4) + DeviceId(4) +
                     //     PreferredDosName(8) +
                     //     DeviceDataLength(4)
             ];
-        WriteOnlyStream remaining_device_announce_request_stream;
+        WriteOnlyStream remaining_device_announce_request_header_stream;
 
         const uint32_t verbose;
 
@@ -169,11 +169,11 @@ private:
         , param_print_authorized(print_authorized)
         , param_serial_port_authorized(serial_port_authorized)
         , param_smart_card_authorized(smart_card_authorized)
-        , remaining_device_announce_request_stream(
-              this->remaining_device_announce_request_data,
-              sizeof(this->remaining_device_announce_request_data))
+        , remaining_device_announce_request_header_stream(
+              this->remaining_device_announce_request_header_data,
+              sizeof(this->remaining_device_announce_request_header_data))
         , verbose(verbose) {
-            this->remaining_device_announce_request_stream.reset();
+            this->remaining_device_announce_request_header_stream.reset();
         }
 
     private:
@@ -333,7 +333,7 @@ private:
                         DeviceCount);
                 }
 
-                this->remaining_device_announce_request_stream.reset();
+                this->remaining_device_announce_request_header_stream.reset();
             }
 
             while (chunk.in_remain())
@@ -344,50 +344,56 @@ private:
                             20  // DeviceType(4) + DeviceId(4) +
                                 //     PreferredDosName(8) + DeviceDataLength(4)
                        ) {
-                        this->remaining_device_announce_request_stream.reset();
+                        REDASSERT(
+                            !this->remaining_device_announce_request_header_stream.get_offset());
 
-                        this->remaining_device_announce_request_stream.out_copy_bytes(chunk.p,
-                            chunk.in_remain());
-                        this->remaining_device_announce_request_stream.mark_end();
+                        this->remaining_device_announce_request_header_stream.out_copy_bytes(
+                            chunk.p, chunk.in_remain());
+                        this->remaining_device_announce_request_header_stream.mark_end();
 
                         break;
                     }
 
-                    Stream * header_stream = &chunk;
+                    Stream* device_announce_request_header_stream = &chunk;
 
-                    if (this->remaining_device_announce_request_stream.get_offset()) {
+                    if (this->remaining_device_announce_request_header_stream.get_offset()) {
                         const uint32_t needed_data_length =
                               20    // DeviceType(4) + DeviceId(4) +
                                     //     PreferredDosName(8) +
                                     //     DeviceDataLength(4)
-                            - this->remaining_device_announce_request_stream.size();
+                            - this->remaining_device_announce_request_header_stream.size();
 
-                        this->remaining_device_announce_request_stream.out_copy_bytes(chunk.p,
-                            needed_data_length);
+                        this->remaining_device_announce_request_header_stream.out_copy_bytes(
+                            chunk.p, needed_data_length);
 
                         chunk.in_skip_bytes(needed_data_length);
-                        this->remaining_device_announce_request_stream.mark_end();
+                        this->remaining_device_announce_request_header_stream.mark_end();
 
-                        header_stream = &this->remaining_device_announce_request_stream;
+                        device_announce_request_header_stream =
+                            &this->remaining_device_announce_request_header_stream;
                     }
 
-                    const uint32_t DeviceType = header_stream->in_uint32_le();
-                    const uint32_t DeviceId   = header_stream->in_uint32_le();
+                    const uint32_t DeviceType =
+                        device_announce_request_header_stream->in_uint32_le();
+                    const uint32_t DeviceId   =
+                        device_announce_request_header_stream->in_uint32_le();
 
                     uint8_t PreferredDosName[
                               8 // PreferredDosName(8)
                             + 1
                         ];
 
-                    header_stream->in_copy_bytes(PreferredDosName,
-                                        8   // PreferredDosName(8)
-                                       );
+                    device_announce_request_header_stream->in_copy_bytes(
+                            PreferredDosName,
+                            8   // PreferredDosName(8)
+                        );
                     PreferredDosName[8  // PreferredDosName(8)
                         ] = '\0';
 
-                    const uint32_t DeviceDataLength = header_stream->in_uint32_le();
+                    const uint32_t DeviceDataLength =
+                        device_announce_request_header_stream->in_uint32_le();
 
-                    this->remaining_device_announce_request_stream.reset();
+                    this->remaining_device_announce_request_header_stream.reset();
 
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
