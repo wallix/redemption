@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestRDPDRChannel
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "channel_list.hpp"
 #include "client_info.hpp"
@@ -94,7 +94,6 @@ public:
     }
 };
 
-/*
 BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 {
     ClientInfo info;
@@ -107,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
-                    511 //verbose =
+                    511 // verbose
                    );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
@@ -232,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
-                    511 //verbose =
+                    511 // verbose
                    );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
@@ -357,7 +356,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
-                    511 //verbose =
+                    511 // verbose
                    );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
@@ -482,7 +481,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
-                    511 //verbose =
+                    511 // verbose
                    );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
@@ -607,7 +606,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
-                    511 //verbose =
+                    511 // verbose
                    );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
@@ -719,7 +718,6 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
     BOOST_CHECK(end_of_file_reached || t.get_status());
 }
-*/
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 {
@@ -733,7 +731,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
-                    511 //verbose =
+                    511 // verbose
                    );
 
     int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
@@ -776,7 +774,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
         &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
                                            sizeof(virtual_channel_data));
 
@@ -810,6 +808,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
             virtual_channel_stream.reset();
 
             uint8_t * chunk_data = virtual_channel_stream.end;
+
+            memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
 
             t.recv(&virtual_channel_stream.end, chunk_data_length);
 

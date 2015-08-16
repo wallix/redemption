@@ -351,6 +351,14 @@ private:
                             chunk.p, chunk.in_remain());
                         this->remaining_device_announce_request_header_stream.mark_end();
 
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
+                                    "%u byte(s) of request header are saved.",
+                                uint32_t(
+                                    this->remaining_device_announce_request_header_stream.size()));
+                        }
+
                         break;
                     }
 
@@ -368,6 +376,7 @@ private:
 
                         chunk.in_skip_bytes(needed_data_length);
                         this->remaining_device_announce_request_header_stream.mark_end();
+                        this->remaining_device_announce_request_header_stream.rewind();
 
                         device_announce_request_header_stream =
                             &this->remaining_device_announce_request_header_stream;
