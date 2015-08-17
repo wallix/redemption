@@ -242,62 +242,6 @@ char const * c_str(CStrBuf<Range<T, Min, Max, Default>>& s, Range<T, Min, Max, D
 
 #include "mk_enum_def.hpp"
 
-template<class E, class = void>
-struct enum_option
-{ using type = std::false_type; };
-
-#ifdef IN_IDE_PARSER
-# define ENUM_OPTION(Enum, X, ...)
-#else
-# define ENUM_OPTION(Enum, X, ...)                       \
-    template<class T> struct enum_option<Enum, T> {      \
-        static constexpr const std::initializer_list<    \
-            std::decay<decltype(X)>::type                \
-        > value {X, __VA_ARGS__};                        \
-        using type = std::true_type;                     \
-    };                                                   \
-    template<class T> constexpr const                    \
-    std::initializer_list<std::decay<decltype(X)>::type> \
-    enum_option<Enum, T>::value
-#endif
-
-#define MK_ENUM_FIELD(Enum, ...)                               \
-    MK_ENUM_IO(Enum)                                           \
-    ENUM_OPTION(Enum, __VA_ARGS__);                            \
-    inline void parse(Enum & e, char const * cstr)  {          \
-        unsigned i = 0;                                        \
-        auto l = {__VA_ARGS__};                                \
-        for (auto s : l) {                                     \
-            if (0 == strcmp(cstr, s)) {                        \
-                e = static_cast<Enum>(i);                      \
-                break;                                         \
-            }                                                  \
-            ++i;                                               \
-        }                                                      \
-    }                                                          \
-    inline int copy_val(Enum e, char * buff, std::size_t n)  { \
-        char const * cstr;                                     \
-        auto l{__VA_ARGS__};                                   \
-        if (underlying_cast(e) >= underlying_cast(Enum::NB)) { \
-            cstr = *l.begin();                                 \
-        }                                                      \
-        cstr = *(l.begin() + underlying_cast(e));              \
-        return snprintf(buff, n, "%s", cstr);                  \
-    }                                                          \
-    inline char const * c_str(CStrBuf<Enum>& , Enum e) {       \
-        auto l{__VA_ARGS__};                                   \
-        if (underlying_cast(e) >= underlying_cast(Enum::NB)) { \
-            return *l.begin();                                 \
-        }                                                      \
-        return *(l.begin() + underlying_cast(e));              \
-    }
-
-
-
-template<class E>
-E enum_to_option(E e) {
-    return e;
-}
 
 enum class Level : unsigned { low, medium, high, NB };
 ENUM_OPTION(Level, "low", "medium", "high");
@@ -397,8 +341,6 @@ inline char const * c_str(CStrBuf<ColorDepth>&, ColorDepth x) {
 
 
 #include "mk_enum_undef.hpp"
-#undef MK_ENUM_FIELD
-#undef ENUM_OPTION
 
 }
 

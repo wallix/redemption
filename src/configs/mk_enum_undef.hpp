@@ -23,5 +23,7 @@
 #undef MK_ENUM_IO
 #undef MK_ENUM_FLAG_FN
 #undef MK_PARSE_UNSIGNED_TO_ENUM_FLAGS
+#undef ENUM_OPTION
+#undef MK_ENUM_FIELD
 
 #endif
