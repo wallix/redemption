@@ -31,7 +31,7 @@
 #include "recording_progress.hpp"
 #include "iter.hpp"
 #include "crypto_in_meta_sequence_transport.hpp"
-#include "program_options.hpp"
+#include "program_options/program_options.hpp"
 
 #include <iostream>
 #include <vector>

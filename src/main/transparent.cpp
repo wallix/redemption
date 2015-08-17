@@ -32,7 +32,7 @@
 #include "out_file_transport.hpp"
 #include "socket_transport_utility.hpp"
 #include "internal/transparent_replay_mod.hpp"
-#include "program_options.hpp"
+#include "program_options/program_options.hpp"
 
 void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
 

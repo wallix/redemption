@@ -17,8 +17,9 @@
 #include "config.hpp"
 //#include "crypto_impl.hpp"
 #include "ccryptofile.h"
-#include "program_options.hpp"
 #include "fdbuf.hpp"
+
+#include "program_options/program_options.hpp"
 
 #ifndef HASH_LEN
 #define HASH_LEN 64
@@ -47,7 +48,7 @@ static inline bool check_file_hash_sha256( const char * file_path
     size_t  number_of_bytes_read = 0;
     int len_read = 0;
     do {
-        len_read = file.read(buf, 
+        len_read = file.read(buf,
                 ((len_to_check == 0) ||(number_of_bytes_read + sizeof(buf) < len_to_check))
                 ? sizeof(buf)
                 : len_to_check - number_of_bytes_read);
@@ -69,7 +70,7 @@ static inline bool check_file_hash_sha256( const char * file_path
     if (len_to_check == 0){
         len_to_check = number_of_bytes_read;
     }
-    
+
     return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 
@@ -245,10 +246,10 @@ bool check_file_hash(const char * file_path, const Stream & crypto_key, const ch
     StaticStream full_hash(hash + (HASH_LEN / 2), HASH_LEN / 2);
 
     if (quick_check){
-        return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key, 
+        return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key,
                                       _4kb_hash.get_data(), _4kb_hash.size(), 4096);
     }
-    return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key, 
+    return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key,
                                       full_hash.get_data(), full_hash.size(), 0);
 }
 
@@ -378,15 +379,15 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char ha
                 while ((/*line_len = */read_line(cf_struct, crypto_read, opaque_stream, opaque_data, line, sizeof(line))) > 0) {
                     int extract_file_info_result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
-                    if ((extract_file_info_result > 0) 
-                        && (((quick_check) 
+                    if ((extract_file_info_result > 0)
+                        && (((quick_check)
                             && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
                                         , ss_hmac_key
                                         , _4kb_hash.get_data()
                                         , _4kb_hash.size()
                                         , 4096) == false)
                            )
-                          || ((!quick_check) 
+                          || ((!quick_check)
                             && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
                                         , ss_hmac_key
                                         , full_hash.get_data()

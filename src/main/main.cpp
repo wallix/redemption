@@ -29,7 +29,7 @@
 
 #include "apps/app_proxy.hpp"
 
-#include "program_options.hpp"
+#include "program_options/program_options.hpp"
 
 namespace po = program_options;
 

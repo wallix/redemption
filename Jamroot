@@ -164,6 +164,8 @@ constant CXXFLAGS-GCC-4.9 :
     <cxxflags>-Wfloat-conversion
     <cxxflags>-Wopenmp-simd
     <cxxflags>-Wparentheses
+
+    <variant>release:<cxxflags>-flto
 ;
 
 
@@ -225,6 +227,7 @@ project redemption
     <include>src/regex
     <include>src/headers
     <include>src/main
+    <include>modules/includes
     <include>/usr/include
     <include>tests
 
@@ -331,6 +334,8 @@ obj d3des : src/utils/d3des.cpp ;
 obj cryptofile : src/transport/cryptofile.cpp ;
 obj ccryptofile : src/transport/ccryptofile.cpp ;
 
+obj program_options : modules/program_options/src/program_options.cpp ;
+
 #
 # Redemption
 #
@@ -338,7 +343,7 @@ obj ccryptofile : src/transport/ccryptofile.cpp ;
 exe rdpproxy
     :
         src/main/main.cpp
-        src/utils/program_options.cpp
+        program_options
         src/utils/bitmap_data_allocator.cpp
 
         cryptofile
@@ -367,7 +372,7 @@ exe rdpproxy
 exe redrec
     :
         src/main/recorder.cpp
-        src/utils/program_options.cpp
+        program_options
         src/utils/bitmap_data_allocator.cpp
 
         cryptofile
@@ -389,7 +394,7 @@ exe redrec
 exe reddec
     :
         src/main/decrypter.cpp
-        src/utils/program_options.cpp
+        program_options
 
         cryptofile
 
@@ -406,7 +411,7 @@ exe reddec
 exe redver
     :
         src/main/verifier.cpp
-        src/utils/program_options.cpp
+        program_options
 
         cryptofile
         ccryptofile
@@ -424,7 +429,7 @@ exe redver
 exe rdptproxy
     :
         src/main/transparent.cpp
-        src/utils/program_options.cpp
+        program_options
         src/utils/bitmap_data_allocator.cpp
 
         cryptofile
@@ -449,7 +454,7 @@ exe rdptproxy
 exe rdptanalyzer
     :
         src/main/tanalyzer.cpp
-        src/utils/program_options.cpp
+        program_options
 
         cryptofile
 
@@ -812,7 +817,5 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_
 
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-
-unit-test test_program_options : tests/utils/test_program_options.cpp src/utils/program_options.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z : ;
