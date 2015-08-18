@@ -345,6 +345,7 @@ obj bitmap : src/utils/bitmap_data_allocator.cpp ;
 exe rdpproxy
     :
         src/main/main.cpp
+        src/main/write_python_spec.cpp
         param_options
         bitmap
 

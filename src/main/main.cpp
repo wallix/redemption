@@ -27,9 +27,10 @@
 #include "parameters_holder.hpp"
 
 #include "apps/app_proxy.hpp"
-#include "apps/app_write_python_spec.hpp"
 
 #include "program_options.hpp"
+
+#include "write_python_spec.hpp"
 
 namespace po = program_options;
 
@@ -46,14 +47,7 @@ int main(int argc, char** argv)
       , [argv](po::variables_map const & options, bool * quit) {
             if (options.count("print-config-spec")) {
                 *quit = true;
-                char const * av[] = {argv[0], "/dev/stdout", nullptr};
-                int ac = static_cast<int>(sizeof(av) / sizeof(av[0]) - 1);
-                struct Writer : python_spec_writer::PythonSpecWriterBase<Writer> {
-                    Writer() {
-                        config_spec::config_spec_definition(*this);
-                    };
-                };
-                if (int err = app_write_python_spec<Writer>(ac, av)) {
+                if (int err = write_python_spec(argv[0], "/dev/stdout")) {
                     return err;
                 }
             }
