@@ -44,7 +44,13 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     std::vector<std::string> sections_ordered;
 
     void do_stop_section() {
-        this->sections_ordered.emplace_back(std::move(this->section_name));
+        if (std::find(
+            this->sections_ordered.begin(),
+            this->sections_ordered.end(),
+            this->section_name
+        ) == this->sections_ordered.end()) {
+            this->sections_ordered.emplace_back(std::move(this->section_name));
+        }
     }
 
     template<class Pack>
