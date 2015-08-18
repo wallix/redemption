@@ -295,7 +295,6 @@ MK_PARSER_ENUM_FLAGS(ClipboardLogFlags)
 
 
 enum class ColorDepth : unsigned {
-    unspecified,
     depth8 = 8,
     depth15 = 15,
     depth16 = 16,
@@ -304,6 +303,10 @@ enum class ColorDepth : unsigned {
 };
 ENUM_OPTION(ColorDepth, 8, 15, 16, 24);
 MK_ENUM_IO(ColorDepth)
+
+inline ColorDepth enum_to_option(ColorDepth e) {
+    return e;
+}
 
 inline ColorDepth color_depth_from_cstr(char const * value) {
     switch (ulong_from_cstr(value)) {

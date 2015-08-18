@@ -46,7 +46,7 @@ int main(int argc, char** argv)
       , [argv](po::variables_map const & options, bool * quit) {
             if (options.count("print-config-spec")) {
                 *quit = true;
-                char const * av[] = {argv[0], "/dev/stdin", nullptr};
+                char const * av[] = {argv[0], "/dev/stdout", nullptr};
                 int ac = static_cast<int>(sizeof(av) / sizeof(av[0]) - 1);
                 struct Writer : python_spec_writer::PythonSpecWriterBase<Writer> {
                     Writer() {

@@ -120,8 +120,9 @@ namespace configs
     { using type = std::false_type; };
 
     template<class E>
-    E enum_to_option(E e) {
-        return e;
+    decltype(*enum_option<E>::value.begin())
+    enum_to_option(E e) {
+        return *(enum_option<E>::value.begin() + underlying_cast(e));
     }
 }
 
