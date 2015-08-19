@@ -54,7 +54,7 @@ public:
               , ini.get<cfg::debug::capture>())
     , nb_file(0)
     , time_to_wait(0)
-    , disable_keyboard_log_wrm(bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm))
+    , disable_keyboard_log_wrm(bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm))
     , externally_generated_breakpoint(externally_generated_breakpoint)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s

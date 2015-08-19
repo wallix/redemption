@@ -255,19 +255,19 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     ini.set<cfg::video::png_interval>(png_interval);
     ini.set<cfg::video::frame_interval>(wrm_frame_interval);
     ini.set<cfg::video::break_interval>(wrm_break_interval);
-    ini.get_ref<cfg::video::capture_flags>() &= ~(CaptureFlags::wrm | CaptureFlags::png);
+    ini.get_ref<cfg::video::capture_flags>() &= ~(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
     if (options.count("wrm") > 0) {
-        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::wrm;
+        ini.get_ref<cfg::video::capture_flags>() |= configs::CaptureFlags::wrm;
     }
     if (options.count("png") > 0) {
-        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::png;
+        ini.get_ref<cfg::video::capture_flags>() |= configs::CaptureFlags::png;
     }
 
     if (int status = parse_format(ini, options, output_filename)) {
         return status;
     }
 
-    ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
+    ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png));
 
 /*
     {
@@ -470,7 +470,7 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
         try {
             result = (
                 force_record
-             || bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
+             || bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png)
              || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
              || show_file_metadata
              || show_statistics

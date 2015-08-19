@@ -31,9 +31,7 @@ enum class CaptureFlags : unsigned {
     wrm = 1 << 1,
     FULL = ((1 << 2) - 1)
 };
-MK_ENUM_FLAG_FN(CaptureFlags)
-
-MK_PARSER_ENUM_FLAGS(CaptureFlags)
+MK_PARSER_ENUM_FLAGS(::configs::CaptureFlags)
 
 }
 

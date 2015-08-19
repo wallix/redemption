@@ -34,9 +34,7 @@ enum class KeyboardLogFlags : unsigned {
     wrm = 1 << 0,
     FULL = ((1 << 1) - 1)
 };
-MK_ENUM_FLAG_FN(KeyboardLogFlags)
-
-MK_PARSER_ENUM_FLAGS(KeyboardLogFlags)
+MK_PARSER_ENUM_FLAGS(::configs::KeyboardLogFlags)
 
 }
 

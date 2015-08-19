@@ -801,7 +801,7 @@ public:
                 mod_rdp_params.wab_agent_on_launch_failure         = this->ini.get<cfg::globals::wab_agent_on_launch_failure>();
                 mod_rdp_params.wab_agent_keepalive_timeout         = this->ini.get<cfg::globals::wab_agent_keepalive_timeout>();
                 mod_rdp_params.wab_agent_alternate_shell           = this->ini.get<cfg::globals::wab_agent_alternate_shell>();
-                mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
+                mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::globals::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::globals::alternate_shell>().c_str();
@@ -877,30 +877,34 @@ public:
 
                 this->ini.set<cfg::context::auth_error_message>("failed authentification on remote VNC host");
 
-                this->mod = new ModWithSocket<mod_vnc>( *this
-                                                      , name
-                                                      , client_sck
-                                                      , this->ini.get<cfg::debug::mod_vnc>()
-                                                      , nullptr
-                                                      , sock_mod_barrier()
-                                                      , this->ini.get<cfg::globals::target_user>().c_str()
-                                                      , this->ini.get<cfg::context::target_password>().c_str()
-                                                      , this->front
-                                                      , this->front.client_info.width
-                                                      , this->front.client_info.height
-                                                      , this->ini.get<cfg::font>()
-                                                      , Translator(language(this->ini))
-                                                      , this->ini.get<cfg::theme>()
-                                                      , this->front.client_info.keylayout
-                                                      , this->front.keymap.key_flags
-                                                      , this->ini.get<cfg::mod_vnc::clipboard_up>()
-                                                      , this->ini.get<cfg::mod_vnc::clipboard_down>()
-                                                      , this->ini.get<cfg::mod_vnc::encodings>().c_str()
-                                                      , this->ini.get<cfg::mod_vnc::allow_authentification_retries>()
-                                                      , true
-                                                      , this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
-                                                      , this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>()
-                                                      , this->ini.get<cfg::debug::mod_vnc>()
+                this->mod = new ModWithSocket<mod_vnc>(
+                    *this
+                  , name
+                  , client_sck
+                  , this->ini.get<cfg::debug::mod_vnc>()
+                  , nullptr
+                  , sock_mod_barrier()
+                  , this->ini.get<cfg::globals::target_user>().c_str()
+                  , this->ini.get<cfg::context::target_password>().c_str()
+                  , this->front
+                  , this->front.client_info.width
+                  , this->front.client_info.height
+                  , this->ini.get<cfg::font>()
+                  , Translator(language(this->ini))
+                  , this->ini.get<cfg::theme>()
+                  , this->front.client_info.keylayout
+                  , this->front.keymap.key_flags
+                  , this->ini.get<cfg::mod_vnc::clipboard_up>()
+                  , this->ini.get<cfg::mod_vnc::clipboard_down>()
+                  , this->ini.get<cfg::mod_vnc::encodings>().c_str()
+                  , this->ini.get<cfg::mod_vnc::allow_authentification_retries>()
+                  , true
+                  , this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
+                  != configs::ClipboardEncodingType::latin1
+                    ? mod_vnc::ClipboardEncodingType::UTF8
+                    : mod_vnc::ClipboardEncodingType::Latin1
+                  , this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>()
+                  , this->ini.get<cfg::debug::mod_vnc>()
                 );
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");

@@ -245,7 +245,7 @@ char const * c_str(CStrBuf<Range<T, Min, Max, Default>>& s, Range<T, Min, Max, D
 
 enum class Level : unsigned { low, medium, high, NB };
 ENUM_OPTION(Level, "low", "medium", "high");
-MK_ENUM_IO(Level)
+MK_ENUM_IO(::configs::Level)
 
 inline Level level_from_cstr(char const * value) {
     return
@@ -279,19 +279,18 @@ inline char const * c_str(CStrBuf<Level>&, Level x) {
 
 
 enum class Language : unsigned { en, fr, NB };
-MK_ENUM_FIELD(Language, "en", "fr")
+MK_ENUM_FIELD(::configs::Language, "en", "fr")
 
 
 enum class ClipboardEncodingType : unsigned { utf8, latin1, NB };
-MK_ENUM_FIELD(ClipboardEncodingType, "utf-8", "latin1")
+MK_ENUM_FIELD(::configs::ClipboardEncodingType, "utf-8", "latin1")
 
 enum class ClipboardLogFlags : unsigned {
     none,
     syslog = 1 << 0,
     FULL = ((1 << 1) - 1)
 };
-MK_ENUM_FLAG_FN(ClipboardLogFlags)
-MK_PARSER_ENUM_FLAGS(ClipboardLogFlags)
+MK_PARSER_ENUM_FLAGS(::configs::ClipboardLogFlags)
 
 
 enum class ColorDepth : unsigned {
@@ -302,7 +301,7 @@ enum class ColorDepth : unsigned {
     //depth32,
 };
 ENUM_OPTION(ColorDepth, 8, 15, 16, 24);
-MK_ENUM_IO(ColorDepth)
+MK_ENUM_IO(::configs::ColorDepth)
 
 inline ColorDepth enum_to_option(ColorDepth e) {
     return e;
@@ -346,15 +345,5 @@ inline char const * c_str(CStrBuf<ColorDepth>&, ColorDepth x) {
 #include "mk_enum_undef.hpp"
 
 }
-
-using configs::Level;
-using configs::Language;
-using configs::ColorDepth;
-using configs::CaptureFlags;
-using configs::KeyboardLogFlags;
-using configs::ClipboardLogFlags;
-using configs::ClipboardEncodingType;
-
-using configs::level_from_cstr;
 
 #endif

@@ -177,9 +177,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     template<class E>
     typename std::enable_if<std::is_enum<E>::value>::type
     write(E const & e) {
-        this->out() << "static_cast< ";
-        this->write_type(config_spec::type_<E>{});
-        this->out() << ">(" << underlying_cast(e) << ")";
+        this->out() << "static_cast< " << get_enum_name(E{}) << ">(" << underlying_cast(e) << ")";
     }
 
     template<class T>
@@ -246,13 +244,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     WRITE_TYPE(Theme)
     WRITE_TYPE(Font)
     WRITE_TYPE(::configs::StaticIpString)
-    WRITE_TYPE(::configs::Level)
-    WRITE_TYPE(::configs::Language)
-    WRITE_TYPE(::configs::ColorDepth)
-    WRITE_TYPE(::configs::CaptureFlags)
-    WRITE_TYPE(::configs::KeyboardLogFlags)
-    WRITE_TYPE(::configs::ClipboardLogFlags)
-    WRITE_TYPE(::configs::ClipboardEncodingType)
 #undef WRITE_TYPE
 
 #define WRITE_STATIC_STRING(T)        \
@@ -274,6 +265,12 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         this->out() << "::configs::Range<";
         this->inherit().write_type(type_<T>{});
         this->out() << ", " << Min << ", " << Max << ", " << Default << ">";
+    }
+
+    template<class T>
+    typename std::enable_if<std::is_enum<T>::value>::type
+    write_type(ref<type_<T>>) {
+        this->out() << get_enum_name(T{});
     }
 };
 

@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
         , false         /* allow authentification retries */
         , is_socket_transport
-        , ClipboardEncodingType::utf8
+        , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
         , verbose);
     mod.get_event().set();

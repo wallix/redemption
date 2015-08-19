@@ -54,8 +54,12 @@ int main(int argc, char** argv)
       , [](po::options_description const &){}
       , [](Inifile const & ini, po::variables_map const &, std::string const & output_filename) -> int {
             if (   output_filename.length()
-                && !(bool(ini.get<cfg::video::capture_flags>() & (CaptureFlags::png | CaptureFlags::wrm))
-                    | ini.get<cfg::globals::capture_chunk>())) {
+                && !(
+                    bool(ini.get<cfg::video::capture_flags>()
+                        & (configs::CaptureFlags::png | configs::CaptureFlags::wrm)
+                    ) | ini.get<cfg::globals::capture_chunk>()
+                )
+            ) {
                 std::cerr << "Missing target format : need --png or --wrm\n" << std::endl;
                 return -1;
             }

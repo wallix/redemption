@@ -153,6 +153,12 @@ private:
     };
 
 public:
+    enum class ClipboardEncodingType : uint8_t {
+        UTF8   = 0,
+        Latin1 = 1
+    };
+
+public:
     std::string encodings;
 
 private:
@@ -226,9 +232,7 @@ public:
     , state(WAIT_SECURITY_TYPES)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_socket_transport(is_socket_transport)
-    , clipboard_server_encoding_type(clipboard_server_encoding_type == ClipboardEncodingType::latin1 ?
-                                        ClipboardEncodingType::utf8 :
-                                        ClipboardEncodingType::latin1)
+    , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     {
     //--------------------------------------------------------------------------------------------------------------
@@ -464,7 +468,7 @@ protected:
 
         if (this->state == UP_AND_RUNNING) {
             if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
-                if (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8) {
+                if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                     if (this->verbose & 0x80) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
                     }
@@ -491,7 +495,7 @@ protected:
                 }
             }
             else {
-                if (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8) {
+                if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                     if (this->verbose & 0x80) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
                     }
@@ -2235,10 +2239,10 @@ private:
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
                 if (this->enable_clipboard_up &&
-//                    ((format_list_pdu.contians_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::latin1)) ||
-//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8)))) {
+//                    ((format_list_pdu.contians_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::Latin1)) ||
+//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8)))) {
                     (format_list_pdu.contians_data_in_text_format || format_list_pdu.contians_data_in_unicodetext_format)) {
-                    if (this->clipboard_server_encoding_type == ClipboardEncodingType::utf8) {
+                    if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                         this->clipboard_requested_format_id =
                             (format_list_pdu.contians_data_in_unicodetext_format ?
                              RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);

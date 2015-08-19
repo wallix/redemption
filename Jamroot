@@ -503,9 +503,9 @@ exe make_cpp_config
 if ! [ os.environ NO_MAKE_CONFIG ]
 {
     local result = [ SHELL "cd ./src/configs && make" : exit-status ] ;
+    Echo $(result[1]) ;
     if $(result[2]) != 0
     {
-        Echo $(result[1]) ;
         exit ;
     }
 }

@@ -31,7 +31,9 @@
     std::basic_ostream<Ch, Tr> &                         \
     operator << (std::basic_ostream<Ch, Tr> & os, E e) { \
         return os << underlying_cast(e);                 \
-    }
+    }                                                    \
+                                                         \
+    inline char const * get_enum_name(E) { return #E; }
 
 
 #define MK_ENUM_FLAG_FN(E)                                                                             \
@@ -43,6 +45,7 @@
     inline E & operator &= (E & x, E y) { return x = x | y; }
 
 #define MK_PARSER_ENUM_FLAGS(Enum)                                \
+    MK_ENUM_FLAG_FN(Enum)                                         \
     inline void parse(Enum & e, char const * cstr) {              \
         char * end = nullptr;                                     \
         errno = 0;                                                \
@@ -124,6 +127,9 @@ namespace configs
     enum_to_option(E e) {
         return *(enum_option<E>::value.begin() + underlying_cast(e));
     }
+
+    template<class T>
+    char const * get_enum_name(T) = delete;
 }
 
 #endif
