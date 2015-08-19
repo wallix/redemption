@@ -129,7 +129,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::ColorDepth;
-            type value{static_cast<ColorDepth>(24)};
+            type value{static_cast< ::configs::ColorDepth>(24)};
         };
 
         // Persistent Disk Bitmap Cache on the front side.
@@ -930,7 +930,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::Level;
-            type value{static_cast<Level>(0)};
+            type value{static_cast< ::configs::Level>(0)};
         };
         struct authip {
             static constexpr ::configs::VariableProperties properties() {
@@ -1405,7 +1405,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 25; }
             using type = ::configs::ClipboardEncodingType;
-            type value{static_cast<ClipboardEncodingType>(1)};
+            type value{static_cast< ::configs::ClipboardEncodingType>(1)};
         };
 
         // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
@@ -1427,7 +1427,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 30; }
             using type = ::configs::Language;
-            type value{static_cast<Language>(0)};
+            type value{static_cast< ::configs::Language>(0)};
         };
     };
 
@@ -1448,7 +1448,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::CaptureFlags;
-            type value{static_cast<CaptureFlags>(3)};
+            type value{static_cast< ::configs::CaptureFlags>(3)};
         };
 
         // Frame interval is in 1/10 s.

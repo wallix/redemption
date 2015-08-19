@@ -174,22 +174,21 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     }
 
 
+    template<class E>
+    typename std::enable_if<std::is_enum<E>::value>::type
+    write(E const & e) {
+        this->out() << "static_cast< ";
+        this->write_type(config_spec::type_<E>{});
+        this->out() << ">(" << underlying_cast(e) << ")";
+    }
+
     template<class T>
-    void write(T const & r) { this->out() << r; }
+    typename std::enable_if<!std::is_enum<T>::value>::type
+    write(T const & r) { this->out() << r; }
+
     void write(const char * s) { this->out() << '"' << s << '"'; }
     void write(macro x) { this->out() << x.name; }
     void write(null_fill x) { this->out() << "::configs::null_fill()"; }
-
-#define WRITE_ENUM(E) \
-    void write(E x) { this->out() << "static_cast<" #E ">(" << underlying_cast(x) << ")"; }
-    WRITE_ENUM(Level)
-    WRITE_ENUM(Language)
-    WRITE_ENUM(ColorDepth)
-    WRITE_ENUM(CaptureFlags)
-    WRITE_ENUM(KeyboardLogFlags)
-    WRITE_ENUM(ClipboardLogFlags)
-    WRITE_ENUM(ClipboardEncodingType)
-#undef WRITE_ENUM
 
     void write(todo x) { this->tab(); this->out() << "TODO(\"" << x.value << "\")\n"; }
     void write(info x) { this->inherit().write(desc{x.value}); }
