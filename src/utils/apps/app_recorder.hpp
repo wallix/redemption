@@ -135,6 +135,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string wrm_color_depth;
     std::string wrm_encryption;
 
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+
     program_options::options_description desc({
         {'h', "help", "produce help message"},
         {'v', "version", "show software version"},
@@ -167,7 +169,9 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
 
         {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
-        {"remove-input-file", "remove input file"}
+        {"remove-input-file", "remove input file"}, 
+
+        {"config-file", &config_filename, "used an another ini file"},
     });
 
     add_prog_option(desc);
@@ -208,7 +212,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     Inifile ini;
-    ConfigurationLoader cfg_loader_full(ini, CFG_PATH "/" RDPPROXY_INI);
+    { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
 
     if (options.count("compression") > 0) {
              if (wrm_compression_algorithm == "none") {

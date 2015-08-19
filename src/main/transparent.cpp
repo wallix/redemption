@@ -60,6 +60,8 @@ int main(int argc, char * argv[]) {
     persistent_key_list_filename = "./PersistentKeyList.bin";
     target_port                  = 3389;
 
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+
     program_options::options_description desc({
         {'h', "help",    "produce help message"},
         {'v', "version", "show software version"},
@@ -73,6 +75,8 @@ int main(int argc, char * argv[]) {
 
         {'r', "record-file",   &record_filename,              "record file name"},
         {'d', "play-file",     &play_filename,                "play file name"},
+
+        {"config-file",        &config_filename,              "used an another ini file"},
     });
 
     auto options = program_options::parse_command_line(argc, argv, desc);
@@ -165,8 +169,8 @@ int main(int argc, char * argv[]) {
     Listen listener(one_shot_server, 0, 3389, true, 5);  // 25 seconds to connect, or timeout
     listener.run();
 
-    Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+    Inifile ini;
+    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay

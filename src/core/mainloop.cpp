@@ -154,7 +154,7 @@ void init_signals(void)
 //    sigaction(SIGUSR2, &sa, nullptr);
 //}
 
-void redemption_new_session()
+void redemption_new_session(char const * config_filename)
 {
     char text[256];
     char source_ip[256];
@@ -171,7 +171,7 @@ void redemption_new_session()
     int sock_len = sizeof(u);
 
     Inifile ini;
-    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+    { ConfigurationLoader cfg_loader(ini, config_filename); }
 
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
@@ -235,11 +235,11 @@ void redemption_new_session()
 
 }
 
-void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr)
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename)
 {
     init_signals();
 
-    SessionServer ss(uid, gid, parametersHldr, ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
+    SessionServer ss(uid, gid, parametersHldr, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>());
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }

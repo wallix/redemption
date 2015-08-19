@@ -36,12 +36,16 @@ class SessionServer : public Server
 
     parameters_holder & parametersHldr;
 
+    std::string config_filename;
+
 public:
-    SessionServer(unsigned uid, unsigned gid, parameters_holder & parametersHldr, bool debug_config = true)
+    SessionServer(unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename, bool debug_config = true)
         : uid(uid)
         , gid(gid)
         , debug_config(debug_config)
-        , parametersHldr(parametersHldr) {
+        , parametersHldr(parametersHldr)
+        , config_filename(config_filename)
+    {
     }
 
     virtual Server_status start(int incoming_sck)
@@ -74,7 +78,7 @@ public:
 
                 Inifile ini;
                 ini.set<cfg::debug::config>(this->debug_config);
-                ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+                { ConfigurationLoader cfg_loader(ini, this->config_filename.c_str()); }
 
                 if (ini.get<cfg::globals::wab_agent_alternate_shell>().empty()) {
                     ini.set<cfg::globals::wab_agent_alternate_shell>(

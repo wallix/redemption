@@ -195,13 +195,13 @@ using extra_option_list = std::initializer_list<extra_option>;
 
 struct EmptyPreLoopFn { void operator()(Inifile &) const {} };
 
-// ExtraOption = extra_option container
-// ExtracOptionChecker = int(po::variables_map &,  bool * quit)
+// ExtraOptions = extra_option container
+// ExtracOptionChecker = int(po::variables_map &, bool * quit)
 // PreLoopFn = void(Inifile &)
-template<class ParametersHldr, class ExtraOption, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
+template<class ParametersHldr, class ExtraOptions, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
 int app_proxy(
     int argc, char** argv, const char * copyright_notice
-  , ExtraOption const & extrax_options, ExtracOptionChecker extrac_options_checker
+  , ExtraOptions const & extrax_options, ExtracOptionChecker extrac_options_checker
   , PreLoopFn pre_loop_fn = PreLoopFn()
 ) {
     setlocale(LC_CTYPE, "C");
@@ -211,6 +211,8 @@ int app_proxy(
 
     unsigned euid = uid;
     unsigned egid = gid;
+
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -229,6 +231,8 @@ int app_proxy(
         {'f', "force", "remove application lock file"},
 
         {'i', "inetd", "launch redemption with inetd like launcher"},
+
+        {"config-file", &config_filename, "used an another ini file"},
 
         //{"test", "check Inifile syntax"}
     });
@@ -310,7 +314,7 @@ int app_proxy(
     }
 
     if (options.count("inetd")) {
-        redemption_new_session();
+        redemption_new_session(config_filename.c_str());
         return 0;
     }
 
@@ -366,7 +370,7 @@ int app_proxy(
     }
 
     Inifile ini;
-    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
 
     OpenSSL_add_all_digests();
 
@@ -386,7 +390,7 @@ int app_proxy(
     ParametersHldr parametersHldr;
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, euid, egid, parametersHldr);
+    redemption_main_loop(ini, euid, egid, parametersHldr, std::move(config_filename));
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */
