@@ -220,9 +220,20 @@ private:
     T x_;
 };
 
+
+template<class T, T Min, T Max, T Default = Min>
+struct SelectRange : Range<T, Min, Max> {
+    using Range<T, Min, Max>::Range;
+    using Range<T, Min, Max>::operator=;
+};
+
 template<class T, T Min, T Max, T Default>
 struct CStrBuf<Range<T, Min, Max, Default>>
 : CStrBuf<T>
+{};
+
+
+struct StringList
 {};
 
 

@@ -207,6 +207,15 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         this->out() << "integer(min=" << Min << ", max=" << Max << ", default=" << this->inherit().get_value(i) << ")\n";
     }
 
+    template<class T, T Min, T Max, T Default, class U>
+    void write_type(type_<SelectRange<T, Min, Max, Default>>, U const & i) {
+        this->out() << "option(";
+        for (auto i = Min; i <=  Max; ++i) {
+            this->out() << i << ", ";
+        }
+        this->out() << "default=" << this->inherit().get_value(i) << ")\n";
+    }
+
     template<std::size_t N, class T>
     void write_type(type_<StaticKeyString<N>>, T const & x) {
         this->out() << "string(min=" << N*2 << ", max=" << N*2 << ", default='";
@@ -222,6 +231,15 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     template<class T>
     void write_type(type_<StaticIpString>, T const & x) {
         this->out() << "ip_addr(default='" << this->inherit().get_value(x) << "')\n";
+    }
+
+    template<class T>
+    void write_type(type_<StringList>, T const & s) {
+        this->out() << "string_list(default=list('" << s << "'))\n";
+    }
+
+    void write_type(type_<StringList>, StringList) {
+        this->out() << "string_list(default=list())\n";
     }
 };
 

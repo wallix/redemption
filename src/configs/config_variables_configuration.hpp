@@ -1114,13 +1114,16 @@ namespace cfg {
             using type = unsigned;
             type value{0};
         };
+        // Specifies the action to be performed is the launch of agent fails.
+        //   0: disconnects session
+        //   1: remains connected
         // AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE
         struct wab_agent_on_launch_failure {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 16; }
-            using type = unsigned;
+            using type = ::configs::Range<unsigned, 0, 1, 0>;
             type value{0};
         };
         // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
@@ -1414,7 +1417,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 26; }
-            using type = unsigned;
+            using type = ::configs::Range<unsigned, 0, 2, 0>;
             type value{0};
         };
     };
@@ -1531,7 +1534,6 @@ namespace cfg {
 
         // Disable keyboard log:
         //   1: disable keyboard log in recorded sessions
-
         // AUTHID_DISABLE_KEYBOARD_LOG
         struct disable_keyboard_log {
             static constexpr ::configs::VariableProperties properties() {

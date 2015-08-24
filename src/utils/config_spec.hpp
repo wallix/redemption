@@ -108,7 +108,7 @@ void config_spec_definition(Writer && W)
         "  4: RDP 6.1 bulk compression"
     };
 
-    using rdp_compression_t = Range<unsigned, 0, 4>;
+    using rdp_compression_t = SelectRange<unsigned, 0, 4>;
 
     desc const rdp_level_desc{"low, medium or high."};
 
@@ -180,7 +180,11 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "enable_wab_agent", def_authid{"opt_wabagent"}, str_authid{"wab_agent"}, set(false), r);
         W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", def_authid{"opt_wabagent_launch_timeout"}, set(0), r);
-        W.member(A, type_<unsigned>(), "wab_agent_on_launch_failure", def_authid{"opt_wabagent_on_launch_failure"}, set(0), r);
+        W.member(A, type_<Range<unsigned, 0, 1>>(), "wab_agent_on_launch_failure", def_authid{"opt_wabagent_on_launch_failure"}, set(0), desc{
+            "Specifies the action to be performed is the launch of agent fails.\n"
+            "  0: disconnects session\n"
+            "  1: remains connected"
+        }, r);
         W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", def_authid{"opt_wabagent_keepalive_timeout"}, set(0), r);
         W.sep();
         W.member(H, type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));
@@ -235,7 +239,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<uint32_>(), "open_session_timeout", set(0));
         W.sep();
-        W.member(A, type_<Range<unsigned, 0, 1>>(), "certificate_change_action", desc{
+        W.member(A, type_<SelectRange<unsigned, 0, 1>>(), "certificate_change_action", desc{
             "0: Cancel connection and reports error.\n"
             "1: Replace existing certificate and continue connection."
         }, set(1));
@@ -259,8 +263,8 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
         W.member(A, type_<bool>(), "persist_bitmap_cache_on_disk", desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
         W.sep();
-        W.member(A, type_<std::string>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
-        W.member(A, type_<std::string>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+        W.member(A, type_<StringList>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
+        W.member(A, type_<StringList>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
         W.sep();
         W.member(A, type_<bool>(), "fast_path", desc{"Enables support of Server Fast-Path Update PDUs."}, set(true));
         W.sep();
@@ -272,7 +276,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<unsigned>(), "client_device_announce_timeout", def_authid{"opt_client_device_announce_timeout"}, set(1000), r);
         W.sep();
-        W.member(V, type_<std::string>(), "proxy_managed_drives", def_authid{"opt_proxy_managed_drives"}, r);
+        W.member(A, type_<StringList>(), "proxy_managed_drives", def_authid{"opt_proxy_managed_drives"}, r);
     }
     W.stop_section();
 
@@ -297,7 +301,7 @@ void config_spec_definition(Writer && W)
             "  latin1 (default) or utf-8"
         }, def_authid{"vnc_server_clipboard_encoding_type"}, str_authid{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1), r);
         W.sep();
-        W.member(A, type_<unsigned>(), user_type<Range<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", def_authid{"vnc_bogus_clipboard_infinite_loop"}, str_authid{"vnc_bogus_clipboard_infinite_loop"}, set(0), r);
+        W.member(A, type_<SelectRange<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", def_authid{"vnc_bogus_clipboard_infinite_loop"}, str_authid{"vnc_bogus_clipboard_infinite_loop"}, set(0), r);
     }
     W.stop_section();
 
@@ -333,7 +337,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
-            "  1: disable keyboard log in recorded sessions\n"
+            "  1: disable keyboard log in recorded sessions"
         }, r);
         W.sep();
         W.member(V, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{
@@ -343,12 +347,12 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(H, type_<unsigned>(), "rt_display", set(0), r);
         W.sep();
-        W.member(A, type_<Range<unsigned, 0, 1>>{}, "wrm_color_depth_selection_strategy", desc{
+        W.member(A, type_<SelectRange<unsigned, 0, 1>>{}, "wrm_color_depth_selection_strategy", desc{
             "The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:\n"
             "  0: 24-bit\n"
             "  1: 16-bit"
         }, set(1));
-        W.member(A, type_<Range<unsigned, 0, 2>>{}, "wrm_compression_algorithm", desc{
+        W.member(A, type_<SelectRange<unsigned, 0, 2>>{}, "wrm_compression_algorithm", desc{
             "The compression method of native video capture:\n"
             "  0: No compression\n"
             "  1: GZip\n"

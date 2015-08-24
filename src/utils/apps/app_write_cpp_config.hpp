@@ -210,6 +210,10 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     void check_constructible(type_<T>, default_<U> const & d)
     { static_assert((void(type_<decltype(T(d.value))>{}), 1), "incompatible type"); }
 
+    template<class U>
+    void check_constructible(type_<StringList>, default_<U> const & d)
+    { static_assert((void(type_<decltype(std::string(d.value))>{}), 1), "incompatible type"); }
+
     template<class T>
     void check_constructible(type_<T>, default_<macro> const &)
     {}
@@ -265,6 +269,17 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         this->out() << "::configs::Range<";
         this->inherit().write_type(type_<T>{});
         this->out() << ", " << Min << ", " << Max << ", " << Default << ">";
+    }
+
+    template<class T, T Min, T Max, T Default>
+    void write_type(ref<type_<SelectRange<T, Min, Max, Default>>>) {
+        this->out() << "::configs::Range<";
+        this->inherit().write_type(type_<T>{});
+        this->out() << ", " << Min << ", " << Max << ", " << Default << ">";
+    }
+
+    void write_type(ref<type_<StringList>>) {
+        this->out() << "std::string";
     }
 
     template<class T>
