@@ -28,7 +28,7 @@
 
 #include "apps/app_proxy.hpp"
 
-#include "program_options.hpp"
+#include "program_options/program_options.hpp"
 
 #include "write_python_spec.hpp"
 

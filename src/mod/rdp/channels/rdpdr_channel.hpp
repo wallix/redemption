@@ -141,6 +141,13 @@ private:
 
         bool waiting_for_server_device_announce_response = false;
 
+        uint8_t         remaining_device_announce_request_header_data[
+                20  // DeviceType(4) + DeviceId(4) +
+                    //     PreferredDosName(8) +
+                    //     DeviceDataLength(4)
+            ];
+        WriteOnlyStream remaining_device_announce_request_header_stream;
+
         const uint32_t verbose;
 
     public:
@@ -162,7 +169,11 @@ private:
         , param_print_authorized(print_authorized)
         , param_serial_port_authorized(serial_port_authorized)
         , param_smart_card_authorized(smart_card_authorized)
+        , remaining_device_announce_request_header_stream(
+              this->remaining_device_announce_request_header_data,
+              sizeof(this->remaining_device_announce_request_header_data))
         , verbose(verbose) {
+            this->remaining_device_announce_request_header_stream.reset();
         }
 
     private:
@@ -321,28 +332,77 @@ private:
                             "DeviceCount=%u",
                         DeviceCount);
                 }
+
+                this->remaining_device_announce_request_header_stream.reset();
             }
 
             while (chunk.in_remain())
             {
                 if (!this->length_of_remaining_device_data_to_be_processed &&
                     !this->length_of_remaining_device_data_to_be_skipped) {
+                    if (chunk.in_remain() <
+                            20  // DeviceType(4) + DeviceId(4) +
+                                //     PreferredDosName(8) + DeviceDataLength(4)
+                       ) {
+                        REDASSERT(
+                            !this->remaining_device_announce_request_header_stream.get_offset());
 
-                    const uint32_t DeviceType = chunk.in_uint32_le();
-                    const uint32_t DeviceId   = chunk.in_uint32_le();
+                        this->remaining_device_announce_request_header_stream.out_copy_bytes(
+                            chunk.p, chunk.in_remain());
+                        this->remaining_device_announce_request_header_stream.mark_end();
+
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
+                                    "%u byte(s) of request header are saved.",
+                                uint32_t(
+                                    this->remaining_device_announce_request_header_stream.size()));
+                        }
+
+                        break;
+                    }
+
+                    Stream* device_announce_request_header_stream = &chunk;
+
+                    if (this->remaining_device_announce_request_header_stream.get_offset()) {
+                        const uint32_t needed_data_length =
+                              20    // DeviceType(4) + DeviceId(4) +
+                                    //     PreferredDosName(8) +
+                                    //     DeviceDataLength(4)
+                            - this->remaining_device_announce_request_header_stream.size();
+
+                        this->remaining_device_announce_request_header_stream.out_copy_bytes(
+                            chunk.p, needed_data_length);
+
+                        chunk.in_skip_bytes(needed_data_length);
+                        this->remaining_device_announce_request_header_stream.mark_end();
+                        this->remaining_device_announce_request_header_stream.rewind();
+
+                        device_announce_request_header_stream =
+                            &this->remaining_device_announce_request_header_stream;
+                    }
+
+                    const uint32_t DeviceType =
+                        device_announce_request_header_stream->in_uint32_le();
+                    const uint32_t DeviceId   =
+                        device_announce_request_header_stream->in_uint32_le();
 
                     uint8_t PreferredDosName[
                               8 // PreferredDosName(8)
                             + 1
                         ];
 
-                    chunk.in_copy_bytes(PreferredDosName,
-                                        8   // PreferredDosName(8)
-                                       );
+                    device_announce_request_header_stream->in_copy_bytes(
+                            PreferredDosName,
+                            8   // PreferredDosName(8)
+                        );
                     PreferredDosName[8  // PreferredDosName(8)
                         ] = '\0';
 
-                    uint32_t DeviceDataLength = chunk.in_uint32_le();
+                    const uint32_t DeviceDataLength =
+                        device_announce_request_header_stream->in_uint32_le();
+
+                    this->remaining_device_announce_request_header_stream.reset();
 
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
@@ -702,8 +762,7 @@ public:
           params.smart_card_authorized,
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           params.verbose)
-    , front(front)
-    {}
+    , front(front) {}
 
     virtual ~FileSystemVirtualChannel()
     {

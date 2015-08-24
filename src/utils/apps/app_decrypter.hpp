@@ -18,7 +18,8 @@
 #include "crypto_in_filename_transport.hpp"
 #include "out_file_transport.hpp"
 #include "fdbuf.hpp"
-#include "program_options.hpp"
+
+#include "program_options/program_options.hpp"
 
 
 template<class F>

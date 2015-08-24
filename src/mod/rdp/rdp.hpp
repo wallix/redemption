@@ -1636,6 +1636,18 @@ private:
 private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    Stream & chunk, size_t length, uint32_t flags) {
+        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
+            !this->file_system_drive_manager.HasManagedDrive()) {
+            if (this->verbose && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                LOG(LOG_INFO,
+                    "mod_rdp::send_to_mod_rdpdr_channel: "
+                        "send Chunked Virtual Channel Data transparently.");
+            }
+
+            this->send_to_channel(*rdpdr_channel, chunk, length, flags);
+            return;
+        }
+
         BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
 
         channel.process_client_message(length, flags, chunk.p, chunk.in_remain());

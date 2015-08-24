@@ -28,7 +28,7 @@
 #include "capture.hpp"
 
 #include "apps/app_recorder.hpp"
-#include "program_options.hpp"
+#include "program_options/program_options.hpp"
 
 namespace po = program_options;
 

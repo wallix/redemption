@@ -42,8 +42,9 @@
 #include "mainloop.hpp"
 #include "log.hpp"
 #include "fdbuf.hpp"
-#include "program_options.hpp"
 #include "fdbuf.hpp"
+
+#include "program_options/program_options.hpp"
 
 #include "version.hpp"
 

@@ -17,8 +17,9 @@
 #include "config.hpp"
 //#include "crypto_impl.hpp"
 #include "ccryptofile.h"
-#include "program_options.hpp"
 #include "fdbuf.hpp"
+
+#include "program_options/program_options.hpp"
 
 #ifndef HASH_LEN
 #define HASH_LEN 64
