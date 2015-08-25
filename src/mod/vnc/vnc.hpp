@@ -80,10 +80,10 @@ struct mod_vnc : public InternalMod, private NotifyApi {
         }
 
         void scroll(Transport & t, int mask) const {
-            StaticFixedSizeStream<12> stream;
+            StaticOutStream<12> stream;
             this->write(stream, this->mod_mouse_state | mask);
             this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_data(), 12);
+            t.send(stream.get_data(), stream.buf_size());
         }
 
     private:
@@ -91,7 +91,7 @@ struct mod_vnc : public InternalMod, private NotifyApi {
         int x = 0;
         int y = 0;
 
-        void write(Stream & stream, uint8_t state) const {
+        void write(OutStream & stream, uint8_t state) const {
             stream.out_uint8(5);
             stream.out_uint8(state);
             stream.out_uint16_be(this->x);
@@ -99,9 +99,9 @@ struct mod_vnc : public InternalMod, private NotifyApi {
         }
 
         void send(Transport & t) const {
-            StaticFixedSizeStream<6> stream;
+            StaticOutStream<6> stream;
             this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_data(), 6);
+            t.send(stream.get_data(), stream.buf_size());
         }
     } mouse;
 

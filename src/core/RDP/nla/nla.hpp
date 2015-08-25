@@ -38,8 +38,6 @@ struct rdpCredssp
     CtxtHandle context;
     CredHandle credentials;
 
-    Array SspiModule;
-
     Transport& trans;
 
     TSCredentials ts_credentials;
@@ -88,7 +86,6 @@ struct rdpCredssp
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "rdpCredssp:: Initialization");
         }
-        this->SspiModule.init(0);
         this->set_credentials(user, domain, pass, hostname);
     }
 

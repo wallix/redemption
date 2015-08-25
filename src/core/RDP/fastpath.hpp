@@ -229,13 +229,14 @@ namespace FastPath {
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
-                decrypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
+                TODO("IMPORTANT: This is bad cast")
+                decrypt.decrypt(const_cast<uint8_t*>(stream.get_data()) + stream.get_offset(), stream.in_remain());
             }
 
             if (this->numEvents == 0) {
                 this->numEvents = stream.in_uint8();
             }
-            return InStream(stream.array, stream.get_offset(), 0, stream.in_remain());
+            return InStream(stream.get_current(), stream.in_remain());
         }())
         {
             stream.in_skip_bytes(this->payload.size());
@@ -839,9 +840,10 @@ namespace FastPath {
                     throw Error(ERR_RDP_FASTPATH);
                 }
                 stream.in_copy_bytes(this->dataSignature, 8);
-                decrypt.decrypt(stream.get_data() + stream.get_offset(), stream.in_remain());
+                TODO("IMPORTANT: This is bad cast")
+                decrypt.decrypt(const_cast<uint8_t*>(stream.get_data()) + stream.get_offset(), stream.in_remain());
             }
-            return InStream(stream.array, stream.get_offset(), 0, stream.in_remain());
+            return InStream(stream.get_current(), stream.in_remain());
         }())
         // Body of constructor
         {
@@ -1158,7 +1160,8 @@ namespace FastPath {
                 const uint8_t * rdata;
                 uint32_t        rlen;
 
-                dec->decompress(stream.get_data() + stream.get_offset(), size,
+                TODO("IMPORTANT: This is bad cast")
+                dec->decompress(const_cast<uint8_t*>(stream.get_data()) + stream.get_offset(), size,
                     compressionFlags, rdata, rlen);
 
                 return SubStream(StaticStream(rdata, rlen), 0, rlen);

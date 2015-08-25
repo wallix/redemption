@@ -1016,10 +1016,11 @@ public:
             }
 
             {
-                Array array(65536);
-                uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(this->trans, &end, array.size());
-                InStream stream(array, 0, 0, end - array.get_data());
+                constexpr size_t array_size = AUTOSIZE;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory fx224(this->trans, &end, array_size);
+                InStream stream(array, end - array);
 
                 X224::CR_TPDU_Recv x224(stream, this->ini.get<cfg::client::bogus_neg_request>());
                 if (x224._header_size != stream.size()) {
@@ -1109,10 +1110,11 @@ public:
             }
 
 
-            Array array(65536);
-            uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(this->trans, &end, array.size());
-            InStream x224_data(array, 0, 0, end - array.get_data());
+            constexpr size_t array_size = AUTOSIZE;
+            uint8_t array[array_size];
+            uint8_t * end = array;
+            X224::RecvFactory fx224(this->trans, &end, array_size);
+            InStream x224_data(array, end - array);
 
             X224::DT_TPDU_Recv x224(x224_data);
             MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
@@ -1387,11 +1389,12 @@ public:
                 LOG(LOG_INFO, "Front::incoming::Recv MCS::ErectDomainRequest");
             }
             {
-                Array array(256);
-                uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(this->trans, &end, array.size());
+                constexpr size_t array_size = 256;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory fx224(this->trans, &end, array_size);
                 REDASSERT(fx224.type == X224::DT_TPDU);
-                InStream x224_data(array, 0, 0, end - array.get_data());
+                InStream x224_data(array, end - array);
 
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1400,11 +1403,12 @@ public:
                 LOG(LOG_INFO, "Front::incoming::Recv MCS::AttachUserRequest");
             }
             {
-                Array array(256);
-                uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(this->trans, &end, array.size());
+                constexpr size_t array_size = 256;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory fx224(this->trans, &end, array_size);
                 REDASSERT(fx224.type == X224::DT_TPDU);
-                InStream x224_data(array, 0, 0, end - array.get_data());
+                InStream x224_data(array, end - array);
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
@@ -1429,11 +1433,12 @@ public:
             {
                 // read tpktHeader (4 bytes = 3 0 len)
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                Array array(256);
-                uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(this->trans, &end, array.size());
+                constexpr size_t array_size = 256;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory fx224(this->trans, &end, array_size);
                 REDASSERT(fx224.type == X224::DT_TPDU);
-                InStream x224_data(array, 0, 0, end - array.get_data());
+                InStream x224_data(array, end - array);
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 this->userid = mcs.initiator;
@@ -1451,11 +1456,12 @@ public:
             }
 
             {
-                Array array(256);
-                uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(this->trans, &end, array.size());
+                constexpr size_t array_size = 256;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory fx224(this->trans, &end, array_size);
                 REDASSERT(fx224.type == X224::DT_TPDU);
-                InStream x224_data(array, 0, 0, end - array.get_data());
+                InStream x224_data(array, end - array);
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid) {
@@ -1476,10 +1482,11 @@ public:
             }
 
             for (size_t i = 0 ; i < this->channel_list.size(); ++i) {
-                Array array(256);
-                uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(this->trans, &end, array.size());
-                InStream x224_data(array, 0, 0, end - array.get_data());
+                constexpr size_t array_size = 256;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory fx224(this->trans, &end, array_size);
+                InStream x224_data(array, end - array);
                 X224::DT_TPDU_Recv x224(x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -1545,10 +1552,11 @@ public:
             else
             {
                 LOG(LOG_INFO, "Legacy RDP mode: expecting exchange packet");
-                Array array(256);
-                uint8_t * end = array.get_data();
-                X224::RecvFactory fx224(this->trans, &end, array.size());
-                InStream pdu(array, 0, 0, end - array.get_data());
+                constexpr size_t array_size = 256;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory fx224(this->trans, &end, array_size);
+                InStream pdu(array, end - array);
                 X224::DT_TPDU_Recv x224(pdu);
 
                 int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -1618,10 +1626,11 @@ public:
         {
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
 
-            Array array(65536);
-            uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(this->trans, &end, array.size());
-            InStream stream(array, 0, 0, end - array.get_data());
+            constexpr size_t array_size = AUTOSIZE;
+            uint8_t array[array_size];
+            uint8_t * end = array;
+            X224::RecvFactory fx224(this->trans, &end, array_size);
+            InStream stream(array, end - array);
             X224::DT_TPDU_Recv x224(stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -1801,10 +1810,11 @@ public:
             if (this->verbose & 2) {
                 LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
             }
-            Array array(65536);
-            uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(this->trans, &end, array.size());
-            InStream stream(array, 0, 0, end - array.get_data());
+            constexpr size_t array_size = AUTOSIZE;
+            uint8_t array[array_size];
+            uint8_t * end = array;
+            X224::RecvFactory fx224(this->trans, &end, array_size);
+            InStream stream(array, end - array);
             X224::DT_TPDU_Recv x224(stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2047,10 +2057,11 @@ public:
         // connection management information and virtual channel messages (exchanged
         // between client-side plug-ins and server-side applications).
         {
-            Array array(65536);
-            uint8_t * end = array.get_data();
-            X224::RecvFactory fx224(this->trans, &end, array.size(), true);
-            InStream stream(array, 0, 0, end - array.get_data());
+            constexpr std::size_t array_size = 65536;
+            uint8_t array[array_size];
+            uint8_t * end = array;
+            X224::RecvFactory fx224(this->trans, &end, array_size, true);
+            InStream stream(array, end - array);
 
             if (fx224.fast_path) {
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt);

@@ -27,7 +27,7 @@
 
 static inline bool check_file_hash_sha256( const char * file_path
                     , const Stream & crypto_key
-                    , uint8_t * hash_buf
+                    , uint8_t const * hash_buf
                     , size_t    hash_len
                     , size_t len_to_check) {
 
@@ -236,17 +236,13 @@ int read_line(  FileDescriptor fd
     while (true);
 }
 
-bool check_file_hash(const char * file_path, const Stream & crypto_key, const char hash[HASH_LEN], bool quick_check)
+bool check_file_hash(const char * file_path, const Stream & crypto_key, const char (&hash)[HASH_LEN], bool quick_check)
 {
-    StaticStream _4kb_hash(hash, HASH_LEN / 2);
-    StaticStream full_hash(hash + (HASH_LEN / 2), HASH_LEN / 2);
-
+    uint8_t const * hash_ = reinterpret_cast<uint8_t const *>(hash);
     if (quick_check){
-        return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key,
-                                      _4kb_hash.get_data(), _4kb_hash.size(), 4096);
+        return check_file_hash_sha256(file_path, crypto_key, hash_, HASH_LEN / 2, 4096);
     }
-    return check_file_hash_sha256(file_path, /*ss_hmac_key*/crypto_key,
-                                      full_hash.get_data(), full_hash.size(), 0);
+    return check_file_hash_sha256(file_path, crypto_key, hash_ + (HASH_LEN / 2), HASH_LEN / 2, 0);
 }
 
 // opaque_stream should be initialized before the first call to read_line.
@@ -324,7 +320,7 @@ static inline int crypto_read_line(crypto_file * cf_struct
 }
 */
 
-bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char hash[HASH_LEN], bool quick_check) {
+bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&hash)[HASH_LEN], bool quick_check) {
     TODO("Add unit test for this function")
     bool result = false;
 

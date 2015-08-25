@@ -50,11 +50,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     BStream out_s(65536);
 
-    Array array(65536);
-    uint8_t * end = array.get_data();
-    X224::RecvFactory fx224(in_t, &end, array.size(), true);
+    constexpr size_t array_size = AUTOSIZE;
+    uint8_t array[array_size];
+    uint8_t * end = array;
+    X224::RecvFactory fx224(in_t, &end, array_size, true);
 
-    InStream in_s(array, 0, 0, end - array.get_data());
+    InStream in_s(array, end - array);
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     BOOST_CHECK_EQUAL(4, in_cie.numEvents);
@@ -130,10 +131,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     BStream out_s(65536);
 
-    Array array(65536);
-    uint8_t * end = array.get_data();
-    X224::RecvFactory fx224(in_t, &end, array.size(), true);
-    InStream in_s(array, 0, 0, end - array.get_data());
+    constexpr size_t array_size = AUTOSIZE;
+    uint8_t array[array_size];
+    uint8_t * end = array;
+    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    InStream in_s(array, end - array);
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     BOOST_CHECK_EQUAL(6, in_cie.numEvents);
@@ -213,10 +215,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
 
     BStream out_s(65536);
 
-    Array array(65536);
-    uint8_t * end = array.get_data();
-    X224::RecvFactory fx224(in_t, &end, array.size(), true);
-    InStream in_s(array, 0, 0, end - array.get_data());
+    constexpr size_t array_size = AUTOSIZE;
+    uint8_t array[array_size];
+    uint8_t * end = array;
+    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    InStream in_s(array, end - array);
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     uint8_t updateCodes[4] = {
@@ -272,10 +275,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
 
     GeneratorTransport in_t(payload, payload_length);
 
-    Array array(65536);
-    uint8_t * end = array.get_data();
-    X224::RecvFactory fx224(in_t, &end, array.size(), true);
-    InStream in_s(array, 0, 0, end - array.get_data());
+    constexpr size_t array_size = AUTOSIZE;
+    uint8_t array[array_size];
+    uint8_t * end = array;
+    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    InStream in_s(array, end - array);
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     uint8_t updateCodes[4] = {
@@ -311,10 +315,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     BStream out_s(65536);
 
-    Array array(65536);
-    uint8_t * end = array.get_data();
-    X224::RecvFactory fx224(in_t, &end, array.size(), true);
-    InStream in_s(array, 0, 0, end - array.get_data());
+    constexpr size_t array_size = AUTOSIZE;
+    uint8_t array[array_size];
+    uint8_t * end = array;
+    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    InStream in_s(array, end - array);
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt);
 
     out_s.out_clear_bytes(FastPath::Update_Send::GetSize(false)); // Fast-Path Update (TS_FP_UPDATE structure) size

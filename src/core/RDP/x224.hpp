@@ -666,8 +666,8 @@ namespace X224
             this->rdp_neg_type = 0;
 
             TODO("We should have some reading function in stream to read this")
-            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            for (uint8_t * p = stream.get_current() + 1; p < end_of_header ; p++){
+            uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            for (uint8_t const * p = stream.get_current() + 1; p < end_of_header ; p++){
                 if (p[-1] == 0x0D && p[0] == 0x0A){
                     this->cookie_len = p - (stream.get_data() + 11) + 1;
                     // cookie can't be larger than header (HEADER_LEN + LI + 1 = 230)
@@ -985,7 +985,7 @@ namespace X224
             this->rdp_neg_length = 0;
             this->rdp_neg_code = 0;
 
-            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             /* rdp_neg_type(1) + rdp_neg_flags(1) + rdp_neg_length(2) + rdp_neg_code(4) */
             if (stream.in_remain() >= 8){
                 this->rdp_neg_type = stream.in_uint8();
@@ -1222,7 +1222,7 @@ namespace X224
             }())
             , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)
         {
-            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             if (end_of_header != stream.get_current()){
                 LOG(LOG_ERR, "DR TPDU header should be terminated, got trailing data %u", end_of_header - stream.get_current());
                 throw Error(ERR_X224);
@@ -1308,7 +1308,7 @@ namespace X224
                     throw Error(ERR_X224);
                 }
 
-                uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->LI + 1;
+                uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->LI + 1;
                 if (end_of_header - stream.get_current() >= 2){
                     this->invalid_tpdu_var = stream.in_uint8();
                     if (this->invalid_tpdu_var != 0xC1){

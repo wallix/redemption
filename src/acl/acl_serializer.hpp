@@ -169,7 +169,7 @@ public:
         }
         if (this->ini.changed_field_size()) {
             try {
-                StaticFixedSizeStream<AUTOSIZE> stream;
+                StaticOutStream<AUTOSIZE> stream;
                 stream.out_uint32_be(0);
 
                 char buff[65536];
@@ -207,7 +207,7 @@ public:
                         }();
                     }
 
-                    if (n < 0 || static_cast<std::size_t>(n) >= size || stream.in_remain() < size_t(n)) {
+                    if (n < 0 || static_cast<std::size_t>(n) >= size || stream.tailroom() < size_t(n)) {
                         LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"
                             " should have write %d bytes but buffer size is %u bytes", n, size);
                         throw Error(ERR_ACL_MESSAGE_TOO_BIG);

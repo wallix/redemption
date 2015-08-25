@@ -169,7 +169,7 @@ public:
         switch (chunk_type) {
         case META_FILE:
             {
-                StaticStream stream(data.p, data.size());
+                InStream stream(data.p, data.size());
 
                 uint16_t info_version               = stream.in_uint16_le();
                 uint16_t info_width                 = stream.in_uint16_le();
@@ -255,7 +255,7 @@ public:
 
         case TIMESTAMP:
             {
-                StaticStream stream(data.p, data.size());
+                InStream stream(data.p, data.size());
                 timeval      record_now;
 
                 stream.in_timeval_from_uint64le_usec(record_now);

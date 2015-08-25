@@ -57,10 +57,10 @@ public:
 
             //LOG(LOG_INFO, "chunk_type=%u data_size=%u", chunk_type, data_size);
 
-            Array array(65535);
-            uint8_t * end = array.get_data();
+            uint8_t array[AUTOSIZE];
+            uint8_t * end = array;
             this->t->recv(&end, data_size);
-            InStream payload(array, 0, 0, end - array.get_data());
+            InStream payload(array, end - array);
 
             switch (chunk_type) {
                 case CHUNK_TYPE_META:

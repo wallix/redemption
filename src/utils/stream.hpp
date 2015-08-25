@@ -34,38 +34,49 @@
 #include "bitfu.hpp"
 #include "utf.hpp"
 
+#include "parse.hpp"
+
+#include <new>
+
+
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
     AUTOSIZE = 65536
 };
 
-#include "array.hpp"
-#include "parse.hpp"
 
-class InStream {
-public:
-    const Array & array;
-private:
-    // Absolute coordinates inside array (begin inclusive, end exclusive)
-    uint8_t * begin;
-    uint8_t * end;
+class InStream
+{
+    uint8_t const * begin;
+    uint8_t const * end;
     // relative coordinate between begin and end (at begin, p = 0)
     Parse p;
 
 public:
-    InStream(const Array & array, size_t base, size_t begin, size_t end)
-    : array(array)
-    , begin(array.get_data() + base + begin)
-    , end(array.get_data() + base + end)
+    explicit InStream(uint8_t const * array, std::size_t len, std::size_t headroom = 0)
+    : begin(array + headroom)
+    , end(array + len)
     , p(this->begin)
+    {
+        assert(len >= headroom);
+    }
+
+    explicit InStream(char const * array, std::size_t len, std::size_t headroom = 0)
+    : InStream(reinterpret_cast<uint8_t const *>(array), len, headroom)
     {
     }
 
-    uint8_t * get_data() const {
+    InStream() = delete;
+    InStream(InStream &&) = default;
+    InStream(InStream const &) = delete;
+    InStream & operator=(InStream &&) = default;
+    InStream & operator=(InStream const &) = delete;
+
+    uint8_t const * get_data() const {
         return this->begin;
     }
 
-    uint8_t * get_current() const {
+    uint8_t const * get_current() const {
         return this->p.p;
     }
 
@@ -318,22 +329,34 @@ public:
 };
 
 
-
-class OutStream {
+class OutStream
+{
     uint8_t * begin;
     uint8_t * end;
     uint8_t * p;
 
 public:
-    explicit OutStream(Array & array, size_t headroom = 0)
-    : begin(array.get_data()+headroom)
-    , end(array.get_data()+array.size())
+    explicit OutStream(uint8_t * array, std::size_t len, std::size_t headroom = 0)
+    : begin(array + headroom)
+    , end(array + len)
     , p(this->begin)
+    {
+        assert(len >= headroom);
+    }
+
+    explicit OutStream(char * array, std::size_t len, std::size_t headroom = 0)
+    : OutStream(reinterpret_cast<uint8_t*>(array), len, headroom)
     {
     }
 
+    OutStream() = delete;
+    OutStream(OutStream &&) = default;
+    OutStream(OutStream const &) = delete;
+    OutStream & operator=(OutStream &&) = default;
+    OutStream & operator=(OutStream const &) = delete;
 
     size_t tailroom() const {
+        TODO("check test below, it shouldn't be necessary. Allow negative remain ?");
         if (this->end <= this->p){
             return 0;
         }
@@ -350,6 +373,10 @@ public:
 
     uint8_t * get_current() const {
         return this->p;
+    }
+
+    size_t get_offset() const {
+        return static_cast<size_t>(this->p - this->begin);
     }
 
     // =========================================================================
@@ -739,6 +766,46 @@ public:
         ER_CLASS_PRIV           = 0xC0  // 1 1
     };
 };
+
+
+template<std::size_t N, class StreamBase>
+struct BasicStaticStream : StreamBase
+{
+    explicit BasicStaticStream(std::size_t headroom = 0)
+    : StreamBase(this->array_, N, headroom)
+    {}
+
+    BasicStaticStream(BasicStaticStream const &) = delete;
+    BasicStaticStream & operator = (BasicStaticStream const &) = delete;
+
+    using array_type = uint8_t[N];
+
+    array_type & buf() { return this->array_; }
+    array_type const & buf() const { return this->array_; }
+    std::size_t buf_size() const { return N; }
+
+private:
+    uint8_t array_[N];
+};
+
+template<std::size_t N>
+using StaticOutStream = BasicStaticStream<N, OutStream>;
+
+template<std::size_t N>
+using StaticInStream = BasicStaticStream<N, InStream>;
+
+
+inline InStream substream(const InStream & stream, std::size_t new_size, std::size_t offset = 0) {
+    if ((offset + new_size) > stream.in_remain()){
+        LOG(LOG_ERR, "substream definition outside underlying stream stream.remain=%u offset=%u new_size=%u",
+            static_cast<unsigned>(stream.in_remain()),
+            static_cast<unsigned>(offset),
+            static_cast<unsigned>(new_size));
+        throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
+    }
+    return InStream(stream.get_current() + offset, new_size);
+}
+
 
 class Stream {
 public:
@@ -1588,7 +1655,8 @@ class SubStream : public Stream {
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
-        this->p = this->data = stream.get_data() + offset;
+        TODO("IMPORTANT: This is bad cast")
+        this->p = this->data = const_cast<uint8_t *>(stream.get_data()) + offset;
         this->capacity = (new_size == 0)?(stream.size() - offset):new_size;
         this->end = this->data + this->capacity;
     }
@@ -1596,27 +1664,6 @@ class SubStream : public Stream {
     // Not allowed on SubStreams
     void init(size_t) override {}
 };
-
-class SubStreamArray : public Stream {
-    public:
-    explicit SubStreamArray(const Array & array, size_t offset = 0, size_t new_size = 0)
-    {
-        if ((offset + new_size) > array.size()){
-            LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
-                static_cast<unsigned>(array.size()),
-                static_cast<unsigned>(offset),
-                static_cast<unsigned>(new_size));
-            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
-        }
-        this->p = this->data = array.get_data() + offset;
-        this->capacity = (new_size == 0)?(array.size() - offset):new_size;
-        this->end = this->data + this->capacity;
-    }
-
-    // Not allowed on SubStreams
-    void init(size_t) override {}
-};
-
 
 // FixedSizeStream does not allocate/reallocate any buffer
 class FixedSizeStream : public Stream {
@@ -1666,20 +1713,20 @@ class StaticStream : public FixedSizeStream {
     }
 };
 
-template<std::size_t N>
-class StaticFixedSizeStream : public Stream {
-    uint8_t buf[N];
-
-public:
-    StaticFixedSizeStream(){
-        this->p = this->data = buf;
-        this->capacity = N;
-        this->end = this->buf + this->capacity;
-    }
-
-    // Not allowed on SubStreams
-    void init(size_t) override {}
-};
+// template<std::size_t N>
+// class StaticFixedSizeStream : public Stream {
+//     uint8_t buf[N];
+//
+// public:
+//     StaticFixedSizeStream(){
+//         this->p = this->data = buf;
+//         this->capacity = N;
+//         this->end = this->buf + this->capacity;
+//     }
+//
+//     // Not allowed on SubStreams
+//     void init(size_t) override {}
+// };
 
 typedef StaticStream ReadOnlyStream;
 typedef FixedSizeStream WriteOnlyStream;

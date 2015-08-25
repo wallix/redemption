@@ -478,8 +478,8 @@ public:
         auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
             uint16_t delta = cmd.data[i++];
             if (delta == 0x80) {
-                StaticStream stream(cmd.data + i, sizeof(uint16_t));
-                i += stream.get_capacity();
+                Parse stream(cmd.data + i);
+                i += sizeof(uint16_t);
 
                 delta = stream.in_uint16_le();
             }

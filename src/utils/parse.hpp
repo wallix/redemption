@@ -28,13 +28,13 @@
 
 class Parse {
 public:
-    uint8_t * p;
+    uint8_t const * p;
 
 public:
-    explicit Parse(uint8_t * p) : p(p) {}
+    explicit Parse(uint8_t const * p) : p(p) {}
 
     int8_t in_sint8(void) {
-        return *(reinterpret_cast<int8_t*>(this->p++));
+        return *(reinterpret_cast<int8_t const *>(this->p++));
     }
 
     uint8_t in_uint8(void) {

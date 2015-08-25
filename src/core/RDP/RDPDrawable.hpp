@@ -461,9 +461,9 @@ public:
             uint16_t & draw_pos_ref, int16_t offset_y, Color color,
             int16_t bmp_pos_x, int16_t bmp_pos_y, Rect const & clip,
             uint8_t cache_id, const GlyphCache * gly_cache) {
-        StaticStream variable_bytes(data, size);
+        InStream variable_bytes(data, size);
 
-        uint8_t * fragment_begin_position = variable_bytes.p;
+        uint8_t const * fragment_begin_position = variable_bytes.get_current();
 
         while (variable_bytes.in_remain())
         {
@@ -520,7 +520,7 @@ public:
                         "fragment_index=%u fragment_size=%u delta=%u",
                     fragment_index, this->fragment_cache[fragment_index][0], delta);
 
-                fragment_begin_position = variable_bytes.p;
+                fragment_begin_position = variable_bytes.get_current();
 
                 this->draw_VariableBytes(&this->fragment_cache[fragment_index][1],
                     this->fragment_cache[fragment_index][0], has_delta_bytes,
@@ -541,7 +541,7 @@ public:
 
                 REDASSERT(!variable_bytes.in_remain());
 
-                REDASSERT(fragment_begin_position + fragment_size + 3 == variable_bytes.p);
+                REDASSERT(fragment_begin_position + fragment_size + 3 == variable_bytes.get_current());
 
                 this->fragment_cache[fragment_index][0] = fragment_size;
                 ::memcpy(&this->fragment_cache[fragment_index][1],
@@ -549,7 +549,7 @@ public:
                          fragment_size
                         );
 
-                fragment_begin_position = variable_bytes.p;
+                fragment_begin_position = variable_bytes.get_current();
             }
         }
     }

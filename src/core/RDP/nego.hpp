@@ -281,10 +281,11 @@ struct RdpNego
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
-        Array array(65536);
-        uint8_t * end = array.get_data();
-        X224::RecvFactory f(this->trans, &end, array.size());
-        InStream stream(array, 0, 0, end - array.get_data());
+        constexpr size_t array_size = AUTOSIZE;
+        uint8_t array[array_size];
+        uint8_t * end = array;
+        X224::RecvFactory f(this->trans, &end, array_size);
+        InStream stream(array, end - array);
         X224::CC_TPDU_Recv x224(stream);
 
         if (x224.rdp_neg_type == 0){
@@ -555,10 +556,11 @@ struct RdpNego
 //         // Receive Request
 //         {
 //
-//             Array array(65536);
-//             uint8_t * end = array.get_data();
-//             X224::RecvFactory fac_x224(this->trans, &end, array.size());
-//             InStream stream(array, 0, 0, end - array.get_data());
+//             constexpr size_t array_size = AUTOSIZE;
+//             uint8_t array[array_size];
+//             uint8_t * end = array;
+//             X224::RecvFactory fac_x224(this->trans, &end, array_size);
+//             InStream stream(array, end - array);
 //             X224::CR_TPDU_Recv x224(stream, false);
 //             if (x224._header_size != (size_t)(stream.size())){
 //                 LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"

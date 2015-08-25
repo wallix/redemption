@@ -111,8 +111,9 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
 
-    Array array(1024);
-    OutStream deltaPoints(array);
+    constexpr std::size_t array_size = 1024;
+    uint8_t array[array_size];
+    OutStream deltaPoints(array, array_size);
 
     deltaPoints.out_sint16_le(0);
     deltaPoints.out_sint16_le(20);
@@ -137,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
 
     deltaPoints.mark_end();
 
-    SubStreamArray dp(array, 0, deltaPoints.size());
+    StaticStream dp(array, deltaPoints.size());
 
     gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect);
 

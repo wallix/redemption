@@ -2015,10 +2015,11 @@ public:
                         LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
                     }
                     {
-                        Array array(65536);
-                        uint8_t * end = array.get_data();
-                        X224::RecvFactory f(this->nego.trans, &end, array.size());
-                        InStream x224_data(array, 0, 0, end - array.get_data());
+                        constexpr std::size_t array_size = 65536;
+                        uint8_t array[array_size];
+                        uint8_t * end = array;
+                        X224::RecvFactory f(this->nego.trans, &end, array_size);
+                        InStream x224_data(array, end - array);
                         X224::DT_TPDU_Recv x224(x224_data);
 
                         MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
@@ -2271,10 +2272,11 @@ public:
                     }
                     {
                         {
-                            Array array(65536);
-                            uint8_t * end = array.get_data();
-                            X224::RecvFactory f(this->nego.trans, &end, array.size());
-                            InStream stream(array, 0, 0, end - array.get_data());
+                            constexpr size_t array_size = AUTOSIZE;
+                            uint8_t array[array_size];
+                            uint8_t * end = array;
+                            X224::RecvFactory f(this->nego.trans, &end, array_size);
+                            InStream stream(array, end - array);
                             X224::DT_TPDU_Recv x224(stream);
                             SubStream & payload = x224.payload;
 
@@ -2303,10 +2305,11 @@ public:
                                 X224::DT_TPDU_Send(x224_header, mcs_cjrq_data.size());
                                 this->nego.trans.send(x224_header, mcs_cjrq_data);
 
-                                Array array(65536);
-                                uint8_t * end = array.get_data();
-                                X224::RecvFactory f(this->nego.trans, &end, array.size());
-                                InStream x224_data(array, 0, 0, end - array.get_data());
+                                constexpr size_t array_size = AUTOSIZE;
+                                uint8_t array[array_size];
+                                uint8_t * end = array;
+                                X224::RecvFactory f(this->nego.trans, &end, array_size);
+                                InStream x224_data(array, end - array);
 
                                 X224::DT_TPDU_Recv x224(x224_data);
                                 SubStream & mcs_cjcf_data = x224.payload;
@@ -2474,10 +2477,11 @@ public:
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
-                        Array array(65536);
-                        uint8_t * end = array.get_data();
-                        X224::RecvFactory f(this->nego.trans, &end, array.size());
-                        InStream stream(array, 0, 0, end - array.get_data());
+                        constexpr size_t array_size = AUTOSIZE;
+                        uint8_t array[array_size];
+                        uint8_t * end = array;
+                        X224::RecvFactory f(this->nego.trans, &end, array_size);
+                        InStream stream(array, end - array);
                         X224::DT_TPDU_Recv x224(stream);
                         TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
                         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2723,10 +2727,11 @@ public:
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
                         // Detect fast-path PDU
-                        Array array(65536);
-                        uint8_t * end = array.get_data();
-                        X224::RecvFactory fx224(this->nego.trans, &end, array.size(), true);
-                        InStream stream(array, 0, 0, end - array.get_data());
+                        constexpr std::size_t array_size = 65536;
+                        uint8_t array[array_size];
+                        uint8_t * end = array;
+                        X224::RecvFactory fx224(this->nego.trans, &end, array_size, true);
+                        InStream stream(array, end - array);
 
                         if (fx224.fast_path) {
                             FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt);

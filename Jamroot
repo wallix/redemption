@@ -370,7 +370,7 @@ exe rdpproxy
         krb5
         gssglue
     :
-        <link>static
+#         <link>static
         <variant>coverage:<library>gcov
         <variant>coverage:<build>no
     ;
@@ -392,7 +392,7 @@ exe redrec
         snappy
 #        lzma
     :
-        <link>static
+#         <link>static
         <variant>coverage:<library>gcov
         <variant>coverage:<build>no
     ;
@@ -411,7 +411,7 @@ exe reddec
 
         snappy
     :
-        <link>static
+#         <link>static
     ;
 
 exe redver
@@ -429,7 +429,7 @@ exe redver
 
         snappy
     :
-        <link>static
+#         <link>static
     ;
 
 exe rdptproxy
@@ -452,7 +452,7 @@ exe rdptproxy
         krb5
         gssglue
     :
-        <link>static
+#         <link>static
         <variant>coverage:<library>gcov
         <variant>coverage:<build>no
     ;
@@ -475,7 +475,7 @@ exe rdptanalyzer
         krb5
         gssglue
     :
-        <link>static
+#         <link>static
         <variant>coverage:<library>gcov
         <variant>coverage:<build>no
     ;
@@ -485,16 +485,20 @@ exe rdptanalyzer
 #
 
 exe tls_test_client
-    : src/ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy
-    : <link>static
-    <variant>coverage:<library>gcov
-    <variant>coverage:<build>no
+    :
+        src/ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy
+    :
+#         <link>static
+        <variant>coverage:<library>gcov
+        <variant>coverage:<build>no
  ;
 exe tls_test_server
-    : src/ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy
-    : <link>static
-    <variant>coverage:<library>gcov
-    <variant>coverage:<build>no
+    :
+        src/ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy
+    :
+#         <link>static
+        <variant>coverage:<library>gcov
+        <variant>coverage:<build>no
 ;
 
 exe make_cpp_config
