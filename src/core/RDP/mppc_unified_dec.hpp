@@ -49,7 +49,7 @@ public:
         }
     }
 
-    int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
+    int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
         if (!this->mppc_dec) {
             const int type = ctype & 0x0f;
             switch (type) {

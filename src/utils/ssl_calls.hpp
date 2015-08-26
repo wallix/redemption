@@ -489,6 +489,34 @@ struct CryptContext
         this->use_count++;
     }
 
+    /* Decrypt data using RC4 */
+    void decrypt(uint8_t const * data, size_t data_size, uint8_t * out_data)
+    {
+        ssllib ssl;
+
+        if (this->use_count == 4096) {
+            size_t keylen = (this->encryptionMethod==1)?8:16;
+
+            Sign sign(this->update_key, keylen);
+            sign.update(this->key, keylen);
+            sign.final(this->key, sizeof(key));
+
+            this->rc4.set_key(this->key, keylen);
+
+            // size, in, out
+            this->rc4.crypt(keylen, this->key, this->key);
+
+            if (this->encryptionMethod == 1){
+                ssl.sec_make_40bit(this->key);
+            }
+            this->rc4.set_key(this->key, keylen);
+            this->use_count = 0;
+        }
+        // size, in, out
+        this->rc4.crypt(data_size, data, out_data);
+        this->use_count++;
+    }
+
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void sign(const uint8_t * data, size_t data_size, uint8_t (&signature)[8])
     {

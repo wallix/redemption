@@ -25,17 +25,19 @@
 #define HASH_LEN 64
 #endif
 
-static inline bool check_file_hash_sha256( const char * file_path
-                    , const Stream & crypto_key
-                    , uint8_t const * hash_buf
-                    , size_t    hash_len
-                    , size_t len_to_check) {
-
+static inline bool check_file_hash_sha256(
+    const char * file_path,
+    uint8_t const * crypto_key,
+    size_t          key_len,
+    uint8_t const * hash_buf,
+    size_t          hash_len,
+    size_t len_to_check
+) {
     if (SHA256_DIGEST_LENGTH != hash_len){
         return false;
     }
 
-    SslHMAC_Sha256 hmac(crypto_key.get_data(), crypto_key.size());
+    SslHMAC_Sha256 hmac(crypto_key, key_len);
 
     io::posix::fdbuf file;
     file.open(file_path, O_RDONLY);
@@ -236,13 +238,17 @@ int read_line(  FileDescriptor fd
     while (true);
 }
 
-bool check_file_hash(const char * file_path, const Stream & crypto_key, const char (&hash)[HASH_LEN], bool quick_check)
-{
+bool check_file_hash(
+    const char * file_path,
+    uint8_t const * crypto_key, size_t key_len,
+    const char (&hash)[HASH_LEN],
+    bool quick_check
+) {
     uint8_t const * hash_ = reinterpret_cast<uint8_t const *>(hash);
     if (quick_check){
-        return check_file_hash_sha256(file_path, crypto_key, hash_, HASH_LEN / 2, 4096);
+        return check_file_hash_sha256(file_path, crypto_key, key_len, hash_, HASH_LEN / 2, 4096);
     }
-    return check_file_hash_sha256(file_path, crypto_key, hash_ + (HASH_LEN / 2), HASH_LEN / 2, 0);
+    return check_file_hash_sha256(file_path, crypto_key, key_len, hash_ + (HASH_LEN / 2), HASH_LEN / 2, 0);
 }
 
 // opaque_stream should be initialized before the first call to read_line.
@@ -324,9 +330,7 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
     TODO("Add unit test for this function")
     bool result = false;
 
-    StaticStream ss_hmac_key(cctx->hmac_key, sizeof(cctx->hmac_key));
-
-    if (check_file_hash(file_path, ss_hmac_key, hash, false) == true) {
+    if (check_file_hash(file_path, cctx->hmac_key, sizeof(cctx->hmac_key), hash, false) == true) {
 
         unsigned char derivator[DERIVATOR_LENGTH];
         get_derivator(file_path, derivator, DERIVATOR_LENGTH);
@@ -374,14 +378,16 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
                     if ((extract_file_info_result > 0)
                         && (((quick_check)
                             && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
-                                        , ss_hmac_key
+                                        , cctx->hmac_key
+                                        , sizeof(cctx->hmac_key)
                                         , _4kb_hash.get_data()
                                         , _4kb_hash.size()
                                         , 4096) == false)
                            )
                           || ((!quick_check)
                             && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
-                                        , ss_hmac_key
+                                        , cctx->hmac_key
+                                        , sizeof(cctx->hmac_key)
                                         , full_hash.get_data()
                                         , full_hash.size()
                                         , 0) == false)

@@ -28,6 +28,7 @@
 #include "RDP/mppc.hpp"
 #include "ssl_calls.hpp"
 
+
 namespace FastPath {
 
 // [MS-RDPBCGR] - 2.2.8.1.2 Client Fast-Path Input Event PDU (TS_FP_INPUT_PDU)
@@ -192,7 +193,7 @@ namespace FastPath {
         uint8_t   dataSignature[8];
         InStream payload;
 
-        ClientInputEventPDU_Recv(InStream & stream, CryptContext & decrypt)
+        ClientInputEventPDU_Recv(InStream & stream, CryptContext & decrypt, uint8_t * out_decrypt_stream)
         : fpInputHeader(stream.in_uint8())
         , action([this](){
             uint8_t action = this->fpInputHeader & 0x03;
@@ -213,8 +214,10 @@ namespace FastPath {
         }())
         , fipsInformation(0)
         , dataSignature{}
-        , payload([&stream, &decrypt, this](){
+        , payload([&stream, &decrypt, out_decrypt_stream, this](){
             TODO("RZ: Should we treat fipsInformation ?");
+
+            InStream istream(stream.get_current(), stream.in_remain());
 
             if ( 0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED)) {
                 const unsigned expected =
@@ -229,17 +232,19 @@ namespace FastPath {
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
-                TODO("IMPORTANT: This is bad cast")
-                decrypt.decrypt(const_cast<uint8_t*>(stream.get_data()) + stream.get_offset(), stream.in_remain());
+                REDASSERT(out_decrypt_stream);
+                decrypt.decrypt(stream.get_current(), stream.in_remain(), out_decrypt_stream);
+
+                istream = InStream(out_decrypt_stream, stream.in_remain());
             }
 
             if (this->numEvents == 0) {
-                this->numEvents = stream.in_uint8();
+                this->numEvents = istream.in_uint8();
             }
-            return InStream(stream.get_current(), stream.in_remain());
+            return istream;
         }())
         {
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.capacity());
         }   // ClientInputEventPDU_Recv(Stream & stream)
     };  // struct ClientInputEventPDU_Recv
 
@@ -808,7 +813,7 @@ namespace FastPath {
         uint8_t   dataSignature[8];
         InStream payload;
 
-        ServerUpdatePDU_Recv(InStream & stream, CryptContext & decrypt)
+        ServerUpdatePDU_Recv(InStream & stream, CryptContext & decrypt, uint8_t * out_decrypt_stream)
         : fpOutputHeader(stream.in_uint8())
         , action([](uint8_t fpOutputHeader){
             uint8_t action = fpOutputHeader & 0x03;
@@ -829,7 +834,7 @@ namespace FastPath {
             return 0;
             }())
         , dataSignature{}
-        , payload([&stream, this, &decrypt]()
+        , payload([&stream, &decrypt, out_decrypt_stream, this]()
         {
             TODO("we should move that to some decrypt utility method (in stream ?)");
             if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
@@ -840,14 +845,17 @@ namespace FastPath {
                     throw Error(ERR_RDP_FASTPATH);
                 }
                 stream.in_copy_bytes(this->dataSignature, 8);
-                TODO("IMPORTANT: This is bad cast")
-                decrypt.decrypt(const_cast<uint8_t*>(stream.get_data()) + stream.get_offset(), stream.in_remain());
+
+                REDASSERT(out_decrypt_stream);
+                decrypt.decrypt(stream.get_current(), stream.in_remain(), out_decrypt_stream);
+
+                return InStream(out_decrypt_stream, stream.in_remain());
             }
             return InStream(stream.get_current(), stream.in_remain());
         }())
         // Body of constructor
         {
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.capacity());
         } // ServerUpdatePDU_Recv(Stream & stream, CryptContext & decrypt)
     }; // struct ServerUpdatePDU_Recv
 
@@ -1160,9 +1168,7 @@ namespace FastPath {
                 const uint8_t * rdata;
                 uint32_t        rlen;
 
-                TODO("IMPORTANT: This is bad cast")
-                dec->decompress(const_cast<uint8_t*>(stream.get_data()) + stream.get_offset(), size,
-                    compressionFlags, rdata, rlen);
+                dec->decompress(stream.get_current(), size, compressionFlags, rdata, rlen);
 
                 return SubStream(StaticStream(rdata, rlen), 0, rlen);
             }

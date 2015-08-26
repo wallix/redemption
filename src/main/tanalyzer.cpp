@@ -277,7 +277,7 @@ public:
     }
 
     void send_fastpath_data(InStream & data) override {
-        LOG(LOG_INFO, "send_fastpath_data: data_size=%u", data.size());
+        LOG(LOG_INFO, "send_fastpath_data: data_size=%u", data.capacity());
 
         while (data.in_remain()) {
             FastPath::Update_Recv fp_upd_r(data, &this->mppc_dec);

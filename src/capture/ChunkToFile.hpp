@@ -24,6 +24,8 @@
 #include "RDPChunkedDevice.hpp"
 #include "compression_transport_wrapper.hpp"
 #include "config.hpp"
+#include "wrm_label.hpp"
+#include "send_wrm_chunk.hpp"
 
 struct ChunkToFile : public RDPChunkedDevice {
 private:
@@ -75,93 +77,36 @@ public:
                , this->ini.get<cfg::video::wrm_compression_algorithm>());
         }
 
-        this->send_meta_chunk( info_width
-                             , info_height
-                             , info_bpp
-                             , info_cache_0_entries
-                             , info_cache_0_size
-                             , info_cache_1_entries
-                             , info_cache_1_size
-                             , info_cache_2_entries
-                             , info_cache_2_size
+        send_meta_chunk(
+            this->trans_target
+          , this->wrm_format_version
 
-                             , info_number_of_cache
-                             , info_use_waiting_list
+          , info_width
+          , info_height
+          , info_bpp
+          , info_cache_0_entries
+          , info_cache_0_size
+          , info_cache_1_entries
+          , info_cache_1_size
+          , info_cache_2_entries
+          , info_cache_2_size
 
-                             , info_cache_0_persistent
-                             , info_cache_1_persistent
-                             , info_cache_2_persistent
+          , info_number_of_cache
+          , info_use_waiting_list
 
-                             , info_cache_3_entries
-                             , info_cache_3_size
-                             , info_cache_3_persistent
-                             , info_cache_4_entries
-                             , info_cache_4_size
-                             , info_cache_4_persistent
-                             );
-    }
+          , info_cache_0_persistent
+          , info_cache_1_persistent
+          , info_cache_2_persistent
 
-private:
-    void send_meta_chunk( uint16_t info_width
-                        , uint16_t info_height
-                        , uint16_t info_bpp
-                        , uint16_t info_cache_0_entries
-                        , uint16_t info_cache_0_size
-                        , uint16_t info_cache_1_entries
-                        , uint16_t info_cache_1_size
-                        , uint16_t info_cache_2_entries
-                        , uint16_t info_cache_2_size
+          , info_cache_3_entries
+          , info_cache_3_size
+          , info_cache_3_persistent
+          , info_cache_4_entries
+          , info_cache_4_size
+          , info_cache_4_persistent
 
-                        , uint16_t info_number_of_cache
-                        , bool     info_use_waiting_list
-
-                        , bool     info_cache_0_persistent
-                        , bool     info_cache_1_persistent
-                        , bool     info_cache_2_persistent
-
-                        , uint16_t info_cache_3_entries
-                        , uint16_t info_cache_3_size
-                        , bool     info_cache_3_persistent
-                        , uint16_t info_cache_4_entries
-                        , uint16_t info_cache_4_size
-                        , bool     info_cache_4_persistent) {
-        BStream payload(36);
-        payload.out_uint16_le(this->wrm_format_version);
-        payload.out_uint16_le(info_width);
-        payload.out_uint16_le(info_height);
-        payload.out_uint16_le(info_bpp);
-
-        payload.out_uint16_le(info_cache_0_entries);
-        payload.out_uint16_le(info_cache_0_size);
-        payload.out_uint16_le(info_cache_1_entries);
-        payload.out_uint16_le(info_cache_1_size);
-        payload.out_uint16_le(info_cache_2_entries);
-        payload.out_uint16_le(info_cache_2_size);
-
-        if (this->wrm_format_version > 3) {
-            payload.out_uint8(info_number_of_cache);
-            payload.out_uint8(info_use_waiting_list);
-
-            payload.out_uint8(info_cache_0_persistent);
-            payload.out_uint8(info_cache_1_persistent);
-            payload.out_uint8(info_cache_2_persistent);
-
-            payload.out_uint16_le(info_cache_3_entries);
-            payload.out_uint16_le(info_cache_3_size);
-            payload.out_uint8(info_cache_3_persistent);
-            payload.out_uint16_le(info_cache_4_entries);
-            payload.out_uint16_le(info_cache_4_size);
-            payload.out_uint8(info_cache_4_persistent);
-
-            payload.out_uint8(this->compression_wrapper.get_index_algorithm());
-        }
-        payload.mark_end();
-
-        BStream header(8);
-        WRMChunk_Send chunk(header, META_FILE, payload.size(), 1);
-
-        this->trans_target.send(header);
-        this->trans_target.send(payload);
+          , this->compression_wrapper.get_index_algorithm()
+        );
     }
 
 public:
@@ -216,39 +161,43 @@ public:
                     //REDASSERT(info_compression_algorithm < 3);
                 }
 
-                this->send_meta_chunk( info_width
-                                     , info_height
-                                     , info_bpp
-                                     , info_cache_0_entries
-                                     , info_cache_0_size
-                                     , info_cache_1_entries
-                                     , info_cache_1_size
-                                     , info_cache_2_entries
-                                     , info_cache_2_size
 
-                                     , info_number_of_cache
-                                     , info_use_waiting_list
+                send_meta_chunk(
+                    this->trans_target
+                  , this->wrm_format_version
 
-                                     , info_cache_0_persistent
-                                     , info_cache_1_persistent
-                                     , info_cache_2_persistent
+                  , info_width
+                  , info_height
+                  , info_bpp
+                  , info_cache_0_entries
+                  , info_cache_0_size
+                  , info_cache_1_entries
+                  , info_cache_1_size
+                  , info_cache_2_entries
+                  , info_cache_2_size
 
-                                     , info_cache_3_entries
-                                     , info_cache_3_size
-                                     , info_cache_3_persistent
-                                     , info_cache_4_entries
-                                     , info_cache_4_size
-                                     , info_cache_4_persistent
-                                     );
+                  , info_number_of_cache
+                  , info_use_waiting_list
+
+                  , info_cache_0_persistent
+                  , info_cache_1_persistent
+                  , info_cache_2_persistent
+
+                  , info_cache_3_entries
+                  , info_cache_3_size
+                  , info_cache_3_persistent
+                  , info_cache_4_entries
+                  , info_cache_4_size
+                  , info_cache_4_persistent
+
+                  , this->compression_wrapper.get_index_algorithm()
+                );
             }
             break;
 
         case RESET_CHUNK:
             {
-                BStream header(8);
-                WRMChunk_Send chunk(header, RESET_CHUNK, 0, 1);
-
-                this->trans.send(header);
+                send_wrm_chunk(this->trans, RESET_CHUNK, 0, 1);
                 this->trans.next();
             }
             break;
@@ -263,13 +212,8 @@ public:
             }
         default:
             {
-                FixedSizeStream payload(data.p, data.size());
-
-                BStream header(8);
-                WRMChunk_Send chunk(header, chunk_type, payload.size(), chunk_count);
-
-                this->trans.send(header);
-                this->trans.send(payload);
+                send_wrm_chunk(this->trans, chunk_type, data.size(), chunk_count);
+                this->trans.send(data.p, data.size());
             }
             break;
         }

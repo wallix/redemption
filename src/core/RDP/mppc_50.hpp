@@ -73,14 +73,14 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
      *
      * @return        true on success, False on failure
      */
-    bool decompress_50(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
+    bool decompress_50(uint8_t const * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
         //LOG(LOG_INFO, "decompress_50");
 
         uint8_t  * history_ptr  = this->history_ptr;    /* points to next free slot in bistory_buf    */
         uint32_t   d32          = 0;                    /* we process 4 compressed uint8_ts at a time */
         uint16_t   lom          = 0;                    /* length of match                            */
         uint8_t  * src_ptr      = nullptr;              /* used while copying compressed data         */
-        uint8_t  * cptr         = cbuf;                 /* points to next uint8_t in cbuf             */
+        uint8_t const * cptr    = cbuf;                 /* points to next uint8_t in cbuf             */
         uint8_t    cur_uint8_t  = 0;                    /* last uint8_t fetched from cbuf             */
         int        bits_left    = 0;                    /* bits left in d32 for processing            */
         int        cur_bits_left;                       /* bits left in cur_uint8_t for processing    */
@@ -453,7 +453,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
         return true;
     }   // decompress_50
 
-    int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
+    int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
         uint32_t roff   = 0;
         int      result;
 

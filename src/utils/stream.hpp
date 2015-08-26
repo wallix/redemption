@@ -101,7 +101,7 @@ public:
         return this->p.p == this->end;
     }
 
-    size_t size() const {
+    size_t capacity() const {
         return this->end - this->begin;
     }
 
@@ -700,7 +700,7 @@ public:
         this->end = this->p;
     }
 
-    size_t size() const {
+    size_t capacity() const {
         return this->end - this->begin;
     }
 
@@ -784,6 +784,10 @@ struct BasicStaticStream : StreamBase
     array_type const & buf() const { return this->array_; }
     std::size_t buf_size() const { return N; }
 
+    void rewind() {
+        static_cast<StreamBase&>(*this) = StreamBase(this->buf(), this->buf_size());
+    }
+
 private:
     uint8_t array_[N];
 };
@@ -794,6 +798,8 @@ using StaticOutStream = BasicStaticStream<N, OutStream>;
 template<std::size_t N>
 using StaticInStream = BasicStaticStream<N, InStream>;
 
+// class DynamicOutStream;
+// class DynamicInStream;
 
 inline InStream substream(const InStream & stream, std::size_t new_size, std::size_t offset = 0) {
     if ((offset + new_size) > stream.in_remain()){
@@ -1648,16 +1654,16 @@ class SubStream : public Stream {
 
     explicit SubStream(const InStream & stream, size_t offset = 0, size_t new_size = 0)
     {
-        if ((offset + new_size) > stream.size()){
+        if ((offset + new_size) > stream.capacity()){
             LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.size()),
+                static_cast<unsigned>(stream.capacity()),
                 static_cast<unsigned>(offset),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
         TODO("IMPORTANT: This is bad cast")
         this->p = this->data = const_cast<uint8_t *>(stream.get_data()) + offset;
-        this->capacity = (new_size == 0)?(stream.size() - offset):new_size;
+        this->capacity = (new_size == 0)?(stream.capacity() - offset):new_size;
         this->end = this->data + this->capacity;
     }
 

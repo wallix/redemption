@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
     BOOST_CHECK_EQUAL((uint32_t)((X224::PROTOCOL_TLS | X224::PROTOCOL_HYBRID) | X224::PROTOCOL_HYBRID_EX), x224.rdp_neg_requestedProtocols);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
 }
 
 
@@ -134,8 +134,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
     BOOST_CHECK_EQUAL(0, strlen(x224.cookie));
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
@@ -287,8 +287,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     BOOST_CHECK_EQUAL(0, strlen(x224.cookie));
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
@@ -331,8 +331,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
         BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
         BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
 
-        BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-        BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+        BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+        BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
     } catch(Error const &) {
         BOOST_CHECK(false);
     };
@@ -387,8 +387,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_wrong_opcode)
@@ -445,8 +445,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
     BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_code);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU_TLS)
@@ -478,8 +478,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::REASON_NOT_SPECIFIED, x224.tpdu_hdr.reason);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_wrong_opcode)
@@ -532,8 +532,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     BOOST_CHECK_EQUAL(0xC1, x224.tpdu_hdr.invalid_tpdu_var);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.invalid_tpdu_vl);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
-    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
@@ -585,9 +585,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
 
-    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(stream.capacity(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(7, x224._header_size);
-    BOOST_CHECK_EQUAL(x224._header_size + x224.payload.size(), stream.size());
+    BOOST_CHECK_EQUAL(x224._header_size + x224.payload.size(), stream.capacity());
 
     BOOST_CHECK_EQUAL(5, x224.payload.size());
 }

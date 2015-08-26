@@ -36,60 +36,45 @@
 #include "RDP/share.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "wrm_label.hpp"
+#include "send_wrm_chunk.hpp"
 
-class WRMChunk_Send
-{
-    public:
-    WRMChunk_Send(Stream & stream, uint16_t chunktype, uint16_t data_size, uint16_t count)
-    {
-        stream.out_uint16_le(chunktype);
-        stream.out_uint32_le(8 + data_size);
-        stream.out_uint16_le(count);
-        stream.mark_end();
-    }
-};
 
 template <size_t SZ>
 class OutChunkedBufferingTransport : public Transport
 {
     Transport & trans;
     size_t max;
-    BStream stream;
+    StaticOutStream<SZ> stream;
+
+    static_assert(SZ >= 8, "");
 
 public:
     explicit OutChunkedBufferingTransport(Transport & trans)
         : trans(trans)
         , max(SZ-8)
-        , stream(SZ)
     {
     }
 
     void flush() override {
-        this->stream.mark_end();
-        if (this->stream.size() > 0) {
-            BStream header(8);
-            WRMChunk_Send(header, LAST_IMAGE_CHUNK, this->stream.size(), 1);
-            this->trans.send(header);
-            this->trans.send(this->stream);
+        if (this->stream.get_offset() > 0) {
+            send_wrm_chunk(this->trans, LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
+            this->trans.send(this->stream.get_data(), this->stream.get_offset());
+            this->stream.rewind();
         }
     }
 
 private:
     void do_send(const char * const buffer, size_t len) override {
         size_t to_buffer_len = len;
-        while (this->stream.size() + to_buffer_len > max) {
-            BStream header(8);
-            WRMChunk_Send(header, PARTIAL_IMAGE_CHUNK, max, 1);
-            this->trans.send(header);
-            this->trans.send(this->stream);
-            size_t to_send = max - this->stream.size();
+        while (this->stream.get_offset() + to_buffer_len > this->max) {
+            send_wrm_chunk(this->trans, PARTIAL_IMAGE_CHUNK, this->max, 1);
+            this->trans.send(this->stream.get_data(), this->stream.get_offset());
+            size_t to_send = this->max - this->stream.get_offset();
             this->trans.send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
-            this->stream.reset();
+            this->stream.rewind();
         }
         this->stream.out_copy_bytes(buffer + len - to_buffer_len, to_buffer_len);
-        REDOC("Marking end here is necessary for chunking")
-        this->stream.mark_end();
     }
 };
 
@@ -118,7 +103,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     const bool send_input;
     RDPDrawable & drawable;
 
-    BStream keyboard_buffer_32;
+    StaticOutStream<GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)> keyboard_buffer_32;
 
     const Inifile & ini;
 
@@ -159,7 +144,6 @@ public:
     , mouse_y(0)
     , send_input(send_input == SendInput::YES)
     , drawable(drawable)
-    , keyboard_buffer_32(GTF_SIZE_KEYBUF_REC * sizeof(uint32_t))
     , ini(ini)
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
     //, verbose(verbose)
@@ -211,52 +195,43 @@ public:
 
     void send_meta_chunk(void)
     {
-        BStream header(8);
-        BStream payload(36);
-        payload.out_uint16_le(this->wrm_format_version);
-        payload.out_uint16_le(this->width);
-        payload.out_uint16_le(this->height);
-        payload.out_uint16_le(this->capture_bpp);
-
         const BmpCache::cache_ & c0 = this->bmp_cache.get_cache(0);
         const BmpCache::cache_ & c1 = this->bmp_cache.get_cache(1);
         const BmpCache::cache_ & c2 = this->bmp_cache.get_cache(2);
+        const BmpCache::cache_ & c3 = this->bmp_cache.get_cache(3);
+        const BmpCache::cache_ & c4 = this->bmp_cache.get_cache(4);
 
-        payload.out_uint16_le(c0.entries());
-        payload.out_uint16_le(c0.bmp_size());
-        payload.out_uint16_le(c1.entries());
-        payload.out_uint16_le(c1.bmp_size());
-        payload.out_uint16_le(c2.entries());
-        payload.out_uint16_le(c2.bmp_size());
+        ::send_meta_chunk(
+            this->trans_target
+          , this->wrm_format_version
 
-        if (this->wrm_format_version > 3) {
-            payload.out_uint8(this->bmp_cache.number_of_cache);
-            payload.out_uint8(this->bmp_cache.use_waiting_list ? 1 : 0);
+          , this->width
+          , this->height
+          , this->capture_bpp
 
-            payload.out_uint8(c0.persistent() ? 1 : 0);
-            payload.out_uint8(c1.persistent() ? 1 : 0);
-            payload.out_uint8(c2.persistent() ? 1 : 0);
+          , c0.entries()
+          , c0.bmp_size()
+          , c1.entries()
+          , c1.bmp_size()
+          , c2.entries()
+          , c2.bmp_size()
 
-            const BmpCache::cache_ & c3 = this->bmp_cache.get_cache(3);
-            const BmpCache::cache_ & c4 = this->bmp_cache.get_cache(4);
+          , this->bmp_cache.number_of_cache
+          , this->bmp_cache.use_waiting_list
 
-            payload.out_uint16_le(c3.entries());
-            payload.out_uint16_le(c3.bmp_size());
-            payload.out_uint8(c3.persistent() ? 1 : 0);
-            payload.out_uint16_le(c4.entries());
-            payload.out_uint16_le(c4.bmp_size());
-            payload.out_uint8(c4.persistent() ? 1 : 0);
+          , c0.persistent()
+          , c1.persistent()
+          , c2.persistent()
 
-            // Compression algorithm
-            payload.out_uint8(this->compression_wrapper.get_index_algorithm());
-        }
+          , c3.entries()
+          , c3.bmp_size()
+          , c3.persistent()
+          , c4.entries()
+          , c4.bmp_size()
+          , c4.persistent()
 
-        payload.mark_end();
-
-        WRMChunk_Send chunk(header, META_FILE, payload.size(), 1);
-
-        this->trans_target.send(header);
-        this->trans_target.send(payload);
+          , this->compression_wrapper.get_index_algorithm()
+        );
     }
 
     // this one is used to store some embedded image inside WRM
@@ -268,14 +243,12 @@ public:
 
     void send_reset_chunk()
     {
-        BStream header(8);
-        WRMChunk_Send chunk(header, RESET_CHUNK, 0, 1);
-        this->trans.send(header);
+        send_wrm_chunk(this->trans, RESET_CHUNK, 0, 1);
     }
 
     void send_timestamp_chunk(bool ignore_time_interval = false)
     {
-        BStream payload(12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1);
+        StaticOutStream<12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1> payload;
         payload.out_timeval_to_uint64le_usec(this->timer);
         if (this->send_input) {
             payload.out_uint16_le(this->mouse_x);
@@ -294,22 +267,20 @@ public:
             }
 */
 
-            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.size());
+            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.capacity());
             keyboard_buffer_32.rewind();
         }
         payload.mark_end();
 
-        BStream header(8);
-        WRMChunk_Send chunk(header, TIMESTAMP, payload.size(), 1);
-        this->trans.send(header);
-        this->trans.send(payload);
+        send_wrm_chunk(this->trans, TIMESTAMP, payload.get_offset(), 1);
+        this->trans.send(payload.get_data(), payload.get_offset());
 
         this->last_sent_timer = this->timer;
     }
 
     void send_save_state_chunk()
     {
-        BStream payload(4096);
+        StaticOutStream<4096> payload;
         // RDPOrderCommon common;
         payload.out_uint8(this->common.order);
         payload.out_uint16_le(this->common.clip.x);
@@ -495,10 +466,8 @@ public:
         //------------------------------ missing variable length ---------------
         payload.mark_end();
 
-        BStream header(8);
-        WRMChunk_Send chunk(header, SAVE_STATE, payload.size(), 1);
-        this->trans.send(header);
-        this->trans.send(payload);
+        send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), 1);
+        this->trans.send(payload.get_data(), payload.get_offset());
     }
 
     void save_bmp_caches()
@@ -572,9 +541,7 @@ public:
     void send_orders_chunk()
     {
         this->stream_orders.mark_end();
-        BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count);
-        this->trans.send(header);
+        send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count);
         this->trans.send(this->stream_orders);
         this->order_count = 0;
         this->stream_orders.reset();
@@ -701,9 +668,7 @@ public:
     void send_bitmaps_chunk()
     {
         this->stream_bitmaps.mark_end();
-        BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_BITMAP, this->stream_bitmaps.size(), this->bitmap_count);
-        this->trans.send(header);
+        send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.size(), this->bitmap_count);
         this->trans.send(this->stream_bitmaps);
         this->bitmap_count = 0;
         this->stream_bitmaps.reset();
@@ -716,7 +681,6 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        BStream header(8);
         size_t size =   2           // mouse x
                       + 2           // mouse y
                       + 1           // cache index
@@ -725,53 +689,48 @@ protected:
                       + 32 * 32 * 3 // data
                       + 128         // mask
                       ;
-        WRMChunk_Send chunk(header, POINTER, size, 0);
-        this->trans.send(header);
+        send_wrm_chunk(this->trans, POINTER, size, 0);
 
-        BStream payload(16);
+        StaticOutStream<16> payload;
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
         payload.mark_end();
-        this->trans.send(payload);
+        this->trans.send(payload.get_data(), payload.get_offset());
 
         this->trans.send(cursor.data, cursor.data_size());
         this->trans.send(cursor.mask, cursor.mask_size());
     }
 
     void set_pointer(int cache_idx) override {
-        BStream header(8);
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
                       + 1                   // cache index
                       ;
-        WRMChunk_Send chunk(header, POINTER, size, 0);
-        this->trans.send(header);
+        send_wrm_chunk(this->trans, POINTER, size, 0);
 
-        BStream payload(16);
+        StaticOutStream<16> payload;
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
         payload.mark_end();
-        this->trans.send(payload);
+        this->trans.send(payload.get_data(), payload.get_offset());
     }
 
 public:
     void session_update(const timeval & now, const char * message) override {
         uint16_t message_length = ::strlen(message) + 1;    // Null-terminator is included.
 
-        BStream payload(16);
+        StaticOutStream<16> payload;
         payload.out_timeval_to_uint64le_usec(now);
         payload.out_uint16_le(message_length);
 
         payload.mark_end();
 
-        BStream header(8);
-        WRMChunk_Send chunk(header, SESSION_UPDATE, payload.size() + message_length, 1);
-        this->trans.send(header);
-        this->trans.send(payload);
+        send_wrm_chunk(this->trans, SESSION_UPDATE, payload.get_offset() + message_length, 1);
+        this->trans.send(payload.get_data(), payload.get_offset());
         this->trans.send(message, message_length);
 
         this->last_sent_timer = this->timer;

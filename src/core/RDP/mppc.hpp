@@ -440,7 +440,7 @@ public:
      */
     virtual ~rdp_mppc_dec() {}
 
-    virtual int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) = 0;
+    virtual int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) = 0;
 
     virtual void mini_dump() = 0;
 

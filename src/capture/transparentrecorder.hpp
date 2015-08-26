@@ -49,10 +49,10 @@ public:
 
     void send_fastpath_data(InStream & data) {
         BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
-        this->make_chunk_header(header, CHUNK_TYPE_FASTPATH, data.size());
+        this->make_chunk_header(header, CHUNK_TYPE_FASTPATH, data.capacity());
 
         this->t->send(header);
-        this->t->send(data);
+        this->t->send(data.get_data(), data.capacity());
     }
 
     void send_to_front_channel( const char * const mod_channel_name

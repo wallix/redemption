@@ -2734,7 +2734,7 @@ public:
                         InStream stream(array, end - array);
 
                         if (fx224.fast_path) {
-                            FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt);
+                            FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array);
                             if (this->enable_transparent_mode) {
                                 //total_data_received += su.payload.size();
                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);

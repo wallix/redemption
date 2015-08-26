@@ -190,8 +190,8 @@ struct rdp_mppc_61_dec : public rdp_mppc_dec {
     }
 
 private:
-    static inline void prepare_compressed_data(Stream & compressed_data_stream, bool compressed,
-        uint16_t & MatchCount, uint8_t *& MatchDetails, uint8_t *& Literals,
+    static inline void prepare_compressed_data(InStream & compressed_data_stream, bool compressed,
+        uint16_t & MatchCount, uint8_t const * & MatchDetails, uint8_t const * & Literals,
         size_t & literals_length)
     {
         if (compressed) {
@@ -209,7 +209,7 @@ private:
                     expected, compressed_data_stream.in_remain());
                 throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
             }
-            MatchDetails = compressed_data_stream.p;
+            MatchDetails = compressed_data_stream.get_current();
             compressed_data_stream.in_skip_bytes(expected);
         }
         else {
@@ -218,11 +218,11 @@ private:
         }
 
         literals_length = compressed_data_stream.in_remain();
-        Literals        = (literals_length ? compressed_data_stream.p : nullptr);
+        Literals        = (literals_length ? compressed_data_stream.get_current() : nullptr);
     }
 
 public:
-    int decompress(uint8_t * compressed_data, int compressed_data_size,
+    int decompress(uint8_t const * compressed_data, int compressed_data_size,
         int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size) override {
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
         //    this->historyOffset, compressed_data_size, compressionFlags);
@@ -230,7 +230,7 @@ public:
         uncompressed_data      = nullptr;
         uncompressed_data_size = 0;
 
-        StaticStream compressed_data_stream(compressed_data, compressed_data_size);
+        InStream compressed_data_stream(compressed_data, compressed_data_size);
 
         unsigned expected = 2; // Level1ComprFlags(1) + Level2ComprFlags(1)
         if (!compressed_data_stream.in_check_rem(expected)) {
@@ -248,17 +248,17 @@ public:
             throw Error(ERR_RDP61_DECOMPRESS);
         }
 
-        uint16_t   MatchCount;
-        uint8_t  * MatchDetails;
-        uint8_t  * Literals;
-        size_t     literals_length;
+        uint8_t const * MatchDetails;
+        uint8_t const * Literals;
+        uint16_t MatchCount;
+        size_t   literals_length;
 
         if ((Level1ComprFlags & L1_INNER_COMPRESSION) && (Level2ComprFlags & PACKET_COMPRESSED)) {
 
             const uint8_t * level_1_compressed_data;
             uint32_t        level_1_compressed_data_size;
 
-            bool nResult = this->level_2_decompressor.decompress(compressed_data_stream.p,
+            bool nResult = this->level_2_decompressor.decompress(compressed_data_stream.get_current(),
                 compressed_data_stream.in_remain(), Level2ComprFlags, level_1_compressed_data,
                 level_1_compressed_data_size);
             if (nResult != true) {
@@ -267,8 +267,7 @@ public:
             }
             //LOG(LOG_INFO, "level_1_compressed_data_size=%d", level_1_compressed_data_size);
 
-            StaticStream level_1_compressed_data_stream(level_1_compressed_data,
-                level_1_compressed_data_size);
+            InStream level_1_compressed_data_stream(level_1_compressed_data, level_1_compressed_data_size);
 
             prepare_compressed_data(level_1_compressed_data_stream,
                 !(Level1ComprFlags & L1_NO_COMPRESSION),
@@ -286,10 +285,11 @@ public:
             this->historyOffset = 0;
         }
 
-        StaticStream match_details_stream(MatchDetails,
+
+        InStream match_details_stream(MatchDetails,
             MatchCount *
             8);   // MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4)
-        StaticStream literals_stream(Literals, literals_length);
+        InStream literals_stream(Literals, literals_length);
 
         uint8_t  * current_output_buffer = this->historyBuffer + this->historyOffset;
         uint16_t   current_output_offset = 0;

@@ -136,9 +136,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     deltaPoints.out_sint16_le(-160);
     deltaPoints.out_sint16_le(0);
 
-    deltaPoints.mark_end();
-
-    StaticStream dp(array, deltaPoints.size());
+    StaticStream dp(array, deltaPoints.get_offset());
 
     gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect);
 

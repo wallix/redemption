@@ -72,11 +72,11 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
      *
      * @return        true on success, False on failure
      */
-    int decompress_40(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
+    int decompress_40(uint8_t const * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
         //LOG(LOG_INFO, "decompress_40");
 
         uint8_t  * src_ptr       = nullptr; /* used while copying compressed data         */
-        uint8_t  * cptr          = cbuf;    /* points to next uint8_t in cbuf             */
+        uint8_t const * cptr     = cbuf;    /* points to next uint8_t in cbuf             */
         uint16_t   lom           = 0;       /* length of match                            */
         int        bits_left     = 0;       /* bits left in d34 for processing            */
         int        cur_bits_left = 0;       /* bits left in cur_uint8_t for processing    */
@@ -420,7 +420,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
         return true;
     }   // decompress_40
 
-    int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
+    int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
         uint32_t roff = 0;
         int      result;
 

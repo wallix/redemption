@@ -573,113 +573,13 @@ public:
         const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
         const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
-//        StaticStream aj(cmd.data, cmd.data_len);
-
-        uint16_t draw_pos          = 0;
-//        uint16_t fragment_draw_pos = draw_pos;
+        uint16_t draw_pos = 0;
 
         Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
 
         this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
             draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
             clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
-/*
-        uint8_t * fragment_begin_position = aj.p;
-
-        while (aj.in_remain())
-        {
-            uint8_t data = aj.in_uint8();
-            if (data <= 0xFD)
-            {
-                FontChar const & fc = gly_cache->glyphs[cmd.cache_id][data].font_item;
-                if (!fc)
-                {
-                    LOG( LOG_INFO
-                        , "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph, cacheId=%u cacheIndex=%u"
-                        , cmd.cache_id, data);
-                    REDASSERT(fc);
-                }
-
-                if (has_delta_bytes)
-                {
-                    data = aj.in_uint8();
-                    if (data == 0x80)
-                    {
-                        draw_pos += aj.in_uint16_le();
-                    }
-                    else
-                    {
-                        draw_pos += data;
-                    }
-                }
-                else
-                {
-                    REDASSERT(cmd.ui_charinc);
-                }
-
-                if (fc)
-                {
-                    this->draw_glyph( fc, draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y
-                                    , clipped_glyph_fragment_rect);
-                }
-            }
-            else if (data == 0xFE)
-            {
-                const uint8_t fragment_index = aj.in_uint8();
-
-                uint16_t delta = 0;
-                if (has_delta_bytes)
-                {
-                    delta = aj.in_uint8();
-                    if (delta == 0x80)
-                    {
-                        delta = aj.in_uint16_le();
-                    }
-                }
-                else
-                {
-                    REDASSERT(cmd.ui_charinc);
-                }
-
-                LOG(LOG_WARNING,
-                    "RDPDrawable::draw(RDPGlyphIndex, ...): "
-                        "Experimental support of USE (0xFE) operation byte in "
-                        "GlyphIndex Primary Drawing Order. "
-                        "fragment_index=%u fragment_size=%u delta=%u",
-                    fragment_index, this->fragment_cache[fragment_index][0], delta);
-
-                fragment_begin_position = aj.p;
-
-                fragment_draw_pos = draw_pos;
-            }
-            else if (data == 0xFF)
-            {
-                const uint8_t fragment_index = aj.in_uint8();
-                const uint8_t fragment_size  = aj.in_uint8();
-
-                LOG(LOG_WARNING,
-                    "RDPDrawable::draw(RDPGlyphIndex, ...): "
-                        "Experimental support of ADD (0xFF) operation byte in "
-                        "GlyphIndex Primary Drawing Order. "
-                        "fragment_index=%u fragment_size=%u",
-                    fragment_index, fragment_size);
-
-                REDASSERT(!aj.in_remain());
-
-                REDASSERT(fragment_begin_position + fragment_size + 3 == aj.p);
-
-                this->fragment_cache[fragment_index][0] = fragment_size;
-                ::memcpy(&this->fragment_cache[fragment_index][1],
-                         fragment_begin_position,
-                         fragment_size
-                        );
-
-                fragment_begin_position = aj.p;
-
-                fragment_draw_pos = draw_pos;
-            }
-        }
-*/
     }
 
     void draw(const RDPBrushCache & cmd) override {}
