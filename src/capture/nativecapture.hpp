@@ -111,9 +111,9 @@ public:
         this->recorder.flush();
     }
 
-    bool input(const timeval & now, Stream & input_data_32) override {
+    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
         if (!this->disable_keyboard_log_wrm) {
-            return this->recorder.input(now, input_data_32);
+            return this->recorder.input(now, input_data_32, data_sz);
         }
 
         return true;

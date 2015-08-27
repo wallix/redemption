@@ -23,13 +23,15 @@
 
 #include "noncopyable.hpp"
 
+#include <cstdint>
+
 class Stream;
 
 struct RDPCaptureDevice : noncopyable {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
 
     // Return false to prevent data to be sent to RDP server.
-    virtual bool input(const timeval & now, Stream & input_data_32) { return true; }
+    virtual bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) { return true; }
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
         bool ignore_frame_in_timeval, bool const & requested_to_stop) {}

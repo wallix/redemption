@@ -265,9 +265,9 @@ public:
         }
     }
 
-    bool input(const timeval & now, Stream & input_data_32) override {
+    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
         if (this->capture_wrm) {
-            return this->pnc->input(now, input_data_32);
+            return this->pnc->input(now, input_data_32, data_sz);
         }
 
         return true;

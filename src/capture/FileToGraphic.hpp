@@ -661,26 +661,23 @@ public:
                         this->input[this->input_len] = 0;
                         this->stream.p = this->stream.end;
 
-                        StaticStream ss(this->input, this->input_len);
-
                         for (size_t i = 0; i < this->nbconsumers; i++){
                             if (this->consumers[i].capture_device) {
-                                this->consumers[i].capture_device->input(this->record_now, ss);
+                                this->consumers[i].capture_device->input(this->record_now, this->input, this->input_len);
                             }
                         }
 
                         if (this->verbose > 16) {
-                            while (ss.in_check_rem(4)) {
+                            while (this->input_len >= 4) {
                                 uint8_t         key8[6];
-                                const uint8_t * key32 = ss.in_uint8p(4);
-                                const size_t    len = UTF32toUTF8(key32, 4, key8, sizeof(key8));
+                                const size_t    len = UTF32toUTF8(this->input, 4, key8, sizeof(key8));
                                 key8[len] = 0;
 
                                 LOG( LOG_INFO, "TIMESTAMP %u.%u keyboard '%s'(0x%X)"
                                    , this->record_now.tv_sec
                                    , this->record_now.tv_usec
                                    , key8
-                                   , key32);
+                                   , this->input);
                             }
                         }
                     }

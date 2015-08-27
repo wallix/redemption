@@ -190,11 +190,11 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    bool input(const timeval & now, Stream & input_data_32) override {
-        uint32_t count  = input_data_32.size() / sizeof(uint32_t);
+    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
+        uint32_t count  = data_sz / sizeof(uint32_t);
 
         size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
-        keyboard_buffer_32.out_copy_bytes(input_data_32.get_data(), c * sizeof(uint32_t));
+        keyboard_buffer_32.out_copy_bytes(input_data_32, c * sizeof(uint32_t));
 
         return true;
     }

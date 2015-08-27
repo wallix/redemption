@@ -2087,46 +2087,7 @@ public:
                                     ke.spKeyboardFlags, ke.keyCode);
                             }
 
-                            BStream decoded_data(256);
-                            bool    tsk_switch_shortcuts;
-
-                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
-                            decoded_data.mark_end();
-                            //LOG(LOG_INFO, "Decoded keyboard input data:");
-                            //hexdump_d(decoded_data.get_data(), decoded_data.size());
-
-                            bool send_to_mod = true;
-
-                            if (  this->capture
-                               && (this->capture_state == CAPTURE_STATE_STARTED)
-                               && decoded_data.size()) {
-                                if (this->focus_on_password_textbox) {
-                                    unsigned char_count = decoded_data.size() / sizeof(uint32_t);
-                                    decoded_data.reset();
-                                    for (; char_count > 0; char_count--) {
-                                        // Unicode Character 'BLACK CIRCLE' (U+25CF).
-                                        decoded_data.out_uint32_le(0x25CF);
-                                    }
-                                    decoded_data.mark_end();
-                                }
-
-                                struct timeval now = tvtime();
-
-                                send_to_mod = this->capture->input(now, decoded_data);
-                            }
-
-                            if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
-                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
-                                }
-                                else {
-                                    if (!this->input_event_and_graphics_update_disabled &&
-                                        send_to_mod) {
-                                        cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
-                                    }
-                                    this->has_activity = true;
-                                }
-                            }
+                            this->input_event_scancode(ke, cb, 0);
                         }
                         break;
 
@@ -3411,46 +3372,7 @@ public:
                                     ie.eventTime, ke.keyboardFlags, ke.keyCode);
                             }
 
-                            BStream decoded_data(256);
-                            bool    tsk_switch_shortcuts;
-
-                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
-                            decoded_data.mark_end();
-                            //LOG(LOG_INFO, "Decoded keyboard input data:");
-                            //hexdump_d(decoded_data.get_data(), decoded_data.size());
-
-                            bool send_to_mod = true;
-
-                            if (  this->capture
-                               && (this->capture_state == CAPTURE_STATE_STARTED)
-                               && decoded_data.size()) {
-                                if (this->focus_on_password_textbox) {
-                                    unsigned char_count = decoded_data.size() / sizeof(uint32_t);
-                                    decoded_data.reset();
-                                    for (; char_count > 0; char_count--) {
-                                        // Unicode Character 'BLACK CIRCLE' (U+25CF).
-                                        decoded_data.out_uint32_le(0x25CF);
-                                    }
-                                    decoded_data.mark_end();
-                                }
-
-                                struct timeval now = tvtime();
-
-                                send_to_mod = this->capture->input(now, decoded_data);
-                            }
-
-                            if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
-                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
-                                }
-                                else {
-                                    if (!this->input_event_and_graphics_update_disabled &&
-                                        send_to_mod) {
-                                        cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
-                                    }
-                                    this->has_activity = true;
-                                }
-                            }
+                            this->input_event_scancode(ke, cb, ie.eventTime);
                         }
                         break;
 
@@ -4648,6 +4570,58 @@ public:
         const bool res = this->has_activity;
         this->has_activity = false;
         return res;
+    }
+
+private:
+    template<class KeyboardEvent_Recv>
+    void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
+        BStream decoded_data(256);
+        bool    tsk_switch_shortcuts;
+
+        struct KeyboardFlags {
+            static uint16_t get(SlowPath::KeyboardEvent_Recv const & ke) {
+                return ke.keyboardFlags;
+            }
+            static uint16_t get(FastPath::KeyboardEvent_Recv const & ke) {
+                return ke.spKeyboardFlags;
+            }
+        };
+
+        this->keymap.event(KeyboardFlags::get(ke), ke.keyCode, decoded_data, tsk_switch_shortcuts);
+        decoded_data.mark_end();
+        //LOG(LOG_INFO, "Decoded keyboard input data:");
+        //hexdump_d(decoded_data.get_data(), decoded_data.size());
+
+        bool send_to_mod = true;
+
+        if (  this->capture
+            && (this->capture_state == CAPTURE_STATE_STARTED)
+            && decoded_data.size()) {
+            if (this->focus_on_password_textbox) {
+                unsigned char_count = decoded_data.size() / sizeof(uint32_t);
+                decoded_data.reset();
+                for (; char_count > 0; char_count--) {
+                    // Unicode Character 'BLACK CIRCLE' (U+25CF).
+                    decoded_data.out_uint32_le(0x25CF);
+                }
+                decoded_data.mark_end();
+            }
+
+            send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.size());
+        }
+
+        if (this->up_and_running) {
+            if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
+                LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
+            }
+            else {
+                if (!this->input_event_and_graphics_update_disabled &&
+                    send_to_mod) {
+                    cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
+                }
+                this->has_activity = true;
+            }
+        }
     }
 };
 
