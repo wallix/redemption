@@ -155,17 +155,13 @@ class LogTransport
 };
 
 
-class MemoryTransport : public Transport {
-public:
-    BStream         stream;
-    FixedSizeStream in_stream;
-    FixedSizeStream out_stream;
+class MemoryTransport : public Transport
+{
+    uint8_t buf[65536];
 
-    MemoryTransport()
-    : Transport()
-    , stream(65536)
-    , in_stream(stream.get_data(), stream.get_capacity())
-    , out_stream(stream.get_data(), stream.get_capacity()) {}
+public:
+    InStream    in_stream{buf};
+    OutStream   out_stream{buf};
 
     virtual void do_recv(char ** pbuffer, size_t len) {
         char * buffer = *pbuffer;

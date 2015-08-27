@@ -396,19 +396,16 @@ struct TSCredentials {
 
     TSCredentials()
         : credType(1)
-        , passCreds(TSPasswordCreds())
     {}
 
     TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)
         : credType(1)
-        , passCreds(TSPasswordCreds(domain, domain_length,
-                                    user, user_length,
-                                    pass, pass_length))
+        , passCreds(domain, domain_length,
+                    user, user_length,
+                    pass, pass_length)
     {
 
     }
-
-    virtual ~TSCredentials() {}
 
     void set_credentials(const uint8_t * domain, int domain_length, const uint8_t * user,
                          int user_length, const uint8_t * pass, int pass_length) {
@@ -470,8 +467,6 @@ struct TSCredentials {
 
         this->passCreds.recv(ts_credentials);
     }
-
-
 };
 
 

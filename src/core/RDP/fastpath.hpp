@@ -244,7 +244,7 @@ namespace FastPath {
             return istream;
         }())
         {
-            stream.in_skip_bytes(this->payload.capacity());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }   // ClientInputEventPDU_Recv(Stream & stream)
     };  // struct ClientInputEventPDU_Recv
 
@@ -855,7 +855,7 @@ namespace FastPath {
         }())
         // Body of constructor
         {
-            stream.in_skip_bytes(this->payload.capacity());
+            stream.in_skip_bytes(this->payload.get_capacity());
         } // ServerUpdatePDU_Recv(Stream & stream, CryptContext & decrypt)
     }; // struct ServerUpdatePDU_Recv
 

@@ -83,7 +83,7 @@ struct mod_vnc : public InternalMod, private NotifyApi {
             StaticOutStream<12> stream;
             this->write(stream, this->mod_mouse_state | mask);
             this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_data(), stream.buf_size());
+            t.send(stream.get_data(), stream.get_offset());
         }
 
     private:
@@ -101,7 +101,7 @@ struct mod_vnc : public InternalMod, private NotifyApi {
         void send(Transport & t) const {
             StaticOutStream<6> stream;
             this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_data(), stream.buf_size());
+            t.send(stream.get_data(), stream.get_offset());
         }
     } mouse;
 
@@ -546,9 +546,7 @@ public:
 
 private:
     void update_screen(const Rect & r, uint8_t incr = 1) {
-        uint8_t data[10];
-        FixedSizeStream stream(data, sizeof(data));
-        stream.end = stream.p;
+        StaticOutStream<10> stream;
         /* FramebufferUpdateRequest */
         stream.out_uint8(3);
         stream.out_uint8(incr);
@@ -556,7 +554,7 @@ private:
         stream.out_uint16_be(r.y);
         stream.out_uint16_be(r.cx);
         stream.out_uint16_be(r.cy);
-        this->t.send(stream.get_data(), 10);
+        this->t.send(stream.get_data(), stream.get_offset());
     } // rdp_input_invalidate
 
 public:
@@ -727,12 +725,10 @@ public:
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
             if (this->is_socket_transport && static_cast<SocketTransport&>(this->t).can_recv()) {
-                uint8_t data[1];
-                FixedSizeStream stream(data, 1);
-                stream.end = stream.p;
                 try {
-                    this->t.recv(&stream.end, 1);
-                    char type = stream.in_uint8();  /* message-type */
+                    uint8_t type; /* message-type */
+                    uint8_t * end = &type;
+                    this->t.recv(&end, 1);
                     switch (type) {
                         case 0: /* framebuffer update */
                             this->lib_framebuffer_update();
@@ -1628,17 +1624,17 @@ private:
     void lib_framebuffer_update() throw (Error) {
     //==============================================================================================================
         uint8_t data_rec[256];
-        FixedSizeStream stream_rec(data_rec, sizeof(data_rec));
-        stream_rec.end = stream_rec.p;
-        this->t.recv(&stream_rec.end, 3);
+        InStream stream_rec(data_rec);
+        uint8_t * end = data_rec;
+        this->t.recv(&end, 3);
         stream_rec.in_skip_bytes(1);
         size_t num_recs = stream_rec.in_uint16_be();
 
         uint8_t Bpp = nbbytes(this->bpp);
         for (size_t i = 0; i < num_recs; i++) {
-            stream_rec.p = stream_rec.get_data();
-            stream_rec.end = stream_rec.get_data();
-            this->t.recv(&stream_rec.end, 12);
+            stream_rec = InStream(data_rec);
+            end = data_rec;
+            this->t.recv(&end, 12);
             const uint16_t x = stream_rec.in_uint16_be();
             const uint16_t y = stream_rec.in_uint16_be();
             const uint16_t cx = stream_rec.in_uint16_be();
@@ -1667,9 +1663,9 @@ private:
             case 1: /* copy rect */
             {
                 uint8_t data_copy_rect[4];
-                FixedSizeStream stream_copy_rect(data_copy_rect, sizeof(data_copy_rect));
-                stream_copy_rect.end = stream_copy_rect.p;
-                this->t.recv(&stream_copy_rect.end, 4);
+                InStream stream_copy_rect(data_copy_rect);
+                uint8_t * end = data_copy_rect;
+                this->t.recv(&end, 4);
                 const int srcx = stream_copy_rect.in_uint16_be();
                 const int srcy = stream_copy_rect.in_uint16_be();
                 //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
@@ -1693,30 +1689,24 @@ private:
                 }
 
                 uint8_t data_rre[256];
-                FixedSizeStream stream_rre(data_rre, sizeof(data_rre));
-                stream_rre.end = stream_rre.p;
+                InStream stream_rre(data_rre);
 
-                this->t.recv(&stream_rre.end,
+                uint8_t * end = data_rre;
+                this->t.recv(&end,
                       4   /* number-of-subrectangles */
                     + Bpp /* background-pixel-value */
                     );
 
-                uint32_t number_of_subrectangles;
-                uint32_t number_of_subrectangles_remain;
-                uint32_t number_of_subrectangles_read;
+                uint32_t number_of_subrectangles_remain = stream_rre.in_uint32_be();
 
-                number_of_subrectangles_remain =
-                number_of_subrectangles        = stream_rre.in_uint32_be();
-
-                uint8_t * bytes_per_pixel = stream_rre.p;
-                stream_rre.in_skip_bytes(Bpp);
+                uint8_t const * bytes_per_pixel = stream_rre.get_current();
 
                 for (uint8_t * point_cur = raw.get(), * point_end = point_cur + cx * cy * Bpp;
                      point_cur < point_end; point_cur += Bpp) {
                     memcpy(point_cur, bytes_per_pixel, Bpp);
                 }
 
-                BStream    subrectangles(65535);
+                uint8_t    subrectangles_buf[65535];
                 uint16_t   subrec_x, subrec_y, subrec_width, subrec_height;
                 uint8_t  * point_line_cur;
                 uint8_t  * point_line_end;
@@ -1724,17 +1714,17 @@ private:
                 uint32_t   ling_boundary;
 
                 while (number_of_subrectangles_remain > 0) {
-                    number_of_subrectangles_read = min<uint32_t>(4096, number_of_subrectangles_remain);
+                    auto number_of_subrectangles_read = min<uint32_t>(4096, number_of_subrectangles_remain);
 
-                    subrectangles.reset();
-                    this->t.recv(&subrectangles.end, (Bpp + 8) * number_of_subrectangles_read);
+                    InStream subrectangles(subrectangles_buf);
+                    end = subrectangles_buf;
+                    this->t.recv(&end, (Bpp + 8) * number_of_subrectangles_read);
 
                     number_of_subrectangles_remain -= number_of_subrectangles_read;
 
                     for (i = 0; i < number_of_subrectangles_read; i++) {
-                        bytes_per_pixel = subrectangles.p;
+                        bytes_per_pixel = subrectangles.get_current();
                         subrectangles.in_skip_bytes(Bpp);
-
                         subrec_x        = subrectangles.in_uint16_be();
                         subrec_y        = subrectangles.in_uint16_be();
                         subrec_width    = subrectangles.in_uint16_be();
@@ -1762,14 +1752,13 @@ private:
             break;
             case 16:    /* ZRLE */
             {
-                uint8_t data_zrle[256];
-                FixedSizeStream stream_zrle(data_zrle, sizeof(data_zrle));
-                stream_zrle.end = stream_zrle.p;
+                uint8_t data_zrle[4];
+                uint8_t * end = data_zrle;
 
                 //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                this->t.recv(&stream_zrle.end, 4);
+                this->t.recv(&end, 4);
 
-                uint32_t zlib_compressed_data_length = stream_zrle.in_uint32_be();
+                uint32_t zlib_compressed_data_length = Parse(data_zrle).in_uint32_be();
 
                 if (this->verbose)
                 {
@@ -1786,10 +1775,10 @@ private:
                     throw Error(ERR_BUFFER_TOO_SMALL);
                 }
 
-                BStream zlib_compressed_data(65536);
-                this->t.recv(&zlib_compressed_data.end,
-                    zlib_compressed_data_length);
-                REDASSERT(zlib_compressed_data.in_remain() == zlib_compressed_data_length);
+                uint8_t zlib_compressed_data[65536];
+                end = zlib_compressed_data;
+                this->t.recv(&end, zlib_compressed_data_length);
+                REDASSERT(end - zlib_compressed_data == zlib_compressed_data_length);
 
                 ZRLEUpdateContext zrle_update_context;
 
@@ -1802,7 +1791,7 @@ private:
                 zrle_update_context.tile_y    = y;
 
                 zstrm.avail_in = zlib_compressed_data_length;
-                zstrm.next_in  = zlib_compressed_data.get_data();
+                zstrm.next_in  = zlib_compressed_data;
 
                 while (zstrm.avail_in > 0)
                 {
@@ -2433,10 +2422,10 @@ private:
                             1                                           // Null character
                         );
 
-                    FixedSizeStream out_data_stream(
-                            out_stream.get_data() + 8 /* clipHeader(8) */,
-                            out_stream.get_capacity() - 8 /* clipHeader(8) */
-                        );
+                    OutStream out_data_stream(
+                        out_stream.get_data() + 8 /* clipHeader(8) */,
+                        out_stream.get_capacity() - 8 /* clipHeader(8) */
+                    );
 
                     const size_t to_rdp_clipboard_data_length =
                         ::linux_to_windows_newline_convert(
@@ -2446,13 +2435,12 @@ private:
                                 out_data_stream.get_capacity()
                             );
                     out_data_stream.out_skip_bytes(to_rdp_clipboard_data_length);
-                    out_data_stream.mark_end();
 
                     const bool response_ok = true;
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
-                    format_data_response_pdu.emit_ex(out_stream, out_data_stream.size());
-                    out_stream.out_skip_bytes(out_data_stream.size());
+                    format_data_response_pdu.emit_ex(out_stream, out_data_stream.get_offset());
+                    out_stream.out_skip_bytes(out_data_stream.get_offset());
                     out_stream.mark_end();
 
                     send_format_data_response(out_stream);
@@ -2470,7 +2458,7 @@ private:
                             1                                           // Null character
                         );
 
-                    FixedSizeStream out_data_stream(
+                    OutStream out_data_stream(
                             out_stream.get_data() + 8 /* clipHeader(8) */,
                             out_stream.get_capacity() - 8 /* clipHeader(8) */
                         );
@@ -2496,13 +2484,12 @@ private:
 
                     out_data_stream.out_skip_bytes(utf16_data_length);
                     out_data_stream.out_uint16_le(0x0000);  // Null character
-                    out_data_stream.mark_end();
 
                     const bool response_ok = true;
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
-                    format_data_response_pdu.emit_ex(out_stream, out_data_stream.size());
-                    out_stream.out_skip_bytes(out_data_stream.size());
+                    format_data_response_pdu.emit_ex(out_stream, out_data_stream.get_offset());
+                    out_stream.out_skip_bytes(out_data_stream.get_offset());
                     out_stream.mark_end();
 
                     send_format_data_response(out_stream);

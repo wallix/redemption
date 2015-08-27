@@ -66,6 +66,24 @@ public:
     {
     }
 
+    template<std::size_t N>
+    explicit InStream(char const (&array)[N])
+    : InStream(reinterpret_cast<uint8_t const *>(array), N)
+    {
+    }
+
+    template<std::size_t N>
+    explicit InStream(uint8_t const (&array)[N])
+    : InStream(array, N)
+    {
+    }
+
+    template<class T>
+    explicit InStream(T const & array)
+    : InStream(array.data(), array.size())
+    {
+    }
+
     InStream() = delete;
     InStream(InStream &&) = default;
     InStream(InStream const &) = delete;
@@ -101,7 +119,7 @@ public:
         return this->p.p == this->end;
     }
 
-    size_t capacity() const {
+    size_t get_capacity() const {
         return this->end - this->begin;
     }
 
@@ -346,6 +364,24 @@ public:
 
     explicit OutStream(char * array, std::size_t len, std::size_t headroom = 0)
     : OutStream(reinterpret_cast<uint8_t*>(array), len, headroom)
+    {
+    }
+
+    template<std::size_t N>
+    explicit OutStream(char (&array)[N])
+    : OutStream(reinterpret_cast<uint8_t*>(array), N)
+    {
+    }
+
+    template<std::size_t N>
+    explicit OutStream(uint8_t (&array)[N])
+    : OutStream(array, N)
+    {
+    }
+
+    template<class T>
+    explicit OutStream(T & array)
+    : OutStream(&array[0], array.size())
     {
     }
 
@@ -700,7 +736,7 @@ public:
         this->end = this->p;
     }
 
-    size_t capacity() const {
+    size_t get_capacity() const {
         return this->end - this->begin;
     }
 
@@ -779,14 +815,6 @@ struct BasicStaticStream : StreamBase
     BasicStaticStream & operator = (BasicStaticStream const &) = delete;
 
     using array_type = uint8_t[N];
-
-    array_type & buf() { return this->array_; }
-    array_type const & buf() const { return this->array_; }
-    std::size_t buf_size() const { return N; }
-
-    void rewind() {
-        static_cast<StreamBase&>(*this) = StreamBase(this->buf(), this->buf_size());
-    }
 
 private:
     uint8_t array_[N];
@@ -1654,16 +1682,16 @@ class SubStream : public Stream {
 
     explicit SubStream(const InStream & stream, size_t offset = 0, size_t new_size = 0)
     {
-        if ((offset + new_size) > stream.capacity()){
+        if ((offset + new_size) > stream.get_capacity()){
             LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.capacity()),
+                static_cast<unsigned>(stream.get_capacity()),
                 static_cast<unsigned>(offset),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
         TODO("IMPORTANT: This is bad cast")
         this->p = this->data = const_cast<uint8_t *>(stream.get_data()) + offset;
-        this->capacity = (new_size == 0)?(stream.capacity() - offset):new_size;
+        this->capacity = (new_size == 0)?(stream.get_capacity() - offset):new_size;
         this->end = this->data + this->capacity;
     }
 
@@ -1718,21 +1746,6 @@ class StaticStream : public FixedSizeStream {
         this->end = this->data + this->capacity;
     }
 };
-
-// template<std::size_t N>
-// class StaticFixedSizeStream : public Stream {
-//     uint8_t buf[N];
-//
-// public:
-//     StaticFixedSizeStream(){
-//         this->p = this->data = buf;
-//         this->capacity = N;
-//         this->end = this->buf + this->capacity;
-//     }
-//
-//     // Not allowed on SubStreams
-//     void init(size_t) override {}
-// };
 
 typedef StaticStream ReadOnlyStream;
 typedef FixedSizeStream WriteOnlyStream;

@@ -46,8 +46,13 @@ public:
 
     bool interpret_chunk(bool real_time = true) {
         try {
-            BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
-            this->t->recv(&header.end, TRANSPARENT_CHUNT_HEADER_SIZE);
+            uint8_t array[AUTOSIZE];
+
+            static_assert(AUTOSIZE >= TRANSPARENT_CHUNK_HEADER_SIZE, "");
+            InStream header(array, TRANSPARENT_CHUNK_HEADER_SIZE);
+
+            uint8_t * end = array;
+            this->t->recv(&end, header.get_capacity());
 
             uint8_t  chunk_type = header.in_uint8();
             uint16_t data_size  = header.in_uint16_le();
@@ -57,8 +62,7 @@ public:
 
             //LOG(LOG_INFO, "chunk_type=%u data_size=%u", chunk_type, data_size);
 
-            uint8_t array[AUTOSIZE];
-            uint8_t * end = array;
+            end = array;
             this->t->recv(&end, data_size);
             InStream payload(array, end - array);
 

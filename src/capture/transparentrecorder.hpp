@@ -34,85 +34,76 @@ public:
     }
 
     void send_data_indication_ex(uint16_t channelId, HStream & stream) {
-        BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
-        BStream payload(8);
+        constexpr unsigned payload_size = 2;
+        StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;
 
-        payload.out_uint16_le(channelId);
-        payload.mark_end();
+        this->make_chunk_header(header, CHUNK_TYPE_SLOWPATH, payload_size + stream.size());
+        header.out_uint16_le(channelId);
 
-        this->make_chunk_header(header, CHUNK_TYPE_SLOWPATH, payload.size() + stream.size());
-
-        this->t->send(header);
-        this->t->send(payload);
-        this->t->send(stream);
+        assert(header.get_offset() == header.get_capacity());
+        this->t->send(header.get_data(), header.get_offset());
+        this->t->send(stream.get_data(), stream.size());
     }
 
     void send_fastpath_data(InStream & data) {
-        BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
-        this->make_chunk_header(header, CHUNK_TYPE_FASTPATH, data.capacity());
+        StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE> header;
+        this->make_chunk_header(header, CHUNK_TYPE_FASTPATH, data.get_capacity());
 
-        this->t->send(header);
-        this->t->send(data.get_data(), data.capacity());
+        assert(header.get_offset() == header.get_capacity());
+        this->t->send(header.get_data(), header.get_capacity());
+        this->t->send(data.get_data(), data.get_capacity());
     }
 
     void send_to_front_channel( const char * const mod_channel_name
                               , uint8_t * data, size_t length
                               , size_t chunk_size, int flags) {
-        BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
-        BStream payload(65535);
-
+        constexpr unsigned payload_size = 9;
+        StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;
         uint8_t mod_channel_name_length = strlen(mod_channel_name);
-        payload.out_uint8(mod_channel_name_length);
-        payload.out_uint16_le(length);
-        payload.out_uint16_le(chunk_size);
-        payload.out_uint32_le(flags);
-        payload.mark_end();
 
-        this->make_chunk_header(header, CHUNK_TYPE_FRONTCHANNEL, payload.size() + mod_channel_name_length + length);
+        this->make_chunk_header(header, CHUNK_TYPE_FRONTCHANNEL, payload_size + mod_channel_name_length + length);
+        header.out_uint8(mod_channel_name_length);
+        header.out_uint16_le(length);
+        header.out_uint16_le(chunk_size);
+        header.out_uint32_le(flags);
 
-        this->t->send(header);
-        this->t->send(payload);
-        this->t->send(reinterpret_cast<const uint8_t *>(mod_channel_name), mod_channel_name_length);
-        this->t->send(reinterpret_cast<const uint8_t *>(data), length);
+        assert(header.get_offset() == header.get_capacity());
+        this->t->send(header.get_data(), header.get_offset());
+        this->t->send(mod_channel_name, mod_channel_name_length);
+        this->t->send(data, length);
     }
 
     void server_resize(uint16_t width, uint16_t height, uint8_t bpp) {
-        BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
-        BStream payload(8);
+        constexpr unsigned payload_size = 5;
+        StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;
 
-        payload.out_uint16_le(width);
-        payload.out_uint16_le(height);
-        payload.out_uint8(bpp);
-        payload.mark_end();
+        this->make_chunk_header(header, CHUNK_TYPE_RESIZE, payload_size);
+        header.out_uint16_le(width);
+        header.out_uint16_le(height);
+        header.out_uint8(bpp);
 
-        this->make_chunk_header(header, CHUNK_TYPE_RESIZE, payload.size());
-
-        this->t->send(header);
-        this->t->send(payload);
+        assert(header.get_offset() == header.get_capacity());
+        this->t->send(header.get_data(), header.get_offset());
     }
 
 private:
-    void make_chunk_header(Stream & stream, uint8_t chunk_type, uint16_t data_size) {
+    void make_chunk_header(OutStream & stream, uint8_t chunk_type, uint16_t data_size) {
         stream.out_uint8(chunk_type);
         stream.out_uint16_le(data_size);
-        timeval now = tvtime();
-        stream.out_timeval_to_uint64le_usec(now);
-        stream.mark_end();
+        stream.out_timeval_to_uint64le_usec(tvtime());
     }
 
     void send_meta_chunk() {
         const uint8_t trm_format_version = 0;
 
-        BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
-        BStream payload(8);
+        constexpr unsigned payload_size = 1;
+        StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;
 
-        payload.out_uint8(trm_format_version);
-        payload.mark_end();
+        this->make_chunk_header(header, CHUNK_TYPE_META, payload_size);
+        header.out_uint8(trm_format_version);
 
-        this->make_chunk_header(header, CHUNK_TYPE_META, payload.size());
-
-        this->t->send(header);
-        this->t->send(payload);
+        assert(header.get_offset() == header.get_capacity());
+        this->t->send(header.get_data(), header.get_offset());
     }
 };
 

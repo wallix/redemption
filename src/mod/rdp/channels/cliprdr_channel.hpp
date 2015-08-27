@@ -22,6 +22,11 @@
 #define REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP
 
 #include "base_channel.hpp"
+#include "stream.hpp"
+#include "make_unique.hpp"
+#include "RDP/clipboard.hpp"
+
+#include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 

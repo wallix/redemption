@@ -215,7 +215,6 @@ public:
                     stream.out_copy_bytes(buff, n);
                 });
 
-                stream.mark_end();
                 int total_length = stream.get_offset();
                 if (this->verbose & 0x40){
                     LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);

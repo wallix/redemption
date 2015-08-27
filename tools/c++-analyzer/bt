@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gdb -q -ex r -ex bt -ex q "$@" <<< '' | grep -C11 'at [^.]\+\..\?pp'

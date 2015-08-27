@@ -195,7 +195,7 @@ public:
 
     void send(InStream const & stream)
     {
-        this->send(stream.get_data(), stream.capacity());
+        this->send(stream.get_data(), stream.get_capacity());
     }
 
 

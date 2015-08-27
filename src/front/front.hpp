@@ -1023,9 +1023,9 @@ public:
                 InStream stream(array, end - array);
 
                 X224::CR_TPDU_Recv x224(stream, this->ini.get<cfg::client::bogus_neg_request>());
-                if (x224._header_size != stream.capacity()) {
+                if (x224._header_size != stream.get_capacity()) {
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-                                 " %d bytes remains", stream.capacity() - x224._header_size);
+                                 " %d bytes remains", stream.get_capacity() - x224._header_size);
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
@@ -2424,7 +2424,7 @@ public:
     void send_fastpath_data(InStream & data) override {
         HStream stream(1024, 1024 + 65536);
 
-        stream.out_copy_bytes(data.get_data(), data.capacity());
+        stream.out_copy_bytes(data.get_data(), data.get_capacity());
         stream.mark_end();
 
         if (this->verbose & 4) {

@@ -44,7 +44,8 @@ class OutChunkedBufferingTransport : public Transport
 {
     Transport & trans;
     size_t max;
-    StaticOutStream<SZ> stream;
+    uint8_t buf[SZ];
+    OutStream stream;
 
     static_assert(SZ >= 8, "");
 
@@ -52,6 +53,7 @@ public:
     explicit OutChunkedBufferingTransport(Transport & trans)
         : trans(trans)
         , max(SZ-8)
+        , stream(buf)
     {
     }
 
@@ -59,7 +61,7 @@ public:
         if (this->stream.get_offset() > 0) {
             send_wrm_chunk(this->trans, LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
             this->trans.send(this->stream.get_data(), this->stream.get_offset());
-            this->stream.rewind();
+            this->stream = OutStream(buf);
         }
     }
 
@@ -72,7 +74,7 @@ private:
             size_t to_send = this->max - this->stream.get_offset();
             this->trans.send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
-            this->stream.rewind();
+            this->stream = OutStream(buf);
         }
         this->stream.out_copy_bytes(buffer + len - to_buffer_len, to_buffer_len);
     }
@@ -103,7 +105,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     const bool send_input;
     RDPDrawable & drawable;
 
-    StaticOutStream<GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)> keyboard_buffer_32;
+
+    uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
+    // Extractor
+    OutStream keyboard_buffer_32;
 
     const Inifile & ini;
 
@@ -145,6 +150,7 @@ public:
     , send_input(send_input == SendInput::YES)
     , drawable(drawable)
     , ini(ini)
+    , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
     //, verbose(verbose)
     {
@@ -256,8 +262,6 @@ public:
 
             payload.out_uint8(ignore_time_interval ? 1 : 0);
 
-            keyboard_buffer_32.mark_end();
-
 /*
             for (uint32_t i = 0, c = keyboard_buffer_32.size() / sizeof(uint32_t);
                  i < c; i++) {
@@ -267,8 +271,8 @@ public:
             }
 */
 
-            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.capacity());
-            keyboard_buffer_32.rewind();
+            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.get_offset());
+            keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
         payload.mark_end();
 

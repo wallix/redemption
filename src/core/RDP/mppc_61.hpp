@@ -647,7 +647,7 @@ private:
         }
         else {
             this->match_finder.find_match(this->historyBuffer, this->historyOffset, uncompressed_data_size);
-            FixedSizeStream level_1_output_stream(this->level_1_output_buffer, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE);
+            OutStream level_1_output_stream(this->level_1_output_buffer, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE);
             uint32_t match_details_data_size = this->match_finder.match_details_stream.size();
             uint32_t MatchCount = (match_details_data_size ?
                                    match_details_data_size / 8 :   // sizeof(RDP61_COMPRESSED_DATA) = 8
@@ -690,8 +690,7 @@ private:
                 }
                 level_1_output_stream.out_copy_bytes(uncompressed_data + current_output_offset, expected);
             }
-            level_1_output_stream.mark_end();
-            this->level_1_compressed_data_size = level_1_output_stream.size();
+            this->level_1_compressed_data_size = level_1_output_stream.get_offset();
 
 
             if (this->level_1_compressed_data_size >= uncompressed_data_size) {
