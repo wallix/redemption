@@ -246,18 +246,20 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD VNC ------------------------");
     }
 
-    Inifile ini;
+    Font font;
 
     const bool bogus_clipboard_infinite_loop = false;
 
     mod_vnc mod(
           t
-        , ini
         , "10.10.3.103"
         , "SecureLinux"
         , front
         , info.width
         , info.height
+        , font
+        , Translator(Translation::EN)
+        , Theme()
         , info.keylayout
         , 0             /* key_flags */
         , true          /* clipboard */
@@ -265,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
         , false         /* allow authentification retries */
         , is_socket_transport
-        , "utf-8"
+        , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
         , verbose);
     mod.get_event().set();

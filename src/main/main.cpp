@@ -24,12 +24,13 @@
 
 #include "version.hpp"
 
-#include "log.hpp"
 #include "parameters_holder.hpp"
 
 #include "apps/app_proxy.hpp"
 
 #include "program_options/program_options.hpp"
+
+#include "write_python_spec.hpp"
 
 namespace po = program_options;
 
@@ -42,6 +43,15 @@ int main(int argc, char** argv)
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."
-      , extra_option_list{}, [](po::variables_map const &, bool *) { return 0; }
+      , extra_option_list{{"print-config-spec", "Configuration file spec for rdpproxy.ini"}}
+      , [argv](po::variables_map const & options, bool * quit) {
+            if (options.count("print-config-spec")) {
+                *quit = true;
+                if (int err = write_python_spec(argv[0], "/dev/stdout")) {
+                    return err;
+                }
+            }
+            return 0;
+        }
     );
 }

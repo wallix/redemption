@@ -432,10 +432,10 @@ public:
         this->init_bitmaps();
     }
 
-    ~GraphicsUpdatePDU() {}
+    ~GraphicsUpdatePDU() override {}
 
     void init_orders() {
-        if (this->ini.debug.primary_orders > 3) {
+        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -444,7 +444,7 @@ public:
     }
 
     void init_bitmaps() {
-        if (this->ini.debug.primary_orders > 3) {
+        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -457,16 +457,15 @@ public:
     }
 
 public:
-    virtual void flush() {
+    void flush() override {
         this->flush_bitmaps();
         this->flush_orders();
     }
 
 protected:
-    virtual void flush_orders()
-    {
+    void flush_orders() override {
         if (this->order_count > 0){
-            if (this->ini.debug.primary_orders > 3) {
+            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
                 LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d"
                    , this->order_count);
             }
@@ -483,9 +482,9 @@ protected:
         }
     }
 
-    virtual void flush_bitmaps() {
+    void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (this->ini.debug.primary_orders > 3) {
+            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
                 LOG( LOG_INFO
                    , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%d offset=%u"
                    , this->bitmap_count, this->offset_bitmap_count);
@@ -680,7 +679,7 @@ protected:
         stream.mark_end();
     }
 
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) throw(Error) {
+    void send_pointer(int cache_idx, const Pointer & cursor) throw(Error) override {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
                 cache_idx, cursor.x, cursor.y);
@@ -730,7 +729,7 @@ protected:
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    virtual void set_pointer(int cache_idx) {
+    void set_pointer(int cache_idx) override {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
         }
@@ -750,7 +749,7 @@ protected:
     }   // void set_pointer(int cache_idx)
 
 public:
-    virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }

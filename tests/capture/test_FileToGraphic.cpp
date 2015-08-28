@@ -59,9 +59,9 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
     Inifile ini;
-    ini.debug.primary_orders = 0;
-    ini.debug.secondary_orders = 0;
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::debug::primary_orders>(0);
+    ini.set<cfg::debug::secondary_orders>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
@@ -72,8 +72,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    ini.video.frame_interval = 10;
-    ini.video.break_interval = 20;
+    ini.set<cfg::video::frame_interval>(10);
+    ini.set<cfg::video::break_interval>(20);
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -162,8 +162,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
 //    Inifile ini;
-//    ini.debug.primary_orders = 0;
-//    ini.debug.secondary_orders = 0;
+//    ini.set<cfg::debug::primary_orders>(0);
+//    ini.set<cfg::debug::secondary_orders>(0);
 
 //    const int groupid = 0;
 //    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
@@ -174,8 +174,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
 
 //    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
-//    ini.video.frame_interval = 10;
-//    ini.video.break_interval = 20;
+//    ini.set<cfg::video::frame_interval>(10);
+//    ini.set<cfg::video::break_interval>(20);
 
 //    BmpCache bmp_cache(
 //        BmpCache::Recorder,

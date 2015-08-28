@@ -159,9 +159,9 @@ struct BitmapCaps : public Capability {
     , pad2octetsB(0)
     {
     }
-    virtual ~BitmapCaps() {}
+    ~BitmapCaps() override {}
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->preferredBitsPerPixel);
@@ -179,7 +179,7 @@ struct BitmapCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsB);
     }
 
-    void recv(Stream & stream, uint16_t len) {
+    void recv(Stream & stream, uint16_t len) override {
         this->len = len;
 
         /* preferredBitsPerPixel(2) + receive1BitPerPixel(2) + receive4BitsPerPixel(2) + receive8BitsPerPixel(2) +
@@ -208,7 +208,7 @@ struct BitmapCaps : public Capability {
         this->pad2octetsB = stream.in_uint16_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s Bitmap caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Bitmap caps::preferredBitsPerPixel %u", this->preferredBitsPerPixel);
         LOG(LOG_INFO, "Bitmap caps::receive1BitPerPixel %u", this->receive1BitPerPixel);

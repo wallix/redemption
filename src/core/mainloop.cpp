@@ -154,7 +154,7 @@ void init_signals(void)
 //    sigaction(SIGUSR2, &sa, nullptr);
 //}
 
-void redemption_new_session()
+void redemption_new_session(char const * config_filename)
 {
     char text[256];
     char source_ip[256];
@@ -171,7 +171,7 @@ void redemption_new_session()
     int sock_len = sizeof(u);
 
     Inifile ini;
-    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+    { ConfigurationLoader cfg_loader(ini, config_filename); }
 
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
@@ -197,7 +197,7 @@ void redemption_new_session()
     target_port = localAddress.s4.sin_port;
     strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
-    if (ini.globals.enable_ip_transparent) {
+    if (ini.get<cfg::globals::enable_ip_transparent>()) {
         const int source_port = 0;
         char target_ip[256];
         strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
@@ -211,10 +211,10 @@ void redemption_new_session()
     }
 
 
-    ini.context_set_value(AUTHID_HOST, source_ip);
-    ini.context_set_value(AUTHID_TARGET, real_target_ip);
+    ini.set_acl<cfg::globals::host>(source_ip);
+    ini.set_acl<cfg::globals::target>(real_target_ip);
 
-    if (ini.debug.session){
+    if (ini.get<cfg::debug::session>()){
         LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
     }
 
@@ -222,7 +222,7 @@ void redemption_new_session()
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
         Session session(sck, ini);
 
-        if (ini.debug.session){
+        if (ini.get<cfg::debug::session>()){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
         }
 
@@ -235,21 +235,21 @@ void redemption_new_session()
 
 }
 
-void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr)
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename)
 {
     init_signals();
 
-    SessionServer ss(uid, gid, parametersHldr, ini.debug.config == Inifile::ENABLE_DEBUG_CONFIG);
+    SessionServer ss(uid, gid, parametersHldr, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-    uint32_t s_addr = inet_addr(ini.globals.listen_address);
+    uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>());
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
-    int port = ini.globals.port;
+    int port = ini.get<cfg::globals::port>();
     Listen listener( ss
                      , s_addr
                      , port
                      , false                              /* exit on timeout       */
                      , 60                                 /* timeout sec           */
-                     , ini.globals.enable_ip_transparent
+                     , ini.get<cfg::globals::enable_ip_transparent>()
                      );
     listener.run();
 }

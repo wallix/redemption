@@ -103,12 +103,12 @@ inline int shutdown(const char * pid_file)
     std::cout << "stopping rdpproxy\n";
     /* read the rdpproxy.pid file */
     io::posix::fdbuf fd;
-    cout << "looking if pid_file " << pid_file <<  " exists\n";
+    std::cout << "looking if pid_file " << pid_file <<  " exists\n";
     if ((0 == access(pid_file, F_OK))) {
         fd.open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
         if (!fd) {
             /* can't open read / write, try to open read only */
-            fd.open(open(pid_file, O_RDONLY));
+            fd.open(pid_file, O_RDONLY);
         }
     }
     if (!fd) {
@@ -140,7 +140,7 @@ inline int shutdown(const char * pid_file)
                 }
                 if ((errno != ESRCH) || (res == 0)){
                     // if errno != ESRCH, pid is still running
-                    cerr << "Error stopping process id " << pid << "\n";
+                    std::cerr << "Error stopping process id " << pid << "\n";
                 }
             }
         }
@@ -153,11 +153,11 @@ inline int shutdown(const char * pid_file)
     if (d){
         size_t path_len = strlen("/var/run/redemption/");
         size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
-        char * buffer = (char*)malloc(file_len + path_len);
+        char * buffer = static_cast<char*>(malloc(file_len + path_len));
         strcpy(buffer, "/var/run/redemption/");
-        size_t len = offsetof(struct dirent, d_name) + file_len;
-        struct dirent * entryp = (struct dirent *)malloc(len);
-        struct dirent * result;
+        size_t len = offsetof(dirent, d_name) + file_len;
+        dirent * entryp = static_cast<dirent *>(malloc(len));
+        dirent * result;
         for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
             if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
                 continue;
@@ -196,13 +196,13 @@ using extra_option_list = std::initializer_list<extra_option>;
 
 struct EmptyPreLoopFn { void operator()(Inifile &) const {} };
 
-// ExtraOption = extra_option container
-// ExtracOptionChecker = int(po::variables_map &,  bool * quit)
+// ExtraOptions = extra_option container
+// ExtracOptionChecker = int(po::variables_map &, bool * quit)
 // PreLoopFn = void(Inifile &)
-template<class ParametersHldr, class ExtraOption, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
+template<class ParametersHldr, class ExtraOptions, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
 int app_proxy(
     int argc, char** argv, const char * copyright_notice
-  , ExtraOption const & extrax_options, ExtracOptionChecker extrac_options_checker
+  , ExtraOptions const & extrax_options, ExtracOptionChecker extrac_options_checker
   , PreLoopFn pre_loop_fn = PreLoopFn()
 ) {
     setlocale(LC_CTYPE, "C");
@@ -212,6 +212,8 @@ int app_proxy(
 
     unsigned euid = uid;
     unsigned egid = gid;
+
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -230,6 +232,8 @@ int app_proxy(
         {'f', "force", "remove application lock file"},
 
         {'i', "inetd", "launch redemption with inetd like launcher"},
+
+        {"config-file", &config_filename, "used an another ini file"},
 
         //{"test", "check Inifile syntax"}
     });
@@ -252,13 +256,13 @@ int app_proxy(
         return status;
     }
     if (options.count("help")) {
-        cout << copyright_notice << "\n\n";
-        cout << "Usage: rdpproxy [options]\n\n";
-        cout << desc << endl;
+        std::cout << copyright_notice << "\n\n";
+        std::cout << "Usage: rdpproxy [options]\n\n";
+        std::cout << desc << endl;
         return 0;
     }
     if (options.count("version")) {
-        cout << copyright_notice << std::endl;
+        std::cout << copyright_notice << std::endl;
         return 0;
     }
 
@@ -311,7 +315,7 @@ int app_proxy(
     }
 
     if (options.count("inetd")) {
-        redemption_new_session();
+        redemption_new_session(config_filename.c_str());
         return 0;
     }
 
@@ -367,11 +371,11 @@ int app_proxy(
     }
 
     Inifile ini;
-    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
 
     OpenSSL_add_all_digests();
 
-    if (!ini.globals.enable_ip_transparent) {
+    if (!ini.get<cfg::globals::enable_ip_transparent>()) {
         if (setgid(egid) != 0){
             LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
             return 1;
@@ -387,7 +391,7 @@ int app_proxy(
     ParametersHldr parametersHldr;
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, euid, egid, parametersHldr);
+    redemption_main_loop(ini, euid, egid, parametersHldr, std::move(config_filename));
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */

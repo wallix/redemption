@@ -185,7 +185,7 @@ struct OrdersUpdate_Recv {
 struct DrawingOrder_RecvFactory {
     uint8_t control_flags;
 
-    DrawingOrder_RecvFactory(Stream & stream) {
+    explicit DrawingOrder_RecvFactory(Stream & stream) {
         this->control_flags = stream.in_uint8();
     }
 };
@@ -402,7 +402,7 @@ struct ConfirmActivePDU_Send {
     uint16_t   numberCapabilities;
     uint16_t   offset_capabilitySets;
 
-    ConfirmActivePDU_Send(Stream & stream)
+    explicit ConfirmActivePDU_Send(Stream & stream)
         : payload(stream)
         , offset_lengthCombinedCapabilities(0)
         , offset_numberCapabilities(0)

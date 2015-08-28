@@ -58,7 +58,7 @@ public:
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
-               Theme & theme, Font const & font, const char * ok_text = "Ok",
+               Theme const & theme, Font const & font, const char * ok_text = "Ok",
                const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
@@ -152,17 +152,17 @@ public:
             this->set_widget_focus(&this->ok, focus_reason_tabkey);
     }
 
-    virtual ~FlatDialog() {
+    ~FlatDialog() override {
         delete this->challenge;
         delete this->cancel;
         this->clear();
     }
 
-    virtual int get_bg_color() const {
+    int get_bg_color() const override {
         return this->bg_color;
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event) {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if ((event == NOTIFY_CANCEL) ||
             ((event == NOTIFY_SUBMIT) && (widget == this->cancel))) {
             this->send_notify(NOTIFY_CANCEL);
@@ -176,8 +176,7 @@ public:
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:

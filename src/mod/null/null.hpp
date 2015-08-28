@@ -29,55 +29,55 @@
 class FrontAPI;
 
 struct null_mod : public mod_api {
-    null_mod(FrontAPI & front) : mod_api(0, 0) {}
+    explicit null_mod(FrontAPI & front) : mod_api(0, 0) {}
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {}
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {}
 
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) {}
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {}
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) {}
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {}
 
-    virtual void rdp_input_invalidate(const Rect & r) {}
+    void rdp_input_invalidate(const Rect & r) override {}
 
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
-    virtual void draw_event(time_t now) {}
+    void draw_event(time_t now) override {}
 
-    virtual void begin_update() {}
-    virtual void end_update() {}
+    void begin_update() override {}
+    void end_update() override {}
     using mod_api::draw;
-    virtual void draw(const RDPOpaqueRect      & cmd, const Rect & clip) {}
-    virtual void draw(const RDPScrBlt          & cmd, const Rect & clip) {}
-    virtual void draw(const RDPDestBlt         & cmd, const Rect & clip) {}
-    virtual void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) {}
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {}
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {}
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {}
-    virtual void draw(const RDPPatBlt          & cmd, const Rect & clip) {}
-    virtual void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) {}
-    virtual void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) {}
-    virtual void draw(const RDPLineTo          & cmd, const Rect & clip) {}
-    virtual void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) {}
-    virtual void draw(const RDPPolygonSC       & cmd, const Rect & clip) {}
-    virtual void draw(const RDPPolygonCB       & cmd, const Rect & clip) {}
-    virtual void draw(const RDPPolyline        & cmd, const Rect & clip) {}
-    virtual void draw(const RDPEllipseSC       & cmd, const Rect & clip) {}
-    virtual void draw(const RDPEllipseCB       & cmd, const Rect & clip) {}
+    void draw(const RDPOpaqueRect      & cmd, const Rect & clip) override {}
+    void draw(const RDPScrBlt          & cmd, const Rect & clip) override {}
+    void draw(const RDPDestBlt         & cmd, const Rect & clip) override {}
+    void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) override {}
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {}
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {}
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {}
+    void draw(const RDPPatBlt          & cmd, const Rect & clip) override {}
+    void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) override {}
+    void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) override {}
+    void draw(const RDPLineTo          & cmd, const Rect & clip) override {}
+    void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) override {}
+    void draw(const RDPPolygonSC       & cmd, const Rect & clip) override {}
+    void draw(const RDPPolygonCB       & cmd, const Rect & clip) override {}
+    void draw(const RDPPolyline        & cmd, const Rect & clip) override {}
+    void draw(const RDPEllipseSC       & cmd, const Rect & clip) override {}
+    void draw(const RDPEllipseCB       & cmd, const Rect & clip) override {}
 
-    virtual void draw(const RDP::FrameMarker & order) {}
+    void draw(const RDP::FrameMarker & order) override {}
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {}
-    virtual void draw(const RDP::RAIL::WindowIcon          & order) {}
-    virtual void draw(const RDP::RAIL::CachedIcon          & order) {}
-    virtual void draw(const RDP::RAIL::DeletedWindow       & order) {}
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {}
+    void draw(const RDP::RAIL::WindowIcon          & order) override {}
+    void draw(const RDP::RAIL::CachedIcon          & order) override {}
+    void draw(const RDP::RAIL::DeletedWindow       & order) override {}
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) {}
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+        size_t size, const Bitmap & bmp) override {}
 
-    virtual void server_set_pointer(const Pointer & cursor) {}
+    void server_set_pointer(const Pointer & cursor) override {}
 
-    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
+    void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) override {}
 };
 
 #endif

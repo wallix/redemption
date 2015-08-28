@@ -32,7 +32,7 @@
 
 #include "log.hpp"
 
-#include "config.hpp"
+#include "font.hpp"
 #include "internal/widget2/flat_selector2.hpp"
 #include "internal/widget2/screen.hpp"
 #include "check_sig.hpp"
@@ -46,15 +46,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -101,16 +101,16 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
 {
     TestDraw drawable(640, 480);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 640, 480, ini.font);
+    WidgetScreen parent(drawable, 640, 480, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier,
-                                "1", "1", nullptr, nullptr, nullptr, ini);
+                                "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -157,15 +157,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
@@ -184,15 +184,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -216,14 +216,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -245,15 +245,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -381,15 +381,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 {
     TestDraw drawable(800, 600);
 
-    Inifile ini(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, ini.font);
+    WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
     selector.add_device("reptile", "snake@10.10.14.111",
                         "RDP");
@@ -569,10 +569,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
 
-//     Inifile ini;
-//     // ini.translation.target.set_from_cstr("Target");
+//     Font font;
+//     // ini.set<cfg::translation::target>_from_cstr("Target");
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -713,10 +713,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
 
-//     Inifile ini;
-//     // ini.translation.target.set_from_cstr("Target");
+//     Font font;
+//     // ini.set<cfg::translation::target>_from_cstr("Target");
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -861,10 +861,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
 
-//     Inifile ini;
-//     // ini.translation.target.set_from_cstr("Target");
+//     Font font;
+//     // ini.set<cfg::translation::target>_from_cstr("Target");
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, ini);
+//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, font, Theme(), Translation::EN);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -1023,9 +1023,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
-//     Inifile ini;
+//     Font font;
 
-//     ini.translation.target.set_from_cstr("Target");
+//     ini.set<cfg::translation::target>_from_cstr("Target");
 
 //     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_VISIBLE | COMMENT_VISIBLE);
 
@@ -1086,9 +1086,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
-//     Inifile ini;
+//     Font font;
 
-//     ini.translation.target.set_from_cstr("Target");
+//     ini.set<cfg::translation::target>_from_cstr("Target");
 
 //     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_VISIBLE | COMMENT_MANDATORY);
 
@@ -1164,9 +1164,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
-//     Inifile ini;
+//     Font font;
 
-//     ini.translation.target.set_from_cstr("Target");
+//     ini.set<cfg::translation::target>_from_cstr("Target");
 
 //     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_MANDATORY | COMMENT_VISIBLE);
 
@@ -1260,9 +1260,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
-//     Inifile ini;
+//     Font font;
 
-//     ini.translation.target.set_from_cstr("Target");
+//     ini.set<cfg::translation::target>_from_cstr("Target");
 
 //     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_MANDATORY | COMMENT_MANDATORY);
 

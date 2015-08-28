@@ -29,7 +29,7 @@ private:
     Transport * t;
 
 public:
-    TransparentRecorder(Transport * t) : t(t) {
+    explicit TransparentRecorder(Transport * t) : t(t) {
         this->send_meta_chunk();
     }
 

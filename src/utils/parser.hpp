@@ -58,13 +58,4 @@ static inline bool bool_from_cstr(const char * str) noexcept
         || (0 == strcasecmp("true",str));
 }
 
-// low = 0, medium = 1, high = 2. Others = low
-static inline unsigned level_from_cstr(const char * str) noexcept
-{
-    unsigned res = 0;
-    if (0 == strcasecmp("medium", str)) { res = 1; }
-    else if (0 == strcasecmp("high",   str)) { res = 2; }
-    return res;
-}
-
 #endif

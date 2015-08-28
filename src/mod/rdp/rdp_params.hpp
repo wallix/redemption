@@ -46,12 +46,12 @@ struct ModRDPParams {
     bool enable_glyph_cache;
     bool enable_wab_agent;
 
+    bool disable_clipboard_log_syslog;
+
     unsigned     wab_agent_launch_timeout;
     unsigned     wab_agent_on_launch_failure;
     unsigned     wab_agent_keepalive_timeout;
     const char * wab_agent_alternate_shell;
-
-    unsigned disable_clipboard_log;
 
     bool         enable_transparent_mode;
     const char * output_filename;
@@ -123,12 +123,12 @@ struct ModRDPParams {
         , enable_glyph_cache(false)
         , enable_wab_agent(false)
 
+        , disable_clipboard_log_syslog(false)
+
         , wab_agent_launch_timeout(0)
         , wab_agent_on_launch_failure(0)
         , wab_agent_keepalive_timeout(0)
         , wab_agent_alternate_shell("")
-
-        , disable_clipboard_log(0)
 
         , enable_transparent_mode(false)
         , output_filename("")
@@ -217,7 +217,7 @@ struct ModRDPParams {
             "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
 
         LOG(LOG_INFO,
-            "ModRDPParams dsiable_clipboard_log=0x%X",             this->disable_clipboard_log);
+            "ModRDPParams dsiable_clipboard_log=0x%X",             this->disable_clipboard_log_syslog ? 1 : 0);
 
         LOG(LOG_INFO,
             "ModRDPParams enable_transparent_mode=%s",             (this->enable_transparent_mode ? "yes" : "no"));

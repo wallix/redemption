@@ -79,7 +79,6 @@ enum {
 
 class Session {
     Inifile  & ini;
-    uint32_t & verbose;
 
     int internal_state;
 
@@ -99,9 +98,9 @@ class Session {
         Client( int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
         : auth_trans( "Authentifier"
                     , client_sck
-                    , ini.globals.authip
-                    , ini.globals.authport
-                    , ini.debug.auth
+                    , ini.get<cfg::globals::authip>()
+                    , ini.get<cfg::globals::authport>()
+                    , ini.get<cfg::debug::auth>()
         )
         , acl( ini
              , activity_checker
@@ -131,12 +130,11 @@ class Session {
 public:
     Session(int sck, Inifile & ini)
             : ini(ini)
-            , verbose(this->ini.debug.session)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
             , perf_file(nullptr) {
         try {
-            SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.debug.front);
+            SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.get<cfg::debug::front>());
             wait_obj front_event;
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
@@ -146,20 +144,20 @@ public:
             const bool mem3blt_support = true;
 
             this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
-                                   , this->ini, this->ini.client.fast_path, mem3blt_support);
+                                   , this->ini, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
 
             ModuleManager mm(*this->front, this->ini);
             BackEvent_t signal = BACK_EVENT_NONE;
 
-            // Under conditions (if this->ini.video.inactivity_pause == true)
-            PauseRecord pause_record(this->ini.video.inactivity_timeout);
+            // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
+            PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>());
 
-            if (this->verbose) {
+            if (this->ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
             const time_t start_time = time(nullptr);
-            if (this->ini.debug.performance & 0x8000) {
+            if (this->ini.get<cfg::debug::performance>() & 0x8000) {
                 this->write_performance_log(start_time);
             }
 
@@ -171,7 +169,7 @@ public:
             const unsigned OSD_STATE_INVALID = timers.size();
             const unsigned OSD_STATE_NOT_YET_COMPUTED = OSD_STATE_INVALID + 1;
             unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
-            const bool enable_osd = this->ini.globals.enable_osd;
+            const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
             while (run_session) {
                 unsigned max = 0;
@@ -223,7 +221,7 @@ public:
                 }
 
                 time_t now = time(nullptr);
-                if (this->ini.debug.performance & 0x8000) {
+                if (this->ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now);
                 }
 
@@ -246,7 +244,7 @@ public:
 
                 try {
                     if (this->front->up_and_running) {
-                        if (this->ini.video.inactivity_pause
+                        if (this->ini.get<cfg::video::inactivity_pause>()
                             && mm.connected
                             && this->front->capture) {
                             pause_record.check(now, *this->front);
@@ -257,8 +255,8 @@ public:
                             mm.check_module();
                         }
 
-                                   asynchronous_task_fd    = -1;
-                                   asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
+                        asynchronous_task_fd    = -1;
+                        asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                         const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
                                                                      is_set(*asynchronous_task_event,
                                                                             asynchronous_task_fd,
@@ -288,11 +286,11 @@ public:
                             if (!mm.last_module) {
                                 // acl never opened or closed by me (close box)
                                 try {
-                                    int client_sck = ip_connect(this->ini.globals.authip,
-                                                                this->ini.globals.authport,
+                                    int client_sck = ip_connect(this->ini.get<cfg::globals::authip>(),
+                                                                this->ini.get<cfg::globals::authport>(),
                                                                 30,
                                                                 1000,
-                                                                this->ini.debug.auth);
+                                                                this->ini.get<cfg::debug::auth>());
 
                                     if (client_sck == -1) {
                                         LOG(LOG_ERR, "Failed to connect to authentifier");
@@ -315,7 +313,7 @@ public:
                         }
 
                         if (enable_osd) {
-                            const uint32_t enddate = this->ini.context.end_date_cnx.get();
+                            const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate &&
                                 mm.is_up_and_running()) {
                                 if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
@@ -327,7 +325,7 @@ public:
                                               timers.rbegin(), timers.rend(), enddata - start_time)
                                             - timers.rbegin()) * (-1);
                                         return i ? i : 0;
-                                    }(this->ini.context.end_date_cnx.get());
+                                    }(this->ini.get<cfg::context::end_date_cnx>());
                                 }
                                 else if (osd_state < OSD_STATE_INVALID &&
                                          enddate - now <= timers[osd_state]) {
@@ -336,13 +334,13 @@ public:
                                     const unsigned minutes = (enddate - now + 30) / 60;
                                     mes += std::to_string(minutes);
                                     mes += ' ';
-                                    mes += TR("minute", this->ini);
+                                    mes += TR("minute", language(this->ini));
                                     if (minutes > 1) {
                                         mes += "s ";
                                     } else {
                                         mes += ' ';
                                     }
-                                    mes += TR("before_closing", this->ini);
+                                    mes += TR("before_closing", language(this->ini));
                                     mm.osd_message(std::move(mes), false);
                                     ++osd_state;
                                 }
@@ -379,7 +377,7 @@ public:
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
-        if (0 != strcmp("127.0.0.1", this->ini.context_get_value(AUTHID_HOST))) {
+        if (!this->ini.is_asked<cfg::globals::host>() && this->ini.get<cfg::globals::host>() == "127.0.0.1") {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
         this->front->stop_capture();
@@ -388,7 +386,7 @@ public:
     Session(Session const &) = delete;
 
     ~Session() {
-        if (this->ini.debug.performance & 0x8000) {
+        if (this->ini.get<cfg::debug::performance>() & 0x8000) {
             this->write_performance_log(this->perf_last_info_collect_time + 3);
         }
         if (this->perf_file) {
@@ -397,10 +395,10 @@ public:
         delete this->front;
         delete this->client;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
-        if (!this->ini.context.session_id.get().empty()) {
+        if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
             snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"
-                    , PID_PATH , this->ini.context.session_id.get_cstr());
+                    , PID_PATH , this->ini.get<cfg::context::session_id>().c_str());
             unlink(new_session_file);
         }
         else {
@@ -424,7 +422,7 @@ private:
 
             char filename[2048];
             snprintf(filename, sizeof(filename), "%s/rdpproxy,%04d%02d%02d-%02d%02d%02d,%d.perf",
-                this->ini.video.record_tmp_path.c_str(),
+                this->ini.get<cfg::video::record_tmp_path>().c_str(),
                 tm_.tm_year + 1900, tm_.tm_mon, tm_.tm_mday, tm_.tm_hour, tm_.tm_min, tm_.tm_sec, this->perf_pid
                 );
 

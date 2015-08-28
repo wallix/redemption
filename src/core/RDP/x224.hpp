@@ -416,7 +416,7 @@ namespace X224
             uint16_t len;
         } tpkt;
 
-        Recv(InStream & stream)
+        explicit Recv(InStream & stream)
         {
             uint16_t length = stream.size();
             if (length < 4){
@@ -947,7 +947,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        CC_TPDU_Recv(InStream & stream, uint32_t verbose = 0)
+        explicit CC_TPDU_Recv(InStream & stream, uint32_t verbose = 0)
             : Recv(stream)
             , tpdu_hdr([&]()
             {
@@ -1197,7 +1197,7 @@ namespace X224
 
         size_t _header_size;
 
-        DR_TPDU_Recv(InStream & stream)
+        explicit DR_TPDU_Recv(InStream & stream)
             : Recv(stream)
             , tpdu_hdr([&]()
             {
@@ -1281,7 +1281,7 @@ namespace X224
             uint8_t invalid_tpdu_vl;
             uint8_t invalid[256];
 
-            ER_Header(InStream & stream)
+            explicit ER_Header(InStream & stream)
             {
                 /* LI(1) + code(1) + dst_ref(2) + reject_cause(1) */
                 if (!stream.in_check_rem(5)){
@@ -1348,7 +1348,7 @@ namespace X224
 
         size_t _header_size;
 
-        ER_TPDU_Recv(InStream & stream)
+        explicit ER_TPDU_Recv(InStream & stream)
             : Recv(stream)
             , tpdu_hdr(stream)
             , _header_size(X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI)
@@ -1402,7 +1402,7 @@ namespace X224
         size_t _header_size;
         SubStream payload;
 
-        DT_TPDU_Recv(InStream & stream)
+        explicit DT_TPDU_Recv(InStream & stream)
         : Recv(stream)
         , tpdu_hdr([&](){
             if (!stream.in_check_rem(3)){

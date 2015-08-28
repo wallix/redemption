@@ -23,12 +23,22 @@
 
 #include "version.hpp"
 #include "front_api.hpp"
-#include "config.hpp"
 #include "widget2/flat_login.hpp"
 #include "internal_mod.hpp"
 #include "widget2/notify_api.hpp"
 #include "translation.hpp"
 #include "copy_paste.hpp"
+#include "config_access.hpp"
+
+
+using FlatLoginModVariables = vcfg::variables<
+    vcfg::var<cfg::context::password,   vcfg::write>,
+    vcfg::var<cfg::globals::auth_user,  vcfg::write>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
+
 
 class FlatLoginMod : public InternalMod, public NotifyApi
 {
@@ -36,42 +46,48 @@ class FlatLoginMod : public InternalMod, public NotifyApi
 
     CopyPaste copy_paste;
 
-public:
-    Inifile & ini;
+    FlatLoginModVariables vars;
 
-    FlatLoginMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height, ini.font, &ini)
+public:
+    FlatLoginMod(
+        FlatLoginModVariables vars,
+        char const * username, char const * password,
+        FrontAPI & front, uint16_t width, uint16_t height
+    )
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
-                ini.account.username[0] != 0,
-                0, nullptr, nullptr, TR("login", ini), TR("password", ini), ini)
-        , ini(ini)
+                username[0] != 0,
+                0, nullptr, nullptr,
+                TR("login", language(vars)),
+                TR("password", language(vars)),
+                this->font(), Translator(language(vars)), this->theme())
+        , vars(vars)
     {
         this->screen.add_widget(&this->login);
 
-        this->login.login_edit.set_text(this->ini.account.username);
-        this->login.password_edit.set_text(this->ini.account.password);
+        this->login.login_edit.set_text(username);
+        this->login.password_edit.set_text(password);
 
         this->screen.set_widget_focus(&this->login, Widget2::focus_reason_tabkey);
 
         this->login.set_widget_focus(&this->login.login_edit, Widget2::focus_reason_tabkey);
-        if (ini.account.username[0] != 0){
+        if (username[0] != 0){
             this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
         }
 
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~FlatLoginMod()
-    {
+    ~FlatLoginMod() override {
         this->screen.clear();
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
-    {
+    void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.parse_username(this->login.login_edit.get_text());
-            this->ini.context_set_value(AUTHID_PASSWORD, this->login.password_edit.get_text());
+            LOG(LOG_INFO, "asking for selector");
+            this->vars.set_acl<cfg::globals::auth_user>(this->login.login_edit.get_text());
+            this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
             break;
@@ -87,16 +103,14 @@ public:
         }
     }
 
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
         this->event.reset();
     }
 
-    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
-    {
+    void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags) override {
         if (this->copy_paste) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }

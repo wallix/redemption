@@ -27,7 +27,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "authentifier.hpp"
 #include "module_manager.hpp"
@@ -48,9 +48,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     Inifile ini;
 
-    ini.globals.keepalive_grace_delay = 30;
-    ini.globals.session_timeout = 900;
-    ini.debug.auth = 255;
+    ini.set<cfg::globals::keepalive_grace_delay>(30);
+    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
 
@@ -144,9 +144,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     Inifile ini;
 
-    ini.globals.keepalive_grace_delay = 30;
-    ini.globals.session_timeout = 900;
-    ini.debug.auth = 255;
+    ini.set<cfg::globals::keepalive_grace_delay>(30);
+    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
 
@@ -264,9 +264,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     BackEvent_t signal = BACK_EVENT_NONE;
 
     Inifile ini;
-    ini.globals.keepalive_grace_delay = 30;
-    ini.globals.session_timeout = 240; // => 8*30 = 240secs inactivity
-    ini.debug.auth = 255;
+    ini.set<cfg::globals::keepalive_grace_delay>(30);
+    ini.set<cfg::globals::session_timeout>(240); // = 8*30 = 240secs inactivity>
+    ini.set<cfg::debug::auth>(255);
     MMIni mm(ini);
 
     char outdata[] =

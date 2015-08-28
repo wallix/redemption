@@ -323,15 +323,14 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool enable_transparent_mode;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
-    const int  rdp_compression;
     const bool persist_bitmap_cache_on_disk;
+    const bool disable_clipboard_log_syslog;
+    const int  rdp_compression;
 
     const unsigned    wab_agent_launch_timeout;
     const unsigned    wab_agent_on_launch_failure;
     const unsigned    wab_agent_keepalive_timeout;
     const std::string wab_agent_alternate_shell;
-
-    const unsigned disable_clipboard_log;
 
     size_t recv_bmp_update;
 
@@ -446,13 +445,13 @@ public:
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
-        , rdp_compression(mod_rdp_params.rdp_compression)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
+        , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
+        , rdp_compression(mod_rdp_params.rdp_compression)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
         , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
         , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
-        , disable_clipboard_log(mod_rdp_params.disable_clipboard_log)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -723,7 +722,7 @@ public:
         // this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }   // mod_rdp
 
-    virtual ~mod_rdp() {
+    ~mod_rdp() override {
         if (this->enable_wab_agent) {
             this->front.disable_input_event_and_graphics_update(false);
         }
@@ -813,7 +812,7 @@ protected:
 
         clipboard_virtual_channel_params.dont_log_data_into_syslog       =
             // disable_clipboard_log_syslog
-            (this->disable_clipboard_log & 1);
+            this->disable_clipboard_log_syslog;
 
         return clipboard_virtual_channel_params;
     }
@@ -948,28 +947,28 @@ public:
                        );
     }   // configure_proxy_managed_drives
 
-    virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
-                                     , Keymap2 * keymap) {
+    void rdp_input_scancode( long param1, long param2, long device_flags, long time
+                                     , Keymap2 * keymap) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
     }
 
-    virtual void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
-                                        , int16_t param2) {
+    void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
+                                        , int16_t param2) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
         }
     }
 
-    virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
-                                        , size_t length, size_t chunk_size, int flags) override {
+    void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
+                              , size_t length, size_t chunk_size, int flags) override {
         if (this->transparent_recorder) {
             this->transparent_recorder->send_to_front_channel( mod_channel_name, data, length
                                                              , chunk_size, flags);
@@ -1023,7 +1022,7 @@ private:
     }
 
 public:
-    virtual wait_obj * get_asynchronous_task_event(int & out_fd) override {
+    wait_obj * get_asynchronous_task_event(int & out_fd) override {
         if (this->asynchronous_tasks.empty()) {
             out_fd = -1;
             return nullptr;
@@ -1034,7 +1033,7 @@ public:
         return &this->asynchronous_task_event;
     }
 
-    virtual void process_asynchronous_task() override {
+    void process_asynchronous_task() override {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1047,10 +1046,10 @@ public:
         }
     }
 
-    virtual void send_to_mod_channel( const char * const front_channel_name
+    void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
                                     , size_t length
-                                    , uint32_t flags) {
+                                    , uint32_t flags) override {
         if (this->verbose & 16) {
             LOG(LOG_INFO,
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
@@ -1251,8 +1250,7 @@ private:
         }
         else if (((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) ||
                   (msgType == RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE)) &&
-                 (!(this->disable_clipboard_log & 1 // disable_clipboard_log_syslog
-                   ))) {
+                 (!this->disable_clipboard_log_syslog)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (!chunk.in_check_rem(6 // msgFlags(2) + dataLen(4)
                                        )) {
@@ -1657,7 +1655,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
-    virtual void send_auth_channel_data(const char * string_data) {
+    void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started
         //}
@@ -1770,7 +1768,7 @@ public:
         this->nego.trans.send(x224_header, mcs_header, stream);
     }
 
-    virtual void draw_event(time_t now) {
+    void draw_event(time_t now) override {
         if (!this->event.waked_up_by_time &&
             (!this->enable_wab_agent || !this->wab_agent_event.set_state || !this->wab_agent_event.waked_up_by_time)) {
             try{
@@ -3348,7 +3346,7 @@ public:
         }
     }   // draw_event
 
-    virtual wait_obj * get_secondary_event() {
+    wait_obj * get_secondary_event() override {
         if (this->wab_agent_event.set_state) {
             return &this->wab_agent_event;
         }
@@ -5416,7 +5414,7 @@ public:
         }
     }
 
-    virtual void rdp_input_invalidate(const Rect & r) {
+    void rdp_input_invalidate(const Rect & r) override {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
@@ -5437,7 +5435,7 @@ public:
         }
     }
 
-    virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {
+    void rdp_input_invalidate2(const DArray<Rect> & vr) override {
         LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
@@ -6097,128 +6095,128 @@ public:
         }
     }
 
-    virtual void begin_update() {
+    void begin_update() override {
         this->front.begin_update();
     }
 
-    virtual void end_update() {
+    void end_update() override {
         this->front.end_update();
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect &clip) {
+    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip,
-                      const Bitmap & bmp) {
+    void draw(const RDPMemBlt & cmd, const Rect & clip,
+                      const Bitmap & bmp) override {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip,
-                      const Bitmap & bmp) {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip,
+                      const Bitmap & bmp) override {
         this->front.draw(cmd, clip, bmp);
     }
 
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip) {
+    void draw(const RDPLineTo& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-                      const GlyphCache * gly_cache) {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+                      const GlyphCache * gly_cache) override {
         this->front.draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
 
-    virtual void draw(const RDPPolyline& cmd, const Rect & clip) {
+    void draw(const RDPPolyline& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseSC& cmd, const Rect & clip) {
+    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPEllipseCB& cmd, const Rect & clip) {
+    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
         this->front.draw(cmd, clip);
     }
 
-    virtual void server_set_pointer(const Pointer & cursor) {
+    void server_set_pointer(const Pointer & cursor) override {
         this->front.server_set_pointer(cursor);
     }
 
-    virtual void draw(const RDPColCache & cmd) {
+    void draw(const RDPColCache & cmd) override {
         this->front.draw(cmd);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+                      size_t size, const Bitmap & bmp) override {
         this->front.draw(bitmap_data, data, size, bmp);
     }
 
-    virtual void draw(const RDPBrushCache & cmd) {
+    void draw(const RDPBrushCache & cmd) override {
         this->front.draw(cmd);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->front.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->front.draw(order);
     }
 
-    virtual bool is_up_and_running() {
+    bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
-    virtual void disconnect() {
+    void disconnect() override {
         if (this->is_up_and_running()) {
             if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::disconnect()");
@@ -6663,8 +6661,7 @@ public:
 
         if (((msgType == RDPECLIP::CB_FORMAT_DATA_RESPONSE) ||
              (msgType == RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE)) &&
-            (!(this->disable_clipboard_log & 1 // disable_clipboard_log_syslog
-              ))) {
+            (!this->disable_clipboard_log_syslog)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 stream.in_skip_bytes(2 // msgFlags(2)
                     );

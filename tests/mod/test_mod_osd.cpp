@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     Inifile ini;
 
     Rect screen_rect(0, 0, 800, 600);
-    FakeMod mod(screen_rect.cx, screen_rect.cy, ini.font);
+    FakeMod mod(screen_rect.cx, screen_rect.cy, ini.get<cfg::font>());
     RDPDrawable & drawable = mod.gd;
 
     const int groupid = 0;
@@ -111,9 +111,9 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 
-    ini.video.rt_display.set(1);
-    ini.video.png_limit = -1;
-    ini.video.png_interval = 0;
+    ini.set<cfg::video::rt_display>(1);
+    ini.set<cfg::video::png_limit>(-1);
+    ini.set<cfg::video::png_interval>(0);
     StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.impl());
 
     drawable.show_mouse_cursor(false);

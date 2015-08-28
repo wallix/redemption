@@ -29,24 +29,37 @@
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "timeout.hpp"
+#include "config_access.hpp"
+
+
+using FlatDialogModVariables = vcfg::variables<
+    vcfg::var<cfg::context::accept_message,     vcfg::write>,
+    vcfg::var<cfg::context::display_message,    vcfg::write>,
+    vcfg::var<cfg::context::password,           vcfg::write>,
+    vcfg::var<cfg::debug::pass_dialog_box>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
 
 class FlatDialogMod : public InternalMod, public NotifyApi
 {
     FlatDialog dialog_widget;
 
-    Inifile          & ini;
+    FlatDialogModVariables vars;
     TimeoutT<time_t>   timeout;
 
 public:
-    FlatDialogMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
+    FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
                   const char * caption, const char * message, const char * cancel_text,
                   time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
-        : InternalMod(front, width, height, ini.font, &ini)
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , dialog_widget(*this, width, height, this->screen, this, caption, message,
-                        0, ini.theme, ini.font, TR("OK", ini), cancel_text,
-                        has_challenge)
-        , ini(ini)
-        , timeout(now, ini.debug.pass_dialog_box)
+                        0, vars.get<cfg::theme>(), vars.get<cfg::font>(),
+                        TR("OK", language(vars)),
+                        cancel_text, has_challenge)
+        , vars(vars)
+        , timeout(now, vars.get<cfg::debug::pass_dialog_box>())
     {
         this->screen.add_widget(&this->dialog_widget);
         this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget2::focus_reason_tabkey);
@@ -55,17 +68,15 @@ public:
 
         if (this->dialog_widget.challenge) {
             this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget2::focus_reason_tabkey);
-            // this->ini.to_send_set.insert(AUTHID_AUTHENTICATION_CHALLENGE);
+            // this->vars.get<cfg::to_send_set::insert>()(AUTHID_AUTHENTICATION_CHALLENGE);
         }
     }
 
-    virtual ~FlatDialogMod()
-    {
+    ~FlatDialogMod() override {
         this->screen.clear();
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
-    {
+    void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -78,14 +89,13 @@ private:
     void accepted()
     {
         if (this->dialog_widget.challenge) {
-            this->ini.context_set_value(AUTHID_PASSWORD,
-                                        this->dialog_widget.challenge->get_text());
+            this->vars.set_acl<cfg::context::password>(this->dialog_widget.challenge->get_text());
+        }
+        else if (this->dialog_widget.cancel) {
+            this->vars.set_acl<cfg::context::accept_message>("True");
         }
         else {
-            this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE
-                                         : AUTHID_DISPLAY_MESSAGE),
-                                        "True");
+            this->vars.set_acl<cfg::context::display_message>("True");
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
@@ -95,18 +105,19 @@ private:
     void refused()
     {
         if (!this->dialog_widget.challenge) {
-            this->ini.context_set_value((this->dialog_widget.cancel
-                                         ? AUTHID_ACCEPT_MESSAGE
-                                         : AUTHID_DISPLAY_MESSAGE),
-                                        "False");
+            if (this->dialog_widget.cancel) {
+                this->vars.set_acl<cfg::context::accept_message>("False");
+            }
+            else {
+                this->vars.set_acl<cfg::context::display_message>("False");
+            }
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
 public:
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
         case TimeoutT<time_t>::TIMEOUT_REACHED:
             this->accepted();

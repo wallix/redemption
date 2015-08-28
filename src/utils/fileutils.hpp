@@ -31,6 +31,8 @@
 #include <cstddef>
 #include <cerrno>
 
+#include <string>
+
 #include "log.hpp"
 #include "error.hpp"
 
@@ -174,14 +176,13 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
     return true;
 }
 
-static inline char * pathncpy(char * dest, const char * src, const size_t n) {
-    TODO("use error return value instead of raisong an exception. The returned pointer is only used in tests, not code anyway");
+static inline void pathncpy(char * dest, const char * src, const size_t n) {
     size_t src_len = strnlen(src, n);
-    if (src_len >= n) {
+    if (src_len >= n || (src_len == 0 && n < 3)) {
         LOG(LOG_INFO, "can't copy path, no room in dest path (available %d): %s\n", static_cast<int>(n), src);
         throw Error(ERR_PATH_TOO_LONG);
     }
-    if ((src_len == 0) && (n >= 3)){
+    if (src_len == 0){
         memcpy(dest, "./", 3);
     }
     else {
@@ -195,7 +196,6 @@ static inline char * pathncpy(char * dest, const char * src, const size_t n) {
             dest[src_len+1] = 0;
         }
     }
-    return dest;
 }
 
 static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
@@ -285,12 +285,12 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             struct stat st;
             if (stat(buffer, &st) < 0){
                 if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to read file %s [%u: %s]\n", buffer, errno, strerror(errno));
+                    LOG(LOG_WARNING, "Failed to read file %s [%u: %s]", buffer, errno, strerror(errno));
                 }
                 continue;
             }
             if (unlink(buffer) < 0){
-                LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
+                LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", buffer, errno, strerror(errno));
             }
         }
     }

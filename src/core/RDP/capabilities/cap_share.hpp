@@ -62,7 +62,7 @@ struct ShareCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(Stream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->nodeId);
@@ -70,13 +70,13 @@ struct ShareCaps : public Capability {
 
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len)override {
         this->len = len;
         this->nodeId = stream.in_uint16_le();
         this->pad2octets = stream.in_uint16_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg)override {
         LOG(LOG_INFO, "%s Share caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Share caps::nodeId %u", this->nodeId);
         LOG(LOG_INFO, "Share caps::pad2octets %u", this->pad2octets);

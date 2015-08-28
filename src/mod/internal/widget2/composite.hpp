@@ -74,13 +74,13 @@ public:
         }
     }
 
-    virtual iterator add(Widget2 * w) {
+    iterator add(Widget2 * w) override {
         REDASSERT(w);
         REDASSERT(this->children_count < MAX_CHILDREN_COUNT);
         this->child_table[this->children_count] = w;
         return static_cast<iterator>(&this->child_table[this->children_count++]);
     }
-    virtual void remove(const Widget2 * w) {
+    void remove(const Widget2 * w) override {
         REDASSERT(w);
         REDASSERT(this->children_count);
         bool children_found = false;
@@ -102,18 +102,18 @@ public:
         }
     }
 
-    virtual Widget2 * get(iterator iter) const {
+    Widget2 * get(iterator iter) const override {
         return *(static_cast<Widget2 **>(iter));
     }
 
-    virtual iterator get_first() {
+    iterator get_first() override {
         if (!this->children_count) {
             return reinterpret_cast<iterator>(invalid_iterator);
         }
 
         return static_cast<iterator>(&this->child_table[0]);
     }
-    virtual iterator get_last() {
+    iterator get_last() override {
         if (!this->children_count) {
             return reinterpret_cast<iterator>(invalid_iterator);
         }
@@ -121,7 +121,7 @@ public:
         return static_cast<iterator>(&this->child_table[this->children_count - 1]);
     }
 
-    virtual iterator get_previous(iterator iter, bool loop = false) {
+    iterator get_previous(iterator iter, bool loop = false) override {
         if (iter == this->get_first()) {
             if (loop) {
                 iterator last;
@@ -134,7 +134,7 @@ public:
 
         return (static_cast<Widget2 **>(iter)) - 1;
     }
-    virtual iterator get_next(iterator iter, bool loop = false) {
+    iterator get_next(iterator iter, bool loop = false) override {
         if (iter == this->get_last()) {
             if (loop) {
                 iterator frist;
@@ -148,7 +148,7 @@ public:
         return (static_cast<Widget2 **>(iter)) + 1;
     }
 
-    virtual iterator find(const Widget2 * w) {
+    iterator find(const Widget2 * w) override {
         for (size_t i = 0; i < this->children_count; i++) {
             if (this->child_table[i] == w) {
                 return static_cast<iterator>(&this->child_table[i]);
@@ -158,7 +158,7 @@ public:
         return reinterpret_cast<iterator>(invalid_iterator);
     }
 
-    virtual void clear()  {
+    void clear()  override {
         this->children_count = 0;
     }
 };  // class CompositeArray
@@ -182,7 +182,7 @@ public:
         , impl(nullptr)
         , current_focus(nullptr) {}
 
-    virtual ~WidgetParent() {}
+    ~WidgetParent() override {}
 
     void set_widget_focus(Widget2 * new_focused, int reason) {
         REDASSERT(new_focused);
@@ -196,7 +196,7 @@ public:
         this->current_focus->focus(reason);
     }
 
-    virtual void focus(int reason) {
+    void focus(int reason) override {
         const bool tmp_has_focus = this->has_focus;
         if (!this->has_focus) {
             this->has_focus = true;
@@ -216,7 +216,7 @@ public:
             this->refresh(this->rect);
         }
     }
-    virtual void blur() {
+    void blur() override {
         if (this->has_focus) {
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
@@ -326,7 +326,7 @@ public:
         this->current_focus = nullptr;
     }
 
-    virtual void draw(const Rect & clip) {
+    void draw(const Rect & clip) override {
         Rect rect_intersect = clip.intersect(this->rect);
         this->draw_inner_free(rect_intersect, this->get_bg_color());
         this->draw_children(rect_intersect);
@@ -407,7 +407,7 @@ public:
         }
     }
 
-    virtual bool next_focus() {
+    bool next_focus() override {
         if (this->current_focus) {
             if (this->current_focus->next_focus()) {
                 return true;
@@ -428,7 +428,7 @@ public:
 
         return false;
     }
-    virtual bool previous_focus() {
+    bool previous_focus() override {
         if (this->current_focus) {
             if (this->current_focus->previous_focus()) {
                 return true;
@@ -450,7 +450,7 @@ public:
         return false;
     }
 
-    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
+    Widget2 * widget_at_pos(int16_t x, int16_t y) override {
         if (!this->rect.contains_pt(x, y)) {
             return nullptr;
         }
@@ -473,8 +473,8 @@ public:
         return nullptr;
     }
 
-    virtual void rdp_input_scancode( long param1, long param2, long param3
-                                   , long param4, Keymap2 * keymap) {
+    void rdp_input_scancode( long param1, long param2, long param3
+                                   , long param4, Keymap2 * keymap) override {
         while (keymap->nb_kevent_available() > 0) {
             uint32_t nb_kevent = keymap->nb_kevent_available();
             switch (keymap->top_kevent()) {
@@ -501,7 +501,7 @@ public:
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         Widget2 * w = this->widget_at_pos(x, y);
 
         // Mouse clic release
@@ -543,9 +543,9 @@ public:
         this->impl = & composite_array;
     }
 
-    virtual ~WidgetComposite() {}
+    ~WidgetComposite() override {}
 
-    virtual void draw(const Rect & clip) {
+    void draw(const Rect & clip) override {
         Rect rect_intersect = clip.intersect(this->rect);
         this->draw_children(rect_intersect);
     }

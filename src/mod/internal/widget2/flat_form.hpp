@@ -71,39 +71,40 @@ enum {
     int flags;
 
     FlatForm(DrawApi& drawable, int16_t width, int16_t height,
-             Widget2 & parent, NotifyApi* notifier, int group_id, Inifile & ini,
-             Theme & theme, int flags = 0)
+             Widget2 & parent, NotifyApi* notifier, int group_id,
+             Font const & font, Theme const & theme, Translation::language_t lang,
+             int flags = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
-        , generic_warning(TR("%s field_required", ini))
-        , format_warning(TR("%s invalid_format", ini))
-        , toohigh_warning(TR("%s toohigh_duration", ini))
-        , field_comment(TR("comment", ini))
-        , field_ticket(TR("ticket", ini))
-        , field_duration(TR("duration", ini))
+        , generic_warning(TR("%s field_required", lang))
+        , format_warning(TR("%s invalid_format", lang))
+        , toohigh_warning(TR("%s toohigh_duration", lang))
+        , field_comment(TR("comment", lang))
+        , field_ticket(TR("ticket", lang))
+        , field_duration(TR("duration", lang))
         , warning_buffer()
         , warning_msg(drawable, 10, 0, *this, nullptr, "", true, group_id,
-                      theme.global.error_color, theme.global.bgcolor, ini.font)
-        , comment_label(drawable, 0, 10, *this, nullptr, TR("comment", ini), true,
-                        group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
+                      theme.global.error_color, theme.global.bgcolor, font)
+        , comment_label(drawable, 0, 10, *this, nullptr, TR("comment", lang), true,
+                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                       theme.edit.focus_color, ini.font, -1, 1, 1)
-        , ticket_label(drawable, 0, 40, *this, nullptr, TR("ticket", ini), true,
-                       group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
+                       theme.edit.focus_color, font, -1, 1, 1)
+        , ticket_label(drawable, 0, 40, *this, nullptr, TR("ticket", lang), true,
+                       group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , ticket_edit(drawable, this->ticket_label.lx() + 20, 40, 300, *this, this,
                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                      theme.edit.focus_color, ini.font, -1, 1, 1)
-        , duration_label(drawable, 0, 70, *this, nullptr, TR("duration", ini), true,
-                         group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
+                      theme.edit.focus_color, font, -1, 1, 1)
+        , duration_label(drawable, 0, 70, *this, nullptr, TR("duration", lang), true,
+                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , duration_edit(drawable, this->duration_label.lx() + 20, 70, 300, *this, this,
                         nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, ini.font, -1, 1, 1)
-        , duration_format(drawable, 0, 100, *this, nullptr, TR("note_duration_format", ini),
-                          true, group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
-        , notes(drawable, 0, 120, *this, nullptr, TR("note_required", ini), true,
-                group_id, theme.global.fgcolor, theme.global.bgcolor, ini.font)
-        , confirm(drawable, 0, 0, *this, this, TR("confirm", ini), true, group_id,
-                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, ini.font,
+                        theme.edit.focus_color, font, -1, 1, 1)
+        , duration_format(drawable, 0, 100, *this, nullptr, TR("note_duration_format", lang),
+                          true, group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , notes(drawable, 0, 120, *this, nullptr, TR("note_required", lang), true,
+                group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , confirm(drawable, 0, 0, *this, this, TR("confirm", lang), true, group_id,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font,
                   6, 2)
         , flags(flags)
     {
@@ -124,13 +125,13 @@ enum {
             this->add_widget(&this->comment_edit);
         }
         if (this->flags & DURATION_MANDATORY) {
-            this->duration_label.set_text(TR("duration_r", ini));
+            this->duration_label.set_text(TR("duration_r", lang));
         }
         if (this->flags & TICKET_MANDATORY) {
-            this->ticket_label.set_text(TR("ticket_r", ini));
+            this->ticket_label.set_text(TR("ticket_r", lang));
         }
         if (this->flags & COMMENT_MANDATORY) {
-            this->comment_label.set_text(TR("comment_r", ini));
+            this->comment_label.set_text(TR("comment_r", lang));
         }
 
         int labelmaxwidth = std::max(this->comment_label.cx(),
@@ -177,7 +178,7 @@ enum {
         this->confirm.set_button_y(y + 10);
     }
 
-    virtual ~FlatForm() {
+    ~FlatForm() override {
         this->clear();
     }
 
@@ -186,11 +187,11 @@ enum {
         this->rect.y += y;
         this->WidgetParent::move_xy(x,y);
     }
-    virtual void set_xy(int16_t x, int16_t y) {
+    void set_xy(int16_t x, int16_t y) override {
         this->move_xy(x - this->rect.x, y - this->rect.y);
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event) {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if (widget->group_id == this->confirm.group_id) {
             if (NOTIFY_SUBMIT == event) {
                 this->check_confirmation();
@@ -296,8 +297,7 @@ enum {
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:

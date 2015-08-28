@@ -45,12 +45,12 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
 
-    Inifile ini;
+    Font font;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    WidgetTestMod d(ini, front, 800, 600/*, "Title", "Hello, World", "OK", 0*/);
+    WidgetTestMod d(front, 800, 600, font, Theme()/*, "Title", "Hello, World", "OK", 0*/);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 

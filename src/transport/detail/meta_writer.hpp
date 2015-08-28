@@ -118,7 +118,7 @@ namespace detail
 
     public:
         template<class BufParams>
-        out_sequence_filename_buf(out_sequence_filename_buf_param<BufParams> const & params)
+        explicit out_sequence_filename_buf(out_sequence_filename_buf_param<BufParams> const & params)
         : filegen_(params.format, params.prefix, params.filename, params.extension, params.groupid)
         , buf_(params.buf_params)
         , num_file_(0)
@@ -272,7 +272,7 @@ namespace detail
 
     public:
         template<class T>
-        out_meta_sequence_filename_buf(out_meta_sequence_filename_buf_param<T> const & params)
+        explicit out_meta_sequence_filename_buf(out_meta_sequence_filename_buf_param<T> const & params)
         : sequence_base_type(params.sq_params)
         , meta_buf_(params.meta_buf_params)
         , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)

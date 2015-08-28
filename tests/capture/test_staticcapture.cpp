@@ -48,9 +48,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_usec = 0;
 
     Inifile ini;
-    ini.video.rt_display.set(1);
-    ini.video.png_limit = 3;
-    ini.video.png_interval = 20;
+    ini.set<cfg::video::rt_display>(1);
+    ini.set<cfg::video::png_limit>(3);
+    ini.set<cfg::video::png_interval>(20);
     RDPDrawable drawable(800, 600, 24);
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.impl());
 
@@ -94,9 +94,9 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     now.tv_usec = 0;
 
     Inifile ini;
-    ini.video.rt_display.set(1);
-    ini.video.png_limit = 3;
-    ini.video.png_interval = 20;
+    ini.set<cfg::video::rt_display>(1);
+    ini.set<cfg::video::png_limit>(3);
+    ini.set<cfg::video::png_interval>(20);
     RDPDrawable drawable(800, 600, 24);
     StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.impl());
 

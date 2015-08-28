@@ -170,7 +170,7 @@ namespace MCS
 
         Stream & stream;
 
-        InBerStream(Stream & stream)
+        explicit InBerStream(Stream & stream)
         : stream(stream)
         {
         }
@@ -380,7 +380,7 @@ namespace MCS
 
         Stream & stream;
 
-        OutBerStream(Stream & stream)
+        explicit OutBerStream(Stream & stream)
         : stream(stream)
         {
         }

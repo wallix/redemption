@@ -45,7 +45,7 @@ class GZipCompressionInTransport : public Transport {
     bool inflate_pending;
 
 public:
-    GZipCompressionInTransport(Transport & st, uint32_t verbose = 0)
+    explicit GZipCompressionInTransport(Transport & st, uint32_t verbose = 0)
     : Transport()
     , source_transport(st)
     , compression_stream()
@@ -59,12 +59,12 @@ public:
 (void)ret;
     }
 
-    virtual ~GZipCompressionInTransport() {
+    ~GZipCompressionInTransport() override {
         ::inflateEnd(&this->compression_stream);
     }
 
 private:
-    virtual void do_recv(char ** pbuffer, size_t len) {
+    void do_recv(char ** pbuffer, size_t len) override {
         uint8_t * temp_data        = reinterpret_cast<uint8_t *>(*pbuffer);
         size_t    temp_data_length = len;
 
@@ -169,7 +169,7 @@ class GZipCompressionOutTransport : public Transport {
     size_t  compressed_data_length;
 
 public:
-    GZipCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
+    explicit GZipCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
     : Transport()
     , target_transport(tt)
     , compression_stream()
@@ -183,7 +183,7 @@ public:
 (void)ret;
     }
 
-    virtual ~GZipCompressionOutTransport() {
+    ~GZipCompressionOutTransport() override {
         if (this->uncompressed_data_length) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "GZipCompressionOutTransport::~GZipCompressionOutTransport: Compress");
@@ -261,7 +261,7 @@ private:
         REDASSERT(this->compression_stream.avail_in == 0);
     }
 
-    virtual void do_send(const char * const buffer, size_t len) {
+    void do_send(const char * const buffer, size_t len) override {
         if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: len=%u", len);
         }
@@ -313,7 +313,7 @@ private:
     }
 
 public:
-    virtual bool next() {
+    bool next() override {
         if (this->uncompressed_data_length) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "GZipCompressionOutTransport::next: Compress");
@@ -369,7 +369,7 @@ private:
     }
 
 public:
-    virtual void timestamp(timeval now) {
+    void timestamp(timeval now) override {
         this->target_transport.timestamp(now);
     }
 };  // class GZipCompressionOutTransport

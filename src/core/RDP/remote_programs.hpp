@@ -132,7 +132,7 @@ class RAILPDUHeader_Recv {
     uint16_t orderLength_;
 
 public:
-    RAILPDUHeader_Recv(Stream & stream) {
+    explicit RAILPDUHeader_Recv(Stream & stream) {
         const unsigned expected = 4;    // orderType(2) + orderLength(2)
 
         if (!stream.in_check_rem(expected)) {
@@ -155,7 +155,7 @@ class RAILPDUHeader_Send {
     uint32_t   offset_of_orderLength;
 
 public:
-    RAILPDUHeader_Send(Stream & stream)
+    explicit RAILPDUHeader_Send(Stream & stream)
     : stream(stream), offset_of_orderLength(0) {}
 
     void emit_begin(uint16_t orderType) {
@@ -203,7 +203,7 @@ class HandshakePDU_Recv {
     uint32_t buildNumber_;
 
 public:
-    HandshakePDU_Recv(Stream & stream) {
+    explicit HandshakePDU_Recv(Stream & stream) {
         const unsigned expected = 4;    // buildNumber(4)
 
         if (!stream.in_check_rem(expected)) {
@@ -271,7 +271,7 @@ class ClientInformationPDU_Recv {
     uint32_t Flags_;
 
 public:
-    ClientInformationPDU_Recv(Stream & stream) {
+    explicit ClientInformationPDU_Recv(Stream & stream) {
         {
             const unsigned expected = 4;    // Flags(4)
 
@@ -419,7 +419,7 @@ class ClientExecutePDU_Recv {
     std::string arguments_;
 
 public:
-    ClientExecutePDU_Recv(Stream & stream) {
+    explicit ClientExecutePDU_Recv(Stream & stream) {
         {
             const unsigned expected =
                 8;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -657,7 +657,7 @@ class ClientSystemParametersUpdatePDU_Recv {
     uint32_t SystemParam_;
 
 public:
-    ClientSystemParametersUpdatePDU_Recv(Stream & stream) {
+    explicit ClientSystemParametersUpdatePDU_Recv(Stream & stream) {
         {
             const unsigned expected = 4;    // SystemParam(4)
 
@@ -723,7 +723,7 @@ class HighContrastSystemInformationStructure_Recv {
     std::string ColorScheme_;
 
 public:
-    HighContrastSystemInformationStructure_Recv(Stream & stream) {
+    explicit HighContrastSystemInformationStructure_Recv(Stream & stream) {
         {
             const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
 

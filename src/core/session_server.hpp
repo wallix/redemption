@@ -29,19 +29,23 @@
 
 class SessionServer : public Server
 {
-    // Used for enable transparent proxying on accepted socket (ini.globals.enable_ip_transparent = true).
+    // Used for enable transparent proxying on accepted socket (ini.get<cfg::globals::enable_ip_transparent>() = true).
     unsigned uid;
     unsigned gid;
     bool debug_config;
 
     parameters_holder & parametersHldr;
 
+    std::string config_filename;
+
 public:
-    SessionServer(unsigned uid, unsigned gid, parameters_holder & parametersHldr, bool debug_config = true)
+    SessionServer(unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename, bool debug_config = true)
         : uid(uid)
         , gid(gid)
         , debug_config(debug_config)
-        , parametersHldr(parametersHldr) {
+        , parametersHldr(parametersHldr)
+        , config_filename(config_filename)
+    {
     }
 
     virtual Server_status start(int incoming_sck)
@@ -73,18 +77,19 @@ public:
                 close(incoming_sck);
 
                 Inifile ini;
-                ini.debug.config = this->debug_config;
-                ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+                ini.set<cfg::debug::config>(this->debug_config);
+                { ConfigurationLoader cfg_loader(ini, this->config_filename.c_str()); }
 
-                if (ini.globals.wab_agent_alternate_shell.empty()) {
-                    ini.globals.wab_agent_alternate_shell =
-                        this->parametersHldr.get_agent_alternate_shell();
+                if (ini.get<cfg::globals::wab_agent_alternate_shell>().empty()) {
+                    ini.set<cfg::globals::wab_agent_alternate_shell>(
+                        this->parametersHldr.get_agent_alternate_shell()
+                    );
                 }
 
-                ini.crypto.key0.setmem(this->parametersHldr.get_crypto_key_0());
-                ini.crypto.key1.setmem(this->parametersHldr.get_crypto_key_1());
+                ini.get_ref<cfg::crypto::key0>().setmem(this->parametersHldr.get_crypto_key_0());
+                ini.get_ref<cfg::crypto::key1>().setmem(this->parametersHldr.get_crypto_key_1());
 
-                if (ini.debug.session){
+                if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
                 }
 
@@ -114,7 +119,7 @@ public:
                 }
 
                 char real_target_ip[256];
-                if (ini.globals.enable_ip_transparent &&
+                if (ini.get<cfg::globals::enable_ip_transparent>() &&
                     (0 != strcmp(source_ip, "127.0.0.1"))) {
                     int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                     // source and dest are inverted because we get the information we want from reply path rule
@@ -165,19 +170,19 @@ public:
                             "New session on %u (pid=%u) from %s to %s",
                             (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                     }
-                    ini.context_set_value(AUTHID_HOST, source_ip);
+                    ini.set_acl<cfg::globals::host>(source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
-                    ini.context_set_value(AUTHID_TARGET, target_ip);
-                    if (ini.globals.enable_ip_transparent
+                    ini.set_acl<cfg::globals::target>(target_ip);
+                    if (ini.get<cfg::globals::enable_ip_transparent>()
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
-                        ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
+                        ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
                     Session session(sck, ini);
 
                     // Suppress session file
                     unlink(session_file);
 
-                    if (ini.debug.session){
+                    if (ini.get<cfg::debug::session>()){
                         LOG(LOG_INFO, "Session::end of Session(%u)", sck);
                     }
 

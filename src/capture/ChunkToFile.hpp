@@ -64,15 +64,15 @@ public:
 
                , const Inifile & ini)
     : RDPChunkedDevice()
-    , compression_wrapper(*trans, ini.video.wrm_compression_algorithm)
+    , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
     , ini(ini)
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
     {
-        if (this->ini.video.wrm_compression_algorithm != this->compression_wrapper.get_index_algorithm()) {
+        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_index_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , this->ini.video.wrm_compression_algorithm);
+               , this->ini.get<cfg::video::wrm_compression_algorithm>());
         }
 
         this->send_meta_chunk( info_width
@@ -165,7 +165,7 @@ private:
     }
 
 public:
-    virtual void chunk(uint16_t chunk_type, uint16_t chunk_count, const Stream & data) {
+    void chunk(uint16_t chunk_type, uint16_t chunk_count, const Stream & data) override {
         switch (chunk_type) {
         case META_FILE:
             {

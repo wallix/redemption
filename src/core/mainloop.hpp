@@ -24,11 +24,13 @@
 #ifndef _REDEMPTION_CORE_MAINLOOP_HPP_
 #define _REDEMPTION_CORE_MAINLOOP_HPP_
 
+#include <string>
+
 class Inifile;
 class parameters_holder;
 
 int g_is_term(void);
-void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr);
-void redemption_new_session();
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename);
+void redemption_new_session(char const * config_filename);
 
 #endif

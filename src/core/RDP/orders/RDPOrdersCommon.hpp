@@ -492,14 +492,14 @@ public:
         , FrameMarker          = 0x0D
     };
 
-    AltsecDrawingOrderHeader(Stream & stream) {
+    explicit AltsecDrawingOrderHeader(Stream & stream) {
         this->controlFlags = stream.in_uint8();
 
         this->class_    = (this->controlFlags & 0x03);
         this->orderType = (this->controlFlags >> 2);
     }
 
-    AltsecDrawingOrderHeader(uint8_t controlFlags) {
+    explicit AltsecDrawingOrderHeader(uint8_t controlFlags) {
         this->controlFlags = controlFlags;
 
         this->class_    = (this->controlFlags & 0x03);
@@ -1218,7 +1218,7 @@ class RDPSecondaryOrderHeader {
     unsigned flags;
     unsigned type;
 
-    RDPSecondaryOrderHeader(Stream & stream) {
+    explicit RDPSecondaryOrderHeader(Stream & stream) {
         this->order_length = stream.in_uint16_le();
         this->flags        = stream.in_uint16_le();
         this->type         = stream.in_uint8();

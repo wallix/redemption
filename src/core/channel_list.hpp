@@ -339,7 +339,7 @@ namespace CHANNELS {
     struct VirtualChannelPDU {
         uint32_t verbose;
 
-        VirtualChannelPDU(uint32_t verbose = 0) : verbose(verbose) {}
+        explicit VirtualChannelPDU(uint32_t verbose = 0) : verbose(verbose) {}
 
         void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags

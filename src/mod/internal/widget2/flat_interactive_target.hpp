@@ -60,7 +60,7 @@ public:
                           Widget2 & parent, NotifyApi* notifier,
                           int group_id, bool ask_device,
                           bool ask_login, bool ask_password,
-                          Theme & theme, const char* caption,
+                          Theme const & theme, const char* caption,
                           const char * text_device,
                           const char * device_str,
                           const char * text_login,
@@ -192,17 +192,15 @@ public:
         this->device_label.rect.y += (device_show->cy() - this->login_label.cy()) / 2;
     }
 
-    virtual ~FlatInteractiveTarget()
-    {
+    ~FlatInteractiveTarget() override {
         this->clear();
     }
 
-    virtual int get_bg_color() const {
+    int get_bg_color() const override {
         return this->bgcolor;
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
-    {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if ((widget == this->last_interactive)
              && event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_SUBMIT);
@@ -212,8 +210,7 @@ public:
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:

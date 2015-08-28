@@ -22,7 +22,6 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 
-#include "translation.hpp"
 #include "front_api.hpp"
 #include "config.hpp"
 #include "widget2/flat_wait.hpp"
@@ -31,23 +30,39 @@
 #include "copy_paste.hpp"
 #include "timeout.hpp"
 
+#include "config_access.hpp"
+
+
+using FlatWaitModVariables = vcfg::variables<
+    vcfg::var<cfg::context::comment,        vcfg::write>,
+    vcfg::var<cfg::context::duration,       vcfg::write>,
+    vcfg::var<cfg::context::ticket,         vcfg::write>,
+    vcfg::var<cfg::context::waitinforeturn, vcfg::write>,
+    vcfg::var<cfg::translation::language>,
+    vcfg::var<cfg::font>,
+    vcfg::var<cfg::theme>
+>;
+
 class FlatWaitMod : public InternalMod, public NotifyApi
 {
     FlatWait wait_widget;
 
-    Inifile          & ini;
+    FlatWaitModVariables vars;
     TimeoutT<time_t>   timeout;
 
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height,
+    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
-        : InternalMod(front, width, height, ini.font, &ini)
-        , wait_widget(*this, width, height, this->screen, this, caption, message,
-                      0, ini,  ini.theme, showform, flag)
-        , ini(ini)
+        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        , wait_widget(*this, width, height, this->screen, this, caption, message, 0,
+                      vars.get<cfg::font>(),
+                      vars.get<cfg::theme>(),
+                      language(vars),
+                      showform, flag)
+        , vars(vars)
         , timeout(now, 600)
     {
         this->screen.add_widget(&this->wait_widget);
@@ -61,13 +76,11 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~FlatWaitMod()
-    {
+    ~FlatWaitMod() override {
         this->screen.clear();
     }
 
-    virtual void notify(Widget2 * sender, notify_event_t event)
-    {
+    void notify(Widget2 * sender, notify_event_t event) override {
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -82,22 +95,17 @@ public:
 private:
     void confirm()
     {
-        this->ini.context_set_value(AUTHID_WAITINFORETURN,
-                                    "confirm");
-        this->ini.context_set_value(AUTHID_COMMENT,
-                                    this->wait_widget.form.comment_edit.get_text());
-        this->ini.context_set_value(AUTHID_TICKET,
-                                    this->wait_widget.form.ticket_edit.get_text());
-        this->ini.context_set_value(AUTHID_DURATION,
-                                    this->wait_widget.form.duration_edit.get_text());
+        this->vars.set_acl<cfg::context::waitinforeturn>("confirm");
+        this->vars.set_acl<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
+        this->vars.set_acl<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
+        this->vars.set_acl<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void accepted()
     {
-        this->ini.context_set_value(AUTHID_WAITINFORETURN,
-                                    "backselector");
+        this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -105,15 +113,13 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
     void refused()
     {
-        this->ini.context_set_value(AUTHID_WAITINFORETURN,
-                                    "exit");
+        this->vars.set_acl<cfg::context::waitinforeturn>("exit");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
 public:
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
         case TimeoutT<time_t>::TIMEOUT_REACHED:
             this->refused();
@@ -130,8 +136,7 @@ public:
         }
     }
 
-    virtual void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags)
-    {
+    void send_to_mod_channel(const char * front_channel_name, Stream& chunk, size_t length, uint32_t flags) override {
         if (this->copy_paste) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }

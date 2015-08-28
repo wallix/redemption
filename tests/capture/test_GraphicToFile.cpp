@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
 
     Inifile ini;
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
     Inifile ini;
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     OutFileTransport trans(fd);
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),

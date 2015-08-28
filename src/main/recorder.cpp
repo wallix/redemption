@@ -41,8 +41,8 @@ int main(int argc, char** argv)
                     , const char * path, const char * basename, const char * /*extension*/
                     , Inifile & ini, bool /*clear*/, uint32_t /*verbose*/)
         : capture( now, width, height, order_bpp
-                 , ini.video.wrm_color_depth_selection_strategy
-                 , path, path, ini.video.hash_path, basename
+                 , ini.get<cfg::video::wrm_color_depth_selection_strategy>()
+                 , path, path, ini.get<cfg::video::hash_path>(), basename
                  , false, false, nullptr, ini, true)
         {}
     };
@@ -54,14 +54,18 @@ int main(int argc, char** argv)
       , [](po::options_description const &){}
       , [](Inifile const & ini, po::variables_map const &, std::string const & output_filename) -> int {
             if (   output_filename.length()
-                && !(  ini.video.capture_png | ini.video.capture_flv | ini.video.capture_ocr | ini.video.capture_wrm
-                    | ini.globals.capture_chunk.get())) {
-                std::cerr << "Missing target format : need --png or --wrm" << endl << endl;
+                && !(
+                    bool(ini.get<cfg::video::capture_flags>()
+                        & (configs::CaptureFlags::png | configs::CaptureFlags::wrm)
+                    ) | ini.get<cfg::globals::capture_chunk>()
+                )
+            ) {
+                std::cerr << "Missing target format : need --png or --wrm\n" << std::endl;
                 return -1;
             }
             return 0;
       }
-      , [](Inifile::Inifile_crypto const &) { return 0; }
+      , [](cfg::crypto::key0::type const &, cfg::crypto::key1::type const &) { return 0; }
       , [](Inifile const &) { return false; }/*has_extra_capture*/
     );
 }

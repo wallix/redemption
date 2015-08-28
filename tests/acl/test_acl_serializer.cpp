@@ -42,8 +42,8 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
     Inifile ini;
     LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
-    ini.context_set_value(AUTHID_FORCEMODULE, "true");
+    AclSerializer acl(ini, trans, 0);
+    ini.set<cfg::context::forcemodule>(true);
     try {
         acl.send_acl_data();
     } catch (const Error & e){
@@ -52,11 +52,11 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     // try exception
     CheckTransport transexcpt("something very wrong",21);
-    AclSerializer aclexcpt(&ini, transexcpt, 0);
-    ini.context_set_value(AUTHID_AUTH_USER, "Newuser");
+    AclSerializer aclexcpt(ini, transexcpt, 0);
+    ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
-    BOOST_CHECK(!ini.context_get_bool(AUTHID_AUTHENTICATED));
-    BOOST_CHECK_EQUAL(0, strcmp(ini.context_get_value(AUTHID_REJECTED), "Authentifier service failed"));
+    BOOST_CHECK(!ini.get<cfg::context::authenticated>());
+    BOOST_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
@@ -65,36 +65,36 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     BStream stream(1024);
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_string(STRAUTHID_AUTH_USER "\nASK\n");
-    stream.out_string(STRAUTHID_PASSWORD "\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
 
-    stream.out_string(STRAUTHID_SESSION_ID "\n!6455\n");
+    stream.out_string(string_from_authid(AUTHID_SESSION_ID)); stream.out_string("\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
-    AclSerializer acl(&ini, trans, 0);
-    ini.context.session_id.set_empty();
-    ini.context_set_value(AUTHID_AUTH_USER,"testuser");
-    BOOST_CHECK(ini.context.session_id.get().empty());
-    BOOST_CHECK(!ini.context_is_asked(AUTHID_AUTH_USER));
+    AclSerializer acl(ini, trans, 0);
+    ini.set<cfg::context::session_id>("");
+    ini.set_acl<cfg::globals::auth_user>("testuser");
+    BOOST_CHECK(ini.get<cfg::context::session_id>().empty());
+    BOOST_CHECK(!ini.is_asked<cfg::globals::auth_user>());
 
     try {
         acl.incoming();
     } catch (const Error & e){
         BOOST_CHECK(false);
     }
-    BOOST_CHECK(ini.context_is_asked(AUTHID_AUTH_USER));
-    BOOST_CHECK(!ini.context.session_id.get().empty());
+    BOOST_CHECK(ini.is_asked<cfg::globals::auth_user>());
+    BOOST_CHECK(!ini.get<cfg::context::session_id>().empty());
 
     // CASE EXCEPTION
     // try exception
     stream.reset();
     stream.out_uint32_be(0xFFFFFFFF);
-    stream.out_string(STRAUTHID_AUTH_USER "\nASK\n");
-    stream.out_string(STRAUTHID_PASSWORD "\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
 
     GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
-    AclSerializer aclexcpt(&ini, transexcpt, 0);
+    AclSerializer aclexcpt(ini, transexcpt, 0);
     try {
         aclexcpt.incoming();
     } catch (const Error & e){
@@ -115,30 +115,32 @@ inline void execute_test_initem(Stream & stream, AclSerializer & acl, const auth
     acl.in_item(stream);
 }
 
-inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t authid, const char * defaut)
+template<class Cfg, class U>
+inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t authid, U const & defaut)
 {
     BStream stream(2048);
 
     // Set defaut value to strauthid key
-    ini.context_set_value(authid, defaut);
-    BOOST_CHECK(!ini.context_is_asked(authid));
+    ini.set_acl<Cfg>(defaut);
+    BOOST_CHECK(!ini.is_asked<Cfg>());
 
-    execute_test_initem(stream, acl, authid,"\nASK\n");
+    execute_test_initem(stream, acl, authid, "\nASK\n");
     // check key value is known
-    BOOST_CHECK(ini.context_is_asked(authid));
+    BOOST_CHECK(ini.is_asked<Cfg>());
 }
 
-inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid_t authid, const char * value)
+template<class Cfg>
+inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid_t authid, char const * value)
 {
     BStream stream(2048);
     // set strauthid key to be asked
-    ini.context_ask(authid);
-    BOOST_CHECK(ini.context_is_asked(authid));
+    ini.ask<Cfg>();
+    BOOST_CHECK(ini.is_asked<Cfg>());
 
-    execute_test_initem(stream, acl, authid,value);
+    execute_test_initem(stream, acl, authid, value);
 
     // check key value is known
-    BOOST_CHECK(!ini.context_is_asked(authid));
+    BOOST_CHECK(!ini.is_asked<Cfg>());
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
@@ -146,19 +148,20 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
     Inifile ini;
     BStream stream(1);
     LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
+    AclSerializer acl(ini, trans, 0);
 
     // SOME NORMAL CASE
-    test_initem_ask(ini, acl, AUTHID_PASSWORD,"SecureLinux");
-    test_initem_ask(ini, acl, AUTHID_SELECTOR_CURRENT_PAGE,"");
-    test_initem_receive(ini, acl, AUTHID_SELECTOR_CURRENT_PAGE,"\n2\n");
-    test_initem_receive(ini, acl, AUTHID_PASSWORD,"\n!SecureLinux\n");
+    test_initem_ask<cfg::context::password>(ini,acl, AUTHID_PASSWORD, "SecureLinux");
+    test_initem_ask<cfg::context::selector_current_page>(ini,acl, AUTHID_SELECTOR_CURRENT_PAGE, 0);
+    test_initem_receive<cfg::context::selector_current_page>(ini,acl, AUTHID_SELECTOR_CURRENT_PAGE, "\n2\n");
+    test_initem_receive<cfg::context::password>(ini,acl, AUTHID_PASSWORD, "\n!SecureLinux\n");
 
     // CASE EXCEPTION
     // try exception
     // stream.init(strlen(STRAUTHID_AUTH_USER "didier"));
     try{
-        test_initem_receive(ini,acl,AUTHID_AUTH_USER,"didier");
+        test_initem_receive<cfg::globals::auth_user>(ini, acl, AUTHID_AUTH_USER, "didier");
+        BOOST_CHECK(!"No exception throw");
     } catch (const Error & e) {
          BOOST_CHECK_EQUAL((uint32_t)ERR_ACL_UNEXPECTED_IN_ITEM_OUT, (uint32_t)e.id);
     }
@@ -169,13 +172,13 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
     Inifile ini;
     BStream stream(1024);
     LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
+    AclSerializer acl(ini, trans, 0);
 
-    ini.context_set_value(AUTHID_PASSWORD, "VerySecurePassword");
-    BOOST_CHECK(!ini.context_is_asked(AUTHID_PASSWORD));
-    stream.out_copy_bytes(STRAUTHID_PASSWORD "\nASK\n", strlen(STRAUTHID_PASSWORD "\nASK\n"));
+    ini.set_acl<cfg::context::password>("VerySecurePassword");
+    BOOST_CHECK(!ini.is_asked<cfg::context::password>());
+    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
     stream.mark_end();
     stream.rewind();
     acl.in_items(stream);
-    BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(ini.is_asked<cfg::context::password>());
 }

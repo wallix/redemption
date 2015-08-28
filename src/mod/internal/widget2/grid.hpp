@@ -65,7 +65,7 @@ protected:
     struct difftimer {
         uint64_t t;
 
-        difftimer(uint64_t start = 0)
+        explicit difftimer(uint64_t start = 0)
             : t(start)
         {}
 
@@ -110,7 +110,7 @@ public:
         REDASSERT(nb_columns <= GRID_NB_COLUMNS_MAX);
     }
 
-    virtual ~WidgetGrid() {
+    ~WidgetGrid() override {
     }
 
     virtual void clear() {
@@ -125,7 +125,7 @@ public:
     }
 
 
-    virtual void draw(const Rect & clip) {
+    void draw(const Rect & clip) override {
         for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
             this->draw_row(row_index, clip);
         }
@@ -239,7 +239,7 @@ public:
         return res;
     }
 
-    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
+    Widget2 * widget_at_pos(int16_t x, int16_t y) override {
         for (unsigned row_index = 0; row_index < this->nb_rows; row_index++) {
             bool empty_row = true;
             for (unsigned column_index = 0; column_index < this->nb_columns; column_index++) {
@@ -292,8 +292,7 @@ public:
         }
     }
 
-    virtual void focus(int reason)
-    {
+    void focus(int reason) override {
         if (!this->has_focus){
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
@@ -301,8 +300,7 @@ public:
         }
     }
 
-    virtual void blur()
-    {
+    void blur() override {
         if (this->has_focus){
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
@@ -310,8 +308,7 @@ public:
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap)
-    {
+    void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
             uint16_t y = this->rect.y;
             for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
@@ -344,7 +341,7 @@ public:
         Widget2::rdp_input_mouse(device_flags, mouse_x, mouse_y, keymap);
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap) {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap) override {
         if (keymap->nb_kevent_available() > 0) {
             switch (keymap->top_kevent()) {
                 case Keymap2::KEVENT_LEFT_ARROW:

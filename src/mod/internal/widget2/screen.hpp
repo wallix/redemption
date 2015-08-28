@@ -44,9 +44,9 @@ public:
     Font const & font;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, Font const & font,
-                 NotifyApi * notifier = nullptr, Theme * theme = nullptr)
+                 NotifyApi * notifier = nullptr, Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
-        , theme(theme ? *theme : Theme())
+        , theme(theme)
         , tooltip(nullptr)
         , current_over(nullptr)
         , normal_pointer(Pointer::POINTER_NORMAL)
@@ -58,15 +58,14 @@ public:
         this->tab_flag = IGNORE_TAB;
     }
 
-    virtual ~WidgetScreen()
-    {
+    ~WidgetScreen() override {
         if (this->tooltip) {
             delete this->tooltip;
             this->tooltip = nullptr;
         }
     }
 
-    void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) override {
         if (text == nullptr) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);
@@ -96,7 +95,7 @@ public:
         }
     }
 
-    virtual bool next_focus() {
+    bool next_focus() override {
         if (this->current_focus) {
             if (this->current_focus->next_focus()) {
                 return true;
@@ -114,7 +113,7 @@ public:
 
         return false;
     }
-    virtual bool previous_focus() {
+    bool previous_focus() override {
         if (this->current_focus) {
             if (this->current_focus->previous_focus()) {
                 return true;
@@ -133,8 +132,7 @@ public:
         return false;
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
-    {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
             if (((w != nullptr) ? w->pointer_flag : Pointer::POINTER_NORMAL) == Pointer::POINTER_EDIT) {
@@ -158,8 +156,7 @@ public:
         WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (this->tooltip) {
             this->hide_tooltip();
         }

@@ -469,7 +469,7 @@ class RDPBmpCache {
           key1(0), key2(0), verbose(verbose) {
     }
 
-    RDPBmpCache(int verbose = 0)
+    explicit RDPBmpCache(int verbose = 0)
         : id(0), idx(0), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
     }
 

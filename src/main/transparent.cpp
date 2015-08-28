@@ -60,6 +60,8 @@ int main(int argc, char * argv[]) {
     persistent_key_list_filename = "./PersistentKeyList.bin";
     target_port                  = 3389;
 
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+
     program_options::options_description desc({
         {'h', "help",    "produce help message"},
         {'v', "version", "show software version"},
@@ -73,6 +75,8 @@ int main(int argc, char * argv[]) {
 
         {'r', "record-file",   &record_filename,              "record file name"},
         {'d', "play-file",     &play_filename,                "play file name"},
+
+        {"config-file",        &config_filename,              "used an another ini file"},
     });
 
     auto options = program_options::parse_command_line(argc, argv, desc);
@@ -147,7 +151,7 @@ int main(int argc, char * argv[]) {
            this->ip_source[0] = 0;
         }
 
-        virtual Server_status start(int incoming_sck) {
+        Server_status start(int incoming_sck) override {
             union {
                 struct sockaddr s;
                 struct sockaddr_storage ss;
@@ -165,8 +169,8 @@ int main(int argc, char * argv[]) {
     Listen listener(one_shot_server, 0, 3389, true, 5);  // 25 seconds to connect, or timeout
     listener.run();
 
-    Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+    Inifile ini;
+    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay
@@ -174,7 +178,7 @@ int main(int argc, char * argv[]) {
         LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
     }
     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-                               , ini.debug.front, nullptr);
+                               , ini.get<cfg::debug::front>(), nullptr);
     wait_obj front_event;
 
     LCGRandom gen(0);
@@ -211,7 +215,7 @@ int main(int argc, char * argv[]) {
     try {
         if (target_device.empty()) {
             TransparentReplayMod mod(front, play_filename.c_str(),
-                front.client_info.width, front.client_info.height, nullptr, ini.font);
+                front.client_info.width, front.client_info.height, nullptr, ini.get<cfg::font>());
 
             run_mod(mod, front, front_event, nullptr, &front_trans);
         }
@@ -243,9 +247,9 @@ int main(int argc, char * argv[]) {
                     persistent_key_list_filename.c_str());
             }
 
-            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.debug.mod_rdp);
+            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.get<cfg::debug::mod_rdp>());
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
-                                     , ini.debug.mod_rdp, &ini.context.auth_error_message);
+                                     , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
 
             ClientInfo client_info = front.client_info;
 
@@ -254,36 +258,36 @@ int main(int argc, char * argv[]) {
                                        , target_device.c_str()
                                        , "0.0.0.0"   // client ip is silenced
                                        , front.keymap.key_flags
-                                       , ini.debug.mod_rdp
+                                       , ini.get<cfg::debug::mod_rdp>()
                                        );
             //mod_rdp_params.enable_tls                          = true;
-            mod_rdp_params.enable_nla                          = ini.mod_rdp.enable_nla;
-            mod_rdp_params.enable_krb                          = ini.mod_rdp.enable_kerberos;
+            mod_rdp_params.enable_nla                          = ini.get<cfg::mod_rdp::enable_nla>();
+            mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
             //mod_rdp_params.enable_fastpath                     = true;
             //mod_rdp_params.enable_mem3blt                      = true;
-            mod_rdp_params.enable_bitmap_update                = ini.globals.enable_bitmap_update;
+            mod_rdp_params.enable_bitmap_update                = ini.get<cfg::globals::enable_bitmap_update>();
             //mod_rdp_params.enable_new_pointer                  = true;
             mod_rdp_params.enable_transparent_mode             = true;
             mod_rdp_params.output_filename                     = (output_filename.empty() ? "" : output_filename.c_str());
             mod_rdp_params.persistent_key_list_transport       = persistent_key_list_ift;
             mod_rdp_params.transparent_recorder_transport      = record_oft;
-            mod_rdp_params.auth_channel                        = ini.globals.auth_channel;
-            mod_rdp_params.alternate_shell                     = ini.globals.alternate_shell.get_cstr();
-            mod_rdp_params.shell_working_directory             = ini.globals.shell_working_directory.get_cstr();
-            mod_rdp_params.rdp_compression                     = ini.mod_rdp.rdp_compression;
-            mod_rdp_params.disconnect_on_logon_user_change     = ini.mod_rdp.disconnect_on_logon_user_change;
-            mod_rdp_params.open_session_timeout                = ini.mod_rdp.open_session_timeout;
-            mod_rdp_params.certificate_change_action           = ini.mod_rdp.certificate_change_action;
-            mod_rdp_params.extra_orders                        = ini.mod_rdp.extra_orders.c_str();
-            mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.mod_rdp.persistent_disk_bitmap_cache;
-            mod_rdp_params.enable_cache_waiting_list           = ini.mod_rdp.cache_waiting_list;
-            mod_rdp_params.password_printing_mode              = ini.debug.password;
-            mod_rdp_params.cache_verbose                       = ini.debug.cache;
+            mod_rdp_params.auth_channel                        = ini.get<cfg::globals::auth_channel>();
+            mod_rdp_params.alternate_shell                     = ini.get<cfg::globals::alternate_shell>().c_str();
+            mod_rdp_params.shell_working_directory             = ini.get<cfg::globals::shell_working_directory>().c_str();
+            mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
+            mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
+            mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
+            mod_rdp_params.certificate_change_action           = ini.get<cfg::mod_rdp::certificate_change_action>();
+            mod_rdp_params.extra_orders                        = ini.get<cfg::mod_rdp::extra_orders>().c_str();
+            mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
+            mod_rdp_params.enable_cache_waiting_list           = ini.get<cfg::mod_rdp::cache_waiting_list>();
+            mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
+            mod_rdp_params.cache_verbose                       = ini.get<cfg::debug::cache>();
 
-            mod_rdp_params.allow_channels                      = &(ini.mod_rdp.allow_channels);
-            mod_rdp_params.deny_channels                       = &(ini.mod_rdp.deny_channels);
+            mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
+            mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
-            mod_rdp mod(mod_trans, front, client_info, ini.mod_rdp.redir_info,
+            mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
                         gen, mod_rdp_params);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);

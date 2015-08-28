@@ -110,7 +110,7 @@ struct SaveSessionInfoPDUData_Recv {
 
     SubStream payload;
 
-    SaveSessionInfoPDUData_Recv(Stream & stream) :
+    explicit SaveSessionInfoPDUData_Recv(Stream & stream) :
     infoType([&stream](){
         if (!stream.in_check_rem(4)) {
             LOG(LOG_ERR,
@@ -215,7 +215,7 @@ struct LogonInfoVersion1_Recv {
     uint8_t  UserName[2048];
     uint32_t SessionId;
 
-    LogonInfoVersion1_Recv(Stream & stream) :
+    explicit LogonInfoVersion1_Recv(Stream & stream) :
     cbDomain(0),
     cbUserName(0),
     SessionId(0) {
@@ -387,7 +387,7 @@ struct LogonInfoVersion2_Recv {
     uint8_t  Domain[512];
     uint8_t  UserName[4096];
 
-    LogonInfoVersion2_Recv(Stream & stream) :
+    explicit LogonInfoVersion2_Recv(Stream & stream) :
     Version(0),
     Size(0),
     SessionId(0),
@@ -472,7 +472,7 @@ struct LogonInfoVersion2_Recv {
 struct PlainNotify_Recv {
     uint8_t  Pad[558];
 
-    PlainNotify_Recv(Stream & stream) {
+    explicit PlainNotify_Recv(Stream & stream) {
         memset(Pad, 0, sizeof(Pad));
 
         const unsigned expected = 576;  // Pad(576)
@@ -570,7 +570,7 @@ struct LogonInfoExtended_Recv {
 
     SubStream payload;
 
-    LogonInfoExtended_Recv(Stream & stream)
+    explicit LogonInfoExtended_Recv(Stream & stream)
     : Length([&stream](){
         const unsigned expected = 2 +   // Length(2)
                                   4;    // FieldsPresent(4)
@@ -618,7 +618,7 @@ struct LogonInfoField_Recv {
 
     SubStream payload;
 
-    LogonInfoField_Recv(Stream & stream)
+    explicit LogonInfoField_Recv(Stream & stream)
     : cbFieldData([&stream](){
         const unsigned expected = 4;    // cbFieldData(4)
         if (!stream.in_check_rem(expected)) {
@@ -719,7 +719,7 @@ struct LogonErrorsInfo_Recv {
     uint32_t ErrorNotificationData;
     uint32_t ErrorNotificationType;
 
-    LogonErrorsInfo_Recv(Stream & stream) :
+    explicit LogonErrorsInfo_Recv(Stream & stream) :
     ErrorNotificationData(0),
     ErrorNotificationType(0) {
         const unsigned expected = 4 +   // ErrorNotificationData(4)

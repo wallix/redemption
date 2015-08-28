@@ -31,6 +31,7 @@
 #include "flat_button.hpp"
 #include "translation.hpp"
 #include "theme.hpp"
+#include "defines.hpp"
 
 class FlatVNCAuthentification : public WidgetParent
 {
@@ -48,7 +49,7 @@ public:
     FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
                             Widget2 & parent, NotifyApi* notifier, const char* caption,
                             int group_id, const char * password,
-                            Theme & theme, const char * label_text_message,
+                            Theme const & theme, const char * label_text_message,
                             const char * label_text_password, Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , message_label(drawable, 0, 0, *this, nullptr, label_text_message, true, -13,
@@ -98,25 +99,22 @@ public:
         this->img.set_xy((width - this->img.rect.cx) / 2, y_bbloc);
     }
 
-    virtual ~FlatVNCAuthentification()
-    {
+    ~FlatVNCAuthentification() override {
         this->clear();
     }
 
-    virtual int get_bg_color() const {
+    int get_bg_color() const override {
         return this->bgcolor;
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
-    {
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if ((widget == &this->password_edit)
              && event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_SUBMIT);
         }
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_ESC:

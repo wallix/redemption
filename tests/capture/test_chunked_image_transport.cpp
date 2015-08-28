@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         Rect scr(0, 0, 20, 10);
         CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
         Inifile ini;
-        ini.video.wrm_compression_algorithm = 0;
+        ini.set<cfg::video::wrm_compression_algorithm>(0);
         BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                            BmpCache::CacheOption(600, 256, false),
                            BmpCache::CacheOption(300, 1024, false),
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),

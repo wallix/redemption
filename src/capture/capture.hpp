@@ -45,6 +45,7 @@ public:
     OutFilenameSequenceTransport * png_trans;
     StaticCapture                * psc;
 
+private:
     Transport                    * wrm_trans;
 
 private:
@@ -59,8 +60,7 @@ public:
     wait_obj capture_event;
 
 private:
-    std::string png_path;
-    std::string basename;
+    FilenameGenerator const * wrm_filename_generator;
 
     CryptoContext crypto_ctx;
 
@@ -82,10 +82,10 @@ public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
            , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
-    : capture_wrm(ini.video.capture_wrm)
-    , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
-    , capture_png(ini.video.png_limit > 0)
-    , enable_file_encryption(ini.globals.enable_file_encryption.get())
+    : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
+    , capture_drawable(this->capture_wrm || (ini.get<cfg::video::png_limit>() > 0))
+    , capture_png(ini.get<cfg::video::png_limit>() > 0)
+    , enable_file_encryption(ini.get<cfg::globals::enable_file_encryption>())
     , png_trans(nullptr)
     , psc(nullptr)
     , wrm_trans(nullptr)
@@ -94,8 +94,6 @@ public:
     , pnc_ptr_cache(nullptr)
     , pnc(nullptr)
     , drawable(nullptr)
-    , png_path(png_path)
-    , basename(basename)
     , gd(nullptr)
     , last_now(now)
     , last_x(width / 2)
@@ -109,31 +107,31 @@ public:
         }
 
         if (this->capture_png) {
-            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.video.capture_groupid) != 0) {
+            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.get<cfg::video::capture_groupid>()) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
             }
 
 //            this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, png_path
             this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_path
-                                                              , basename, ".png", ini.video.capture_groupid, authentifier);
+                                                              , basename, ".png", ini.get<cfg::video::capture_groupid>(), authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
                                          , clear_png, ini, this->drawable->impl());
         }
 
         if (this->capture_wrm) {
             if (recursive_create_directory( wrm_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.video.capture_groupid) != 0) {
+                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
             }
 
             if (recursive_create_directory( hash_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.video.capture_groupid) != 0) {
+                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
             memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
-            memcpy(this->crypto_ctx.crypto_key, ini.crypto.key0, sizeof(this->crypto_ctx.crypto_key));
-            memcpy(this->crypto_ctx.hmac_key,   ini.crypto.key1, sizeof(this->crypto_ctx.hmac_key  ));
+            memcpy(this->crypto_ctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(this->crypto_ctx.crypto_key));
+            memcpy(this->crypto_ctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(this->crypto_ctx.hmac_key  ));
 
             TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
                  "Here is not the right level to manage anything related to encryption.")
@@ -150,13 +148,17 @@ public:
             this->pnc_ptr_cache = new PointerCache(pointerCacheSize);
 
             if (this->enable_file_encryption) {
-                this->wrm_trans = new CryptoOutMetaSequenceTransport( &this->crypto_ctx, wrm_path, hash_path, basename, now
-                                                                    , width, height, ini.video.capture_groupid
-                                                                    , authentifier);
+                auto * trans = new CryptoOutMetaSequenceTransport(
+                    &this->crypto_ctx, wrm_path, hash_path, basename, now
+                  , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
+                this->wrm_trans = trans;
+                this->wrm_filename_generator = trans->seqgen();
             }
             else {
-                this->wrm_trans = new OutMetaSequenceTransport( wrm_path, basename, now
-                                                              , width, height, ini.video.capture_groupid, authentifier);
+                auto * trans = new OutMetaSequenceTransport(
+                    wrm_path, basename, now, width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
+                this->wrm_trans = trans;
+                this->wrm_filename_generator = trans->seqgen();
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
                                          , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
@@ -172,7 +174,7 @@ public:
         }
     }
 
-    virtual ~Capture() {
+    ~Capture() override {
         delete this->psc;
         delete this->png_trans;
 
@@ -189,7 +191,13 @@ public:
         delete this->drawable;
 
         if (this->clear_png) {
-            clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+            auto i = this->wrm_trans->get_seqno();
+            while (i > 0) {
+                auto filename = this->wrm_filename_generator->get(--i);
+                if (::unlink(filename) < 0) {
+                    LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", filename, errno, strerror(errno));
+                }
+            }
         }
     }
 
@@ -223,14 +231,13 @@ public:
         }
     }
 
-    virtual void set_row(size_t rownum, const uint8_t * data)
-    {
+    void set_row(size_t rownum, const uint8_t * data) override {
         if (this->capture_drawable){
             this->drawable->set_row(rownum, data);
         }
     }
 
-    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
+    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
                           bool const & requested_to_stop) override {
         this->capture_event.reset();
 
@@ -252,13 +259,13 @@ public:
         }
     }
 
-    void flush() {
+    void flush() override {
         if (this->capture_wrm) {
             this->pnc->flush();
         }
     }
 
-    virtual bool input(const timeval & now, Stream & input_data_32) override {
+    bool input(const timeval & now, Stream & input_data_32) override {
         if (this->capture_wrm) {
             return this->pnc->input(now, input_data_32);
         }
@@ -266,25 +273,25 @@ public:
         return true;
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect &clip) {
+    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPMultiOpaqueRect capture_cmd = cmd;
@@ -302,7 +309,7 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDP::RDPMultiPatBlt capture_cmd = cmd;
@@ -324,13 +331,13 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (this->gd) {
             this->gd->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPPatBlt & cmd, const Rect &clip) {
+    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPatBlt capture_cmd = cmd;
@@ -352,13 +359,13 @@ public:
         }
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
         if (this->gd) {
             this->gd->draw(cmd, clip, bmp);
         }
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPMem3Blt capture_cmd = cmd;
@@ -380,7 +387,7 @@ public:
         }
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPOpaqueRect capture_cmd = cmd;
@@ -398,7 +405,7 @@ public:
         }
     }
 
-    void draw(const RDPLineTo & cmd, const Rect & clip) {
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPLineTo capture_cmd = cmd;
@@ -420,19 +427,19 @@ public:
         }
     }
 
-    void draw(const RDPBrushCache & cmd) {
+    void draw(const RDPBrushCache & cmd) override {
         if (this->gd) {
             this->gd->draw(cmd);
         }
     }
 
-    void draw(const RDPColCache & cmd) {
+    void draw(const RDPColCache & cmd) override {
         if (this->gd) {
             this->gd->draw(cmd);
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPGlyphIndex capture_cmd = cmd;
@@ -454,7 +461,7 @@ public:
         }
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) override {
         if (this->gd) {
             if (this->capture_wrm) {
                 if (bmp.bpp() > this->capture_bpp) {
@@ -476,7 +483,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
@@ -489,7 +496,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPolygonSC capture_cmd = cmd;
@@ -507,7 +514,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPolygonCB capture_cmd = cmd;
@@ -529,7 +536,7 @@ public:
         }
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPPolyline capture_cmd = cmd;
@@ -547,7 +554,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPEllipseSC capture_cmd = cmd;
@@ -565,7 +572,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (this->gd) {
             if (this->capture_bpp != this->order_bpp) {
                 RDPEllipseCB capture_cmd = cmd;
@@ -587,63 +594,62 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         if (this->gd) {
             this->gd->draw(order);
         }
     }
 
-    virtual void server_set_pointer(const Pointer & cursor)
-    {
+    void server_set_pointer(const Pointer & cursor) override {
         if (this->gd) {
             this->gd->server_set_pointer(cursor);
         }
     }
 
-    virtual void set_mod_palette(const BGRPalette & palette) {
+    void set_mod_palette(const BGRPalette & palette) override {
         if (this->capture_drawable) {
             this->drawable->set_mod_palette(palette);
         }
     }
 
-    virtual void set_pointer_display() {
+    void set_pointer_display() override {
         if (this->capture_drawable) {
             this->drawable->show_mouse_cursor(false);
         }
     }
 
     // toggles externally genareted breakpoint.
-    virtual void external_breakpoint() {
+    void external_breakpoint() override {
         if (this->capture_wrm) {
             this->pnc->external_breakpoint();
         }
     }
 
-    virtual void external_time(const timeval & now) {
+    void external_time(const timeval & now) override {
         if (this->capture_wrm) {
             this->pnc->external_time(now);
         }
     }
 
-    virtual void session_update(const timeval & now, const char * message) override {
+    void session_update(const timeval & now, const char * message) override {
         if (this->capture_wrm) {
             this->pnc->session_update(now, message);
         }

@@ -158,12 +158,11 @@ public:
         Latin1 = 1
     };
 
+public:
     std::string encodings;
 
 private:
     int state;
-
-    Inifile & ini;
 
     bool allow_authentification_retries;
 
@@ -177,7 +176,7 @@ private:
     uint64_t clipboard_last_client_data_timestamp     = 0;
     int      clipboard_requested_format_id            = 0;
 
-    ClipboardEncodingType clipboard_server_encoding_type = ClipboardEncodingType::UTF8;
+    ClipboardEncodingType clipboard_server_encoding_type;
 
     bool clipboard_owned_by_client = true;
 
@@ -188,12 +187,14 @@ private:
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
-           , Inifile & ini
            , const char * username
            , const char * password
            , FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
+           , Font const & font
+           , Translator const & tr
+           , Theme const & theme
            , int keylayout
            , int key_flags
            , bool clipboard_up
@@ -201,18 +202,18 @@ public:
            , const char * encodings
            , bool allow_authentification_retries
            , bool is_socket_transport
-           , const char * clipboard_server_encoding_type
+           , ClipboardEncodingType clipboard_server_encoding_type
            , uint32_t bogus_clipboard_infinite_loop
            , uint32_t verbose
            )
     //==============================================================================================================
-    : InternalMod(front, front_width, front_height, ini.font, &ini)
+    : InternalMod(front, front_width, front_height, font, theme)
     , challenge(*this, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
-                0, nullptr, ini.theme,
-                TR("Authentification required", ini),
-                TR("VNC password", ini),
-                ini.font)
+                0, nullptr, this->theme(),
+                tr("Authentification required"),
+                tr("VNC password"),
+                this->font())
     , mod_name{0}
     , palette(nullptr)
     , vnc_desktop(0)
@@ -229,12 +230,9 @@ public:
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
-    , ini(ini)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
     , is_socket_transport(is_socket_transport)
-    , clipboard_server_encoding_type(strcasecmp(clipboard_server_encoding_type, "latin1") ?
-                                        ClipboardEncodingType::UTF8 :
-                                        ClipboardEncodingType::Latin1)
+    , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     {
     //--------------------------------------------------------------------------------------------------------------
@@ -258,8 +256,7 @@ public:
     } // Constructor
 
     //==============================================================================================================
-    virtual ~mod_vnc()
-    {
+    ~mod_vnc() override {
         inflateEnd(&this->zstrm);
 
         TODO("mod_vnc isn't owner of sck")
@@ -340,8 +337,7 @@ public:
     }
 
     TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
-    virtual void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap )
-    {
+    void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap ) override {
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_mouse(device_flags, x, y, keymap);
             return;
@@ -372,12 +368,12 @@ public:
     } // rdp_input_mouse
 
     //==============================================================================================================
-    virtual void rdp_input_scancode( long param1
+    void rdp_input_scancode( long param1
                                    , long param2
                                    , long device_flags
                                    , long param4
                                    , Keymap2 * keymap
-                                   ) {
+                                   ) override {
     //==============================================================================================================
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_scancode(param1, param2, device_flags, param4, keymap);
@@ -534,11 +530,11 @@ protected:
 
 public:
     //==============================================================================================================
-    virtual void rdp_input_synchronize( uint32_t time
+    void rdp_input_synchronize( uint32_t time
                                       , uint16_t device_flags
                                       , int16_t param1
                                       , int16_t param2
-                                      ) {
+                                      ) override {
     //==============================================================================================================
         if (this->verbose) {
             LOG( LOG_INFO
@@ -564,7 +560,7 @@ private:
     } // rdp_input_invalidate
 
 public:
-    virtual void rdp_input_invalidate(const Rect & r) {
+    void rdp_input_invalidate(const Rect & r) override {
 
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_invalidate(r);
@@ -598,8 +594,7 @@ protected:
     }
 
 public:
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         if (this->verbose & 2) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -2121,10 +2116,10 @@ private:
     } // lib_clip_data
 
     //==============================================================================================================
-    virtual void send_to_mod_channel( const char * const front_channel_name
+    void send_to_mod_channel( const char * const front_channel_name
                                     , Stream & chunk
                                     , size_t length
-                                    , uint32_t flags) {
+                                    , uint32_t flags) override {
     //==============================================================================================================
         if (this->verbose) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
@@ -2670,8 +2665,7 @@ private:
 
     // Front calls this member function when it became up and running.
 public:
-    virtual void rdp_input_up_and_running()
-    {
+    void rdp_input_up_and_running() override {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
             if (this->verbose) {
                 LOG(LOG_INFO, "Client up and running");
@@ -2681,19 +2675,14 @@ public:
         }
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event)
-    {
+    void notify(Widget2* sender, notify_event_t event) override {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.context_set_value(AUTHID_TARGET_PASSWORD,
-                                        this->challenge.password_edit.get_text());
-
             this->screen.clear();
 
-            memset(this->password, 0, 256);
-
-            memcpy(this->password, this->challenge.password_edit.get_text(),
-                   sizeof(this->password) - 1);
+            memset(this->password, 0, sizeof(this->password));
+            strncpy(this->password, this->challenge.password_edit.get_text(),
+                    sizeof(this->password) - 1);
             this->password[sizeof(this->password) - 1] = 0;
 
             this->state = RETRY_CONNECTION;
@@ -2711,15 +2700,14 @@ public:
     }
 
 private:
-    virtual bool is_up_and_running() {
+    bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->state);
     }
 
 public:
     using InternalMod::draw;
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
         /// NOTE force resize cliping with rdesktop...
         if (this->is_first_membelt && clip.cx != 1 && clip.cy != 1) {
             this->front.draw(cmd, Rect(clip.x,clip.y,1,1), bmp);

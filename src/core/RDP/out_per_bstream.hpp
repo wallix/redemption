@@ -30,14 +30,13 @@
 class OutPerBStream : public BStream
 {
 public:
-    OutPerBStream(size_t size = AUTOSIZE) : BStream(size)
+    explicit OutPerBStream(size_t size = AUTOSIZE) : BStream(size)
     {
     }
 
-    virtual ~OutPerBStream() 
-    {
+    ~OutPerBStream() override {
     }
-    
+
     // =========================================================================
     // PER encoding rules support methods
     // =========================================================================

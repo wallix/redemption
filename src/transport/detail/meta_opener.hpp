@@ -55,7 +55,7 @@ namespace detail
         }
 
     public:
-        ReaderLine(Reader reader) noexcept
+        explicit ReaderLine(Reader reader) noexcept
         : eof(buf)
         , cur(buf)
         , reader(reader)
@@ -108,7 +108,7 @@ namespace detail
         BufMetaParam meta_param;
         uint32_t verbose;
 
-        in_meta_sequence_buf_param(
+        explicit in_meta_sequence_buf_param(
             const char * meta_filename,
             uint32_t verbose = 0,
             const BufParam & buf_param = BufParam(),
@@ -146,20 +146,17 @@ namespace detail
         char meta_path[2048];
         uint32_t verbose;
 
-        static BufMeta & open_and_return(const char * filename, BufMeta & buf)
-        {
-            if (buf.open(filename) < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-            return buf;
-        }
-
     public:
         template<class BufParam, class BufMetaParam>
-        in_meta_sequence_buf(const in_meta_sequence_buf_param<BufParam, BufMetaParam> & params)
+        explicit in_meta_sequence_buf(const in_meta_sequence_buf_param<BufParam, BufMetaParam> & params)
         : Buf(params.buf_param)
         , buf_meta(params.meta_param)
-        , reader(open_and_return(params.meta_filename, this->buf_meta))
+        , reader([&]() {
+            if (this->buf_meta.open(params.meta_filename) < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            return ReaderBuf{this->buf_meta};
+        }())
         , begin_chunk_time(0)
         , end_chunk_time(0)
         , verbose(params.verbose)

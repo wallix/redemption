@@ -38,8 +38,8 @@
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
     Inifile ini;
-    ini.video.rt_display.set(1);
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::video::rt_display>(1);
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     const int groupid = 0;
     {
         // Timestamps are applied only when flushing
@@ -49,15 +49,14 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         Rect scr(0, 0, 800, 600);
 
-        ini.video.frame_interval = 100; // one timestamp every second
-        ini.video.break_interval = 3;   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
+        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
 
-        ini.video.png_limit = 10; // one snapshot by second
-        ini.video.png_interval = 10; // one snapshot by second
+        ini.set<cfg::video::png_limit>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(10); // one snapshot by second
 
-        ini.video.capture_wrm = true;
-        ini.video.capture_png = true;
-        ini.globals.enable_file_encryption.set(false);
+        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
+        ini.set_acl<cfg::globals::enable_file_encryption>(false);
 
         Capture capture(
             now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini
@@ -105,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator png_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".png", ini.video.capture_groupid
+        , "./" , "capture", ".png", ini.get<cfg::video::capture_groupid>()
         );
 
         const char * filename;
@@ -139,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator wrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".wrm", ini.video.capture_groupid
+        , "./" , "capture", ".wrm", ini.get<cfg::video::capture_groupid>()
         );
 
         const char * filename;
@@ -169,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ::unlink(filename);
     }
 
-    if (ini.globals.enable_file_encryption.get()) {
+    if (ini.get<cfg::globals::enable_file_encryption>()) {
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
@@ -184,7 +183,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
     Inifile ini;
-    ini.video.rt_display.set(1);
+    ini.set<cfg::video::rt_display>(1);
     {
         // Timestamps are applied only when flushing
         timeval now;
@@ -193,15 +192,14 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Rect scr(0, 0, 12, 10);
 
-        ini.video.frame_interval = 100; // one timestamp every second
-        ini.video.break_interval = 3;   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
+        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
 
-        ini.video.png_limit = 10; // one snapshot by second
-        ini.video.png_interval = 10; // one snapshot by second
+        ini.set<cfg::video::png_limit>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(10); // one snapshot by second
 
-        ini.video.capture_wrm = false;
-        ini.video.capture_png = true;
-        ini.globals.enable_file_encryption.set(false);
+        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::png);
+        ini.set_acl<cfg::globals::enable_file_encryption>(false);
         Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini);
 
         Pointer pointer1(Pointer::POINTER_EDIT);

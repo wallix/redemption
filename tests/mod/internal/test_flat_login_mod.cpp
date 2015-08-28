@@ -46,12 +46,15 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
 
-    Inifile             ini;
+    Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, front, 800, 600);
+    FlatLoginMod d(ini, "user", "pass", front, 800, 600);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    BOOST_CHECK_EQUAL(ini.get<cfg::globals::auth_user>(), "user");
+    BOOST_CHECK_EQUAL(ini.get<cfg::context::password>(), "pass");
 }

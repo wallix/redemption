@@ -54,14 +54,14 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     Inifile ini;
-    ini.video.wrm_compression_algorithm = 0;
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
     RDPDrawable drawable(800, 600, 24);
     NativeCapture consumer(now, trans, 800, 600, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
 
     drawable.show_mouse_cursor(false);
 
-    ini.video.frame_interval = 100; // one snapshot by second
-    ini.video.break_interval = 5;   // one WRM file every 5 seconds
+    ini.set<cfg::video::frame_interval>(100); // one snapshot by second
+    ini.set<cfg::video::break_interval>(5);   // one WRM file every 5 seconds
     consumer.update_config(ini);
 
     bool ignore_frame_in_timeval = false;

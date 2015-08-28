@@ -39,8 +39,7 @@ class ReplayMod : public InternalMod {
     FileToGraphic           * reader;
 
     bool end_of_data;
-
-    const Inifile & ini;
+    bool wait_for_escape;
 
 public:
     ReplayMod( FrontAPI & front
@@ -49,11 +48,13 @@ public:
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
-             , Inifile & ini)
-    : InternalMod(front, width, height, ini.font)
+             , Font const & font
+             , bool wait_for_escape
+             , uint32_t debug_capture)
+    : InternalMod(front, width, height, font)
     , auth_error_message(auth_error_message)
     , end_of_data(false)
-    , ini(ini)
+    , wait_for_escape(wait_for_escape)
     {
         strncpy(this->movie, replay_path, sizeof(this->movie)-1);
         strncat(this->movie, movie, sizeof(this->movie)-1);
@@ -80,8 +81,7 @@ public:
         this->in_trans = new InMetaSequenceTransport(prefix, extension);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-        this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true
-                                        , this->ini.debug.capture);
+        this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true, debug_capture);
 
         switch (this->front.server_resize( this->reader->info_width
                                          , this->reader->info_height
@@ -109,24 +109,20 @@ public:
         this->front.send_global_palette();
     }
 
-    virtual ~ReplayMod()
-    {
+    ~ReplayMod() override {
         delete reader;
         delete in_trans;
         this->screen.clear();
     }
 
-    virtual void rdp_input_invalidate(const Rect & /*rect*/)
-    {
+    void rdp_input_invalidate(const Rect & /*rect*/) override {
     }
 
-    virtual void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/)
-    {
+    void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {
     }
 
-    virtual void rdp_input_scancode(long /*param1*/, long /*param2*/,
-                                    long /*param3*/, long /*param4*/, Keymap2 * keymap)
-    {
+    void rdp_input_scancode(long /*param1*/, long /*param2*/,
+                                    long /*param3*/, long /*param4*/, Keymap2 * keymap) override {
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
             this->event.signal = BACK_EVENT_STOP;
@@ -134,16 +130,14 @@ public:
         }
     }
 
-    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                                       int16_t /*param1*/, int16_t /*param2*/)
-    {
+    void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t /*param1*/, int16_t /*param2*/) override {
     }
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    virtual void draw_event(time_t now)
-    {
+    void draw_event(time_t now) override {
         TODO("use system constants for sizes");
         TODO("RZ: Support encrypted recorded file.");
         if (!this->end_of_data) {
@@ -160,7 +154,7 @@ public:
                 else {
                     this->front.flush();
 
-                    if (this->ini.mod_replay.on_end_of_data == 1) {
+                    if (!this->wait_for_escape) {
                         this->event.signal = BACK_EVENT_STOP;
                         this->event.set(1);
                     }

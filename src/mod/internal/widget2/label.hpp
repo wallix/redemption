@@ -66,8 +66,7 @@ public:
         this->set_text(text);
     }
 
-    virtual ~WidgetLabel()
-    {
+    ~WidgetLabel() override {
     }
 
     void set_text(const char * text)
@@ -91,8 +90,7 @@ public:
         return this->buffer;
     }
 
-    virtual void draw(const Rect& clip)
-    {
+    void draw(const Rect& clip) override {
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
         this->drawable.server_draw_text(this->font,
                                         this->x_text + this->dx(),
@@ -104,7 +102,7 @@ public:
                                         );
     }
 
-    virtual Dimension get_optimal_dim() {
+    Dimension get_optimal_dim() override {
         int w, h;
         this->drawable.text_metrics(this->font, this->buffer, w, h);
         return Dimension(w + this->x_text * 2, h + this->y_text * 2);
@@ -124,12 +122,12 @@ public:
         return res;
     }
 
-    virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
+    void set_color(uint32_t bg_color, uint32_t fg_color) override {
         this->bg_color = bg_color;
         this->fg_color = fg_color;
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (this->tool) {
             if (device_flags == MOUSE_FLAG_MOVE) {
                 int w = 0;

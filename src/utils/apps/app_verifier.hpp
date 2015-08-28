@@ -67,10 +67,6 @@ static inline bool check_file_hash_sha256( const char * file_path
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
 
-    if (len_to_check == 0){
-        len_to_check = number_of_bytes_read;
-    }
-
     return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 
@@ -431,8 +427,8 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     Inifile ini;
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-    std::string hash_path      = ini.video.hash_path.c_str()  ;
-    std::string mwrm_path      = ini.video.record_path.c_str();
+    std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
+    std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
     std::string input_filename                                ;
     bool        quick_check    = false                        ;
     uint32_t    verbose        = 0                            ;
@@ -453,7 +449,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
         std::cout << "Usage: redver [options]\n\n";
-        std::cout << desc << endl;
+        std::cout << desc << std::endl;
         exit(0);
     }
 
@@ -488,7 +484,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
 
         canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
 
-        //cout << "temp_path: \"" << temp_path << "\", \"" << temp_basename << "\", \"" << temp_extension << "\"" << endl;
+        //cout << "temp_path: \"" << temp_path << "\", \"" << temp_basename << "\", \"" << temp_extension << "\"" << std::endl;
 
         if (strlen(temp_path) > 0) {
             mwrm_path       = temp_path;
@@ -558,14 +554,14 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
         //snprintf(temp_filename, sizeof(temp_filename), "%s%s", temp_basename, temp_extension);
 //        temp_filename[sizeof(temp_filename) - 1] = '\0';
 
-//        std::cout << "temp_filename: \"" << temp_filename << "\"" << endl << endl;
+//        std::cout << "temp_filename: \"" << temp_filename << "\"" << std::endl << std::endl;
 //        size_t filename_len = strlen(temp_filename);
         size_t filename_len = input_filename.length();
 
         bool hash_ok = false;
 
         make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
-        std::cout << "hash file path: \"" << file_path << "\"." << endl;
+        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
 
         char   temp_buffer[4096];
         char * buf;
@@ -603,18 +599,18 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
                     hash_ok = true;
                 }
                 else {
-                    std::cerr << "Truncated hash: \"" << file_path << "\"" << endl << endl;
+                    std::cerr << "Truncated hash: \"" << file_path << "\"" << std::endl << std::endl;
                 }
             }
             else {
-                std::cerr << "File name mismatch: \"" << file_path << "\"" << endl << endl;
+                std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
             }
         }
         catch (Error const & e) {
-            std::cerr << "Exception code (hash): " << e.id << endl << endl;
+            std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
         }
         catch (...) {
-            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << endl << endl;
+            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
         }
 
         if (hash_ok == false) {
@@ -626,12 +622,12 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     * Check mwrm file *
     *****************/
     if (check_mwrm_file(&cctx, fullfilename, hash, quick_check) == false) {
-        std::cerr << "File \"" << fullfilename << "\" is invalid!" << endl << endl;
+        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 
         exit(-1);
     }
 
-    std::cout << "No error detected during the data verification." << endl << endl;
+    std::cout << "No error detected during the data verification." << std::endl << std::endl;
 
     return 0;
 }

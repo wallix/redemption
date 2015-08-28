@@ -147,7 +147,7 @@ private:
             BmpCache::Front
           , client_info.bpp
           , client_info.number_of_cache
-          , ((client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) && ini.client.cache_waiting_list),
+          , ((client_info.cache_flags & ALLOW_CACHE_WAITING_LIST_FLAG) && ini.get<cfg::client::cache_waiting_list>()),
             BmpCache::CacheOption(
                 client_info.cache1_entries
               , client_info.cache1_size
@@ -168,18 +168,18 @@ private:
                 client_info.cache5_entries
               , client_info.cache5_size
               , client_info.cache5_persistent),
-            ini.debug.cache
+            ini.get<cfg::debug::cache>()
           )
         , bmp_cache_persister([&ini, verbose, this]() {
             BmpCachePersister * bmp_cache_persister = nullptr;
 
-            if (ini.client.persistent_disk_bitmap_cache &&
-                ini.client.persist_bitmap_cache_on_disk &&
+            if (ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
+                ini.get<cfg::client::persist_bitmap_cache_on_disk>() &&
                 bmp_cache.has_cache_persistent()) {
                 // Generates the name of file.
                 char cache_filename[2048];
                 ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
-                    PERSISTENT_PATH "/client", ini.globals.host.get_cstr(), this->bmp_cache.bpp);
+                    PERSISTENT_PATH "/client", ini.get<cfg::globals::host>().c_str(), this->bmp_cache.bpp);
                 cache_filename[sizeof(cache_filename) - 1] = '\0';
 
                 int fd = ::open(cache_filename, O_RDONLY);
@@ -216,12 +216,12 @@ private:
           , this->glyph_cache
           , this->pointer_cache
           , client_info.bitmap_cache_version
-          , ini.client.bitmap_compression
+          , ini.get<cfg::client::bitmap_compression>()
           , client_info.use_compact_packets
           , max_bitmap_size
           , fastpath_support
           , mppc_enc
-          , ini.client.rdp_compression ? client_info.rdp_compression : 0
+          , ini.get<cfg::client::rdp_compression>() ? client_info.rdp_compression : 0
           , verbose
           )
         {}
@@ -392,17 +392,17 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : FrontAPI(ini.globals.notimestamp, ini.globals.nomouse)
+    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , up_and_running(0)
     , share_id(65538)
-    , encryptionLevel(ini.globals.encryptionLevel + 1)
+    , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
     , trans(trans)
     , userid(0)
     , order_level(0)
     , ini(ini)
-    , verbose(this->ini.debug.front)
+    , verbose(this->ini.get<cfg::debug::front>())
     , font(default_font_name)
     , mod_bpp(0)
     , capture_bpp(0)
@@ -483,7 +483,7 @@ public:
         }
     }
 
-    ~Front() {
+    ~Front() override {
         ERR_free_strings();
         delete this->mppc_enc;
 
@@ -504,8 +504,7 @@ public:
         return this->trans.get_total_sent();
     }
 
-    int server_resize(int width, int height, int bpp)
-    {
+    int server_resize(int width, int height, int bpp) override {
         uint32_t res = 0;
 
         this->mod_bpp = bpp;
@@ -564,8 +563,7 @@ public:
         return res;
     }
 
-    void server_set_pointer(const Pointer & cursor)
-    {
+    void server_set_pointer(const Pointer & cursor) override {
         this->orders->server_set_pointer(cursor);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -573,7 +571,7 @@ public:
         }
     }
 
-    virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) override
     {
         this->orders->update_pointer_position(xPos, yPos);
         if (  this->capture
@@ -582,22 +580,20 @@ public:
         }
     }
 
-    virtual void text_metrics(Font const & font, const char * text, int & width, int & height)
-    {
+    void text_metrics(Font const & font, const char * text, int & width, int & height) override {
         REDASSERT(false);
     }
 
-    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
-                                  uint32_t bgcolor, const Rect & clip)
-    {
+    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
+                                  uint32_t bgcolor, const Rect & clip) override {
         REDASSERT(false);
     }
 
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
-        // Recording or pattern dectection is enabled.
-        if (!ini.globals.movie.get() && ini.context.pattern_kill.is_empty() && ini.context.pattern_notify.is_empty()) {
+        // Recording is enabled.
+        if (!ini.get<cfg::globals::movie>()) {
             return;
         }
 
@@ -607,26 +603,15 @@ public:
             return;
         }
 
-        if (!ini.globals.movie.get()) {
-            ini.video.capture_flags = 8;
-            ini.video.capture_wrm   = false;
-            ini.video.capture_flv   = false;
-            ini.video.capture_ocr   = true;
-            ini.video.capture_png   = false;
-            ini.video.png_limit     = 0;
-        }
-
         LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
         struct timeval now = tvtime();
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
-            LOG(LOG_INFO, "codec_id      = %s\n", ini.globals.codec_id.get_cstr());
-            LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
-            LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
-            LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.globals.target_user.get_cstr());
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>().c_str());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>().c_str());
+            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>().c_str());
+            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>().c_str());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
         }
 
         char path[1024];
@@ -635,18 +620,18 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.globals.movie_path.get_cstr(), path,
+        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(), path,
                                         sizeof(path), basename, sizeof(basename), extension,
                                         sizeof(extension));
         if (!res) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
-        this->capture_bpp = ((ini.video.wrm_color_depth_selection_strategy == 1) ? 16 : 24);
+        this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
         this->capture = new Capture( now, width, height, this->capture_bpp, this->capture_bpp
-                                   , ini.video.record_path
-                                   , ini.video.record_tmp_path
-                                   , ini.video.hash_path, basename
+                                   , ini.get<cfg::video::record_path>()
+                                   , ini.get<cfg::video::record_tmp_path>()
+                                   , ini.get<cfg::video::hash_path>(), basename
                                    , true
                                    , false
                                    , authentifier
@@ -733,7 +718,7 @@ public:
     }
 
     void save_persistent_disk_bitmap_cache() const {
-        if (!this->ini.client.persistent_disk_bitmap_cache || !this->ini.client.persist_bitmap_cache_on_disk)
+        if (!this->ini.get<cfg::client::persistent_disk_bitmap_cache>() || !this->ini.get<cfg::client::persist_bitmap_cache_on_disk>())
             return;
 
         const char * persistent_path = PERSISTENT_PATH "/client";
@@ -749,12 +734,12 @@ public:
         // Generates the name of file.
         char filename[2048];
         ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini.globals.host.get_cstr(), this->orders.bpp());
+            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
         filename[sizeof(filename) - 1] = '\0';
 
         char filename_temporary[2048];
         ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini.globals.host.get_cstr(), this->orders.bpp());
+            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
@@ -790,7 +775,7 @@ public:
 private:
     void reset() {
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->ini.client.bitmap_compression ? 1 : 0);
+            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->ini.get<cfg::client::bitmap_compression>() ? 1 : 0);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
         }
@@ -802,32 +787,32 @@ private:
 
         this->max_bitmap_size = 1024 * 64;
 
-        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.client.rdp_compression - 1))
+        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.get<cfg::client::rdp_compression>() - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.1 Bulk compression");
             }
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
-            this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_RDP6:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 6.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_60_enc(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_60_enc(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_64K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 5.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_50_enc(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_50_enc(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_8K:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
             }
-            this->mppc_enc = new rdp_mppc_40_enc(this->ini.debug.compression);
+            this->mppc_enc = new rdp_mppc_40_enc(this->ini.get<cfg::debug::compression>());
             this->max_bitmap_size = 1024 * 8;
             break;
         }
@@ -851,16 +836,14 @@ private:
     }
 
 public:
-    virtual void begin_update()
-    {
+    void begin_update() override {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "Front::begin_update");
         }
         this->order_level++;
     }
 
-    virtual void end_update()
-    {
+    void end_update() override {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "Front::end_update");
         }
@@ -888,16 +871,15 @@ public:
         this->trans.send(x224_header, mcs_data);
     }
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const
-    {
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->channel_list;
     }
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel
+    void send_to_channel( const CHANNELS::ChannelDef & channel
                                 , uint8_t * chunk
                                 , size_t length
                                 , size_t chunk_size
-                                , int flags) {
+                                , int flags) override {
         if (this->verbose & 16) {
             LOG( LOG_INFO
                , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%u, chunk_size=%u, flags=%x)"
@@ -964,7 +946,7 @@ public:
     //    const uint32_t log_condition = (128 | 8);
     //    ::send_share_data_ex( this->trans
     //                        , PDUTYPE2_SAVE_SESSION_INFO
-    //                        , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+    //                        , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
     //                        , this->mppc_enc
     //                        , this->share_id
     //                        , this->encryptionLevel
@@ -976,8 +958,7 @@ public:
     //                        );
     //}
 
-    void send_global_palette()
-    {
+    void send_global_palette() override {
         if (!this->palette_sent && (this->client_info.bpp == 8)) {
             if (this->verbose & 4) {
                 LOG(LOG_INFO, "Front::send_global_palette");
@@ -990,7 +971,7 @@ public:
 
             ::send_server_update( this->trans
                                 , this->server_fastpath_update_support
-                                , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                                , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
                                 , this->mppc_enc
                                 , this->share_id
                                 , this->encryptionLevel
@@ -1040,7 +1021,7 @@ public:
                 X224::RecvFactory fx224(this->trans, &end, array.size());
                 InStream stream(array, 0, 0, end - array.get_data());
 
-                X224::CR_TPDU_Recv x224(stream, this->ini.client.bogus_neg_request);
+                X224::CR_TPDU_Recv x224(stream, this->ini.get<cfg::client::bogus_neg_request>());
                 if (x224._header_size != stream.size()) {
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);
@@ -1048,9 +1029,9 @@ public:
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
                 if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-                    (!this->ini.client.tls_support || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
+                    (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
-                    && this->ini.client.tls_fallback_legacy) {
+                    && this->ini.get<cfg::client::tls_fallback_legacy>()) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
                     this->tls_client_active = false;
                 }
@@ -1084,7 +1065,7 @@ public:
                 this->trans.send(stream);
 
                 if (this->tls_client_active) {
-                    this->trans.enable_server_tls(this->ini.globals.certificate_password);
+                    this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>());
 
             // 2.2.10.2 Early User Authorization Result PDU
             // ============================================
@@ -1186,9 +1167,9 @@ public:
                         default:
                         break;
                         }
-                        if (this->ini.client.max_color_depth) {
-                            this->client_info.bpp = std::min<int>(
-                                this->client_info.bpp, this->ini.client.max_color_depth);
+                        if (bool(this->ini.get<cfg::client::max_color_depth>())) {
+                            this->client_info.bpp = std::min(
+                                this->client_info.bpp, static_cast<int>(this->ini.get<cfg::client::max_color_depth>()));
                         }
                     }
                     break;
@@ -1428,7 +1409,7 @@ public:
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
 
-            if (this->ini.client.bogus_user_id) {
+            if (this->ini.get<cfg::client::bogus_user_id>()) {
                 // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
                 //  when unexpected channel id is received.
                 this->userid = 32;
@@ -1665,11 +1646,11 @@ public:
 
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info( sec.payload
-                                                , ini.client.ignore_logon_password
-                                                , ini.client.performance_flags_default
-                                                , ini.client.performance_flags_force_present
-                                                , ini.client.performance_flags_force_not_present
-                                                , ini.debug.password
+                                                , ini.get<cfg::client::ignore_logon_password>()
+                                                , ini.get<cfg::client::performance_flags_default>()
+                                                , ini.get<cfg::client::performance_flags_force_present>()
+                                                , ini.get<cfg::client::performance_flags_force_not_present>()
+                                                , ini.get<cfg::debug::password>()
                                                 , (this->verbose & 128)
                                                 );
 
@@ -1680,7 +1661,7 @@ public:
 
             this->keymap.init_layout(this->client_info.keylayout);
             LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
-            this->ini.client.keyboard_layout.set(this->client_info.keylayout);
+            this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2) {
                     LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
@@ -2124,7 +2105,7 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini.client.disable_tsk_switch_shortcuts.get()) {
+                                if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
@@ -2425,12 +2406,11 @@ public:
         this->trans.send(x224_header, mcs_header, stream);
     }
 
-    inline void send_data_indication_ex(uint16_t channelId, HStream & stream)
-    {
+    inline void send_data_indication_ex(uint16_t channelId, HStream & stream) override {
         ::send_data_indication_ex(this->trans, this->encryptionLevel, this->encrypt, this->userid, stream);
     }
 
-    virtual void send_fastpath_data(InStream & data) {
+    void send_fastpath_data(InStream & data) override {
         HStream stream(1024, 1024 + 65536);
 
         stream.out_copy_bytes(data.get_data(), data.size());
@@ -2451,7 +2431,7 @@ public:
         this->trans.send(fastpath_header, stream);
     }
 
-    virtual bool retrieve_client_capability_set(Capability & caps) {
+    bool retrieve_client_capability_set(Capability & caps) override {
 #ifdef __clang__
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
@@ -2497,15 +2477,15 @@ public:
         return true;
     }
 
-    virtual void set_keylayout(int LCID) override {
+    void set_keylayout(int LCID) override {
         this->keymap.init_layout(LCID);
     }
 
-    virtual void focus_changed(bool on_password_textbox) override {
+    void focus_changed(bool on_password_textbox) override {
         this->focus_on_password_textbox = on_password_textbox;
     }
 
-    virtual void session_update(const char * message) override {
+    void session_update(const char * message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
@@ -2539,7 +2519,7 @@ public:
 
         ::send_server_update( this->trans
                             , this->server_fastpath_update_support
-                            , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                            , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -2646,7 +2626,7 @@ public:
         order_caps.emit(stream);
         caps_count++;
 
-        if (this->ini.client.persistent_disk_bitmap_cache) {
+        if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
             BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
             if (this->verbose) {
                 bitmap_cache_host_support_caps.log("Sending to client");
@@ -3449,7 +3429,7 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (tsk_switch_shortcuts && this->ini.client.disable_tsk_switch_shortcuts.get()) {
+                                if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                                     LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
@@ -3597,7 +3577,7 @@ public:
                 const uint32_t log_condition = (128 | 8);
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
-                                    , (this->ini.client.rdp_compression ? this->client_info.rdp_compression : 0)
+                                    , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
                                     , this->mppc_enc
                                     , this->share_id
                                     , this->encryptionLevel
@@ -3684,9 +3664,9 @@ public:
                 this->up_and_running = 1;
                 cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
-                this->ini.context.opt_width.set(this->client_info.width);
-                this->ini.context.opt_height.set(this->client_info.height);
-                this->ini.context.opt_bpp.set(this->client_info.bpp);
+                this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
+                this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
+                this->ini.set_acl<cfg::context::opt_bpp>(this->client_info.bpp);
 
                 if (!this->auth_info_sent) {
                     char         username_a_domain[512];
@@ -3700,9 +3680,14 @@ public:
                     else {
                         username = this->client_info.username;
                     }
-                    this->ini.parse_username(username);
+                    this->ini.ask<cfg::context::selector>();
+                    LOG(LOG_INFO, "asking for selector");
+                    this->ini.set_acl<cfg::globals::auth_user>(username);
+                    this->ini.ask<cfg::globals::target_user>();
+                    this->ini.ask<cfg::globals::target_device>();
+                    this->ini.ask<cfg::context::target_protocol>();
                     if (this->client_info.password[0]) {
-                        this->ini.context_set_value(AUTHID_PASSWORD, this->client_info.password);
+                        this->ini.set_acl<cfg::context::password>(this->client_info.password);
                     }
 
                     this->auth_info_sent = true;
@@ -3729,7 +3714,7 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
 
-            if (this->ini.client.persistent_disk_bitmap_cache &&
+            if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
                 this->orders.bmp_cache_persister()) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
@@ -3859,7 +3844,7 @@ public:
         }
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
@@ -3894,8 +3879,7 @@ public:
         }
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             if (!this->input_event_and_graphics_update_disabled) {
                 this->orders->draw(cmd, clip);
@@ -3908,8 +3892,7 @@ public:
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip)
-    {
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             if (!this->input_event_and_graphics_update_disabled) {
                 this->orders->draw(cmd, clip);
@@ -3922,7 +3905,7 @@ public:
         }
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             if (!this->input_event_and_graphics_update_disabled) {
@@ -3936,7 +3919,7 @@ public:
         }
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->send_global_palette();
@@ -3972,7 +3955,7 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
@@ -4010,7 +3993,7 @@ public:
         }
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             if (!this->input_event_and_graphics_update_disabled) {
                 this->orders->draw(cmd, clip);
@@ -4023,7 +4006,7 @@ public:
         }
     }
 
-    void draw(const RDPPatBlt & cmd, const Rect & clip) {
+    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
@@ -4157,8 +4140,7 @@ private:
     }
 
 public:
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
-    {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
@@ -4204,12 +4186,11 @@ public:
         }
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap)
-    {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
-    void draw(const RDPLineTo & cmd, const Rect & clip) {
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
         const uint16_t miny = std::min(cmd.starty, cmd.endy);
         const Rect rect(minx, miny,
@@ -4254,8 +4235,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()) {
             this->send_global_palette();
 
@@ -4291,7 +4271,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 
         minx = maxx = previousx = cmd.xStart;
@@ -4335,7 +4315,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 
         minx = maxx = previousx = cmd.xStart;
@@ -4391,7 +4371,7 @@ public:
         }
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 
         minx = maxx = previousx = cmd.xStart;
@@ -4441,8 +4421,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseSC & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
@@ -4475,8 +4454,7 @@ public:
         }
     }
 
-    void draw(const RDPEllipseCB & cmd, const Rect & clip)
-    {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
@@ -4516,7 +4494,7 @@ public:
         }
     }
 
-    virtual void flush() {
+    void flush() override {
         this->orders->flush();
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4542,13 +4520,11 @@ public:
         }
     }
 
-    virtual void draw(const RDPColCache & cmd)
-    {
+    void draw(const RDPColCache & cmd) override {
         this->orders->draw(cmd);
     }
 
-    void set_mod_palette(const BGRPalette & palette)
-    {
+    void set_mod_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
         this->palette_sent = false;
 
@@ -4558,7 +4534,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDP::FrameMarker & order) override {
         if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
             this->orders->draw(order);
         }
@@ -4568,7 +4544,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4577,7 +4553,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4586,7 +4562,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4595,7 +4571,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->orders->draw(order);
 
         if (  this->capture
@@ -4604,19 +4580,19 @@ public:
         }
     }
 
-    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {
+    void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const override {
         proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
     }
 
-    virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {
+    void intersect_order_caps_ex(OrderCaps & order_caps) const override {
         order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
+                     , size_t size, const Bitmap & bmp) override {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
-        if (   !this->ini.globals.enable_bitmap_update
+        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
             // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
             || (bitmap_data.bits_per_pixel != this->client_info.bpp)
             || (bitmap_data.bitmap_size() > this->max_bitmap_size)
@@ -4657,8 +4633,7 @@ public:
         }
     }
 
-    virtual bool check_and_reset_activity()
-    {
+    bool check_and_reset_activity() override {
         const bool res = this->has_activity;
         this->has_activity = false;
         return res;

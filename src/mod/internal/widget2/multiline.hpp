@@ -69,8 +69,7 @@ public:
         this->set_text(text);
     }
 
-    virtual ~WidgetMultiLine()
-    {
+    ~WidgetMultiLine() override {
     }
 
     void set_text(const char * text)
@@ -120,8 +119,7 @@ public:
         return this->lines[num].str;
     }
 
-    virtual void draw(const Rect& clip)
-    {
+    void draw(const Rect& clip) override {
         int dy = this->dy() + this->y_text;
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {

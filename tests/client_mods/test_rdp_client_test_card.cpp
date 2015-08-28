@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     Inifile ini;
 
     BOOST_CHECK(true);
-    TestCardMod mod(front, info.width, info.height, ini.font);
+    TestCardMod mod(front, info.width, info.height, ini.get<cfg::font>());
     BOOST_CHECK(true);
     try{
         mod.draw_event(time(nullptr));

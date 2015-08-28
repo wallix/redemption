@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestBouncer2Mod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    Bouncer2Mod d(front, 800, 600, ini.font);
+    Bouncer2Mod d(front, 800, 600, ini.get<cfg::font>());
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }
 
