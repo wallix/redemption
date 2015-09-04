@@ -63,6 +63,31 @@ struct AuthorizationChannels
 
         this->normalize(this->allow_);
         this->normalize(this->deny_);
+
+        if (contains_true(this->cliprdr_restriction_)) {
+            if (this->allow_.length()) {
+                this->allow_ += ",";
+            }
+            this->allow_ += "cliprdr";
+        }
+        else {
+            if (this->deny_.length()) {
+                this->deny_ += ",";
+            }
+            this->deny_ += "cliprdr";
+        }
+        if (contains_true(this->rdpdr_restriction_)) {
+            if (this->allow_.length()) {
+                this->allow_ += ",";
+            }
+            this->allow_ += "rdpdr";
+        }
+        else {
+            if (this->deny_.length()) {
+                this->deny_ += ",";
+            }
+            this->deny_ += "rdpdr";
+        }
     }
 
     bool is_authorized(const char * s) const noexcept {
@@ -205,14 +230,14 @@ private:
                 s.erase(0, 1);
             }
         }
-        if (set) {
-            if (contains_true(this->cliprdr_restriction_)) {
-                s += "cliprdr,";
-            }
-            if (contains_true(this->rdpdr_restriction_)) {
-                s += "rdpdr";
-            }
-        }
+//        if (set) {
+//            if (contains_true(this->cliprdr_restriction_)) {
+//                s += "cliprdr,";
+//            }
+//            if (contains_true(this->rdpdr_restriction_)) {
+//                s += "rdpdr";
+//            }
+//        }
         if (!s.empty() && s.back() == ',') {
             s.pop_back();
         }
