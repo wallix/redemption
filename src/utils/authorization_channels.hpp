@@ -64,30 +64,23 @@ struct AuthorizationChannels
         this->normalize(this->allow_);
         this->normalize(this->deny_);
 
-        if (contains_true(this->cliprdr_restriction_)) {
-            if (this->allow_.length()) {
-                this->allow_ += ",";
+        auto normalize_channel = [this](const char * channel_name, bool is_allowed) {
+            if (is_allowed) {
+                if (this->allow_.length()) {
+                    this->allow_ += ",";
+                }
+                this->allow_ += channel_name;
             }
-            this->allow_ += "cliprdr";
-        }
-        else {
-            if (this->deny_.length()) {
-                this->deny_ += ",";
+            else {
+                if (this->deny_.length()) {
+                    this->deny_ += ",";
+                }
+                this->deny_ += channel_name;
             }
-            this->deny_ += "cliprdr";
-        }
-        if (contains_true(this->rdpdr_restriction_)) {
-            if (this->allow_.length()) {
-                this->allow_ += ",";
-            }
-            this->allow_ += "rdpdr";
-        }
-        else {
-            if (this->deny_.length()) {
-                this->deny_ += ",";
-            }
-            this->deny_ += "rdpdr";
-        }
+        };
+
+        normalize_channel("cliprdr", contains_true(this->cliprdr_restriction_));
+        normalize_channel("rdpdr", contains_true(this->rdpdr_restriction_));
     }
 
     bool is_authorized(const char * s) const noexcept {
