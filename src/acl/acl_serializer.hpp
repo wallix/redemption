@@ -187,6 +187,7 @@ public:
                         n = snprintf(buff, size, "%s\n!", key);
                         auto val = buff + n;
                         int tmpn = bfield.copy(buff + n, size);
+                        buff[n + tmpn] = '\0';
                         [&]{
                             if (tmpn >= 0) {
                                 const char * display_val = val;
