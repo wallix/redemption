@@ -79,7 +79,7 @@ struct AuthorizationChannels
             }
         };
 
-        normalize_channel("cliprdr", contains_true(this->cliprdr_restriction_));
+        normalize_channel("cliprdr", this->cliprdr_restriction_[0] || this->cliprdr_restriction_[1]);
         normalize_channel("rdpdr", contains_true(this->rdpdr_restriction_));
     }
 
