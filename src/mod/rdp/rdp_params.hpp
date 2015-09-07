@@ -271,9 +271,9 @@ struct ModRDPParams {
             "ModRDPParams password_printing_mode=%u",              this->password_printing_mode);
 
         LOG(LOG_INFO,
-            "ModRDPParams allow_channels=<%p>",                    this->allow_channels);
+            "ModRDPParams allow_channels=%s",                      (this->allow_channels ? this->allow_channels->c_str() : "<none>"));
         LOG(LOG_INFO,
-            "ModRDPParams deny_channels=<%p>",                     this->deny_channels);
+            "ModRDPParams deny_channels=%s",                       (this->deny_channels ? this->deny_channels->c_str() : "<none>"));
 
         LOG(LOG_INFO,
             "ModRDPParams remote_program=%s",                      (this->remote_program ? "yes" : "no"));
