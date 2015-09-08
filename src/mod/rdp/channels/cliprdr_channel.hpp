@@ -127,6 +127,19 @@ private:
     bool process_client_clipboard_capabilities_pdu(uint32_t total_length,
         uint32_t flags, ReadOnlyStream& chunk)
     {
+        {
+            const unsigned int expected = 10;   // msgFlags(2) + dataLen(4) +
+                                                //     cCapabilitiesSets(2) +
+                                                //     pad1(2)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_client_clipboard_capabilities_pdu: "
+                        "Truncated CLIPRDR_CAPS, need=%s remains=%u",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
@@ -191,6 +204,18 @@ private:
             return false;
         }
 
+        {
+            const unsigned int expected = 10;   // msgFlags(2) + dataLen(4) +
+                                                //     requestedFormatId(4)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
+                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%s remains=%u",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         this->requestedFormatId = chunk.in_uint32_le();
@@ -208,13 +233,17 @@ private:
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             const auto saved_chunk_p = chunk.p;
 
-            if (!chunk.in_check_rem(6 /* msgFlags(2) + dataLen(4) */)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
-                        "Truncated CB_FORMAT_DATA_RESPONSE, "
-                        "need=6 remains=%u",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
+            {
+                const unsigned int expected = 6;    // msgFlags(2) +
+                                                    //     dataLen(4)
+                if (!chunk.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
+                            "Truncated CB_FORMAT_DATA_RESPONSE, "
+                            "need=%s remains=%u",
+                        expected, chunk.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
             }
 
             chunk.in_skip_bytes(2 /* msgFlags(2) */);
@@ -272,15 +301,18 @@ private:
             const auto saved_chunk_p = chunk.p;
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                if (!chunk.in_check_rem(10  // msgFlags(2) + dataLen(4) +
-                                            //     cItems(4)
-                                       )) {
-                    LOG(LOG_ERR,
-                        "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
-                            "Truncated Packed File List, "
-                            "need=10 remains=%u",
-                        chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                {
+                    const unsigned int expected = 10;   // msgFlags(2) +
+                                                        //     dataLen(4) +
+                                                        //     cItems(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
+                                "Truncated Packed File List, "
+                                "need=%s remains=%u",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
                 }
 
                 chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
@@ -360,6 +392,30 @@ private:
             return false;
         }
 
+        if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+            LOG(LOG_ERR,
+                "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                    "!!!CHUNKED!!! Format List PDU is not yet supported!");
+
+            this->send_pdu_to_client<RDPECLIP::FormatListResponsePDU>(
+                true);
+
+            return false;
+        }
+
+        {
+            const unsigned int expected = 6;    // msgFlags(2) +
+                                                //     dataLen(4)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                        "Truncated CLIPRDR_FORMAT_LIST, "
+                        "need=%s remains=%u",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
         const uint16_t msgFlags = chunk.in_uint16_le();
         const uint32_t dataLen  = chunk.in_uint32_le();
 
@@ -384,6 +440,18 @@ private:
 
             for (uint32_t remaining_data_length = dataLen;
                  remaining_data_length; ) {
+                {
+                    const unsigned int expected = 2;    // formatId(2)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                                "Truncated CLIPRDR_FORMAT_LIST, "
+                                "need=%s remains=%u",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
                 const uint32_t formatId           = chunk.in_uint32_le();
                 const size_t   format_name_length = UTF16StrLen(chunk.p) + 1;
 
