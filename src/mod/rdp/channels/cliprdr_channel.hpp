@@ -134,7 +134,7 @@ private:
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_clipboard_capabilities_pdu: "
-                        "Truncated CLIPRDR_CAPS, need=%s remains=%u",
+                        "Truncated CLIPRDR_CAPS, need=%u remains=%u",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -210,7 +210,7 @@ private:
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%s remains=%u",
+                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%u",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -240,7 +240,7 @@ private:
                     LOG(LOG_ERR,
                         "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
                             "Truncated CB_FORMAT_DATA_RESPONSE, "
-                            "need=%s remains=%u",
+                            "need=%u remains=%u",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -309,7 +309,7 @@ private:
                         LOG(LOG_ERR,
                             "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
                                 "Truncated Packed File List, "
-                                "need=%s remains=%u",
+                                "need=%u remains=%u",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -410,7 +410,7 @@ private:
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_format_list_pdu: "
                         "Truncated CLIPRDR_FORMAT_LIST, "
-                        "need=%s remains=%u",
+                        "need=%u remains=%u",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -446,7 +446,7 @@ private:
                         LOG(LOG_ERR,
                             "ClipboardVirtualChannel::process_client_format_list_pdu: "
                                 "Truncated CLIPRDR_FORMAT_LIST, "
-                                "need=%s remains=%u",
+                                "need=%u remains=%u",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }

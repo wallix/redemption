@@ -247,6 +247,9 @@ private:
                     REDASSERT(client_message_header.packet_id ==
                         rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
 
+                    REDASSERT(chunk.in_remain() >=
+                              4 // DeviceCount(4)
+                             );
                     const uint32_t DeviceCount = chunk.in_uint32_le();
                     (void)DeviceCount;
                     REDASSERT(DeviceCount == 1);
@@ -324,6 +327,18 @@ private:
                 REDASSERT(
                     !this->length_of_remaining_device_data_to_be_skipped);
 
+                {
+                    const unsigned int expected = 4;    // DeviceCount(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
+                                "Truncated DR_DEVICELIST_ANNOUNCE, "
+                                "need=%u remains=%u",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
                 uint32_t DeviceCount = chunk.in_uint32_le();
 
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
@@ -340,9 +355,12 @@ private:
             {
                 if (!this->length_of_remaining_device_data_to_be_processed &&
                     !this->length_of_remaining_device_data_to_be_skipped) {
+                    // There is no device in process.
+
                     if (chunk.in_remain() <
                             20  // DeviceType(4) + DeviceId(4) +
-                                //     PreferredDosName(8) + DeviceDataLength(4)
+                                //     PreferredDosName(8) +
+                                //     DeviceDataLength(4)
                        ) {
                         REDASSERT(
                             !this->remaining_device_announce_request_header_stream.get_offset());
@@ -375,6 +393,7 @@ private:
                             chunk.p, needed_data_length);
 
                         chunk.in_skip_bytes(needed_data_length);
+
                         this->remaining_device_announce_request_header_stream.mark_end();
                         this->remaining_device_announce_request_header_stream.rewind();
 
@@ -437,15 +456,21 @@ private:
                                                 //     DeviceDataLength(4)
                             + DeviceDataLength;
 
-                        this->current_device_announce_data =
-                            std::make_unique<uint8_t[]>(
-                                current_device_announce_data_length);
+                        if (this->current_device_announce_stream.get_capacity() <
+                            current_device_announce_data_length) {
+                            this->current_device_announce_data =
+                                std::make_unique<uint8_t[]>(
+                                    current_device_announce_data_length);
 
-                        this->current_device_announce_stream.~WriteOnlyStream();
-                        new (&this->current_device_announce_stream)
-                            WriteOnlyStream(
-                                this->current_device_announce_data.get(),
-                                current_device_announce_data_length);
+                            this->current_device_announce_stream.~WriteOnlyStream();
+                            new (&this->current_device_announce_stream)
+                                WriteOnlyStream(
+                                    this->current_device_announce_data.get(),
+                                    current_device_announce_data_length);
+                        }
+                        else {
+                            this->current_device_announce_stream.reset();
+                        }
 
                         this->length_of_remaining_device_data_to_be_processed =
                             DeviceDataLength;
@@ -580,6 +605,18 @@ private:
 
         void process_client_drive_device_list_remove(uint32_t total_length,
                 uint32_t flags, Stream& chunk) {
+            {
+                const unsigned int expected = 4;    // DeviceCount(4)
+                if (!chunk.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
+                            "Truncated DR_DEVICELIST_REMOVE, "
+                            "need=%u remains=%u",
+                        expected, chunk.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+            }
+
             const uint32_t DeviceCount = chunk.in_uint32_le();
 
             auto remove_device =
