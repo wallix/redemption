@@ -441,7 +441,7 @@ private:
             for (uint32_t remaining_data_length = dataLen;
                  remaining_data_length; ) {
                 {
-                    const unsigned int expected = 2;    // formatId(2)
+                    const unsigned int expected = 4;    // formatId(4)
                     if (!chunk.in_check_rem(expected)) {
                         LOG(LOG_ERR,
                             "ClipboardVirtualChannel::process_client_format_list_pdu: "
