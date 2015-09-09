@@ -195,6 +195,7 @@ public:
                 std::make_unique<ClipboardVirtualChannel>(
                     this->clipboard_to_client_sender.get(),
                     this->clipboard_to_server_sender.get(),
+                    this->front,
                     this->get_clipboard_virtual_channel_params());
         }
 

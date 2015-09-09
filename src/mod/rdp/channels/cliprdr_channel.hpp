@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP
 
 #include "base_channel.hpp"
+#include "front_api.hpp"
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
@@ -48,6 +49,8 @@ private:
     std::unique_ptr<uint8_t[]> file_descriptor_data;
     FixedSizeStream            file_descriptor_stream;
 
+    FrontAPI& front;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -60,6 +63,7 @@ public:
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
+        FrontAPI& front,
         const Params & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
@@ -71,7 +75,8 @@ public:
     , file_descriptor_data(
           std::make_unique<uint8_t[]>(RDPECLIP::FileDescriptor::size()))
     , file_descriptor_stream(
-          file_descriptor_data.get(), RDPECLIP::FileDescriptor::size()) {}
+          file_descriptor_data.get(), RDPECLIP::FileDescriptor::size())
+    , front(front) {}
 
     inline virtual const char*
         get_reporting_reason_exchanged_data_limit_reached() const override
@@ -250,13 +255,15 @@ private:
 
             const uint32_t dataLen = chunk.in_uint32_le();
 
-            LOG(LOG_INFO,
-                "Sending %s(%u) clipboard data to server (%u) bytes%s",
-                RDPECLIP::get_Format_name(this->requestedFormatId),
-                this->requestedFormatId, dataLen,
-                (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
-                  (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
-                 ":" : "."));
+            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                LOG(LOG_INFO,
+                    "Sending %s(%u) clipboard data to server (%u) bytes%s",
+                    RDPECLIP::get_Format_name(this->requestedFormatId),
+                    this->requestedFormatId, dataLen,
+                    (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
+                      (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
+                     ":" : "."));
+            }
 
             const size_t max_length_of_data_to_dump = 256;
 
@@ -346,6 +353,11 @@ private:
                 fd.receive(this->file_descriptor_stream);
                 fd.log(LOG_INFO);
 
+                std::string message("SendFileToServerClipboard=");
+                message += fd.fileName();
+
+                this->front.session_update(message.c_str());
+
                 this->file_descriptor_stream.reset();
             }
 
@@ -354,6 +366,11 @@ private:
 
                 fd.receive(chunk);
                 fd.log(LOG_INFO);
+
+                std::string message("SendFileToServerClipboard=");
+                message += fd.fileName();
+
+                this->front.session_update(message.c_str());
             }
 
             if (chunk.in_remain()) {
@@ -697,12 +714,14 @@ public:
 
             const uint32_t dataLen = chunk.in_uint32_le();
 
-            LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
-                RDPECLIP::get_Format_name(this->requestedFormatId),
-                this->requestedFormatId, dataLen,
-                (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
-                  (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
-                 ":" : "."));
+            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
+                    RDPECLIP::get_Format_name(this->requestedFormatId),
+                    this->requestedFormatId, dataLen,
+                    (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
+                      (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
+                     ":" : "."));
+            }
 
             const size_t max_length_of_data_to_dump = 256;
 
@@ -778,6 +797,11 @@ public:
                 fd.receive(this->file_descriptor_stream);
                 fd.log(LOG_INFO);
 
+                std::string message("SendFileToClientClipboard=");
+                message += fd.fileName();
+
+                this->front.session_update(message.c_str());
+
                 this->file_descriptor_stream.reset();
             }
 
@@ -786,6 +810,11 @@ public:
 
                 fd.receive(chunk);
                 fd.log(LOG_INFO);
+
+                std::string message("SendFileToClientClipboard=");
+                message += fd.fileName();
+
+                this->front.session_update(message.c_str());
             }
 
             if (chunk.in_remain()) {

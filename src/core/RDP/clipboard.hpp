@@ -1156,6 +1156,8 @@ public:
         stream.in_skip_bytes(520);  // fileName(520)
     }
 
+    inline const char * fileName() const { return this->file_name.c_str(); }
+
     inline static size_t size() {
         return 592; // flags(4) + reserved1(32) + fileAttributes(4) +
                     //     reserved2(16) + lastWriteTime(8) +

@@ -654,7 +654,7 @@ unit-test test_null : tests/mod/null/test_null.cpp libboost_unit_test : <variant
 unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel.cpp libboost_unit_test : $(PNG_DEBUG) <variant>coverage:<library>gcov ;
+unit-test test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel.cpp libboost_unit_test png : <variant>coverage:<library>gcov ;
 unit-test test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel.cpp libboost_unit_test png : <variant>coverage:<library>gcov ;
 unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

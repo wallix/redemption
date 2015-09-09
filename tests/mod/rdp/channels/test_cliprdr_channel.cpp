@@ -28,11 +28,14 @@
 //#define LOGPRINT
 
 #include "channel_list.hpp"
+#include "client_info.hpp"
 #include "make_unique.hpp"
 #include "RDP/clipboard.hpp"
 #include "test_transport.hpp"
 #include "virtual_channel_data_sender.hpp"
 #include "rdp/channels/cliprdr_channel.hpp"
+
+#include "../../../front/fake_front.hpp"
 
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;
@@ -90,6 +93,19 @@ public:
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info,
+                    511 // verbose
+                   );
+
     int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
@@ -113,7 +129,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, clipboard_virtual_channel_params);
+        &to_client_sender, &to_server_sender, front,
+        clipboard_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
@@ -187,6 +204,19 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info,
+                    511 // verbose
+                   );
+
     int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
@@ -210,7 +240,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, clipboard_virtual_channel_params);
+        &to_client_sender, &to_server_sender, front,
+        clipboard_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
@@ -284,6 +315,19 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info,
+                    511 // verbose
+                   );
+
     int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
@@ -307,7 +351,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, clipboard_virtual_channel_params);
+        &to_client_sender, &to_server_sender, front,
+        clipboard_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
@@ -381,6 +426,19 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 {
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info,
+                    511 // verbose
+                   );
+
     int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
@@ -404,7 +462,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, clipboard_virtual_channel_params);
+        &to_client_sender, &to_server_sender, front,
+        clipboard_virtual_channel_params);
 
     uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     WriteOnlyStream virtual_channel_stream(virtual_channel_data,
