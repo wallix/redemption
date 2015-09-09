@@ -583,8 +583,25 @@ public:
                 send_message_to_server =
                     this->process_client_format_data_response_pdu(
                         total_length, flags, chunk);
+
+                if (send_message_to_server &&
+                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    this->update_exchanged_data(total_length);
+                }
             break;
-        }
+
+            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_message: "
+                            "File Contents Response PDU");
+                }
+
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    this->update_exchanged_data(total_length);
+                }
+            break;
+        }   // switch (this->client_message_type)
 
         if (send_message_to_server) {
             this->send_message_to_server(total_length, flags, chunk_data,
@@ -962,8 +979,24 @@ public:
                 send_message_to_client =
                     this->process_server_format_data_response_pdu(
                         total_length, flags, chunk);
+
+                if (send_message_to_client &&
+                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    this->update_exchanged_data(total_length);
+                }
             break;
-        }
+
+            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_message: "
+                            "File Contents Response PDU");
+                }
+
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    this->update_exchanged_data(total_length);
+                }
+        }   // switch (this->server_message_type)
 
         if (send_message_to_client) {
             this->send_message_to_client(total_length, flags, chunk_data,
