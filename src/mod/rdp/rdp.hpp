@@ -174,10 +174,10 @@ protected:
     : mod_api(front_width, front_height)
     , front(front) {}
 
-    virtual std::unique_ptr<ToClientSender> create_to_client_sender(
+    virtual std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
         const char* channel_name) const = 0;
 
-    virtual std::unique_ptr<ToServerSender> create_to_server_sender(
+    virtual std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
         const char* channel_name) = 0;
 
 public:
@@ -384,6 +384,51 @@ class mod_rdp : public RDPChannelManagerMod {
 
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
+
+    class ToServerAsynchronousSender : public VirtualChannelDataSender
+    {
+        std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
+
+        std::deque<std::unique_ptr<AsynchronousTask>> & asynchronous_tasks;
+
+        wait_obj & asynchronous_task_event;
+
+        uint32_t verbose;
+
+    public:
+        ToServerAsynchronousSender(
+            std::unique_ptr<VirtualChannelDataSender> &
+                to_server_synchronous_sender,
+            std::deque<std::unique_ptr<AsynchronousTask>> &
+                asynchronous_tasks,
+            wait_obj & asynchronous_task_event,
+            uint32_t verbose)
+        : to_server_synchronous_sender(
+            std::move(to_server_synchronous_sender))
+        , asynchronous_tasks(asynchronous_tasks)
+        , asynchronous_task_event(asynchronous_task_event)
+        , verbose(verbose) {}
+
+        virtual void operator()(uint32_t total_length, uint32_t flags,
+            const uint8_t* chunk_data, uint32_t chunk_data_length)
+                override {
+            std::unique_ptr<AsynchronousTask> asynchronous_task =
+                std::make_unique<RdpdrSendClientMessageTask>(
+                    total_length, flags, chunk_data, chunk_data_length,
+                    *(this->to_server_synchronous_sender.get()),
+                    this->verbose);
+
+            if (this->asynchronous_tasks.empty()) {
+                this->asynchronous_task_event.~wait_obj();
+                new (&this->asynchronous_task_event) wait_obj();
+
+                asynchronous_task->configure_wait_object(
+                    this->asynchronous_task_event);
+            }
+
+            this->asynchronous_tasks.push_back(std::move(asynchronous_task));
+        }
+    };
 
 public:
     mod_rdp( Transport & trans
@@ -737,7 +782,7 @@ public:
     }
 
 protected:
-    inline virtual std::unique_ptr<ToClientSender> create_to_client_sender(
+    inline virtual std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
             const char* channel_name) const override
     {
         if (!this->authorization_channels.is_authorized(channel_name))
@@ -755,10 +800,14 @@ protected:
             return nullptr;
         }
 
-        return std::make_unique<ToClientSender>(this->front, *channel);
+        std::unique_ptr<ToClientSender> to_client_sender =
+            std::make_unique<ToClientSender>(this->front, *channel);
+
+        return std::unique_ptr<VirtualChannelDataSender>(
+            std::move(to_client_sender));
     }
 
-    inline virtual std::unique_ptr<ToServerSender> create_to_server_sender(
+    inline virtual std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
             const char* channel_name) override
     {
         const CHANNELS::ChannelDef* channel =
@@ -768,14 +817,34 @@ protected:
             return nullptr;
         }
 
-        return std::make_unique<ToServerSender>(
-            this->nego.trans,
-            this->encrypt,
-            this->encryptionLevel,
-            this->userid,
-            channel->chanid,
-            (channel->flags &
-             GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL));
+        std::unique_ptr<ToServerSender> to_server_sender =
+            std::make_unique<ToServerSender>(
+                this->nego.trans,
+                this->encrypt,
+                this->encryptionLevel,
+                this->userid,
+                channel->chanid,
+                (channel->flags &
+                 GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL));
+
+        if (strcmp(channel_name, channel_names::rdpdr)) {
+            return std::unique_ptr<VirtualChannelDataSender>(
+                std::move(to_server_sender));
+        }
+
+        std::unique_ptr<VirtualChannelDataSender>
+            virtual_channel_data_sender(std::move(to_server_sender));
+
+        std::unique_ptr<ToServerAsynchronousSender>
+            to_server_asynchronous_sender =
+                std::make_unique<ToServerAsynchronousSender>(
+                    virtual_channel_data_sender,
+                    this->asynchronous_tasks,
+                    this->asynchronous_task_event,
+                    this->verbose);
+
+        return std::unique_ptr<VirtualChannelDataSender>(
+            std::move(to_server_asynchronous_sender));
     }
 
     inline virtual const ClipboardVirtualChannel::Params

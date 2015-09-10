@@ -183,7 +183,7 @@ class RdpdrSendDriveIOResponseTask : public AsynchronousTask {
 
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
-                                 uint8_t * data,
+                                 const uint8_t * data,
                                  size_t data_length,
                                  VirtualChannelDataSender & to_server_sender,
                                  uint32_t verbose = 0)
@@ -236,6 +236,51 @@ public:
         this->remaining_number_of_bytes_to_send -= number_of_bytes_to_send;
 
         return (this->remaining_number_of_bytes_to_send != 0);
+    }
+};
+
+class RdpdrSendClientMessageTask : public AsynchronousTask {
+    const size_t total_length;
+    const uint32_t flags;
+    std::unique_ptr<uint8_t[]> chunked_data;
+    const size_t chunked_data_length;
+
+    VirtualChannelDataSender & to_server_sender;
+
+    const uint32_t verbose;
+
+public:
+    RdpdrSendClientMessageTask(size_t total_length,
+                               uint32_t flags,
+                               const uint8_t * chunked_data,
+                               size_t chunked_data_length,
+                               VirtualChannelDataSender & to_server_sender,
+                               uint32_t verbose = 0)
+    : total_length(total_length)
+    , flags(flags)
+    , chunked_data(std::make_unique<uint8_t[]>(chunked_data_length))
+    , chunked_data_length(chunked_data_length)
+    , to_server_sender(to_server_sender)
+    , verbose(verbose) {
+        ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
+    }
+
+    void configure_wait_object(wait_obj & wait_object) const override {
+        REDASSERT(!wait_object.waked_up_by_time);
+
+        wait_object.object_and_time = true;
+
+        wait_object.set(1000);  // 1 ms
+    }
+
+    bool run(const wait_obj & wait_object) override {
+        REDASSERT(this->chunked_data_length <=
+            CHANNELS::CHANNEL_CHUNK_LENGTH);
+
+        this->to_server_sender(this->total_length, this->flags,
+            this->chunked_data.get(), this->chunked_data_length);
+
+        return false;
     }
 };
 
