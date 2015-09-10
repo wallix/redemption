@@ -750,6 +750,30 @@ protected:
     }
 
 public:
+    static void SendClientDriveLockControlResponse(
+            rdpdr::DeviceIORequest const & device_io_request,
+            const char * message,
+            uint32_t IoStatus,
+            VirtualChannelDataSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        BStream out_stream(65536);
+
+        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+            device_io_request, message, IoStatus, verbose);
+
+        out_stream.out_clear_bytes(5);  // Padding(5)
+
+        out_stream.mark_end();
+
+        uint32_t out_flags =
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(),
+            to_server_sender, verbose);
+    }
+
     static inline void SendClientDriveIoUnsuccessfulResponse(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * message,
@@ -2026,10 +2050,30 @@ public:
                 }
             break;
 
+            case rdpdr::IRP_MJ_LOCK_CONTROL:
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "FileSystemDriveManager::ProcessDeviceIORequest: "
+                            "Server Drive Lock Control Request");
+                }
+
+                ManagedFileSystemObject::SendClientDriveLockControlResponse(
+                    device_io_request,
+                    "FileSystemDriveManager::ProcessDeviceIORequest",
+                    0x00000000, // STATUS_SUCCESS
+                    to_server_sender,
+                    out_asynchronous_task,
+                    verbose);
+
+            break;
+
             default:
                 LOG(LOG_ERR,
                     "FileSystemDriveManager::ProcessDeviceIORequest: "
-                        "Undecoded Device I/O Request - MajorFunction=0x%X",
+                        "Undecoded Device I/O Request - "
+                        "MajorFunction=%s(0x%X)",
+                    rdpdr::DeviceIORequest::get_MajorFunction_name(
+                        device_io_request.MajorFunction()),
                     device_io_request.MajorFunction());
                 REDASSERT(false);
 
