@@ -6129,6 +6129,19 @@ public:
 
     void process_rdpdr_event(const CHANNELS::ChannelDef & rdpdr_channel,
             Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
+            !this->file_system_drive_manager.HasManagedDrive()) {
+            if (this->verbose && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                LOG(LOG_INFO,
+                    "mod_rdp::process_rdpdr_event: "
+                        "send Chunked Virtual Channel Data transparently.");
+            }
+
+            this->send_to_front_channel(
+                channel_names::rdpdr, stream.p, length, chunk_size, flags);
+            return;
+        }
+
         BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
