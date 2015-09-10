@@ -1253,41 +1253,28 @@ public:
                             "Close request.");
                 }
 
-                for (device_io_request_info_inventory_type::const_iterator
-                         request_iter =
-                             this->device_io_request_info_inventory.cbegin();
-                     request_iter !=
-                         this->device_io_request_info_inventory.cend();
-                     ++request_iter) {
-                    if ((std::get<0>(*request_iter) ==
+                for (device_io_target_info_inventory_type::const_iterator
+                         target_iter =
+                             this->device_io_target_info_inventory.cbegin();
+                     target_iter !=
+                         this->device_io_target_info_inventory.cend();
+                     ++target_iter) {
+                    if ((std::get<0>(*target_iter) ==
                          device_io_response.DeviceId()) &&
-                        (std::get<2>(*request_iter) ==
-                         device_io_response.CompletionId())) {
-                        const uint32_t FileId = std::get<1>(*request_iter);
+                        (std::get<1>(*target_iter) == FileId)) {
 
-                        for (device_io_target_info_inventory_type::const_iterator
-                                 target_iter =
-                                     this->device_io_target_info_inventory.cbegin();
-                             target_iter != this->device_io_target_info_inventory.cend();
-                             ++target_iter) {
-                            if ((std::get<0>(*target_iter) == device_io_response.DeviceId()) &&
-                                (std::get<1>(*target_iter) == FileId)) {
-
-                                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                                    LOG(LOG_INFO,
-                                        "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                            "Remove \"%s\" from known file list. "
-                                            "DeviceId=%u FileId=%u",
-                                        std::get<2>(*target_iter).get()->c_str(),
-                                        device_io_response.DeviceId(),
-                                        FileId);
-                                }
-
-                                this->device_io_target_info_inventory.erase(target_iter);
-
-                                break;
-                            }
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                    "Remove \"%s\" from known file list. "
+                                    "DeviceId=%u FileId=%u",
+                                std::get<2>(*target_iter).get()->c_str(),
+                                device_io_response.DeviceId(),
+                                FileId);
                         }
+
+                        this->device_io_target_info_inventory.erase(
+                            target_iter);
 
                         break;
                     }
