@@ -1409,6 +1409,11 @@ public:
 
         const uint64_t Offset = device_read_request.Offset();
 
+        struct stat64 sb;
+        if (!::fstat64(this->fd, &sb)) {
+            this->size = sb.st_size;
+        }
+
         off64_t remaining_number_of_bytes_to_read = std::min<off64_t>(this->size - Offset, Length);
 
 
