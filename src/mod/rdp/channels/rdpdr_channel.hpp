@@ -835,7 +835,7 @@ public:
                             "There is Device I/O request information "
                             "remaining in inventory. "
                             "DeviceId=%u FileId=%u CompletionId=%u "
-                            "MajorFunction=%u extra_data=%u file_path=\"\"",
+                            "MajorFunction=%u extra_data=%u file_path=\"%s\"",
                         std::get<0>(*iter), std::get<1>(*iter),
                         std::get<2>(*iter), std::get<3>(*iter),
                         std::get<4>(*iter),
@@ -861,7 +861,7 @@ public:
                     "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
                         "There is Device I/O target information "
                         "remaining in inventory. "
-                        "DeviceId=%u FileId=%u file_path=\"\" for_reading=%s "
+                        "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
                         "for_writing=%s",
                     std::get<0>(*iter), std::get<1>(*iter),
                     ((bool)std::get<2>(*iter) ?
