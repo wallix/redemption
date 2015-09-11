@@ -817,12 +817,12 @@ public:
 
     virtual ~FileSystemVirtualChannel()
     {
-        if (!this->device_io_request_info_inventory.empty())
-        {
 #ifndef NDEBUG
-            bool make_boom_in_debug_mode = false;
+        bool make_boom_in_debug_mode = false;
 #endif  // #ifndef NDEBUG
 
+        if (!this->device_io_request_info_inventory.empty())
+        {
             for (device_io_request_info_inventory_type::iterator iter =
                      this->device_io_request_info_inventory.begin();
                  iter != this->device_io_request_info_inventory.end();
@@ -848,9 +848,39 @@ public:
 #endif  // #ifndef NDEBUG
                 }
             }
-
-            REDASSERT(!make_boom_in_debug_mode);
         }
+
+        if (!this->device_io_target_info_inventory.empty())
+        {
+            for (device_io_target_info_inventory_type::iterator iter =
+                     this->device_io_target_info_inventory.begin();
+                 iter != this->device_io_target_info_inventory.end();
+                 ++iter)
+            {
+                LOG(LOG_WARNING,
+                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                        "There is Device I/O target information "
+                        "remaining in inventory. "
+                        "DeviceId=%u FileId=%u file_path=\"\" for_reading=%s "
+                        "for_writing=%s",
+                    std::get<0>(*iter), std::get<1>(*iter),
+                    ((bool)std::get<2>(*iter) ?
+                     std::get<2>(*iter).get()->c_str() :
+                     ""),
+                    ((bool)std::get<3>(*iter) ?
+                     "yes" :
+                     "no"),
+                    ((bool)std::get<4>(*iter) ?
+                     "yes" :
+                     "no"));
+
+#ifndef NDEBUG
+                make_boom_in_debug_mode = true;
+#endif  // #ifndef NDEBUG
+            }
+        }
+
+        REDASSERT(!make_boom_in_debug_mode);
     }
 
     inline virtual const char*
