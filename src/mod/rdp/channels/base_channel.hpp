@@ -86,49 +86,21 @@ public:
         uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
 
-    inline static void msgdump_c(bool send, bool from_or_to_client,
-        uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length)
-    {
-        if (send) {
-            LOG(LOG_INFO, "Sending on channel (-1) n bytes");
-        }
-        else {
-            LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
-        }
-        const uint32_t dest = (from_or_to_client
-                               ? 0  // Client
-                               : 1  // Server
-                              );
-        hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-            sizeof(dest));
-        hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-            sizeof(total_length));
-        hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-        hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-            sizeof(chunk_data_length));
-        hexdump_c(chunk_data, chunk_data_length);
-        if (send) {
-            LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
-        }
-        else {
-            LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
-        }
-    }
-
 protected:
     inline void send_message_to_client(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_client_sender)
         {
+/*
             if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
                 (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                this->msgdump_c(send, from_or_to_client, total_length, flags,
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
                     chunk_data, chunk_data_length);
             }
+*/
 
             (*this->to_client_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
@@ -140,19 +112,22 @@ protected:
     {
         if (this->to_server_sender)
         {
+/*
             if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
                 (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
                 const bool send              = true;
                 const bool from_or_to_client = false;
-                this->msgdump_c(send, from_or_to_client, total_length, flags,
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
                     chunk_data, chunk_data_length);
             }
+*/
 
             (*this->to_server_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }
     }
 
+/*
     inline void send_message(bool to_client, uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
@@ -165,7 +140,7 @@ protected:
                 (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
                 const bool send              = true;
                 const bool from_or_to_client = to_client;
-                this->msgdump_c(send, from_or_to_client, total_length, flags,
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
                     chunk_data, chunk_data_length);
             }
 
@@ -173,6 +148,7 @@ protected:
                 chunk_data_length);
         }
     }
+*/
 
     inline void update_exchanged_data(uint32_t data_length) {
         this->exchanged_data += data_length;

@@ -114,16 +114,28 @@ protected:
 
         const CHANNELS::ChannelDef& channel;
 
+        uint32_t verbose;
+
     public:
         ToClientSender(FrontAPI& front,
-                       const CHANNELS::ChannelDef& channel)
+                       const CHANNELS::ChannelDef& channel,
+                       uint32_t verbose)
         : front(front)
-        , channel(channel) {}
+        , channel(channel)
+        , verbose(verbose) {}
 
         virtual void operator()(uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override
         {
+            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
+                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
+            }
+
             this->front.send_to_channel(this->channel,
                 const_cast<uint8_t*>(chunk_data), total_length,
                 chunk_data_length, flags);
@@ -139,19 +151,23 @@ protected:
         uint16_t        channel_id;
         bool            show_protocol;
 
+        uint32_t verbose;
+
     public:
         ToServerSender(Transport& transport,
                        CryptContext& encrypt,
                        int encryption_level,
                        uint16_t user_id,
                        uint16_t channel_id,
-                       bool show_protocol)
+                       bool show_protocol,
+                       uint32_t verbose)
         : transport(transport)
         , encrypt(encrypt)
         , encryption_level(encryption_level)
         , user_id(user_id)
         , channel_id(channel_id)
-        , show_protocol(show_protocol) {}
+        , show_protocol(show_protocol)
+        , verbose(verbose) {}
 
         virtual void operator()(uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length)
@@ -160,6 +176,14 @@ protected:
 
             if (this->show_protocol) {
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+            }
+
+            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
+                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
+                const bool send              = true;
+                const bool from_or_to_client = false;
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
             }
 
             virtual_channel_pdu.send_to_server(this->transport,
@@ -408,6 +432,10 @@ class mod_rdp : public RDPChannelManagerMod {
         , asynchronous_tasks(asynchronous_tasks)
         , asynchronous_task_event(asynchronous_task_event)
         , verbose(verbose) {}
+
+        virtual VirtualChannelDataSender& SynchronousSender() override {
+            return *(to_server_synchronous_sender.get());
+        }
 
         virtual void operator()(uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length)
@@ -801,7 +829,8 @@ protected:
         }
 
         std::unique_ptr<ToClientSender> to_client_sender =
-            std::make_unique<ToClientSender>(this->front, *channel);
+            std::make_unique<ToClientSender>(this->front, *channel,
+                this->verbose);
 
         return std::unique_ptr<VirtualChannelDataSender>(
             std::move(to_client_sender));
@@ -825,7 +854,8 @@ protected:
                 this->userid,
                 channel->chanid,
                 (channel->flags &
-                 GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL));
+                 GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
+                this->verbose);
 
         if (strcmp(channel_name, channel_names::rdpdr)) {
             return std::unique_ptr<VirtualChannelDataSender>(

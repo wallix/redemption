@@ -64,7 +64,7 @@ public:
     , total_number_of_bytes_to_read(number_of_bytes_to_read)
     , remaining_number_of_bytes_to_read(number_of_bytes_to_read)
     , Offset(Offset)
-    , to_server_sender(to_server_sender)
+    , to_server_sender(to_server_sender.SynchronousSender())
     , verbose(verbose) {}
 
     void configure_wait_object(wait_obj & wait_object) const override {
@@ -191,7 +191,7 @@ public:
     , data(std::make_unique<uint8_t[]>(data_length))
     , data_length(data_length)
     , remaining_number_of_bytes_to_send(data_length)
-    , to_server_sender(to_server_sender)
+    , to_server_sender(to_server_sender.SynchronousSender())
     , verbose(verbose) {
         ::memcpy(this->data.get(), data, data_length);
     }
@@ -260,7 +260,7 @@ public:
     , flags(flags)
     , chunked_data(std::make_unique<uint8_t[]>(chunked_data_length))
     , chunked_data_length(chunked_data_length)
-    , to_server_sender(to_server_sender)
+    , to_server_sender(to_server_sender.SynchronousSender())
     , verbose(verbose) {
         ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
     }

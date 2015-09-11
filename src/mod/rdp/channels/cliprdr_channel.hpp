@@ -520,7 +520,7 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
             const bool send              = false;
             const bool from_or_to_client = true;
-            this->msgdump_c(send, from_or_to_client, total_length, flags,
+            ::msgdump_c(send, from_or_to_client, total_length, flags,
                 chunk_data, chunk_data_length);
         }
 
@@ -928,7 +928,7 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            this->msgdump_c(send, from_or_to_client, total_length, flags,
+            ::msgdump_c(send, from_or_to_client, total_length, flags,
                 chunk_data, chunk_data_length);
         }
 
