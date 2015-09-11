@@ -828,25 +828,25 @@ public:
                  iter != this->device_io_request_info_inventory.end();
                  ++iter)
             {
-                if (std::get<3>(*iter) != rdpdr::IRP_MJ_DIRECTORY_CONTROL)
-                {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
-                            "There is Device I/O request information "
-                            "remaining in inventory. "
-                            "DeviceId=%u FileId=%u CompletionId=%u "
-                            "MajorFunction=%u extra_data=%u file_path=\"%s\"",
-                        std::get<0>(*iter), std::get<1>(*iter),
-                        std::get<2>(*iter), std::get<3>(*iter),
-                        std::get<4>(*iter),
-                        ((bool)std::get<5>(*iter) ?
-                         std::get<5>(*iter).get()->c_str() :
-                         ""));
+                REDASSERT(std::get<3>(*iter) !=
+                    rdpdr::IRP_MJ_DIRECTORY_CONTROL);
+
+                LOG(LOG_WARNING,
+                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                        "There is Device I/O request information "
+                        "remaining in inventory. "
+                        "DeviceId=%u FileId=%u CompletionId=%u "
+                        "MajorFunction=%u extra_data=%u file_path=\"%s\"",
+                    std::get<0>(*iter), std::get<1>(*iter),
+                    std::get<2>(*iter), std::get<3>(*iter),
+                    std::get<4>(*iter),
+                    ((bool)std::get<5>(*iter) ?
+                     std::get<5>(*iter).get()->c_str() :
+                     ""));
 
 #ifndef NDEBUG
-                    make_boom_in_debug_mode = true;
+                make_boom_in_debug_mode = true;
 #endif  // #ifndef NDEBUG
-                }
             }
         }
 
@@ -1068,12 +1068,14 @@ public:
                         }
                     }
 
-                    chunk.in_skip_bytes(4); // Length(4)
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        chunk.in_skip_bytes(4); // Length(4)
 
-                    fscc::FileBasicInformation file_basic_information;
+                        fscc::FileBasicInformation file_basic_information;
 
-                    file_basic_information.receive(chunk);
-                    file_basic_information.log(LOG_INFO);
+                        file_basic_information.receive(chunk);
+                        file_basic_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -1094,12 +1096,14 @@ public:
                         }
                     }
 
-                    chunk.in_skip_bytes(4); // Length(4)
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        chunk.in_skip_bytes(4); // Length(4)
 
-                    fscc::FileStandardInformation file_standard_information;
+                        fscc::FileStandardInformation file_standard_information;
 
-                    file_standard_information.receive(chunk);
-                    file_standard_information.log(LOG_INFO);
+                        file_standard_information.receive(chunk);
+                        file_standard_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -1139,13 +1143,15 @@ public:
                     }
                 }
 
-                chunk.in_skip_bytes(4); // Length(4)
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    chunk.in_skip_bytes(4); // Length(4)
 
-                fscc::FileFsAttributeInformation
-                    file_fs_Attribute_information;
+                    fscc::FileFsAttributeInformation
+                        file_fs_Attribute_information;
 
-                file_fs_Attribute_information.receive(chunk);
-                file_fs_Attribute_information.log(LOG_INFO);
+                    file_fs_Attribute_information.receive(chunk);
+                    file_fs_Attribute_information.log(LOG_INFO);
+                }
             }
             break;
 
@@ -1945,7 +1951,8 @@ public:
 
         uint32_t extra_data = 0;
 
-        bool send_message_to_client = true;
+        bool send_message_to_client  = true;
+        bool do_not_add_to_inventory = false;
 
         std::unique_ptr<std::string> file_path;
 
@@ -2065,6 +2072,9 @@ public:
                     extra_data =
                         server_drive_query_directory_request.FsInformationClass();
                 }
+                else {
+                    do_not_add_to_inventory = true;
+                }
             break;
 
             default:
@@ -2084,7 +2094,7 @@ public:
             break;
         }   // switch (this->server_device_io_request.MajorFunction())
 
-        if (send_message_to_client) {
+        if (send_message_to_client && !do_not_add_to_inventory) {
             this->device_io_request_info_inventory.push_back(
                 std::make_tuple(
                     this->server_device_io_request.DeviceId(),
