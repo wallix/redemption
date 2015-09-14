@@ -833,6 +833,8 @@ public:
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
 
+                mod_rdp_params.lang                                = language(this->ini);
+
                 UdevRandom gen;
 
                 TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
