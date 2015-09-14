@@ -409,6 +409,8 @@ class mod_rdp : public RDPChannelManagerMod {
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
+    Translation::language_t lang;
+
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
@@ -539,6 +541,7 @@ public:
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
+        , lang(mod_rdp_params.lang)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -4276,6 +4279,9 @@ public:
             break;
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DISCONNECTED_BY_OTHERCONNECTION");
+            if (this->acl) {
+                this->acl->set_auth_error_message(TR("disconnected_by_otherconnection", this->lang));
+            }
             break;
         case ERRINFO_OUT_OF_MEMORY:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OUT_OF_MEMORY");

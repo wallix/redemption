@@ -22,6 +22,7 @@
 #define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 
 #include "log.hpp"
+#include "translation.hpp"
 
 #include <string>
 
@@ -95,6 +96,8 @@ struct ModRDPParams {
     unsigned client_device_announce_timeout;
 
     const char * proxy_managed_drives;
+
+    Translation::language_t lang;
 
     uint32_t verbose;
     uint32_t cache_verbose;
@@ -172,6 +175,8 @@ struct ModRDPParams {
         , client_device_announce_timeout(1000)
 
         , proxy_managed_drives("")
+
+        , lang(Translation::EN)
 
         , verbose(verbose)
         , cache_verbose(0)
@@ -288,6 +293,8 @@ struct ModRDPParams {
             "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
 
         LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
+
+        LOG(LOG_INFO, "ModRDPParams lang=%s",                      ((this->lang == Translation::EN) ? "EN" : ((this->lang == Translation::FR) ? "FR" : "<unknown>")));
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);
