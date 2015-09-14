@@ -2828,9 +2828,24 @@ public:
                                                     this->process_disconnect_pdu(sdata.payload);
                                                     break;
                                                 case PDUTYPE2_SHUTDOWN_DENIED:
-                                                    if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
+                                                    //if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
                                                     LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED Received");
                                                     break;
+
+                                                case PDUTYPE2_SET_KEYBOARD_INDICATORS:
+                                                    {
+                                                        if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");}
+
+                                                        sdata.payload.in_skip_bytes(2); // UnitId(2)
+
+                                                        uint16_t LedFlags = sdata.payload.in_uint16_le();
+
+                                                        this->front.set_keyboard_indicators(LedFlags);
+
+                                                        REDASSERT(sdata.payload.p == sdata.payload.end);
+                                                    }
+                                                    break;
+
                                                 default:
                                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                                     TODO("CGR: Data should actually be consumed");

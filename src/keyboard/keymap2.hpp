@@ -790,6 +790,12 @@ struct Keymap2
 
     } // END METHOD : is_caps_locked
 
+    void toggle_caps_lock(bool on) {
+        if (((this->key_flags & CAPSLOCK) == CAPSLOCK) != on) {
+            this->key_flags ^= CAPSLOCK;
+        }
+    }
+
 
     //==============================================================================
     bool is_scroll_locked() const
@@ -799,6 +805,12 @@ struct Keymap2
 
     } // END METHOD : is_scroll_locked
 
+    void toggle_scroll_lock(bool on) {
+        if (((this->key_flags & SCROLLLOCK) == SCROLLLOCK) != on) {
+            this->key_flags ^= SCROLLLOCK;
+        }
+    }
+
 
     //==============================================================================
     bool is_num_locked() const
@@ -807,6 +819,12 @@ struct Keymap2
         return this->key_flags & NUMLOCK;
 
     } // END METHOD : is_num_locked
+
+    void toggle_num_lock(bool on) {
+        if (((this->key_flags & NUMLOCK) == NUMLOCK) != on) {
+            this->key_flags ^= NUMLOCK;
+        }
+    }
 
 
     //==============================================================================
