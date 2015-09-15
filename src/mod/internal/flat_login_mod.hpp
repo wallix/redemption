@@ -34,6 +34,10 @@
 using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::context::password,   vcfg::write>,
     vcfg::var<cfg::globals::auth_user,  vcfg::write>,
+    vcfg::var<cfg::context::selector,           vcfg::ask | vcfg::write>,
+    vcfg::var<cfg::context::target_protocol,    vcfg::ask | vcfg::read>,
+    vcfg::var<cfg::globals::target_device,      vcfg::ask | vcfg::read>,
+    vcfg::var<cfg::globals::target_user,        vcfg::ask | vcfg::read>,
     vcfg::var<cfg::translation::language>,
     vcfg::var<cfg::font>,
     vcfg::var<cfg::theme>
@@ -87,6 +91,10 @@ public:
         case NOTIFY_SUBMIT:
             LOG(LOG_INFO, "asking for selector");
             this->vars.set_acl<cfg::globals::auth_user>(this->login.login_edit.get_text());
+            this->vars.ask<cfg::context::selector>();
+            this->vars.ask<cfg::globals::target_user>();
+            this->vars.ask<cfg::globals::target_device>();
+            this->vars.ask<cfg::context::target_protocol>();
             this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
