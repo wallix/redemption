@@ -400,6 +400,10 @@ public:
 
         this->ask_acl();
     }
+
+    virtual void set_auth_error_message(const char * error_message) {
+        this->ini.set<cfg::context::auth_error_message>(error_message);
+    }
 };
 
 

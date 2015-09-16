@@ -247,6 +247,9 @@ private:
                     REDASSERT(client_message_header.packet_id ==
                         rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
 
+                    REDASSERT(chunk.in_remain() >=
+                              4 // DeviceCount(4)
+                             );
                     const uint32_t DeviceCount = chunk.in_uint32_le();
                     (void)DeviceCount;
                     REDASSERT(DeviceCount == 1);
@@ -289,7 +292,7 @@ private:
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
                         const bool send              = true;
                         const bool from_or_to_client = false;
-                        BaseVirtualChannel::msgdump_c(send, from_or_to_client,
+                        ::msgdump_c(send, from_or_to_client,
                             total_length, flags, chunk_data,
                             chunk_data_length);
                     }
@@ -324,6 +327,18 @@ private:
                 REDASSERT(
                     !this->length_of_remaining_device_data_to_be_skipped);
 
+                {
+                    const unsigned int expected = 4;    // DeviceCount(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
+                                "Truncated DR_DEVICELIST_ANNOUNCE, "
+                                "need=%u remains=%u",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
                 uint32_t DeviceCount = chunk.in_uint32_le();
 
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
@@ -340,9 +355,12 @@ private:
             {
                 if (!this->length_of_remaining_device_data_to_be_processed &&
                     !this->length_of_remaining_device_data_to_be_skipped) {
+                    // There is no device in process.
+
                     if (chunk.in_remain() <
                             20  // DeviceType(4) + DeviceId(4) +
-                                //     PreferredDosName(8) + DeviceDataLength(4)
+                                //     PreferredDosName(8) +
+                                //     DeviceDataLength(4)
                        ) {
                         REDASSERT(
                             !this->remaining_device_announce_request_header_stream.get_offset());
@@ -375,6 +393,7 @@ private:
                             chunk.p, needed_data_length);
 
                         chunk.in_skip_bytes(needed_data_length);
+
                         this->remaining_device_announce_request_header_stream.mark_end();
                         this->remaining_device_announce_request_header_stream.rewind();
 
@@ -437,15 +456,21 @@ private:
                                                 //     DeviceDataLength(4)
                             + DeviceDataLength;
 
-                        this->current_device_announce_data =
-                            std::make_unique<uint8_t[]>(
-                                current_device_announce_data_length);
+                        if (this->current_device_announce_stream.get_capacity() <
+                            current_device_announce_data_length) {
+                            this->current_device_announce_data =
+                                std::make_unique<uint8_t[]>(
+                                    current_device_announce_data_length);
 
-                        this->current_device_announce_stream.~WriteOnlyStream();
-                        new (&this->current_device_announce_stream)
-                            WriteOnlyStream(
-                                this->current_device_announce_data.get(),
-                                current_device_announce_data_length);
+                            this->current_device_announce_stream.~WriteOnlyStream();
+                            new (&this->current_device_announce_stream)
+                                WriteOnlyStream(
+                                    this->current_device_announce_data.get(),
+                                    current_device_announce_data_length);
+                        }
+                        else {
+                            this->current_device_announce_stream.reset();
+                        }
 
                         this->length_of_remaining_device_data_to_be_processed =
                             DeviceDataLength;
@@ -518,7 +543,7 @@ private:
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
                             const bool send              = true;
                             const bool from_or_to_client = true;
-                            BaseVirtualChannel::msgdump_c(send,
+                            ::msgdump_c(send,
                                 from_or_to_client, total_length_, flags_,
                                 chunk_data_, chunk_data_length_);
                         }
@@ -580,7 +605,33 @@ private:
 
         void process_client_drive_device_list_remove(uint32_t total_length,
                 uint32_t flags, Stream& chunk) {
+            {
+                const unsigned int expected = 4;    // DeviceCount(4)
+                if (!chunk.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
+                            "Truncated DR_DEVICELIST_REMOVE (1), "
+                            "need=%u remains=%u",
+                        expected, chunk.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+            }
+
             const uint32_t DeviceCount = chunk.in_uint32_le();
+
+            {
+                const unsigned int expected = DeviceCount *
+                                              4 // DeviceId(4)
+                                            ;
+                if (!chunk.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
+                            "Truncated DR_DEVICELIST_REMOVE (2), "
+                            "need=%u remains=%u",
+                        expected, chunk.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+            }
 
             auto remove_device =
                     [](device_announce_collection_type& device_announces,
@@ -677,7 +728,7 @@ private:
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
                     const bool send              = true;
                     const bool from_or_to_client = false;
-                    BaseVirtualChannel::msgdump_c(send, from_or_to_client,
+                    ::msgdump_c(send, from_or_to_client,
                         total_length_, flags_, chunk_data_,
                         chunk_data_length_);
                 }
@@ -766,40 +817,70 @@ public:
 
     virtual ~FileSystemVirtualChannel()
     {
-        if (!this->device_io_request_info_inventory.empty())
-        {
 #ifndef NDEBUG
-            bool make_boom_in_debug_mode = false;
+        bool make_boom_in_debug_mode = false;
 #endif  // #ifndef NDEBUG
 
+        if (!this->device_io_request_info_inventory.empty())
+        {
             for (device_io_request_info_inventory_type::iterator iter =
                      this->device_io_request_info_inventory.begin();
                  iter != this->device_io_request_info_inventory.end();
                  ++iter)
             {
-                if (std::get<3>(*iter) != rdpdr::IRP_MJ_DIRECTORY_CONTROL)
-                {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
-                            "There is Device I/O request information "
-                            "remaining in inventory. "
-                            "DeviceId=%u FileId=%u CompletionId=%u "
-                            "MajorFunction=%u extra_data=%u file_path=\"\"",
-                        std::get<0>(*iter), std::get<1>(*iter),
-                        std::get<2>(*iter), std::get<3>(*iter),
-                        std::get<4>(*iter),
-                        ((bool)std::get<5>(*iter) ?
-                         std::get<5>(*iter).get()->c_str() :
-                         ""));
+                REDASSERT(std::get<3>(*iter) !=
+                    rdpdr::IRP_MJ_DIRECTORY_CONTROL);
+
+                LOG(LOG_WARNING,
+                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                        "There is Device I/O request information "
+                        "remaining in inventory. "
+                        "DeviceId=%u FileId=%u CompletionId=%u "
+                        "MajorFunction=%u extra_data=%u file_path=\"%s\"",
+                    std::get<0>(*iter), std::get<1>(*iter),
+                    std::get<2>(*iter), std::get<3>(*iter),
+                    std::get<4>(*iter),
+                    ((bool)std::get<5>(*iter) ?
+                     std::get<5>(*iter).get()->c_str() :
+                     ""));
 
 #ifndef NDEBUG
-                    make_boom_in_debug_mode = true;
+                make_boom_in_debug_mode = true;
 #endif  // #ifndef NDEBUG
-                }
             }
-
-            REDASSERT(!make_boom_in_debug_mode);
         }
+
+        if (!this->device_io_target_info_inventory.empty())
+        {
+            for (device_io_target_info_inventory_type::iterator iter =
+                     this->device_io_target_info_inventory.begin();
+                 iter != this->device_io_target_info_inventory.end();
+                 ++iter)
+            {
+                LOG(LOG_WARNING,
+                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                        "There is Device I/O target information "
+                        "remaining in inventory. "
+                        "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
+                        "for_writing=%s",
+                    std::get<0>(*iter), std::get<1>(*iter),
+                    ((bool)std::get<2>(*iter) ?
+                     std::get<2>(*iter).get()->c_str() :
+                     ""),
+                    ((bool)std::get<3>(*iter) ?
+                     "yes" :
+                     "no"),
+                    ((bool)std::get<4>(*iter) ?
+                     "yes" :
+                     "no"));
+
+#ifndef NDEBUG
+                make_boom_in_debug_mode = true;
+#endif  // #ifndef NDEBUG
+            }
+        }
+
+        REDASSERT(!make_boom_in_debug_mode);
     }
 
     inline virtual const char*
@@ -879,6 +960,19 @@ public:
         REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
             (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
+        {
+            const unsigned int expected = 4;    // numCapabilities(2) +
+                                                //     Padding(2)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "FileSystemVirtualChannel::process_client_core_capability_response: "
+                        "Truncated DR_CORE_CAPABILITY_RSP (1), "
+                        "need=%u remains=%u",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
         const uint16_t numCapabilities = chunk.in_uint16_le();
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             LOG(LOG_INFO,
@@ -890,6 +984,20 @@ public:
 
         for (uint16_t idx_capabilities = 0; idx_capabilities < numCapabilities;
              ++idx_capabilities) {
+            {
+                const unsigned int expected = 8;    // CapabilityType(2) +
+                                                    //     CapabilityLength(2) +
+                                                    //     Version(4)
+                if (!chunk.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "FileSystemVirtualChannel::process_client_core_capability_response: "
+                            "Truncated DR_CORE_CAPABILITY_RSP (2), "
+                            "need=%u remains=%u",
+                        expected, chunk.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+            }
+
             const uint16_t CapabilityType   = chunk.in_uint16_le();
             const uint16_t CapabilityLength = chunk.in_uint16_le();
             const uint32_t Version          = chunk.in_uint32_le();
@@ -947,12 +1055,27 @@ public:
             case rdpdr::FileBasicInformation:
             {
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    chunk.in_skip_bytes(4); // Length(4)
+                    {
+                        const unsigned int expected = 4;    // Length(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "FileSystemVirtualChannel::process_client_drive_query_information_response: "
+                                    "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
+                                    "FileBasicInformation, "
+                                    "need=%u remains=%u",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
 
-                    fscc::FileBasicInformation file_basic_information;
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        chunk.in_skip_bytes(4); // Length(4)
 
-                    file_basic_information.receive(chunk);
-                    file_basic_information.log(LOG_INFO);
+                        fscc::FileBasicInformation file_basic_information;
+
+                        file_basic_information.receive(chunk);
+                        file_basic_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -960,12 +1083,27 @@ public:
             case rdpdr::FileStandardInformation:
             {
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    chunk.in_skip_bytes(4); // Length(4)
+                    {
+                        const unsigned int expected = 4;    // Length(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "FileSystemVirtualChannel::process_client_drive_query_information_response: "
+                                    "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
+                                    "FileStandardInformation, "
+                                    "need=%u remains=%u",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
 
-                    fscc::FileStandardInformation file_standard_information;
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        chunk.in_skip_bytes(4); // Length(4)
 
-                    file_standard_information.receive(chunk);
-                    file_standard_information.log(LOG_INFO);
+                        fscc::FileStandardInformation file_standard_information;
+
+                        file_standard_information.receive(chunk);
+                        file_standard_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -992,13 +1130,28 @@ public:
         switch (FsInformationClass) {
             case rdpdr::FileFsAttributeInformation:
             {
-                chunk.in_skip_bytes(4); // Length(4)
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
+                                "Truncated DR_DRIVE_QUERY_VOLUME_INFORMATION_RSP - "
+                                "FileFsAttributeInformation, "
+                                "need=%u remains=%u",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
 
-                fscc::FileFsAttributeInformation
-                    file_fs_Attribute_information;
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    chunk.in_skip_bytes(4); // Length(4)
 
-                file_fs_Attribute_information.receive(chunk);
-                file_fs_Attribute_information.log(LOG_INFO);
+                    fscc::FileFsAttributeInformation
+                        file_fs_Attribute_information;
+
+                    file_fs_Attribute_information.receive(chunk);
+                    file_fs_Attribute_information.log(LOG_INFO);
+                }
             }
             break;
 
@@ -1136,41 +1289,28 @@ public:
                             "Close request.");
                 }
 
-                for (device_io_request_info_inventory_type::const_iterator
-                         request_iter =
-                             this->device_io_request_info_inventory.cbegin();
-                     request_iter !=
-                         this->device_io_request_info_inventory.cend();
-                     ++request_iter) {
-                    if ((std::get<0>(*request_iter) ==
+                for (device_io_target_info_inventory_type::const_iterator
+                         target_iter =
+                             this->device_io_target_info_inventory.cbegin();
+                     target_iter !=
+                         this->device_io_target_info_inventory.cend();
+                     ++target_iter) {
+                    if ((std::get<0>(*target_iter) ==
                          device_io_response.DeviceId()) &&
-                        (std::get<2>(*request_iter) ==
-                         device_io_response.CompletionId())) {
-                        const uint32_t FileId = std::get<1>(*request_iter);
+                        (std::get<1>(*target_iter) == FileId)) {
 
-                        for (device_io_target_info_inventory_type::const_iterator
-                                 target_iter =
-                                     this->device_io_target_info_inventory.cbegin();
-                             target_iter != this->device_io_target_info_inventory.cend();
-                             ++target_iter) {
-                            if ((std::get<0>(*target_iter) == device_io_response.DeviceId()) &&
-                                (std::get<1>(*target_iter) == FileId)) {
-
-                                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                                    LOG(LOG_INFO,
-                                        "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                            "Remove \"%s\" from known file list. "
-                                            "DeviceId=%u FileId=%u",
-                                        std::get<2>(*target_iter).get()->c_str(),
-                                        device_io_response.DeviceId(),
-                                        FileId);
-                                }
-
-                                this->device_io_target_info_inventory.erase(target_iter);
-
-                                break;
-                            }
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                    "Remove \"%s\" from known file list. "
+                                    "DeviceId=%u FileId=%u",
+                                std::get<2>(*target_iter).get()->c_str(),
+                                device_io_response.DeviceId(),
+                                FileId);
                         }
+
+                        this->device_io_target_info_inventory.erase(
+                            target_iter);
 
                         break;
                     }
@@ -1180,6 +1320,17 @@ public:
 
             case rdpdr::IRP_MJ_READ:
             {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                "Truncated IRP_MJ_READ, need=%u remains=%u",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
                 const uint32_t Length = chunk.in_uint32_le();
 
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
@@ -1356,7 +1507,7 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
             const bool send              = false;
             const bool from_or_to_client = true;
-            this->msgdump_c(send, from_or_to_client, total_length, flags,
+            ::msgdump_c(send, from_or_to_client, total_length, flags,
                 chunk_data, chunk_data_length);
         }
 
@@ -1800,7 +1951,8 @@ public:
 
         uint32_t extra_data = 0;
 
-        bool send_message_to_client = true;
+        bool send_message_to_client  = true;
+        bool do_not_add_to_inventory = false;
 
         std::unique_ptr<std::string> file_path;
 
@@ -1920,6 +2072,9 @@ public:
                     extra_data =
                         server_drive_query_directory_request.FsInformationClass();
                 }
+                else {
+                    do_not_add_to_inventory = true;
+                }
             break;
 
             default:
@@ -1939,7 +2094,7 @@ public:
             break;
         }   // switch (this->server_device_io_request.MajorFunction())
 
-        if (send_message_to_client) {
+        if (send_message_to_client && !do_not_add_to_inventory) {
             this->device_io_request_info_inventory.push_back(
                 std::make_tuple(
                     this->server_device_io_request.DeviceId(),
@@ -1968,7 +2123,7 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            this->msgdump_c(send, from_or_to_client, total_length, flags,
+            ::msgdump_c(send, from_or_to_client, total_length, flags,
                 chunk_data, chunk_data_length);
         }
 

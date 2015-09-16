@@ -750,6 +750,30 @@ protected:
     }
 
 public:
+    static void SendClientDriveLockControlResponse(
+            rdpdr::DeviceIORequest const & device_io_request,
+            const char * message,
+            uint32_t IoStatus,
+            VirtualChannelDataSender & to_server_sender,
+            std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            uint32_t verbose) {
+        BStream out_stream(65536);
+
+        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+            device_io_request, message, IoStatus, verbose);
+
+        out_stream.out_clear_bytes(5);  // Padding(5)
+
+        out_stream.mark_end();
+
+        uint32_t out_flags =
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+        out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+            out_flags, out_stream.get_data(), out_stream.size(),
+            to_server_sender, verbose);
+    }
+
     static inline void SendClientDriveIoUnsuccessfulResponse(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * message,
@@ -1152,8 +1176,6 @@ public:
 class ManagedFile : public ManagedFileSystemObject {
     std::unique_ptr<InFileTransport> in_file_transport; // For read operations only.
 
-    off64_t size = 0;
-
 public:
     //ManagedFile() {
     //    LOG(LOG_INFO, "ManagedFile::ManagedFile(): <%p>", this);
@@ -1206,10 +1228,8 @@ public:
                                    int drive_access_mode,
                                    void * log_this,
                                    uint32_t verbose,
-                                   int & out_fd,
-                                   off64_t & out_size) -> int {
+                                   int & out_fd) -> int {
             out_fd = -1;
-            out_size = 0;
 
             if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
                  smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) ||
@@ -1261,19 +1281,9 @@ public:
             }
 
             out_fd = ::open(path, open_flags, S_IRUSR | S_IWUSR | S_IRGRP);
-            if (out_fd > -1) {
-                struct stat64 st;
-                if (fstat64(out_fd, &st)) {
-                    ::close(out_fd);
-                    out_fd = -1;
-                }
-                else {
-                    out_size = st.st_size;
-                }
-            }
             return ((out_fd > -1) ? 0 : errno);
         } (this->full_path.c_str(), DesiredAccess, CreateDisposition, drive_access_mode,
-           this, verbose, this->fd, this->size);
+           this, verbose, this->fd);
 
         if (this->fd > -1) {
             this->in_file_transport = std::make_unique<InFileTransport>(this->fd);
@@ -1385,13 +1395,40 @@ public:
 
         const uint64_t Offset = device_read_request.Offset();
 
-        off64_t remaining_number_of_bytes_to_read = std::min<off64_t>(this->size - Offset, Length);
+        struct stat64 sb;
+        if (::fstat64(this->fd, &sb)) {
+            BStream out_stream(512);
 
+            ManagedFileSystemObject::MakeClientDriveIoResponse(
+                  out_stream
+                , device_io_request
+                , "ManagedFile::ProcessServerDriveReadRequest"
+                , 0xC0000001    // STATUS_UNSUCCESSFUL
+                , verbose);
 
-        out_asynchronous_task = std::make_unique<RdpdrDriveReadTask>(this->in_file_transport.get(),
-            this->fd, device_io_request.DeviceId(), device_io_request.CompletionId(),
-            static_cast<uint32_t>(remaining_number_of_bytes_to_read), Offset, to_server_sender,
-            verbose);
+            out_stream.out_uint32_le(0);    // Length(4)
+
+            out_stream.mark_end();
+
+            uint32_t out_flags =
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+
+            out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
+                out_flags, out_stream.get_data(), out_stream.size(),
+                to_server_sender, verbose);
+
+            return;
+        }
+
+        off64_t remaining_number_of_bytes_to_read = std::min<off64_t>(
+            sb.st_size - Offset, Length);
+
+        out_asynchronous_task = std::make_unique<RdpdrDriveReadTask>(
+            this->in_file_transport.get(),
+            this->fd, device_io_request.DeviceId(),
+            device_io_request.CompletionId(),
+            static_cast<uint32_t>(remaining_number_of_bytes_to_read),
+            Offset, to_server_sender, verbose);
     }
 
     void ProcessServerDriveControlRequest(
@@ -2026,10 +2063,30 @@ public:
                 }
             break;
 
+            case rdpdr::IRP_MJ_LOCK_CONTROL:
+                if (verbose) {
+                    LOG(LOG_INFO,
+                        "FileSystemDriveManager::ProcessDeviceIORequest: "
+                            "Server Drive Lock Control Request");
+                }
+
+                ManagedFileSystemObject::SendClientDriveLockControlResponse(
+                    device_io_request,
+                    "FileSystemDriveManager::ProcessDeviceIORequest",
+                    0x00000000, // STATUS_SUCCESS
+                    to_server_sender,
+                    out_asynchronous_task,
+                    verbose);
+
+            break;
+
             default:
                 LOG(LOG_ERR,
                     "FileSystemDriveManager::ProcessDeviceIORequest: "
-                        "Undecoded Device I/O Request - MajorFunction=0x%X",
+                        "Undecoded Device I/O Request - "
+                        "MajorFunction=%s(0x%X)",
+                    rdpdr::DeviceIORequest::get_MajorFunction_name(
+                        device_io_request.MajorFunction()),
                     device_io_request.MajorFunction());
                 REDASSERT(false);
 

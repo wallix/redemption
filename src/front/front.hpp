@@ -3756,6 +3756,13 @@ public:
         }
     }
 
+    virtual void set_keyboard_indicators(uint16_t LedFlags)
+    {
+        this->keymap.toggle_caps_lock(LedFlags & SlowPath::TS_SYNC_CAPS_LOCK);
+        this->keymap.toggle_scroll_lock(LedFlags & SlowPath::TS_SYNC_SCROLL_LOCK);
+        this->keymap.toggle_num_lock(LedFlags & SlowPath::TS_SYNC_NUM_LOCK);
+    }
+
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();

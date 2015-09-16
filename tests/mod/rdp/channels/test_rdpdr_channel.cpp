@@ -49,8 +49,7 @@ public:
         LOG(LOG_INFO,
             "TestToClientSender: "
                 "total_length=%u flags=0x%X chunk_data_length=%u",
-            static_cast<uint32_t>(total_length), flags,
-            static_cast<uint32_t>(chunk_data_length));
+            total_length, flags, chunk_data_length);
 
         const uint32_t dest = 0;    // Client
         this->transport.send(reinterpret_cast<const uint8_t*>(&dest),
@@ -77,8 +76,7 @@ public:
         LOG(LOG_INFO,
             "TestToServerSender: "
                 "total_length=%u flags=0x%X chunk_data_length=%u",
-            static_cast<uint32_t>(total_length), flags,
-            static_cast<uint32_t>(chunk_data_length));
+            total_length, flags, chunk_data_length);
 
         const uint32_t dest = 1;    // Server
         this->transport.send(reinterpret_cast<const uint8_t*>(&dest),

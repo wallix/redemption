@@ -69,6 +69,8 @@ class FrontAPI : public DrawApi {
     virtual void send_fastpath_data(InStream & data) {}
     virtual bool retrieve_client_capability_set(Capability & caps) { return true; }
 
+    virtual void set_keyboard_indicators(uint16_t LedFlags) {}
+
     ////////////////////////////////
     // Agent.
 
