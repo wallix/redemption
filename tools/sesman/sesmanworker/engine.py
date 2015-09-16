@@ -18,6 +18,8 @@ try:
     from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
         APPROVAL_PENDING, APPROVAL_NONE
     from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
+    from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEYS
+    from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY
     from wabx509 import AuthX509
     WAB_BANNER_LOGO = """
          __      __         __   __   __
@@ -128,6 +130,7 @@ class Engine(object):
         self.rights = None
         self.targets = {}
         self.target_right = None
+        self.target_credentials = None
         self.physical_targets = []
         self.displaytargets = []
         self.proxyrightsinput = None
@@ -477,6 +480,7 @@ class Engine(object):
         self.proxy_rights = None
         self.rights = None
         self.target_right = None
+        self.target_credentials = None
 
     def valid_device_name(self, protocols, target_device):
         # Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
@@ -608,18 +612,36 @@ class Engine(object):
             Logger().info("Engine get_app_params failed: (((%s)))" % (traceback.format_exc(e)))
         return None
 
+    def get_target_credentials(self, target_device):
+        target_credentials = []
+        if self.target_right == target_device:
+            if self.target_credentials is None:
+                Logger().debug("get_target_credentials")
+                self.target_credentials = self.wabengine.get_target_credentials(target_device)
+                Logger().debug("get_target_credentials done")
+                # Logger().info("GET_TARGET_CREDENTIALS = '%s'" % self.target_credentials)
+            target_credentials = self.target_credentials
+        else:
+            Logger().debug("get_target_credentials")
+            target_credentials = self.wabengine.get_target_credentials(target_device)
+            Logger().debug("get_target_credentials done")
+        return target_credentials or []
+
     def get_target_password(self, target_device):
-#         Logger().info("Engine get_target_password: target_device=%s" % target_device)
-        Logger().debug("Engine get_target_password ...")
+        # Logger().info("Engine get_target_password: target_device=%s" % target_device)
+        Logger().info("Engine get_target_password ...")
         if target_device.account.login == MAGIC_AM and self.primary_password:
             Logger().info("Account mapping: get primary password ...")
             return self.primary_password
         try:
-            target_password = self.wabengine.get_target_password(target_device)
+            target_credentials = self.get_target_credentials(target_device)
+            passwords = [ cred.get(CRED_DATA_PASSWORD) for cred in target_credentials if cred.get(CRED_TYPE) == CRED_TYPE_PASSWORD ]
+            target_password = passwords[0] if passwords else ""
+            # target_password = self.wabengine.get_target_password(target_device)
             self.erpm_password_checked_out = True
             if not target_password:
                 target_password = u''
-            Logger().debug("Engine get_target_password done")
+            Logger().info("Engine get_target_password done")
             return target_password
         except Exception, e:
             import traceback
@@ -802,7 +824,7 @@ class Engine(object):
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
         conn_cmd = target.resource.service.authmechanism.data
-        autologon = target.account.password or target.account.isAgentForwardable
+        autologon = target.account.isAgentForwardable
         return LoginInfo(account_login=account_login,
                          target_name=target_name,
                          service_name=service_name,
