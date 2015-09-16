@@ -404,6 +404,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "disable_clipboard_log")) {
             ::configs::parse(static_cast<cfg::video::disable_clipboard_log&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "disable_file_system_log")) {
+            ::configs::parse(static_cast<cfg::video::disable_file_system_log&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "rt_display")) {
             ::configs::parse(static_cast<cfg::video::rt_display&>(this->variables).value, value);
         }

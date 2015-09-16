@@ -299,9 +299,19 @@ MK_ENUM_FIELD(::configs::ClipboardEncodingType, "utf-8", "latin1")
 enum class ClipboardLogFlags : unsigned {
     none,
     syslog = 1 << 0,
-    FULL = ((1 << 1) - 1)
+    wrm = 1 << 1,
+    FULL = ((1 << 2) - 1)
 };
 MK_PARSER_ENUM_FLAGS(::configs::ClipboardLogFlags)
+
+
+enum class FileSystemLogFlags : unsigned {
+    none,
+    syslog = 1 << 0,
+    wrm = 1 << 1,
+    FULL = ((1 << 2) - 1)
+};
+MK_PARSER_ENUM_FLAGS(::configs::FileSystemLogFlags)
 
 
 enum class ColorDepth : unsigned {

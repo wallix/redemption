@@ -347,6 +347,9 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
     const bool disable_clipboard_log_syslog;
+    const bool disable_clipboard_log_wrm;
+    const bool disable_file_system_log_syslog;
+    const bool disable_file_system_log_wrm;
     const int  rdp_compression;
 
     const unsigned    wab_agent_launch_timeout;
@@ -511,6 +514,9 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
+        , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
+        , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
+        , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
@@ -900,8 +906,9 @@ protected:
             this->authorization_channels.cliprdr_file_is_authorized();
 
         clipboard_virtual_channel_params.dont_log_data_into_syslog       =
-            // disable_clipboard_log_syslog
             this->disable_clipboard_log_syslog;
+        clipboard_virtual_channel_params.dont_log_data_into_wrm          =
+            this->disable_clipboard_log_wrm;
 
         return clipboard_virtual_channel_params;
     }
@@ -938,6 +945,11 @@ protected:
                 rdpdr::RDPDR_DTYP_SMARTCARD);
         file_system_virtual_channel_params.random_number                   =
             ::getpid();
+
+        file_system_virtual_channel_params.dont_log_data_into_syslog       =
+            this->disable_file_system_log_syslog;
+        file_system_virtual_channel_params.dont_log_data_into_wrm          =
+            this->disable_file_system_log_wrm;
 
         return file_system_virtual_channel_params;
     }
@@ -5206,9 +5218,8 @@ public:
     }
 
     void rdp_input_invalidate2(const DArray<Rect> & vr) override {
-        LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
         if (this->verbose & 4){
-            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && (vr.size() > 0)) {

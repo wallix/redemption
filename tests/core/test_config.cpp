@@ -80,9 +80,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
                                                         ini.get<cfg::video::record_path>().c_str());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,  ini.get<cfg::video::disable_keyboard_log>());
 
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,   ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -311,9 +312,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,  ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,   ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
@@ -540,9 +541,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,  ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,   ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -775,9 +776,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>().c_str());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::wrm,   ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog, ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -941,6 +942,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
                           "disable_keyboard_log=1\n"
                           "disable_clipboard_log=1\n"
+                          "disable_file_system_log=2\n"
                           "\n"
                           "[mod_vnc]\n"
                           "server_clipboard_encoding_type=utf-8\n"
@@ -990,9 +992,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("/mnt/wab/hash/",                 ini.get<cfg::video::hash_path>().c_str());
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>().c_str());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>().c_str());
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::wrm,   ini.get<cfg::video::disable_keyboard_log>());
 
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,  ini.get<cfg::video::disable_keyboard_log>());
     BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::wrm,   ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -1181,9 +1184,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::wrm,   ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog, ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -1371,9 +1374,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::wrm,   ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog, ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -1536,9 +1539,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,  ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,   ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -1700,9 +1703,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,  ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,   ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -1851,9 +1854,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,  ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,   ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
@@ -2001,9 +2004,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::video::record_tmp_path>().c_str());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,  ini.get<cfg::video::disable_keyboard_log>());
-
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::none,   ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none,  ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());

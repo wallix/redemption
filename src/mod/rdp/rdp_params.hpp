@@ -48,6 +48,9 @@ struct ModRDPParams {
     bool enable_wab_agent;
 
     bool disable_clipboard_log_syslog;
+    bool disable_clipboard_log_wrm;
+    bool disable_file_system_log_syslog;
+    bool disable_file_system_log_wrm;
 
     unsigned     wab_agent_launch_timeout;
     unsigned     wab_agent_on_launch_failure;
@@ -127,6 +130,10 @@ struct ModRDPParams {
         , enable_wab_agent(false)
 
         , disable_clipboard_log_syslog(false)
+        , disable_clipboard_log_wrm(false)
+
+        , disable_file_system_log_syslog(false)
+        , disable_file_system_log_wrm(false)
 
         , wab_agent_launch_timeout(0)
         , wab_agent_on_launch_failure(0)
@@ -222,7 +229,14 @@ struct ModRDPParams {
             "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
 
         LOG(LOG_INFO,
-            "ModRDPParams dsiable_clipboard_log=0x%X",             this->disable_clipboard_log_syslog ? 1 : 0);
+            "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");
+        LOG(LOG_INFO,
+            "ModRDPParams dsiable_clipboard_log_wrm=%s",           this->disable_clipboard_log_wrm ? "yes" : "no");
+
+        LOG(LOG_INFO,
+            "ModRDPParams dsiable_file_system_log_syslog=%s",      this->disable_file_system_log_syslog ? "yes" : "no");
+        LOG(LOG_INFO,
+            "ModRDPParams dsiable_file_system_log_wrm=%s",         this->disable_file_system_log_wrm ? "yes" : "no");
 
         LOG(LOG_INFO,
             "ModRDPParams enable_transparent_mode=%s",             (this->enable_transparent_mode ? "yes" : "no"));

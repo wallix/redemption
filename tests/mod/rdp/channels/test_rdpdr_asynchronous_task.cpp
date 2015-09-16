@@ -44,8 +44,7 @@ public:
     virtual void operator() (uint32_t total_length, uint32_t flags,
         const uint8_t * chunk_data, uint32_t chunk_data_length) override {
         LOG(LOG_INFO, "total_length=%u flags=0x%X chunk_data=<%p> chunk_data_length=%u",
-            static_cast<uint32_t>(total_length), flags,
-            chunk_data, static_cast<uint32_t>(chunk_data_length));
+            total_length, flags, chunk_data, chunk_data_length);
         BStream stream(128);
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
