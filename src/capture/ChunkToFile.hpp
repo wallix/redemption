@@ -110,12 +110,10 @@ public:
     }
 
 public:
-    void chunk(uint16_t chunk_type, uint16_t chunk_count, const Stream & data) override {
+    void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream stream) override {
         switch (chunk_type) {
         case META_FILE:
             {
-                InStream stream(data.p, data.size());
-
                 uint16_t info_version               = stream.in_uint16_le();
                 uint16_t info_width                 = stream.in_uint16_le();
                 uint16_t info_height                = stream.in_uint16_le();
@@ -204,16 +202,14 @@ public:
 
         case TIMESTAMP:
             {
-                InStream stream(data.p, data.size());
-                timeval      record_now;
-
+                timeval record_now;
                 stream.in_timeval_from_uint64le_usec(record_now);
                 this->trans_target.timestamp(record_now);
             }
         default:
             {
-                send_wrm_chunk(this->trans, chunk_type, data.size(), chunk_count);
-                this->trans.send(data.p, data.size());
+                send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);
+                this->trans.send(stream.get_data(), stream.get_capacity());
             }
             break;
         }

@@ -1461,6 +1461,19 @@ namespace X224
 
             stream.mark_end();
         }
+
+        DT_TPDU_Send(OutStream & stream, size_t payload_len)
+        {
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_uint16_be(7 + payload_len); // packet len, inclusive
+            stream.out_uint8(7 - 5); // LI
+
+            stream.out_uint8(X224::DT_TPDU);
+            stream.out_uint8(X224::EOT_EOT);
+
+            stream.mark_end();
+        }
     };
 } // end namespace X224
 

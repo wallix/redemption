@@ -37,6 +37,7 @@
 #include "parse.hpp"
 
 #include <new>
+#include <initializer_list>
 
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
@@ -86,9 +87,17 @@ public:
 
     InStream() = delete;
     InStream(InStream &&) = default;
-    InStream(InStream const &) = delete;
     InStream & operator=(InStream &&) = default;
     InStream & operator=(InStream const &) = delete;
+
+private:
+    InStream(InStream const &) = default;
+
+public:
+    InStream clone() const {
+        return InStream(*this);
+    }
+
 
     uint8_t const * get_data() const {
         return this->begin;
@@ -108,10 +117,7 @@ public:
     }
 
     size_t in_remain() const {
-        TODO("check test below, it shouldn't be necessary. Allow negative remain ?");
-        if (this->p.p >= this->end) {
-            return 0;
-        }
+        REDASSERT(this->p.p <= this->end);
         return this->end - this->p.p;
     }
 
@@ -121,6 +127,12 @@ public:
 
     size_t get_capacity() const {
         return this->end - this->begin;
+    }
+
+    /// set current position to start buffer (\a p = \a begin)
+    void rewind(std::size_t headroom = 0) {
+        REDASSERT(this->begin + headroom <= this->end);
+        this->p.p = this->begin + headroom;
     }
 
     // =========================================================================
@@ -839,6 +851,114 @@ inline InStream substream(const InStream & stream, std::size_t new_size, std::si
     }
     return InStream(stream.get_current() + offset, new_size);
 }
+
+namespace details_ {
+    inline void copy_to_head_impl(char * & buf) {}
+
+    template<class InStream, class... InStreams>
+    void copy_to_head_impl(char * & buf, InStream const & in_stream, InStreams const & ... in_streams) {
+        copy_to_head_impl(buf, in_streams...);
+        buf -= in_stream.get_offset();
+        memcpy(buf, in_stream.get_data(), in_stream.get_offset());
+    }
+}
+
+template<class... InStream>
+char * copy_to_head(char * buf, std::size_t headroom, InStream const & ... in_streams) {
+#ifdef NDEBUG
+    std::size_t len_streams = 0;
+    (void)std::initializer_list<int>{len_streams += in_streams.get_offset(), 1)};
+    assert(len_streams <= headroom);
+#endif
+    auto start = buf + headroom;
+    details_::copy_to_head_impl(start, in_streams...);
+    return start;
+}
+
+template<class... InStream>
+uint8_t * copy_to_head(uint8_t * buf, std::size_t headroom, InStream const & ... in_streams) {
+    return reinterpret_cast<uint8_t *>(copy_to_head(reinterpret_cast<char *>(buf), headroom, in_streams...));
+}
+
+
+struct OutHeaderStreamHelper
+{
+    OutHeaderStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len)
+    : buf(data + reserved_leading_space)
+    , reserved_leading_space(reserved_leading_space)
+    , stream(this->buf, buf_len - reserved_leading_space)
+    {}
+
+    uint8_t * get_header() const {
+        return this->buf;
+    }
+
+    std::size_t get_reserved_leading_space() const {
+        return this->reserved_leading_space;
+    }
+
+    std::size_t get_size() const {
+        return this->stream.get_current() - this->get_header();
+    }
+
+    OutStream & get_data_stream() {
+        return this->stream;
+    }
+
+    OutStream to_out_stream() const {
+        return OutStream(this->get_header(), this->get_size());
+    }
+
+    void copy_to_head(OutStream const & stream) {
+        assert(this->reserved_leading_space <= stream.get_offset());
+        this->buf -= stream.get_offset();
+        this->reserved_leading_space -= stream.get_offset();
+        memcpy(this->buf, stream.get_data(), stream.get_offset());
+    }
+
+    void copy_to_head(OutStream const & stream1, OutStream const & stream2) {
+        auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
+        assert(this->reserved_leading_space <= total_stream_size);
+        this->reserved_leading_space -= total_stream_size;
+        this->buf -= total_stream_size;
+
+        auto start = this->buf;
+        memcpy(start, stream1.get_data(), stream1.get_offset());
+        start += stream1.get_offset();
+        memcpy(start, stream2.get_data(), stream2.get_offset());
+    }
+
+    void copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) {
+        auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
+        assert(this->reserved_leading_space <= total_stream_size);
+        this->reserved_leading_space -= total_stream_size;
+        this->buf -= total_stream_size;
+
+        auto start = this->buf;
+        memcpy(start, stream1.get_data(), stream1.get_offset());
+        start += stream1.get_offset();
+        memcpy(start, stream2.get_data(), stream2.get_offset());
+        start += stream2.get_offset();
+        memcpy(start, stream3.get_data(), stream3.get_offset());
+    }
+
+private:
+    uint8_t * buf;
+    std::size_t reserved_leading_space;
+    OutStream stream;
+};
+
+
+template<std::size_t HeaderSz, std::size_t StreamSz>
+struct StaticOutHeaderStreamHelper : OutHeaderStreamHelper
+{
+    StaticOutHeaderStreamHelper()
+    : OutHeaderStreamHelper(this->data, HeaderSz, HeaderSz + StreamSz)
+    {}
+
+private:
+    uint8_t data[HeaderSz + StreamSz];
+};
 
 
 class Stream {

@@ -344,52 +344,56 @@ namespace CHANNELS {
         void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
                            , const uint8_t * chunk, size_t chunk_size) {
-            HStream stream(1024, 65536);
-
-            stream.out_uint32_le(length);
-            stream.out_uint32_le(flags);
-            stream.out_copy_bytes(chunk, chunk_size);
-            stream.mark_end();
-
-            BStream x224_header(256);
-            OutPerBStream mcs_header(256);
-            BStream sec_header(256);
-
-            SEC::Sec_Send             sec( sec_header, stream, 0, crypt_context, encryptionLevel);
-            MCS::SendDataRequest_Send mcs( mcs_header, userId, channelId, 1, 3
-                                         , sec_header.size() + stream.size(), MCS::PER_ENCODING);
-
-            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
-
-            trans.send(x224_header, mcs_header, sec_header, stream);
+            this->send_<false, MCS::SendDataRequest_Send>(
+                trans, crypt_context, encryptionLevel,
+                userId, channelId, length, flags,
+                chunk, chunk_size
+            );
         }
 
         void send_to_client( Transport & trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-                           , const uint8_t * const chunk, size_t chunk_size) {
-            HStream stream(1024, 65536);
+                           , const uint8_t * chunk, size_t chunk_size) {
+            this->send_<true, MCS::SendDataIndication_Send>(
+                trans, crypt_context, encryptionLevel,
+                userId, channelId, length, flags,
+                chunk, chunk_size
+            );
+        }
+
+    private:
+        template<bool enable_verbose, class MCS_SendData>
+        void send_(
+          Transport & trans, CryptContext & crypt_context, int encryptionLevel
+        , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
+        , const uint8_t * chunk, size_t chunk_size) {
+            size_t const header_sz = 65536;
+            uint8_t buf[header_sz];
+            size_t const headroom = 1024;
+            OutStream stream(buf + headroom, header_sz - headroom);
 
             stream.out_uint32_le(length);
             stream.out_uint32_le(flags);
             stream.out_copy_bytes(chunk, chunk_size);
-            stream.mark_end();
 
-            BStream x224_header(256);
-            OutPerBStream mcs_header(256);
-            BStream sec_header(256);
 
-            if (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0)) {
+            if (enable_verbose && (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0))) {
                 LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);
-                hexdump_d(stream.get_data(), stream.size());
+                hexdump_d(stream.get_data(), stream.get_offset());
             }
 
-            SEC::Sec_Send                sec( sec_header, stream, 0, crypt_context, encryptionLevel);
-            MCS::SendDataIndication_Send mcs( mcs_header, userId, channelId, 1, 3
-                                            , sec_header.size() + stream.size(), MCS::PER_ENCODING);
+            StaticOutStream<256> x224_header;
+            StaticOutPerStream<256> mcs_header;
+            StaticOutStream<256> sec_header;
 
-            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+            SEC::Sec_Send(sec_header, stream.get_data(), stream.get_offset(), 0, crypt_context, encryptionLevel);
+            size_t const payload_len = sec_header.get_offset() + stream.get_offset();
+            MCS_SendData( mcs_header, userId, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header, mcs_header.get_offset() + payload_len);
 
-            trans.send(x224_header, mcs_header, sec_header, stream);
+            auto start = copy_to_head(buf, headroom, x224_header, mcs_header, sec_header);
+
+            trans.send(InStream(start, stream.get_current() - start));
         }
     };  // struct VirtualChannelPDU
 }   // namespace CHANNELS

@@ -863,12 +863,15 @@ public:
             LOG(LOG_INFO, "Front::disconnect");
         }
 
-        BStream x224_header(256);
-        HStream mcs_data(256, 512);
-        MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_data.size());
+        StaticOutStream<256> x224_header;
+        StaticOutHeaderStreamHelper<256, 256> mcs_data;
 
-        this->trans.send(x224_header, mcs_data);
+        MCS::DisconnectProviderUltimatum_Send(mcs_data.get_data_stream(), 3, MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_data.get_size());
+
+        mcs_data.copy_to_head(x224_header);
+
+        this->trans.send(mcs_data.get_header(), mcs_data.get_size());
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -898,6 +901,7 @@ public:
                                           , length, flags, chunk, chunk_size);
     }
 
+private:
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
     // -------------------------------------------------------------------
 
@@ -932,32 +936,7 @@ public:
         stream.mark_end();
     }
 
-    //void SendLogonInfo(const uint8_t * user_name)
-    //{
-    //    HStream stream(1024, 2048);
-    //
-    //    // Payload
-    //    RDP::SaveSessionInfoPDUData_Send ssipdu(stream, RDP::INFOTYPE_LOGON);
-    //    RDP::LogonInfoVersion1_Send      liv1(stream,
-    //                                          reinterpret_cast<const uint8_t *>(""),
-    //                                          user_name, getpid());
-    //    stream.mark_end();
-    //
-    //    const uint32_t log_condition = (128 | 8);
-    //    ::send_share_data_ex( this->trans
-    //                        , PDUTYPE2_SAVE_SESSION_INFO
-    //                        , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
-    //                        , this->mppc_enc
-    //                        , this->share_id
-    //                        , this->encryptionLevel
-    //                        , this->encrypt
-    //                        , this->userid
-    //                        , stream
-    //                        , log_condition
-    //                        , this->verbose
-    //                        );
-    //}
-
+public:
     void send_global_palette() override {
         if (!this->palette_sent && (this->client_info.bpp == 8)) {
             if (this->verbose & 4) {

@@ -26,10 +26,11 @@
 #include "RDPChunkedDevice.hpp"
 #include "compression_transport_wrapper.hpp"
 
-struct FileToChunk {
-    BStream stream;
+class FileToChunk
+{
+    unsigned char stream_buf[65536];
+    InStream stream;
 
-private:
     CompressionInTransportWrapper compression_wrapper;
 
     Transport * trans_source;
@@ -40,11 +41,11 @@ private:
     uint16_t chunk_type;
     uint16_t chunk_count;
 
-public:
     uint16_t nbconsumers;
 
     RDPChunkedDevice * consumers[10];
 
+public:
     timeval record_now;
 
     bool meta_ok;
@@ -75,7 +76,7 @@ public:
     uint8_t  info_compression_algorithm;
 
     FileToChunk(Transport * trans, uint32_t verbose)
-        : stream(65536)
+        : stream(this->stream_buf)
         , compression_wrapper(*trans, CompressionTransportBase::Algorithm::None)
         , trans_source(trans)
         , trans(trans)
@@ -125,22 +126,29 @@ public:
 
     bool next_chunk() {
         try {
-            BStream header(FileToGraphic::HEADER_SIZE);
-            this->trans->recv(&header.end, FileToGraphic::HEADER_SIZE);
-            this->chunk_type  = header.in_uint16_le();
-            this->chunk_size  = header.in_uint32_le();
-            this->chunk_count = header.in_uint16_le();
+            {
+                auto const buf_sz = FileToGraphic::HEADER_SIZE;
+                unsigned char buf[buf_sz];
+                auto * p = buf;
+                this->trans->recv(&p, buf_sz);
+                InStream header(buf);
+                this->chunk_type  = header.in_uint16_le();
+                this->chunk_size  = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+            }
 
             if (this->chunk_size > 65536) {
                 LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
                 return false;
             }
-            this->stream.reset();
+            this->stream = InStream(this->stream_buf, 0);
             if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
-                this->trans->recv(&this->stream.end, this->chunk_size - FileToGraphic::HEADER_SIZE);
+                auto * p = this->stream_buf;
+                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
+                this->stream = InStream(this->stream_buf, this->stream_buf - p);
             }
         }
-        catch (Error & e) {
+        catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
                 throw;
             }
@@ -202,7 +210,7 @@ public:
                 this->trans = &this->compression_wrapper.get();
             }
 
-            this->stream.p = this->stream.get_data();
+            this->stream.rewind();
 
             if (!this->meta_ok) {
                 this->meta_ok = true;
@@ -217,7 +225,7 @@ public:
 
         for (size_t i = 0; i < this->nbconsumers ; i++) {
             if (this->consumers[i]) {
-                this->consumers[i]->chunk(this->chunk_type, this->chunk_count, this->stream);
+                this->consumers[i]->chunk(this->chunk_type, this->chunk_count, this->stream.clone());
             }
         }
     }   // void interpret_chunk()

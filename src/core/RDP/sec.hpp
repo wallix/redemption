@@ -859,6 +859,19 @@ enum {
             }
             stream.mark_end();
         }
+
+        Sec_Send(OutStream & stream, uint8_t * data, size_t len, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
+            flags |= encryptionLevel?SEC_ENCRYPT:0;
+            if (flags) {
+                stream.out_uint32_le(flags);
+            }
+            if (flags & SEC_ENCRYPT){
+                uint8_t signature[8] = {};
+                crypt.sign(data, len, signature);
+                stream.out_copy_bytes(signature, 8);
+                crypt.decrypt(data, len);
+            }
+        }
     };
 
     // 5.1.3 Generating the Licensing Encryption and MAC Salt Keys

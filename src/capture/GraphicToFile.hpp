@@ -149,8 +149,8 @@ public:
     , mouse_y(0)
     , send_input(send_input == SendInput::YES)
     , drawable(drawable)
-    , ini(ini)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
+    , ini(ini)
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
     //, verbose(verbose)
     {

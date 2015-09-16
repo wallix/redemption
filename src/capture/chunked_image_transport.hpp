@@ -29,46 +29,55 @@
 #include "stream.hpp"
 #include "wrm_label.hpp"
 
+#include <memory>
 
-class InChunkedImageTransport : public Transport {
+class InChunkedImageTransport : public Transport
+{
     uint16_t chunk_type;
     uint32_t chunk_size;
     uint16_t chunk_count;
     Transport * trans;
-    BStream stream;
+    char buf[65536];
+    InStream in_stream;
+
 public:
     InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans)
         : chunk_type(chunk_type)
         , chunk_size(chunk_size)
         , chunk_count(1)
         , trans(trans)
+        , in_stream(this->buf, this->chunk_size - 8)
     {
-        this->stream.init(this->chunk_size - 8);
-        this->trans->recv(&stream.end, this->chunk_size - 8);
+        auto * p = this->buf;
+        this->trans->recv(&p, this->in_stream.get_capacity());
     }
 
 private:
     void do_recv(char ** pbuffer, size_t len) override {
         size_t total_len = 0;
         while (total_len < len){
-            if (static_cast<size_t>(stream.end - stream.p) >= (len - total_len)){
-                stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
+            size_t remaining = in_stream.in_remain();
+            if (remaining >= (len - total_len)){
+                in_stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
                 *pbuffer += len;
                 return;
             }
-            uint16_t remaining = stream.end - stream.p;
-            stream.in_copy_bytes(*pbuffer + total_len, remaining);
+            in_stream.in_copy_bytes(*pbuffer + total_len, remaining);
             total_len += remaining;
             switch (this->chunk_type){
             case PARTIAL_IMAGE_CHUNK:
             {
-                BStream header(8);
-                this->trans->recv(&header.end, 8);
+                const size_t header_sz = 8;
+                char header_buf[header_sz];
+                InStream header(header_buf);
+                auto * p = header_buf;
+                this->trans->recv(&p, header_sz);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
                 this->chunk_count = header.in_uint16_le();
-                this->stream.init(this->chunk_size - 8);
-                this->trans->recv(&this->stream.end, this->chunk_size - 8);
+                this->in_stream = InStream(this->buf, this->chunk_size - 8);
+                p = this->buf;
+                this->trans->recv(&p, this->chunk_size - 8);
             }
             break;
             case LAST_IMAGE_CHUNK:

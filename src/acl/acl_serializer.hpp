@@ -200,7 +200,7 @@ public:
                                     buff[n] = '\n';
                                     buff[n+1] = 0;
                                     ++n;
-                                    return;
+                                    return; // ATTENTION
                                 }
                             }
                             n = -1;

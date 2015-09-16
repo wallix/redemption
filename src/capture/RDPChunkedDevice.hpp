@@ -21,12 +21,12 @@
 #ifndef _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
 #define _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
 
-class Stream;
+#include "stream.hpp"
 
 struct RDPChunkedDevice {
     virtual ~RDPChunkedDevice () {}
 
-    virtual void chunk(uint16_t chunk_type, uint16_t chunk_count, const Stream & data) = 0;
+    virtual void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream data) = 0;
 };
 
 #endif

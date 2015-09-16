@@ -251,12 +251,13 @@ struct Font
         }
 
         {
-            long size_to_read = file_size;
-            BStream stream(8192);
+            std::size_t size_to_read = file_size;
+            std::size_t const stream_buf_sz = 8192;
+            char stream_buf[stream_buf_sz];
 
             // Read header
             // -----------
-            while ((b = read(fd, stream.end, std::min<uint32_t>(size_to_read, 8192))) < 0){
+            while ((b = read(fd, stream_buf, std::min(size_to_read, stream_buf_sz))) < 0) {
                 if (b >= 0){
                     break;
                 }
@@ -266,7 +267,7 @@ struct Font
                 LOG(LOG_ERR,"create: error reading font file [%s] error: %s\n", file_path, strerror(errno));
                 goto ErrorReadingFontFile;
             }
-            stream.end += b;
+            InStream stream(stream_buf, b);
             size_to_read -= b;
             if (size_to_read == 0){
                 close(fd);
@@ -290,11 +291,9 @@ struct Font
                     if (size_to_read > 0){
                         TODO("Create a pack_left function in stream to do this");
                         //-----------------------------------------------------
-                        memmove(stream.get_data(), stream.p, remaining);
-                        stream.p = stream.get_data();
-                        stream.end = stream.p + remaining;
+                        memmove(stream_buf, stream.get_current(), remaining);
                         //-----------------------------------------------------
-                        while ((b = read(fd, stream.end, std::min<uint32_t>(size_to_read, 8192 - remaining))) < 0){
+                        while ((b = read(fd, stream_buf + remaining, std::min(size_to_read, stream_buf_sz - remaining))) < 0){
                             if (b >= 0){
                                 break;
                             }
@@ -304,7 +303,7 @@ struct Font
                             LOG(LOG_ERR,"create: error reading font file [%s] error: %s\n", file_path, strerror(errno));
                             goto ErrorReadingFontFile;
                         }
-                        stream.end += b;
+                        stream = InStream(stream_buf, remaining + b);
                         size_to_read -= b;
                         if (size_to_read == 0){
                             close(fd);
