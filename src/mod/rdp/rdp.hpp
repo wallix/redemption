@@ -340,6 +340,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
     const bool enable_wab_agent;
+    const bool enable_wab_agent_loading_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -507,6 +508,7 @@ public:
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_wab_agent(mod_rdp_params.enable_wab_agent)
+        , enable_wab_agent_loading_mask(mod_rdp_params.enable_wab_agent_loading_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -792,7 +794,7 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_wab_agent) {
+        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
             this->front.disable_input_event_and_graphics_update(false);
         }
 
@@ -3022,7 +3024,7 @@ public:
                 };
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_wab_agent) {
+                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3046,7 +3048,7 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_wab_agent) {
+                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3073,7 +3075,9 @@ public:
                 LOG((this->wab_agent_on_launch_failure ? LOG_WARNING : LOG_ERR), "Agent is not ready yet!");
 
                 const bool need_full_screen_update =
-                    this->front.disable_input_event_and_graphics_update(false);
+                    (this->enable_wab_agent_loading_mask ?
+                     this->front.disable_input_event_and_graphics_update(false) :
+                     false);
 
                 if (this->wab_agent_on_launch_failure) {
                     if (need_full_screen_update) {
@@ -3088,7 +3092,7 @@ public:
             }
 
             if (this->wab_agent_is_ready && this->wab_agent_keepalive_timeout) {
-                if (!this->wab_agent_keep_alive_received) {
+                if (!this->wab_agent_keep_alive_received && this->enable_wab_agent_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
 
                     LOG(LOG_ERR, "No keep alive received from Agent!");
@@ -4671,7 +4675,7 @@ public:
             this->event.reset();
         }
 
-        if (this->enable_wab_agent) {
+        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
             this->front.disable_input_event_and_graphics_update(true);
         }
     }
@@ -6090,7 +6094,7 @@ public:
                 LOG(LOG_INFO, "Agent is ready.");
             }
 
-            if (this->front.disable_input_event_and_graphics_update(false)) {
+            if (this->enable_wab_agent_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
                         this->front_width, this->front_height);

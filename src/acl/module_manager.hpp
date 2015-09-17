@@ -797,6 +797,7 @@ public:
                 //mod_rdp_params.enable_new_pointer                  = true;
                 mod_rdp_params.enable_glyph_cache                  = this->ini.get<cfg::globals::glyph_cache>();
                 mod_rdp_params.enable_wab_agent                    = this->ini.get<cfg::globals::enable_wab_agent>();
+                mod_rdp_params.enable_wab_agent_loading_mask       = this->ini.get<cfg::globals::enable_wab_agent_loading_mask>();
                 mod_rdp_params.wab_agent_launch_timeout            = this->ini.get<cfg::globals::wab_agent_launch_timeout>();
                 mod_rdp_params.wab_agent_on_launch_failure         = this->ini.get<cfg::globals::wab_agent_on_launch_failure>();
                 mod_rdp_params.wab_agent_keepalive_timeout         = this->ini.get<cfg::globals::wab_agent_keepalive_timeout>();

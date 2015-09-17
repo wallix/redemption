@@ -230,6 +230,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "enable_wab_agent")) {
             ::configs::parse(static_cast<cfg::globals::enable_wab_agent&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "enable_wab_agent_loading_mask")) {
+            ::configs::parse(static_cast<cfg::globals::enable_wab_agent_loading_mask&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "wab_agent_launch_timeout")) {
             ::configs::parse(static_cast<cfg::globals::wab_agent_launch_timeout&>(this->variables).value, value);
         }

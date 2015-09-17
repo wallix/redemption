@@ -179,6 +179,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "enable_osd_display_remote_target", set(true));
         W.sep();
         W.member(A, type_<bool>(), "enable_wab_agent", def_authid{"opt_wabagent"}, str_authid{"wab_agent"}, set(false), r);
+        W.member(A, type_<bool>(), "enable_wab_agent_loading_mask", def_authid{"enable_wab_agent_loading_mask"}, set(true), r);
         W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", def_authid{"opt_wabagent_launch_timeout"}, set(20000), r);
         W.member(A, type_<Range<unsigned, 0, 1>>(), "wab_agent_on_launch_failure", def_authid{"opt_wabagent_on_launch_failure"}, set(0), desc{
             "Specifies the action to be performed is the launch of agent fails.\n"
