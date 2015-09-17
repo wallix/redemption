@@ -972,6 +972,7 @@ namespace cfg {
             type value{600};
         };
 
+        // Authentication channel used by Auto IT scripts.
         struct auth_channel {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -1112,7 +1113,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 15; }
             using type = unsigned;
-            type value{0};
+            type value{20000};
         };
         // Specifies the action to be performed is the launch of agent fails.
         //   0: disconnects session
@@ -1133,7 +1134,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 17; }
             using type = unsigned;
-            type value{0};
+            type value{5000};
         };
 
         struct wab_agent_alternate_shell {
