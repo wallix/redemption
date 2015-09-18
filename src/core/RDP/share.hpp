@@ -296,6 +296,17 @@ struct ShareControl_Send
         stream.out_uint16_le(PDUSource);
         stream.mark_end();
     }
+
+    ShareControl_Send(OutStream & stream, uint8_t pduType, uint16_t PDUSource, uint16_t payload_len)
+    {
+        enum {
+            versionLow = 0x10,
+            versionHigh = 0
+        };
+        stream.out_uint16_le(payload_len + 6);
+        stream.out_uint16_le(versionHigh | versionLow | pduType);
+        stream.out_uint16_le(PDUSource);
+    }
 }; // END CLASS ShareControl_Send
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)

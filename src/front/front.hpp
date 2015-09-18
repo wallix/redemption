@@ -295,11 +295,40 @@ private:
         GraphicsUpdatePDU * operator->() const { return &this->p->graphics_update_pdu; }
     } orders;
 
-    struct write_x224_dt_tpdu_fn {
+    struct write_x224_dt_tpdu_fn
+    {
         void operator()(StreamSize<256>, OutStream & x224_header, std::size_t sz) const {
             X224::DT_TPDU_Send(x224_header, sz);
         }
-    } ;
+    };
+
+    /// \param fn  Fn(MCS::ChannelJoinRequest_Recv &)
+    template<class Fn>
+    void channel_join_request_transmission(Fn fn) {
+        constexpr size_t array_size = 256;
+        uint8_t array[array_size];
+        uint8_t * end = array;
+        X224::RecvFactory fx224(this->trans, &end, array_size);
+        REDASSERT(fx224.type == X224::DT_TPDU);
+        InStream x224_data(array, end - array);
+        X224::DT_TPDU_Recv x224(x224_data);
+        MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+        fn(mcs);
+
+        write_packets(
+            this->trans,
+            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+                MCS::ChannelJoinConfirm_Send(
+                    mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                    mcs.initiator, mcs.channelId,
+                    true, mcs.channelId,
+                    MCS::PER_ENCODING
+                );
+            },
+            write_x224_dt_tpdu_fn{}
+        );
+    }
 
 public:
     Keymap2 keymap;
@@ -874,7 +903,7 @@ public:
             [](StreamSize<256>, OutStream & mcs_data) {
                 MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
             },
-            write_x224_dt_tpdu_fn()
+            write_x224_dt_tpdu_fn{}
         );
     }
 
@@ -1337,7 +1366,7 @@ public:
                 [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
                     MCS::CONNECT_RESPONSE_Send_new_stream mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
                 },
-                write_x224_dt_tpdu_fn()
+                write_x224_dt_tpdu_fn{}
             );
 
             // Channel Connection
@@ -1423,99 +1452,32 @@ public:
                 [this](StreamSize<256>, OutStream & mcs_data) {
                     MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                 },
-                write_x224_dt_tpdu_fn()
+                write_x224_dt_tpdu_fn{}
             );
 
-            // TODO repetition 1
-            {
-                // read tpktHeader (4 bytes = 3 0 len)
-                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                constexpr size_t array_size = 256;
-                uint8_t array[array_size];
-                uint8_t * end = array;
-                X224::RecvFactory fx224(this->trans, &end, array_size);
-                REDASSERT(fx224.type == X224::DT_TPDU);
-                InStream x224_data(array, end - array);
-                X224::DT_TPDU_Recv x224(x224_data);
-                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            this->channel_join_request_transmission([this](MCS::ChannelJoinRequest_Recv & mcs) {
                 this->userid = mcs.initiator;
-
-                write_packets(
-                    this->trans,
-                    [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
-                        MCS::ChannelJoinConfirm_Send(
-                            mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                            mcs.initiator, mcs.channelId,
-                            true, mcs.channelId,
-                            MCS::PER_ENCODING
-                        );
-                    },
-                    write_x224_dt_tpdu_fn()
-                );
-            }
-
-            // TODO repetition 1
-            {
-                constexpr size_t array_size = 256;
-                uint8_t array[array_size];
-                uint8_t * end = array;
-                X224::RecvFactory fx224(this->trans, &end, array_size);
-                REDASSERT(fx224.type == X224::DT_TPDU);
-                InStream x224_data(array, end - array);
-                X224::DT_TPDU_Recv x224(x224_data);
-                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            });
+            this->channel_join_request_transmission([this](MCS::ChannelJoinRequest_Recv & mcs) {
                 if (mcs.initiator != this->userid) {
                     LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-
-                write_packets(
-                    this->trans,
-                    [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
-                        MCS::ChannelJoinConfirm_Send(
-                            mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                            mcs.initiator, mcs.channelId,
-                            true, mcs.channelId,
-                            MCS::PER_ENCODING
-                        );
-                    },
-                    write_x224_dt_tpdu_fn()
-                );
-            }
+            });
 
             for (size_t i = 0 ; i < this->channel_list.size(); ++i) {
-                constexpr size_t array_size = 256;
-                uint8_t array[array_size];
-                uint8_t * end = array;
-                X224::RecvFactory fx224(this->trans, &end, array_size);
-                InStream x224_data(array, end - array);
-                X224::DT_TPDU_Recv x224(x224_data);
-                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                this->channel_join_request_transmission([this,i](MCS::ChannelJoinRequest_Recv & mcs) {
+                    if (this->verbose & 16) {
+                        LOG(LOG_INFO, "cjrq[%u] = %u -> cjcf", i, mcs.channelId);
+                    }
 
-                if (this->verbose & 16) {
-                    LOG(LOG_INFO, "cjrq[%u] = %u -> cjcf", i, mcs.channelId);
-                }
+                    if (mcs.initiator != this->userid) {
+                        LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                        throw Error(ERR_MCS_BAD_USERID);
+                    }
 
-                if (mcs.initiator != this->userid) {
-                    LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
-                    throw Error(ERR_MCS_BAD_USERID);
-                }
-
-                // TODO repetition 1
-                write_packets(
-                    this->trans,
-                    [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
-                        MCS::ChannelJoinConfirm_Send(
-                            mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                            mcs.initiator, mcs.channelId,
-                            true, mcs.channelId,
-                            MCS::PER_ENCODING
-                        );
-                    },
-                    write_x224_dt_tpdu_fn()
-                );
-
-                this->channel_list.set_chanid(i, mcs.channelId);
+                    this->channel_list.set_chanid(i, mcs.channelId);
+                });
             }
 
             if (this->verbose & 1) {
@@ -2322,7 +2284,6 @@ public:
     }
 
     void send_valid_client_license_data() {
-        // TODO repetition 2
         this->send_data_indication(
             GCC::MCS_GLOBAL_CHANNEL,
             [this](StreamSize<24>, OutStream & sec_header) {
@@ -2354,20 +2315,6 @@ public:
         );
     }
 
-    // TODO unused
-    void send_data_indication(uint16_t channelId, HStream & stream)
-    {
-        BStream x224_header(256);
-        OutPerBStream mcs_header(256);
-
-        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
-                                         1, 3, stream.size(),
-                                         MCS::PER_ENCODING);
-
-        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-        this->trans.send(x224_header, mcs_header, stream);
-    }
-
     template<class DataWriter>
     void send_data_indication(uint16_t channelId, DataWriter data_writer)
     {
@@ -2383,7 +2330,7 @@ public:
                 );
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn()
+            write_x224_dt_tpdu_fn{}
         );
     }
 
@@ -2685,10 +2632,10 @@ public:
         stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
         stream.mark_end();
 
-        BStream sctrl_header(256);
+        StaticOutStream<256> sctrl_header;
         ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        stream.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
+        stream.copy_to_head(sctrl_header.get_data(), sctrl_header.get_offset());
 
         if ((this->verbose & (128 | 1)) == (128 | 1)) {
             LOG(LOG_INFO, "Sec clear payload to send:");
