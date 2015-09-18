@@ -295,6 +295,12 @@ private:
         GraphicsUpdatePDU * operator->() const { return &this->p->graphics_update_pdu; }
     } orders;
 
+    struct write_x224_dt_tpdu_fn {
+        void operator()(StreamSize<256>, OutStream & x224_header, std::size_t sz) const {
+            X224::DT_TPDU_Send(x224_header, sz);
+        }
+    } ;
+
 public:
     Keymap2 keymap;
 
@@ -863,15 +869,13 @@ public:
             LOG(LOG_INFO, "Front::disconnect");
         }
 
-        StaticOutStream<256> x224_header;
-        StaticOutHeaderStreamHelper<256, 256> mcs_data;
-
-        MCS::DisconnectProviderUltimatum_Send(mcs_data.get_data_stream(), 3, MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_data.get_size());
-
-        mcs_data.copy_to_head(x224_header);
-
-        this->trans.send(mcs_data.get_header(), mcs_data.get_size());
+        write_packets(
+            this->trans,
+            [](StreamSize<256>, OutStream & mcs_data) {
+                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+            },
+            write_x224_dt_tpdu_fn()
+        );
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -1021,7 +1025,6 @@ public:
                 LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
             }
             {
-                BStream stream(256);
                 uint8_t rdp_neg_type = 0;
                 uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
                 uint32_t rdp_neg_code = 0;
@@ -1041,8 +1044,9 @@ public:
                     LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
                 }
 
+                StaticOutStream<256> stream;
                 X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-                this->trans.send(stream);
+                this->trans.send(stream.get_data(), stream.get_offset());
 
                 if (this->tls_client_active) {
                     this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>());
@@ -1215,114 +1219,126 @@ public:
                 throw Error(ERR_MCS_DATA_SHORT_HEADER);
             }
 
-            // ------------------------------------------------------------------
-            HStream stream(1024, 65536);
-            // ------------------------------------------------------------------
-//            GCC::UserData::ServerToClient_Send(stream, this->clientRequestedProtocols, this->channel_list.size());
+            write_packets(
+                this->trans,
+                [this](StreamSize<65536-1024>, OutStream & stream) {
+                    {
+                        GCC::UserData::SCCore sc_core;
+                        sc_core.version = 0x00080004;
+                        if (this->tls_client_active) {
+                            sc_core.length = 12;
+                            sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
+                        }
+                        if (this->verbose & 1) {
+                            sc_core.log("Sending to client");
+                        }
+                        sc_core.emit(stream);
+                    }
+                    // ------------------------------------------------------------------
+                    {
+                        GCC::UserData::SCNet sc_net;
+                        sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
+                        sc_net.channelCount = this->channel_list.size();
+                        for (size_t index = 0; index < this->channel_list.size(); ++index) {
+                            sc_net.channelDefArray[index].id = this->channel_list[index].chanid;
+                        }
+                        if (this->verbose & 1) {
+                            sc_net.log("Sending to client");
+                        }
+                        sc_net.emit(stream);
+                    }
+                    // ------------------------------------------------------------------
+                    if (this->tls_client_active) {
+                        GCC::UserData::SCSecurity sc_sec1;
+                        sc_sec1.encryptionMethod = 0;
+                        sc_sec1.encryptionLevel = 0;
+                        sc_sec1.length = 12;
+                        sc_sec1.serverRandomLen = 0;
+                        sc_sec1.serverCertLen = 0;
+                        if (this->verbose & 1) {
+                            sc_sec1.log("Sending to client");
+                        }
+                        sc_sec1.emit(stream);
+                    }
+                    else {
+                        GCC::UserData::SCSecurity sc_sec1;
+                        /*
+                        For now rsa_keys are not in a configuration file any more, but as we were not changing keys
+                        the values have been embedded in code and the key generator file removed from source code.
 
-            GCC::UserData::SCCore sc_core;
-            sc_core.version = 0x00080004;
-            if (this->tls_client_active) {
-                sc_core.length = 12;
-                sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
-            }
-            if (this->verbose & 1) {
-                sc_core.log("Sending to client");
-            }
-            sc_core.emit(stream);
-            // ------------------------------------------------------------------
-            GCC::UserData::SCNet sc_net;
-            sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
-            sc_net.channelCount = this->channel_list.size();
-            for (size_t index = 0; index < this->channel_list.size(); ++index) {
-                sc_net.channelDefArray[index].id = this->channel_list[index].chanid;
-            }
-            if (this->verbose & 1) {
-                sc_net.log("Sending to client");
-            }
-            sc_net.emit(stream);
-            // ------------------------------------------------------------------
-            if (this->tls_client_active) {
-                GCC::UserData::SCSecurity sc_sec1;
-                sc_sec1.encryptionMethod = 0;
-                sc_sec1.encryptionLevel = 0;
-                sc_sec1.length = 12;
-                sc_sec1.serverRandomLen = 0;
-                sc_sec1.serverCertLen = 0;
-                if (this->verbose & 1) {
-                    sc_sec1.log("Sending to client");
-                }
-                sc_sec1.emit(stream);
-            }
-            else {
-                GCC::UserData::SCSecurity sc_sec1;
-                /*
-                   For now rsa_keys are not in a configuration file any more, but as we were not changing keys
-                   the values have been embedded in code and the key generator file removed from source code.
+                        It will be put back at some later time using a clean parser/writer module and sll calls
+                        coherent with the remaining of ReDemPtion code. For reference to historical key generator
+                        code look for utils/keygen.cpp in old repository code.
 
-                   It will be put back at some later time using a clean parser/writer module and sll calls
-                   coherent with the remaining of ReDemPtion code. For reference to historical key generator code
-                   look for utils/keygen.cpp in old repository code.
+                        references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
+                        */
+                        uint8_t rsa_keys_pub_mod[64] = {
+                            0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3,
+                            0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
+                            0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d,
+                            0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
+                            0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f,
+                            0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
+                            0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92,
+                            0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
+                        };
+                        memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
 
-                   references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
-                */
-                uint8_t rsa_keys_pub_mod[64] = {
-                    0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3, 0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
-                    0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d, 0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
-                    0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f, 0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
-                    0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92, 0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
-                };
-                memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
+                        uint8_t rsa_keys_pri_exp[64] = {
+                            0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47,
+                            0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
+                            0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5,
+                            0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
+                            0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B,
+                            0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
+                            0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C,
+                            0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
+                        };
+                        memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
+                        memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
 
-                uint8_t rsa_keys_pri_exp[64] = {
-                    0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47, 0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
-                    0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5, 0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
-                    0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B, 0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
-                    0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C, 0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
-                };
-                memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
-                memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
+                        uint8_t rsa_keys_pub_sig[64] = {
+                            0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1,
+                            0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
+                            0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a,
+                            0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
+                            0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e,
+                            0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
+                            0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41,
+                            0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
+                        };
 
-                uint8_t rsa_keys_pub_sig[64] = {
-                    0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1, 0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
-                    0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a, 0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
-                    0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e, 0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
-                    0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41, 0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
-                };
+                        uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
 
-                uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
+                        sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
+                        sc_sec1.encryptionLevel = this->encryptionLevel;
+                        sc_sec1.serverRandomLen = 32;
+                        this->gen.random(this->server_random, 32);
+                        memcpy(sc_sec1.serverRandom, this->server_random, 32);
+                        sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
+                        sc_sec1.temporary = false;
+                        memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
+                        memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
+                        memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
+                            "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+                        memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
+                        memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
+                            "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
 
-                sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-                sc_sec1.encryptionLevel = this->encryptionLevel;
-                sc_sec1.serverRandomLen = 32;
-                this->gen.random(this->server_random, 32);
-                memcpy(sc_sec1.serverRandom, this->server_random, 32);
-                sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
-                sc_sec1.temporary = false;
-                memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
-                memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
-                memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
-                    "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
-                memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
-                memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
-                    "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
-
-                if (this->verbose & 1) {
-                    sc_sec1.log("Sending to client");
-                }
-                sc_sec1.emit(stream);
-            }
-            stream.mark_end();
-
-            // ------------------------------------------------------------------
-            BStream gcc_header(256);
-            BStream mcs_header(256);
-            BStream x224_header(256);
-
-            GCC::Create_Response_Send(gcc_header, stream.size());
-            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
-            X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-            this->trans.send(x224_header, mcs_header, gcc_header, stream);
+                        if (this->verbose & 1) {
+                            sc_sec1.log("Sending to client");
+                        }
+                        sc_sec1.emit(stream);
+                    }
+                },
+                [](StreamSize<256>, OutStream & gcc_header, std::size_t packed_size) {
+                    GCC::Create_Response_Send(gcc_header, packed_size);
+                },
+                [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
+                    MCS::CONNECT_RESPONSE_Send_new_stream mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
+                },
+                write_x224_dt_tpdu_fn()
+            );
 
             // Channel Connection
             // ------------------
@@ -1401,14 +1417,16 @@ public:
             if (this->verbose) {
                 LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm userid=%u", this->userid);
             }
-            {
-                BStream x224_header(256);
-                HStream mcs_data(256, 512);
-                MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                this->trans.send(x224_header, mcs_data);
-            }
 
+            write_packets(
+                this->trans,
+                [this](StreamSize<256>, OutStream & mcs_data) {
+                    MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
+                },
+                write_x224_dt_tpdu_fn()
+            );
+
+            // TODO repetition 1
             {
                 // read tpktHeader (4 bytes = 3 0 len)
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -1422,18 +1440,21 @@ public:
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 this->userid = mcs.initiator;
 
-                BStream x224_header(256);
-                HStream mcs_cjcf_data(256, 512);
-
-                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                                             mcs.initiator,
-                                             mcs.channelId,
-                                             true, mcs.channelId,
-                                             MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                this->trans.send(x224_header, mcs_cjcf_data);
+                write_packets(
+                    this->trans,
+                    [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+                        MCS::ChannelJoinConfirm_Send(
+                            mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                            mcs.initiator, mcs.channelId,
+                            true, mcs.channelId,
+                            MCS::PER_ENCODING
+                        );
+                    },
+                    write_x224_dt_tpdu_fn()
+                );
             }
 
+            // TODO repetition 1
             {
                 constexpr size_t array_size = 256;
                 uint8_t array[array_size];
@@ -1448,16 +1469,18 @@ public:
                     throw Error(ERR_MCS_BAD_USERID);
                 }
 
-                BStream x224_header(256);
-                HStream mcs_cjcf_data(256, 512);
-
-                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                                             mcs.initiator,
-                                             mcs.channelId,
-                                             true, mcs.channelId,
-                                             MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                this->trans.send(x224_header, mcs_cjcf_data);
+                write_packets(
+                    this->trans,
+                    [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+                        MCS::ChannelJoinConfirm_Send(
+                            mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                            mcs.initiator, mcs.channelId,
+                            true, mcs.channelId,
+                            MCS::PER_ENCODING
+                        );
+                    },
+                    write_x224_dt_tpdu_fn()
+                );
             }
 
             for (size_t i = 0 ; i < this->channel_list.size(); ++i) {
@@ -1478,16 +1501,19 @@ public:
                     throw Error(ERR_MCS_BAD_USERID);
                 }
 
-                BStream x224_header(256);
-                HStream mcs_cjcf_data(256, 512);
-
-                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                                             mcs.initiator,
-                                             mcs.channelId,
-                                             true, mcs.channelId,
-                                             MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                this->trans.send(x224_header, mcs_cjcf_data);
+                // TODO repetition 1
+                write_packets(
+                    this->trans,
+                    [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+                        MCS::ChannelJoinConfirm_Send(
+                            mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                            mcs.initiator, mcs.channelId,
+                            true, mcs.channelId,
+                            MCS::PER_ENCODING
+                        );
+                    },
+                    write_x224_dt_tpdu_fn()
+                );
 
                 this->channel_list.set_chanid(i, mcs.channelId);
             }
@@ -1656,31 +1682,34 @@ public:
                     LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
                 }
 
-                {
-                    HStream stream(1024, 65535);
+                this->send_data_indication(
+                    GCC::MCS_GLOBAL_CHANNEL,
+                    [this](StreamSize<24>, OutStream & sec_header) {
+                        /* mce */
+                        /* some compilers need unsigned char to avoid warnings */
+                        uint8_t lic3[] = {
+                            0xff, 0x03, 0x10, 0x00,
+                            0x07, 0x00, 0x00, 0x00,
+                            0x02, 0x00, 0x00, 0x00,
+                            0xf3, 0x99, 0x00, 0x00
+                        };
+                        static_assert(sizeof(lic3) == 16, "");
 
-                    /* mce */
-                    /* some compilers need unsigned char to avoid warnings */
-                    static uint8_t lic3[16] = { 0xff, 0x03, 0x10, 0x00,
-                                             0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-                                             0xf3, 0x99, 0x00, 0x00
-                                             };
+                        SEC::Sec_Send sec(
+                            sec_header, lic3, sizeof(lic3),
+                            SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0
+                        );
+                        (void)sec;
 
-                    stream.out_copy_bytes((char*)lic3, 16);
-                    stream.mark_end();
+                        sec_header.out_copy_bytes(lic3, sizeof(lic3));
 
-                    BStream sec_header(65536);
-
-                    if ((this->verbose & (128 | 2)) == (128 | 2)) {
-                        LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.get_data(), stream.size());
+                        if ((this->verbose & (128 | 2)) == (128 | 2)) {
+                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            hexdump_d(lic3, sizeof(lic3));
+                        }
                     }
+                );
 
-                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
-                    stream.copy_to_head(sec_header.get_data(), sec_header.size());
-
-                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
-                }
                 // proceed with capabilities exchange
 
                 // Capabilities Exchange
@@ -1708,73 +1737,81 @@ public:
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
                 }
 
-                HStream stream(1024, 65535);
+                this->send_data_indication(
+                    GCC::MCS_GLOBAL_CHANNEL,
+                    [this](StreamSize<314+8+4>, OutStream & sec_header) {
+                        /* some compilers need unsigned char to avoid warnings */
+                        static const uint8_t lic1[] = {
+                            // SEC_RANDOM ?
+                            0x7b, 0x3c, 0x31, 0xa6, 0xae, 0xe8, 0x74, 0xf6,
+                            0xb4, 0xa5, 0x03, 0x90, 0xe7, 0xc2, 0xc7, 0x39,
+                            0xba, 0x53, 0x1c, 0x30, 0x54, 0x6e, 0x90, 0x05,
+                            0xd0, 0x05, 0xce, 0x44, 0x18, 0x91, 0x83, 0x81,
+                            //
+                            0x00, 0x00, 0x04, 0x00, 0x2c, 0x00, 0x00, 0x00,
+                            0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00,
+                            0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00,
+                            0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00,
+                            0x72, 0x00, 0x70, 0x00, 0x6f, 0x00, 0x72, 0x00,
+                            0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00,
+                            0x6e, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+                            0x32, 0x00, 0x33, 0x00, 0x36, 0x00, 0x00, 0x00,
+                            0x0d, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
+                            0x03, 0x00, 0xb8, 0x00, 0x01, 0x00, 0x00, 0x00,
+                            0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                            0x06, 0x00, 0x5c, 0x00, 0x52, 0x53, 0x41, 0x31,
+                            0x48, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
+                            0x3f, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+                            0x01, 0xc7, 0xc9, 0xf7, 0x8e, 0x5a, 0x38, 0xe4,
+                            0x29, 0xc3, 0x00, 0x95, 0x2d, 0xdd, 0x4c, 0x3e,
+                            0x50, 0x45, 0x0b, 0x0d, 0x9e, 0x2a, 0x5d, 0x18,
+                            0x63, 0x64, 0xc4, 0x2c, 0xf7, 0x8f, 0x29, 0xd5,
+                            0x3f, 0xc5, 0x35, 0x22, 0x34, 0xff, 0xad, 0x3a,
+                            0xe6, 0xe3, 0x95, 0x06, 0xae, 0x55, 0x82, 0xe3,
+                            0xc8, 0xc7, 0xb4, 0xa8, 0x47, 0xc8, 0x50, 0x71,
+                            0x74, 0x29, 0x53, 0x89, 0x6d, 0x9c, 0xed, 0x70,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x08, 0x00, 0x48, 0x00, 0xa8, 0xf4, 0x31, 0xb9,
+                            0xab, 0x4b, 0xe6, 0xb4, 0xf4, 0x39, 0x89, 0xd6,
+                            0xb1, 0xda, 0xf6, 0x1e, 0xec, 0xb1, 0xf0, 0x54,
+                            0x3b, 0x5e, 0x3e, 0x6a, 0x71, 0xb4, 0xf7, 0x75,
+                            0xc8, 0x16, 0x2f, 0x24, 0x00, 0xde, 0xe9, 0x82,
+                            0x99, 0x5f, 0x33, 0x0b, 0xa9, 0xa6, 0x94, 0xaf,
+                            0xcb, 0x11, 0xc3, 0xf2, 0xdb, 0x09, 0x42, 0x68,
+                            0x29, 0x56, 0x58, 0x01, 0x56, 0xdb, 0x59, 0x03,
+                            0x69, 0xdb, 0x7d, 0x37, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                            0x0e, 0x00, 0x0e, 0x00, 0x6d, 0x69, 0x63, 0x72,
+                            0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
+                            0x6d, 0x00
+                        };
+                        static_assert(sizeof(lic1) == 314, "");
 
-                stream.out_uint8(LIC::LICENSE_REQUEST);
-                stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
-                stream.out_uint16_le(318); // wMsgSize = 318 including preamble
+                        OutReservedStreamHelper hstream(sec_header.get_data(), 8, sec_header.get_capacity());
+                        OutStream & stream = hstream.get_data_stream();
 
-                /* some compilers need unsigned char to avoid warnings */
-                static uint8_t lic1[314] = {
-                    // SEC_RANDOM ?
-                    0x7b, 0x3c, 0x31, 0xa6, 0xae, 0xe8, 0x74, 0xf6,
-                    0xb4, 0xa5, 0x03, 0x90, 0xe7, 0xc2, 0xc7, 0x39,
-                    0xba, 0x53, 0x1c, 0x30, 0x54, 0x6e, 0x90, 0x05,
-                    0xd0, 0x05, 0xce, 0x44, 0x18, 0x91, 0x83, 0x81,
-                    //
-                    0x00, 0x00, 0x04, 0x00, 0x2c, 0x00, 0x00, 0x00,
-                    0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00,
-                    0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00,
-                    0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00,
-                    0x72, 0x00, 0x70, 0x00, 0x6f, 0x00, 0x72, 0x00,
-                    0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00,
-                    0x6e, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
-                    0x32, 0x00, 0x33, 0x00, 0x36, 0x00, 0x00, 0x00,
-                    0x0d, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
-                    0x03, 0x00, 0xb8, 0x00, 0x01, 0x00, 0x00, 0x00,
-                    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                    0x06, 0x00, 0x5c, 0x00, 0x52, 0x53, 0x41, 0x31,
-                    0x48, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
-                    0x3f, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
-                    0x01, 0xc7, 0xc9, 0xf7, 0x8e, 0x5a, 0x38, 0xe4,
-                    0x29, 0xc3, 0x00, 0x95, 0x2d, 0xdd, 0x4c, 0x3e,
-                    0x50, 0x45, 0x0b, 0x0d, 0x9e, 0x2a, 0x5d, 0x18,
-                    0x63, 0x64, 0xc4, 0x2c, 0xf7, 0x8f, 0x29, 0xd5,
-                    0x3f, 0xc5, 0x35, 0x22, 0x34, 0xff, 0xad, 0x3a,
-                    0xe6, 0xe3, 0x95, 0x06, 0xae, 0x55, 0x82, 0xe3,
-                    0xc8, 0xc7, 0xb4, 0xa8, 0x47, 0xc8, 0x50, 0x71,
-                    0x74, 0x29, 0x53, 0x89, 0x6d, 0x9c, 0xed, 0x70,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x08, 0x00, 0x48, 0x00, 0xa8, 0xf4, 0x31, 0xb9,
-                    0xab, 0x4b, 0xe6, 0xb4, 0xf4, 0x39, 0x89, 0xd6,
-                    0xb1, 0xda, 0xf6, 0x1e, 0xec, 0xb1, 0xf0, 0x54,
-                    0x3b, 0x5e, 0x3e, 0x6a, 0x71, 0xb4, 0xf7, 0x75,
-                    0xc8, 0x16, 0x2f, 0x24, 0x00, 0xde, 0xe9, 0x82,
-                    0x99, 0x5f, 0x33, 0x0b, 0xa9, 0xa6, 0x94, 0xaf,
-                    0xcb, 0x11, 0xc3, 0xf2, 0xdb, 0x09, 0x42, 0x68,
-                    0x29, 0x56, 0x58, 0x01, 0x56, 0xdb, 0x59, 0x03,
-                    0x69, 0xdb, 0x7d, 0x37, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                    0x0e, 0x00, 0x0e, 0x00, 0x6d, 0x69, 0x63, 0x72,
-                    0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
-                    0x6d, 0x00
-                };
+                        stream.out_uint8(LIC::LICENSE_REQUEST);
+                        stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
+                        stream.out_uint16_le(318); // wMsgSize = 318 including preamble
 
-                stream.out_copy_bytes((char*)lic1, 314);
-                stream.mark_end();
+                        stream.out_copy_bytes(lic1, sizeof(lic1));
 
-                BStream sec_header(65536);
+                        if ((this->verbose & (128 | 2)) == (128 | 2)) {
+                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            hexdump_d(stream.get_data(), stream.get_offset());
+                        }
 
-                if ((this->verbose & (128 | 2)) == (128 | 2)) {
-                    LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(stream.get_data(), stream.size());
-                }
+                        StaticOutStream<8> tmp_sec_header;
+                        SEC::Sec_Send sec(
+                            tmp_sec_header, stream.get_data(), stream.get_offset(),
+                            SEC::SEC_LICENSE_PKT, this->encrypt, 0
+                        );
+                        (void)sec;
 
-                SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT,
-                    this->encrypt, 0);
-                stream.copy_to_head(sec_header.get_data(), sec_header.size());
-
-                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
+                        auto packet = hstream.copy_to_head(tmp_sec_header);
+                        sec_header = make_skip_out_stream(packet.data(), packet.size());
+                    }
+                );
 
                 if (this->verbose & 2) {
                     LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
@@ -1854,35 +1891,6 @@ public:
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
                     TODO("Instead of returning a license we return a message saying that no license is OK")
                     this->send_valid_client_license_data();
-/*
-                    HStream stream(1024, 65535);
-                    // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
-
-                    // some compilers need unsigned char to avoid warnings
-                    static uint8_t lic2[16] = {
-                        0xff,       // bMsgType : ERROR_ALERT
-                        0x02,       // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
-                        0x10, 0x00, // wMsgSize: 16 bytes including preamble
-                        0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
-                        0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
-                        0x28, 0x14, // wBlobType : ignored because wBlobLen is 0
-                        0x00, 0x00  // wBlobLen  : 0
-                    };
-                    stream.out_copy_bytes((char*)lic2, 16);
-                    stream.mark_end();
-
-                    BStream sec_header(256);
-
-                    if ((this->verbose & (128 | 2)) == (128 | 2)) {
-                        LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.get_data(), stream.size());
-                    }
-
-                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
-                    stream.copy_to_head(sec_header.get_data(), sec_header.size());
-
-                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
-*/
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
@@ -2314,36 +2322,39 @@ public:
     }
 
     void send_valid_client_license_data() {
-        HStream stream(1024, 65535);
+        // TODO repetition 2
+        this->send_data_indication(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this](StreamSize<24>, OutStream & sec_header) {
+                // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
-        // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+                /* some compilers need unsigned char to avoid warnings */
+                uint8_t lic2[16] = {
+                    0xff,                   // bMsgType : ERROR_ALERT
+                    0x02,                   // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
+                    0x10, 0x00,             // wMsgSize: 16 bytes including preamble
+                    0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
+                    0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
+                    0x28, 0x14,             // wBlobType : ignored because wBlobLen is 0
+                    0x00, 0x00              // wBlobLen  : 0
+                };
+                SEC::Sec_Send sec(
+                    sec_header, lic2, sizeof(lic2),
+                    SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0
+                );
+                (void)sec;
 
-        /* some compilers need unsigned char to avoid warnings */
-        static uint8_t lic2[16] = {
-            0xff,                   // bMsgType : ERROR_ALERT
-            0x02,                   // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
-            0x10, 0x00,             // wMsgSize: 16 bytes including preamble
-            0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
-            0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
-            0x28, 0x14,             // wBlobType : ignored because wBlobLen is 0
-            0x00, 0x00              // wBlobLen  : 0
-        };
-        stream.out_copy_bytes((char *)lic2, 16);
-        stream.mark_end();
+                if ((this->verbose & (128 | 2)) == (128 | 2)) {
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(lic2, sizeof(lic2));
+                }
 
-        BStream sec_header(256);
-
-        if ((this->verbose & (128 | 2)) == (128 | 2)) {
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.get_data(), stream.size());
-        }
-
-        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
-        stream.copy_to_head(sec_header.get_data(), sec_header.size());
-
-        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
+                sec_header.out_copy_bytes(lic2, sizeof(lic2));
+            }
+        );
     }
 
+    // TODO unused
     void send_data_indication(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
@@ -2357,29 +2368,48 @@ public:
         this->trans.send(x224_header, mcs_header, stream);
     }
 
+    template<class DataWriter>
+    void send_data_indication(uint16_t channelId, DataWriter data_writer)
+    {
+        write_packets(
+            this->trans,
+            data_writer,
+            [channelId, this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_sz) {
+                MCS::SendDataIndication_Send mcs(
+                    static_cast<OutPerStream&>(mcs_header),
+                    this->userid, channelId,
+                    1, 3, packet_sz,
+                    MCS::PER_ENCODING
+                );
+                (void)mcs;
+            },
+            write_x224_dt_tpdu_fn()
+        );
+    }
+
     inline void send_data_indication_ex(uint16_t channelId, HStream & stream) override {
         ::send_data_indication_ex(this->trans, this->encryptionLevel, this->encrypt, this->userid, stream);
     }
 
     void send_fastpath_data(InStream & data) override {
-        HStream stream(1024, 1024 + 65536);
+        write_packets(
+            this->trans,
+            [&data, this](StreamSize<65536>, OutStream & stream) {
+                stream.out_copy_bytes(data.get_data(), data.get_capacity());
 
-        stream.out_copy_bytes(data.get_data(), data.get_capacity());
-        stream.mark_end();
-
-        if (this->verbose & 4) {
-            LOG(LOG_INFO, "Front::send_data: fast-path");
-        }
-
-        BStream fastpath_header(256);
-
-        FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-            fastpath_header,
-            stream,
-            ((this->encryptionLevel > 1) ?
-             FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
-            this->encrypt);
-        this->trans.send(fastpath_header, stream);
+                if (this->verbose & 4) {
+                    LOG(LOG_INFO, "Front::send_data: fast-path");
+                }
+            },
+            [this](StreamSize<256>, OutStream & fastpath_header, uint8_t * pkt_data, std::size_t pkt_sz) {
+                FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                    fastpath_header, pkt_data, pkt_sz,
+                    ((this->encryptionLevel > 1) ?
+                    FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
+                    this->encrypt
+                );
+            }
+        );
     }
 
     bool retrieve_client_capability_set(Capability & caps) override {
@@ -2460,7 +2490,7 @@ public:
     }
 
     /*****************************************************************************/
-    void send_data_update_sync() throw(Error)
+    void send_data_update_sync()
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Front::send_data_update_sync");
@@ -2484,7 +2514,7 @@ public:
     }
 
     /*****************************************************************************/
-    void send_demand_active() throw(Error)
+    void send_demand_active()
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Front::send_demand_active");
@@ -3229,7 +3259,7 @@ public:
     }
 
     /* PDUTYPE_DATAPDU */
-    void process_data(Stream & stream, Callback & cb) throw(Error)
+    void process_data(Stream & stream, Callback & cb)
     {
         unsigned expected;
         if (this->verbose & 8) {
@@ -3242,11 +3272,11 @@ public:
                           " sdata_in.compressedLen=%u"
                           " remains=%u"
                           " payload_len=%u",
-                (unsigned)sdata_in.pdutype2,
-                (unsigned)sdata_in.len,
-                (unsigned)sdata_in.compressedLen,
-                (unsigned)(stream.in_remain()),
-                (unsigned)(sdata_in.payload.size())
+                unsigned(sdata_in.pdutype2),
+                unsigned(sdata_in.len),
+                unsigned(sdata_in.compressedLen),
+                unsigned(stream.in_remain()),
+                unsigned(sdata_in.payload.size())
             );
         }
 
@@ -3635,6 +3665,7 @@ public:
                     pklpdud.log(LOG_INFO, "Receiving from client");
                 }
 
+                TODO("mutable and static is a bad idea")
                 static uint16_t cache_entry_index[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
                 RDP::BitmapCachePersistentListEntry * entries = pklpdud.entries;
@@ -3650,19 +3681,21 @@ public:
                 }
 
                 if (this->persistent_key_list_transport) {
-                    BStream persistent_key_list_stream(65535);
+                    StaticOutStream<65535> persistent_key_list_stream;
 
                     uint16_t pdu_size_offset = persistent_key_list_stream.get_offset();
                     persistent_key_list_stream.out_clear_bytes(2);  // Size of Persistent Key List PDU.
 
                     pklpdud.emit(persistent_key_list_stream);
-                    persistent_key_list_stream.mark_end();
 
                     persistent_key_list_stream.set_out_uint16_le(
-                          persistent_key_list_stream.size() - 2 /* Size of Persistent Key List PDU(2) */
+                          persistent_key_list_stream.get_offset() - 2 /* Size of Persistent Key List PDU(2) */
                         , pdu_size_offset);
 
-                    this->persistent_key_list_transport->send(persistent_key_list_stream);
+                    this->persistent_key_list_transport->send(
+                        persistent_key_list_stream.get_data(),
+                        persistent_key_list_stream.get_offset()
+                    );
                 }
 
                 if (pklpdud.bBitMask & RDP::PERSIST_LAST_PDU) {
@@ -4561,7 +4594,7 @@ public:
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
-        BStream decoded_data(256);
+        StaticOutStream<256> decoded_data;
         bool    tsk_switch_shortcuts;
 
         struct KeyboardFlags {
@@ -4574,7 +4607,6 @@ private:
         };
 
         this->keymap.event(KeyboardFlags::get(ke), ke.keyCode, decoded_data, tsk_switch_shortcuts);
-        decoded_data.mark_end();
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
@@ -4582,18 +4614,17 @@ private:
 
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
-            && decoded_data.size()) {
+            && decoded_data.get_offset()) {
             if (this->focus_on_password_textbox) {
-                unsigned char_count = decoded_data.size() / sizeof(uint32_t);
-                decoded_data.reset();
+                unsigned char_count = decoded_data.get_offset() / sizeof(uint32_t);
+                decoded_data.rewind();
                 for (; char_count > 0; char_count--) {
                     // Unicode Character 'BLACK CIRCLE' (U+25CF).
                     decoded_data.out_uint32_le(0x25CF);
                 }
-                decoded_data.mark_end();
             }
 
-            send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.size());
+            send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.get_offset());
         }
 
         if (this->up_and_running) {

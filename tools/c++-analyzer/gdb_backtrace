@@ -1,6 +1,7 @@
 #!/bin/bash
 
-exec gdb -q "$@" <<< "r
-backtrace
+exec gdb -q "$@" <<< "catch throw
+r
+bt
 q
 " | grep -EC10000 'at .*:[0-9]+$'

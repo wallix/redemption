@@ -141,7 +141,7 @@ public:
                 LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
                 return false;
             }
-            this->stream = InStream(this->stream_buf, 0);
+            this->stream = InStream(this->stream_buf, 0);   // empty stream
             if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
                 auto * p = this->stream_buf;
                 this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);

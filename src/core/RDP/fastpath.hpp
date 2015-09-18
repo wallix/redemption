@@ -904,6 +904,50 @@ namespace FastPath {
 
             stream.mark_end();
         }
+
+        ServerUpdatePDU_Send( OutStream & stream
+                            , uint8_t * data
+                            , std::size_t data_sz
+                            , uint8_t secFlags
+                            , CryptContext & crypt
+                            , Stream * fipsInformation = nullptr) {
+            if ((fipsInformation != nullptr) && (fipsInformation->size() < 4)) {
+                LOG(LOG_ERR, "FastPath::ServerUpdatePDU_Send: fipsInformation too short, expected=4 got=%u",
+                    fipsInformation->size());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            uint8_t fpOutputHeader =
+                  FASTPATH_OUTPUT_ACTION_FASTPATH
+                | ((secFlags & 0x03) << 6)
+                ;
+
+            stream.out_uint8(fpOutputHeader);
+
+            uint16_t length =
+                  1                                               // fpOutputHeader
+                + ((fipsInformation != nullptr) ? 4 : 0)
+                + ((secFlags & FASTPATH_INPUT_ENCRYPTED) ? 8 : 0) // dataSignature
+                + data_sz                                         // fpOutputUpdates
+                ;
+            length += ((length >= 127) ? 2 : 1);                  // length
+
+            stream.out_2BUE(length);
+
+            if (fipsInformation != nullptr) {
+                stream.out_copy_bytes(fipsInformation->get_data(), 4);
+            }
+
+            if (secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
+                uint8_t signature[8] = {};
+                crypt.sign(data, data_sz, signature);
+                TODO("check signature size : 8 bytes truncate MD5 result")
+                stream.out_copy_bytes(signature, 8);
+                crypt.decrypt(data, data_sz);
+            }
+
+            stream.mark_end();
+        }
     };
 
 // [MS-RDPBCGR] - 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
@@ -1201,6 +1245,26 @@ namespace FastPath {
             stream.out_uint16_le(datalen);
 
             stream.mark_end();
+        }
+
+        Update_Send( OutStream & stream
+                   , uint16_t datalen
+                   , uint8_t updateCode
+                   , uint8_t fragmentation
+                   , uint8_t compression
+                   , uint8_t compressionFlags
+                   ) {
+            stream.out_uint8(
+                  (updateCode & 0x0F)
+                | (fragmentation & 0x3) << 4    // fragmentation
+                | (compression & 0x3) << 6      // compression
+                );
+
+            if (compression & FASTPATH_OUTPUT_COMPRESSION_USED) {
+                stream.out_uint8(compressionFlags);
+            }
+
+            stream.out_uint16_le(datalen);
         }
 
         static size_t GetSize(bool compression) {

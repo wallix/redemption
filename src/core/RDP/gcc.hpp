@@ -468,6 +468,80 @@ namespace GCC
             stream.out_uint16_be(0x8000 | payload_size);
             stream.mark_end();
         }
+
+        Create_Response_Send(OutStream & stream, size_t payload_size) {
+            // ConnectData
+            // 00 05 -> Key::object length = 5 bytes
+            // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
+            stream.out_uint16_be(5);
+            stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
+
+            // 2a -> ConnectData::connectPDU length = 42 bytes
+            // This length MUST be ignored by the client.
+            stream.out_uint8(0x2a);
+
+            // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
+            // PDU:
+            // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
+
+            // 0x14:
+            // 0 - extension bit (ConnectGCCPDU)
+            // 0 - --\ ...
+            // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
+            // 1 - --/ of type ConferenceCreateResponse
+            // 0 - extension bit (ConferenceCreateResponse)
+            // 1 - ConferenceCreateResponse::userData present
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0x10 | 4);
+
+            // ConferenceCreateResponse::nodeID
+            //  = 0x760a + 1001 = 30218 + 1001 = 31219
+            //  (minimum for UserID is 1001)
+            stream.out_uint16_be(0x760a);
+
+            // ConferenceCreateResponse::tag length = 1 byte
+            stream.out_uint8(1);
+
+            // ConferenceCreateResponse::tag = 1
+            stream.out_uint8(1);
+
+            // 0x00:
+            // 0 - extension bit (Result)
+            // 0 - --\ ...
+            // 0 -   | ConferenceCreateResponse::result = success (0)
+            // 0 - --/
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0);
+
+            // number of UserData sets = 1
+            stream.out_uint8(1);
+
+            // 0xc0:
+            // 1 - UserData::value present
+            // 1 - CHOICE: From Key select h221NonStandard (1)
+            //               of type H221NonStandardIdentifier
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0xc0);
+
+            // h221NonStandard length = 0 + 4 = 4 octets
+            //   (minimum for H221NonStandardIdentifier is 4)
+            stream.out_uint8(0);
+
+            // h221NonStandard (server-to-client H.221 key) = "McDn"
+            stream.out_copy_bytes("McDn", 4);
+
+            // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
+            stream.out_uint16_be(0x8000 | payload_size);
+        }
     };
 
     class Create_Response_Recv {
@@ -663,6 +737,27 @@ namespace GCC
                     stream.out_uint32_le(this->earlyCapabilityFlags);
                 }
                 stream.mark_end();
+            }
+
+            void emit(OutStream & stream)
+            {
+                if (this->length != 8
+                && this->length != 12
+                && this->length != 16) {
+                    LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                    throw Error(ERR_GCC);
+                };
+
+                stream.out_uint16_le(this->userDataType);
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->version);
+
+                if (this->length >= 12){
+                    stream.out_uint32_le(this->clientRequestedProtocols);
+                }
+                if (this->length >= 16){
+                    stream.out_uint32_le(this->earlyCapabilityFlags);
+                }
             }
 
             void recv(Stream & stream)
@@ -1941,6 +2036,21 @@ namespace GCC
                 stream.mark_end();
             }
 
+            void emit(OutStream & stream)
+            {
+                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
+                stream.out_uint16_le(this->userDataType);
+                stream.out_uint16_le(this->length);
+                stream.out_uint16_le(this->MCSChannelId);
+                stream.out_uint16_le(this->channelCount);
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    stream.out_uint16_le(this->channelDefArray[i].id);
+                }
+                if (this->channelCount & 1){
+                    stream.out_uint16_le(0);
+                }
+            }
+
             void recv(Stream & stream, bool bogus_sc_net_size)
             {
                 if (!stream.in_check_rem(8)){
@@ -2511,6 +2621,59 @@ namespace GCC
                     // --------------------------------------------------------------
                 }
                 stream.mark_end();
+            }
+
+            void emit(OutStream & stream)
+            {
+                stream.out_uint16_le(SC_SECURITY);
+
+                if ((this->encryptionMethod == 0) && (this->encryptionLevel == 0)){
+                    this->length = 12;
+                    this->serverRandomLen = 0;
+                    this->encryptionLevel = 0;
+                    stream.out_uint16_le(this->length); // length, including tag and length fields
+                    stream.out_uint32_le(this->encryptionMethod); // encryptionMethod
+                    stream.out_uint32_le(this->encryptionLevel); // encryptionLevel
+                }
+                else {
+                    stream.out_uint16_le(this->length); // length, including tag and length fields
+                    stream.out_uint32_le(this->encryptionMethod); // key len 1 = 40 bit 2 = 128 bit
+                    stream.out_uint32_le(this->encryptionLevel);
+                    stream.out_uint32_le(this->serverRandomLen);  // random len
+                    stream.out_uint32_le(this->serverCertLen); // len of rsa info(certificate)
+                    stream.out_copy_bytes(this->serverRandom, this->serverRandomLen);
+
+                    // --------------------------------------------------------------
+                    /* here to end is certificate */
+                    /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TermService\Parameters\Certificate */
+                    stream.out_uint32_le(this->dwVersion|(this->temporary << 31));
+
+                    if ((this->dwVersion & 0x7FFFFFFF) == CERT_CHAIN_VERSION_1){
+                        stream.out_uint32_le(this->proprietaryCertificate.dwSigAlgId);
+                        stream.out_uint32_le(this->proprietaryCertificate.dwKeyAlgId);
+
+                        stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobType);
+                        stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobLen);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.magic);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.keylen);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.bitlen);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.datalen);
+                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
+                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.modulus,
+                                              /*SEC_MODULUS_SIZE*/this->proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
+                        stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+                        stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobType);
+                        stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobLen); /* len */
+                        stream.out_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64); /* pub sig */
+                        stream.out_clear_bytes(8); /* pad */
+                    }
+                    else {
+                        // send chain of certificates
+                    }
+                    /* end certificate */
+                    // --------------------------------------------------------------
+                }
             }
 
             void recv(Stream & stream)

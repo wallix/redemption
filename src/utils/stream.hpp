@@ -36,6 +36,8 @@
 
 #include "parse.hpp"
 
+#include "exchange.hpp"
+
 #include <new>
 #include <initializer_list>
 
@@ -54,16 +56,16 @@ class InStream
     Parse p;
 
 public:
-    explicit InStream(uint8_t const * array, std::size_t len, std::size_t headroom = 0)
-    : begin(array + headroom)
+    explicit InStream(uint8_t const * array, std::size_t len, std::size_t offset = 0)
+    : begin(array)
     , end(array + len)
-    , p(this->begin)
+    , p(this->begin + offset)
     {
-        assert(len >= headroom);
+        assert(len >= offset);
     }
 
-    explicit InStream(char const * array, std::size_t len, std::size_t headroom = 0)
-    : InStream(reinterpret_cast<uint8_t const *>(array), len, headroom)
+    explicit InStream(char const * array, std::size_t len, std::size_t offset = 0)
+    : InStream(reinterpret_cast<uint8_t const *>(array), len, offset)
     {
     }
 
@@ -130,9 +132,9 @@ public:
     }
 
     /// set current position to start buffer (\a p = \a begin)
-    void rewind(std::size_t headroom = 0) {
-        REDASSERT(this->begin + headroom <= this->end);
-        this->p.p = this->begin + headroom;
+    void rewind(std::size_t offset = 0) {
+        REDASSERT(this->begin + offset <= this->end);
+        this->p.p = this->begin + offset;
     }
 
     // =========================================================================
@@ -330,7 +332,7 @@ public:
     // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
     // ===================================================================
 
-    // ..., the delta value it  represents is encoded in a packed signed
+    // ..., the delta value it  represents is encoded in a packet signed
     //  format:
 
     //  * If the high bit (0x80) is not set in the first encoding byte, the
@@ -361,21 +363,21 @@ public:
 
 class OutStream
 {
-    uint8_t * begin;
-    uint8_t * end;
-    uint8_t * p;
+    uint8_t * begin = nullptr;
+    uint8_t * end = nullptr;
+    uint8_t * p = nullptr;
 
 public:
-    explicit OutStream(uint8_t * array, std::size_t len, std::size_t headroom = 0)
-    : begin(array + headroom)
+    explicit OutStream(uint8_t * array, std::size_t len, std::size_t offset = 0)
+    : begin(array)
     , end(array + len)
-    , p(this->begin)
+    , p(this->begin + offset)
     {
-        assert(len >= headroom);
+        assert(len >= offset);
     }
 
-    explicit OutStream(char * array, std::size_t len, std::size_t headroom = 0)
-    : OutStream(reinterpret_cast<uint8_t*>(array), len, headroom)
+    explicit OutStream(char * array, std::size_t len, std::size_t offset = 0)
+    : OutStream(reinterpret_cast<uint8_t*>(array), len, offset)
     {
     }
 
@@ -397,7 +399,7 @@ public:
     {
     }
 
-    OutStream() = delete;
+    OutStream() = default;
     OutStream(OutStream &&) = default;
     OutStream(OutStream const &) = delete;
     OutStream & operator=(OutStream &&) = default;
@@ -417,6 +419,10 @@ public:
 
     uint8_t * get_data() const {
         return this->begin;
+    }
+
+    uint8_t * get_data_end() const {
+        return this->end;
     }
 
     uint8_t * get_current() const {
@@ -587,7 +593,7 @@ public:
     // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
     // ===================================================================
 
-    // ..., the delta value it  represents is encoded in a packed signed
+    // ..., the delta value it  represents is encoded in a packet signed
     //  format:
 
     //  * If the high bit (0x80) is not set in the first encoding byte, the
@@ -752,6 +758,12 @@ public:
         return this->end - this->begin;
     }
 
+    /// set current position to start buffer (\a p = \a begin)
+    void rewind(std::size_t offset = 0) {
+        REDASSERT(this->begin + offset <= this->end);
+        this->p = this->begin + offset;
+    }
+
     void out_copy_bytes(const uint8_t * v, size_t n) {
         REDASSERT(this->has_room(n));
         memcpy(this->p, v, n);
@@ -819,14 +831,18 @@ public:
 template<std::size_t N, class StreamBase>
 struct BasicStaticStream : StreamBase
 {
-    explicit BasicStaticStream(std::size_t headroom = 0)
-    : StreamBase(this->array_, N, headroom)
+    explicit BasicStaticStream(std::size_t offset = 0)
+    : StreamBase(this->array_, N, offset)
     {}
 
     BasicStaticStream(BasicStaticStream const &) = delete;
     BasicStaticStream & operator = (BasicStaticStream const &) = delete;
 
     using array_type = uint8_t[N];
+
+    constexpr std::size_t original_capacity() const {
+        return N;
+    }
 
 private:
     uint8_t array_[N];
@@ -881,44 +897,47 @@ uint8_t * copy_to_head(uint8_t * buf, std::size_t headroom, InStream const & ...
 }
 
 
-struct OutHeaderStreamHelper
+struct OutReservedStreamHelper
 {
-    OutHeaderStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len)
+    OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len)
     : buf(data + reserved_leading_space)
     , reserved_leading_space(reserved_leading_space)
     , stream(this->buf, buf_len - reserved_leading_space)
     {}
 
-    uint8_t * get_header() const {
-        return this->buf;
+    struct Packet
+    {
+        uint8_t * data() const noexcept { return this->data_; }
+        std::size_t size() const noexcept { return this->size_; }
+
+        uint8_t * data_;
+        std::size_t size_;
+    };
+
+    Packet get_packet() const noexcept {
+        return Packet{this->buf, std::size_t(this->stream.get_data_end() - this->buf)};
     }
 
     std::size_t get_reserved_leading_space() const {
         return this->reserved_leading_space;
     }
 
-    std::size_t get_size() const {
-        return this->stream.get_current() - this->get_header();
-    }
-
     OutStream & get_data_stream() {
         return this->stream;
     }
 
-    OutStream to_out_stream() const {
-        return OutStream(this->get_header(), this->get_size());
-    }
-
-    void copy_to_head(OutStream const & stream) {
-        assert(this->reserved_leading_space <= stream.get_offset());
+    Packet copy_to_head(OutStream const & stream) {
+        assert(stream.get_offset() <= this->reserved_leading_space);
         this->buf -= stream.get_offset();
         this->reserved_leading_space -= stream.get_offset();
         memcpy(this->buf, stream.get_data(), stream.get_offset());
+
+        return get_packet();
     }
 
-    void copy_to_head(OutStream const & stream1, OutStream const & stream2) {
+    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2) {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
-        assert(this->reserved_leading_space <= total_stream_size);
+        assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
         this->buf -= total_stream_size;
 
@@ -926,11 +945,13 @@ struct OutHeaderStreamHelper
         memcpy(start, stream1.get_data(), stream1.get_offset());
         start += stream1.get_offset();
         memcpy(start, stream2.get_data(), stream2.get_offset());
+
+        return get_packet();
     }
 
-    void copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) {
+    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
-        assert(this->reserved_leading_space <= total_stream_size);
+        assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
         this->buf -= total_stream_size;
 
@@ -940,6 +961,8 @@ struct OutHeaderStreamHelper
         memcpy(start, stream2.get_data(), stream2.get_offset());
         start += stream2.get_offset();
         memcpy(start, stream3.get_data(), stream3.get_offset());
+
+        return get_packet();
     }
 
 private:
@@ -950,15 +973,114 @@ private:
 
 
 template<std::size_t HeaderSz, std::size_t StreamSz>
-struct StaticOutHeaderStreamHelper : OutHeaderStreamHelper
+struct StaticOutReservedStreamHelper : OutReservedStreamHelper
 {
-    StaticOutHeaderStreamHelper()
-    : OutHeaderStreamHelper(this->data, HeaderSz, HeaderSz + StreamSz)
+    StaticOutReservedStreamHelper()
+    : OutReservedStreamHelper(this->data, HeaderSz, HeaderSz + StreamSz)
     {}
 
 private:
     uint8_t data[HeaderSz + StreamSz];
 };
+
+namespace details_ {
+    template<class R, class C, class Sz, class ... Args>
+    constexpr Sz packet_size_impl(R(C::*)(Sz, OutStream &, Args...)) {
+        return Sz{};
+    }
+
+    template<class R, class C, class Sz, class ... Args>
+    constexpr Sz packet_size_impl(R(C::*)(Sz, OutStream &, Args...) const) {
+        return Sz{};
+    }
+
+    template<class F>
+    constexpr decltype(packet_size_impl(&F::operator()))
+    packet_size(F const &) {
+        return packet_size_impl(&F::operator());
+    }
+
+    template<class R, class Sz, class ... Args>
+    constexpr Sz packet_size(R(*)(Sz, OutStream &, Args...)) {
+        return Sz{};
+    }
+
+
+    template<class F, class... Fs>
+    struct packet_size_struct
+    {
+        using sz_type_ = decltype(packet_size(std::declval<F>()));
+        using value_type = std::integral_constant<
+            std::size_t,
+            sz_type_::value + packet_size_struct<Fs...>::value_type::value
+        >;
+    };
+
+    template<class F>
+    struct packet_size_struct<F>
+    {
+        using sz_type_ = decltype(packet_size(std::declval<F>()));
+        using value_type = std::integral_constant<std::size_t, sz_type_::value>;
+    };
+
+    template<class... Fs>
+    constexpr typename packet_size_struct<Fs...>::value_type
+    packets_size(Fs const & ... ) {
+        return {};
+    }
+
+    template<class StreamSz, class Writer>
+    auto apply_writer(StreamSz sz, OutStream & ostream, uint8_t *, std::size_t used_buf, Writer & writer, int)
+    -> decltype(writer(sz, ostream, used_buf))
+    { writer(sz, ostream, used_buf); }
+
+    template<class StreamSz, class Writer>
+    void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf, Writer & writer, unsigned)
+    { writer(sz, ostream, buf, used_buf); }
+
+    template<class StreamSz, class Writer>
+    void write_packet(uint8_t * & full_buf, std::size_t & used_buf, StreamSz sz, Writer & writer) {
+        uint8_t data_buf[StreamSz::value];
+        OutStream ostream(data_buf);
+        apply_writer(sz, ostream, full_buf, used_buf, writer, 1);
+        used_buf += ostream.get_offset();
+        full_buf -= ostream.get_offset();
+        memcpy(full_buf, ostream.get_data(), ostream.get_offset());
+    }
+}
+
+template<std::size_t N>
+using StreamSize = std::integral_constant<std::size_t, N>;
+
+/**
+ * \param data_writer  function(OutStream &)
+ * \param header_writers  function(IntegralConstant, OutStream &)
+ *
+ * write_packets(t, f1, f2, f3) write a packet [f3, f2, f1]
+ */
+template<class Transport, class DataWriter, class... HeaderWriters>
+void write_packets(Transport & trans, DataWriter data_writer, HeaderWriters... header_writers)
+{
+    constexpr auto data_buf_sz = details_::packet_size(data_writer);
+    constexpr auto header_buf_sz = details_::packets_size(header_writers...);
+    uint8_t buf[header_buf_sz + data_buf_sz];
+    OutStream data_stream(buf + header_buf_sz, data_buf_sz);
+    data_writer(data_buf_sz, data_stream);
+    auto * start = data_stream.get_data();
+    std::size_t used_buf = data_stream.get_offset();
+    (void)std::initializer_list<int>{((
+        details_::write_packet(start, used_buf, details_::packet_size(header_writers), header_writers)
+    ), 1)...};
+    trans.send(start, used_buf);
+}
+
+
+inline OutStream make_skip_out_stream(uint8_t * p, std::size_t sz)
+{
+    OutStream stream(p, sz);
+    stream.out_skip_bytes(sz);
+    return stream;
+}
 
 
 class Stream {
@@ -1376,7 +1498,7 @@ public:
     // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
     // ===================================================================
 
-    // ..., the delta value it  represents is encoded in a packed signed
+    // ..., the delta value it  represents is encoded in a packet signed
     //  format:
 
     //  * If the high bit (0x80) is not set in the first encoding byte, the

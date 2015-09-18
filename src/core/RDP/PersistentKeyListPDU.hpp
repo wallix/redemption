@@ -332,6 +332,27 @@ struct PersistentKeyListPDUData {
         }
     }
 
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->numEntriesCache[0]);
+        stream.out_uint16_le(this->numEntriesCache[1]);
+        stream.out_uint16_le(this->numEntriesCache[2]);
+        stream.out_uint16_le(this->numEntriesCache[3]);
+        stream.out_uint16_le(this->numEntriesCache[4]);
+        stream.out_uint16_le(this->totalEntriesCache[0]);
+        stream.out_uint16_le(this->totalEntriesCache[1]);
+        stream.out_uint16_le(this->totalEntriesCache[2]);
+        stream.out_uint16_le(this->totalEntriesCache[3]);
+        stream.out_uint16_le(this->totalEntriesCache[4]);
+        stream.out_uint8(this->bBitMask);
+
+        stream.out_clear_bytes(3);  // Pad2(1) + Pad3(2)
+
+        for (uint32_t i = 0, c = this->maximum_entries(); i < c; i++) {
+            stream.out_uint32_le(this->entries[i].Key1);
+            stream.out_uint32_le(this->entries[i].Key2);
+        }
+    }
+
     void reset() {
         using std::begin;
         using std::end;

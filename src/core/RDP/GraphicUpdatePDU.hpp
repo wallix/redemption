@@ -58,6 +58,32 @@ static inline void send_data_indication_ex( Transport & trans
     trans.send(x224_header, mcs_header, stream);
 }
 
+template<class DataWriter>
+void send_data_indication_ex( Transport & trans, DataWriter data_writer
+                            , int encryptionLevel, CryptContext & encrypt
+                            , uint16_t initiator)
+{
+    write_packets(
+        trans,
+        data_writer,
+        [&](StreamSize<256>, OutStream & security_header, uint8_t * data, std::size_t data_sz) {
+            SEC::Sec_Send sec(security_header, data, data_sz, 0, encrypt, encryptionLevel);
+        },
+        [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+            MCS::SendDataIndication_Send mcs( static_cast<OutPerStream &>(mcs_header)
+                                            , initiator
+                                            , GCC::MCS_GLOBAL_CHANNEL
+                                            , 1 // dataPriority
+                                            , 3 // segmentation
+                                            , packet_size
+                                            , MCS::PER_ENCODING);
+        },
+        [](StreamSize<256>, OutStream & x224_header, std::size_t packet_size) {
+            X224::DT_TPDU_Send(x224_header, packet_size);
+        }
+    );
+}
+
 void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_support
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator, HStream & data
@@ -145,12 +171,10 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 {
                     updateCode = FastPath::FASTPATH_UPDATETYPE_ORDERS;
 
-                    BStream data(64);
-
+                    StaticOutStream<2> data;
                     data.out_uint16_le(data_extra);
-                    data.mark_end();
 
-                    data_common.copy_to_head(data.get_data(), data.size());
+                    data_common.copy_to_head(data.get_data(), data.get_offset());
                 }
                 break;
 
@@ -202,7 +226,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             }
         }
 
-        BStream update_header(256);
+        StaticOutStream<8> update_header;
         // Fast-Path Update (TS_FP_UPDATE)
         FastPath::Update_Send Upd( update_header
                                  , data_common_.get().size()
@@ -211,17 +235,19 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                                  , compression
                                  , compressionFlags
                                  );
-        data_common_.get().copy_to_head(update_header.get_data(), update_header.size());
+        data_common_.get().copy_to_head(update_header.get_data(), update_header.get_offset());
 
-        BStream server_update_header(256);
+        StaticOutStream<256> server_update_header;
          // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
         FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
-                                                , data_common_.get()
+                                                , data_common_.get().get_data()
+                                                , data_common_.get().size()
                                                 , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                                                 , encrypt
                                                 );
+        data_common_.get().copy_to_head(server_update_header.get_data(), server_update_header.get_offset());
 
-        trans.send(server_update_header, data_common_.get());
+        trans.send(data_common_.get().get_data(), data_common_.get().size());
     }
     else {
         uint8_t pduType2 = 0;
@@ -231,15 +257,14 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 {
                     pduType2 = PDUTYPE2_UPDATE;
 
-                    BStream data(64);
+                    StaticOutStream<64> data;
 
                     data.out_uint16_le(RDP_UPDATE_ORDERS);
                     data.out_clear_bytes(2);
                     data.out_uint16_le(data_extra);
                     data.out_clear_bytes(2);
-                    data.mark_end();
 
-                    data_common.copy_to_head(data.get_data(), data.size());
+                    data_common.copy_to_head(data.get_data(), data.get_offset());
                 }
                 break;
 
@@ -252,13 +277,12 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 {
                     pduType2 = PDUTYPE2_UPDATE;
 
-                    BStream data(64);
+                    StaticOutStream<64> data;
 
                     data.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
                     data.out_clear_bytes(2);
-                    data.mark_end();
 
-                    data_common.copy_to_head(data.get_data(), data.size());
+                    data_common.copy_to_head(data.get_data(), data.get_offset());
                 }
                 break;
 
@@ -287,13 +311,12 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                             break;
                     }
 
-                    BStream data(64);
+                    StaticOutStream<64> data;
 
                     data.out_uint16_le(updateType);
                     data.out_clear_bytes(2);
-                    data.mark_end();
 
-                    data_common.copy_to_head(data.get_data(), data.size());
+                    data_common.copy_to_head(data.get_data(), data.get_offset());
                 }
                 break;
 
