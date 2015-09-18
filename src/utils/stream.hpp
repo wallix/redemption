@@ -881,10 +881,10 @@ namespace details_ {
 
 template<class... InStream>
 char * copy_to_head(char * buf, std::size_t headroom, InStream const & ... in_streams) {
-#ifdef NDEBUG
+#ifndef NDEBUG
     std::size_t len_streams = 0;
-    (void)std::initializer_list<int>{len_streams += in_streams.get_offset(), 1)};
-    assert(len_streams <= headroom);
+    (void)std::initializer_list<int>{(len_streams += in_streams.get_offset(), 1)...};
+    REDASSERT(len_streams <= headroom);
 #endif
     auto start = buf + headroom;
     details_::copy_to_head_impl(start, in_streams...);
