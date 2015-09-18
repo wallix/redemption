@@ -356,7 +356,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const unsigned    wab_agent_launch_timeout;
     const unsigned    wab_agent_on_launch_failure;
     const unsigned    wab_agent_keepalive_timeout;
-    const std::string wab_agent_alternate_shell;
+          std::string wab_agent_alternate_shell;
 
     size_t recv_bmp_update;
 
@@ -704,10 +704,23 @@ public:
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
-            const char * wab_agent_working_dir = "%TMP%";
+            char pid_str[64];
+            snprintf(pid_str, sizeof(pid_str), "%u", ::getpid());
+            const size_t pid_str_len = ::strlen(pid_str);
+
+            const char * pid_tag ="{PID}";
+            const size_t pid_tag_len = ::strlen(pid_tag);
+
+            size_t pos = 0;
+            while ((pos = this->wab_agent_alternate_shell.find(pid_tag, pos)) != std::string::npos) {
+                this->wab_agent_alternate_shell.replace(pos, pid_tag_len, pid_str);
+                pos += pid_str_len;
+            }
 
             strncpy(this->program, this->wab_agent_alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
+
+            const char * wab_agent_working_dir = "%TMP%";
             strncpy(this->directory, wab_agent_working_dir, sizeof(this->directory) - 1);
             this->directory[sizeof(this->directory) - 1] = 0;
         }
