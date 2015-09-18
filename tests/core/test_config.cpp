@@ -63,9 +63,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -294,9 +295,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -523,9 +525,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -676,6 +679,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "enable_osd=false\n"
                           "enable_osd_display_remote_target=false\n"
                           "enable_wab_agent=true\n"
+                          "enable_wab_agent_loading_mask=false\n"
                           "wab_agent_launch_timeout=0\n"
                           "wab_agent_keepalive_timeout=0\n"
                           "\n"
@@ -761,6 +765,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent_loading_mask>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
@@ -978,6 +983,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
@@ -1166,9 +1172,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1356,6 +1363,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
@@ -1521,9 +1529,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1685,6 +1694,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
     BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
     BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
@@ -1836,9 +1846,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1986,9 +1997,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_wab_agent>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_launch_timeout>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_wab_agent_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::wab_agent_launch_timeout>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::wab_agent_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::wab_agent_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
