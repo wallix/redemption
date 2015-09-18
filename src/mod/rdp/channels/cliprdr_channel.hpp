@@ -465,14 +465,14 @@ private:
             for (uint32_t remaining_data_length = dataLen;
                  remaining_data_length; ) {
                 {
-                    const unsigned int expected = 4;    // formatId(4)
+                    const unsigned int expected = 6;    // formatId(4) + min_len(formatName)(2)
                     if (!chunk.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
+                        LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_client_format_list_pdu: "
                                 "Truncated CLIPRDR_FORMAT_LIST, "
                                 "need=%u remains=%u",
                             expected, chunk.in_remain());
-                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                        break;
                     }
                 }
 
