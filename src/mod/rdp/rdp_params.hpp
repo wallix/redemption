@@ -46,8 +46,12 @@ struct ModRDPParams {
     bool enable_new_pointer;
     bool enable_glyph_cache;
     bool enable_wab_agent;
+    bool enable_wab_agent_loading_mask;
 
     bool disable_clipboard_log_syslog;
+    bool disable_clipboard_log_wrm;
+    bool disable_file_system_log_syslog;
+    bool disable_file_system_log_wrm;
 
     unsigned     wab_agent_launch_timeout;
     unsigned     wab_agent_on_launch_failure;
@@ -125,8 +129,13 @@ struct ModRDPParams {
         , enable_new_pointer(true)
         , enable_glyph_cache(false)
         , enable_wab_agent(false)
+        , enable_wab_agent_loading_mask(true)
 
         , disable_clipboard_log_syslog(false)
+        , disable_clipboard_log_wrm(false)
+
+        , disable_file_system_log_syslog(false)
+        , disable_file_system_log_wrm(false)
 
         , wab_agent_launch_timeout(0)
         , wab_agent_on_launch_failure(0)
@@ -213,6 +222,8 @@ struct ModRDPParams {
             "ModRDPParams enable_glyph_cache=%s",                  (this->enable_glyph_cache ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams enable_wab_agent=%s",                    (this->enable_wab_agent ? "yes" : "no"));
+        LOG(LOG_INFO,
+            "ModRDPParams enable_wab_agent_loading_mask=%s",       (this->enable_wab_agent_loading_mask ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams wab_agent_launch_timeout=%u",            this->wab_agent_launch_timeout);
@@ -222,7 +233,14 @@ struct ModRDPParams {
             "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
 
         LOG(LOG_INFO,
-            "ModRDPParams dsiable_clipboard_log=0x%X",             this->disable_clipboard_log_syslog ? 1 : 0);
+            "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");
+        LOG(LOG_INFO,
+            "ModRDPParams dsiable_clipboard_log_wrm=%s",           this->disable_clipboard_log_wrm ? "yes" : "no");
+
+        LOG(LOG_INFO,
+            "ModRDPParams dsiable_file_system_log_syslog=%s",      this->disable_file_system_log_syslog ? "yes" : "no");
+        LOG(LOG_INFO,
+            "ModRDPParams dsiable_file_system_log_wrm=%s",         this->disable_file_system_log_wrm ? "yes" : "no");
 
         LOG(LOG_INFO,
             "ModRDPParams enable_transparent_mode=%s",             (this->enable_transparent_mode ? "yes" : "no"));

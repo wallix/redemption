@@ -25,7 +25,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 18; }
+            static constexpr unsigned index() { return 19; }
             using type = unsigned;
             type value{0};
         };
@@ -100,7 +100,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 19; }
+            static constexpr unsigned index() { return 20; }
             using type = bool;
             type value{0};
         };
@@ -190,7 +190,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 31; }
+            static constexpr unsigned index() { return 33; }
             using type = unsigned;
             type value{40000};
         };
@@ -199,7 +199,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 32; }
+            static constexpr unsigned index() { return 34; }
             using type = unsigned;
             type value{5};
         };
@@ -208,7 +208,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 33; }
+            static constexpr unsigned index() { return 35; }
             using type = unsigned;
             type value{15};
         };
@@ -218,7 +218,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 34; }
+            static constexpr unsigned index() { return 36; }
             using type = unsigned;
             type value{24};
         };
@@ -227,7 +227,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 35; }
+            static constexpr unsigned index() { return 37; }
             using type = unsigned;
             type value{600};
         };
@@ -236,7 +236,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 36; }
+            static constexpr unsigned index() { return 38; }
             using type = unsigned;
             type value{800};
         };
@@ -249,7 +249,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 37; }
+            static constexpr unsigned index() { return 39; }
             using type = std::string;
             type value{};
         };
@@ -259,7 +259,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 38; }
+            static constexpr unsigned index() { return 40; }
             using type = bool;
             type value{0};
         };
@@ -268,7 +268,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 39; }
+            static constexpr unsigned index() { return 41; }
             using type = unsigned;
             type value{1};
         };
@@ -277,7 +277,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 40; }
+            static constexpr unsigned index() { return 42; }
             using type = std::string;
             type value{};
         };
@@ -286,7 +286,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 41; }
+            static constexpr unsigned index() { return 43; }
             using type = std::string;
             type value{};
         };
@@ -295,7 +295,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 42; }
+            static constexpr unsigned index() { return 44; }
             using type = std::string;
             type value{};
         };
@@ -304,7 +304,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 43; }
+            static constexpr unsigned index() { return 45; }
             using type = unsigned;
             type value{0};
         };
@@ -313,7 +313,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 44; }
+            static constexpr unsigned index() { return 46; }
             using type = unsigned;
             type value{1};
         };
@@ -323,7 +323,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 45; }
+            static constexpr unsigned index() { return 47; }
             using type = std::string;
             type value{};
         };
@@ -332,7 +332,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 46; }
+            static constexpr unsigned index() { return 48; }
             using type = std::string;
             type value{""};
         };
@@ -341,7 +341,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 47; }
+            static constexpr unsigned index() { return 49; }
             using type = unsigned;
             type value{3389};
         };
@@ -350,7 +350,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 48; }
+            static constexpr unsigned index() { return 50; }
             using type = std::string;
             type value{"RDP"};
         };
@@ -360,7 +360,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 49; }
+            static constexpr unsigned index() { return 51; }
             using type = std::string;
             type value{};
         };
@@ -370,7 +370,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 50; }
+            static constexpr unsigned index() { return 52; }
             using type = std::string;
             type value{};
         };
@@ -380,7 +380,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 51; }
+            static constexpr unsigned index() { return 53; }
             using type = std::string;
             type value{};
         };
@@ -389,7 +389,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 52; }
+            static constexpr unsigned index() { return 54; }
             using type = std::string;
             type value{};
         };
@@ -398,7 +398,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 53; }
+            static constexpr unsigned index() { return 55; }
             using type = std::string;
             type value{};
         };
@@ -408,7 +408,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 54; }
+            static constexpr unsigned index() { return 56; }
             using type = std::string;
             type value{};
         };
@@ -419,7 +419,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 55; }
+            static constexpr unsigned index() { return 57; }
             using type = std::string;
             type value{};
         };
@@ -428,7 +428,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 56; }
+            static constexpr unsigned index() { return 58; }
             using type = std::string;
             type value{};
         };
@@ -438,7 +438,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 57; }
+            static constexpr unsigned index() { return 59; }
             using type = std::string;
             type value{};
         };
@@ -448,7 +448,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 58; }
+            static constexpr unsigned index() { return 60; }
             using type = bool;
             type value{0};
         };
@@ -458,7 +458,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 59; }
+            static constexpr unsigned index() { return 61; }
             using type = bool;
             type value{0};
         };
@@ -468,7 +468,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 60; }
+            static constexpr unsigned index() { return 62; }
             using type = std::string;
             type value{};
         };
@@ -478,7 +478,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 61; }
+            static constexpr unsigned index() { return 63; }
             using type = unsigned;
             type value{0};
         };
@@ -487,7 +487,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 62; }
+            static constexpr unsigned index() { return 64; }
             using type = std::string;
             type value{};
         };
@@ -497,7 +497,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 63; }
+            static constexpr unsigned index() { return 65; }
             using type = std::string;
             type value{"allow"};
         };
@@ -506,7 +506,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 64; }
+            static constexpr unsigned index() { return 66; }
             using type = int;
             type value{-3600};
         };
@@ -516,7 +516,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 65; }
+            static constexpr unsigned index() { return 67; }
             using type = std::string;
             type value{};
         };
@@ -526,7 +526,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 66; }
+            static constexpr unsigned index() { return 68; }
             using type = bool;
             type value{};
         };
@@ -536,7 +536,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 67; }
+            static constexpr unsigned index() { return 69; }
             using type = std::string;
             type value{""};
         };
@@ -545,7 +545,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 68; }
+            static constexpr unsigned index() { return 70; }
             using type = std::string;
             type value{""};
         };
@@ -554,7 +554,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 69; }
+            static constexpr unsigned index() { return 71; }
             using type = std::string;
             type value{""};
         };
@@ -563,7 +563,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 70; }
+            static constexpr unsigned index() { return 72; }
             using type = std::string;
             type value{""};
         };
@@ -572,7 +572,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 71; }
+            static constexpr unsigned index() { return 73; }
             using type = bool;
             type value{0};
         };
@@ -581,7 +581,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 72; }
+            static constexpr unsigned index() { return 74; }
             using type = unsigned;
             type value{0};
         };
@@ -591,7 +591,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 73; }
+            static constexpr unsigned index() { return 75; }
             using type = std::string;
             type value{"login"};
         };
@@ -600,7 +600,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 74; }
+            static constexpr unsigned index() { return 76; }
             using type = bool;
             type value{0};
         };
@@ -609,7 +609,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 75; }
+            static constexpr unsigned index() { return 77; }
             using type = std::string;
             type value{};
         };
@@ -972,6 +972,7 @@ namespace cfg {
             type value{600};
         };
 
+        // Authentication channel used by Auto IT scripts.
         struct auth_channel {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -1105,14 +1106,23 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+        // AUTHID_ENABLE_WAB_AGENT_LOADING_MASK
+        struct enable_wab_agent_loading_mask {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 15; }
+            using type = bool;
+            type value{1};
+        };
         // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT
         struct wab_agent_launch_timeout {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 15; }
+            static constexpr unsigned index() { return 16; }
             using type = unsigned;
-            type value{0};
+            type value{20000};
         };
         // Specifies the action to be performed is the launch of agent fails.
         //   0: disconnects session
@@ -1122,7 +1132,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 16; }
+            static constexpr unsigned index() { return 17; }
             using type = ::configs::Range<unsigned, 0, 1, 0>;
             type value{0};
         };
@@ -1131,9 +1141,9 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 17; }
+            static constexpr unsigned index() { return 18; }
             using type = unsigned;
-            type value{0};
+            type value{5000};
         };
 
         struct wab_agent_alternate_shell {
@@ -1318,7 +1328,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 20; }
+            static constexpr unsigned index() { return 21; }
             using type = bool;
             type value{1};
         };
@@ -1328,7 +1338,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 21; }
+            static constexpr unsigned index() { return 22; }
             using type = unsigned;
             type value{1000};
         };
@@ -1338,7 +1348,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 22; }
+            static constexpr unsigned index() { return 23; }
             using type = std::string;
             type value{};
         };
@@ -1362,7 +1372,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 23; }
+            static constexpr unsigned index() { return 24; }
             using type = bool;
             type value{};
         };
@@ -1372,7 +1382,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 24; }
+            static constexpr unsigned index() { return 25; }
             using type = bool;
             type value{};
         };
@@ -1406,7 +1416,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 25; }
+            static constexpr unsigned index() { return 26; }
             using type = ::configs::ClipboardEncodingType;
             type value{static_cast< ::configs::ClipboardEncodingType>(1)};
         };
@@ -1416,7 +1426,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 26; }
+            static constexpr unsigned index() { return 27; }
             using type = ::configs::Range<unsigned, 0, 2, 0>;
             type value{0};
         };
@@ -1428,7 +1438,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 30; }
+            static constexpr unsigned index() { return 32; }
             using type = ::configs::Language;
             type value{static_cast< ::configs::Language>(0)};
         };
@@ -1533,26 +1543,41 @@ namespace cfg {
         };
 
         // Disable keyboard log:
-        //   1: disable keyboard log in recorded sessions
+        //   1: disable keyboard log in syslog
+        //   2: disable keyboard log in recorded sessions
         // AUTHID_DISABLE_KEYBOARD_LOG
         struct disable_keyboard_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 27; }
+            static constexpr unsigned index() { return 28; }
             using type = ::configs::KeyboardLogFlags;
             type value{};
         };
 
         // Disable clipboard log:
         //   1: disable clipboard log in syslog
+        //   2: disable clipboard log in recorded sessions
         // AUTHID_DISABLE_CLIPBOARD_LOG
         struct disable_clipboard_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 28; }
+            static constexpr unsigned index() { return 29; }
             using type = ::configs::ClipboardLogFlags;
+            type value{};
+        };
+
+        // Disable (redirected) file system log:
+        //   1: disable (redirected) file system log in syslog
+        //   2: disable (redirected) file system log in recorded sessions
+        // AUTHID_DISABLE_FILE_SYSTEM_LOG
+        struct disable_file_system_log {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 30; }
+            using type = ::configs::FileSystemLogFlags;
             type value{};
         };
 
@@ -1561,7 +1586,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 29; }
+            static constexpr unsigned index() { return 31; }
             using type = unsigned;
             type value{0};
         };
@@ -1730,6 +1755,7 @@ struct globals
 , cfg::globals::enable_osd
 , cfg::globals::enable_osd_display_remote_target
 , cfg::globals::enable_wab_agent
+, cfg::globals::enable_wab_agent_loading_mask
 , cfg::globals::wab_agent_launch_timeout
 , cfg::globals::wab_agent_on_launch_failure
 , cfg::globals::wab_agent_keepalive_timeout
@@ -1795,6 +1821,7 @@ struct video
 , cfg::video::inactivity_timeout
 , cfg::video::disable_keyboard_log
 , cfg::video::disable_clipboard_log
+, cfg::video::disable_file_system_log
 , cfg::video::rt_display
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
@@ -1839,6 +1866,7 @@ using VariablesAclPack = Pack<
 , cfg::globals::movie
 , cfg::globals::movie_path
 , cfg::globals::enable_wab_agent
+, cfg::globals::enable_wab_agent_loading_mask
 , cfg::globals::wab_agent_launch_timeout
 , cfg::globals::wab_agent_on_launch_failure
 , cfg::globals::wab_agent_keepalive_timeout
@@ -1853,6 +1881,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
 , cfg::video::disable_keyboard_log
 , cfg::video::disable_clipboard_log
+, cfg::video::disable_file_system_log
 , cfg::video::rt_display
 , cfg::translation::language
 , cfg::context::opt_bitrate

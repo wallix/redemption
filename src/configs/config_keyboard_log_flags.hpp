@@ -31,8 +31,9 @@ namespace configs {
 
 enum class KeyboardLogFlags : unsigned {
     none,
-    wrm = 1 << 0,
-    FULL = ((1 << 1) - 1)
+    syslog = 1 << 0,
+    wrm = 1 << 1,
+    FULL = ((1 << 2) - 1)
 };
 MK_PARSER_ENUM_FLAGS(::configs::KeyboardLogFlags)
 

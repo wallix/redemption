@@ -340,6 +340,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
     const bool enable_wab_agent;
+    const bool enable_wab_agent_loading_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -347,12 +348,15 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
     const bool disable_clipboard_log_syslog;
+    const bool disable_clipboard_log_wrm;
+    const bool disable_file_system_log_syslog;
+    const bool disable_file_system_log_wrm;
     const int  rdp_compression;
 
     const unsigned    wab_agent_launch_timeout;
     const unsigned    wab_agent_on_launch_failure;
     const unsigned    wab_agent_keepalive_timeout;
-    const std::string wab_agent_alternate_shell;
+          std::string wab_agent_alternate_shell;
 
     size_t recv_bmp_update;
 
@@ -504,6 +508,7 @@ public:
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_wab_agent(mod_rdp_params.enable_wab_agent)
+        , enable_wab_agent_loading_mask(mod_rdp_params.enable_wab_agent_loading_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -511,6 +516,9 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
+        , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
+        , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
+        , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
         , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
@@ -696,10 +704,23 @@ public:
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
-            const char * wab_agent_working_dir = "%TMP%";
+            char pid_str[64];
+            snprintf(pid_str, sizeof(pid_str), "%u", ::getpid());
+            const size_t pid_str_len = ::strlen(pid_str);
+
+            const char * pid_tag ="{PID}";
+            const size_t pid_tag_len = ::strlen(pid_tag);
+
+            size_t pos = 0;
+            while ((pos = this->wab_agent_alternate_shell.find(pid_tag, pos)) != std::string::npos) {
+                this->wab_agent_alternate_shell.replace(pos, pid_tag_len, pid_str);
+                pos += pid_str_len;
+            }
 
             strncpy(this->program, this->wab_agent_alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
+
+            const char * wab_agent_working_dir = "%TMP%";
             strncpy(this->directory, wab_agent_working_dir, sizeof(this->directory) - 1);
             this->directory[sizeof(this->directory) - 1] = 0;
         }
@@ -786,7 +807,7 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_wab_agent) {
+        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
             this->front.disable_input_event_and_graphics_update(false);
         }
 
@@ -900,8 +921,9 @@ protected:
             this->authorization_channels.cliprdr_file_is_authorized();
 
         clipboard_virtual_channel_params.dont_log_data_into_syslog       =
-            // disable_clipboard_log_syslog
             this->disable_clipboard_log_syslog;
+        clipboard_virtual_channel_params.dont_log_data_into_wrm          =
+            this->disable_clipboard_log_wrm;
 
         return clipboard_virtual_channel_params;
     }
@@ -938,6 +960,11 @@ protected:
                 rdpdr::RDPDR_DTYP_SMARTCARD);
         file_system_virtual_channel_params.random_number                   =
             ::getpid();
+
+        file_system_virtual_channel_params.dont_log_data_into_syslog       =
+            this->disable_file_system_log_syslog;
+        file_system_virtual_channel_params.dont_log_data_into_wrm          =
+            this->disable_file_system_log_wrm;
 
         return file_system_virtual_channel_params;
     }
@@ -3015,7 +3042,7 @@ public:
                 };
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_wab_agent) {
+                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3039,7 +3066,7 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_wab_agent) {
+                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3066,7 +3093,9 @@ public:
                 LOG((this->wab_agent_on_launch_failure ? LOG_WARNING : LOG_ERR), "Agent is not ready yet!");
 
                 const bool need_full_screen_update =
-                    this->front.disable_input_event_and_graphics_update(false);
+                    (this->enable_wab_agent_loading_mask ?
+                     this->front.disable_input_event_and_graphics_update(false) :
+                     false);
 
                 if (this->wab_agent_on_launch_failure) {
                     if (need_full_screen_update) {
@@ -3081,7 +3110,7 @@ public:
             }
 
             if (this->wab_agent_is_ready && this->wab_agent_keepalive_timeout) {
-                if (!this->wab_agent_keep_alive_received) {
+                if (!this->wab_agent_keep_alive_received && this->enable_wab_agent_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
 
                     LOG(LOG_ERR, "No keep alive received from Agent!");
@@ -4664,7 +4693,7 @@ public:
             this->event.reset();
         }
 
-        if (this->enable_wab_agent) {
+        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
             this->front.disable_input_event_and_graphics_update(true);
         }
     }
@@ -5211,9 +5240,8 @@ public:
     }
 
     void rdp_input_invalidate2(const DArray<Rect> & vr) override {
-        LOG(LOG_INFO, " ===================> mod_rdp::rdp_input_invalidate 2 <=====================");
         if (this->verbose & 4){
-            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && (vr.size() > 0)) {
@@ -6084,7 +6112,7 @@ public:
                 LOG(LOG_INFO, "Agent is ready.");
             }
 
-            if (this->front.disable_input_event_and_graphics_update(false)) {
+            if (this->enable_wab_agent_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
                         this->front_width, this->front_height);

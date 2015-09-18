@@ -50,6 +50,7 @@ private:
     const bool param_clipboard_file_authorized;
 
     const bool param_dont_log_data_into_syslog;
+    const bool param_dont_log_data_into_wrm;
 
     std::unique_ptr<uint8_t[]> file_descriptor_data;
     FixedSizeStream            file_descriptor_stream;
@@ -63,6 +64,7 @@ public:
         bool clipboard_file_authorized;
 
         bool dont_log_data_into_syslog;
+        bool dont_log_data_into_wrm;
     };
 
     ClipboardVirtualChannel(
@@ -77,6 +79,7 @@ public:
     , param_clipboard_up_authorized(params.clipboard_up_authorized)
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
+    , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , file_descriptor_data(
           std::make_unique<uint8_t[]>(RDPECLIP::FileDescriptor::size()))
     , file_descriptor_stream(
@@ -358,10 +361,12 @@ private:
                 fd.receive(this->file_descriptor_stream);
                 fd.log(LOG_INFO);
 
-                std::string message("SendFileToServerClipboard=");
-                message += fd.fileName();
+                if (!this->param_dont_log_data_into_wrm) {
+                    std::string message("SendFileToServerClipboard=");
+                    message += fd.fileName();
 
-                this->front.session_update(message.c_str());
+                    this->front.session_update(message.c_str());
+                }
 
                 this->file_descriptor_stream.reset();
             }
@@ -372,10 +377,12 @@ private:
                 fd.receive(chunk);
                 fd.log(LOG_INFO);
 
-                std::string message("SendFileToServerClipboard=");
-                message += fd.fileName();
+                if (!this->param_dont_log_data_into_wrm) {
+                    std::string message("SendFileToServerClipboard=");
+                    message += fd.fileName();
 
-                this->front.session_update(message.c_str());
+                    this->front.session_update(message.c_str());
+                }
             }
 
             if (chunk.in_remain()) {
@@ -463,14 +470,14 @@ private:
             for (uint32_t remaining_data_length = dataLen;
                  remaining_data_length; ) {
                 {
-                    const unsigned int expected = 4;    // formatId(4)
+                    const unsigned int expected = 6;    // formatId(4) + min_len(formatName)(2)
                     if (!chunk.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
+                        LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_client_format_list_pdu: "
                                 "Truncated CLIPRDR_FORMAT_LIST, "
                                 "need=%u remains=%u",
                             expected, chunk.in_remain());
-                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                        break;
                     }
                 }
 
@@ -802,10 +809,12 @@ public:
                 fd.receive(this->file_descriptor_stream);
                 fd.log(LOG_INFO);
 
-                std::string message("SendFileToClientClipboard=");
-                message += fd.fileName();
+                if (!this->param_dont_log_data_into_wrm) {
+                    std::string message("SendFileToClientClipboard=");
+                    message += fd.fileName();
 
-                this->front.session_update(message.c_str());
+                    this->front.session_update(message.c_str());
+                }
 
                 this->file_descriptor_stream.reset();
             }
@@ -816,10 +825,12 @@ public:
                 fd.receive(chunk);
                 fd.log(LOG_INFO);
 
-                std::string message("SendFileToClientClipboard=");
-                message += fd.fileName();
+                if (!this->param_dont_log_data_into_wrm) {
+                    std::string message("SendFileToClientClipboard=");
+                    message += fd.fileName();
 
-                this->front.session_update(message.c_str());
+                    this->front.session_update(message.c_str());
+                }
             }
 
             if (chunk.in_remain()) {

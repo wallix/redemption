@@ -158,7 +158,7 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
-        W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()));
+        W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()), desc{"Authentication channel used by Auto IT scripts."});
         W.member(A, type_<bool>(), "enable_file_encryption", def_authid{"opt_file_encryption"}, str_authid{"file_encryption"}, rw);
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
@@ -179,13 +179,14 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "enable_osd_display_remote_target", set(true));
         W.sep();
         W.member(A, type_<bool>(), "enable_wab_agent", def_authid{"opt_wabagent"}, str_authid{"wab_agent"}, set(false), r);
-        W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", def_authid{"opt_wabagent_launch_timeout"}, set(0), r);
+        W.member(A, type_<bool>(), "enable_wab_agent_loading_mask", def_authid{"enable_wab_agent_loading_mask"}, set(true), r);
+        W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", def_authid{"opt_wabagent_launch_timeout"}, set(20000), r);
         W.member(A, type_<Range<unsigned, 0, 1>>(), "wab_agent_on_launch_failure", def_authid{"opt_wabagent_on_launch_failure"}, set(0), desc{
             "Specifies the action to be performed is the launch of agent fails.\n"
             "  0: disconnects session\n"
             "  1: remains connected"
         }, r);
-        W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", def_authid{"opt_wabagent_keepalive_timeout"}, set(0), r);
+        W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", def_authid{"opt_wabagent_keepalive_timeout"}, set(5000), r);
         W.sep();
         W.member(H, type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));
         W.sep();
@@ -337,12 +338,20 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
-            "  1: disable keyboard log in recorded sessions"
+            "  1: disable keyboard log in syslog\n"
+            "  2: disable keyboard log in recorded sessions"
         }, r);
         W.sep();
         W.member(V, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{
             "Disable clipboard log:\n"
-            "  1: disable clipboard log in syslog"
+            "  1: disable clipboard log in syslog\n"
+            "  2: disable clipboard log in recorded sessions"
+        }, r);
+        W.sep();
+        W.member(V, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{
+            "Disable (redirected) file system log:\n"
+            "  1: disable (redirected) file system log in syslog\n"
+            "  2: disable (redirected) file system log in recorded sessions"
         }, r);
         W.sep();
         W.member(H, type_<unsigned>(), "rt_display", set(0), r);
