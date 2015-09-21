@@ -1314,6 +1314,19 @@ namespace X224
 
             stream.mark_end();
         }
+
+        DR_TPDU_Send(OutStream & stream, uint8_t reason)
+        {
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_uint16_be(11); // packet len, inclusive
+            stream.out_uint8(11 - 5); // LI
+
+            stream.out_uint8(X224::DR_TPDU);
+            stream.out_uint16_be(0x0000); // DST-REF
+            stream.out_uint16_be(0x0000); // SRC-REF
+            stream.out_uint8(reason);
+        }
     };
 
 
@@ -1538,8 +1551,6 @@ namespace X224
 
             stream.out_uint8(X224::DT_TPDU);
             stream.out_uint8(X224::EOT_EOT);
-
-            stream.mark_end();
         }
     };
 } // end namespace X224

@@ -1416,6 +1416,17 @@ namespace MCS
             stream.out_per_integer(subinterval); /* subInterval (INTEGER) */
             stream.mark_end();
         }
+
+        ErectDomainRequest_Send(OutPerStream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
+        {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+            stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
+            stream.out_per_integer(subheight); /* subHeight (INTEGER) */
+            stream.out_per_integer(subinterval); /* subInterval (INTEGER) */
+        }
     };
 
     struct ErectDomainRequest_Recv
@@ -1835,6 +1846,15 @@ namespace MCS
             stream.out_uint8(MCS::MCSPDU_AttachUserRequest << 2);
             stream.mark_end();
         }
+
+        AttachUserRequest_Send(OutStream & stream, int encoding)
+        {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+            stream.out_uint8(MCS::MCSPDU_AttachUserRequest << 2);
+        }
     };
 
     struct AttachUserRequest_Recv
@@ -2184,6 +2204,17 @@ namespace MCS
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
             stream.mark_end();
+        }
+
+        ChannelJoinRequest_Send(OutStream & stream, uint16_t initiator, uint16_t channelId, int encoding)
+        {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+            stream.out_uint8(MCS::MCSPDU_ChannelJoinRequest << 2);
+            stream.out_uint16_be(initiator);
+            stream.out_uint16_be(channelId);
         }
     };
 

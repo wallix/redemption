@@ -37,8 +37,10 @@
 #include "parse.hpp"
 
 #include "exchange.hpp"
+#include "make_unique.hpp"
 
 #include <new>
+#include <memory>
 #include <initializer_list>
 
 
@@ -749,11 +751,6 @@ public:
         }
     }
 
-    TODO("We should need neither mark_end nor size for OutStream")
-    void mark_end() {
-        this->end = this->p;
-    }
-
     size_t get_capacity() const {
         return this->end - this->begin;
     }
@@ -983,7 +980,55 @@ private:
     uint8_t data[HeaderSz + StreamSz];
 };
 
+/**
+ * \addtogroup stream-utility
+ * \addtogroup transport-utility
+ * @{
+ */
+template<class Writer>
+struct DynamicStreamWriter
+{
+    Writer writer_;
+    std::size_t stream_size_;
+
+    void operator()(std::size_t, OutStream & ostream) const {
+        REDASSERT(ostream.get_capacity() == this->stream_size_);
+        this->apply_writer1(ostream, this->writer_, 1);
+    }
+
+    void operator()(std::size_t, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz) const {
+        REDASSERT(ostream.get_capacity() == this->stream_size_);
+        this->apply_writer2(ostream, buf, used_buf_sz, this->writer_, 1);
+    }
+
+private:
+    template<class W>
+    auto apply_writer1(OutStream & ostream, W & writer, int) const
+    -> decltype(writer(ostream))
+    { writer(ostream); }
+
+    template<class W>
+    void apply_writer1(OutStream & ostream, W & writer, unsigned) const;
+
+    template<class W>
+    auto apply_writer2(OutStream & ostream, uint8_t *, std::size_t used_buf_sz, W & writer, int) const
+    -> decltype(writer(ostream, used_buf_sz))
+    { writer(ostream, used_buf_sz); }
+
+    template<class W>
+    void apply_writer2(OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, W & writer, unsigned) const
+    { writer(ostream, buf, used_buf_sz); }
+};
+
+template<std::size_t N>
+using StreamSize = std::integral_constant<std::size_t, N>;
+/**
+ * @}
+ */
+
 namespace details_ {
+    /// Extract stream size of Writer
+    /// @{
     template<class R, class C, class Sz, class ... Args>
     constexpr Sz packet_size_impl(R(C::*)(Sz, OutStream &, Args...)) {
         return Sz{};
@@ -1000,78 +1045,161 @@ namespace details_ {
         return packet_size_impl(&F::operator());
     }
 
+    template<class Writer>
+    std::size_t packet_size(DynamicStreamWriter<Writer> const & dyn_stream_size) {
+        return dyn_stream_size.stream_size_;
+    }
+
     template<class R, class Sz, class ... Args>
     constexpr Sz packet_size(R(*)(Sz, OutStream &, Args...)) {
         return Sz{};
     }
+    /// @}
 
 
-    template<class F, class... Fs>
-    struct packet_size_struct
-    {
-        using sz_type_ = decltype(packet_size(std::declval<F>()));
-        using value_type = std::integral_constant<
-            std::size_t,
-            sz_type_::value + packet_size_struct<Fs...>::value_type::value
-        >;
-    };
-
-    template<class F>
-    struct packet_size_struct<F>
-    {
-        using sz_type_ = decltype(packet_size(std::declval<F>()));
-        using value_type = std::integral_constant<std::size_t, sz_type_::value>;
-    };
-
-    template<class... Fs>
-    constexpr typename packet_size_struct<Fs...>::value_type
-    packets_size(Fs const & ... ) {
+    /// Extract stream size of multiple Writers
+    /// @{
+    template<class T, class U>
+    std::integral_constant<std::size_t, T::value + U::value>
+    packet_size_add(T const & a, U const & b) {
         return {};
     }
 
-    template<class StreamSz, class Writer>
-    auto apply_writer(StreamSz sz, OutStream & ostream, uint8_t *, std::size_t used_buf, Writer & writer, int)
-    -> decltype(writer(sz, ostream, used_buf))
-    { writer(sz, ostream, used_buf); }
+    template<class T, class U>
+    typename std::enable_if<
+        std::is_same<T, std::size_t>::value
+     || std::is_same<U, std::size_t>::value
+    , std::size_t>::type
+    packet_size_add(T const & a, U const & b) {
+        return a + b;
+    }
+
+    template<class AccuSize>
+    constexpr AccuSize packets_size_impl(AccuSize accu) {
+        return accu;
+    }
+
+    template<class AccuSize, class... Fns>
+    struct build_packets_size_type;
+
+    template<class AccuSize, class Fn, class... Fns>
+    struct build_packets_size_type<AccuSize, Fn, Fns...>
+    {
+        using type = typename build_packets_size_type<
+            decltype(packet_size_add(AccuSize{}, packet_size(std::declval<Fn>()))),
+            Fns...
+        >::type;
+    };
+
+    template<class AccuSize>
+    struct build_packets_size_type<AccuSize>
+    { using type = AccuSize; };
+
+    template<class AccuSize, class Fn, class... Fns>
+    constexpr typename build_packets_size_type<AccuSize, Fn, Fns...>::type
+    packets_size_impl(AccuSize accu, Fn const & f, Fns const & ... fns)
+    {
+        return packets_size_impl(packet_size_add(accu, packet_size(f)), fns...);
+    }
+
+    template<class... Fs>
+    constexpr auto packets_size(Fs const & ... fns)
+    -> decltype(packets_size_impl(StreamSize<0>{}, fns...))
+    {
+        return packets_size_impl(StreamSize<0>{}, fns...);
+    }
+    /// @}
+
 
     template<class StreamSz, class Writer>
-    void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf, Writer & writer, unsigned)
-    { writer(sz, ostream, buf, used_buf); }
+    auto apply_writer(StreamSz sz, OutStream & ostream, uint8_t *, std::size_t used_buf_sz, Writer & writer, int)
+    -> decltype(writer(sz, ostream, used_buf_sz))
+    { writer(sz, ostream, used_buf_sz); }
 
     template<class StreamSz, class Writer>
-    void write_packet(uint8_t * & full_buf, std::size_t & used_buf, StreamSz sz, Writer & writer) {
+    void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned)
+    { writer(sz, ostream, buf, used_buf_sz); }
+
+
+    template<class StreamSz, class Writer>
+    void write_packet(uint8_t * & full_buf, std::size_t & used_buf_sz, StreamSz sz, Writer & writer) {
         uint8_t data_buf[StreamSz::value];
         OutStream ostream(data_buf);
-        apply_writer(sz, ostream, full_buf, used_buf, writer, 1);
-        used_buf += ostream.get_offset();
+        apply_writer(sz, ostream, full_buf, used_buf_sz, writer, 1);
+        used_buf_sz += ostream.get_offset();
         full_buf -= ostream.get_offset();
         memcpy(full_buf, ostream.get_data(), ostream.get_offset());
     }
+
+    template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>
+    void write_packets_mpl(
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, uint8_t * buf,
+        Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
+    {
+        OutStream data_stream(buf + header_buf_sz, data_buf_sz);
+        data_writer(data_buf_sz, data_stream);
+        auto * start = data_stream.get_data();
+        std::size_t used_buf_sz = data_stream.get_offset();
+        (void)std::initializer_list<int>{((
+            details_::write_packet(start, used_buf_sz, details_::packet_size(header_writers), header_writers)
+        ), 1)...};
+        trans.send(start, used_buf_sz);
+    }
+
+    template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>
+    void write_packets(
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, std::size_t,
+        Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
+    {
+        if (data_buf_sz + header_buf_sz < 65536) {
+            uint8_t buf[65536];
+            write_packets_mpl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
+        }
+        else {
+            auto u = std::make_unique<uint8_t[]>(data_buf_sz + header_buf_sz);
+            write_packets_mpl(data_buf_sz, header_buf_sz, u.get(), trans, data_writer, header_writers...);
+        }
+    }
+
+    template<
+        class DataBufSz, class HeaderBufSz, class TotalSz,
+        class Transport, class DataWriter, class... HeaderWriters
+    >
+    void write_packets(
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, TotalSz,
+        Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
+    {
+        uint8_t buf[TotalSz::value];
+        write_packets_mpl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
+    }
 }
 
-template<std::size_t N>
-using StreamSize = std::integral_constant<std::size_t, N>;
 
 /**
- * \param data_writer  function(OutStream &)
- * \param header_writers  function(IntegralConstant, OutStream &)
+ * \addtogroup stream-utility
+ * \addtogroup transport-utility
  *
- * write_packets(t, f1, f2, f3) write a packet [f3, f2, f1]
+ * \param data_writer  function(IntegralConstant||std:size_t, OutStream &)
+ * \param header_writers  function(IntegralConstant||std:size_t, OutStream &, [uint8_t * data,] std::size_t data_sz)
+ *
+ * write_packets(t, f1, f2, f3) write a packet [f3-f2-f1]
  */
 template<class Transport, class DataWriter, class... HeaderWriters>
 void write_packets(Transport & trans, DataWriter data_writer, HeaderWriters... header_writers)
 {
-    constexpr auto data_buf_sz = details_::packet_size(data_writer);
-    constexpr auto header_buf_sz = details_::packets_size(header_writers...);
-    uint8_t buf[header_buf_sz + data_buf_sz];
-    OutStream data_stream(buf + header_buf_sz, data_buf_sz);
-    data_writer(data_buf_sz, data_stream);
-    auto * start = data_stream.get_data();
-    std::size_t used_buf = data_stream.get_offset();
-    (void)std::initializer_list<int>{((
-        details_::write_packet(start, used_buf, details_::packet_size(header_writers), header_writers)
-    ), 1)...};
-    trans.send(start, used_buf);
+    auto const data_buf_sz = details_::packet_size(data_writer);
+    auto const header_buf_sz = details_::packets_size(header_writers...);
+    details_::write_packets(
+        data_buf_sz, header_buf_sz,
+        details_::packet_size_add(header_buf_sz, data_buf_sz),
+        trans, data_writer, header_writers...
+    );
+}
+
+template<class Writer>
+DynamicStreamWriter<Writer>
+dynamic_packet(std::size_t stream_sz, Writer writer) {
+    return {std::move(writer), stream_sz};
 }
 
 

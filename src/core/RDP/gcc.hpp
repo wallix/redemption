@@ -235,6 +235,35 @@ namespace GCC
             stream.out_per_length(payload_size); // user data length
             stream.mark_end();
         }
+
+        Create_Request_Send(OutPerStream & stream, size_t payload_size)
+        {
+            // ConnectData
+            stream.out_per_choice(0); // From Key select object (0) of type OBJECT_IDENTIFIER
+            const uint8_t t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
+            stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
+            //  ConnectData::connectPDU (OCTET_STRING)
+            // 23 = offset after mark_end()
+            stream.out_per_length(payload_size + 23 - 9); // connectPDU length
+
+             // ConnectGCCPDU
+            stream.out_per_choice(0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
+            stream.out_per_selection(0x08); // select optional userData from ConferenceCreateRequest
+
+            //  ConferenceCreateRequest::conferenceName
+            stream.out_uint16_be(16);
+            stream.out_per_padding(1); /* padding */
+
+            //  UserData (SET OF SEQUENCE)
+            stream.out_per_number_of_sets(1); // one set of UserData
+            stream.out_per_choice(0xC0); // UserData::value present + select h221NonStandard (1)
+
+            //  h221NonStandard
+            const uint8_t h221_cs_key[4] = {'D', 'u', 'c', 'a'};
+            stream.out_per_octet_string(h221_cs_key, 4, 4); // h221NonStandard, client-to-server H.221 key, "Duca"
+
+            stream.out_per_length(payload_size); // user data length
+        }
     };
 
     class Create_Request_Recv {
@@ -1279,8 +1308,59 @@ namespace GCC
                 stream.mark_end();
             }
 
+            void emit(OutStream & stream)
+            {
+                stream.out_uint16_le(this->userDataType);
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->version);
+                stream.out_uint16_le(this->desktopWidth);
+                stream.out_uint16_le(this->desktopHeight);
+                stream.out_uint16_le(this->colorDepth);
+                stream.out_uint16_le(this->SASSequence);
+                stream.out_uint32_le(this->keyboardLayout);
+                stream.out_uint32_le(this->clientBuild);
+                // utf16 hostname fixed length,
+                // including mandatory terminal 0
+                // length is a number of utf16 characters
+                stream.out_utf16(this->clientName, 16);
+                stream.out_uint32_le(this->keyboardType);
+                stream.out_uint32_le(this->keyboardSubType);
+                stream.out_uint32_le(this->keyboardFunctionKey);
+                // utf16 fixed length,
+                // including mandatory terminal 0
+                // length is a number of utf16 characters
+                stream.out_utf16(this->imeFileName, 32);
+
+                // --------------------- Optional Fields ---------------------------------------
+                this->emit_optional(stream);
+            }
+
             private:
             void emit_optional(Stream & stream)
+            {
+                if (this->length < 134) { return; }
+                stream.out_uint16_le(this->postBeta2ColorDepth);
+                if (this->length < 136) { return; }
+                stream.out_uint16_le(this->clientProductId);
+                if (this->length < 140) { return; }
+                stream.out_uint32_le(this->serialNumber);
+                if (this->length < 142) { return; }
+                stream.out_uint16_le(this->highColorDepth);
+                if (this->length < 144) { return; }
+                stream.out_uint16_le(this->supportedColorDepths);
+                if (this->length < 146) { return; }
+                stream.out_uint16_le(this->earlyCapabilityFlags);
+                if (this->length < 210) { return; }
+                stream.out_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
+                if (this->length < 211) { return; }
+                stream.out_uint8(this->connectionType);
+                if (this->length < 212) { return; }
+                stream.out_uint8(this->pad1octet);
+                if (this->length < 216) { return; }
+                stream.out_uint32_le(this->serverSelectedProtocol);
+            }
+
+            void emit_optional(OutStream & stream)
             {
                 if (this->length < 134) { return; }
                 stream.out_uint16_le(this->postBeta2ColorDepth);
@@ -1548,6 +1628,14 @@ namespace GCC
                 stream.out_uint32_le(this->flags);
                 stream.out_uint32_le(this->redirectedSessionID);
                 stream.mark_end();
+            }
+
+            void emit(OutStream & stream)
+            {
+                stream.out_uint16_le(this->userDataType);
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->flags);
+                stream.out_uint32_le(this->redirectedSessionID);
             }
 
             void recv(Stream & stream)
@@ -1895,6 +1983,18 @@ namespace GCC
                     stream.out_uint32_le(this->channelDefArray[i].options);
                 }
                 stream.mark_end();
+            }
+
+            void emit(OutStream & stream)
+            {
+                stream.out_uint16_le(this->userDataType);
+                this->length = this->channelCount * 12 + 8;
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->channelCount);
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    stream.out_copy_bytes(this->channelDefArray[i].name, 8);
+                    stream.out_uint32_le(this->channelDefArray[i].options);
+                }
             }
 
             void recv(Stream & stream)
@@ -2946,6 +3046,14 @@ namespace GCC
                 stream.out_uint32_le(this->encryptionMethods);
                 stream.out_uint32_le(this->extEncryptionMethods);
                 stream.mark_end();
+            }
+
+            void emit(OutStream & stream)
+            {
+                stream.out_uint16_le(this->userDataType);
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->encryptionMethods);
+                stream.out_uint32_le(this->extEncryptionMethods);
             }
 
             void recv(Stream & stream)

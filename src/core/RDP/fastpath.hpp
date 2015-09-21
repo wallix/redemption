@@ -945,8 +945,6 @@ namespace FastPath {
                 stream.out_copy_bytes(signature, 8);
                 crypt.decrypt(data, data_sz);
             }
-
-            stream.mark_end();
         }
     };
 

@@ -274,7 +274,6 @@ public:
             payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.get_offset());
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
-        payload.mark_end();
 
         send_wrm_chunk(this->trans, TIMESTAMP, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
@@ -468,7 +467,6 @@ public:
         }
 
         //------------------------------ missing variable length ---------------
-        payload.mark_end();
 
         send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
@@ -701,7 +699,6 @@ protected:
         payload.out_uint8(cache_idx);
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
-        payload.mark_end();
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->trans.send(cursor.data, cursor.data_size());
@@ -719,7 +716,6 @@ protected:
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
-        payload.mark_end();
         this->trans.send(payload.get_data(), payload.get_offset());
     }
 
@@ -730,8 +726,6 @@ public:
         StaticOutStream<16> payload;
         payload.out_timeval_to_uint64le_usec(now);
         payload.out_uint16_le(message_length);
-
-        payload.mark_end();
 
         send_wrm_chunk(this->trans, SESSION_UPDATE, payload.get_offset() + message_length, 1);
         this->trans.send(payload.get_data(), payload.get_offset());

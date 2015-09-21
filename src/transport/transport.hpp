@@ -230,4 +230,21 @@ private:
     Transport& operator=(const Transport &) = delete;
 };
 
+/**
+ * \addtogroup transport-utility
+ * @{
+ */
+inline void send(Transport & trans, const char * const buffer, size_t len) {
+    trans.send(buffer, len);
+}
+
+inline void send(Transport & trans, const unsigned char * const buffer, size_t len) {
+    trans.send(buffer, len);
+}
+
+inline void send(Transport & trans, OutStream & stream) {
+    trans.send(stream.get_data(), stream.get_offset());
+}
+/** @} */
+
 #endif
