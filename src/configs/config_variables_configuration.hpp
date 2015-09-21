@@ -1598,7 +1598,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<unsigned, 0, 1, 0>;
+            using type = unsigned;
             type value{1};
         };
         // The compression method of native video capture:
@@ -1609,7 +1609,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<unsigned, 0, 2, 0>;
+            using type = unsigned;
             type value{1};
         };
     };
