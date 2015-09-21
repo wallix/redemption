@@ -356,7 +356,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(H, type_<unsigned>(), "rt_display", set(0), r);
         W.sep();
-        W.member(A, type_<unsigned>{}, user_type<SelectRange<unsigned, 0, 1>>{}, "wrm_color_depth_selection_strategy", desc{
+        W.member(A, type_<SelectRange<unsigned, 0, 1>>{}, "wrm_color_depth_selection_strategy", desc{
             "The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:\n"
             "  0: 24-bit\n"
             "  1: 16-bit"

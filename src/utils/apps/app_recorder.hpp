@@ -39,6 +39,7 @@
 
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
+                        , int capture_bpp
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
@@ -57,6 +58,7 @@ void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char *
 template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
+                    , int capture_bpp
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument);
@@ -75,7 +77,7 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted);
 
 
 static const unsigned USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
-static const unsigned USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
+static const signed   USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
 
 
 bool program_requested_to_shutdown = false;
@@ -236,15 +238,20 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
     }
 
+    int capture_bpp = 16;
+
     if (options.count("color-depth") > 0) {
              if (wrm_color_depth == "16") {
-            ini.set<cfg::video::wrm_color_depth_selection_strategy>(16);
+//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(16);
+            capture_bpp = 16;
         }
         else if (wrm_color_depth == "24") {
-            ini.set<cfg::video::wrm_color_depth_selection_strategy>(24);
+//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(24);
+            capture_bpp = 24;
         }
         else if (wrm_color_depth == "original") {
-            ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
+//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
+            capture_bpp = USE_ORIGINAL_COLOR_DEPTH;
         }
         else {
             std::cerr << "Unknown wrm color depth\n\n";
@@ -252,7 +259,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
+//        ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
+        capture_bpp = USE_ORIGINAL_COLOR_DEPTH;
     }
 
     ini.set<cfg::video::png_limit>(png_limit);
@@ -343,7 +351,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     return recompress_or_record<CaptureMaker>(
-        input_filename, output_filename, ini
+        input_filename, output_filename, capture_bpp, ini
       , remove_input_file, infile_is_encrypted, auto_output_file
       , begin_cap, end_cap, order_count, clear, zoom
       , show_file_metadata, show_statistics
@@ -378,6 +386,7 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
+                        , int capture_bpp
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
@@ -475,7 +484,8 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
             result = (
                 force_record
              || bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png)
-             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
+//             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
+             || capture_bpp != USE_ORIGINAL_COLOR_DEPTH
              || show_file_metadata
              || show_statistics
              || file_count > 1
@@ -483,7 +493,7 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                 ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
                   , do_record<CaptureMaker>(
                       trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, ini, file_count, order_count, clear, zoom
+                    , output_filename, capture_bpp, ini, file_count, order_count, clear, zoom
                     , show_file_metadata, show_statistics, verbose
                     , std::forward<ExtraArguments>(extra_argument)...
                     )
@@ -783,6 +793,7 @@ static void raise_error(std::string const & output_filename, int code, const cha
 template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
+                    , int capture_bpp
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument) {
@@ -836,14 +847,18 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
         }
 
-        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
-            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
+//        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
+//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
+//        }
+        if (capture_bpp == USE_ORIGINAL_COLOR_DEPTH) {
+            capture_bpp = player.info_bpp;
         }
+        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
 
         {
             CaptureMaker capmake( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx, player.screen_rect.cy
-                                , player.info_bpp, outfile_path, outfile_basename, outfile_extension
+                                , player.info_bpp, capture_bpp, outfile_path, outfile_basename, outfile_extension
                                 , ini, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
             auto & capture = capmake.capture;
 
