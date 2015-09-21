@@ -3136,7 +3136,6 @@ public:
 class RDPFileRenameInformation {
     bool     replace_if_exists_ = false;
     uint8_t  RootDirectory_     = 0;
-    uint16_t FileNameLength     = 0;
 
     std::string file_name;
 

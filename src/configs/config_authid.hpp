@@ -94,7 +94,7 @@ constexpr char const * const authstr[] = {
     "alternate_shell",
     "shell_working_directory",
     "is_rec",
-    "rec_patch",
+    "rec_path",
     "wab_agent",
     "enable_wab_agent_loading_mask",
     "wab_agent_launch_timeout",

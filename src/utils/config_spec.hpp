@@ -171,7 +171,7 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
         W.member(H, type_<bool>(), "movie", def_authid{"opt_movie"}, str_authid{"is_rec"}, set(false), r);
-        W.member(A, type_<std::string>(), "movie_path", def_authid{"opt_movie_path"}, str_authid{"rec_patch"}, r);
+        W.member(A, type_<std::string>(), "movie_path", def_authid{"opt_movie_path"}, str_authid{"rec_path"}, r);
         W.member(A, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
         W.sep();
         W.member(V, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));

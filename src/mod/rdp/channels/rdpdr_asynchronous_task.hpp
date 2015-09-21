@@ -179,8 +179,6 @@ class RdpdrSendDriveIOResponseTask : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    const uint32_t verbose;
-
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
                                  const uint8_t * data,
@@ -191,8 +189,8 @@ public:
     , data(std::make_unique<uint8_t[]>(data_length))
     , data_length(data_length)
     , remaining_number_of_bytes_to_send(data_length)
-    , to_server_sender(to_server_sender.SynchronousSender())
-    , verbose(verbose) {
+    , to_server_sender(to_server_sender.SynchronousSender()) {
+        (void)verbose;
         ::memcpy(this->data.get(), data, data_length);
     }
 
@@ -247,8 +245,6 @@ class RdpdrSendClientMessageTask : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    const uint32_t verbose;
-
 public:
     RdpdrSendClientMessageTask(size_t total_length,
                                uint32_t flags,
@@ -260,8 +256,8 @@ public:
     , flags(flags)
     , chunked_data(std::make_unique<uint8_t[]>(chunked_data_length))
     , chunked_data_length(chunked_data_length)
-    , to_server_sender(to_server_sender.SynchronousSender())
-    , verbose(verbose) {
+    , to_server_sender(to_server_sender.SynchronousSender()) {
+        (void)verbose;
         ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
     }
 
