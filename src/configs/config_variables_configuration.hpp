@@ -1609,7 +1609,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = ::configs::Range<unsigned, 0, 2, 0>;
             type value{1};
         };
     };

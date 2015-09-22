@@ -361,7 +361,7 @@ void config_spec_definition(Writer && W)
             "  0: 24-bit\n"
             "  1: 16-bit"
         }, set(1));
-        W.member(A, type_<unsigned>{}, user_type<SelectRange<unsigned, 0, 2>>{}, "wrm_compression_algorithm", desc{
+        W.member(A, type_<SelectRange<unsigned, 0, 2>>{}, "wrm_compression_algorithm", desc{
             "The compression method of native video capture:\n"
             "  0: No compression\n"
             "  1: GZip\n"
