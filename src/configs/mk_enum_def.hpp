@@ -42,7 +42,7 @@
     inline E operator & (E x, E y) { return static_cast<E>(underlying_cast(x) & underlying_cast(y)); } \
     inline E operator ~ (E x) { return static_cast<E>(~underlying_cast(x)) & E::FULL; }                \
     inline E & operator |= (E & x, E y) { return x = x | y; }                                          \
-    inline E & operator &= (E & x, E y) { return x = x | y; }
+    inline E & operator &= (E & x, E y) { return x = x & y; }
 
 #define MK_PARSER_ENUM_FLAGS(Enum)                                \
     MK_ENUM_FLAG_FN(Enum)                                         \
