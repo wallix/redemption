@@ -408,10 +408,6 @@ public:
     OutStream & operator=(OutStream const &) = delete;
 
     size_t tailroom() const {
-        TODO("check test below, it shouldn't be necessary. Allow negative remain ?");
-        if (this->end <= this->p){
-            return 0;
-        }
         return  this->end - this->p;
     }
 

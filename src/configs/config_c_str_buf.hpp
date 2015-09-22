@@ -48,8 +48,6 @@ namespace detail {
     template<class T>
     struct TaggedCStrBuf<T, false, false>
     {};
-
-    struct dummy {};
 }
 
 template<class T>

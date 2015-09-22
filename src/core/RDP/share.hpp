@@ -649,6 +649,74 @@ struct ShareData
 }; // END CLASS ShareData
 
 //##############################################################################
+struct ShareData_new_stream
+//##############################################################################
+{
+    OutStream & stream;
+
+    public:
+    uint32_t share_id;
+    uint8_t streamid;
+    uint16_t len;
+    uint8_t pdutype2;
+    uint16_t uncompressedLen;
+    uint8_t compressedType;
+    uint16_t compressedLen;
+
+    // CONSTRUCTOR
+    //==============================================================================
+    explicit ShareData_new_stream(OutStream & stream)
+    //==============================================================================
+    : stream(stream)
+    , share_id(0)
+    , streamid(0)
+    , len(0)
+    , pdutype2(0)
+    , uncompressedLen(0)
+    , compressedType(0)
+    , compressedLen(0)
+    {
+    } // END CONSTRUCTOR
+
+    //==============================================================================
+    void emit_begin( uint8_t pdu_type2
+                   , uint32_t share_id
+                   , uint8_t streamid
+                   , uint16_t _uncompressedLen = 0
+                   , uint8_t compressedType = 0
+                   , uint16_t compressedLen = 0
+                   )
+    //==============================================================================
+    {
+        stream.out_uint32_le(share_id);
+        stream.out_uint8(0); // pad1
+        stream.out_uint8(streamid); // streamid
+        this->uncompressedLen = _uncompressedLen;
+        if (!_uncompressedLen) {
+            stream.out_clear_bytes(2); // skip len
+            REDASSERT(compressedType == 0);
+        }
+        else {
+            stream.out_uint16_le(_uncompressedLen);
+        }
+        stream.out_uint8(pdu_type2); // pdutype2
+        stream.out_uint8(compressedType); // compressedType
+        stream.out_uint16_le(compressedLen); // compressedLen
+    } // END METHOD emit_begin
+
+    //==============================================================================
+    void emit_end()
+    //==============================================================================
+    {
+        if (!this->uncompressedLen) {
+            stream.set_out_uint16_le(  stream.get_offset()
+                                     + 6,                   // TS_SHARECONTROLHEADER(6)
+                                     6);
+        }
+    } // END METHOD emit_end
+}; // END CLASS ShareData
+
+//##############################################################################
 struct FlowPDU_Send
 //##############################################################################
 {

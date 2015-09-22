@@ -464,6 +464,7 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     };
 
+    TODO("duplicated code in front")
     struct write_x224_dt_tpdu_fn
     {
         void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
@@ -3572,7 +3573,7 @@ public:
         }
     }   // send_confirm_active
 
-    void process_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
+    void process_pointer_pdu(Stream & stream, mod_api * mod)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
@@ -4963,34 +4964,30 @@ public:
         }
     }   // process_server_caps
 
-    void send_control(int action) throw(Error) {
+    void send_control(int action) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_control");
         }
 
-        BStream stream(256);
+        this->send_data_request_ex(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this, action](StreamSize<256>, OutStream & stream) {
+                ShareData_new_stream sdata(stream);
+                sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
+                // Payload
+                stream.out_uint16_le(action);
+                stream.out_uint16_le(0); /* userid */
+                stream.out_uint32_le(0); /* control id */
 
-        // Payload
-        stream.out_uint16_le(action);
-        stream.out_uint16_le(0); /* userid */
-        stream.out_uint32_le(0); /* control id */
-        stream.mark_end();
+                // Packet trailer
+                sdata.emit_end();
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            }
+        );
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_control done");
@@ -5002,8 +4999,7 @@ public:
        before in process_data case. The problem is that
        we don't save the bitmap key list attached with rdp_bmpcache2 capability
        message so we can't develop this function yet */
-
-    void send_persistent_key_list_pdu(BStream & pdu_data_stream) throw(Error) {
+    void send_persistent_key_list_pdu(BStream & pdu_data_stream) {
         BStream persistent_key_list_stream(65535);
 
         ShareData sdata(persistent_key_list_stream);
@@ -5026,7 +5022,43 @@ public:
         this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
-    void send_persistent_key_list_regular() throw(Error) {
+    /* Send persistent bitmap cache enumeration PDU's
+       Not implemented yet because it should be implemented
+       before in process_data case. The problem is that
+       we don't save the bitmap key list attached with rdp_bmpcache2 capability
+       message so we can't develop this function yet */
+    template<class DataWriter>
+    void send_persistent_key_list_pdu(DataWriter data_writer) {
+        this->send_data_request_ex(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, data_writer);
+    }
+
+    template<class DataWriter>
+    void send_data(uint8_t pdu_type2, DataWriter data_writer) {
+        // TODO duplication 2
+        using packet_size_t = decltype(details_::packet_size(data_writer));
+        this->send_data_request_ex(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this, &data_writer, pdu_type2](
+                StreamSize<256 + packet_size_t{}>, OutStream & stream) {
+                ShareData_new_stream sdata(stream);
+                sdata.emit_begin(pdu_type2, this->share_id, RDP::STREAM_MED);
+                {
+                    OutStream substream(stream.get_current(), packet_size_t{});
+                    data_writer(packet_size_t{}, substream);
+                    stream.out_skip_bytes(substream.get_offset());
+                }
+                sdata.emit_end();
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                ShareControl_Send(
+                    sctrl_header, PDUTYPE_DATAPDU,
+                    this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size
+                );
+            }
+        );
+    }
+
+    void send_persistent_key_list_regular() {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular");
         }
@@ -5085,11 +5117,11 @@ public:
 
                         //pklpdu.log(LOG_INFO, "Send to server");
 
-                        BStream pdu_data_stream(65535);
-                        pklpdu.emit(pdu_data_stream);
-                        pdu_data_stream.mark_end();
-
-                        this->send_persistent_key_list_pdu(pdu_data_stream);
+                        this->send_persistent_key_list_pdu(
+                            [&pklpdu](StreamSize<2048>, OutStream & pdu_data_stream) {
+                                pklpdu.emit(pdu_data_stream);
+                            }
+                        );
 
                         pklpdu.reset();
 
@@ -5104,7 +5136,7 @@ public:
         }
     }   // send_persistent_key_list_regular
 
-    void send_persistent_key_list_transparent() throw(Error) {
+    void send_persistent_key_list_transparent() {
         if (!this->persistent_key_list_transport) {
             return;
         }
@@ -5113,40 +5145,34 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_transparent");
         }
 
-        BStream pdu_data_stream(65535);
+        try
+        {
+            while (1) {
+                this->send_persistent_key_list_pdu(
+                    [this](StreamSize<65535>, OutStream & pdu_data_stream) {
+                        uint8_t * data = pdu_data_stream.get_data();
+                        uint8_t * end = data;
+                        this->persistent_key_list_transport->recv(&end, 2/*pdu_size(2)*/);
+                        std::size_t pdu_size = Parse(data).in_uint16_le();
+                        end = data;
+                        this->persistent_key_list_transport->recv(&end, pdu_size);
+                        pdu_data_stream.out_skip_bytes(pdu_size);
 
-        bool bContinue = true;
-        while (bContinue) {
-            try
-            {
-                pdu_data_stream.reset();
-
-                this->persistent_key_list_transport->recv(&pdu_data_stream.end, 2/*pdu_size(2)*/);
-
-                uint16_t pdu_size = pdu_data_stream.in_uint16_le();
-
-
-                pdu_data_stream.reset();
-
-                this->persistent_key_list_transport->recv(&pdu_data_stream.end, pdu_size);
-
-                if (this->verbose & 1) {
-                    SubStream stream(pdu_data_stream);
-                    RDP::PersistentKeyListPDUData pklpdu;
-                    pklpdu.receive(stream);
-                    pklpdu.log(LOG_INFO, "Send to server");
-                }
-
-                this->send_persistent_key_list_pdu(pdu_data_stream);
+                        if (this->verbose & 1) {
+                            InStream stream(data, pdu_size);
+                            RDP::PersistentKeyListPDUData pklpdu;
+                            pklpdu.receive(stream);
+                            pklpdu.log(LOG_INFO, "Send to server");
+                        }
+                    }
+                );
             }
-            catch (Error & e)
-            {
-                if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                    LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);
-                    throw;
-                }
-
-                bContinue = false;
+        }
+        catch (Error const & e)
+        {
+            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);
+                throw;
             }
         }
 
@@ -5155,7 +5181,7 @@ public:
         }
     }
 
-    void send_persistent_key_list() throw(Error) {
+    void send_persistent_key_list() {
         if (this->enable_transparent_mode) {
             this->send_persistent_key_list_transparent();
         }
@@ -5165,64 +5191,53 @@ public:
     }
 
     TODO("CGR: duplicated code in front")
-    void send_synchronise() throw(Error) {
+    void send_synchronise() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
         }
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
-        // Payload
-        stream.out_uint16_le(1); /* type */
-        stream.out_uint16_le(1002);
-        stream.mark_end();
+        // TODO duplication 2
+        this->send_data_request_ex(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this](StreamSize<65536>, OutStream & stream) {
+                ShareData_new_stream sdata(stream);
+                sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
-        // Packet trailer
-        sdata.emit_end();
+                // Payload
+                stream.out_uint16_le(1); /* type */
+                stream.out_uint16_le(1002);
 
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+                // Packet trailer
+                sdata.emit_end();
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                ShareControl_Send(
+                    sctrl_header, PDUTYPE_DATAPDU,
+                    this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size
+                );
+            }
+        );
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise done");
         }
     }
 
-    void send_fonts(int seq) throw(Error) {
+    void send_fonts(int seq) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_fonts");
         }
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
-        // Payload
-        stream.out_uint16_le(0); /* number of fonts */
-        stream.out_uint16_le(0); /* pad? */
-        stream.out_uint16_le(seq); /* unknown */
-        stream.out_uint16_le(0x32); /* entry size */
-        stream.mark_end();
-
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data(
+            PDUTYPE2_FONTLIST,
+            [seq](StreamSize<8>, OutStream & stream){
+                // Payload
+                stream.out_uint16_le(0); /* number of fonts */
+                stream.out_uint16_le(0); /* pad? */
+                stream.out_uint16_le(seq); /* unknown */
+                stream.out_uint16_le(0x32); /* entry size */
+            }
+        );
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_fonts done");
@@ -5231,43 +5246,31 @@ public:
 
 public:
 
-    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         }
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
-        // Payload
-        stream.out_uint16_le(1); /* number of events */
-        stream.out_uint16_le(0);
-        stream.out_uint32_le(time);
-        stream.out_uint16_le(message_type);
-        stream.out_uint16_le(device_flags);
-        stream.out_uint16_le(param1);
-        stream.out_uint16_le(param2);
-        stream.mark_end();
-
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data(
+            PDUTYPE2_INPUT,
+            [&](StreamSize<8>, OutStream & stream){
+                // Payload
+                stream.out_uint16_le(1); /* number of events */
+                stream.out_uint16_le(0);
+                stream.out_uint32_le(time);
+                stream.out_uint16_le(message_type);
+                stream.out_uint16_le(device_flags);
+                stream.out_uint16_le(param1);
+                stream.out_uint16_le(param2);
+            }
+        );
 
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
         }
     }
 
-    void send_input_fastpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+    void send_input_fastpath(int time, int message_type, int device_flags, int param1, int param2) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
         }
@@ -5302,7 +5305,7 @@ public:
         }
     }
 
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) {
         if (this->enable_fastpath_client_input_event == false) {
             this->send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
@@ -5420,7 +5423,7 @@ public:
 
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
-    void process_color_pointer_pdu(Stream & stream) throw(Error) {
+    void process_color_pointer_pdu(Stream & stream) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
@@ -5645,7 +5648,7 @@ public:
     //  contains one palette index; for 4 bpp, there are two palette indices per byte).
 
 
-    void process_new_pointer_pdu(Stream & stream) throw(Error) {
+    void process_new_pointer_pdu(Stream & stream) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }

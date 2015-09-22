@@ -311,6 +311,48 @@ struct PersistentKeyListPDUData {
         }
     }
 
+    void receive(InStream & stream) {
+        unsigned expected = 24; /* numEntriesCache0(2) + numEntriesCache1(2) + numEntriesCache2(2) +
+                                   numEntriesCache3(2) + numEntriesCache4(2) + totalEntriesCache0(2) +
+                                   totalEntriesCache1(2) + totalEntriesCache2(2) + totalEntriesCache3(2) +
+                                   totalEntriesCache4(2) + bBitMask(1) + Pad2(1) + Pad3(2) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_ERR
+               , "PersistentKeyListPDUData::receive  - Truncated data, need=%u, remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->numEntriesCache[0] = stream.in_uint16_le();
+        this->numEntriesCache[1] = stream.in_uint16_le();
+        this->numEntriesCache[2] = stream.in_uint16_le();
+        this->numEntriesCache[3] = stream.in_uint16_le();
+        this->numEntriesCache[4] = stream.in_uint16_le();
+        this->totalEntriesCache[0] = stream.in_uint16_le();
+        this->totalEntriesCache[1] = stream.in_uint16_le();
+        this->totalEntriesCache[2] = stream.in_uint16_le();
+        this->totalEntriesCache[3] = stream.in_uint16_le();
+        this->totalEntriesCache[4] = stream.in_uint16_le();
+        this->bBitMask           = stream.in_uint8();
+
+        stream.in_skip_bytes(3);    // Pad2(1) + Pad3(2)
+
+        unsigned int count = this->maximum_entries();
+
+        expected = count * 8; /* count * (Key1(4) + Key2(4)) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_ERR
+               , "PersistentKeyListPDUData::receive  - Truncated entries, need=%u, remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        for (unsigned int index = 0; index < count; index++) {
+            this->entries[index].Key1 = stream.in_uint32_le();
+            this->entries[index].Key2 = stream.in_uint32_le();
+        }
+    }
+
     void emit(Stream & stream) {
         stream.out_uint16_le(this->numEntriesCache[0]);
         stream.out_uint16_le(this->numEntriesCache[1]);

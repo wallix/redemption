@@ -233,6 +233,7 @@ struct CStrBuf<Range<T, Min, Max, Default>>
 {};
 
 
+// TODO move to config_spec
 struct StringList
 {};
 
