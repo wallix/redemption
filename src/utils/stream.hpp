@@ -984,8 +984,9 @@ private:
 template<class Writer>
 struct DynamicStreamWriter
 {
-    Writer writer_;
-    std::size_t stream_size_;
+    std::size_t packet_size() const noexcept {
+        return this->stream_size_;
+    }
 
     void operator()(std::size_t, OutStream & ostream) const {
         REDASSERT(ostream.get_capacity() == this->stream_size_);
@@ -996,6 +997,9 @@ struct DynamicStreamWriter
         REDASSERT(ostream.get_capacity() == this->stream_size_);
         this->apply_writer2(ostream, buf, used_buf_sz, this->writer_, 1);
     }
+
+    Writer writer_;
+    std::size_t stream_size_;
 
 private:
     template<class W>
@@ -1026,24 +1030,39 @@ namespace details_ {
     /// Extract stream size of Writer
     /// @{
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_impl(R(C::*)(Sz, OutStream &, Args...)) {
+    constexpr Sz packet_size_from_mfunc(R(C::*)(Sz, OutStream &, Args...)) {
         return Sz{};
     }
 
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_impl(R(C::*)(Sz, OutStream &, Args...) const) {
+    constexpr Sz packet_size_from_mfunc(R(C::*)(Sz, OutStream &, Args...) const) {
         return Sz{};
     }
 
     template<class F>
-    constexpr decltype(packet_size_impl(&F::operator()))
-    packet_size(F const &) {
-        return packet_size_impl(&F::operator());
+    constexpr auto packet_size_impl(F const &, std::false_type)
+    -> decltype(packet_size_from_mfunc(&F::operator())){
+        return packet_size_from_mfunc(&F::operator());
     }
 
     template<class Writer>
-    std::size_t packet_size(DynamicStreamWriter<Writer> const & dyn_stream_size) {
-        return dyn_stream_size.stream_size_;
+    constexpr auto packet_size_impl(Writer & writer, std::true_type)
+    -> decltype(writer.packet_size()) {
+        return writer.packet_size();
+    }
+
+    template<class F, class = void>
+    struct has_packet_size : std::false_type
+    {};
+
+    template<class F>
+    struct has_packet_size<F, decltype(void(std::declval<F>().packet_size()))> : std::true_type
+    {};
+
+    template<class F>
+    constexpr auto packet_size(F const & f)
+    -> decltype(packet_size_impl(f, has_packet_size<F>{})) {
+        return packet_size_impl(f, has_packet_size<F>{});
     }
 
     template<class R, class Sz, class ... Args>
@@ -1093,15 +1112,13 @@ namespace details_ {
 
     template<class AccuSize, class Fn, class... Fns>
     constexpr typename build_packets_size_type<AccuSize, Fn, Fns...>::type
-    packets_size_impl(AccuSize accu, Fn const & f, Fns const & ... fns)
-    {
+    packets_size_impl(AccuSize accu, Fn const & f, Fns const & ... fns) {
         return packets_size_impl(packet_size_add(accu, packet_size(f)), fns...);
     }
 
     template<class... Fs>
     constexpr auto packets_size(Fs const & ... fns)
-    -> decltype(packets_size_impl(StreamSize<0>{}, fns...))
-    {
+    -> decltype(packets_size_impl(StreamSize<0>{}, fns...)) {
         return packets_size_impl(StreamSize<0>{}, fns...);
     }
     /// @}
@@ -1178,7 +1195,7 @@ namespace details_ {
  * \param data_writer  function(IntegralConstant||std:size_t, OutStream &)
  * \param header_writers  function(IntegralConstant||std:size_t, OutStream &, [uint8_t * data,] std::size_t data_sz)
  *
- * write_packets(t, f1, f2, f3) write a packet [f3-f2-f1]
+ * write_packets(t, f1, f2, f3) write a packet [f3-f2-f1] in t
  */
 template<class Transport, class DataWriter, class... HeaderWriters>
 void write_packets(Transport & trans, DataWriter data_writer, HeaderWriters... header_writers)

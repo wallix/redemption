@@ -472,6 +472,18 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     };
 
+    struct write_sec_send_fn
+    {
+        uint32_t flags;
+        CryptContext & encrypt;
+        int encryption_level;
+
+        void operator()(StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
+            SEC::Sec_Send sec(sec_header, packet_data, packet_size, this->flags, this->encrypt, this->encryption_level);
+            (void)sec;
+        }
+    };
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -1463,10 +1475,13 @@ public:
     }
 
 private:
-    void send_to_channel(const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length, uint32_t flags) {
+    void send_to_channel(
+        const CHANNELS::ChannelDef & channel,
+        uint8_t const * chunk, std::size_t chunk_size,
+        size_t length, uint32_t flags
+    ) {
         if (this->verbose & 16) {
-            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", static_cast<unsigned>(length)
-                 , (unsigned)chunk.size());
+            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
             channel.log(-1u);
         }
 
@@ -1474,14 +1489,14 @@ private:
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
-        if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+        if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
-                                              , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
+                                              , this->userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
-            uint8_t const * virtual_channel_data = chunk.get_data();
+            uint8_t const * virtual_channel_data = chunk;
             size_t          remaining_data_length = length;
 
             auto get_channel_control_flags = [] (uint32_t flags, size_t data_length,
@@ -1519,28 +1534,10 @@ private:
         }
     }
 
-    // TODO
-    void send_data_request(uint16_t channelId, HStream & stream) {
-        if (this->verbose & 16) {
-            LOG(LOG_INFO, "send data request");
-        }
-
-        BStream x224_header(256);
-        OutPerBStream mcs_header(256);
-
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
-                                      3, stream.size(), MCS::PER_ENCODING);
-
-        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-
-        this->nego.trans.send(x224_header, mcs_header, stream);
-
-        if (this->verbose & 16) {
-            LOG(LOG_INFO, "send data request done");
-        }
+    void send_to_channel(const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length, uint32_t flags) {
+        this->send_to_channel(channel, chunk.get_data(), chunk.size(), length, flags);
     }
 
-    // TODO repetition 1
     template<class... WriterData>
     void send_data_request(uint16_t channelId, WriterData... writer_data) {
         if (this->verbose & 16) {
@@ -1569,45 +1566,12 @@ private:
         }
     }
 
-    // TODO
-    void send_data_request_ex(uint16_t channelId, HStream & stream) {
-        BStream x224_header(256);
-        OutPerBStream mcs_header(256);
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
-        stream.copy_to_head(sec_header.get_data(), sec_header.size());
-
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
-                                      3, stream.size(), MCS::PER_ENCODING);
-
-        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-
-        this->nego.trans.send(x224_header, mcs_header, stream);
-    }
-
-    // TODO repetition 1
     template<class... WriterData>
     void send_data_request_ex(uint16_t channelId, WriterData ... writer_data) {
-        write_packets(
-            this->nego.trans,
-#ifdef IN_IDE_PARSER
-            writer_data,
-#else
+        this->send_data_request(
+            channelId,
             writer_data...,
-#endif
-            [this](StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) {
-                SEC::Sec_Send sec(sec_header, packet_data, packet_size, 0, this->encrypt, this->encryptionLevel);
-                (void)sec;
-            },
-            [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
-                MCS::SendDataRequest_Send mcs(
-                    static_cast<OutPerStream&>(mcs_header), this->userid,
-                    channelId, 1, 3, packet_size, MCS::PER_ENCODING
-                );
-                (void)mcs;
-            },
-            write_x224_dt_tpdu_fn{}
+            write_sec_send_fn{0, this->encrypt, this->encryptionLevel}
         );
     }
 
@@ -2407,15 +2371,7 @@ public:
                                             );
                                         }
                                     },
-                                    [this](StreamSize<256>, OutStream & sec_header,
-                                        uint8_t * packet_data, std::size_t packet_size
-                                    ) {
-                                        SEC::Sec_Send sec(
-                                            sec_header, packet_data, packet_size,
-                                            SEC::SEC_LICENSE_PKT, this->encrypt, 0
-                                        );
-                                        (void)sec;
-                                    }
+                                    write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
                                 );
                                 break;
                             case LIC::PLATFORM_CHALLENGE:
@@ -2471,15 +2427,7 @@ public:
                                                 lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig
                                             );
                                         },
-                                        [this](StreamSize<256>, OutStream & sec_header,
-                                            uint8_t * packet_data, std::size_t packet_size
-                                        ) {
-                                            SEC::Sec_Send sec(
-                                                sec_header, packet_data, packet_size,
-                                                SEC::SEC_LICENSE_PKT, this->encrypt, 0
-                                            );
-                                            (void)sec;
-                                        }
+                                        write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
                                     );
                                 }
                                 break;
@@ -4999,41 +4947,13 @@ public:
        before in process_data case. The problem is that
        we don't save the bitmap key list attached with rdp_bmpcache2 capability
        message so we can't develop this function yet */
-    void send_persistent_key_list_pdu(BStream & pdu_data_stream) {
-        BStream persistent_key_list_stream(65535);
-
-        ShareData sdata(persistent_key_list_stream);
-        sdata.emit_begin(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, this->share_id, RDP::STREAM_MED);
-
-        // Payload
-        persistent_key_list_stream.out_copy_bytes(pdu_data_stream);
-        persistent_key_list_stream.mark_end();
-
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, persistent_key_list_stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(persistent_key_list_stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    }
-
-    /* Send persistent bitmap cache enumeration PDU's
-       Not implemented yet because it should be implemented
-       before in process_data case. The problem is that
-       we don't save the bitmap key list attached with rdp_bmpcache2 capability
-       message so we can't develop this function yet */
     template<class DataWriter>
     void send_persistent_key_list_pdu(DataWriter data_writer) {
-        this->send_data_request_ex(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, data_writer);
+        this->send_pdu_type2(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, data_writer);
     }
 
     template<class DataWriter>
-    void send_data(uint8_t pdu_type2, DataWriter data_writer) {
+    void send_pdu_type2(uint8_t pdu_type2, DataWriter data_writer) {
         // TODO duplication 2
         using packet_size_t = decltype(details_::packet_size(data_writer));
         this->send_data_request_ex(
@@ -5196,27 +5116,10 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
         }
 
-        // TODO duplication 2
-        this->send_data_request_ex(
-            GCC::MCS_GLOBAL_CHANNEL,
-            [this](StreamSize<65536>, OutStream & stream) {
-                ShareData_new_stream sdata(stream);
-                sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
-
-                // Payload
-                stream.out_uint16_le(1); /* type */
-                stream.out_uint16_le(1002);
-
-                // Packet trailer
-                sdata.emit_end();
-            },
-            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
-                ShareControl_Send(
-                    sctrl_header, PDUTYPE_DATAPDU,
-                    this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size
-                );
-            }
-        );
+        this->send_pdu_type2(PDUTYPE2_SYNCHRONIZE, [](StreamSize<4>, OutStream & stream) {
+            stream.out_uint16_le(1); /* type */
+            stream.out_uint16_le(1002);
+        });
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise done");
@@ -5228,7 +5131,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_fonts");
         }
 
-        this->send_data(
+        this->send_pdu_type2(
             PDUTYPE2_FONTLIST,
             [seq](StreamSize<8>, OutStream & stream){
                 // Payload
@@ -5251,7 +5154,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         }
 
-        this->send_data(
+        this->send_pdu_type2(
             PDUTYPE2_INPUT,
             [&](StreamSize<8>, OutStream & stream){
                 // Payload
@@ -5270,35 +5173,40 @@ public:
         }
     }
 
-    void send_input_fastpath(int time, int message_type, int device_flags, int param1, int param2) {
+    void send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
         }
 
-        BStream fastpath_header(256);
-        HStream stream(256, 512);
+        write_packets(
+            this->nego.trans,
+            [&](StreamSize<256>, OutStream & stream) {
+                switch (message_type) {
+                case RDP_INPUT_SCANCODE:
+                    FastPath::KeyboardEvent_Send(stream, device_flags, param1);
+                    break;
 
-        switch (message_type) {
-        case RDP_INPUT_SCANCODE:
-            FastPath::KeyboardEvent_Send(stream, (uint16_t)device_flags, param1);
-            break;
+                case RDP_INPUT_SYNCHRONIZE:
+                    FastPath::SynchronizeEvent_Send(stream, param1);
+                    break;
 
-        case RDP_INPUT_SYNCHRONIZE:
-            FastPath::SynchronizeEvent_Send(stream, param1);
-            break;
+                case RDP_INPUT_MOUSE:
+                    FastPath::MouseEvent_Send(stream, device_flags, param1, param2);
+                    break;
 
-        case RDP_INPUT_MOUSE:
-            FastPath::MouseEvent_Send(stream, (uint16_t)device_flags, param1, param2);
-            break;
-
-        default:
-            LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", message_type);
-            throw Error(ERR_RDP_FASTPATH);
-        }
-
-        FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-
-        this->nego.trans.send(fastpath_header, stream);
+                default:
+                    LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", message_type);
+                    throw Error(ERR_RDP_FASTPATH);
+                }
+            },
+            [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
+                FastPath::ClientInputEventPDU_Send out_cie(
+                    fastpath_header, packet_data, packet_size, 1,
+                    this->encrypt, this->encryptionLevel, this->encryptionMethod
+                );
+                (void)out_cie;
+            }
+        );
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
@@ -5433,9 +5341,9 @@ public:
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
 
-        struct Pointer & cursor = this->cursors[pointer_cache_idx];
+        Pointer & cursor = this->cursors[pointer_cache_idx];
 
-        memset(&cursor, 0, sizeof(struct Pointer));
+        memset(&cursor, 0, sizeof(Pointer));
         cursor.bpp = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
@@ -5526,7 +5434,7 @@ public:
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
-                struct Pointer cursor;
+                Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
             }
@@ -5944,44 +5852,42 @@ public:
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
-        HStream stream(1024, 2048);
 
         InfoPacket infoPacket( this->use_rdp5
-                               , this->domain
-                               , this->username
-                               , password
-                               , this->program
-                               , this->directory
-                               , this->performanceFlags
-                               , this->clientAddr
-                               );
+                             , this->domain
+                             , this->username
+                             , password
+                             , this->program
+                             , this->directory
+                             , this->performanceFlags
+                             , this->clientAddr
+                             );
 
-        if (this->rdp_compression) {
-            infoPacket.flags |= INFO_COMPRESSION;
-            infoPacket.flags &= ~CompressionTypeMask;
-            infoPacket.flags |= ((this->rdp_compression - 1) << 9);
-        }
+        this->send_data_request(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
+                if (this->rdp_compression) {
+                    infoPacket.flags |= INFO_COMPRESSION;
+                    infoPacket.flags &= ~CompressionTypeMask;
+                    infoPacket.flags |= ((this->rdp_compression - 1) << 9);
+                }
 
-        if (this->enable_wab_agent) {
-            infoPacket.flags &= ~INFO_MAXIMIZESHELL;
-        }
+                if (this->enable_wab_agent) {
+                    infoPacket.flags &= ~INFO_MAXIMIZESHELL;
+                }
 
-        if (this->remote_program) {
-            infoPacket.flags |= INFO_RAIL;
-        }
+                if (this->remote_program) {
+                    infoPacket.flags |= INFO_RAIL;
+                }
 
-        infoPacket.emit(stream);
-        stream.mark_end();
-
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
-        stream.copy_to_head(sec_header.get_data(), sec_header.size());
+                infoPacket.emit(stream);
+            },
+            write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
+        );
 
         if (this->verbose & 1) {
             infoPacket.log("Send data request", this->password_printing_mode, !this->enable_wab_agent);
         }
-        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->open_session_timeout) {
             this->open_session_timeout_checker.restart_timeout(
@@ -6150,11 +6056,13 @@ public:
         if (this->verbose & 1){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }
-        BStream x224_header(256);
-        HStream mcs_data(256, 512);
-        MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_data.size());
-        this->nego.trans.send(x224_header, mcs_data);
+        write_packets(
+            this->nego.trans,
+            [](StreamSize<256>, OutStream & mcs_data) {
+                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+            },
+            write_x224_dt_tpdu_fn{}
+        );
     }
 
     //void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
@@ -6226,21 +6134,26 @@ public:
                 this->verbose);
 
             {
-                BStream out_s(32768);
+                StaticOutStream<32768> out_s;
 
                 const size_t message_length_offset = out_s.get_offset();
                 out_s.out_clear_bytes(sizeof(uint16_t));
 
-                out_s.out_string("StartupApplication=");
+                {
+                    char cstr[] = "StartupApplication=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
+                }
+
                 if (this->real_alternate_shell.empty()) {
-                    out_s.out_string("[Windows Explorer]");
+                    char cstr[] = "[Windows Explorer]";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
                 }
                 else {
                     if (!this->real_working_dir.empty()) {
-                        out_s.out_string(this->real_working_dir.c_str());
+                        out_s.out_copy_bytes(this->real_working_dir.data(), this->real_working_dir.size());
                     }
                     out_s.out_uint8('|');
-                    out_s.out_string(this->real_alternate_shell.c_str());
+                    out_s.out_copy_bytes(this->real_alternate_shell.data(), this->real_alternate_shell.size());
                 }
                 out_s.out_clear_bytes(1);   // Null character
 
@@ -6248,10 +6161,8 @@ public:
                     out_s.get_offset() - message_length_offset - sizeof(uint16_t),
                     message_length_offset);
 
-                out_s.mark_end();
-
                 this->send_to_channel(
-                    wab_agent_channel, out_s, out_s.size(),
+                    wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                 );
             }
@@ -6261,22 +6172,23 @@ public:
 
             if (this->wab_agent_keepalive_timeout > 0) {
                 {
-                    BStream out_s(1024);
+                    StaticOutStream<1024> out_s;
 
                     const size_t message_length_offset = out_s.get_offset();
                     out_s.out_clear_bytes(sizeof(uint16_t));
 
-                    out_s.out_string("Request=Keep-Alive");
+                    {
+                        char cstr[] = "Request=Keep-Alive";
+                        out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
+                    }
                     out_s.out_clear_bytes(1);   // Null character
 
                     out_s.set_out_uint16_le(
                         out_s.get_offset() - message_length_offset - sizeof(uint16_t),
                         message_length_offset);
 
-                    out_s.mark_end();
-
                     this->send_to_channel(
-                        wab_agent_channel, out_s, out_s.size(),
+                        wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                     );
                 }
