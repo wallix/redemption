@@ -49,7 +49,7 @@ namespace aux_ {
 #ifdef NDEBUG
 #define REDASSERT(x)
 #else
-# ifdef LOGPRINT
+# if defined(LOGPRINT) || defined(REDASSERT_AS_ASSERT)
 #  include <cassert>
 #  define REDASSERT(x) assert(x)
 # else

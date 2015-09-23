@@ -4949,19 +4949,19 @@ public:
        message so we can't develop this function yet */
     template<class DataWriter>
     void send_persistent_key_list_pdu(DataWriter data_writer) {
-        this->send_pdu_type2(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, data_writer);
+        this->send_pdu_type2(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, RDP::STREAM_MED, data_writer);
     }
 
     template<class DataWriter>
-    void send_pdu_type2(uint8_t pdu_type2, DataWriter data_writer) {
+    void send_pdu_type2(uint8_t pdu_type2, uint8_t stream_id, DataWriter data_writer) {
         // TODO duplication 2
         using packet_size_t = decltype(details_::packet_size(data_writer));
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this, &data_writer, pdu_type2](
+            [this, &data_writer, pdu_type2, stream_id](
                 StreamSize<256 + packet_size_t{}>, OutStream & stream) {
                 ShareData_new_stream sdata(stream);
-                sdata.emit_begin(pdu_type2, this->share_id, RDP::STREAM_MED);
+                sdata.emit_begin(pdu_type2, this->share_id, stream_id);
                 {
                     OutStream substream(stream.get_current(), packet_size_t{});
                     data_writer(packet_size_t{}, substream);
@@ -5116,10 +5116,13 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
         }
 
-        this->send_pdu_type2(PDUTYPE2_SYNCHRONIZE, [](StreamSize<4>, OutStream & stream) {
-            stream.out_uint16_le(1); /* type */
-            stream.out_uint16_le(1002);
-        });
+        this->send_pdu_type2(
+            PDUTYPE2_SYNCHRONIZE, RDP::STREAM_MED,
+            [](StreamSize<4>, OutStream & stream) {
+                stream.out_uint16_le(1); /* type */
+                stream.out_uint16_le(1002);
+            }
+        );
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise done");
@@ -5132,7 +5135,7 @@ public:
         }
 
         this->send_pdu_type2(
-            PDUTYPE2_FONTLIST,
+            PDUTYPE2_FONTLIST, RDP::STREAM_MED,
             [seq](StreamSize<8>, OutStream & stream){
                 // Payload
                 stream.out_uint16_le(0); /* number of fonts */
@@ -5155,8 +5158,8 @@ public:
         }
 
         this->send_pdu_type2(
-            PDUTYPE2_INPUT,
-            [&](StreamSize<8>, OutStream & stream){
+            PDUTYPE2_INPUT, RDP::STREAM_HI,
+            [&](StreamSize<16>, OutStream & stream){
                 // Payload
                 stream.out_uint16_le(1); /* number of events */
                 stream.out_uint16_le(0);
