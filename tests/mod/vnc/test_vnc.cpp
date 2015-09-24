@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
 {
     struct testable_mod_vnc : mod_vnc {
         static void testable_fill_encoding_types_buffer(
-                const char * encodings, Stream & stream,
+                const char * encodings, OutStream & stream,
                 uint16_t & number_of_encodings, uint32_t verbose) {
             fill_encoding_types_buffer(encodings, stream, number_of_encodings,
                 verbose);
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
     };
 
     {
-        BStream  stream(512);
+        StaticOutStream <512> stream;
         uint16_t number_of_encodings = 0;
         testable_mod_vnc::testable_fill_encoding_types_buffer("16,2,0,1,-239",
             stream, number_of_encodings, 1);
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
     }
 
     {
-        BStream  stream(512);
+        StaticOutStream <512> stream;
         uint16_t number_of_encodings = 0;
         testable_mod_vnc::testable_fill_encoding_types_buffer(
             "\t16 , 2 , 0 , 1 , -239 ", stream, number_of_encodings, 1);

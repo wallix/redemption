@@ -269,9 +269,8 @@ public:
 
         this->screen.clear();
     }
-    //==============================================================================================================
 
-    virtual void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
+    void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
         if (this->verbose) {
             LOG(LOG_INFO, "MS-Logon with following values:");
             LOG(LOG_INFO, "Gen=%u", gen);
@@ -281,14 +280,14 @@ public:
         DiffieHellman dh(gen, mod);
         uint64_t pub = dh.createInterKey();
 
-        BStream stream(32768);
-        stream.out_uint64_be(pub);
+        StaticOutStream<32768> out_stream;
+        out_stream.out_uint64_be(pub);
 
         uint64_t key = dh.createEncryptionKey(resp);
         uint8_t keybuffer[8] = {};
         dh.uint64_to_uint8p(key, keybuffer);
 
-        rfbDesKey((unsigned char*)keybuffer, EN0); // 0, encrypt
+        rfbDesKey(keybuffer, EN0); // 0, encrypt
 
         uint8_t ms_username[256] = {};
         uint8_t ms_password[64] = {};
@@ -299,24 +298,29 @@ public:
         rfbDesText(ms_username, cp_username, sizeof(ms_username), keybuffer);
         rfbDesText(ms_password, cp_password, sizeof(ms_password), keybuffer);
 
-        stream.out_copy_bytes(cp_username, 256);
-        stream.out_copy_bytes(cp_password, 64);
+        out_stream.out_copy_bytes(cp_username, 256);
+        out_stream.out_copy_bytes(cp_password, 64);
 
-        this->t.send(stream.get_data(), 8+256+64);
+        this->t.send(out_stream.get_data(), out_stream.get_offset());
         // sec result
         if (this->verbose) {
             LOG(LOG_INFO, "Waiting for password ack");
         }
-        stream.init(8192);
-        this->t.recv(&stream.end, 4);
-        int i = stream.in_uint32_be();
-        if (i != 0) {
+
+        auto in_uint32_be = [&]{
+            uint8_t buf_stream[4];
+            auto end = buf_stream;
+            this->t.recv(&end, 4);
+            return Parse(buf_stream).in_uint32_be();
+
+        };
+        uint32_t i = in_uint32_be();
+        if (i != 0u) {
             // vnc password failed
             LOG(LOG_INFO, "MS LOGON password FAILED\n");
             // Optionnal
             try {
-                this->t.recv(&stream.end, 4);
-                uint32_t reason_length = stream.in_uint32_be();
+                uint32_t reason_length = in_uint32_be();
 
                 char   reason[256];
                 char * preason = reason;
@@ -415,12 +419,12 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
         }
-        BStream stream(32768);
+        StaticOutPerStream<8> stream;
         stream.out_uint8(4);
         stream.out_uint8(down_flag); /* down/up flag */
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
-        this->t.send(stream.get_data(), 8);
+        this->t.send(stream.get_data(), stream.get_offset());
         this->event.set(1000);
     }
 
@@ -450,18 +454,17 @@ protected:
         auto client_cut_text = [this](char * str) {
             ::in_place_windows_to_linux_newline_convert(str);
 
-            size_t str_len = ::strlen(str);
+            size_t const str_len = ::strlen(str);
 
-            BStream stream(str_len + 8);
+            StreamBufMaker<65536> buf_maker;
+            OutStream stream = buf_maker.reserve_out_stream(str_len + 8);
 
             stream.out_uint8(6);                    // message-type : ClientCutText
             stream.out_clear_bytes(3);              // padding
             stream.out_uint32_be(str_len);          // length
             stream.out_copy_bytes(str, str_len);    // text
 
-            stream.mark_end();
-
-            this->t.send(stream.get_data(), stream.size());
+            this->t.send(stream.get_data(), stream.get_offset());
 
             this->event.set(1000);
         };
@@ -575,7 +578,7 @@ public:
     } // rdp_input_invalidate
 
 protected:
-    static void fill_encoding_types_buffer(const char * encodings, Stream & stream, uint16_t & number_of_encodings, uint32_t verbose)
+    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, uint32_t verbose)
     {
         if (verbose) {
             LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
@@ -656,12 +659,12 @@ public:
                         RDPECLIP::GeneralCapabilitySet::size()
                     );
 
-                BStream out_s(1024);
+                StaticOutStream<1024> out_s;
 
                 clip_cap_pdu.emit(out_s);
                 general_caps.emit(out_s);
 
-                size_t length     = out_s.size();
+                size_t length     = out_s.get_offset();
                 size_t chunk_size = length;
 
                 if (this->verbose) {
@@ -681,11 +684,11 @@ public:
 
                 RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
 
-                out_s.reset();
+                out_s.rewind();
 
                 server_monitor_ready_pdu.emit(out_s);
 
-                length     = out_s.size();
+                length     = out_s.get_offset();
                 chunk_size = length;
 
                 if (this->verbose) {
@@ -772,23 +775,27 @@ public:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
-                BStream stream(32768);
 
                 /* protocol version */
-                this->t.recv(&stream.end, 12);
                 uint8_t server_protoversion[12];
-                stream.in_copy_bytes(server_protoversion, 12);
+                {
+                    auto end = server_protoversion;
+                    this->t.recv(&end, 12);
+                }
                 server_protoversion[11] = 0;
                 if (this->verbose) {
-                    LOG(LOG_INFO, "Server Protocol Version=%s\n",
-                        server_protoversion);
+                    LOG(LOG_INFO, "Server Protocol Version=%s\n", server_protoversion);
                 }
                 this->t.send("RFB 003.003\n", 12);
                 // sec type
 
-                stream.init(8192);
-                this->t.recv(&stream.end, 4);
-                int32_t security_level = stream.in_sint32_be();
+                int32_t const security_level = [this](){
+                    uint8_t buf[4];
+                    auto end = buf;
+                    this->t.recv(&end, sizeof(buf));
+                    return Parse(buf).in_sint32_be();
+                }();
+
                 if (this->verbose) {
                     LOG(LOG_INFO, "security level is %d "
                         "(1 = none, 2 = standard, -6 = mslogon)\n",
@@ -803,8 +810,12 @@ public:
                         if (this->verbose) {
                             LOG(LOG_INFO, "Receiving VNC Server Random");
                         }
-                        stream.init(8192);
-                        this->t.recv(&stream.end, 16);
+                        uint8_t buf[16];
+                        auto recv = [&](size_t len) {
+                            auto end = buf;
+                            this->t.recv(&end, len);
+                        };
+                        recv(16);
 
                         // taken from vncauth.c
                         {
@@ -813,29 +824,28 @@ public:
                             // key is simply password padded with nulls
                             strncpy(key, this->password, 8);
                             rfbDesKey((unsigned char*)key, EN0); // 0, encrypt
-                            rfbDes(stream.get_data(), stream.get_data());
-                            rfbDes(stream.get_data() + 8, stream.get_data() + 8);
+                            rfbDes(buf, buf);
+                            rfbDes(buf + 8, buf + 8);
                         }
                         if (this->verbose) {
                             LOG(LOG_INFO, "Sending Password");
                         }
-                        this->t.send(stream.get_data(), 16);
+                        this->t.send(buf, 16);
 
                         // sec result
                         if (this->verbose) {
                             LOG(LOG_INFO, "Waiting for password ack");
                         }
-                        stream.init(8192);
-                        this->t.recv(&stream.end, 4);
-                        int i = stream.in_uint32_be();
+                        recv(4);
+                        int i = Parse(buf).in_uint32_be();
                         if (i != 0) {
                             // vnc password failed
 
                             // Optionnal
                             try
                             {
-                                this->t.recv(&stream.end, 4);
-                                uint32_t reason_length = stream.in_uint32_be();
+                                recv(4);
+                                uint32_t reason_length = Parse(buf).in_uint32_be();
 
                                 char   reason[256];
                                 char * preason = reason;
@@ -845,7 +855,7 @@ public:
 
                                 LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
                             }
-                            catch (const Error & e)
+                            catch (const Error &)
                             {
                             }
 
@@ -876,8 +886,10 @@ public:
                     case -6: // MS-LOGON
                     {
                         LOG(LOG_INFO, "VNC MS-LOGON Auth");
-                        stream.init(8192);
-                        this->t.recv(&stream.end, 8+8+8);
+                        uint8_t buf[8+8+8];
+                        auto end = buf;
+                        this->t.recv(&end, sizeof(buf));
+                        InStream stream(buf);
                         uint64_t gen = stream.in_uint64_be();
                         uint64_t mod = stream.in_uint64_be();
                         uint64_t resp = stream.in_uint64_be();
@@ -887,12 +899,13 @@ public:
                     case 0:
                     {
                         LOG(LOG_INFO, "VNC INVALID Auth");
-                        stream.init(8192);
-                        this->t.recv(&stream.end, 4);
-                        size_t reason_length = stream.in_uint32_be();
-                        stream.init(8192);
-                        this->t.recv(&stream.end, reason_length);
-                        hexdump_c(stream.get_data(), reason_length);
+                        uint8_t buf[8192];
+                        auto end = buf;
+                        this->t.recv(&end, 4);
+                        size_t reason_length = Parse(buf).in_uint32_be();
+                        end = buf;
+                        this->t.recv(&end, reason_length);
+                        hexdump_c(buf, reason_length);
                         throw Error(ERR_VNC_CONNECTION_ERROR);
 
                     }
@@ -980,8 +993,12 @@ public:
                 // message is extended with an interaction capabilities section.
 
                 {
-                    BStream stream(32768);
-                    this->t.recv(&stream.end, 24); // server init
+                    uint8_t buf[24];
+                    {
+                        auto end = buf;
+                        this->t.recv(&end, sizeof(buf)); // server init
+                    }
+                    InStream stream(buf);
                     this->width = stream.in_uint16_be();
                     this->height = stream.in_uint16_be();
                     this->bpp    = stream.in_uint8();
@@ -1035,7 +1052,7 @@ public:
                 // FramebufferUpdate is using the new or the previous pixel
                 // format.
 
-                    BStream stream(32768);
+                    StaticOutStream<20> stream;
                     // Set Pixel format
                     stream.out_uint8(0);
 
@@ -1095,7 +1112,7 @@ public:
                         "\x00" // blue shift      : 1 bytes =  0
                         "\0\0\0"; // padding      : 3 bytes
                     stream.out_copy_bytes(pixel_format, 16);
-                    this->t.send(stream.get_data(), 20);
+                    this->t.send(stream.get_data(), stream.get_offset());
 
                     this->bpp = 16;
                     this->depth  = 16;
@@ -1132,7 +1149,7 @@ public:
                     uint16_t     number_of_encodings = 0;
 
                     // SetEncodings
-                    BStream stream(32768);
+                    StaticOutStream<32768> stream;
                     stream.out_uint8(2);
                     stream.out_uint8(0);
 
@@ -1216,11 +1233,11 @@ public:
                 // 04 00 00 00 04 00 00 00 0? 00 00 00
                 // 00 00 00 00
                 RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
-                BStream                        out_s(256);
+                StaticOutStream<256>           out_s;
 
                 format_data_request_pdu.emit(out_s);
 
-                size_t length     = out_s.size();
+                size_t length     = out_s.get_offset();
                 size_t chunk_size = length;
 
                 this->clipboard_requesting_for_data_is_delayed = false;
@@ -1250,9 +1267,9 @@ private:
         uint16_t tile_x;
         uint16_t tile_y;
 
-        BStream data_remain;
+        StaticOutStream<16384> data_remain;
 
-        ZRLEUpdateContext() : data_remain(16384) {}
+        ZRLEUpdateContext() {}
     };
 
     void lib_framebuffer_update_zrle(HStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context)
@@ -1261,17 +1278,17 @@ private:
             LOG(LOG_INFO,
                 "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
                 uncompressed_data_buffer.in_remain(),
-                update_context.data_remain.size());
+                update_context.data_remain.get_offset());
         }
 
-        if (update_context.data_remain.size())
+        if (update_context.data_remain.get_offset())
         {
             uncompressed_data_buffer.copy_to_head(
                 update_context.data_remain.get_data(),
-                update_context.data_remain.size());
+                update_context.data_remain.get_offset());
             uncompressed_data_buffer.p = uncompressed_data_buffer.get_data();
 
-            update_context.data_remain.reset();
+            update_context.data_remain.rewind();
         }
 
         uint8_t    tile_data[16384];    // max size with 16 bpp
@@ -1616,7 +1633,6 @@ private:
             {
                 update_context.data_remain.out_copy_bytes(remaining_data,
                     remaining_data_length);
-                update_context.data_remain.mark_end();
             }
         }
     }
@@ -1850,11 +1866,14 @@ private:
 
                 const int sz_pixel_array = cx * cy * Bpp;
                 const int sz_bitmask = nbbytes(cx) * cy;
-                BStream stream_cursor(sz_pixel_array + sz_bitmask);
-                this->t.recv(&stream_cursor.end, sz_pixel_array + sz_bitmask);
-
-                const uint8_t *vnc_pointer_data = stream_cursor.in_uint8p(sz_pixel_array);
-                const uint8_t *vnc_pointer_mask = stream_cursor.in_uint8p(sz_bitmask);
+                StreamBufMaker<65536> cursor_buf_maker;
+                auto cursor_buf = cursor_buf_maker.reserve(sz_pixel_array + sz_bitmask);
+                const uint8_t *vnc_pointer_data = cursor_buf;
+                const uint8_t *vnc_pointer_mask = cursor_buf + sz_pixel_array;
+                {
+                    auto end = cursor_buf;
+                    this->t.recv(&end, sz_pixel_array + sz_bitmask);
+                }
 
                 Pointer cursor;
                 cursor.x = 3;
@@ -1927,14 +1946,22 @@ private:
     //==============================================================================================================
     void lib_palette_update(void) {
     //==============================================================================================================
-        BStream stream(32768);
-        this->t.recv(&stream.end, 5);
+        uint8_t buf[5];
+        InStream stream(buf);
+        {
+            auto end = buf;
+            this->t.recv(&end, 5);
+        }
         stream.in_skip_bytes(1);
         int first_color = stream.in_uint16_be();
         int num_colors = stream.in_uint16_be();
 
-        BStream stream2(8192);
-        this->t.recv(&stream2.end, num_colors * 6);
+        uint8_t buf2[8192];
+        InStream stream2(buf2);
+        {
+            auto end = buf2;
+            this->t.recv(&end, num_colors * 6);
+        }
 
         if (num_colors <= 256) {
             for (int i = 0; i < num_colors; i++) {
@@ -1963,7 +1990,7 @@ private:
         if (channel) {
             // Monitor ready PDU send to front
             RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-            BStream                         out_s(64);
+            StaticOutStream<64>             out_s;
 
 /*
             //- Beginning of clipboard PDU Header ----------------------------
@@ -1979,7 +2006,7 @@ private:
 
             server_monitor_ready_pdu.emit(out_s);
 
-            size_t length     = out_s.size();
+            size_t length     = out_s.get_offset();
             size_t chunk_size = length;
 
             this->send_to_front_channel( channel_names::cliprdr
@@ -2077,13 +2104,13 @@ private:
             }
 
             RDPECLIP::FormatListPDU format_list_pdu;
-            BStream                 out_s(256);
+            StaticOutStream<256>    out_s;
 
             const bool unicodetext = this->to_rdp_clipboard_data_is_utf8_encoded;
 
             format_list_pdu.emit_ex(out_s, unicodetext);
 
-            size_t length     = out_s.size();
+            size_t length     = out_s.get_offset();
             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
             this->send_to_front_channel(channel_names::cliprdr,
@@ -2130,8 +2157,8 @@ private:
     void clipboard_send_to_vnc(Stream & chunk, size_t length, uint32_t flags)
     {
         if (this->verbose) {
-            LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: length=%u chunk_size=%u flags=0x%08X"
-               , (unsigned)length, (unsigned)chunk.size(), flags);
+            LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: length=%zu chunk_size=%zu flags=0x%08X"
+               , length, chunk.size(), flags);
         }
 
         TODO("Create a unit tested class for clipboard messages");
@@ -2173,7 +2200,7 @@ private:
          */
 
         // specific treatement depending on msgType
-        SubStream stream(chunk, 0, chunk.size());
+        InStream stream(chunk.get_data(), chunk.size());
 
         RDPECLIP::RecvFactory recv_factory(stream);
 
@@ -2210,11 +2237,11 @@ private:
                 // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
                 // 03 00 01 00 00 00 00 00 00 00 00 00
                 RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
-                BStream                         out_s(256);
+                StaticOutStream<256>            out_s;
 
                 format_list_response_pdu.emit(out_s);
 
-                size_t length     = out_s.size();
+                size_t length     = out_s.get_offset();
                 size_t chunk_size = length;
 
                 this->send_to_front_channel( channel_names::cliprdr
@@ -2258,11 +2285,11 @@ private:
                         // 04 00 00 00 04 00 00 00 0? 00 00 00
                         // 00 00 00 00
                         RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
-                        out_s.init(256);
+                        out_s.rewind();
 
                         format_data_request_pdu.emit(out_s);
 
-                        length     = out_s.size();
+                        length     = out_s.get_offset();
                         chunk_size = length;
 
                         this->clipboard_requesting_for_data_is_delayed = false;
@@ -2304,13 +2331,13 @@ private:
                             }
 
                             RDPECLIP::FormatListPDU format_list_pdu;
-                            BStream                 out_s(256);
+                            StaticOutStream<256>    out_s;
 
                             const bool unicodetext = (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT);
 
                             format_list_pdu.emit_ex(out_s, unicodetext);
 
-                            size_t length     = out_s.size();
+                            size_t length     = out_s.get_offset();
                             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
                             this->send_to_front_channel(channel_names::cliprdr,
@@ -2355,8 +2382,8 @@ private:
                        );
                 }
 
-                auto send_format_data_response = [this] (Stream & pdu_stream) {
-                    size_t pdu_data_length           = pdu_stream.size();
+                auto send_format_data_response = [this] (OutStream & pdu_stream) {
+                    size_t pdu_data_length           = pdu_stream.get_offset();
                     size_t remaining_pdu_data_length = pdu_data_length;
 
                     uint8_t * chunk_data = pdu_stream.get_data();
@@ -2397,7 +2424,8 @@ private:
                 };
 
                 if (this->bogus_clipboard_infinite_loop && this->clipboard_owned_by_client) {
-                    BStream out_stream(
+                    StreamBufMaker<65536> buf_maker;
+                    OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                 // clipHeader(8)
                             this->to_vnc_clipboard_data.size()  // data
                         );
@@ -2407,7 +2435,6 @@ private:
 
                     format_data_response_pdu.emit_ex(out_stream, this->to_vnc_clipboard_data.size());
                     out_stream.out_copy_bytes(this->to_vnc_clipboard_data.get_data(), this->to_vnc_clipboard_data.size());
-                    out_stream.mark_end();
 
                     send_format_data_response(out_stream);
 
@@ -2416,7 +2443,8 @@ private:
 
                 if ((format_data_request_pdu.requestedFormatId == RDPECLIP::CF_TEXT) &&
                     !this->to_rdp_clipboard_data_is_utf8_encoded) {
-                    BStream out_stream(
+                    StreamBufMaker<65536> buf_maker;
+                    OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                         // clipHeader(8)
                             this->to_rdp_clipboard_data.size() * 2 +    // data
                             1                                           // Null character
@@ -2441,7 +2469,6 @@ private:
 
                     format_data_response_pdu.emit_ex(out_stream, out_data_stream.get_offset());
                     out_stream.out_skip_bytes(out_data_stream.get_offset());
-                    out_stream.mark_end();
 
                     send_format_data_response(out_stream);
 
@@ -2452,7 +2479,8 @@ private:
                     }
                 }
                 else if (format_data_request_pdu.requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
-                    BStream out_stream(
+                    StreamBufMaker<65536> buf_maker;
+                    OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                         // clipHeader(8)
                             this->to_rdp_clipboard_data.size() * 4 +    // data
                             1                                           // Null character
@@ -2490,7 +2518,6 @@ private:
 
                     format_data_response_pdu.emit_ex(out_stream, out_data_stream.get_offset());
                     out_stream.out_skip_bytes(out_data_stream.get_offset());
-                    out_stream.mark_end();
 
                     send_format_data_response(out_stream);
 
@@ -2525,7 +2552,7 @@ private:
 
                         this->to_vnc_clipboard_data.reset();
 
-                        this->to_vnc_clipboard_data.out_copy_bytes(stream.p, format_data_response_pdu.dataLen());
+                        this->to_vnc_clipboard_data.out_copy_bytes(stream.get_current(), format_data_response_pdu.dataLen());
                         this->to_vnc_clipboard_data.mark_end();
 
                         this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
@@ -2555,7 +2582,7 @@ private:
                                     this->to_vnc_clipboard_data_remaining,
                                     stream.in_remain()
                                 );
-                            this->to_vnc_clipboard_data.out_copy_bytes(stream.p, number_of_bytes_to_read);
+                            this->to_vnc_clipboard_data.out_copy_bytes(stream.get_current(), number_of_bytes_to_read);
 
                             this->to_vnc_clipboard_data_remaining -= number_of_bytes_to_read;
                         }
@@ -2607,7 +2634,7 @@ private:
                             stream.in_remain()
                         );
 
-                    this->to_vnc_clipboard_data.out_copy_bytes(stream.p, number_of_bytes_to_read);
+                    this->to_vnc_clipboard_data.out_copy_bytes(stream.get_current(), number_of_bytes_to_read);
 
                     this->to_vnc_clipboard_data_remaining -= number_of_bytes_to_read;
                 }

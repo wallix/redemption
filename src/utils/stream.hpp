@@ -847,6 +847,33 @@ using StaticOutStream = BasicStaticStream<N, OutStream>;
 template<std::size_t N>
 using StaticInStream = BasicStaticStream<N, InStream>;
 
+template<std::size_t LenMax>
+struct StreamBufMaker
+{
+    StreamBufMaker() = default;
+
+    uint8_t * reserve(std::size_t n) {
+        uint8_t * p = this->buf_;
+        if (n > sizeof(this->buf_)) {
+            p = new uint8_t[n];
+            this->dyn_buf_.reset(p);
+        }
+        return p;
+    }
+
+    OutStream reserve_out_stream(std::size_t n) {
+        return OutStream(this->reserve(n), n);
+    }
+
+    InStream reserve_in_stream(std::size_t n) {
+        return InStream(this->reserve(n), n);
+    }
+
+private:
+    uint8_t buf_[LenMax];
+    std::unique_ptr<uint8_t[]> dyn_buf_;
+};
+
 // class DynamicOutStream;
 // class DynamicInStream;
 

@@ -30,9 +30,9 @@
 #define SHARE_PATH FIXTURES_PATH
 
 // Comment the code block below to generate testing data.
-// #define LOGNULL
+#define LOGNULL
 // Uncomment the code block below to generate testing data.
-#define LOGPRINT
+// #define LOGPRINT
 
 #include "check_sig.hpp"
 #include "config.hpp"
