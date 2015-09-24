@@ -263,15 +263,14 @@ private:
 
             const uint32_t dataLen = chunk.in_uint32_le();
 
-            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                LOG(LOG_INFO,
-                    "Sending %s(%u) clipboard data to server (%u) bytes%s",
-                    RDPECLIP::get_Format_name(this->requestedFormatId),
-                    this->requestedFormatId, dataLen,
-                    (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
-                      (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
-                     ":" : "."));
-            }
+            // !this->param_dont_log_data_into_syslog
+            LOG(LOG_INFO,
+                "Sending %s(%u) clipboard data to server (%u) bytes%s",
+                RDPECLIP::get_Format_name(this->requestedFormatId),
+                this->requestedFormatId, dataLen,
+                (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
+                  (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
+                 ":" : "."));
 
             const size_t max_length_of_data_to_dump = 256;
 
@@ -450,14 +449,65 @@ private:
 
         if (!this->client_use_long_format_name ||
             !this->server_use_long_format_name) {
-            LOG(LOG_WARNING,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "Short Format Name%s variant of Format List PDU is used "
-                    "for exchanging updated format names.",
-                ((msgFlags & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)" : ""));
+            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                LOG(LOG_INFO,
+                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                        "Short Format Name%s variant of Format List PDU is used "
+                        "for exchanging updated format names.",
+                    ((msgFlags & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
+                                                           : ""));
+            }
 
-            // File List data cannot be detected!!!
-            this->client_file_list_format_id = 0;
+            for (uint32_t remaining_data_length = dataLen;
+                 remaining_data_length; ) {
+                {
+                    const unsigned int expected = 6;    // formatId(4) + formatName(32)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_WARNING,
+                            "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                                "Truncated (SHORT) CLIPRDR_FORMAT_LIST, "
+                                "need=%u remains=%u",
+                            expected, chunk.in_remain());
+                        break;
+                    }
+                }
+
+                const uint32_t formatId           = chunk.in_uint32_le();
+                const size_t   format_name_length =
+                        32      // formatName(32)
+                           / 2  // size_of(Unicode characters)(2)
+                    ;
+
+                const size_t size_of_utf8_string =
+                    format_name_length *
+                    maximum_length_of_utf8_character_in_bytes;
+                uint8_t * const utf8_string = static_cast<uint8_t *>(
+                    ::alloca(size_of_utf8_string));
+                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                    chunk.p, format_name_length, utf8_string,
+                    size_of_utf8_string);
+
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                            "formatId=%d wszFormatName=\"%s\"",
+                        formatId, utf8_string);
+                }
+
+                remaining_data_length -=
+                          4     // formatId(4)
+                        + 32    // formatName(32)
+                    ;
+
+                if ((sizeof(FILE_LIST_FORMAT_NAME) == length_of_utf8_string) &&
+                    !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
+                    this->client_file_list_format_id = formatId;
+                }
+
+                chunk.in_skip_bytes(
+                        32  // formatName(32)
+                    );
+            }
         }
         else {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -474,7 +524,7 @@ private:
                     if (!chunk.in_check_rem(expected)) {
                         LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                                "Truncated CLIPRDR_FORMAT_LIST, "
+                                "Truncated (LONG) CLIPRDR_FORMAT_LIST, "
                                 "need=%u remains=%u",
                             expected, chunk.in_remain());
                         break;
@@ -726,14 +776,13 @@ public:
 
             const uint32_t dataLen = chunk.in_uint32_le();
 
-            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
-                    RDPECLIP::get_Format_name(this->requestedFormatId),
-                    this->requestedFormatId, dataLen,
-                    (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
-                      (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
-                     ":" : "."));
-            }
+            // !this->param_dont_log_data_into_syslog
+            LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
+                RDPECLIP::get_Format_name(this->requestedFormatId),
+                this->requestedFormatId, dataLen,
+                (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
+                  (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
+                 ":" : "."));
 
             const size_t max_length_of_data_to_dump = 256;
 
@@ -874,14 +923,53 @@ public:
 
         if (!this->client_use_long_format_name ||
             !this->server_use_long_format_name) {
-            LOG(LOG_WARNING,
-                "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                    "Short Format Name%s variant of Format List PDU is used "
-                    "for exchanging updated format names.",
-                ((msgFlags & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)" : ""));
+            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                LOG(LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                        "Short Format Name%s variant of Format List PDU is used "
+                        "for exchanging updated format names.",
+                    ((msgFlags & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
+                                                           : ""));
+            }
 
-            // File List data cannot be detected!!!
-            this->server_file_list_format_id = 0;
+            for (uint32_t remaining_data_length = dataLen;
+                 remaining_data_length; ) {
+                const uint32_t formatId           = chunk.in_uint32_le();
+                const size_t   format_name_length =
+                        32      // formatName(32)
+                           / 2  // size_of(Unicode characters)(2)
+                    ;
+
+                const size_t size_of_utf8_string =
+                    format_name_length *
+                    maximum_length_of_utf8_character_in_bytes;
+                uint8_t * const utf8_string = static_cast<uint8_t *>(
+                    ::alloca(size_of_utf8_string));
+                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                    chunk.p, format_name_length, utf8_string,
+                    size_of_utf8_string);
+
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                            "formatId=%d wszFormatName=\"%s\"",
+                        formatId, utf8_string);
+                }
+
+                remaining_data_length -=
+                          4     // formatId(4)
+                        + 32    // formatName(32)
+                    ;
+
+                if ((sizeof(FILE_LIST_FORMAT_NAME) == length_of_utf8_string) &&
+                    !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
+                    this->server_file_list_format_id = formatId;
+                }
+
+                chunk.in_skip_bytes(
+                        32  // formatName(32)
+                    );
+            }
         }
         else {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {

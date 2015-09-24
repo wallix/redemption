@@ -172,7 +172,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
 
         {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
-        {"remove-input-file", "remove input file"}, 
+        {"remove-input-file", "remove input file"},
 
         {"config-file", &config_filename, "used an another ini file"},
     });

@@ -700,12 +700,11 @@ public:
         }
 
         if (this->enable_wab_agent) {
-
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
-            char pid_str[64];
-            snprintf(pid_str, sizeof(pid_str), "%u", ::getpid());
+            char pid_str[16];
+            snprintf(pid_str, sizeof(pid_str), "%d", ::getpid());
             const size_t pid_str_len = ::strlen(pid_str);
 
             const char * pid_tag ="{PID}";
