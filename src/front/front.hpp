@@ -4566,8 +4566,7 @@ private:
                 unsigned char_count = decoded_data.get_offset() / sizeof(uint32_t);
                 decoded_data.rewind();
                 for (; char_count > 0; char_count--) {
-                    // Unicode Character 'BLACK CIRCLE' (U+25CF).
-                    decoded_data.out_uint32_le(0x25CF);
+                    decoded_data.out_uint32_le('*');
                 }
             }
 
