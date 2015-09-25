@@ -261,7 +261,7 @@ public:
     }
 
 private:
-    void process_framemarker( Stream & stream, const RDP::AltsecDrawingOrderHeader & header
+    void process_framemarker( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
                             , RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_framemarker");
@@ -274,18 +274,17 @@ private:
         gd.draw(order);
     }
 
-    void process_window_information( Stream & stream, const RDP::AltsecDrawingOrderHeader & header
+    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
                                    , RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");
         }
 
-        const auto savec_stream_p = stream.p;
-
-        stream.in_skip_bytes(2);    // OrderSize(2)
-        const uint32_t FieldsPresentFlags = stream.in_uint32_le();
-
-        stream.p = savec_stream_p;
+        const uint32_t FieldsPresentFlags = [&]{
+            InStream stream2(stream.get_current(), stream.in_remain());
+            stream2.in_skip_bytes(2);    // OrderSize(2)
+            return stream2.in_uint32_le();
+        }();
 
         if (FieldsPresentFlags & (RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW | RDP::RAIL::WINDOW_ORDER_STATE_NEW)) {
             RDP::RAIL::NewOrExistingWindow order;
@@ -320,7 +319,7 @@ private:
         }
     }
 
-    void process_bmpcache(Stream & stream, const RDPSecondaryOrderHeader & header, uint8_t bpp)
+    void process_bmpcache(InStream & stream, const RDPSecondaryOrderHeader & header, uint8_t bpp)
     {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", bpp);
@@ -373,7 +372,44 @@ private:
         }
     }
 
+    void process_glyphcache(InStream & stream, const RDPSecondaryOrderHeader &/* header*/) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders_process_glyphcache");
+        }
+        const uint8_t cacheId = stream.in_uint8();
+        const uint8_t nglyphs = stream.in_uint8();
+        for (uint8_t i = 0; i < nglyphs; i++) {
+            const uint16_t cacheIndex = stream.in_uint16_le();
+            const int16_t  offset     = stream.in_sint16_le();
+            const int16_t  baseline   = stream.in_sint16_le();
+            const uint16_t width      = stream.in_uint16_le();
+            const uint16_t height     = stream.in_uint16_le();
+
+            const unsigned int   datasize = (height * nbbytes(width) + 3) & ~3;
+            const uint8_t      * data     = stream.in_uint8p(datasize);
+
+            this->server_add_char(cacheId, cacheIndex, offset, baseline, width, height, data);
+        }
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders_process_glyphcache done");
+        }
+    }
+
     void process_colormap(Stream & stream, const RDPSecondaryOrderHeader & header, RDPGraphicDevice & gd) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "process_colormap");
+        }
+        RDPColCache colormap;
+        colormap.receive(stream, header);
+        RDPColCache cmd(colormap.cacheIndex, colormap.palette);
+        gd.draw(cmd);
+
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "process_colormap done");
+        }
+    }
+
+    void process_colormap(InStream & stream, const RDPSecondaryOrderHeader & header, RDPGraphicDevice & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_colormap");
         }
@@ -389,7 +425,7 @@ private:
 
 public:
     /*****************************************************************************/
-    int process_orders(uint8_t bpp, Stream & stream, bool fast_path, RDPGraphicDevice & gd,
+    int process_orders(uint8_t bpp, InStream & stream, bool fast_path, RDPGraphicDevice & gd,
                        uint16_t front_width, uint16_t front_height) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_orders bpp=%u", bpp);
@@ -425,7 +461,7 @@ public:
                 //uint8_t * order_start = stream.p;
                 RDPSecondaryOrderHeader header(stream);
                 //LOG(LOG_INFO, "secondary order=%d", header.type);
-                uint8_t * next_order = stream.p + header.order_data_length();
+                uint8_t const * next_order = stream.get_current() + header.order_data_length();
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
@@ -449,7 +485,7 @@ public:
                     /* error, unknown order */
                     break;
                 }
-                stream.p = next_order;
+                stream.in_skip_bytes(next_order - stream.get_current());
             }
             else if (class_ == STANDARD) {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, drawing_order.control_flags);

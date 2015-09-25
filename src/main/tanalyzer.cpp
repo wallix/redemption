@@ -167,7 +167,7 @@ public:
             channel.name, channel.chanid, length, chunk_size, flags);
     }
 
-    void send_global_palette() throw(Error) override { REDASSERT(false); }
+    void send_global_palette() override { REDASSERT(false); }
     void set_mod_palette(const BGRPalette & palette) override { REDASSERT(false); }
 
     int server_resize(int width, int height, int bpp) override {
@@ -175,11 +175,10 @@ public:
         return 1;
     };
 
-    void send_data_indication_ex(uint16_t channelId, HStream & stream) override {
-        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, stream.size());
+    void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
+        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, data_size);
 
-        stream.p = stream.get_data();
-
+        InStream stream(data, data_size);
         ShareControl_Recv sctrl(stream);
 
         switch (sctrl.pduType) {

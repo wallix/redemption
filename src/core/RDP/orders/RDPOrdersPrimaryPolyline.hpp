@@ -385,6 +385,69 @@ public:
         }
     }   // void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
+        // LOG(LOG_INFO, "RDPPolyline::receive: header fields=0x%02X", header.fields);
+
+        header.receive_coord(stream, 0x0001, this->xStart);
+        header.receive_coord(stream, 0x0002, this->yStart);
+
+        if (header.fields & 0x0004) {
+            this->bRop2 = stream.in_uint8();
+        }
+        if (header.fields & 0x0008) {
+            this->BrushCacheEntry = stream.in_uint16_le();
+        }
+
+        if (header.fields & 0x0010) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->PenColor = r + (g << 8) + (b << 16);
+        }
+
+        if (header.fields & 0x0020) {
+            this->NumDeltaEntries = stream.in_uint8();
+        }
+
+        if (header.fields & 0x0040) {
+            uint8_t cbData = stream.in_uint8();
+            // LOG(LOG_INFO, "cbData=%d", cbData);
+
+            SubStream rgbData(stream, stream.get_offset(), cbData);
+            stream.in_skip_bytes(cbData);
+            // hexdump_d(rgbData.p, rgbData.size());
+
+            uint8_t zeroBitsSize = ((this->NumDeltaEntries + 3) / 4);
+            // LOG(LOG_INFO, "zeroBitsSize=%d", zeroBitsSize);
+
+            SubStream zeroBits(rgbData, rgbData.get_offset(), zeroBitsSize);
+            rgbData.in_skip_bytes(zeroBitsSize);
+
+            uint8_t zeroBit = 0;
+
+            for (uint8_t i = 0, m4 = 0; i < this->NumDeltaEntries; i++, m4++) {
+                if (m4 == 4) {
+                    m4 = 0;
+                }
+
+                if (!m4) {
+                    zeroBit = zeroBits.in_uint8();
+                    // LOG(LOG_INFO, "0x%02X", zeroBit);
+                }
+
+                this->deltaEncodedPoints[i].xDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedPoints[i].yDelta = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
+
+/*
+                LOG(LOG_INFO, "RDPPolyline::receive: delta point=(%d, %d)",
+                    this->deltaEncodedPoints[i].xDelta, this->deltaEncodedPoints[i].yDelta);
+*/
+
+                zeroBit <<= 2;
+            }
+        }
+    }   // void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);

@@ -226,6 +226,19 @@ class RDPScrBlt {
         header.receive_src(stream, 0x20, this->srcx, this->srcy);
     }
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
+    {
+        using namespace RDP;
+
+        header.receive_rect(stream, 0x01, this->rect);
+
+        if (header.fields & 0x10) {
+            this->rop = stream.in_uint8();
+        }
+
+        header.receive_src(stream, 0x20, this->srcx, this->srcy);
+    }
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));

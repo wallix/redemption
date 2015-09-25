@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
     BOOST_CHECK_EQUAL(virtualchannel_caps.flags, static_cast<uint32_t>(2));
     BOOST_CHECK_EQUAL(virtualchannel_caps.VCChunkSize, static_cast<uint32_t>(56897));
 
-    BStream stream(1024);
-    virtualchannel_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    virtualchannel_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     VirtualChannelCaps virtualchannel_caps2;
 

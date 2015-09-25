@@ -132,6 +132,25 @@ public:
         }
     }
 
+    void receive(InStream & stream, const RDPSecondaryOrderHeader &/* header*/)
+    {
+        using namespace RDP;
+
+        this->cacheIndex = stream.in_uint8();
+        LOG(LOG_INFO, "receiving colormap %u", this->cacheIndex);
+        assert(this->cacheIndex < 6);
+
+        uint16_t numberColors = stream.in_uint16_le();
+
+        for (size_t i = 0; i < numberColors; i++) {
+            uint8_t b = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t r = stream.in_uint8();
+            stream.in_skip_bytes(1);
+            this->palette.set_color(i, b|(g << 8)| (r << 16));
+        }
+    }
+
     #define warning remove printf in operator== and show palette differences in test code
     bool operator==(const RDPColCache & other) const {
         if (this->cacheIndex != other.cacheIndex) {

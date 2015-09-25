@@ -636,6 +636,22 @@ class RDPPrimaryOrderHeader
         }
     }
 
+    void receive_coord(InStream & stream, uint32_t base, int16_t & coord) const
+    {
+        using namespace RDP;
+
+        if (this->control & DELTA){
+            if (this->fields & base) {
+                coord = coord + stream.in_sint8();
+            }
+        }
+        else {
+            if (this->fields & base) {
+                coord = stream.in_sint16_le();
+            }
+        }
+    }
+
 
     void emit_rect(Stream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const {
         using namespace RDP;
@@ -671,6 +687,40 @@ class RDPPrimaryOrderHeader
     }
 
     void receive_rect(Stream & stream, uint32_t base, Rect & rect) const
+    {
+        using namespace RDP;
+
+        if (this->control & DELTA){
+            if (this->fields & base) {
+                rect.x = rect.x + stream.in_sint8();
+            }
+            if (this->fields & (base << 1)) {
+                rect.y = rect.y + stream.in_sint8();
+            }
+            if (this->fields & (base << 2)) {
+                rect.cx = rect.cx + stream.in_sint8();
+            }
+            if (this->fields & (base << 3)) {
+                rect.cy = rect.cy + stream.in_sint8();
+            }
+        }
+        else {
+            if (this->fields & base) {
+                rect.x = stream.in_sint16_le();
+            }
+            if (this->fields & (base << 1)) {
+                rect.y = stream.in_sint16_le();
+            }
+            if (this->fields & (base << 2)) {
+                rect.cx = stream.in_sint16_le();
+            }
+            if (this->fields & (base << 3)) {
+                rect.cy = stream.in_sint16_le();
+            }
+        }
+    }
+
+    void receive_rect(InStream & stream, uint32_t base, Rect & rect) const
     {
         using namespace RDP;
 
@@ -751,6 +801,29 @@ class RDPPrimaryOrderHeader
         }
     }
 
+    void receive_src(InStream & stream, uint32_t base,
+                     uint16_t & srcx, uint16_t & srcy) const
+    {
+        using namespace RDP;
+
+        if (this->control & DELTA){
+            if (this->fields & base) {
+                srcx = srcx + stream.in_sint8();
+            }
+            if (this->fields & (base << 1)) {
+                srcy = srcy + stream.in_sint8();
+            }
+        }
+        else {
+            if (this->fields & base) {
+                srcx = stream.in_sint16_le();
+            }
+            if (this->fields & (base << 1)) {
+                srcy = stream.in_sint16_le();
+            }
+        }
+    }
+
     void emit_pen(Stream & stream, uint32_t base,
                   const RDPPen & pen,
                   const RDPPen & old_pen) const {
@@ -770,6 +843,26 @@ class RDPPrimaryOrderHeader
     }
 
     void receive_pen(Stream & stream, uint32_t base, RDPPen & pen) const
+    {
+        using namespace RDP;
+
+        if (this->fields & base) {
+            pen.style = stream.in_uint8();
+        }
+
+        if (this->fields & (base << 1)) {
+            pen.width = stream.in_uint8();
+        }
+
+        if (this->fields & (base << 2)) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            pen.color = r + (g << 8) + (b << 16);
+        }
+    }
+
+    void receive_pen(InStream & stream, uint32_t base, RDPPen & pen) const
     {
         using namespace RDP;
 
@@ -819,6 +912,33 @@ class RDPPrimaryOrderHeader
     }
 
     void receive_brush(Stream & stream, uint32_t base, RDPBrush & brush) const
+    {
+        using namespace RDP;
+
+        if (this->fields & base) {
+            brush.org_x = stream.in_sint8();
+        }
+        if (this->fields & (base << 1)) {
+            brush.org_y = stream.in_sint8();
+        }
+        if (this->fields & (base << 2)) {
+            brush.style = stream.in_uint8();
+        }
+        if (this->fields & (base << 3)) {
+            brush.hatch = stream.in_uint8();
+        }
+        if (this->fields & (base << 4)){
+            brush.extra[0] = stream.in_uint8();
+            brush.extra[1] = stream.in_uint8();
+            brush.extra[2] = stream.in_uint8();
+            brush.extra[3] = stream.in_uint8();
+            brush.extra[4] = stream.in_uint8();
+            brush.extra[5] = stream.in_uint8();
+            brush.extra[6] = stream.in_uint8();
+        }
+    }
+
+    void receive_brush(InStream & stream, uint32_t base, RDPBrush & brush) const
     {
         using namespace RDP;
 
@@ -1129,6 +1249,173 @@ public:
         return header;
     }
 
+    const  RDPPrimaryOrderHeader receive(InStream & stream, uint8_t control)
+    {
+
+        using namespace RDP;
+
+        RDPPrimaryOrderHeader header(control, 0);
+
+//        LOG(LOG_INFO, "reading control (%p): %.2x %s%s%s%s%s%s%s%s", stream.p,
+//            control,
+//            (control & STANDARD  )?"STD ":"    ",
+//            (control & SECONDARY )?"SEC ":"    ",
+//            (control & BOUNDS    )?"BOU ":"    ",
+//            (control & CHANGE    )?"CHA ":"    ",
+//            (control & DELTA     )?"DTA ":"    ",
+//            (control & LASTBOUNDS)?"LBO ":"    ",
+//            (control & SMALL     )?"SMA ":"    ",
+//            (control & TINY      )?"TIN ":"    "
+//        );
+
+        if (control & CHANGE) {
+            this->order = stream.in_uint8();
+        }
+
+        size_t size = 1;
+        switch (this->order) {
+        case MEM3BLT:
+        case GLYPHINDEX:
+            size = 3;
+            break;
+        case PATBLT:
+        case MEMBLT:
+        case LINE:
+        case ELLIPSECB:
+        case POLYGONCB:
+        case MULTIOPAQUERECT:
+        case MULTIPATBLT:
+        case MULTISCRBLT:
+            size = 2;
+            break;
+        case RECT:
+        case SCREENBLT:
+        case DESTBLT:
+        case POLYGONSC:
+        case POLYLINE:
+        case ELLIPSESC:
+        case MULTIDSTBLT:
+        default:
+            size = 1;
+        }
+        if (header.control & SMALL) {
+            size = (size<=1)?0:size-1;
+        }
+        if (header.control & TINY) {
+            size = (size<=2)?0:size-2;
+        }
+
+        for (size_t i = 0; i < size; i++) {
+            int bits = stream.in_uint8();
+            header.fields |= bits << (i * 8);
+        }
+
+//        LOG(LOG_INFO, "control=%.2x order=%d  size=%d fields=%.6x assert=%d",
+//            header.control, this->order, size, header.fields, (0 == (header.fields & ~0x3FF)));
+
+        switch (this->order){
+        case DESTBLT:
+            assert(!(header.fields & ~0x1F));
+            break;
+        case MULTIDSTBLT:
+            assert(!(header.fields & ~0x7F));
+            break;
+        case MULTIOPAQUERECT:
+            assert(!(header.fields & ~0x1FF));
+            break;
+        case MULTIPATBLT:
+            assert(!(header.fields & ~0x3FFF));
+            break;
+        case MULTISCRBLT:
+            assert(!(header.fields & ~0x1FF));
+            break;
+        case PATBLT:
+            assert(!(header.fields & ~0xFFF));
+            break;
+        case SCREENBLT:
+            assert(!(header.fields & ~0x7F));
+            break;
+        case LINE:
+            assert(!(header.fields & ~0x3FF));
+            break;
+        case RECT:
+            assert(!(header.fields & ~0x7F));
+            break;
+        case DESKSAVE:
+            break;
+        case MEMBLT:
+            assert(!(header.fields & ~0x1FF));
+            break;
+        case MEM3BLT:
+            assert(!(header.fields & ~0xFFFF));
+            break;
+        case GLYPHINDEX:
+            assert(!(header.fields & ~0x3FFFFF));
+            break;
+        case POLYGONSC:
+            assert(!(header.fields & ~0x7F));
+            break;
+        case POLYGONCB:
+            assert(!(header.fields & ~0x1FFF));
+            break;
+        case POLYLINE:
+            assert(!(header.fields & ~0x7F));
+            break;
+        case ELLIPSESC:
+            assert(!(header.fields & ~0x7F));
+            break;
+        case ELLIPSECB:
+            assert(!(header.fields & ~0x1FFF));
+            break;
+        default:
+            LOG(LOG_INFO, "Order is Unknown (%u)\n", this->order);
+            assert(false);
+        }
+
+        if (header.control & BOUNDS) {
+            if (!(header.control & LASTBOUNDS)){
+                int bound_fields = stream.in_uint8();
+                uint16_t bounds[4] =
+                    { static_cast<uint16_t>(this->clip.x)
+                    , static_cast<uint16_t>(this->clip.y)
+                    , static_cast<uint16_t>(this->clip.x + this->clip.cx - 1)
+                    , static_cast<uint16_t>(this->clip.y + this->clip.cy - 1)
+                    };
+
+                if (bound_fields & 1) {
+                    bounds[0] = stream.in_sint16_le();
+                } else if (bound_fields & 0x10) {
+                    bounds[0] += stream.in_sint8();
+                }
+
+                if (bound_fields & 2) {
+                    bounds[1] = stream.in_sint16_le();
+                } else if (bound_fields & 0x20) {
+                    bounds[1] += stream.in_sint8();
+                }
+
+                if (bound_fields & 4) {
+                    bounds[2] = stream.in_sint16_le();
+                } else if (bound_fields & 0x40) {
+                    bounds[2] += stream.in_sint8();
+                }
+
+                if (bound_fields & 8) {
+                    bounds[3] = stream.in_sint16_le();
+                } else if (bound_fields & 0x80) {
+                    bounds[3] += stream.in_sint8();
+                }
+
+                this->clip.x = bounds[0];
+                this->clip.y = bounds[1];
+                this->clip.cx = bounds[2] - bounds[0] + 1;
+                this->clip.cy = bounds[3] - bounds[1] + 1;
+            }
+        }
+
+        return header;
+    }
+
     TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions")
     size_t str(char * buffer, size_t sz, bool showclip = true) const
     {
@@ -1219,6 +1506,12 @@ class RDPSecondaryOrderHeader {
     unsigned type;
 
     explicit RDPSecondaryOrderHeader(Stream & stream) {
+        this->order_length = stream.in_uint16_le();
+        this->flags        = stream.in_uint16_le();
+        this->type         = stream.in_uint8();
+    }
+
+    explicit RDPSecondaryOrderHeader(InStream & stream) {
         this->order_length = stream.in_uint16_le();
         this->flags        = stream.in_uint16_le();
         this->type         = stream.in_uint8();

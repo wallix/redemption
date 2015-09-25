@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySoundEmit)
     BOOST_CHECK_EQUAL(sound_caps.soundFlags, static_cast<uint16_t>(0));
     BOOST_CHECK_EQUAL(sound_caps.pad2octetsA, static_cast<uint16_t>(1));
 
-    BStream stream(1024);
-    sound_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    sound_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     SoundCaps sound_caps2;
 

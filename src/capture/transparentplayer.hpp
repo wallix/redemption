@@ -103,13 +103,10 @@ public:
                 case CHUNK_TYPE_SLOWPATH:
                     {
                         uint16_t channelId = payload.in_uint16_le();
-
-                        HStream data(1024, 65535);
                         size_t  length(data_size - sizeof(uint16_t));
-                        data.out_copy_bytes(payload.in_uint8p(length), length);
-                        data.mark_end();
+                        auto * data = payload.in_uint8p(length);
 
-                        this->consumer->send_data_indication_ex(channelId, data);
+                        this->consumer->send_data_indication_ex(channelId, data, length);
                     }
                     break;
                 case CHUNK_TYPE_RESIZE:

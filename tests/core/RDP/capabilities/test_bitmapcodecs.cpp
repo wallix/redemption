@@ -27,15 +27,13 @@
 #include "RDP/capabilities/bitmapcodecs.hpp"
 #include "stream.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBitmapCodecCaps)
+BOOST_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
 {
+    StaticOutStream<1024> out_stream;
     BitmapCodecCaps cap;
+    cap.emit(out_stream);
 
-    BStream stream(1024);
-    cap.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
-
+    InStream in_stream(out_stream.get_data(), out_stream.get_offset());
     BitmapCodecCaps cap2;
-    cap2.recv(stream, CAPLEN_BITMAP_CODECS);
+    cap2.recv(in_stream, CAPLEN_BITMAP_CODECS);
 }

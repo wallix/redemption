@@ -218,6 +218,33 @@ public:
         }
     }
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
+        // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
+        int16_t leftRect   = this->el.left();
+        int16_t topRect    = this->el.top();
+        int16_t rightRect  = this->el.right();
+        int16_t bottomRect = this->el.bottom();
+        header.receive_coord(stream, 0x0001, leftRect);
+        header.receive_coord(stream, 0x0002, topRect);
+        header.receive_coord(stream, 0x0004, rightRect);
+        header.receive_coord(stream, 0x0008, bottomRect);
+
+        this->el = Ellipse(leftRect, topRect, rightRect, bottomRect);
+
+        if (header.fields & 0x0010) {
+            this->bRop2  = stream.in_uint8();
+        }
+        if (header.fields & 0x0020) {
+            this->fillMode  = stream.in_uint8();
+        }
+        if (header.fields & 0x0040) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->color = r + (g << 8) + (b << 16);
+        }
+    }
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);

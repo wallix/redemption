@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
     BOOST_CHECK_EQUAL(font_caps.fontSupportFlags, static_cast<uint16_t>(32769));
     BOOST_CHECK_EQUAL(font_caps.pad2octets, static_cast<uint16_t>(65535));
 
-    BStream stream(1024);
-    font_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    font_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     FontCaps font_caps2;
 

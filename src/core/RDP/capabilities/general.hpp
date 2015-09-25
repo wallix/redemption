@@ -213,7 +213,7 @@ struct GeneralCaps : public Capability {
     }
     ~GeneralCaps() override {}
 
-    void emit(Stream & stream)override {
+    void emit(OutStream & stream) override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->os_major);
@@ -229,7 +229,7 @@ struct GeneralCaps : public Capability {
         stream.out_uint8(this->suppressOutputSupport);
     }
 
-    void recv(Stream & stream, uint16_t len) throw(Error)override {
+    void recv(InStream & stream, uint16_t len) override {
         this->len = len;
 
         /* os_major(2) + os_minor(2) + protocolVersion(2) + pad1(2) + compressionType(2) +

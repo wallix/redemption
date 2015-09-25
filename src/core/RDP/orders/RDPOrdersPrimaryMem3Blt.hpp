@@ -349,6 +349,42 @@ class RDPMem3Blt {
         }
     }
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
+        using namespace RDP;
+
+        if (header.fields & 0x0001) {
+            this->cache_id = stream.in_uint16_le();
+        }
+
+        header.receive_rect(stream, 0x0002, this->rect);
+
+        if (header.fields & 0x0020) {
+            this->rop = stream.in_uint8();
+        }
+
+        header.receive_src(stream, 0x0040, this->srcx, this->srcy);
+
+        if (header.fields & 0x0100) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->back_color = r + (g << 8) + (b << 16);
+        }
+
+        if (header.fields & 0x0200) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->fore_color = r + (g << 8) + (b << 16);
+        }
+
+        header.receive_brush(stream, 0x0400, this->brush);
+
+        if (header.fields & 0x8000) {
+            this->cache_idx = stream.in_uint16_le();
+        }
+    }
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions");
         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));

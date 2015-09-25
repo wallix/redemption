@@ -58,21 +58,26 @@ static inline void send_data_indication_ex( Transport & trans
     trans.send(x224_header, mcs_header, stream);
 }
 
-template<class DataWriter>
-void send_data_indication_ex( Transport & trans, DataWriter data_writer
+template<class... DataWriter>
+void send_data_indication_ex( Transport & trans
+                            , uint16_t channelId
                             , int encryptionLevel, CryptContext & encrypt
-                            , uint16_t initiator)
+                            , uint16_t initiator, DataWriter... data_writer)
 {
     write_packets(
         trans,
+#ifdef IN_IDE_PARSER
         data_writer,
+#else
+        data_writer...,
+#endif
         [&](StreamSize<256>, OutStream & security_header, uint8_t * data, std::size_t data_sz) {
             SEC::Sec_Send sec(security_header, data, data_sz, 0, encrypt, encryptionLevel);
         },
         [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
             MCS::SendDataIndication_Send mcs( static_cast<OutPerStream &>(mcs_header)
                                             , initiator
-                                            , GCC::MCS_GLOBAL_CHANNEL
+                                            , channelId
                                             , 1 // dataPriority
                                             , 3 // segmentation
                                             , packet_size

@@ -2569,7 +2569,7 @@ public:
                             }
 
                             while (su.payload.in_remain()) {
-                                FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
+                                FastPath::Update_Recv_new_stream upd(su.payload, &this->mppc_dec);
 
                                 switch (upd.updateCode) {
                                 case FastPath::FASTPATH_UPDATETYPE_ORDERS:
@@ -2739,7 +2739,8 @@ public:
                                     next_packet = sec.payload.p;
                                 }
                                 else {
-                                    ShareControl_Recv sctrl(sec.payload);
+                                    InStream tmp_sec_payload(sec.payload.p, sec.payload.capacity - sec.payload.get_offset());
+                                    ShareControl_Recv_new_stream sctrl(tmp_sec_payload);
                                     next_packet += sctrl.totalLength;
 
                                     if (this->verbose & 128) {
@@ -2762,8 +2763,8 @@ public:
                                             //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                             {
-                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
                                         case WAITING_CTL_COOPERATE:
@@ -2773,8 +2774,8 @@ public:
                                             //this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                             {
-                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
                                         case WAITING_GRANT_CONTROL_COOPERATE:
@@ -2784,8 +2785,8 @@ public:
                                             //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_FONT_MAP;
                                             {
-                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
                                         case WAITING_FONT_MAP:
@@ -2799,8 +2800,8 @@ public:
                                             // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
                                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
                                             {
-                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
                                         case UP_AND_RUNNING:
@@ -2808,19 +2809,24 @@ public:
                                             {
                                                 sec.payload.p = current_packet;
 
-                                                HStream copy_stream(1024, 65535);
-
+                                                StaticOutStream<65535> copy_stream;
                                                 copy_stream.out_copy_bytes(current_packet, next_packet - current_packet);
-                                                copy_stream.mark_end();
 
                                                 //total_data_received += copy_stream.size();
                                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
 
                                                 if (this->transparent_recorder) {
-                                                    this->transparent_recorder->send_data_indication_ex(mcs.channelId,
-                                                        copy_stream);
+                                                    this->transparent_recorder->send_data_indication_ex(
+                                                        mcs.channelId,
+                                                        copy_stream.get_data(),
+                                                        copy_stream.get_offset()
+                                                    );
                                                 }
-                                                this->front.send_data_indication_ex(mcs.channelId, copy_stream);
+                                                this->front.send_data_indication_ex(
+                                                    mcs.channelId,
+                                                    copy_stream.get_data(),
+                                                    copy_stream.get_offset()
+                                                );
 
                                                 next_packet = sec.payload.end;
 
@@ -2828,7 +2834,7 @@ public:
                                             }
 
                                             {
-                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
                                                 switch (sdata.pdutype2) {
                                                 case PDUTYPE2_UPDATE:
                                                     {
@@ -2875,23 +2881,23 @@ public:
                                                 case PDUTYPE2_CONTROL:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SYNCHRONIZE:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_POINTER:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
                                                     this->process_pointer_pdu(sdata.payload, this);
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_PLAY_SOUND:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SAVE_SESSION_INFO:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
@@ -2917,14 +2923,14 @@ public:
 
                                                         this->front.set_keyboard_indicators(LedFlags);
 
-                                                        REDASSERT(sdata.payload.p == sdata.payload.end);
+                                                        REDASSERT(sdata.payload.get_current() == sdata.payload.get_data_end());
                                                     }
                                                     break;
 
                                                 default:
                                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 }
                                             }
@@ -3581,7 +3587,80 @@ public:
         }
     }
 
+    void process_pointer_pdu(InStream & stream, mod_api * mod)
+    {
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
+        }
+
+        int message_type = stream.in_uint16_le();
+        stream.in_skip_bytes(2); /* pad */
+        switch (message_type) {
+        case RDP_POINTER_CACHED:
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Process pointer cached");
+            }
+            this->process_cached_pointer_pdu(stream);
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Process pointer cached done");
+            }
+            break;
+        case RDP_POINTER_COLOR:
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Process pointer color");
+            }
+            this->process_system_pointer_pdu(stream);
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Process pointer system done");
+            }
+            break;
+        case RDP_POINTER_NEW:
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Process pointer new");
+            }
+            if (enable_new_pointer) {
+                this->process_new_pointer_pdu(stream); // Pointer with arbitrary color depth
+            }
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Process pointer new done");
+            }
+            break;
+        case RDP_POINTER_SYSTEM:
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Process pointer system");
+            }
+        case RDP_POINTER_MOVE:
+            {
+                if (this->verbose & 4) {
+                    LOG(LOG_INFO, "Process pointer move");
+                }
+                uint16_t xPos = stream.in_uint16_le();
+                uint16_t yPos = stream.in_uint16_le();
+                this->front.update_pointer_position(xPos, yPos);
+            }
+            break;
+        default:
+            break;
+        }
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::process_pointer_pdu done");
+        }
+    }
+
     void process_palette(Stream & stream, bool fast_path) {
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::process_palette");
+        }
+
+        RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
+        this->front.set_mod_palette(this->orders.global_palette);
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::process_palette done");
+        }
+    }
+
+    void process_palette(InStream & stream, bool fast_path) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_palette");
         }
@@ -4686,6 +4765,339 @@ public:
         }
     }   // process_disconnect_pdu
 
+    void process_disconnect_pdu(InStream & stream) {
+        uint32_t errorInfo = stream.in_uint32_le();
+        switch (errorInfo){
+        case ERRINFO_RPC_INITIATED_DISCONNECT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_DISCONNECT");
+            break;
+        case ERRINFO_RPC_INITIATED_LOGOFF:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_LOGOFF");
+            break;
+        case ERRINFO_IDLE_TIMEOUT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "IDLE_TIMEOUT");
+            break;
+        case ERRINFO_LOGON_TIMEOUT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LOGON_TIMEOUT");
+            break;
+        case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DISCONNECTED_BY_OTHERCONNECTION");
+            if (this->acl) {
+                this->acl->set_auth_error_message(TR("disconnected_by_otherconnection", this->lang));
+            }
+            break;
+        case ERRINFO_OUT_OF_MEMORY:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OUT_OF_MEMORY");
+            break;
+        case ERRINFO_SERVER_DENIED_CONNECTION:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_DENIED_CONNECTION");
+            break;
+        case ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_INSUFFICIENT_PRIVILEGES");
+            break;
+        case ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_FRESH_CREDENTIALS_REQUIRED");
+            break;
+        case ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_DISCONNECT_BYUSER");
+            break;
+        case ERRINFO_LOGOFF_BY_USER:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LOGOFF_BY_USER");
+            break;
+        case ERRINFO_LICENSE_INTERNAL:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_INTERNAL");
+            break;
+        case ERRINFO_LICENSE_NO_LICENSE_SERVER:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_LICENSE_SERVER");
+            break;
+        case ERRINFO_LICENSE_NO_LICENSE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_LICENSE");
+            break;
+        case ERRINFO_LICENSE_BAD_CLIENT_MSG:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_MSG");
+            break;
+        case ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_HWID_DOESNT_MATCH_LICENSE");
+            break;
+        case ERRINFO_LICENSE_BAD_CLIENT_LICENSE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_LICENSE");
+            break;
+        case ERRINFO_LICENSE_CANT_FINISH_PROTOCOL:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CANT_FINISH_PROTOCOL");
+            break;
+        case ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CLIENT_ENDED_PROTOCOL");
+            break;
+        case ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_ENCRYPTION");
+            break;
+        case ERRINFO_LICENSE_CANT_UPGRADE_LICENSE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CANT_UPGRADE_LICENSE");
+            break;
+        case ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_REMOTE_CONNECTIONS");
+            break;
+        case ERRINFO_CB_DESTINATION_NOT_FOUND:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_DESTINATION_NOT_FOUND");
+            break;
+        case ERRINFO_CB_LOADING_DESTINATION:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_LOADING_DESTINATION");
+            break;
+        case ERRINFO_CB_REDIRECTING_TO_DESTINATION:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_REDIRECTING_TO_DESTINATION");
+            break;
+        case ERRINFO_CB_SESSION_ONLINE_VM_WAKE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_WAKE");
+            break;
+        case ERRINFO_CB_SESSION_ONLINE_VM_BOOT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_BOOT");
+            break;
+        case ERRINFO_CB_SESSION_ONLINE_VM_NO_DNS:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_NO_DNS");
+            break;
+        case ERRINFO_CB_DESTINATION_POOL_NOT_FREE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_DESTINATION_POOL_NOT_FREE");
+            break;
+        case ERRINFO_CB_CONNECTION_CANCELLED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_CONNECTION_CANCELLED");
+            break;
+        case ERRINFO_CB_CONNECTION_ERROR_INVALID_SETTINGS:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_CONNECTION_ERROR_INVALID_SETTINGS");
+            break;
+        case ERRINFO_CB_SESSION_ONLINE_VM_BOOT_TIMEOUT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_BOOT_TIMEOUT");
+            break;
+        case ERRINFO_CB_SESSION_ONLINE_VM_SESSMON_FAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_SESSMON_FAILED");
+            break;
+        case ERRINFO_UNKNOWNPDUTYPE2:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UNKNOWNPDUTYPE2");
+            break;
+        case ERRINFO_UNKNOWNPDUTYPE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UNKNOWNPDUTYPE");
+            break;
+        case ERRINFO_DATAPDUSEQUENCE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DATAPDUSEQUENCE");
+            break;
+        case ERRINFO_CONTROLPDUSEQUENCE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONTROLPDUSEQUENCE");
+            break;
+        case ERRINFO_INVALIDCONTROLPDUACTION:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDCONTROLPDUACTION");
+            break;
+        case ERRINFO_INVALIDINPUTPDUTYPE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDINPUTPDUTYPE");
+            break;
+        case ERRINFO_INVALIDINPUTPDUMOUSE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDINPUTPDUMOUSE");
+            break;
+        case ERRINFO_INVALIDREFRESHRECTPDU:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDREFRESHRECTPDU");
+            break;
+        case ERRINFO_CREATEUSERDATAFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CREATEUSERDATAFAILED");
+            break;
+        case ERRINFO_CONNECTFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONNECTFAILED");
+            break;
+        case ERRINFO_CONFIRMACTIVEWRONGSHAREID:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEWRONGSHAREID");
+            break;
+        case ERRINFO_CONFIRMACTIVEWRONGORIGINATOR:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEWRONGORIGINATOR");
+            break;
+        case ERRINFO_PERSISTENTKEYPDUBADLENGTH:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUBADLENGTH");
+            break;
+        case ERRINFO_PERSISTENTKEYPDUILLEGALFIRST:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUILLEGALFIRST");
+            break;
+        case ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUTOOMANYTOTALKEYS");
+            break;
+        case ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUTOOMANYCACHEKEYS");
+            break;
+        case ERRINFO_INPUTPDUBADLENGTH:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INPUTPDUBADLENGTH");
+            break;
+        case ERRINFO_BITMAPCACHEERRORPDUBADLENGTH:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BITMAPCACHEERRORPDUBADLENGTH");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT");
+            break;
+        case ERRINFO_VCHANNELDATATOOSHORT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCHANNELDATATOOSHORT");
+            break;
+        case ERRINFO_SHAREDATATOOSHORT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SHAREDATATOOSHORT");
+            break;
+        case ERRINFO_BADSUPRESSOUTPUTPDU:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADSUPRESSOUTPUTPDU");
+            break;
+        case ERRINFO_CONFIRMACTIVEPDUTOOSHORT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEPDUTOOSHORT");
+            break;
+        case ERRINFO_CAPABILITYSETTOOSMALL:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CAPABILITYSETTOOSMALL");
+            break;
+        case ERRINFO_CAPABILITYSETTOOLARGE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CAPABILITYSETTOOLARGE");
+            break;
+        case ERRINFO_NOCURSORCACHE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "NOCURSORCACHE");
+            break;
+        case ERRINFO_BADCAPABILITIES:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADCAPABILITIES");
+            break;
+        case ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VIRTUALCHANNELDECOMPRESSIONERR");
+            break;
+        case ERRINFO_INVALIDVCCOMPRESSIONTYPE:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDVCCOMPRESSIONTYPE");
+            break;
+        case ERRINFO_INVALIDCHANNELID:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDCHANNELID");
+            break;
+        case ERRINFO_VCHANNELSTOOMANY:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCHANNELSTOOMANY");
+            break;
+        case ERRINFO_REMOTEAPPSNOTENABLED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "REMOTEAPPSNOTENABLED");
+            break;
+        case ERRINFO_CACHECAPNOTSET:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CACHECAPNOTSET");
+            break;
+        case ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BITMAPCACHEERRORPDUBADLENGTH2");
+            break;
+        case ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OFFSCRCACHEERRORPDUBADLENGTH");
+            break;
+        case ERRINFO_DNGCACHEERRORPDUBADLENGTH:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DNGCACHEERRORPDUBADLENGTH");
+            break;
+        case ERRINFO_GDIPLUSPDUBADLENGTH:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GDIPLUSPDUBADLENGTH");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT2:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT2");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT3:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT3");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT4:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT4");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT5:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT5");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT6:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT6");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT7:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT7");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT8:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT8");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT9:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT9");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT10:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT10");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT11:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT11");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT12:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT12");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT13:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT13");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT14:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT14");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT15:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT15");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT16:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT16");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT17:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT17");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT18:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT18");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT19:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT19");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT20:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT20");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT21:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT21");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT22:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT22");
+            break;
+        case ERRINFO_SECURITYDATATOOSHORT23:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT23");
+            break;
+        case ERRINFO_BADMONITORDATA:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADMONITORDATA");
+            break;
+        case ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCDECOMPRESSEDREASSEMBLEFAILED");
+            break;
+        case ERRINFO_VCDATATOOLONG:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCDATATOOLONG");
+            break;
+        case ERRINFO_BAD_FRAME_ACK_DATA:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BAD_FRAME_ACK_DATA");
+            break;
+        case ERRINFO_GRAPHICSMODENOTSUPPORTED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSMODENOTSUPPORTED");
+            break;
+        case ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSSUBSYSTEMRESETFAILED");
+            break;
+        case ERRINFO_GRAPHICSSUBSYSTEMFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSSUBSYSTEMFAILED");
+            break;
+        case ERRINFO_TIMEZONEKEYNAMELENGTHTOOSHORT:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "TIMEZONEKEYNAMELENGTHTOOSHORT");
+            break;
+        case ERRINFO_TIMEZONEKEYNAMELENGTHTOOLONG:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "TIMEZONEKEYNAMELENGTHTOOLONG");
+            break;
+        case ERRINFO_DYNAMICDSTDISABLEDFIELDMISSING:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DYNAMICDSTDISABLEDFIELDMISSING");
+            break;
+        case ERRINFO_UPDATESESSIONKEYFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UPDATESESSIONKEYFAILED");
+            break;
+        case ERRINFO_DECRYPTFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DECRYPTFAILED");
+            break;
+        case ERRINFO_ENCRYPTFAILED:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "ENCRYPTFAILED");
+            break;
+        case ERRINFO_ENCPKGMISMATCH:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "ENCPKGMISMATCH");
+            break;
+        case ERRINFO_DECRYPTFAILED2:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DECRYPTFAILED2");
+            break;
+        default:
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "?");
+            break;
+        }
+    }   // process_disconnect_pdu
+
     void process_logon_info(const char * domain, const char * username) {
         char domain_username_format_0[2048];
         char domain_username_format_1[2048];
@@ -4792,8 +5204,60 @@ public:
         stream.p = stream.end;
     }
 
+    void process_save_session_info(InStream & stream) {
+        RDP::SaveSessionInfoPDUData_Recv_new_stream ssipdudata(stream);
+
+        switch (ssipdudata.infoType) {
+        case RDP::INFOTYPE_LOGON:
+        {
+            LOG(LOG_INFO, "process save session info : Logon");
+            RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
+
+            process_logon_info(reinterpret_cast<char *>(liv1.Domain),
+                reinterpret_cast<char *>(liv1.UserName));
+        }
+        break;
+        case RDP::INFOTYPE_LOGON_LONG:
+        {
+            LOG(LOG_INFO, "process save session info : Logon long");
+            RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
+
+            process_logon_info(reinterpret_cast<char *>(liv2.Domain),
+                reinterpret_cast<char *>(liv2.UserName));
+        }
+        break;
+        case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
+        {
+            LOG(LOG_INFO, "process save session info : Logon plainnotify");
+            RDP::PlainNotify_Recv pn(ssipdudata.payload);
+        }
+        break;
+        case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
+        {
+            LOG(LOG_INFO, "process save session info : Logon extended info");
+            RDP::LogonInfoExtended_Recv lie(ssipdudata.payload);
+
+            RDP::LogonInfoField_Recv lif(lie.payload);
+
+            if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
+                LOG(LOG_INFO, "process save session info : Auto-reconnect cookie");
+
+                RDP::ServerAutoReconnectPacket_Recv sarp(lif.payload);
+            }
+            if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
+                LOG(LOG_INFO, "process save session info : Logon Errors Info");
+
+                RDP::LogonErrorsInfo_Recv lei(lif.payload);
+            }
+        }
+        break;
+        }
+
+        stream.in_skip_bytes(stream.in_remain());
+    }
+
     TODO("CGR: this can probably be unified with process_confirm_active in front")
-    void process_server_caps(Stream & stream, uint16_t len) {
+    void process_server_caps(InStream & stream, uint16_t len) {
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
@@ -4842,7 +5306,7 @@ public:
                 throw Error(ERR_MCS_PDU_TRUNCATED);
             }
 
-            uint8_t * next = stream.p + expected;
+            uint8_t const * next = stream.get_current() + expected;
             switch (capset_type) {
             case CAPSTYPE_GENERAL:
                 {
@@ -4904,7 +5368,7 @@ public:
                 }
                 break;
             }
-            stream.p = next;
+            stream.in_skip_bytes(next - stream.get_current());
         }
 
         if (this->verbose & 32){
@@ -5372,6 +5836,44 @@ public:
         }
     }
 
+    void process_color_pointer_pdu(InStream & stream) {
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
+        }
+        unsigned pointer_cache_idx = stream.in_uint16_le();
+        if (pointer_cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
+            LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: index out of bounds");
+            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
+        }
+
+        Pointer & cursor = this->cursors[pointer_cache_idx];
+
+        memset(&cursor, 0, sizeof(Pointer));
+        cursor.bpp = 24;
+        cursor.x      = stream.in_uint16_le();
+        cursor.y      = stream.in_uint16_le();
+        cursor.width  = stream.in_uint16_le();
+        cursor.height = stream.in_uint16_le();
+        unsigned mlen  = stream.in_uint16_le(); /* mask length */
+        unsigned dlen  = stream.in_uint16_le(); /* data length */
+
+        if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
+            LOG(LOG_ERR,
+                "mod_rdp::process_color_pointer_pdu: "
+                    "bad length for color pointer mask_len=%u data_len=%u",
+                mlen, dlen);
+            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
+        }
+        TODO("this is modifiying cursor in place: we should not do that.");
+        memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
+        memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
+
+        this->front.server_set_pointer(cursor);
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
+        }
+    }
+
     // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
     // ---------------------------------------------------------------
 
@@ -5415,6 +5917,36 @@ public:
         }
     }
 
+    void process_cached_pointer_pdu(InStream & stream)
+    {
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
+        }
+
+        TODO("Add check that the idx transmitted is actually an used pointer")
+        uint16_t pointer_idx = stream.in_uint16_le();
+        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
+            LOG(LOG_ERR,
+                "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)",
+                pointer_idx);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
+        }
+        struct Pointer & cursor = this->cursors[pointer_idx];
+        if (cursor.is_valid()) {
+            this->front.server_set_pointer(cursor);
+        }
+        else {
+            LOG(LOG_WARNING,
+                "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u",
+                pointer_idx);
+            Pointer cursor(Pointer::POINTER_NORMAL);
+            this->front.server_set_pointer(cursor);
+        }
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
+        }
+    }
+
     // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
     // ---------------------------------------------------------------
 
@@ -5429,6 +5961,32 @@ public:
     // +---------------------------+-----------------------------+
 
     void process_system_pointer_pdu(Stream & stream)
+    {
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
+        }
+        int system_pointer_type = stream.in_uint32_le();
+        switch (system_pointer_type) {
+        case RDP_NULL_POINTER:
+            {
+                Pointer cursor;
+                memset(cursor.mask, 0xff, sizeof(cursor.mask));
+                this->front.server_set_pointer(cursor);
+            }
+            break;
+        default:
+            {
+                Pointer cursor(Pointer::POINTER_NORMAL);
+                this->front.server_set_pointer(cursor);
+            }
+            break;
+        }
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu done");
+        }
+    }
+
+    void process_system_pointer_pdu(InStream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
@@ -5658,7 +6216,299 @@ public:
         }
     }   // process_new_pointer_pdu
 
+    void process_new_pointer_pdu(InStream & stream) {
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
+        }
+
+        unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
+        unsigned pointer_idx = stream.in_uint16_le();
+
+        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
+            LOG(LOG_ERR,
+                "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%d)",
+                pointer_idx);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
+        }
+
+        Pointer & cursor = this->cursors[pointer_idx];
+        memset(&cursor, 0, sizeof(struct Pointer));
+        cursor.bpp    = 24;
+        cursor.x      = stream.in_uint16_le();
+        cursor.y      = stream.in_uint16_le();
+        cursor.width  = stream.in_uint16_le();
+        cursor.height = stream.in_uint16_le();
+        uint16_t mlen  = stream.in_uint16_le(); /* mask length */
+        uint16_t dlen  = stream.in_uint16_le(); /* data length */
+
+        if (cursor.width > Pointer::MAX_WIDTH){
+            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
+        }
+        if (cursor.height > Pointer::MAX_HEIGHT){
+            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer height overflow (%d)", cursor.height);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
+        }
+
+        if ((unsigned)cursor.x >= cursor.width){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %d)", cursor.x, cursor.width);
+            cursor.x = 0;
+        }
+
+        if ((unsigned)cursor.y >= cursor.height){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %d)", cursor.y, cursor.height);
+            cursor.y = 0;
+        }
+
+        if (!stream.in_check_rem(dlen)){
+            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%u remain=%u)", dlen, stream.in_remain());
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+        if (!stream.in_check_rem(mlen + dlen)){
+            LOG(LOG_ERR, "Not enough data for cursor mask (need=%u remain=%u)", mlen, stream.in_remain() - dlen);
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+
+        size_t out_data_len = 3 * (
+            (bpp == 1) ? (cursor.width * cursor.height) / 8 :
+            (bpp == 4) ? (cursor.width * cursor.height) / 2 :
+            (dlen / nbbytes(data_bpp)));
+
+        if ((mlen > sizeof(cursor.mask)) ||
+            (out_data_len > sizeof(cursor.data))) {
+            LOG(LOG_ERR,
+                "mod_rdp::Bad length for color pointer mask_len=%u "
+                    "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
+                (unsigned)mlen, (unsigned)dlen, cursor.width, cursor.height,
+                data_bpp, out_data_len, nbbytes(data_bpp));
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+
+        if (data_bpp == 1) {
+            uint8_t data_data[32*32/8];
+            uint8_t mask_data[32*32/8];
+            stream.in_copy_bytes(data_data, dlen);
+            stream.in_copy_bytes(mask_data, mlen);
+
+            for (unsigned i = 0 ; i < mlen; i++) {
+                uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                data_data[i]    = new_data_data;
+                mask_data[i]    = new_mask_data;
+            }
+
+            TODO("move that into cursor")
+            this->to_regular_pointer(data_data, dlen, 1, cursor.data, sizeof(cursor.data));
+            this->to_regular_mask(mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
+        }
+        else {
+            TODO("move that into cursor")
+            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data, sizeof(cursor.data));
+            stream.in_skip_bytes(dlen);
+            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+            stream.in_skip_bytes(mlen);
+        }
+
+        this->front.server_set_pointer(cursor);
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
+        }
+    }   // process_new_pointer_pdu
+
     void process_bitmap_updates(Stream & stream, bool fast_path) {
+        if (this->verbose & 64){
+            LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
+        }
+
+        this->recv_bmp_update++;
+
+        if (fast_path) {
+            stream.in_skip_bytes(2); // updateType(2)
+        }
+
+        // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
+        // ----------------------------------------------------------
+        // The TS_UPDATE_BITMAP structure contains one or more rectangular
+        // clippings taken from the server-side screen frame buffer (see [T128]
+        // section 8.17).
+
+        // shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
+        // containing information about the packet. The type subfield of the
+        // pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
+        // MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share
+        // Data Header MUST be set to PDUTYPE2_UPDATE (2).
+
+        // bitmapData (variable): The actual bitmap update data, as specified in
+        // section 2.2.9.1.1.3.1.2.1.
+
+        // 2.2.9.1.1.3.1.2.1 Bitmap Update Data (TS_UPDATE_BITMAP_DATA)
+        // ------------------------------------------------------------
+        // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
+        // defines a Bitmap Update (section 2.2.9.1.1.3.1.2).
+
+        // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update
+        // type. This field MUST be set to UPDATETYPE_BITMAP (0x0001).
+
+        // numberRectangles (2 bytes): A 16-bit, unsigned integer.
+        // The number of screen rectangles present in the rectangles field.
+        size_t numberRectangles = stream.in_uint16_le();
+        if (this->verbose & 64){
+            LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
+        }
+
+        for (size_t i = 0; i < numberRectangles; i++) {
+
+            // rectangles (variable): Variable-length array of TS_BITMAP_DATA
+            // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
+            // rectangular clipping taken from the server-side screen frame buffer.
+            // The number of screen clippings in the array is specified by the
+            // numberRectangles field.
+
+            // 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
+            // ----------------------------------------------
+
+            // The TS_BITMAP_DATA structure wraps the bitmap data bytestream
+            // for a screen area rectangle containing a clipping taken from
+            // the server-side screen frame buffer.
+
+            // A 16-bit, unsigned integer. Left bound of the rectangle.
+
+            // A 16-bit, unsigned integer. Top bound of the rectangle.
+
+            // A 16-bit, unsigned integer. Right bound of the rectangle.
+
+            // A 16-bit, unsigned integer. Bottom bound of the rectangle.
+
+            // A 16-bit, unsigned integer. The width of the rectangle.
+
+            // A 16-bit, unsigned integer. The height of the rectangle.
+
+            // A 16-bit, unsigned integer. The color depth of the rectangle
+            // data in bits-per-pixel.
+
+            // CGR: As far as I understand we should have
+            // align4(right-left) == width and bottom-top == height
+            // maybe put some assertion to check it's true
+            // LOG(LOG_ERR, "left=%u top=%u right=%u bottom=%u width=%u height=%u bpp=%u", left, top, right, bottom, width, height, bpp);
+
+            // A 16-bit, unsigned integer. The flags describing the format
+            // of the bitmap data in the bitmapDataStream field.
+
+            // +-----------------------------------+---------------------------+
+            // | 0x0001 BITMAP_COMPRESSION         | Indicates that the bitmap |
+            // |                                   | data is compressed. This  |
+            // |                                   | implies that the          |
+            // |                                   | bitmapComprHdr field is   |
+            // |                                   | present if the NO_BITMAP_C|
+            // |                                   |OMPRESSION_HDR (0x0400)    |
+            // |                                   | flag is not set.          |
+            // +-----------------------------------+---------------------------+
+            // | 0x0400 NO_BITMAP_COMPRESSION_HDR  | Indicates that the        |
+            // |                                   | bitmapComprHdr field is   |
+            // |                                   | not present(removed for   |
+            // |                                   | bandwidth efficiency to   |
+            // |                                   | save 8 bytes).            |
+            // +-----------------------------------+---------------------------+
+
+            RDPBitmapData bmpdata;
+
+            bmpdata.receive(stream);
+
+            Rect boundary( bmpdata.dest_left
+                           , bmpdata.dest_top
+                           , bmpdata.dest_right - bmpdata.dest_left + 1
+                           , bmpdata.dest_bottom - bmpdata.dest_top + 1
+                           );
+
+            // BITMAP_COMPRESSION 0x0001
+            // Indicates that the bitmap data is compressed. This implies
+            // that the bitmapComprHdr field is present if the
+            // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
+
+            if (this->verbose & 64) {
+                LOG( LOG_INFO
+                     , "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */"
+                     , i
+                     , bmpdata.bits_per_pixel
+                     , bmpdata.width
+                     , bmpdata.height
+                     , boundary.x
+                     , boundary.y
+                     , boundary.cx
+                     , boundary.cy
+                     );
+            }
+
+            // bitmapComprHdr (8 bytes): Optional Compressed Data Header
+            // structure (see Compressed Data Header (TS_CD_HEADER)
+            // (section 2.2.9.1.1.3.1.2.3)) specifying the bitmap data
+            // in the bitmapDataStream. This field MUST be present if
+            // the BITMAP_COMPRESSION (0x0001) flag is present in the
+            // Flags field, but the NO_BITMAP_COMPRESSION_HDR (0x0400)
+            // flag is not.
+
+            if (bmpdata.flags & BITMAP_COMPRESSION) {
+                if ((bmpdata.width <= 0) || (bmpdata.height <= 0)) {
+                    LOG( LOG_WARNING
+                         , "Unexpected bitmap size: width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u"
+                         , bmpdata.width
+                         , bmpdata.height
+                         , bmpdata.cb_comp_main_body_size
+                         , bmpdata.dest_left
+                         , bmpdata.dest_top
+                         , bmpdata.dest_right
+                         , bmpdata.dest_bottom
+                         );
+                }
+            }
+
+            TODO("CGR: check which sanity checks should be done");
+                //            if (bufsize != bitmap.bmp_size){
+                //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
+                //                    bufsize, bitmap.bmp_size, width, height, bpp);
+                //            }
+                const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
+            Bitmap bitmap( this->bpp
+                           , bmpdata.bits_per_pixel
+                           , &this->orders.global_palette
+                           , bmpdata.width
+                           , bmpdata.height
+                           , data
+                           , bmpdata.bitmap_size()
+                           , (bmpdata.flags & BITMAP_COMPRESSION)
+                           );
+
+            if (   bmpdata.cb_scan_width
+                   && ((bmpdata.cb_scan_width - bitmap.line_size()) >= nbbytes(bitmap.bpp()))) {
+                LOG( LOG_WARNING
+                     , "Bad line size: line_size=%u width=%u height=%u bpp=%u"
+                     , bmpdata.cb_scan_width
+                     , bmpdata.width
+                     , bmpdata.height
+                     , bmpdata.bits_per_pixel
+                     );
+            }
+
+            if (   bmpdata.cb_uncompressed_size
+                   && (bmpdata.cb_uncompressed_size != bitmap.bmp_size())) {
+                LOG( LOG_WARNING
+                     , "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u"
+                     , bmpdata.cb_uncompressed_size
+                     , bitmap.bmp_size()
+                     , bmpdata.width
+                     , bmpdata.height
+                     , bmpdata.bits_per_pixel
+                     );
+            }
+
+            this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+        }
+        if (this->verbose & 64){
+            LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
+        }
+    }   // process_bitmap_updates
+
+    void process_bitmap_updates(InStream & stream, bool fast_path) {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }

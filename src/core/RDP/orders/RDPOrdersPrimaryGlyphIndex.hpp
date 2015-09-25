@@ -519,6 +519,67 @@ public:
         }
     }
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
+        if (header.fields & 0x001) { this->cache_id       = stream.in_uint8(); }
+        if (header.fields & 0x002) { this->fl_accel       = stream.in_uint8(); }
+        if (header.fields & 0x004) { this->ui_charinc     = stream.in_uint8(); }
+        if (header.fields & 0x008) { this->f_op_redundant = stream.in_uint8(); }
+
+        if (header.fields & 0x010) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->back_color = r + (g << 8) + (b << 16);
+        }
+
+        if (header.fields & 0x020) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->fore_color = r + (g << 8) + (b << 16);
+        }
+
+        int16_t bk_left   = this->bk.x;
+        int16_t bk_top    = this->bk.y;
+        int16_t bk_right  = this->bk.x + this->bk.cx - 1;
+        int16_t bk_bottom = this->bk.y + this->bk.cy - 1;
+
+        if (header.fields & 0x0040) { bk_left   = stream.in_uint16_le(); }
+        if (header.fields & 0x0080) { bk_top    = stream.in_uint16_le(); }
+        if (header.fields & 0x0100) { bk_right  = stream.in_uint16_le(); }
+        if (header.fields & 0x0200) { bk_bottom = stream.in_uint16_le(); }
+
+        this->bk.x  = bk_left;
+        this->bk.y  = bk_top;
+        this->bk.cx = bk_right - this->bk.x + 1;
+        this->bk.cy = bk_bottom - this->bk.y + 1;
+
+        int16_t op_left   = this->op.x;
+        int16_t op_top    = this->op.y;
+        int16_t op_right  = this->op.x + this->op.cx - 1;
+        int16_t op_bottom = this->op.y + this->op.cy - 1;
+
+        if (header.fields & 0x0400) { op_left   = stream.in_uint16_le(); }
+        if (header.fields & 0x0800) { op_top    = stream.in_uint16_le(); }
+        if (header.fields & 0x1000) { op_right  = stream.in_uint16_le(); }
+        if (header.fields & 0x2000) { op_bottom = stream.in_uint16_le(); }
+
+        this->op.x  = op_left;
+        this->op.y  = op_top;
+        this->op.cx = op_right - this->op.x + 1;
+        this->op.cy = op_bottom - this->op.y + 1;
+
+        header.receive_brush(stream, 0x4000, this->brush);
+
+        if (header.fields & 0x080000) { this->glyph_x = stream.in_uint16_le(); }
+        if (header.fields & 0x100000) { this->glyph_y = stream.in_uint16_le(); }
+
+        if (header.fields & 0x200000) {
+            this->data_len = stream.in_uint8();
+            stream.in_copy_bytes(this->data, this->data_len);
+        }
+    }
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = common.str(buffer, sz,
             !(!common.clip.contains(this->bk) || ((this->op.cx > 1) && !common.clip.contains(this->op))));

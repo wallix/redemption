@@ -28,9 +28,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 // Comment the code block below to generate testing data.
-#define LOGNULL
+// #define LOGNULL
 // Uncomment the code block below to generate testing data.
-//#define LOGPRINT
+#define LOGPRINT
 
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"

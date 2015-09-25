@@ -162,6 +162,33 @@ class RDPLineTo {
         header.receive_pen(stream, 0x080, this->pen);
     }
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
+    {
+        using namespace RDP;
+
+        if (header.fields & 0x001) {
+            this->back_mode = stream.in_uint16_le();
+        }
+
+        header.receive_coord(stream, 0x002, this->startx);
+        header.receive_coord(stream, 0x004, this->starty);
+        header.receive_coord(stream, 0x008, this->endx);
+        header.receive_coord(stream, 0x010, this->endy);
+
+        if (header.fields & 0x020) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->back_color = r + (g << 8) + (b << 16);
+        }
+
+        if (header.fields & 0x040) {
+            this->rop2 = stream.in_uint8();
+        }
+
+        header.receive_pen(stream, 0x080, this->pen);
+    }
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
         size_t lg = common.str(buffer, sz, true);

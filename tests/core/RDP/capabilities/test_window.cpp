@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
     BOOST_CHECK_EQUAL(windowlist_caps.NumIconCaches, static_cast<uint8_t>(255));
     BOOST_CHECK_EQUAL(windowlist_caps.NumIconCacheEntries, static_cast<uint16_t>(65535));
 
-    BStream stream(1024);
-    windowlist_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    windowlist_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     WindowListCaps windowslist_caps2;
 

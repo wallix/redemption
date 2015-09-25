@@ -135,6 +135,28 @@ class RDPOpaqueRect {
         this->color = r|(g << 8)|(b<<16);
     }
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
+    {
+        using namespace RDP;
+
+        header.receive_rect(stream, 0x01, this->rect);
+
+        uint8_t r = this->color;
+        uint8_t g = this->color >> 8;
+        uint8_t b = this->color >> 16;
+
+        if (header.fields & 0x10) {
+            r = stream.in_uint8();
+        }
+        if (header.fields & 0x20) {
+            g = stream.in_uint8();
+        }
+        if (header.fields & 0x40) {
+            b = stream.in_uint8();
+        }
+        this->color = r|(g << 8)|(b<<16);
+    }
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));

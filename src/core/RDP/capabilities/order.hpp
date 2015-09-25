@@ -364,8 +364,7 @@ struct OrderCaps : public Capability {
         memset(this->orderSupport, 0, NB_ORDER_SUPPORT); // 32 bits array filled with 0 BY DEFAULT
     }
 
-    void emit(Stream & stream)override {
-
+    void emit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_copy_bytes(this->terminalDescriptor, 16);
@@ -387,7 +386,7 @@ struct OrderCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsE);
     }
 
-    void recv(Stream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len) override {
         this->len = len;
 
         /* terminalDescriptor(16) + pad4octetsA(4) + desktopSaveXGranularity(2) + desktopSaveYGranularity(2) +

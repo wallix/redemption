@@ -105,6 +105,34 @@ struct ServerAutoReconnectPacket_Recv {
         LOG(LOG_INFO, "LogonId=%d", this->LogonId);
         hexdump(this->ArcRandomBits, sizeof(this->ArcRandomBits));
     }
+
+    explicit ServerAutoReconnectPacket_Recv(InStream & stream) :
+    cbLen(0),
+    Version(0),
+    LogonId(0) {
+        memset(ArcRandomBits, 0, sizeof(ArcRandomBits));
+
+        const unsigned expected = 4 +   // cbLen(4)
+                                  4 +   // Version(4)
+                                  4 +   // LogonId(4)
+                                  16;   // ArcRandomBits(16)
+
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR,
+                "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->cbLen   = stream.in_uint32_le();
+        this->Version = stream.in_uint32_le();
+        this->LogonId = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->ArcRandomBits, sizeof(this->ArcRandomBits));
+
+        LOG(LOG_INFO, "LogonId=%d", this->LogonId);
+        hexdump(this->ArcRandomBits, sizeof(this->ArcRandomBits));
+    }
 };  // ServerAutoReconnectPacket_Recv
 
 }   // namespace RDP

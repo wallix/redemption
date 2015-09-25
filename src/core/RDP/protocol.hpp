@@ -141,6 +141,17 @@ struct OrdersUpdate_Recv {
             stream.in_skip_bytes(2);    /* pad2OctetsB */
         }
     }
+
+    OrdersUpdate_Recv(InStream & stream, bool fast_path) {
+        if (fast_path) {
+            this->number_orders = stream.in_uint16_le();
+        }
+        else {
+            stream.in_skip_bytes(2);    /* pad2OctetsA */
+            this->number_orders = stream.in_uint16_le();
+            stream.in_skip_bytes(2);    /* pad2OctetsB */
+        }
+    }
 };
 
 // [MS-RDPEGDI] - 2.2.2.2.1 Drawing Order (DRAWING_ORDER)
@@ -186,6 +197,10 @@ struct DrawingOrder_RecvFactory {
     uint8_t control_flags;
 
     explicit DrawingOrder_RecvFactory(Stream & stream) {
+        this->control_flags = stream.in_uint8();
+    }
+
+    explicit DrawingOrder_RecvFactory(InStream & stream) {
         this->control_flags = stream.in_uint8();
     }
 };
@@ -245,6 +260,26 @@ struct DrawingOrder_RecvFactory {
 
 struct UpdatePaletteData_Recv {
     UpdatePaletteData_Recv(Stream & stream, bool fast_path, BGRPalette & palette) {
+        if (fast_path) {
+            stream.in_skip_bytes(2);    // updateType(2)
+        }
+
+        stream.in_skip_bytes(2);    // pad2Octets(2)
+
+        uint32_t numberColors = stream.in_uint32_le();
+        assert(numberColors == 256);
+
+        uint8_t r, g, b;
+
+        for (uint32_t i = 0; i < numberColors; i++) {
+            r = stream.in_uint8();
+            g = stream.in_uint8();
+            b = stream.in_uint8();
+            palette.set_color(i, (r << 16) | (g << 8) | b);
+        }
+    }
+
+    UpdatePaletteData_Recv(InStream & stream, bool fast_path, BGRPalette & palette) {
         if (fast_path) {
             stream.in_skip_bytes(2);    // updateType(2)
         }
@@ -455,7 +490,9 @@ struct ConfirmActivePDU_Send {
     }
 
     void emit_capability_set(Capability & capability) {
-        capability.emit(this->payload);
+        OutStream new_stream(this->payload.p, this->payload.capacity - (this->payload.p - this->payload.get_data()));
+        capability.emit(new_stream);
+        this->payload.out_skip_bytes(new_stream.get_offset());
         this->payload.mark_end();
         this->numberCapabilities++;
     }
@@ -541,17 +578,7 @@ struct ConfirmActivePDU_Send_new_stream {
     }
 
     void emit_capability_set(Capability & capability) {
-        struct WStream : Stream {
-            WStream(OutStream & o) {
-                this->data = o.get_data();
-                this->p = o.get_current();
-                this->end = o.get_data_end();
-                this->capacity = o.get_capacity();
-            }
-            void init(std::size_t capacity) override {}
-        } substream(this->payload);
-        capability.emit(substream);
-        this->payload.out_skip_bytes(substream.p - this->payload.get_current());
+        capability.emit(this->payload);
         this->numberCapabilities++;
     }
 

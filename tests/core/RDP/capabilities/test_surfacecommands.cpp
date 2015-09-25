@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySurfaceCommandsEmit)
     BOOST_CHECK_EQUAL(surfacecommands_caps.cmdFlags, static_cast<uint32_t>(65536));
     BOOST_CHECK_EQUAL(surfacecommands_caps.reserved, static_cast<uint32_t>(65536));
 
-    BStream stream(1024);
-    surfacecommands_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    surfacecommands_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     SurfaceCommandsCaps surfacecommands_caps2;
 

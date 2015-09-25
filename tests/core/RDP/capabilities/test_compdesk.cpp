@@ -38,10 +38,9 @@ BOOST_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
     BOOST_CHECK_EQUAL(compdesk_caps.len, static_cast<uint16_t>(CAPLEN_COMPDESK));
     BOOST_CHECK_EQUAL(compdesk_caps.CompDeskSupportLevel, static_cast<uint16_t>(COMPDESK_SUPPORTED));
 
-    BStream stream(1024);
-    compdesk_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    compdesk_caps.emit(out_stream);
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     CompDeskCaps compdesk_caps2;
 

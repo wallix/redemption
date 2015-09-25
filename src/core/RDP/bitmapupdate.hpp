@@ -309,6 +309,52 @@ struct RDPBitmapData {
         }
     }
 
+    void receive(InStream & stream) {
+        unsigned expected = 18; /* destLeft(2) + destTop(2) + destRight(2) +
+                                   destBottom(2) + width(2) + height(2) +
+                                   bitsPerPixel(2) + flags(2) + bitmapLength(2) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_ERR
+               , "BitmapData::receive TS_BITMAP_DATA - Truncated data, need=%u, remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->dest_left      = stream.in_uint16_le();
+        this->dest_top       = stream.in_uint16_le();
+        this->dest_right     = stream.in_uint16_le();
+        this->dest_bottom    = stream.in_uint16_le();
+        this->width          = stream.in_uint16_le();
+        this->height         = stream.in_uint16_le();
+        this->bits_per_pixel = stream.in_uint16_le();
+        this->flags          = stream.in_uint16_le();
+        this->bitmap_length  = stream.in_uint16_le();
+
+        REDASSERT(   (this->bits_per_pixel == 32)
+                  || (this->bits_per_pixel == 24)
+                  || (this->bits_per_pixel == 16)
+                  || (this->bits_per_pixel == 15)
+                  || (this->bits_per_pixel == 8 ));
+
+        if (    (this->flags & BITMAP_COMPRESSION)
+            && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
+            expected = 8; /* cbCompFirstRowSize(2) + cbCompMainBodySize(2) +
+                             cbScanWidth(2) + cbUncompressedSize(2) */
+            if (!stream.in_check_rem(expected)) {
+                LOG( LOG_ERR
+                   , "BitmapData::receive TS_CD_HEADER - Truncated data, need=18, remains=%u"
+                   , stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            stream.in_skip_bytes(2);    /* cbCompFirstRowSize (2 bytes) */
+
+            this->cb_comp_main_body_size = stream.in_uint16_le();
+            this->cb_scan_width          = stream.in_uint16_le();
+            this->cb_uncompressed_size   = stream.in_uint16_le();
+        }
+    }
+
     uint16_t struct_size() const {
         if (    (this->flags & BITMAP_COMPRESSION)
             && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {

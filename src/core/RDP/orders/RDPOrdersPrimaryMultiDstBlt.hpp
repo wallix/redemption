@@ -262,6 +262,62 @@ public:
         }
     }   // void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiDstBlt & oldcmd) const
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
+        //LOG(LOG_INFO, "RDPMultiDstBlt::receive: header fields=0x%02X", header.fields);
+
+        header.receive_coord(stream, 0x0001, this->nLeftRect);
+        header.receive_coord(stream, 0x0002, this->nTopRect);
+        header.receive_coord(stream, 0x0004, this->nWidth);
+        header.receive_coord(stream, 0x0008, this->nHeight);
+
+        if (header.fields & 0x0010) {
+            this->bRop = stream.in_uint8();
+        }
+
+        if (header.fields & 0x0020) {
+            this->nDeltaEntries = stream.in_uint8();
+        }
+
+        if (header.fields & 0x0040) {
+            uint16_t cbData = stream.in_uint16_le();
+            //LOG(LOG_INFO, "cbData=%d", cbData);
+
+            SubStream rgbData(stream, stream.get_offset(), cbData);
+            stream.in_skip_bytes(cbData);
+            //hexdump_d(rgbData.p, rgbData.size());
+
+            uint8_t zeroBitsSize = ((this->nDeltaEntries + 1) / 2);
+            //LOG(LOG_INFO, "zeroBitsSize=%d", zeroBitsSize);
+
+            SubStream zeroBits(rgbData, rgbData.get_offset(), zeroBitsSize);
+            rgbData.in_skip_bytes(zeroBitsSize);
+
+            uint8_t zeroBit = 0;
+
+            for (uint8_t i = 0, m2 = 0; i < this->nDeltaEntries; i++, m2++) {
+                if (m2 == 2) {
+                    m2 = 0;
+                }
+
+                if (!m2) {
+                    zeroBit = zeroBits.in_uint8();
+                    //LOG(LOG_INFO, "0x%02X", zeroBit);
+                }
+
+                this->deltaEncodedRectangles[i].leftDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedRectangles[i].topDelta  = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedRectangles[i].width     = (!(zeroBit & 0x20) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedRectangles[i].height    = (!(zeroBit & 0x10) ? rgbData.in_DEP() : 0);
+
+                //LOG(LOG_INFO, "RDPMultiDstBlt::receive: delta rectangle=(%d, %d, %d, %d)",
+                //    this->deltaEncodedRectangles[i].leftDelta, this->deltaEncodedRectangles[i].topDelta,
+                //    this->deltaEncodedRectangles[i].width, this->deltaEncodedRectangles[i].height);
+
+                zeroBit <<= 4;
+            }
+        }
+    }   // void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
         //LOG(LOG_INFO, "RDPMultiDstBlt::receive: header fields=0x%02X", header.fields);
 

@@ -107,6 +107,10 @@ public:
         return this->begin;
     }
 
+    uint8_t const * get_data_end() const {
+        return this->end;
+    }
+
     uint8_t const * get_current() const {
         return this->p.p;
     }
@@ -1163,12 +1167,18 @@ namespace details_ {
 
     template<class StreamSz, class Writer>
     void write_packet(uint8_t * & full_buf, std::size_t & used_buf_sz, StreamSz sz, Writer & writer) {
-        uint8_t data_buf[StreamSz::value];
-        OutStream ostream(data_buf);
-        apply_writer(sz, ostream, full_buf, used_buf_sz, writer, 1);
-        used_buf_sz += ostream.get_offset();
-        full_buf -= ostream.get_offset();
-        memcpy(full_buf, ostream.get_data(), ostream.get_offset());
+        if (!StreamSz::value) {
+            OutStream ostream;
+            apply_writer(sz, ostream, full_buf, used_buf_sz, writer, 1);
+        }
+        else {
+            uint8_t data_buf[StreamSz::value ? StreamSz::value : 1 /*disable warning: zero size arrays*/];
+            OutStream ostream(data_buf);
+            apply_writer(sz, ostream, full_buf, used_buf_sz, writer, 1);
+            used_buf_sz += ostream.get_offset();
+            full_buf -= ostream.get_offset();
+            memcpy(full_buf, ostream.get_data(), ostream.get_offset());
+        }
     }
 
     template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>

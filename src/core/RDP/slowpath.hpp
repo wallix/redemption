@@ -108,6 +108,43 @@ namespace SlowPath {
         }
     };
 
+    struct ClientInputEventPDU_Recv_new_stream {
+        uint16_t  numEvents;
+        InStream payload;
+
+        explicit ClientInputEventPDU_Recv_new_stream(InStream & stream)
+
+        : numEvents(
+            [&stream](){
+                if (!stream.in_check_rem(2)) {
+                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated (numEvents)");
+                    throw Error(ERR_RDP_SLOWPATH);
+                }
+
+                auto numEvents = stream.in_uint16_le();
+                const unsigned expected =
+                      2                    // pad(2)
+                    + numEvents * 12 // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
+                    ;
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDP_SLOWPATH);
+                }
+
+                stream.in_skip_bytes(2); // pad
+                return numEvents;
+            }()
+        )
+        // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
+        , payload(stream.get_current(), this->numEvents * 12)
+        {
+            // This is the constructor body, we skip payload now that it is packaged
+
+            stream.in_skip_bytes(this->payload.get_capacity());
+        }
+    };
+
     struct ClientInputEventPDU_Send {
         ClientInputEventPDU_Send(Stream & stream, uint16_t numEvents) {
             stream.out_uint16_le(numEvents);
@@ -197,6 +234,29 @@ namespace SlowPath {
         }
     };
 
+    struct InputEvent_Recv_new_stream {
+        uint32_t  eventTime;
+        uint16_t  messageType;
+        InStream payload;
+
+        explicit InputEvent_Recv_new_stream(InStream & stream)
+        : eventTime([&stream](){
+            // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
+            if (!stream.in_check_rem(12)) {
+                LOG(LOG_ERR, "SlowPath::InputEvent: data truncated, expected=12 remains=%u", stream.in_remain());
+                throw Error(ERR_RDP_SLOWPATH);
+            }
+            return stream.in_uint32_le();
+        }())
+        , messageType(stream.in_uint16_le())
+         // device_flags(2) + param1(2) + param2(2)
+        , payload(stream.get_current(), 6)
+        // Body of constructor
+        {
+            stream.in_skip_bytes(this->payload.get_capacity());
+        }
+    };
+
     struct InputEvent_Send {
         InputEvent_Send(Stream & stream, uint32_t eventTime, uint16_t messageType) {
             stream.out_uint32_le(eventTime);
@@ -265,6 +325,23 @@ namespace SlowPath {
         uint16_t keyCode;
 
         explicit KeyboardEvent_Recv(Stream & stream)
+        : keyboardFlags(0)
+        , keyCode(0) {
+            const unsigned expected =
+                6; // keyboardFlags(2) + keyCode(2) + pad2Octets(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR, "SlowPath::KeyboardEvent: data truncated, expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_SLOWPATH);
+            }
+
+            this->keyboardFlags = stream.in_uint16_le();
+            this->keyCode       = stream.in_uint16_le();
+
+            stream.in_skip_bytes(2); // pad2Octets
+        }
+
+        explicit KeyboardEvent_Recv(InStream & stream)
         : keyboardFlags(0)
         , keyCode(0) {
             const unsigned expected =
@@ -477,6 +554,23 @@ namespace SlowPath {
             this->xPos         = stream.in_uint16_le();
             this->yPos         = stream.in_uint16_le();
         }
+
+        explicit MouseEvent_Recv(InStream & stream)
+        : pointerFlags(0)
+        , xPos(0)
+        , yPos(0) {
+            const unsigned expected =
+                6; // pointerFlags(2) + xPos(2) + yPos(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR, "SlowPath::MouseEvent: data truncated, expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_SLOWPATH);
+            }
+
+            this->pointerFlags = stream.in_uint16_le();
+            this->xPos         = stream.in_uint16_le();
+            this->yPos         = stream.in_uint16_le();
+        }
     };
 
     struct MouseEvent_Send {
@@ -635,6 +729,21 @@ namespace SlowPath {
 
             this->toggleFlags = stream.in_uint32_le();
         }
+
+        explicit SynchronizeEvent_Recv(InStream & stream)
+        : toggleFlags(0) {
+            const unsigned expected =
+                6; // pad2Octets(2) + toggleFlags(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR, "SlowPath::SynchronizeEvent: data truncated, expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_SLOWPATH);
+            }
+
+            stream.in_skip_bytes(2); // pad2Octets
+
+            this->toggleFlags = stream.in_uint32_le();
+        }
     };
 
     struct SynchronizeEvent_Send {
@@ -748,6 +857,10 @@ struct GraphicsUpdate_Recv {
     uint16_t update_type;
 
     explicit GraphicsUpdate_Recv(Stream & stream) {
+        update_type = stream.in_uint16_le();
+    }
+
+    explicit GraphicsUpdate_Recv(InStream & stream) {
         update_type = stream.in_uint16_le();
     }
 };

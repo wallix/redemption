@@ -87,6 +87,10 @@ public:
         this->action = stream.in_uint32_le();
     }
 
+    void receive(InStream & stream, const AltsecDrawingOrderHeader & header) {
+        this->action = stream.in_uint32_le();
+    }
+
     size_t str(char * buffer, size_t sz) const {
         size_t lg  = snprintf( buffer
                              , sz

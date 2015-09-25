@@ -326,7 +326,91 @@ struct ServerRedirectionPDU {
         return offset;
     }
 
+    unsigned recv_field_process(InStream & stream, uint8_t* field, size_t field_size,
+                                uint32_t & field_length) {
+        unsigned offset = 0;
+        field_length = stream.in_uint32_le();
+        offset += 4;
+        if ((field_length > field_size) ||
+            !stream.in_check_rem(field_length)) {
+            LOG(LOG_INFO, "error recv_field_process field_length=%u, sizeof(field)=%u",
+                field_length, field_size);
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+        stream.in_copy_bytes(field, field_length);
+        offset += field_length;
+        return offset;
+    }
+
     void receive(Stream & stream) {
+        unsigned offset = 0;
+        unsigned expected = 12; /* Flags(2) + Length(2) +
+                                   SessionID(4) + RedirFlags(4) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_ERR
+               , "ServerRedirection::receive RDP_SERVER_REDIRECTION_PACKET"
+                 " - Truncated data, need=%u, remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+        this->Flags = stream.in_uint16_le();
+        this->Length = stream.in_uint16_le();
+        this->SessionID = stream.in_uint32_le();
+        this->RedirFlags = stream.in_uint32_le();
+        offset += 12;
+        if (this->RedirFlags & LB_TARGET_NET_ADDRESS) {
+            offset += this->recv_field_process(stream, this->TargetNetAddress,
+                                               sizeof(this->TargetNetAddress),
+                                               this->TargetNetAddressLength);
+        }
+        if (this->RedirFlags & LB_LOAD_BALANCE_INFO) {
+            offset += this->recv_field_process(stream, this->LoadBalanceInfo,
+                                               sizeof(this->LoadBalanceInfo),
+                                               this->LoadBalanceInfoLength);
+        }
+        if (this->RedirFlags & LB_USERNAME) {
+            offset += this->recv_field_process(stream, this->UserName,
+                                               sizeof(this->UserName),
+                                               this->UserNameLength);
+        }
+        if (this->RedirFlags & LB_DOMAIN) {
+            offset += this->recv_field_process(stream, this->Domain,
+                                               sizeof(this->Domain),
+                                               this->DomainLength);
+        }
+        if (this->RedirFlags & LB_PASSWORD) {
+            offset += this->recv_field_process(stream, this->Password,
+                                               sizeof(this->Password),
+                                               this->PasswordLength);
+        }
+        if (this->RedirFlags & LB_TARGET_FQDN) {
+            offset += this->recv_field_process(stream, this->TargetFQDN,
+                                               sizeof(this->TargetFQDN),
+                                               this->TargetFQDNLength);
+        }
+        if (this->RedirFlags & LB_TARGET_NETBIOS_NAME) {
+            offset += this->recv_field_process(stream, this->TargetNetBiosName,
+                                               sizeof(this->TargetNetBiosName),
+                                               this->TargetNetBiosNameLength);
+        }
+        if (this->RedirFlags & LB_CLIENT_TSV_URL) {
+            offset += this->recv_field_process(stream, this->TsvUrl,
+                                               sizeof(this->TsvUrl),
+                                               this->TsvUrlLength);
+        }
+        if (this->RedirFlags & LB_TARGET_NET_ADDRESSES) {
+            offset += this->recv_field_process(stream, this->TargetNetAddresses,
+                                               sizeof(this->TargetNetAddresses),
+                                               this->TargetNetAddressesLength);
+        }
+        int remains = this->Length - offset;
+        // LOG(LOG_INFO, "receive RDP_SERVER_REDIRECTION_PACKET pad = %d", remains);
+        if ((remains <= 8) && (remains >= 0)) {
+            stream.in_skip_bytes(remains);
+        }
+    }
+
+    void receive(InStream & stream) {
         unsigned offset = 0;
         unsigned expected = 12; /* Flags(2) + Length(2) +
                                    SessionID(4) + RedirFlags(4) */

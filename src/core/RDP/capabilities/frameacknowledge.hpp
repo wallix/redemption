@@ -67,18 +67,18 @@ struct FrameAcknowledgeCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream){
+    void emit(OutStream & stream) override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->maxUnacknowledgedFrameCount);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(InStream & stream, uint16_t len) override {
         this->len = len;
         this->maxUnacknowledgedFrameCount = stream.in_uint32_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg) override {
         LOG(LOG_INFO, "%s FrameAcknowledge caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "FrameAcknowledge caps::maxUnacknowledgedFrameCount %u", this->maxUnacknowledgedFrameCount);
     }

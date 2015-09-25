@@ -38,10 +38,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
     BOOST_CHECK_EQUAL(largepointer_caps.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
     BOOST_CHECK_EQUAL(largepointer_caps.largePointerSupportFlags, static_cast<uint16_t>(1));
 
-    BStream stream(1024);
-    largepointer_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    largepointer_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     LargePointerCaps largepointer_caps2;
 

@@ -1148,6 +1148,31 @@ class RDPPatBlt {
         header.receive_brush(stream, 0x080, this->brush);
     }
 
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
+    {
+        using namespace RDP;
+
+        header.receive_rect(stream, 0x01, this->rect);
+
+        if (header.fields & 0x10) {
+            this->rop = stream.in_uint8();
+        }
+        if (header.fields & 0x20) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->back_color = r + (g << 8) + (b << 16);
+        }
+        if (header.fields & 0x40) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->fore_color = r + (g << 8) + (b << 16);
+        }
+
+        header.receive_brush(stream, 0x080, this->brush);
+    }
+
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
         size_t lg = common.str(buffer, sz, common.clip.contains(this->rect));
