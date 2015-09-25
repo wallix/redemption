@@ -86,6 +86,7 @@ enum class Attribute : unsigned {
     visible = 1 << 4,
     advanced = 1 << 5,
     iptables = 1 << 6,
+    password = 1 << 7,
 };
 
 constexpr Attribute operator | (Attribute x, Attribute y) {
@@ -127,6 +128,7 @@ void config_spec_definition(Writer && W)
     Attribute const V = Attribute::visible;
     Attribute const A = Attribute::advanced;
     Attribute const IPT = Attribute::iptables;
+    Attribute const P = Attribute::password;
 
     PropertyFieldFlags const w = PropertyFieldFlags::write;
     PropertyFieldFlags const r = PropertyFieldFlags::read;
@@ -158,11 +160,11 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
-        W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()), desc{"Authentication channel used by Auto IT scripts."});
+        W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
         W.member(A, type_<bool>(), "enable_file_encryption", def_authid{"opt_file_encryption"}, str_authid{"file_encryption"}, rw);
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
-        W.member(V, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
+        W.member(P, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
         W.sep();
         W.member(A, type_<StaticString<1024>>(), "png_path", set(MACRO(PNG_PATH)));
         W.member(A, type_<StaticString<1024>>(), "wrm_path", set(MACRO(WRM_PATH)));

@@ -972,7 +972,7 @@ namespace cfg {
             type value{600};
         };
 
-        // Authentication channel used by Auto IT scripts.
+        // Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
         struct auth_channel {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;

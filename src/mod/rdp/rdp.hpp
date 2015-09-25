@@ -586,7 +586,10 @@ public:
         this->event.object_and_time = (this->open_session_timeout > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
-        strncpy(this->auth_channel, mod_rdp_params.auth_channel, sizeof(this->auth_channel) - 1);
+        strncpy(this->auth_channel,
+                (!strncmp(mod_rdp_params.auth_channel, "*", 2) ? "wablnch"
+                                                               : mod_rdp_params.auth_channel),
+                sizeof(this->auth_channel) - 1);
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
