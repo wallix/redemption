@@ -826,11 +826,11 @@ public:
         }
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %llu",
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %zu",
                 this->orders.recv_bmp_cache_count);
-            LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %llu",
+            LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %zu",
                 this->orders.recv_order_count);
-            LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %llu",
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
     }
