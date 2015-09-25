@@ -1740,17 +1740,17 @@ public:
 
                                 // Inject a new channel for auth_channel virtual channel (wablauncher)
                                 if (this->auth_channel[0]) {
-                                    memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
-                                    cs_net.channelDefArray[num_channels].options =
+                                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
+                                    cs_net.channelDefArray[cs_net.channelCount].options =
                                           GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                                    cs_net.channelCount++;
                                     CHANNELS::ChannelDef def;
                                     memcpy(def.name, this->auth_channel, 8);
-                                    def.flags = cs_net.channelDefArray[num_channels].options;
+                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                                     if (this->verbose & 16){
-                                        def.log(num_channels);
+                                        def.log(cs_net.channelCount);
                                     }
                                     this->mod_channel_list.push_back(def);
+                                    cs_net.channelCount++;
                                 }
 
                                 if (this->enable_wab_agent) {
