@@ -444,14 +444,6 @@ public:
         this->mod.refresh_context(ini);
     }
 
-    void send_data_indication_ex(uint16_t channelId, HStream& stream) override {
-        this->mod.send_data_indication_ex(channelId, stream);
-    }
-
-    void send_fastpath_data(Stream& data) override {
-        this->mod.send_fastpath_data(data);
-    }
-
     void set_mod_palette(const BGRPalette& palette) override {
         this->mod.set_mod_palette(palette);
     }

@@ -34,8 +34,6 @@
 
 class RDPGraphicDevice;
 class Inifile;
-class Stream;
-class HStream;
 
 enum {
     BUTTON_STATE_UP   = 0,
@@ -183,8 +181,6 @@ public:
 
     virtual bool is_up_and_running() { return false; }
 
-    virtual void send_fastpath_data(Stream & data) {}
-    virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {}
     virtual void disconnect() {}
 };
 

@@ -27,7 +27,6 @@
 #include "draw_api.hpp"
 
 class Capability;
-class HStream;
 class InStream;
 class OrderCaps;
 

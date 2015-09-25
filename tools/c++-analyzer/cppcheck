@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"/../..
 
-exec cppcheck -v --enable=all --std=posix --std=c++11 \
+exec cppcheck -v --enable=all --std=posix --std=c++11 "$@" \
 src/main/*.cpp \
 -DCERTIF_PATH='"/etc/rdpproxy/cert/rdp"' \
 -DCFG_PATH='"/etc/rdpproxy"' \
