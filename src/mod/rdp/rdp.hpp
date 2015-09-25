@@ -2569,7 +2569,7 @@ public:
                             }
 
                             while (su.payload.in_remain()) {
-                                FastPath::Update_Recv_new_stream upd(su.payload, &this->mppc_dec);
+                                FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 
                                 switch (upd.updateCode) {
                                 case FastPath::FASTPATH_UPDATETYPE_ORDERS:
@@ -2740,7 +2740,7 @@ public:
                                 }
                                 else {
                                     InStream tmp_sec_payload(sec.payload.p, sec.payload.capacity - sec.payload.get_offset());
-                                    ShareControl_Recv_new_stream sctrl(tmp_sec_payload);
+                                    ShareControl_Recv sctrl(tmp_sec_payload);
                                     next_packet += sctrl.totalLength;
 
                                     if (this->verbose & 128) {
@@ -2763,7 +2763,7 @@ public:
                                             //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                             {
-                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
@@ -2774,7 +2774,7 @@ public:
                                             //this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                             {
-                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
@@ -2785,7 +2785,7 @@ public:
                                             //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_FONT_MAP;
                                             {
-                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
@@ -2800,7 +2800,7 @@ public:
                                             // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
                                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
                                             {
-                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
@@ -2834,7 +2834,7 @@ public:
                                             }
 
                                             {
-                                                ShareData_Recv_new_stream sdata(sctrl.payload, &this->mppc_dec);
+                                                ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                                 switch (sdata.pdutype2) {
                                                 case PDUTYPE2_UPDATE:
                                                     {
@@ -3251,7 +3251,7 @@ public:
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this](StreamSize<65536>, OutStream & stream) {
-                RDP::ConfirmActivePDU_Send_new_stream confirm_active_pdu(stream);
+                RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
 
                 confirm_active_pdu.emit_begin(this->share_id);
 
@@ -5152,60 +5152,8 @@ public:
         }
     }
 
-    void process_save_session_info(Stream & stream) {
-        RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
-
-        switch (ssipdudata.infoType) {
-        case RDP::INFOTYPE_LOGON:
-        {
-            LOG(LOG_INFO, "process save session info : Logon");
-            RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
-
-            process_logon_info(reinterpret_cast<char *>(liv1.Domain),
-                reinterpret_cast<char *>(liv1.UserName));
-        }
-        break;
-        case RDP::INFOTYPE_LOGON_LONG:
-        {
-            LOG(LOG_INFO, "process save session info : Logon long");
-            RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
-
-            process_logon_info(reinterpret_cast<char *>(liv2.Domain),
-                reinterpret_cast<char *>(liv2.UserName));
-        }
-        break;
-        case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
-        {
-            LOG(LOG_INFO, "process save session info : Logon plainnotify");
-            RDP::PlainNotify_Recv pn(ssipdudata.payload);
-        }
-        break;
-        case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
-        {
-            LOG(LOG_INFO, "process save session info : Logon extended info");
-            RDP::LogonInfoExtended_Recv lie(ssipdudata.payload);
-
-            RDP::LogonInfoField_Recv lif(lie.payload);
-
-            if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
-                LOG(LOG_INFO, "process save session info : Auto-reconnect cookie");
-
-                RDP::ServerAutoReconnectPacket_Recv sarp(lif.payload);
-            }
-            if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
-                LOG(LOG_INFO, "process save session info : Logon Errors Info");
-
-                RDP::LogonErrorsInfo_Recv lei(lif.payload);
-            }
-        }
-        break;
-        }
-
-        stream.p = stream.end;
-    }
-
     void process_save_session_info(InStream & stream) {
-        RDP::SaveSessionInfoPDUData_Recv_new_stream ssipdudata(stream);
+        RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
 
         switch (ssipdudata.infoType) {
         case RDP::INFOTYPE_LOGON:
@@ -5384,7 +5332,7 @@ public:
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, action](StreamSize<256>, OutStream & stream) {
-                ShareData_new_stream sdata(stream);
+                ShareData sdata(stream);
                 sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
                 // Payload
@@ -5424,7 +5372,7 @@ public:
             GCC::MCS_GLOBAL_CHANNEL,
             [this, &data_writer, pdu_type2, stream_id](
                 StreamSize<256 + packet_size_t{}>, OutStream & stream) {
-                ShareData_new_stream sdata(stream);
+                ShareData sdata(stream);
                 sdata.emit_begin(pdu_type2, this->share_id, stream_id);
                 {
                     OutStream substream(stream.get_current(), packet_size_t{});

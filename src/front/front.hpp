@@ -1901,7 +1901,7 @@ public:
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
                 InStream tmp_sec_payload(sec.payload.p, sec.payload.capacity - sec.payload.get_offset());
-                ShareControl_Recv_new_stream sctrl(tmp_sec_payload);
+                ShareControl_Recv sctrl(tmp_sec_payload);
 
                 switch (sctrl.pduType) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
@@ -2192,7 +2192,7 @@ public:
                 else {
                     while (sec.payload.p < sec.payload.end) {
                         InStream tmp_sec_payload(sec.payload.p, sec.payload.capacity - sec.payload.get_offset());
-                        ShareControl_Recv_new_stream sctrl(tmp_sec_payload);
+                        ShareControl_Recv sctrl(tmp_sec_payload);
 
                         switch (sctrl.pduType) {
                         case PDUTYPE_DEMANDACTIVEPDU:
@@ -3230,7 +3230,7 @@ private:
         if (this->verbose & 8) {
             LOG(LOG_INFO, "Front::process_data(...)");
         }
-        ShareData_Recv_new_stream sdata_in(stream, nullptr);
+        ShareData_Recv sdata_in(stream, nullptr);
         if (this->verbose & 8) {
             LOG(LOG_INFO, "sdata_in.pdutype2=%u"
                           " sdata_in.len=%u"
@@ -3289,14 +3289,14 @@ private:
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
-                SlowPath::ClientInputEventPDU_Recv_new_stream cie(sdata_in.payload);
+                SlowPath::ClientInputEventPDU_Recv cie(sdata_in.payload);
 
                 if (this->verbose & 4) {
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", cie.numEvents);
                 }
 
                 for (int index = 0; index < cie.numEvents; index++) {
-                    SlowPath::InputEvent_Recv_new_stream ie(cie.payload);
+                    SlowPath::InputEvent_Recv ie(cie.payload);
 
                     TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")

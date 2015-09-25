@@ -116,7 +116,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
     }
 
 
-    BStream share_data_header(256);
+    StaticOutStream<256> share_data_header;
     ShareData share_data(share_data_header);
     share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
                          , data.size() + 18 /* TS_SHAREDATAHEADER(18) */
@@ -124,7 +124,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
                          , (compressionFlags ? data_.get().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
                          );
     share_data.emit_end();
-    data_.get().copy_to_head(share_data_header.get_data(), share_data_header.size());
+    data_.get().copy_to_head(share_data_header.get_data(), share_data_header.get_offset());
 
     BStream share_ctrl_header(256);
     ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE

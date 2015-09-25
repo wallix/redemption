@@ -1267,69 +1267,9 @@ namespace FastPath {
         uint8_t   compression;
         uint8_t   compressionFlags;
         uint16_t  size;
-        SubStream payload;
-
-        Update_Recv(InStream & stream, rdp_mppc_dec * dec)
-        : updateHeader([&stream](){
-            unsigned expected = 1; // updateHeader(1)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDP_FASTPATH);
-            }
-
-            return stream.in_uint8();
-        }())
-        , updateCode(this->updateHeader & 0xF)           // 4 bits
-        , fragmentation((this->updateHeader >> 4) & 0x3) // 2 bits
-        , compression((this->updateHeader >> 6) & 0x3)   // 2 bits
-        , compressionFlags([&stream, this](){
-            unsigned expected =
-                  ((this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) ? 1 : 0)  // ?compressionFlags?(1)
-                + 2;                                                                // + size(2)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDP_FASTPATH);
-            }
-
-            return (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED)?stream.in_uint8():0;
-        }())
-        , size(stream.in_uint16_le())
-        , payload([&stream, &dec](uint16_t size, uint8_t compression, uint8_t compressionFlags){
-            if ((size != 0) && !stream.in_check_rem(size)) {
-                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
-                    size, stream.in_remain());
-                throw Error(ERR_RDP_FASTPATH);
-            }
-
-            if ((compression & FASTPATH_OUTPUT_COMPRESSION_USED)
-            && (compressionFlags & PACKET_COMPRESSED)) {
-                const uint8_t * rdata;
-                uint32_t        rlen;
-
-                dec->decompress(stream.get_current(), size, compressionFlags, rdata, rlen);
-
-                return SubStream(StaticStream(rdata, rlen), 0, rlen);
-            }
-            return SubStream(stream, stream.get_offset(), size);
-        }(this->size, this->compression, this->compressionFlags))
-        // Body of constructor
-        {
-            stream.in_skip_bytes(this->size);
-        }
-    };
-
-    struct Update_Recv_new_stream {
-        uint8_t   updateHeader;
-        uint8_t   updateCode;
-        uint8_t   fragmentation;
-        uint8_t   compression;
-        uint8_t   compressionFlags;
-        uint16_t  size;
         InStream payload;
 
-        Update_Recv_new_stream(InStream & stream, rdp_mppc_dec * dec)
+        Update_Recv(InStream & stream, rdp_mppc_dec * dec)
         : updateHeader([&stream](){
             unsigned expected = 1; // updateHeader(1)
             if (!stream.in_check_rem(expected)) {

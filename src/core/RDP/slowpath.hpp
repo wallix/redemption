@@ -73,46 +73,9 @@ namespace SlowPath {
 
     struct ClientInputEventPDU_Recv {
         uint16_t  numEvents;
-        SubStream payload;
-
-        explicit ClientInputEventPDU_Recv(Stream & stream)
-
-        : numEvents(
-            [&stream](){
-                if (!stream.in_check_rem(2)) {
-                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated (numEvents)");
-                    throw Error(ERR_RDP_SLOWPATH);
-                }
-
-                auto numEvents = stream.in_uint16_le();
-                const unsigned expected =
-                      2                    // pad(2)
-                    + numEvents * 12 // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
-                    ;
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RDP_SLOWPATH);
-                }
-
-                stream.in_skip_bytes(2); // pad
-                return numEvents;
-            }()
-        )
-        // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
-        , payload(stream, stream.get_offset(), this->numEvents * 12)
-        {
-            // This is the constructor body, we skip payload now that it is packaged
-
-            stream.in_skip_bytes(this->payload.size());
-        }
-    };
-
-    struct ClientInputEventPDU_Recv_new_stream {
-        uint16_t  numEvents;
         InStream payload;
 
-        explicit ClientInputEventPDU_Recv_new_stream(InStream & stream)
+        explicit ClientInputEventPDU_Recv(InStream & stream)
 
         : numEvents(
             [&stream](){
@@ -147,6 +110,12 @@ namespace SlowPath {
 
     struct ClientInputEventPDU_Send {
         ClientInputEventPDU_Send(Stream & stream, uint16_t numEvents) {
+            stream.out_uint16_le(numEvents);
+
+            stream.out_clear_bytes(2); // pad
+        }
+
+        ClientInputEventPDU_Send(OutStream & stream, uint16_t numEvents) {
             stream.out_uint16_le(numEvents);
 
             stream.out_clear_bytes(2); // pad
@@ -214,32 +183,9 @@ namespace SlowPath {
     struct InputEvent_Recv {
         uint32_t  eventTime;
         uint16_t  messageType;
-        SubStream payload;
-
-        explicit InputEvent_Recv(Stream & stream)
-        : eventTime([&stream](){
-            // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
-            if (!stream.in_check_rem(12)) {
-                LOG(LOG_ERR, "SlowPath::InputEvent: data truncated, expected=12 remains=%u", stream.in_remain());
-                throw Error(ERR_RDP_SLOWPATH);
-            }
-            return stream.in_uint32_le();
-        }())
-        , messageType(stream.in_uint16_le())
-         // device_flags(2) + param1(2) + param2(2)
-        , payload(stream, stream.get_offset(), 6)
-        // Body of constructor
-        {
-            stream.in_skip_bytes(this->payload.size());
-        }
-    };
-
-    struct InputEvent_Recv_new_stream {
-        uint32_t  eventTime;
-        uint16_t  messageType;
         InStream payload;
 
-        explicit InputEvent_Recv_new_stream(InStream & stream)
+        explicit InputEvent_Recv(InStream & stream)
         : eventTime([&stream](){
             // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
             if (!stream.in_check_rem(12)) {
@@ -259,6 +205,11 @@ namespace SlowPath {
 
     struct InputEvent_Send {
         InputEvent_Send(Stream & stream, uint32_t eventTime, uint16_t messageType) {
+            stream.out_uint32_le(eventTime);
+
+            stream.out_uint16_le(messageType);
+        }
+        InputEvent_Send(OutStream & stream, uint32_t eventTime, uint16_t messageType) {
             stream.out_uint32_le(eventTime);
 
             stream.out_uint16_le(messageType);
@@ -361,6 +312,12 @@ namespace SlowPath {
 
     struct KeyboardEvent_Send {
         KeyboardEvent_Send(Stream & stream, uint16_t keyboardFlags, uint16_t keyCode) {
+            stream.out_uint16_le(keyboardFlags);
+            stream.out_uint16_le(keyCode);
+
+            stream.out_clear_bytes(2); // pad2Octets
+        }
+        KeyboardEvent_Send(OutStream & stream, uint16_t keyboardFlags, uint16_t keyCode) {
             stream.out_uint16_le(keyboardFlags);
             stream.out_uint16_le(keyCode);
 
@@ -580,6 +537,12 @@ namespace SlowPath {
             stream.out_uint16_le(xPos);
             stream.out_uint16_le(yPos);
         }
+        MouseEvent_Send(  OutStream & stream, uint16_t pointerFlags, uint16_t xPos
+                        , uint16_t yPos) {
+            stream.out_uint16_le(pointerFlags);
+            stream.out_uint16_le(xPos);
+            stream.out_uint16_le(yPos);
+        }
     };
 
 // 2.2.8.1.1.3.1.1.4 Extended Mouse Event (TS_POINTERX_EVENT)
@@ -748,6 +711,11 @@ namespace SlowPath {
 
     struct SynchronizeEvent_Send {
         SynchronizeEvent_Send(Stream & stream, uint32_t toggleFlags) {
+            stream.out_clear_bytes(2); // pad2Octets
+
+            stream.out_uint32_le(toggleFlags);
+        }
+        SynchronizeEvent_Send(OutStream & stream, uint32_t toggleFlags) {
             stream.out_clear_bytes(2); // pad2Octets
 
             stream.out_uint32_le(toggleFlags);

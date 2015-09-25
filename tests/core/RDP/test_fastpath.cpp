@@ -27,7 +27,8 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+// #define LOGNULL
+#define LOGPRINT
 
 #include "stream.hpp"
 #include "test_transport.hpp"
@@ -313,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream out_s(65536);
+    StaticOutStream<65536> out_s;
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -330,30 +331,30 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
         FastPath::Update_Recv in_upd(in_su.payload, nullptr);
 
         if (in_upd.updateCode == updateCode) {
-            out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.size());
-            out_s.mark_end();
+            out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.get_capacity());
 
-            SubStream Upd_s(out_s, 0, FastPath::Update_Send::GetSize(false));
+            OutStream Upd_s(out_s.get_data(), FastPath::Update_Send::GetSize(false));
 
             FastPath::Update_Send Upd( Upd_s
-                                     , out_s.size() - FastPath::Update_Send::GetSize(false)
+                                     , out_s.get_offset() - FastPath::Update_Send::GetSize(false)
                                      , in_upd.updateCode
                                      , in_upd.fragmentation
                                      , 0
                                      , 0
                                      );
 
-            BStream SvrUpdPDU_s(256);
+            StaticOutStream<256> SvrUpdPDU_s;
 
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                   SvrUpdPDU_s
-                , out_s
+                , out_s.get_data()
+                , out_s.get_offset()
                 , in_su.secFlags
                 , decrypt
                 );
 
-            out_t.send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            out_t.send(out_s);       // Fast-Path Update (TS_FP_UPDATE)
+            send(out_t, SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            send(out_t, out_s);       // Fast-Path Update (TS_FP_UPDATE)
         }
     }
 

@@ -431,101 +431,13 @@ struct UpdatePaletteData_Recv {
 //  the numberCapabilities field.
 
 struct ConfirmActivePDU_Send {
-    Stream   & payload;
-    uint16_t   offset_lengthCombinedCapabilities;
-    uint16_t   offset_numberCapabilities;
-    uint16_t   numberCapabilities;
-    uint16_t   offset_capabilitySets;
-
-    explicit ConfirmActivePDU_Send(Stream & stream)
-        : payload(stream)
-        , offset_lengthCombinedCapabilities(0)
-        , offset_numberCapabilities(0)
-        , numberCapabilities(0)
-        , offset_capabilitySets(0) {
-    }
-
-    void emit_begin(uint32_t shareId) {
-        const char * sourceDescriptor       = "MSTSC";
-        uint16_t     lengthSourceDescriptor = ::strlen(sourceDescriptor);
-
-        // Payload
-
-        // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier
-        //  for the packet (see [T128] section 8.4.2 for more information
-        //  regarding share IDs).
-        payload.out_uint32_le(shareId);
-
-        // riginatorId (2 bytes): A 16-bit, unsigned integer. The identifier
-        //  of the packet originator. This field MUST be set to the server
-        //  channel ID (0x03EA).
-        payload.out_uint16_le(0x03EA);
-
-        // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The
-        //  size in bytes of the sourceDescriptor field.
-        payload.out_uint16_le(lengthSourceDescriptor);
-
-        // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer.
-        //  The combined size in bytes of the numberCapabilities, pad2Octets
-        //  and capabilitySets fields.
-        this->offset_lengthCombinedCapabilities = payload.get_offset();
-        payload.out_uint16_le(0);
-
-        // sourceDescriptor (variable): A variable-length array of bytes
-        //  containing a source descriptor (see [T128] section 8.4.1 for more
-        //  information regarding source descriptors).
-        payload.out_copy_bytes(sourceDescriptor, lengthSourceDescriptor);
-
-        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. Number of
-        //  capability sets included in the Confirm Active PDU.
-        this->offset_numberCapabilities = payload.get_offset();
-        this->numberCapabilities        = 0;
-        payload.out_uint16_le(0);
-
-        // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values
-        //  in this field MUST be ignored.
-        payload.out_clear_bytes(2);
-
-        this->offset_capabilitySets = payload.get_offset();
-    }
-
-    void emit_capability_set(Capability & capability) {
-        OutStream new_stream(this->payload.p, this->payload.capacity - (this->payload.p - this->payload.get_data()));
-        capability.emit(new_stream);
-        this->payload.out_skip_bytes(new_stream.get_offset());
-        this->payload.mark_end();
-        this->numberCapabilities++;
-    }
-
-    void emit_end() {
-        uint16_t lengthCombinedCapabilities;
-
-        // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer.
-        //  The combined size in bytes of the numberCapabilities, pad2Octets
-        //  and capabilitySets fields.
-        lengthCombinedCapabilities =
-              2 // numberCapabilities(2)
-            + 2 // pad2Octets(2)
-            + payload.get_offset() - this->offset_capabilitySets;
-        this->payload.set_out_uint16_le( lengthCombinedCapabilities
-                                       , this->offset_lengthCombinedCapabilities);
-
-        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. Number of
-        //  capability sets included in the Confirm Active PDU.
-        this->payload.set_out_uint16_le(this->numberCapabilities, this->offset_numberCapabilities);
-
-        this->payload.mark_end();
-    }
-};  // struct ConfirmActivePDU_Send
-
-struct ConfirmActivePDU_Send_new_stream {
     OutStream & payload;
     uint16_t   offset_lengthCombinedCapabilities;
     uint16_t   offset_numberCapabilities;
     uint16_t   numberCapabilities;
     uint16_t   offset_capabilitySets;
 
-    explicit ConfirmActivePDU_Send_new_stream(OutStream & stream)
+    explicit ConfirmActivePDU_Send(OutStream & stream)
         : payload(stream)
         , offset_lengthCombinedCapabilities(0)
         , offset_numberCapabilities(0)

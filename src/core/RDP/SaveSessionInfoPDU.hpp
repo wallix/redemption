@@ -108,30 +108,9 @@ enum {
 struct SaveSessionInfoPDUData_Recv {
     uint32_t infoType;
 
-    SubStream payload;
-
-    explicit SaveSessionInfoPDUData_Recv(Stream & stream) :
-    infoType([&stream](){
-        if (!stream.in_check_rem(4)) {
-            LOG(LOG_ERR,
-                "Truncated Save Session Info PDU (data): expected=4 remains=%u",
-                 stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-        return stream.in_uint32_le();
-    }()),
-    payload(stream, stream.get_offset(), stream.in_remain())
-    {
-        stream.in_skip_bytes(this->payload.size());
-    }
-};
-
-struct SaveSessionInfoPDUData_Recv_new_stream {
-    uint32_t infoType;
-
     InStream payload;
 
-    explicit SaveSessionInfoPDUData_Recv_new_stream(InStream & stream) :
+    explicit SaveSessionInfoPDUData_Recv(InStream & stream) :
     infoType([&stream](){
         if (!stream.in_check_rem(4)) {
             LOG(LOG_ERR,
