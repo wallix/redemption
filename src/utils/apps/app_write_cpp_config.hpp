@@ -208,11 +208,11 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
 
     template<class T, class U>
     void check_constructible(type_<T>, default_<U> const & d)
-    { static_assert((void(type_<decltype(T(d.value))>{}), 1), "incompatible type"); }
+    { static_cast<void>(T(d.value)); }
 
     template<class U>
     void check_constructible(type_<StringList>, default_<U> const & d)
-    { static_assert((void(type_<decltype(std::string(d.value))>{}), 1), "incompatible type"); }
+    { static_cast<void>(std::string(d.value)); }
 
     template<class T>
     void check_constructible(type_<T>, default_<macro> const &)
