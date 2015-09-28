@@ -87,7 +87,7 @@ enum {
 // Return True if flowMarker is detected
 // In these case we have FlowTestPDU, FlowResponsePDU or FlowStopPDU
 // and not ShareControl header.
-inline bool peekFlowPDU(const Stream & stream) {
+inline bool peekFlowPDU(const InStream & stream) {
     if (!stream.in_check_rem(2)) {
         throw Error(ERR_SEC);
     }
@@ -124,6 +124,39 @@ struct ShareFlow_Recv
     uint16_t mcs_channel;
 
     explicit ShareFlow_Recv(Stream & stream)
+    : flowMarker([&stream]{
+        if (!stream.in_check_rem(2+1+1+1+1+2)){
+            LOG(LOG_ERR,
+                "Truncated "
+                "[2: ShareFlow PDU packet]"
+                "[1: ShareFlow pad]"
+                "[1: ShareFlow PDU type]"
+                "[1: flow Identifier]"
+                "[1: flow number]"
+                "[2: ShareFlow PDU packet] , remains=%u", stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+        return stream.in_uint16_le();
+    }())
+    , pad(stream.in_uint8())
+    , pduTypeFlow(stream.in_uint8())
+    , flowIdentifier(stream.in_uint8())
+    , flowNumber(stream.in_uint8())
+    , mcs_channel(stream.in_uint16_le())
+    {
+        LOG(LOG_INFO, "Flow control packet %0.4x (offset=%u)", this->flowMarker, stream.get_offset());
+        if (this->flowMarker != 0x8000) {
+            LOG(LOG_ERR, "Expected flow control packet, got %0.4x", this->flowMarker);
+            throw Error(ERR_SEC);
+        }
+
+        LOG(LOG_INFO, "PDUTypeFlow=%u", this->pduTypeFlow);
+        if (stream.in_remain()) {
+            LOG(LOG_INFO, "trailing bytes in FlowPDU, remains %u bytes", stream.in_remain());
+        }
+    }
+
+    explicit ShareFlow_Recv(InStream & stream)
     : flowMarker([&stream]{
         if (!stream.in_check_rem(2+1+1+1+1+2)){
             LOG(LOG_ERR,

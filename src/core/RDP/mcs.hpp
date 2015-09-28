@@ -156,6 +156,13 @@ namespace MCS
         return *stream.get_data() >> 2;
     }
 
+    int peekPerEncodedMCSType(const InStream & stream) {
+        if (!stream.in_check_rem(1)){
+            throw Error(ERR_MCS);
+        }
+        return *stream.get_data() >> 2;
+    }
+
     //int peekBerEncodedMCSType(const Stream & stream) {
     //    if (!stream.in_check_rem(2)){
     //        throw Error(ERR_MCS);
@@ -1771,6 +1778,30 @@ namespace MCS
             this->type   = MCS::MCSPDU_DisconnectProviderUltimatum;
             this->reason = static_cast<t_reasons>((tag & 0x0380) >> 7);
         }
+
+        DisconnectProviderUltimatum_Recv(InStream & stream, int encoding)
+        {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+
+            const unsigned expected = 2; /* tag(1) + reason(1) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated DisconnectProviderUltimatum: expected=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
+            uint16_t tag = stream.in_uint16_be();
+            if ((tag >> 10) != MCS::MCSPDU_DisconnectProviderUltimatum) {
+                LOG(LOG_ERR, "DisconnectProviderUltimatum tag (%u) expected, got %u",
+                   MCS::MCSPDU_DisconnectProviderUltimatum, (tag >> 10));
+                throw Error(ERR_MCS);
+            }
+            this->type   = MCS::MCSPDU_DisconnectProviderUltimatum;
+            this->reason = static_cast<t_reasons>((tag & 0x0380) >> 7);
+        }
     };
 
 //    RejectMCSPDUUltimatum ::= [APPLICATION 9] IMPLICIT SEQUENCE
@@ -2027,6 +2058,39 @@ namespace MCS
         uint16_t initiator;
 
         AttachUserConfirm_Recv(Stream & stream, int encoding)
+        {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+
+            const unsigned expected = 2; /* tag(1) + result(1) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated AttachUserConfirm: expected=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
+            uint8_t tag = stream.in_uint8();
+            this->initiator_flag = (tag & 2) != 0;
+            if ((tag & 0xFC) != MCS::MCSPDU_AttachUserConfirm << 2){
+                LOG(LOG_ERR, "AttachUserConfirm tag (%u) expected, got %u",
+                    MCS::MCSPDU_AttachUserConfirm << 2, (tag & 0xFC));
+                throw Error(ERR_MCS);
+            }
+            this->type = MCS::MCSPDU_AttachUserConfirm;
+            this->result = stream.in_uint8();
+            if (this->initiator_flag){
+                if (!stream.in_check_rem(2)){
+                   LOG(LOG_ERR, "Truncated AttachUserConfirm indicator: expected=2, remains=%u",
+                       stream.in_remain());
+                   throw Error(ERR_MCS);
+                }
+                this->initiator = stream.in_uint16_be();
+            }
+        }
+
+        AttachUserConfirm_Recv(InStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
@@ -2379,6 +2443,49 @@ namespace MCS
         uint16_t channelId;
 
         ChannelJoinConfirm_Recv(Stream & stream, int encoding)
+        : type(MCS::MCSPDU_ChannelJoinConfirm)
+        , result(0)
+        , initiator(0)
+        , requested(0)
+        , channelId_flag(false)
+        , channelId(0)
+        {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+
+            const unsigned expected = 6; /* tag(1) + result(1) + initiator(2) + requested(2) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated ChannelJoinConfirm: expected=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
+            uint8_t tag = stream.in_uint8();
+            if ((tag & 0xFC) != (MCS::MCSPDU_ChannelJoinConfirm << 2)){
+                LOG(LOG_ERR, "ChannelJoinConfirm tag (%u) expected, got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, (tag & 0xFC));
+                throw Error(ERR_MCS);
+            }
+            this->result    = stream.in_uint8();
+            this->initiator = stream.in_uint16_be();
+            this->requested = stream.in_uint16_be();
+            this->channelId_flag = (tag & 2) != 0;
+            if ((tag & 2) && this->result){
+                LOG(LOG_ERR, "ChannelJoinConfirm provided a channel while result is negative (%u)", this->result);
+                throw Error(ERR_MCS);
+            }
+            if (this->channelId_flag){
+                if (!stream.in_check_rem(2)){
+                   LOG(LOG_ERR, "Truncated ChannelJoinConfirm indicator: expected=2, remains=%u",
+                       stream.in_remain());
+                   throw Error(ERR_MCS);
+                }
+                this->channelId = stream.in_uint16_be();
+            }
+        }
+
+        ChannelJoinConfirm_Recv(InStream & stream, int encoding)
         : type(MCS::MCSPDU_ChannelJoinConfirm)
         , result(0)
         , initiator(0)
@@ -2792,7 +2899,6 @@ namespace MCS
 
     struct SendDataIndication_Recv
     {
-
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;
@@ -2857,6 +2963,76 @@ namespace MCS
             }())
         {
             stream.in_skip_bytes(this->payload.size());
+        }
+    };
+
+    struct SendDataIndication_Recv_new_stream
+    {
+
+        uint8_t type;
+        uint16_t initiator;
+        uint16_t channelId;
+        uint8_t magic;
+        uint8_t dataPriority;
+        uint8_t segmentation;
+
+        InStream payload;
+
+        SendDataIndication_Recv_new_stream(InStream & stream, int encoding)
+            : type([&stream, encoding](){
+                if (encoding != PER_ENCODING){
+                    LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
+                    throw Error(ERR_MCS);
+                }
+
+                if (!stream.in_check_rem(1)){ // tag
+                    LOG(LOG_ERR, "SendDataIndication: truncated MCS PDU, expected=1 remains=%u",
+                        stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
+
+                uint8_t first_byte = stream.in_uint8();
+                uint8_t tag = first_byte >> 2;
+                if (tag != MCS::MCSPDU_SendDataIndication){
+                    LOG(LOG_ERR, "SendDataIndication tag (%u) expected, got %u", MCS::MCSPDU_SendDataIndication, tag);
+                    throw Error(ERR_MCS);
+                }
+                return MCS::MCSPDU_SendDataIndication;
+            }())
+            , initiator([&stream](){
+                const unsigned expected = 5; /* initiator(2) + channelId(2) + magic(1) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
+
+                return stream.in_uint16_be();
+            }())
+            , channelId(stream.in_uint16_be())
+            // low 4 bits of magic are padding
+            , magic(stream.in_uint8())
+            // dataPriority = high 2 bits,
+            , dataPriority((magic >> 6) & 3)
+            // segmentation = next 2 bits
+            , segmentation((magic >> 4) & 3)
+            , payload([&stream](){
+                if (!stream.in_check_rem(2)){
+                    LOG(LOG_ERR, "Truncated SendDataIndication data: payload length");
+                    throw Error(ERR_MCS);
+                }
+                // length of payload, per_encoded
+                size_t payload_size = stream.in_2BUE();
+
+                if (!stream.in_check_rem(payload_size)){
+                    LOG(LOG_ERR, "Truncated SendDataIndication payload data: expected=%u remains=%u",
+                        payload_size, stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
+                return InStream(stream.get_current(), stream.in_remain());
+            }())
+        {
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 

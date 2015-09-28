@@ -29,7 +29,7 @@
 #include "darray.hpp"
 #include "rect.hpp"
 
-class Stream;
+class InStream;
 class Keymap2;
 
 enum {
@@ -86,7 +86,7 @@ struct RdpInput
 
 struct Callback : RdpInput
 {
-    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, std::size_t length, uint32_t flags)
+    virtual void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, std::size_t length, uint32_t flags)
     {
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)

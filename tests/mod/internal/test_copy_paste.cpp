@@ -49,17 +49,17 @@ struct CopyPasteFront : FakeFront
         this->channel_def_array.push_back(def);
     }
 
-    virtual const CHANNELS::ChannelDefArray& get_channel_list() const
+    const CHANNELS::ChannelDefArray& get_channel_list() const override
     {
         return this->channel_def_array;
     }
 
-    virtual void send_to_channel(
-        const CHANNELS::ChannelDef& channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
-    {
+    void send_to_channel(
+        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t chunk_size, int flags
+    ) override {
         BOOST_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
 
-        FixedSizeStream stream(data, length);
+        InStream stream(data, length);
         RDPECLIP::RecvFactory recv_factory(stream);
 
         switch (recv_factory.msgType) {
@@ -97,7 +97,8 @@ private:
     void send_to_server(PDU && pdu, Args && ...args) {
         BStream out_s(256);
         pdu.emit(out_s, std::move(args)...);
-        this->copy_paste.send_to_mod_channel(out_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+        InStream in_s(out_s.get_data(), out_s.size());
+        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
     }
 
     CHANNELS::ChannelDefArray channel_def_array;

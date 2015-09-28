@@ -161,7 +161,7 @@ public:
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->channel_list;
     }
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , size_t length, size_t chunk_size, int flags) override {
         LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%u chunk_size=%u flags=0x%X",
             channel.name, channel.chanid, length, chunk_size, flags);

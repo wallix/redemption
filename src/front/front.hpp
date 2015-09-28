@@ -912,7 +912,7 @@ public:
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel
-                                , uint8_t * chunk
+                                , uint8_t const * chunk
                                 , size_t length
                                 , size_t chunk_size
                                 , int flags) override {
@@ -2178,7 +2178,7 @@ public:
                             LOG(LOG_INFO, "Front::send_to_mod_channel");
                         }
 
-                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+                        InStream chunk(sec.payload.get_current(), chunk_size);
 
                         cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }

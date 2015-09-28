@@ -419,7 +419,7 @@ enum {
 
     using RDPGraphicDevice::draw;
 
-    void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) override {
+    void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
     }
 };
 

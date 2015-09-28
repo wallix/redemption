@@ -38,7 +38,7 @@ namespace CHANNELS {
 class FrontAPI : public DrawApi {
     public:
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , std::size_t length, std::size_t chunk_size, int flags) = 0;
 
     virtual void send_global_palette() = 0;

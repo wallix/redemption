@@ -138,9 +138,14 @@ public:
     }
 
     /// set current position to start buffer (\a p = \a begin)
-    void rewind(std::size_t offset = 0) {
+    void rewind(std::size_t offset) {
         REDASSERT(this->begin + offset <= this->end);
         this->p.p = this->begin + offset;
+    }
+
+    /// set current position to start buffer (\a p = \a begin)
+    void rewind() {
+        this->p.p = this->begin;
     }
 
     // =========================================================================

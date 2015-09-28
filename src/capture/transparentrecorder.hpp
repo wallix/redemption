@@ -59,7 +59,7 @@ public:
     }
 
     void send_to_front_channel( const char * const mod_channel_name
-                              , uint8_t * data, size_t length
+                              , uint8_t const * data, size_t length
                               , size_t chunk_size, int flags) {
         constexpr unsigned payload_size = 9;
         StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;

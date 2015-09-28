@@ -2133,7 +2133,7 @@ private:
 
     //==============================================================================================================
     void send_to_mod_channel( const char * const front_channel_name
-                                    , Stream & chunk
+                                    , InStream & chunk
                                     , size_t length
                                     , uint32_t flags) override {
     //==============================================================================================================
@@ -2154,11 +2154,11 @@ private:
     } // send_to_mod_channel
 
 private:
-    void clipboard_send_to_vnc(Stream & chunk, size_t length, uint32_t flags)
+    void clipboard_send_to_vnc(InStream & chunk, size_t length, uint32_t flags)
     {
         if (this->verbose) {
             LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: length=%zu chunk_size=%zu flags=0x%08X"
-               , length, chunk.size(), flags);
+               , length, chunk.get_capacity(), flags);
         }
 
         TODO("Create a unit tested class for clipboard messages");
@@ -2200,7 +2200,7 @@ private:
          */
 
         // specific treatement depending on msgType
-        InStream stream(chunk.get_data(), chunk.size());
+        InStream stream(chunk.get_data(), chunk.get_capacity());
 
         RDPECLIP::RecvFactory recv_factory(stream);
 

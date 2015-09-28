@@ -127,9 +127,9 @@ public:
     //    return this->has_clipboard_;
     //}
 
-    void send_to_mod_channel(Stream & chunk, uint32_t flags)
+    void send_to_mod_channel(InStream & chunk, uint32_t flags)
     {
-        SubStream stream(chunk, 0, chunk.size());
+        InStream stream(chunk.get_data(), chunk.get_capacity());
 
         if (this->long_data_response_size) {
             if (this->long_data_response_size < stream.in_remain()) {
@@ -140,7 +140,7 @@ public:
             }
 
             this->long_data_response_size -= stream.in_remain();
-            this->clipboard_str_.utf16_push_back(stream.p, stream.in_remain() / 2);
+            this->clipboard_str_.utf16_push_back(stream.get_current(), stream.in_remain() / 2);
 
             if (!this->long_data_response_size && this->paste_edit_) {
                 this->paste_edit_->insert_text(this->clipboard_str_.c_str());
@@ -181,7 +181,7 @@ public:
                             throw Error(ERR_RDP_PROTOCOL);
                         }
 
-                        this->clipboard_str_.utf16_push_back(stream.p, format_data_response_pdu.dataLen() / 2);
+                        this->clipboard_str_.utf16_push_back(stream.get_current(), format_data_response_pdu.dataLen() / 2);
 
                         if (this->paste_edit_) {
                             this->paste_edit_->insert_text(this->clipboard_str_.c_str());
@@ -199,7 +199,7 @@ public:
                         }
 
                         this->long_data_response_size = format_data_response_pdu.dataLen() - stream.in_remain();
-                        this->clipboard_str_.utf16_push_back(stream.p, stream.in_remain() / 2);
+                        this->clipboard_str_.utf16_push_back(stream.get_current(), stream.in_remain() / 2);
                     }
                 }
                 break;

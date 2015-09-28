@@ -337,7 +337,7 @@ class ModuleManager : public MMIni
 
     struct sock_mod_barrier {};
     template<class Mod>
-    struct ModWithSocket : private SocketTransport, Mod
+    struct ModWithSocket final : private SocketTransport, Mod
     {
     private:
         ModuleManager & mm;
