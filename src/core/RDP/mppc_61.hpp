@@ -357,7 +357,7 @@ public:
 
 
 struct rdp_mppc_enc_match_finder {
-    BStream match_details_stream;
+    StaticOutStream<65536> match_details_stream;
 
     virtual ~rdp_mppc_enc_match_finder() {}
 
@@ -425,7 +425,7 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
         if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)
             return;
 
-        this->match_details_stream.reset();
+        this->match_details_stream.rewind();
 
         uint32_t        history_data_size  = historyOffset;
         uint16_t        output_data_length = uncompressed_data_size;
@@ -456,8 +456,6 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
                 output_data_begin++;
             }
         }
-
-        this->match_details_stream.mark_end();
     }
 };
 
@@ -487,7 +485,7 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
 
     void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
         uint16_t uncompressed_data_size) override {
-        this->match_details_stream.reset();
+        this->match_details_stream.rewind();
 
         this->hash_tab_mgr.clear_undo_history();
 
@@ -545,8 +543,6 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
                 this->match_details_stream.out_uint32_le(previous_match);
             }
         }
-
-        this->match_details_stream.mark_end();
     }
 
 public:
@@ -642,7 +638,7 @@ private:
         else {
             this->match_finder.find_match(this->historyBuffer, this->historyOffset, uncompressed_data_size);
             OutStream level_1_output_stream(this->level_1_output_buffer, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE);
-            uint32_t match_details_data_size = this->match_finder.match_details_stream.size();
+            uint32_t match_details_data_size = this->match_finder.match_details_stream.get_offset();
             uint32_t MatchCount = (match_details_data_size ?
                                    match_details_data_size / 8 :   // sizeof(RDP61_COMPRESSED_DATA) = 8
                                    0);
@@ -655,12 +651,13 @@ private:
             level_1_output_stream.out_uint16_le(MatchCount);
             level_1_output_stream.out_copy_bytes(this->match_finder.match_details_stream.get_data(),
                 match_details_data_size);
-            this->match_finder.match_details_stream.rewind();
+            InStream match_details_in_stream(this->match_finder.match_details_stream.get_data(),
+                match_details_data_size);
             uint16_t current_output_offset = 0;
             for (uint32_t match_index = 0; match_index < MatchCount; match_index++) {
-                uint16_t match_length        = this->match_finder.match_details_stream.in_uint16_le();
-                uint16_t match_output_offset = this->match_finder.match_details_stream.in_uint16_le();
-                this->match_finder.match_details_stream.in_skip_bytes(4);
+                uint16_t match_length        = match_details_in_stream.in_uint16_le();
+                uint16_t match_output_offset = match_details_in_stream.in_uint16_le();
+                match_details_in_stream.in_skip_bytes(4);
 
                 if (match_output_offset > current_output_offset) {
                     expected = match_output_offset - current_output_offset;

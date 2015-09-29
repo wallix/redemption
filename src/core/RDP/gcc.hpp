@@ -311,6 +311,51 @@ namespace GCC
         }
     };
 
+    class Create_Request_Recv_new_stream {
+        public:
+        InStream payload;
+
+        explicit Create_Request_Recv_new_stream(InStream & stream)
+            : payload([&stream](){
+                if (!stream.in_check_rem(23)){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.get_capacity());
+                    throw Error(ERR_GCC);
+                }
+
+                // Key select object (0) of type OBJECT_IDENTIFIER
+                // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
+                stream.in_skip_bytes(7);
+
+                uint16_t length_with_header = stream.in_2BUE();
+
+                // ConnectGCCPDU
+                // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
+                // select optional userData from ConferenceCreateRequest
+                // ConferenceCreateRequest::conferenceName
+                // UserData (SET OF SEQUENCE), one set of UserData
+                // UserData::value present + select h221NonStandard (1)
+                // h221NonStandard, client-to-server H.221 key, "Duca"
+
+                stream.in_skip_bytes(12);
+                uint16_t length = stream.in_2BUE();
+
+                if (length_with_header != length + 14){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
+                    throw Error(ERR_GCC);
+                }
+
+                if (length != stream.in_remain()){
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
+                return InStream(stream.get_current(), stream.in_remain());
+            }())
+        // Body of constructor
+        {
+            stream.in_skip_bytes(this->payload.get_capacity());
+        }
+    };
+
     // GCC Conference Create Response
     // ------------------------------
 
@@ -661,6 +706,36 @@ namespace GCC
                     throw Error(ERR_GCC);
                 }
                 return SubStream(stream, stream.get_offset() - 4, this->length);
+            }())
+            {
+                stream.in_skip_bytes(this->length - 4);
+            }
+        };
+
+        struct RecvFactory_new_stream
+        {
+            uint16_t tag;
+            uint16_t length;
+            InStream payload;
+
+            explicit RecvFactory_new_stream(InStream & stream)
+            : tag([&stream](){
+                if (!stream.in_check_rem(4)){
+                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");
+                    throw Error(ERR_GCC);
+                }
+                return stream.in_uint16_le();
+            }())
+            , length(stream.in_uint16_le())
+            , payload([&stream, this](){
+                LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
+                if (!stream.in_check_rem(length - 4)){
+                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
+                                     " tag=%u length=%u available_length=%u",
+                                     tag, length, stream.get_capacity() - 4);
+                    throw Error(ERR_GCC);
+                }
+                return InStream(stream.get_current() - 4, this->length);
             }())
             {
                 stream.in_skip_bytes(this->length - 4);
@@ -1280,6 +1355,64 @@ namespace GCC
 
             }
 
+            void recv(InStream & stream)
+            {
+                if (!stream.in_check_rem(36)){
+                    LOG(LOG_ERR, "CSCore::recv short header");
+                    throw Error(ERR_GCC);
+                }
+
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+
+                if (!stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "CSCore::recv short length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
+                this->version = stream.in_uint32_le();
+                this->desktopWidth = stream.in_uint16_le();
+                this->desktopHeight = stream.in_uint16_le();
+                this->colorDepth = stream.in_uint16_le();
+                this->SASSequence = stream.in_uint16_le();
+                this->keyboardLayout = stream.in_uint32_le();
+                this->clientBuild = stream.in_uint32_le();
+                // utf16 hostname fixed length,
+                // including mandatory terminal 0
+                // length is a number of utf16 characters
+                stream.in_utf16(this->clientName, 16);
+                this->keyboardType = stream.in_uint32_le();
+                this->keyboardSubType = stream.in_uint32_le();
+                this->keyboardFunctionKey = stream.in_uint32_le();
+                // utf16 fixed length,
+                // including mandatory terminal 0
+                // length is a number of utf16 characters
+                stream.in_utf16(this->imeFileName, 32);
+                // --------------------- Optional Fields ---------------------------------------
+                if (this->length < 134) { return; }
+                this->postBeta2ColorDepth = stream.in_uint16_le();
+                if (this->length < 136) { return; }
+                this->clientProductId = stream.in_uint16_le();
+                if (this->length < 140) { return; }
+                this->serialNumber = stream.in_uint32_le();
+                if (this->length < 142) { return; }
+                this->highColorDepth = stream.in_uint16_le();
+                if (this->length < 144) { return; }
+                this->supportedColorDepths = stream.in_uint16_le();
+                if (this->length < 146) { return; }
+                this->earlyCapabilityFlags = stream.in_uint16_le();
+                if (this->length < 210) { return; }
+                stream.in_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
+                if (this->length < 211) { return; }
+                this->connectionType = stream.in_uint8();
+                if (this->length < 212) { return; }
+                this->pad1octet = stream.in_uint8();
+                if (this->length < 216) { return; }
+                this->serverSelectedProtocol = stream.in_uint32_le();
+                TODO("Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2");
+
+            }
+
             void emit(Stream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
@@ -1661,6 +1794,29 @@ namespace GCC
                 this->redirectedSessionID = stream.in_uint32_le();
             }
 
+            void recv(InStream & stream)
+            {
+                if (!stream.in_check_rem(12)){
+                    LOG(LOG_ERR, "CS_CORE short header");
+                    throw Error(ERR_GCC);
+                }
+
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+
+                if (this->length != 12){
+                    LOG(LOG_ERR, "CSCluster::recv bad header length=%d", this->length);
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 4);
+                        return;
+                    }
+                    throw Error(ERR_GCC);
+                }
+
+                this->flags = stream.in_uint32_le();
+                this->redirectedSessionID = stream.in_uint32_le();
+            }
+
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
@@ -1791,6 +1947,64 @@ namespace GCC
             }
 
             void recv(Stream & stream) {
+                if (!stream.in_check_rem(4)) {
+                    LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%u",
+                        stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
+
+                this->userDataType = stream.in_uint16_le();
+                this->length       = stream.in_uint16_le();
+
+                if (!stream.in_check_rem(4)) {
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=4 remains=%u",
+                        stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
+
+                this->flags        = stream.in_uint32_le();
+                this->monitorCount = stream.in_uint32_le();
+
+                if ((this->monitorCount < 1) || (this->monitorCount > MAX_MONITOR_COUNT)) {
+                    LOG(LOG_ERR, "CSMonitor::recv monitor count out of range (%u)", this->monitorCount);
+                    this->monitorCount = 0;
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 12 /*header(4) + flags(4) + monitorCount(4)*/);
+                        return;
+                    }
+                    throw Error(ERR_GCC);
+                }
+
+                unsigned expected = 4 + 4 + 4 + this->monitorCount * 20;    // header(4) + flags(4) + monitorCount(4) + monitorCount * monitorDefArray(20)
+
+                if ((this->length != expected) && (!this->permissive || (this->length < expected))) {
+                    LOG(LOG_ERR, "CSMonitor::recv bad header length, expecting=%u got=%u",
+                        expected, this->length);
+                    throw Error(ERR_GCC);
+                }
+
+                expected = this->monitorCount * 20;    // monitorCount * monitorDefArray(20)
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
+
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    this->monitorDefArray[i].left   = stream.in_sint32_le();
+                    this->monitorDefArray[i].top    = stream.in_sint32_le();
+                    this->monitorDefArray[i].right  = stream.in_sint32_le();
+                    this->monitorDefArray[i].bottom = stream.in_sint32_le();
+                    this->monitorDefArray[i].flags  = stream.in_uint32_le();
+                }
+
+                expected = 4 + 4 + 4 + this->monitorCount * 20;    // header(4) + flags(4) + monitorCount(4) + monitorCount * monitorDefArray(20)
+                if ((this->length > expected) && this->permissive) {
+                    stream.in_skip_bytes(this->length - expected);
+                }
+            }
+
+            void recv(InStream & stream) {
                 if (!stream.in_check_rem(4)) {
                     LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%u",
                         stream.in_remain());
@@ -1998,6 +2212,48 @@ namespace GCC
             }
 
             void recv(Stream & stream)
+            {
+
+                if (!stream.in_check_rem(8)){
+                    LOG(LOG_ERR, "CSNet::recv short header");
+                    throw Error(ERR_GCC);
+                }
+
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+
+                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "CSNet::recv bad header length=%u", this->length);
+                    throw Error(ERR_GCC);
+                }
+
+                this->channelCount = stream.in_uint32_le();
+                if (this->channelCount >= 31) {
+                    LOG(LOG_ERR, "cs_net::recv channel count out of range (%u)", this->channelCount);
+                    this->channelCount = 0;
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 8);
+                        return;
+                    }
+                    throw Error(ERR_CHANNEL_OUT_OF_RANGE);
+                }
+                if ((12 * this->channelCount + 8) != (this->length)) {
+                    LOG(LOG_ERR, "CSNet::recv length=%u and 12 * channelcount=%u not matching, ",
+                        this->length - 8, this->channelCount);
+                    if (this->permissive) {
+                        stream.in_skip_bytes(this->length - 8);
+                        return;
+                    }
+                    throw Error(ERR_GCC);
+                }
+
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    stream.in_copy_bytes(this->channelDefArray[i].name, 8);
+                    this->channelDefArray[i].options = stream.in_uint32_le();
+                }
+            }
+
+            void recv(InStream & stream)
             {
 
                 if (!stream.in_check_rem(8)){
@@ -3057,6 +3313,24 @@ namespace GCC
             }
 
             void recv(Stream & stream)
+            {
+                if (!stream.in_check_rem(12)){
+                    LOG(LOG_ERR, "CS_SECURITY short header");
+                    throw Error(ERR_GCC);
+                }
+                this->userDataType         = stream.in_uint16_le();
+                this->length               = stream.in_uint16_le();
+
+                if (this->length != 12){
+                    LOG(LOG_ERR, "CS_SECURITY bad header length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
+                this->encryptionMethods    = stream.in_uint32_le();
+                this->extEncryptionMethods = stream.in_uint32_le();
+            }
+
+            void recv(InStream & stream)
             {
                 if (!stream.in_check_rem(12)){
                     LOG(LOG_ERR, "CS_SECURITY short header");

@@ -62,8 +62,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 /* 0170 */ "\x03\x00\x00\x00\x00\x00\x00\x00"                                 //........ |
     , payload_length);
 
-    BStream payload(65536);
-    t.recv(&payload.end, payload_length);
+    uint8_t payload_buf[65536];
+    InStream payload(payload_buf, payload_length);
+    {
+        auto end = payload_buf;
+        t.recv(&end, payload_length);
+    }
 
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
@@ -107,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
     BOOST_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
     BOOST_CHECK_EQUAL(263, mcs.payload.size()); // USER_DATA (after len)
-    BOOST_CHECK_EQUAL(mcs.payload.size(), payload.end - payload.get_data() - mcs._header_size);
+    BOOST_CHECK_EQUAL(mcs.payload.get_capacity(), payload.get_capacity() - mcs._header_size);
 }
 
 

@@ -948,7 +948,7 @@ private:
     // The number of RGB triplets in the paletteData field.
     // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
 
-    void GeneratePaletteUpdateData(Stream & stream) {
+    void GeneratePaletteUpdateData(OutStream & stream) {
         const BGRPalette & palette = (this->mod_bpp == 8) ? this->mod_palette_rgb : this->palette332_rgb;
 
         // Payload
@@ -966,7 +966,6 @@ private:
             stream.out_uint8(g);
             stream.out_uint8(b);
         }
-        stream.mark_end();
     }
 
 public:
@@ -978,8 +977,8 @@ public:
 
             this->flush();
 
-            HStream stream(1024, 65536);
-            GeneratePaletteUpdateData(stream);
+            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+            GeneratePaletteUpdateData(stream.get_data_stream());
 
             ::send_server_update( this->trans
                                 , this->server_fastpath_update_support
@@ -1128,17 +1127,16 @@ public:
             X224::RecvFactory fx224(this->trans, &end, array_size);
             InStream x224_data(array, end - array);
 
-            X224::DT_TPDU_Recv x224(x224_data);
-            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
+            X224::DT_TPDU_Recv_new_stream x224(x224_data);
+            MCS::CONNECT_INITIAL_PDU_Recv_new_stream mcs_ci(x224.payload, MCS::BER_ENCODING);
 
             // GCC User Data
             // -------------
-            SubStream & gcc_data = mcs_ci.payload;
-            GCC::Create_Request_Recv gcc_cr(gcc_data);
+            GCC::Create_Request_Recv_new_stream gcc_cr(mcs_ci.payload);
             TODO("ensure gcc_data substream is fully consumed")
 
             while (gcc_cr.payload.in_check_rem(4)) {
-                GCC::UserData::RecvFactory f(gcc_cr.payload);
+                GCC::UserData::RecvFactory_new_stream f(gcc_cr.payload);
                 switch (f.tag) {
                     case CS_CORE:
                     {
@@ -2461,7 +2459,7 @@ private:
             LOG(LOG_INFO, "Front::send_data_update_sync");
         }
 
-        HStream stream(1024, 65536);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
         ::send_server_update( this->trans
                             , this->server_fastpath_update_support
@@ -3087,11 +3085,10 @@ private:
             LOG(LOG_INFO, "send_synchronize");
         }
 
-        HStream stream(1024, 2048);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         // Payload
-        stream.out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
-        stream.out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
-        stream.mark_end();
+        stream.get_data_stream().out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
+        stream.get_data_stream().out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
@@ -3140,13 +3137,12 @@ private:
             LOG(LOG_INFO, "send_control action=%u", action);
         }
 
-        HStream stream(1024, 2048);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
         // Payload
-        stream.out_uint16_le(action);
-        stream.out_uint16_le(0); // userid
-        stream.out_uint32_le(1002); // control id
-        stream.mark_end();
+        stream.get_data_stream().out_uint16_le(action);
+        stream.get_data_stream().out_uint16_le(0); // userid
+        stream.get_data_stream().out_uint32_le(1002); // control id
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
@@ -3198,11 +3194,10 @@ private:
                                           0x2b, 0x00, 0x2a, 0x00
                                         };
 
-        HStream stream(1024, 4096);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
         // Payload
-        stream.out_copy_bytes((char*)g_fontmap, 172);
-        stream.mark_end();
+        stream.get_data_stream().out_copy_bytes((char*)g_fontmap, 172);
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
@@ -3476,10 +3471,7 @@ private:
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect
 
-                HStream stream(1024, 2048);
-
-                // Payload
-                stream.mark_end();
+                StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
                 const uint32_t log_condition = (128 | 8);
                 ::send_share_data_ex( this->trans
