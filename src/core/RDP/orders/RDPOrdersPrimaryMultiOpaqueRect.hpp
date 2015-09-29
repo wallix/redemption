@@ -272,6 +272,113 @@ public:
         }
     }   // void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiOpaqueRect & oldcmd) const
 
+    void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
+             , const RDPMultiOpaqueRect & oldcmd) const {
+        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
+
+        int16_t nLeftRect = 0;
+        int16_t nTopRect  = 0;
+        int16_t nWidth    = 0;
+        int16_t nHeight   = 0;
+        if (!common.clip.contains(Rect(nLeftRect, nTopRect, nWidth, nHeight))) {
+            header.control |= RDP::BOUNDS;
+        }
+        else {
+            for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
+                nLeftRect += this->deltaEncodedRectangles[i].leftDelta;
+                nTopRect  += this->deltaEncodedRectangles[i].topDelta;
+                nWidth    =  this->deltaEncodedRectangles[i].width;
+                nHeight   =  this->deltaEncodedRectangles[i].height;
+
+                if (!common.clip.contains(Rect(nLeftRect, nTopRect, nWidth, nHeight))) {
+                    header.control |= RDP::BOUNDS;
+                    break;
+                }
+            }
+        }
+
+        header.control |= (is_1_byte(this->nLeftRect - oldcmd.nLeftRect) && is_1_byte(this->nTopRect - oldcmd.nTopRect) &&
+            is_1_byte(this->nWidth - oldcmd.nWidth) && is_1_byte(this->nHeight - oldcmd.nHeight)) * RDP::DELTA;
+
+        header.fields =
+                (this->nLeftRect           != oldcmd.nLeftRect          ) * 0x0001
+              | (this->nTopRect            != oldcmd.nTopRect           ) * 0x0002
+              | (this->nWidth              != oldcmd.nWidth             ) * 0x0004
+              | (this->nHeight             != oldcmd.nHeight            ) * 0x0008
+              | ((this->_Color & 0x0000FF) != (oldcmd._Color & 0x0000FF)) * 0x0010
+              | ((this->_Color & 0x00FF00) != (oldcmd._Color & 0x00FF00)) * 0x0020
+              | ((this->_Color & 0xFF0000) != (oldcmd._Color & 0xFF0000)) * 0x0040
+              | (this->nDeltaEntries       != oldcmd.nDeltaEntries      ) * 0x0080
+              | (
+                 (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
+                 memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
+                        this->nDeltaEntries * sizeof(RDP::DeltaEncodedRectangle))
+                                                                        ) * 0x0100
+              ;
+
+        common.emit(stream, header, oldcommon);
+
+        header.emit_coord(stream, 0x0001, this->nLeftRect, oldcmd.nLeftRect);
+        header.emit_coord(stream, 0x0002, this->nTopRect,  oldcmd.nTopRect);
+        header.emit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
+        header.emit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
+
+        if (header.fields & 0x0010) { stream.out_uint8(this->_Color); }
+        if (header.fields & 0x0020) { stream.out_uint8(this->_Color >> 8); }
+        if (header.fields & 0x0040) { stream.out_uint8(this->_Color >> 16); }
+
+        if (header.fields & 0x0080) { stream.out_uint8(this->nDeltaEntries); }
+
+        if (header.fields & 0x0100) {
+            uint32_t offset_cbData = stream.get_offset();
+            stream.out_clear_bytes(2);
+
+            uint8_t * zeroBit = stream.get_current();
+            stream.out_clear_bytes((this->nDeltaEntries + 1) / 2);
+            *zeroBit = 0;
+
+            for (uint8_t i = 0, m2 = 0; i < this->nDeltaEntries; i++, m2++) {
+                if (m2 == 2) {
+                    m2 = 0;
+                }
+
+                if (i && !m2) {
+                    *(++zeroBit) = 0;
+                }
+
+                if (!this->deltaEncodedRectangles[i].leftDelta) {
+                    *zeroBit |= (1 << (7 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].leftDelta);
+                }
+
+                if (!this->deltaEncodedRectangles[i].topDelta) {
+                    *zeroBit |= (1 << (6 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].topDelta);
+                }
+
+                if (!this->deltaEncodedRectangles[i].width) {
+                    *zeroBit |= (1 << (5 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].width);
+                }
+
+                if (!this->deltaEncodedRectangles[i].height) {
+                    *zeroBit |= (1 << (4 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].height);
+                }
+            }
+
+            stream.set_out_uint16_le(stream.get_offset() - offset_cbData - 2, offset_cbData);
+        }
+    }   // void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiOpaqueRect & oldcmd) const
+
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
         //LOG(LOG_INFO, "RDPMultiOpaqueRect::receive: header fields=0x%02X", header.fields);
 

@@ -92,8 +92,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     CompressionOutTransportWrapper compression_wrapper;
     Transport & trans_target;
     Transport & trans;
-    BStream buffer_stream_orders;
-    BStream buffer_stream_bitmaps;
+    StaticOutStream<65536> buffer_stream_orders;
+    StaticOutStream<65536> buffer_stream_bitmaps;
 
     timeval last_sent_timer;
     timeval timer;
@@ -138,8 +138,6 @@ public:
     , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
-    , buffer_stream_orders(65536)
-    , buffer_stream_bitmaps(65536)
     , last_sent_timer()
     , timer(now)
     , width(width)
@@ -542,11 +540,10 @@ protected:
 public:
     void send_orders_chunk()
     {
-        this->stream_orders.mark_end();
-        send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count);
-        this->trans.send(this->stream_orders);
+        send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
+        ::send(this->trans, this->stream_orders);
         this->order_count = 0;
-        this->stream_orders.reset();
+        this->stream_orders.rewind();
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
@@ -669,11 +666,10 @@ public:
 
     void send_bitmaps_chunk()
     {
-        this->stream_bitmaps.mark_end();
-        send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.size(), this->bitmap_count);
-        this->trans.send(this->stream_bitmaps);
+        send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
+        ::send(this->trans, this->stream_bitmaps);
         this->bitmap_count = 0;
-        this->stream_bitmaps.reset();
+        this->stream_bitmaps.rewind();
     }
 
     void server_set_pointer(const Pointer & cursor) override {

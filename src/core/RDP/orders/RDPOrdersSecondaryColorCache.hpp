@@ -113,6 +113,31 @@ public:
         }
     }
 
+    void emit(OutStream & stream) const
+    {
+        using namespace RDP;
+
+        uint8_t control = STANDARD | SECONDARY;
+        stream.out_uint8(control);
+        uint16_t len = 1027 - 7;    // length after type minus 7
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0);    // flags
+        stream.out_uint8(TS_CACHE_COLOR_TABLE); // type
+
+        stream.out_uint8(this->cacheIndex);
+        stream.out_uint16_le(256); /* num colors */
+        for (int i = 0; i < 256; i++) {
+            uint32_t color = this->palette[i];
+            uint8_t r = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t b = color;
+            stream.out_uint8(b);
+            stream.out_uint8(g);
+            stream.out_uint8(r);
+            stream.out_uint8(0);
+        }
+    }
+
     void receive(Stream & stream, const RDPSecondaryOrderHeader &/* header*/)
     {
         using namespace RDP;

@@ -72,6 +72,13 @@ public:
         stream.out_uint16_le(this->Bottom);
     }
 
+    inline void emit(OutStream & stream) const {
+        stream.out_uint16_le(this->Left);
+        stream.out_uint16_le(this->Top);
+        stream.out_uint16_le(this->Right);
+        stream.out_uint16_le(this->Bottom);
+    }
+
     inline void receive(Stream & stream) {
         {
             const unsigned expected =
@@ -218,6 +225,27 @@ class IconInfo {
 
 public:
     void emit(Stream & stream) const {
+        stream.out_uint16_le(this->CacheEntry);
+        stream.out_uint16_le(this->CacheId);
+
+        stream.out_uint8(this->Bpp);
+
+        stream.out_uint16_le(this->Width);
+        stream.out_uint16_le(this->Height);
+
+        if ((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) {
+            stream.out_uint16_le(this->color_table.get_capacity());
+        }
+
+        stream.out_uint16_le(this->bits_mask.get_capacity());
+        stream.out_uint16_le(this->bits_color.get_capacity());
+
+        stream.out_copy_bytes(this->bits_mask.get_data(), this->bits_mask.get_capacity());
+        stream.out_copy_bytes(this->color_table.get_data(), this->color_table.get_capacity());
+        stream.out_copy_bytes(this->bits_color.get_data(), this->bits_color.get_capacity());
+    }
+
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->CacheEntry);
         stream.out_uint16_le(this->CacheId);
 
@@ -463,6 +491,11 @@ public:
         stream.out_uint16_le(this->CacheId);
     }
 
+    inline void emit(OutStream & stream) const {
+        stream.out_uint16_le(this->CacheEntry);
+        stream.out_uint16_le(this->CacheId);
+    }
+
     inline void receive(Stream & stream) {
         {
             const unsigned expected = 4;  // CacheEntry(2) + CacheId(2)
@@ -554,7 +587,7 @@ class WindowInformationCommonHeader {
             uint32_t WindowId            = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
-    mutable Stream   * output_stream       = nullptr;
+    mutable OutStream* output_stream       = nullptr;
 
 protected:
     //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
@@ -565,7 +598,7 @@ protected:
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    inline void emit_begin(Stream & stream) const {
+    inline void emit_begin(OutStream & stream) const {
         REDASSERT(this->output_stream == nullptr);
 
         this->output_stream = &stream;
@@ -575,8 +608,6 @@ protected:
 
         stream.out_uint32_le(this->FieldsPresentFlags_);
         stream.out_uint32_le(this->WindowId);
-
-        stream.mark_end();
     }
 
     inline void emit_end() const {
@@ -1032,7 +1063,7 @@ class NewOrExistingWindow : public WindowInformationCommonHeader {
     std::vector<Rectangle> visibility_rects;
 
 public:
-    void emit(Stream & stream) const {
+    void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
@@ -1098,7 +1129,7 @@ public:
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             stream.out_uint16_le(this->NumWindowRects);
 
-            for (Rectangle rectangle : this->window_rects) {
+            for (Rectangle const & rectangle : this->window_rects) {
                 rectangle.emit(stream);
             }
         }
@@ -1111,12 +1142,10 @@ public:
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             stream.out_uint16_le(this->NumVisibilityRects);
 
-            for (Rectangle rectangle : this->visibility_rects) {
+            for (Rectangle const & rectangle : this->visibility_rects) {
                 rectangle.emit(stream);
             }
         }
-
-        stream.mark_end();
 
         WindowInformationCommonHeader::emit_end();
     }   // emit
@@ -1903,12 +1932,10 @@ class WindowIcon : public WindowInformationCommonHeader {
     IconInfo icon_info;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
 
         this->icon_info.emit(stream);
-
-        stream.mark_end();
 
         WindowInformationCommonHeader::emit_end();
     }   // emit
@@ -2018,12 +2045,10 @@ class CachedIcon : public WindowInformationCommonHeader {
     CachedIconInfo cached_icon_info;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
 
         this->cached_icon_info.emit(stream);
-
-        stream.mark_end();
 
         WindowInformationCommonHeader::emit_end();
     }   // emit
@@ -2110,10 +2135,8 @@ enum {
 
 class DeletedWindow : public WindowInformationCommonHeader {
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
-
-        stream.mark_end();
 
         WindowInformationCommonHeader::emit_end();
     }   // emit

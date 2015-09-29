@@ -593,6 +593,23 @@ class Bounds {
             }
         }
     }
+
+    void emit(OutStream & stream)
+    {
+        using namespace RDP;
+
+        if (this->bounds_flags != 0){
+            stream.out_uint8(this->bounds_flags);
+            for (unsigned b = LEFT ; b <= BOTTOM ; ++b){
+                if (this->bounds_flags & (1<<b)) {
+                    stream.out_uint16_le(this->absolute_bounds[b]);
+                }
+                else if (this->bounds_flags & (0x10<<b)) {
+                    stream.out_uint8(this->delta_bounds[b]);
+                }
+            }
+        }
+    }
 };
 
 
@@ -606,6 +623,21 @@ class RDPPrimaryOrderHeader
         : control(control), fields(fields) {}
 
     void emit_coord(Stream & stream, uint32_t base, int16_t coord, int16_t oldcoord) const {
+        using namespace RDP;
+
+        if (this->control & DELTA){
+            if (this->fields & base){
+                stream.out_uint8(coord-oldcoord);
+            }
+        }
+        else {
+            if (this->fields & base){
+                stream.out_uint16_le(coord);
+            }
+        }
+    }
+
+    void emit_coord(OutStream & stream, uint32_t base, int16_t coord, int16_t oldcoord) const {
         using namespace RDP;
 
         if (this->control & DELTA){
@@ -652,8 +684,42 @@ class RDPPrimaryOrderHeader
         }
     }
 
+    void emit_rect(Stream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const
+    {
+        using namespace RDP;
 
-    void emit_rect(Stream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const {
+        if (this->control & DELTA){
+            if (this->fields & base){
+                stream.out_uint8(rect.x-oldr.x);
+            }
+            if (this->fields & (base << 1)){
+                stream.out_uint8(rect.y-oldr.y);
+            }
+            if (this->fields & (base << 2)){
+                stream.out_uint8(rect.cx-oldr.cx);
+            }
+            if (this->fields & (base << 3)){
+                stream.out_uint8(rect.cy-oldr.cy);
+            }
+        }
+        else {
+            if (this->fields & base){
+                stream.out_uint16_le(rect.x);
+            }
+            if (this->fields & (base << 1)){
+                stream.out_uint16_le(rect.y);
+            }
+            if (this->fields & (base << 2)){
+                stream.out_uint16_le(rect.cx);
+            }
+            if (this->fields & (base << 3)){
+                stream.out_uint16_le(rect.cy);
+            }
+        }
+    }
+
+    void emit_rect(OutStream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const
+    {
         using namespace RDP;
 
         if (this->control & DELTA){
@@ -756,8 +822,32 @@ class RDPPrimaryOrderHeader
 
     void emit_src(Stream & stream, uint32_t base,
                   uint16_t srcx, uint16_t srcy,
-                  uint16_t oldx, uint16_t oldy) const {
+                  uint16_t oldx, uint16_t oldy) const
+    {
+        using namespace RDP;
 
+        if (this->control & DELTA){
+            if (this->fields & base){
+                stream.out_uint8(srcx-oldx);
+            }
+            if (this->fields & (base << 1)){
+                stream.out_uint8(srcy-oldy);
+            }
+        }
+        else {
+            if (this->fields & base){
+                stream.out_uint16_le(srcx);
+            }
+            if (this->fields & (base << 1)){
+                stream.out_uint16_le(srcy);
+            }
+        }
+    }
+
+    void emit_src(OutStream & stream, uint32_t base,
+                  uint16_t srcx, uint16_t srcy,
+                  uint16_t oldx, uint16_t oldy) const
+    {
         using namespace RDP;
 
         if (this->control & DELTA){
@@ -842,6 +932,24 @@ class RDPPrimaryOrderHeader
         }
     }
 
+    void emit_pen(OutStream & stream, uint32_t base,
+                  const RDPPen & pen,
+                  const RDPPen & old_pen) const {
+
+        using namespace RDP;
+        if (this->fields & base) {
+            stream.out_uint8(pen.style);
+        }
+        if (this->fields & (base << 1)) {
+            stream.out_sint8(pen.width);
+         }
+        if (this->fields & (base << 2)) {
+            stream.out_uint8(pen.color);
+            stream.out_uint8(pen.color >> 8);
+            stream.out_uint8(pen.color >> 16);
+        }
+    }
+
     void receive_pen(Stream & stream, uint32_t base, RDPPen & pen) const
     {
         using namespace RDP;
@@ -883,6 +991,35 @@ class RDPPrimaryOrderHeader
     }
 
     void emit_brush(Stream & stream, uint32_t base,
+                  const RDPBrush & brush,
+                  const RDPBrush & old_brush) const {
+
+        using namespace RDP;
+        if (this->fields & base) {
+            stream.out_sint8(brush.org_x);
+        }
+        if (this->fields & (base << 1)) {
+            stream.out_sint8(brush.org_y);
+         }
+        if (this->fields & (base << 2)) {
+            stream.out_uint8(brush.style);
+        }
+        if (this->fields & (base << 3)) {
+            stream.out_uint8(brush.hatch);
+        }
+
+        if (this->fields & (base << 4)){
+            stream.out_uint8(brush.extra[0]);
+            stream.out_uint8(brush.extra[1]);
+            stream.out_uint8(brush.extra[2]);
+            stream.out_uint8(brush.extra[3]);
+            stream.out_uint8(brush.extra[4]);
+            stream.out_uint8(brush.extra[5]);
+            stream.out_uint8(brush.extra[6]);
+        }
+    }
+
+    void emit_brush(OutStream & stream, uint32_t base,
                   const RDPBrush & brush,
                   const RDPBrush & old_brush) const {
 
@@ -1056,8 +1193,100 @@ private:
         }
     }
 
+    void _emit(OutStream & stream, RDPPrimaryOrderHeader & header)
+    {
+        using namespace RDP;
+
+        int size = 1;
+        switch (this->order)
+        {
+            case MEM3BLT:
+            case GLYPHINDEX:
+                size = 3;
+                break;
+
+            case PATBLT:
+            case MEMBLT:
+            case LINE:
+            case POLYGONCB:
+            case ELLIPSECB:
+            case MULTIOPAQUERECT:
+            case MULTIPATBLT:
+            case MULTISCRBLT:
+                size = 2;
+                break;
+            case RECT:
+            case SCREENBLT:
+            case DESTBLT:
+            case MULTIDSTBLT:
+            case POLYLINE:
+            default:
+                size = 1;
+        }
+
+        int realsize = (header.fields == 0)      ?  0  :
+        (header.fields < 0x100)   ?  1  :
+        (header.fields < 0x10000) ?  2  :
+        3;
+
+        switch (size - realsize){
+            case 3:
+                header.control |= TINY | SMALL;
+                break;
+            case 2:
+                header.control |= TINY;
+                break;
+            case 1:
+                header.control |= SMALL;
+                break;
+            default:;
+        }
+
+        // know control is known
+        stream.out_uint8(header.control);
+
+        if (header.control & CHANGE){
+            stream.out_uint8(order);
+        }
+
+        if (header.fields){
+            stream.out_uint8(header.fields & 0xFF);
+            if (header.fields >= 0x100){
+                stream.out_uint8((header.fields >> 8) & 0xFF);
+                if (header.fields >= 0x10000){
+                    stream.out_uint8((header.fields >> 16) & 0xFF);
+                }
+            }
+        }
+    }
+
 public:
     void emit(Stream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
+    {
+
+        using namespace RDP;
+
+        Bounds bounds(oldcommon.clip, this->clip);
+
+        header.control |= (this->order != oldcommon.order) * CHANGE;
+
+        if (header.control & BOUNDS){
+            header.control |= ((bounds.bounds_flags == 0) * LASTBOUNDS);
+        }
+
+        this->_emit(stream, header);
+
+        if (header.control & BOUNDS){
+            if (!(header.control & LASTBOUNDS)){
+                bounds.emit(stream);
+            }
+        }
+        else {
+            this->clip = oldcommon.clip;
+        }
+    }
+
+    void emit(OutStream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
     {
 
         using namespace RDP;

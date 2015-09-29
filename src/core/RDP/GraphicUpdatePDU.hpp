@@ -497,7 +497,6 @@ protected:
                 LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d"
                    , this->order_count);
             }
-            this->stream_orders.mark_end();
 
             ::send_server_update( *this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
@@ -505,7 +504,7 @@ protected:
                                 , this->order_count, this->buffer_stream_orders, this->verbose);
 
             this->order_count = 0;
-            this->stream_orders.reset();
+            this->stream_orders.rewind();
             this->init_orders();
         }
     }
@@ -518,7 +517,6 @@ protected:
                    , this->bitmap_count, this->offset_bitmap_count);
             }
             this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
-            this->stream_bitmaps.mark_end();
 
             ::send_server_update( *this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt
@@ -526,7 +524,7 @@ protected:
                                 , this->buffer_stream_bitmaps, this->verbose);
 
             this->bitmap_count = 0;
-            this->stream_bitmaps.reset();
+            this->stream_bitmaps.rewind();
             this->init_bitmaps();
         }
     }

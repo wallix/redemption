@@ -284,7 +284,98 @@ public:
 
             uint8_t * zeroBit = stream.get_current();
             stream.out_clear_bytes((this->NumDeltaEntries + 3) / 4);
-            
+
+            *zeroBit = 0;
+            for (uint8_t i = 0, m4 = 0; i < this->NumDeltaEntries; i++, m4++) {
+                if (m4 == 4) {
+                    m4 = 0;
+                }
+
+                if (i && !m4) {
+                    *(++zeroBit) = 0;
+                }
+
+                if (!this->deltaPoints[i].xDelta) {
+                    *zeroBit |= (1 << (7 - m4 * 2));
+                }
+                else {
+                    stream.out_DEP(this->deltaPoints[i].xDelta);
+                }
+
+                if (!this->deltaPoints[i].yDelta) {
+                    *zeroBit |= (1 << (6 - m4 * 2));
+                }
+                else {
+                    stream.out_DEP(this->deltaPoints[i].yDelta);
+                }
+            }
+
+            stream.set_out_uint8(stream.get_offset() - offset_cbData - 1, offset_cbData);
+        }
+    }
+
+    void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
+              const RDPPolygonSC & oldcmd) const {
+        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
+
+        TODO("check that");
+        int16_t pointx = this->xStart;
+        int16_t pointy = this->yStart;
+        if (!common.clip.contains_pt(pointx, pointy)) {
+            header.control |= RDP::BOUNDS;
+        }
+        else {
+            for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
+                pointx += this->deltaPoints[i].xDelta;
+                pointy += this->deltaPoints[i].yDelta;
+
+                if (!common.clip.contains_pt(pointx, pointy)) {
+                    header.control |= RDP::BOUNDS;
+                    break;
+                }
+            }
+        }
+
+        header.control |= (is_1_byte(this->xStart - oldcmd.xStart) && is_1_byte(this->yStart - oldcmd.yStart)) * RDP::DELTA;
+
+        header.fields =
+                (this->xStart          != oldcmd.xStart         ) * 0x0001
+              | (this->yStart          != oldcmd.yStart         ) * 0x0002
+              | (this->bRop2           != oldcmd.bRop2          ) * 0x0004
+              | (this->fillMode        != oldcmd.fillMode       ) * 0x0008
+              | (this->BrushColor      != oldcmd.BrushColor     ) * 0x0010
+              | (this->NumDeltaEntries != oldcmd.NumDeltaEntries) * 0x0020
+              | (
+                 (this->NumDeltaEntries != oldcmd.NumDeltaEntries) ||
+                 memcmp(this->deltaPoints, oldcmd.deltaPoints,
+                        this->NumDeltaEntries * sizeof(DeltaPoint))
+                                                                ) * 0x0040
+              ;
+
+        common.emit(stream, header, oldcommon);
+
+        header.emit_coord(stream, 0x0001, this->xStart, oldcmd.xStart);
+        header.emit_coord(stream, 0x0002, this->yStart, oldcmd.yStart);
+
+        if (header.fields & 0x0004) { stream.out_uint8(this->bRop2); }
+
+        if (header.fields & 0x0008) { stream.out_uint8(this->fillMode); }
+
+        if (header.fields & 0x0010) {
+            stream.out_uint8(this->BrushColor);
+            stream.out_uint8(this->BrushColor >> 8);
+            stream.out_uint8(this->BrushColor >> 16);
+        }
+
+        if (header.fields & 0x0020) { stream.out_uint8(this->NumDeltaEntries); }
+
+        if (header.fields & 0x0040) {
+            uint32_t offset_cbData = stream.get_offset();
+            stream.out_clear_bytes(1);
+
+            uint8_t * zeroBit = stream.get_current();
+            stream.out_clear_bytes((this->NumDeltaEntries + 3) / 4);
+
             *zeroBit = 0;
             for (uint8_t i = 0, m4 = 0; i < this->NumDeltaEntries; i++, m4++) {
                 if (m4 == 4) {

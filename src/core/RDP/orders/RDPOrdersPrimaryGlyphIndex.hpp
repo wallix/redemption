@@ -458,6 +458,107 @@ public:
         }
     }
 
+    void emit( OutStream & stream
+             , RDPOrderCommon & common
+             , const RDPOrderCommon & oldcommon
+             , const RDPGlyphIndex & oldcmd) const {
+        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
+
+        if (!common.clip.contains(this->bk)) {
+            header.control |= RDP::BOUNDS;
+        }
+
+        if (this->op.cx > 1 && !common.clip.contains(this->op)) {
+            header.control |= RDP::BOUNDS;
+        }
+
+        // DELTA flag Does not seems to works as usual for this function
+        // (at least in rdesktop)
+        // hence coordinates fields are transmitted as absolute fields
+        // DELTA may also raise some problems with empty rects,
+        // if initial rect is empty DELTA should not be used
+//        control |=
+//            (is_1_byte(this->bk.x               - oldcmd.bk.x                )
+//          && is_1_byte(this->bk.y               - oldcmd.bk.y                )
+//          && is_1_byte(this->bk.x + this->bk.cx - oldcmd.bk.x + oldcmd.bk.cx )
+//          && is_1_byte(this->bk.y + this->bk.cy - oldcmd.bk.y + oldcmd.bk.cy )
+//          && is_1_byte(this->op.x               - oldcmd.op.x                )
+//          && is_1_byte(this->op.y               - oldcmd.op.y                )
+//          && is_1_byte(this->op.x + this->op.cx - oldcmd.op.x + oldcmd.op.cx )
+//          && is_1_byte(this->op.y + this->op.cy - oldcmd.op.y + oldcmd.op.cy )
+//          && is_1_byte(this->glyph_x            - oldcmd.glyph_x             )
+//          && is_1_byte(this->glyph_y            - oldcmd.glyph_y             )
+//                                                                    ) * DELTA;
+
+        header.fields =
+              (this->cache_id           != oldcmd.cache_id            ) * 0x000001
+            | (this->fl_accel           != oldcmd.fl_accel            ) * 0x000002
+            | (this->ui_charinc         != oldcmd.ui_charinc          ) * 0x000004
+            | (this->f_op_redundant     != oldcmd.f_op_redundant      ) * 0x000008
+
+            | (this->back_color         != oldcmd.back_color          ) * 0x000010
+            | (this->fore_color         != oldcmd.fore_color          ) * 0x000020
+
+            | (this->bk.x               != oldcmd.bk.x                ) * 0x000040
+            | (this->bk.y               != oldcmd.bk.y                ) * 0x000080
+            | (this->bk.x + this->bk.cx != oldcmd.bk.x + oldcmd.bk.cx ) * 0x000100
+            | (this->bk.y + this->bk.cy != oldcmd.bk.y + oldcmd.bk.cy ) * 0x000200
+
+            | (this->op.x               != oldcmd.op.x                ) * 0x000400
+            | (this->op.y               != oldcmd.op.y                ) * 0x000800
+            | (this->op.x + this->op.cx != oldcmd.op.x + oldcmd.op.cx ) * 0x001000
+            | (this->op.y + this->op.cy != oldcmd.op.y + oldcmd.op.cy ) * 0x002000
+
+            | (this->brush.org_x        != oldcmd.brush.org_x         ) * 0x004000
+            | (this->brush.org_y        != oldcmd.brush.org_y         ) * 0x008000
+            | (this->brush.style        != oldcmd.brush.style         ) * 0x010000
+            | (this->brush.hatch        != oldcmd.brush.hatch         ) * 0x020000
+            | (memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0  ) * 0x040000
+
+            | (this->glyph_x            != oldcmd.glyph_x             ) * 0x080000
+            | (this->glyph_y            != oldcmd.glyph_y             ) * 0x100000
+            | (data_len                 != 0                          ) * 0x200000
+            ;
+
+        common.emit(stream, header, oldcommon);
+
+        if (header.fields & 0x001) { stream.out_uint8(this->cache_id); }
+        if (header.fields & 0x002) { stream.out_uint8(this->fl_accel); }
+        if (header.fields & 0x004) { stream.out_uint8(this->ui_charinc); }
+        if (header.fields & 0x008) { stream.out_uint8(this->f_op_redundant); }
+
+        if (header.fields & 0x010) {
+            stream.out_uint8(this->back_color);
+            stream.out_uint8(this->back_color >> 8);
+            stream.out_uint8(this->back_color >> 16);
+        }
+        if (header.fields & 0x020) {
+            stream.out_uint8(this->fore_color);
+            stream.out_uint8(this->fore_color >> 8);
+            stream.out_uint8(this->fore_color >> 16);
+        }
+
+        if (header.fields & 0x0040) { stream.out_uint16_le(this->bk.x); }
+        if (header.fields & 0x0080) { stream.out_uint16_le(this->bk.y); }
+        if (header.fields & 0x0100) { stream.out_uint16_le(this->bk.x + this->bk.cx - 1); }
+        if (header.fields & 0x0200) { stream.out_uint16_le(this->bk.y + this->bk.cy - 1); }
+
+        if (header.fields & 0x0400) { stream.out_uint16_le(this->op.x); }
+        if (header.fields & 0x0800) { stream.out_uint16_le(this->op.y); }
+        if (header.fields & 0x1000) { stream.out_uint16_le(this->op.x + this->op.cx - 1); }
+        if (header.fields & 0x2000) { stream.out_uint16_le(this->op.y + this->op.cy - 1); }
+
+        header.emit_brush(stream, 0x4000, this->brush, oldcmd.brush);
+
+        if (header.fields & 0x080000) { stream.out_uint16_le(this->glyph_x); }
+        if (header.fields & 0x100000) { stream.out_uint16_le(this->glyph_y); }
+
+        if (header.fields & 0x200000) {
+            stream.out_uint8(this->data_len);
+            stream.out_copy_bytes(this->data, this->data_len);
+        }
+    }
+
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
         if (header.fields & 0x001) { this->cache_id       = stream.in_uint8(); }
         if (header.fields & 0x002) { this->fl_accel       = stream.in_uint8(); }

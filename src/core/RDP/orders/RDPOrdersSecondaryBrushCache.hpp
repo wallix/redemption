@@ -188,6 +188,26 @@ public:
         stream.out_copy_bytes(this->data, this->size);
     }
 
+    void emit(OutStream & stream) const
+    {
+        using namespace RDP;
+
+        uint8_t control = STANDARD | SECONDARY;
+        stream.out_uint8(control);
+        uint16_t len = (this->size + 6) - 7;    // length after type minus 7
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0);    // flags
+        stream.out_uint8(TS_CACHE_BRUSH); // type
+
+        stream.out_uint8(this->cacheIndex);
+        stream.out_uint8(this->bpp);
+        stream.out_uint8(this->width);
+        stream.out_uint8(this->height);
+        stream.out_uint8(this->type);
+        stream.out_uint8(this->size);
+        stream.out_copy_bytes(this->data, this->size);
+    }
+
     void receive(Stream & stream, const RDPSecondaryOrderHeader &/* header*/)
     {
         using namespace RDP;

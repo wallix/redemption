@@ -33,10 +33,6 @@ public:
         this->send_meta_chunk();
     }
 
-    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
-        this->send_data_indication_ex(channelId, stream.get_data(), stream.size());
-    }
-
     void send_data_indication_ex(uint16_t channelId, uint8_t const * packet_data, std::size_t packet_size) {
         constexpr unsigned payload_size = 2;
         StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;

@@ -233,6 +233,69 @@ public:
         header.emit_brush(stream, 0x0100, this->brush, oldcmd.brush);
     }
 
+    void emit(OutStream & stream,
+              RDPOrderCommon & common,
+              const RDPOrderCommon & oldcommon,
+              const RDPEllipseCB & oldcmd) const
+    {
+        using namespace RDP;
+        RDPPrimaryOrderHeader header(STANDARD, 0);
+
+        if (!common.clip.contains(this->el.get_rect())){
+            header.control |= BOUNDS;
+        }
+
+        int16_t left      = this->el.left();
+        int16_t top       = this->el.top();
+        int16_t right     = this->el.right();
+        int16_t bottom    = this->el.bottom();
+        int16_t oldleft   = oldcmd.el.left();
+        int16_t oldtop    = oldcmd.el.top();
+        int16_t oldright  = oldcmd.el.right();
+        int16_t oldbottom = oldcmd.el.bottom();
+
+        header.control |= (is_1_byte(left - oldleft) &&
+                           is_1_byte(top - oldtop) &&
+                           is_1_byte(right - oldright) &&
+                           is_1_byte(bottom - oldbottom)) * RDP::DELTA;
+        header.fields =
+            ( left              != oldleft           ) * 0x0001
+            |(top               != oldtop            ) * 0x0002
+            |(right             != oldright          ) * 0x0004
+            |(bottom            != oldbottom         ) * 0x0008
+            |(this->brop2       != oldcmd.brop2      ) * 0x0010
+            |(this->fill_mode   != oldcmd.fill_mode  ) * 0x0020
+            |(this->back_color  != oldcmd.back_color ) * 0x0040
+            |(this->fore_color  != oldcmd.fore_color ) * 0x0080
+            |(this->brush.org_x != oldcmd.brush.org_x) * 0x0100
+            |(this->brush.org_y != oldcmd.brush.org_y) * 0x0200
+            |(this->brush.style != oldcmd.brush.style) * 0x0400
+            |(this->brush.hatch != oldcmd.brush.hatch) * 0x0800
+            |(memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0) * 0x1000;
+
+        common.emit(stream, header, oldcommon);
+        header.emit_coord(stream, 0x0001, left,   oldleft);
+        header.emit_coord(stream, 0x0002, top,    oldtop);
+        header.emit_coord(stream, 0x0004, right,  oldright);
+        header.emit_coord(stream, 0x0008, bottom, oldbottom);
+
+        if (header.fields & 0x0010) { stream.out_uint8(this->brop2); }
+
+        if (header.fields & 0x0020) { stream.out_uint8(this->fill_mode); }
+
+        if (header.fields & 0x0040) {
+            stream.out_uint8(this->back_color);
+            stream.out_uint8(this->back_color >> 8);
+            stream.out_uint8(this->back_color >> 16);
+        }
+        if (header.fields & 0x0080) {
+            stream.out_uint8(this->fore_color);
+            stream.out_uint8(this->fore_color >> 8);
+            stream.out_uint8(this->fore_color >> 16);
+        }
+        header.emit_brush(stream, 0x0100, this->brush, oldcmd.brush);
+    }
+
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
     {
         // using namespace RDP;

@@ -284,6 +284,113 @@ public:
         }
     }   // void emit( Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiScrBlt & oldcmd) const
 
+    void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
+             , const RDPMultiScrBlt & oldcmd) const {
+        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
+
+        if (!common.clip.contains(this->rect)){
+            header.control |= BOUNDS;
+        }
+
+        // MultiScrBlt fields bytes (2 byte)
+        // =================================
+        // 0x0001: nLeftRect
+        // 0x0002: nTopRect
+        // 0x0004: nWidth
+        // 0x0008: nHeight
+        // 0x0010: bRop
+        // 0x0020: nXSrc
+        // 0x0040: nYSrc
+        // 0x0080: nDeltaEntries
+        // 0x0100: CodedDeltaList
+
+        DeltaRect dr(this->rect, oldcmd.rect);
+
+        // RDP specs says that we can have DELTA only if we have bounds.
+        //  Can't see the rationale and rdesktop don't do it by the book.
+        //  Behavior should be checked with server and clients from
+        //  Microsoft. Looks like an error in RDP specs.
+        header.control |= dr.fully_relative() * DELTA;
+
+        header.fields = (dr.dleft            != 0                   ) * 0x0001
+                      | (dr.dtop             != 0                   ) * 0x0002
+                      | (dr.dwidth           != 0                   ) * 0x0004
+                      | (dr.dheight          != 0                   ) * 0x0008
+
+                      | (this->bRop          != oldcmd.bRop         ) * 0x0010
+                      | (this->nXSrc         != oldcmd.nXSrc        ) * 0x0020
+                      | (this->nYSrc         != oldcmd.nYSrc        ) * 0x0040
+
+                      | (this->nDeltaEntries != oldcmd.nDeltaEntries) * 0x0080
+                      | (
+                         (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
+                         memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
+                                this->nDeltaEntries * sizeof(RDP::DeltaEncodedRectangle))
+                                                                    ) * 0x0100
+                      ;
+
+        common.emit(stream, header, oldcommon);
+
+        header.emit_rect(stream, 0x0001, this->rect, oldcmd.rect);
+
+        if (header.fields & 0x0010) {
+            stream.out_uint8(this->bRop);
+        }
+
+        header.emit_coord(stream, 0x0020, this->nXSrc, oldcmd.nXSrc);
+        header.emit_coord(stream, 0x0040, this->nYSrc, oldcmd.nYSrc);
+
+        if (header.fields & 0x0080) { stream.out_uint8(this->nDeltaEntries); }
+
+        if (header.fields & 0x0100) {
+            uint32_t offset_cbData = stream.get_offset();
+            stream.out_clear_bytes(2);
+            uint8_t * zeroBit = stream.get_current();
+            stream.out_clear_bytes((this->nDeltaEntries + 1) / 2);
+            *zeroBit = 0;
+
+            for (uint8_t i = 0, m2 = 0; i < this->nDeltaEntries; i++, m2++) {
+                if (m2 == 2) {
+                    m2 = 0;
+                }
+
+                if (i && !m2) {
+                    *(++zeroBit) = 0;
+                }
+
+                if (!this->deltaEncodedRectangles[i].leftDelta) {
+                    *zeroBit |= (1 << (7 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].leftDelta);
+                }
+
+                if (!this->deltaEncodedRectangles[i].topDelta) {
+                    *zeroBit |= (1 << (6 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].topDelta);
+                }
+
+                if (!this->deltaEncodedRectangles[i].width) {
+                    *zeroBit |= (1 << (5 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].width);
+                }
+
+                if (!this->deltaEncodedRectangles[i].height) {
+                    *zeroBit |= (1 << (4 - m2 * 4));
+                }
+                else {
+                    stream.out_DEP(this->deltaEncodedRectangles[i].height);
+                }
+            }
+
+            stream.set_out_uint16_le(stream.get_offset() - offset_cbData - 2, offset_cbData);
+        }
+    }   // void emit( Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiScrBlt & oldcmd) const
+
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
         //LOG(LOG_INFO, "RDPMultiScrBlt::receive: header fields=0x%02X", header.fields);
 

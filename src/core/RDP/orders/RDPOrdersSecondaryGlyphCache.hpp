@@ -207,6 +207,27 @@ public:
         stream.out_copy_bytes(this->aj.get(), size);
     }
 
+    void emit(OutStream & stream) const {
+        using namespace RDP;
+        uint16_t size = this->datasize();
+
+        uint8_t control = STANDARD | SECONDARY;
+        stream.out_uint8(control);
+        uint16_t len = (size + 12) - 7;     // length after type minus 7
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(8);            // flags
+        stream.out_uint8(TS_CACHE_GLYPH);   // type
+
+        stream.out_uint8(cacheId);
+        stream.out_uint8(this->cGlyphs);
+        stream.out_uint16_le(this->cacheIndex);
+        stream.out_uint16_le(this->x);
+        stream.out_uint16_le(this->y);
+        stream.out_uint16_le(this->cx);
+        stream.out_uint16_le(this->cy);
+        stream.out_copy_bytes(this->aj.get(), size);
+    }
+
     void receive(Stream & stream, const RDPSecondaryOrderHeader & header) {
         this->cacheId    = stream.in_uint8();
         this->cGlyphs    = stream.in_uint8();
