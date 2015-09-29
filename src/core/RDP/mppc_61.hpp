@@ -596,12 +596,6 @@ public:
         , bytes_in_output_buffer(0)
     {}
 
-    /**
-     * Deinitialize rdp_mppc_61_enc structure
-     */
-    ~rdp_mppc_61_enc() override {
-    }
-
 private:
     void compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size) {
         if (this->verbose & 512) {
@@ -786,6 +780,19 @@ public:
     }
 
     void get_compressed_data(Stream & stream) const override {
+        if (stream.tailroom() <
+            static_cast<size_t>(2) + // Level1ComprFlags(1) + Level2ComprFlags(1)
+                this->bytes_in_output_buffer) {
+            LOG(LOG_ERR, "rdp_mppc_61_enc::get_compressed_data: Buffer too small");
+            throw Error(ERR_BUFFER_TOO_SMALL);
+        }
+
+        stream.out_uint8(this->Level1ComprFlags);
+        stream.out_uint8(this->Level2ComprFlags);
+        stream.out_copy_bytes(this->outputBuffer, this->bytes_in_output_buffer);
+    }
+
+    void get_compressed_data(OutStream & stream) const override {
         if (stream.tailroom() <
             static_cast<size_t>(2) + // Level1ComprFlags(1) + Level2ComprFlags(1)
                 this->bytes_in_output_buffer) {

@@ -944,7 +944,7 @@ struct OutReservedStreamHelper
     };
 
     Packet get_packet() const noexcept {
-        return Packet{this->buf, std::size_t(this->stream.get_data_end() - this->buf)};
+        return Packet{this->buf, std::size_t(this->stream.get_current() - this->buf)};
     }
 
     std::size_t get_reserved_leading_space() const {
@@ -992,6 +992,12 @@ struct OutReservedStreamHelper
         memcpy(start, stream3.get_data(), stream3.get_offset());
 
         return get_packet();
+    }
+
+    void rewind() {
+        this->reserved_leading_space += this->stream.get_data() - this->buf;
+        this->buf = this->stream.get_data();
+        this->stream.rewind();
     }
 
 private:

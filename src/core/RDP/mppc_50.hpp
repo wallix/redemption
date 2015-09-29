@@ -763,6 +763,15 @@ public:
 
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
     }
+
+    void get_compressed_data(OutStream & stream) const override {
+        if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
+            LOG(LOG_ERR, "rdp_mppc_50_enc::get_compressed_data: Buffer too small");
+            throw Error(ERR_BUFFER_TOO_SMALL);
+        }
+
+        stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
+    }
 };  // struct rdp_mppc_50_enc
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_50_HPP_
