@@ -89,9 +89,11 @@ public:
     BmpCachePersister(BmpCache & bmp_cache, Transport & t, const char * filename, uint32_t verbose = 0)
     : bmp_cache(bmp_cache)
     , verbose(verbose) {
-        BStream stream(16);
+        uint8_t buf[16];
+        InStream stream(buf);
 
-        t.recv(&stream.end, 5);  /* magic(4) + version(1) */
+        auto end = buf;
+        t.recv(&end, 5);  /* magic(4) + version(1) */
 
         const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
               uint8_t   version = stream.in_uint8();
@@ -123,8 +125,10 @@ public:
 
 private:
     void preload_from_disk(Transport & t, const char * filename, uint8_t version, uint8_t cache_id) {
-        BStream stream(65536);
-        t.recv(&stream.end, 2);
+        uint8_t buf[65536];
+        InStream stream(buf);
+        auto end = buf;
+        t.recv(&end, 2);
 
         uint16_t bitmap_count = stream.in_uint16_le();
         if (this->verbose & 1) {
@@ -132,7 +136,7 @@ private:
         }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
-            t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            t.recv(&end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
 
             uint8_t sig[8];
 
@@ -146,18 +150,19 @@ private:
 
             BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
-                t.recv(&stream.end, sizeof(original_palette));
+                t.recv(&end, sizeof(original_palette));
 
                 stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
-            t.recv(&stream.end, sizeof(bmp_size));
+            t.recv(&end, sizeof(bmp_size));
             bmp_size = stream.in_uint16_le();
 
-            stream.reset();
+            end = buf;
+            stream = InStream(buf);
 
-            t.recv(&stream.end, bmp_size);
+            t.recv(&end, bmp_size);
 
             if (bmp_cache.get_cache(cache_id).persistent()) {
                 map_key key(sig);
@@ -186,7 +191,8 @@ private:
                 }
             }
 
-            stream.reset();
+            end = buf;
+            stream = InStream(buf);
         }
     }
 
@@ -228,9 +234,11 @@ public:
     // Loads bitmap from file to be placed immediately into the cache.
     static void load_all_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
                                   , uint32_t verbose = 0) {
-        BStream stream(16);
+        uint8_t buf[16];
+        InStream stream(buf);
 
-        t.recv(&stream.end, 5);  /* magic(4) + version(1) */
+        auto end = buf;
+        t.recv(&end, 5);  /* magic(4) + version(1) */
 
         const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
               uint8_t   version = stream.in_uint8();
@@ -263,8 +271,10 @@ public:
 private:
     static void load_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
                               , uint8_t cache_id, uint8_t version, uint32_t verbose) {
-        BStream stream(65536);
-        t.recv(&stream.end, 2);
+        uint8_t buf[65536];
+        InStream stream(buf);
+        auto end = buf;
+        t.recv(&end, 2);
 
         uint16_t bitmap_count = stream.in_uint16_le();
         if (verbose & 1) {
@@ -272,7 +282,7 @@ private:
         }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
-            t.recv(&stream.end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            t.recv(&end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
 
             union {
                 uint8_t  sig_8[8];
@@ -289,18 +299,19 @@ private:
 
             BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
-                t.recv(&stream.end, sizeof(original_palette));
+                t.recv(&end, sizeof(original_palette));
 
                 stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
-            t.recv(&stream.end, sizeof(bmp_size));
+            t.recv(&end, sizeof(bmp_size));
             bmp_size = stream.in_uint16_le();
 
-            stream.reset();
+            end = buf;
+            stream = InStream(buf);
 
-            t.recv(&stream.end, bmp_size);
+            t.recv(&end, bmp_size);
 
             if (bmp_cache.get_cache(cache_id).persistent() && (i < bmp_cache.get_cache(cache_id).size())) {
                 if (verbose & 1) {
@@ -313,12 +324,13 @@ private:
                     }
                 }
 
-                Bitmap bmp(bmp_cache.bpp, original_bpp, &original_palette, cx, cy, stream.get_data(), stream.size());
+                Bitmap bmp(bmp_cache.bpp, original_bpp, &original_palette, cx, cy, stream.get_data(), stream.get_data() - end);
 
                 bmp_cache.put(cache_id, i, bmp, sig.sig_32[0], sig.sig_32[1]);
             }
 
-            stream.reset();
+            end = buf;
+            stream = InStream(buf);
         }
     }
 
@@ -329,13 +341,12 @@ public:
             bmp_cache.log();
         }
 
-        BStream stream(128);
+        StaticOutStream<128> stream;
 
         stream.out_copy_bytes("PDBC", 4);  // Magic(4)
         stream.out_uint8(CURRENT_VERSION);
-        stream.mark_end();
 
-        t.send(stream);
+        t.send(stream.get_data(), stream.get_offset());
 
         for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
             save_to_disk(bmp_cache, cache_id, t, verbose);
@@ -355,17 +366,16 @@ private:
             }
         }
 
-        BStream stream(65535);
+        StaticOutStream<65535> stream;
         stream.out_uint16_le(bitmap_count);
-        stream.mark_end();
-        t.send(stream);
+        t.send(stream.get_data(), stream.get_offset());
         if (!bitmap_count) {
             return;
         }
 
         for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {
             if (cache[cache_index]) {
-                stream.reset();
+                stream.rewind();
 
                 const Bitmap &   bmp      = cache[cache_index].bmp;
                 const uint8_t (& sig)[8]  = cache[cache_index].sig.sig_8;
@@ -409,8 +419,7 @@ private:
                     stream.out_copy_bytes(bmp.palette().data(), sizeof(bmp.palette()));
                 }
                 stream.out_uint16_le(bmp_size);
-                stream.mark_end();
-                t.send(stream);
+                t.send(stream.get_data(), stream.get_offset());
 
                 t.send(bmp_data, bmp_size);
             }
