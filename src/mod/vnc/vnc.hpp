@@ -450,7 +450,7 @@ protected:
     } // rdp_input_clip_data
 */
 
-    void rdp_input_clip_data(uint8_t * data, size_t /*data_length*/) {
+    void rdp_input_clip_data(uint8_t * data, size_t data_length) {
         auto client_cut_text = [this](char * str) {
             ::in_place_windows_to_linux_newline_convert(str);
 
@@ -1272,29 +1272,12 @@ private:
         ZRLEUpdateContext() {}
     };
 
-    void lib_framebuffer_update_zrle(HStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context)
+    void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context)
     {
-        if (this->verbose) {
-            LOG(LOG_INFO,
-                "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
-                uncompressed_data_buffer.in_remain(),
-                update_context.data_remain.get_offset());
-        }
+        uint8_t         tile_data[16384];    // max size with 16 bpp
 
-        if (update_context.data_remain.get_offset())
-        {
-            uncompressed_data_buffer.copy_to_head(
-                update_context.data_remain.get_data(),
-                update_context.data_remain.get_offset());
-            uncompressed_data_buffer.p = uncompressed_data_buffer.get_data();
-
-            update_context.data_remain.rewind();
-        }
-
-        uint8_t    tile_data[16384];    // max size with 16 bpp
-
-        uint8_t  * remaining_data        = nullptr;
-        uint16_t   remaining_data_length = 0;
+        uint8_t const * remaining_data        = nullptr;
+        uint16_t        remaining_data_length = 0;
 
         try
         {
@@ -1314,7 +1297,7 @@ private:
                     throw Error(ERR_BUFFER_TOO_SMALL);
                 }
 
-                remaining_data        = uncompressed_data_buffer.p;
+                remaining_data        = uncompressed_data_buffer.get_current();
                 remaining_data_length = uncompressed_data_buffer.in_remain();
 
                 uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
@@ -1811,10 +1794,16 @@ private:
 
                 while (zstrm.avail_in > 0)
                 {
-                    HStream zlib_uncompressed_data_buffer(16384, 49152);
+                    constexpr std::size_t reserved_leading_space = 16384;
+                    constexpr std::size_t total_size = 49152;
+                    constexpr std::size_t data_size = total_size - reserved_leading_space;
 
-                    zstrm.avail_out = zlib_uncompressed_data_buffer.endroom();
-                    zstrm.next_out  = zlib_uncompressed_data_buffer.get_data();
+                    uint8_t zlib_uncompressed_data_buffer[total_size];
+
+                    uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
+
+                    zstrm.avail_out = data_size;
+                    zstrm.next_out  = data;
 
                     int zlib_result = inflate(&zstrm, Z_NO_FLUSH);
 
@@ -1824,11 +1813,26 @@ private:
                         throw Error(ERR_VNC_ZLIB_INFLATE);
                     }
 
-                    zlib_uncompressed_data_buffer.out_skip_bytes(zlib_uncompressed_data_buffer.endroom() - zstrm.avail_out);
-                    zlib_uncompressed_data_buffer.mark_end();
-                    zlib_uncompressed_data_buffer.rewind();
+                    InStream zlib_uncompressed_data_stream(data, data_size - zstrm.avail_out);
 
-                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_buffer, zrle_update_context);
+                    if (this->verbose) {
+                        LOG(LOG_INFO,
+                            "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
+                            zlib_uncompressed_data_stream.in_remain(),
+                            zrle_update_context.data_remain.get_offset());
+                    }
+
+                    if (zrle_update_context.data_remain.get_offset())
+                    {
+                        auto sz = zrle_update_context.data_remain.get_offset();
+                        data -= sz;
+                        memcpy(data, zrle_update_context.data_remain.get_data(), sz);
+                        zlib_uncompressed_data_stream = InStream(data, data_size - zstrm.avail_out + sz);
+
+                        zrle_update_context.data_remain.rewind();
+                    }
+
+                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, zrle_update_context);
                 }
             }
             break;
