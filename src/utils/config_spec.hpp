@@ -459,6 +459,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "target_password", rw);
         W.member(type_<std::string>(), "target_host", set(""), rw);
+        W.member(type_<std::string>(), "target_service", set(""), r);
         W.member(type_<unsigned>(), "target_port", set(3389), rw);
         W.member(type_<std::string>(), "target_protocol", str_authid{"proto_dest"}, set("RDP"), r);
         W.sep();

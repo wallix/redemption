@@ -2414,6 +2414,21 @@ public:
     }
 
     void session_update(const char * message) override {
+        LOG( LOG_INFO
+           , "[RDP Session] type='AGT event' "
+             "sesion_id='%s' "
+             "user='%s' "
+             "device='%s' "
+             "service='%s' "
+             "account='%s' "
+             "data='%s'",
+            this->ini.get<cfg::context::session_id>().c_str(),
+            this->ini.get<cfg::globals::auth_user>().c_str(),
+            this->ini.get<cfg::globals::target_device>().c_str(),
+            this->ini.get<cfg::context::target_service>().c_str(),
+            this->ini.get<cfg::globals::target_user>().c_str(),
+            message);
+
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();

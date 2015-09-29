@@ -6108,7 +6108,7 @@ public:
                 LOG(LOG_INFO, "Agent channel data=\"%s\"", wab_agent_channel_message.c_str());
             }
 
-            //LOG(LOG_INFO, "<<<Get startup application>>>");
+            dont_send_to_front = true;
 
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Agent is ready.");
@@ -6206,9 +6206,11 @@ public:
                 std::string order(message, separator - message);
                 std::string parameters(separator + 1);
 
-                LOG(LOG_INFO,
-                    "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
-                    order.c_str(), parameters.c_str());
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
+                        order.c_str(), parameters.c_str());
+                }
 
                 if (!order.compare("FocusOnPasswordTextBox")) {
                     this->front.focus_changed(!parameters.compare("yes"));
