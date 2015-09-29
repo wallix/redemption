@@ -65,9 +65,10 @@ struct FileToGraphic
         HEADER_SIZE = 8
     };
 
-    BStream stream;
-
 private:
+    uint8_t stream_buf[65536];
+    InStream stream;
+
     CompressionInTransportWrapper compression_wrapper;
 
 public:
@@ -203,7 +204,7 @@ public:
     } statistics;
 
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
-        : stream(65536)
+        : stream(stream_buf)
         , compression_wrapper(*trans, CompressionTransportBase::Algorithm::None)
         , trans_source(trans)
         , trans(trans)
@@ -298,14 +299,14 @@ public:
     {
         if (this->chunk_type != LAST_IMAGE_CHUNK
          && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
-            if (this->stream.p == this->stream.end
+            if (this->stream.get_current() == this->stream.get_data_end()
              && this->remaining_order_count) {
                 LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                              "order [%u/%u] "
                              "remaining [%u/%u]",
                              this->chunk_type,
                              (this->chunk_count-this->remaining_order_count), this->chunk_count,
-                             (this->stream.end - this->stream.p), this->chunk_size);
+                             this->stream.in_remain(), this->chunk_size);
                 return false;
             }
         }
@@ -316,8 +317,12 @@ public:
             }
 
             try {
-                BStream header(HEADER_SIZE);
-                this->trans->recv(&header.end, HEADER_SIZE);
+                uint8_t buf[HEADER_SIZE];
+                {
+                    auto end = buf;
+                    this->trans->recv(&end, HEADER_SIZE);
+                }
+                InStream header(buf);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
@@ -335,9 +340,11 @@ public:
                         LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
                         return false;
                     }
-                    this->stream.reset();
+                    this->stream = InStream(this->stream_buf);
                     if (this->chunk_size - HEADER_SIZE > 0) {
-                        this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                        this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
+                        auto end = this->stream_buf;
+                        this->trans->recv(&end, this->chunk_size - HEADER_SIZE);
                     }
                 }
             }
@@ -399,7 +406,7 @@ public:
             else if (class_ == (RDP::STANDARD | RDP::SECONDARY)) {
                 using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
-                uint8_t *next_order = this->stream.p + header.order_data_length();
+                uint8_t const *next_order = this->stream.get_current() + header.order_data_length();
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
@@ -445,7 +452,7 @@ public:
                     /* error, unknown order */
                     break;
                 }
-                stream.p = next_order;
+                this->stream.in_skip_bytes(next_order - this->stream.get_current());
             }
             else if (class_ == RDP::STANDARD) {
                 RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
@@ -630,10 +637,10 @@ public:
                 }
 
                 REDOC("If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)")
-                if (this->stream.end - this->stream.p > 0){
-                    if (this->stream.end - this->stream.p < 4){
+                if (this->stream.in_remain() > 0){
+                    if (this->stream.in_remain() < 4){
                         LOG(LOG_WARNING, "Input data truncated");
-                        hexdump_d(stream.p, stream.end - stream.p);
+                        hexdump_d(stream.get_data(), stream.in_remain());
                     }
 
                     this->mouse_x = this->stream.in_uint16_le();
@@ -654,12 +661,12 @@ public:
 
                     TODO("this->input contains UTF32 unicode points, it should not be a byte buffer."
                          "This leads to back and forth conversion between 32 bits and 8 bits")
-                    this->input_len = std::min( static_cast<uint16_t>(stream.end - stream.p)
+                    this->input_len = std::min( static_cast<uint16_t>(stream.in_remain())
                                               , static_cast<uint16_t>(sizeof(this->input) - 1));
                     if (this->input_len){
                         this->stream.in_copy_bytes(this->input, this->input_len);
                         this->input[this->input_len] = 0;
-                        this->stream.p = this->stream.end;
+                        this->stream.in_skip_bytes(this->stream.in_remain());
 
                         for (size_t i = 0; i < this->nbconsumers; i++){
                             if (this->consumers[i].capture_device) {
@@ -769,7 +776,7 @@ public:
                     this->trans = &this->compression_wrapper.get();
                 }
 
-                this->stream.p = this->stream.end;
+                this->stream.in_skip_bytes(this->stream.in_remain());
 
                 if (!this->meta_ok) {
                     this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
@@ -1066,9 +1073,11 @@ public:
                 }
                 else {
                     REDOC("If no drawable is available ignore images chunks");
-                    this->stream.reset();
-                    this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
-                    this->stream.p = this->stream.end;
+                    this->stream.rewind();
+                    std::size_t sz = this->chunk_size - HEADER_SIZE;
+                    auto end = this->stream_buf;
+                    this->trans->recv(&end, sz);
+                    this->stream = InStream(this->stream_buf, sz, sz);
                 }
                 this->remaining_order_count = 0;
             }
@@ -1173,7 +1182,7 @@ public:
                 {
                     uint16_t message_length = this->stream.in_uint16_le();
 
-                    const char * message =  ::char_ptr_cast(this->stream.p); // Null-terminator is included.
+                    const char * message =  ::char_ptr_cast(this->stream.get_current()); // Null-terminator is included.
 
                     this->stream.in_skip_bytes(message_length);
 

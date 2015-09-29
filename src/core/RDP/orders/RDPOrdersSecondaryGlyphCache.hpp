@@ -243,6 +243,21 @@ public:
         memcpy(this->aj.get(), stream.in_uint8p(size), size);
     }
 
+    void receive(InStream & stream, const RDPSecondaryOrderHeader & header) {
+        this->cacheId    = stream.in_uint8();
+        this->cGlyphs    = stream.in_uint8();
+        this->cacheIndex = stream.in_uint16_le();
+        this->x          = stream.in_uint16_le();
+        this->y          = stream.in_uint16_le();
+        this->cx         = stream.in_uint16_le();
+        this->cy         = stream.in_uint16_le();
+
+        uint16_t size = this->datasize();
+
+        this->aj.reset(new uint8_t[size]);
+        memcpy(this->aj.get(), stream.in_uint8p(size), size);
+    }
+
     size_t str(char * buffer, size_t sz) const {
         size_t lg = snprintf( buffer, sz
                             , "GlyphCache(cacheId=%u cGlyphs=%u cacheIndex=%u x=%d y=%d cx=%u cy=%u data=("
