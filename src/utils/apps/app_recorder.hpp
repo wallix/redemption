@@ -39,7 +39,7 @@
 
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
-                        , int capture_bpp
+                        , int capture_bpp, int wrm_compression_algorithm_
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
@@ -58,12 +58,13 @@ void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char *
 template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
-                    , int capture_bpp
+                    , int capture_bpp, int wrm_compression_algorithm_
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument);
 
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
+                        , int wrm_compression_algorithm_
                         , std::string const & output_filename, Inifile & ini, uint32_t verbose);
 
 
@@ -76,8 +77,8 @@ static void raise_error(std::string const & output_filename, int code, const cha
 int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted);
 
 
-static const unsigned USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
-static const signed   USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
+static const signed USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
+static const signed USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
 
 
 bool program_requested_to_shutdown = false;
@@ -171,7 +172,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
 
         {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
-        {"remove-input-file", "remove input file"}, 
+        {"remove-input-file", "remove input file"},
 
         {"config-file", &config_filename, "used an another ini file"},
     });
@@ -216,18 +217,24 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     Inifile ini;
     { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
 
+    int wrm_compression_algorithm_;
+
     if (options.count("compression") > 0) {
              if (wrm_compression_algorithm == "none") {
-            ini.set<cfg::video::wrm_compression_algorithm>(0);
+//            ini.set<cfg::video::wrm_compression_algorithm>(0);
+            wrm_compression_algorithm_ = 0;
         }
         else if (wrm_compression_algorithm == "gzip") {
-            ini.set<cfg::video::wrm_compression_algorithm>(1);
+//            ini.set<cfg::video::wrm_compression_algorithm>(1);
+            wrm_compression_algorithm_ = 1;
         }
         else if (wrm_compression_algorithm == "snappy") {
-            ini.set<cfg::video::wrm_compression_algorithm>(2);
+//            ini.set<cfg::video::wrm_compression_algorithm>(2);
+            wrm_compression_algorithm_ = 2;
         }
         else if (wrm_compression_algorithm == "original") {
-            ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+//            ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+            wrm_compression_algorithm_ = USE_ORIGINAL_COMPRESSION_ALGORITHM;
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
@@ -235,7 +242,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+//        ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+        wrm_compression_algorithm_ = USE_ORIGINAL_COMPRESSION_ALGORITHM;
     }
 
     int capture_bpp = 16;
@@ -351,7 +359,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     return recompress_or_record<CaptureMaker>(
-        input_filename, output_filename, capture_bpp, ini
+        input_filename, output_filename, capture_bpp, wrm_compression_algorithm_, ini
       , remove_input_file, infile_is_encrypted, auto_output_file
       , begin_cap, end_cap, order_count, clear, zoom
       , show_file_metadata, show_statistics
@@ -386,7 +394,7 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
-                        , int capture_bpp
+                        , int capture_bpp, int wrm_compression_algorithm_
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
@@ -493,13 +501,13 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                 ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
                   , do_record<CaptureMaker>(
                       trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, capture_bpp, ini, file_count, order_count, clear, zoom
+                    , output_filename, capture_bpp, wrm_compression_algorithm_, ini, file_count, order_count, clear, zoom
                     , show_file_metadata, show_statistics, verbose
                     , std::forward<ExtraArguments>(extra_argument)...
                     )
                 )
                 : ((verbose ? void(std::cout << "[B]"<< std::endl) : void())
-                  , do_recompress(cctx, trans, begin_record, output_filename, ini, verbose)
+                  , do_recompress(cctx, trans, begin_record, wrm_compression_algorithm_, output_filename, ini, verbose)
                 )
             ;
         }
@@ -605,6 +613,7 @@ void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char 
 
 inline
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
+                        , int wrm_compression_algorithm_
                         , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
     FileToChunk player(&in_wrm_trans, 0);
 
@@ -636,9 +645,13 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
     }
 
-    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
-    }
+//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
+//    }
+    ini.set<cfg::video::wrm_compression_algorithm>(
+        ((wrm_compression_algorithm_ == USE_ORIGINAL_COMPRESSION_ALGORITHM) ?
+         player.info_compression_algorithm :
+         wrm_compression_algorithm_));
 
     int return_code = 0;
     try {
@@ -793,7 +806,7 @@ static void raise_error(std::string const & output_filename, int code, const cha
 template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
-                    , int capture_bpp
+                    , int capture_bpp, int wrm_compression_algorithm_
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument) {
@@ -843,9 +856,13 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             clear_files_flv_meta_png(outfile_path, outfile_basename);
         }
 
-        if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-            ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
-        }
+//        if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+//            ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
+//        }
+        ini.set<cfg::video::wrm_compression_algorithm>(
+            ((wrm_compression_algorithm_ == USE_ORIGINAL_COMPRESSION_ALGORITHM) ?
+             player.info_compression_algorithm :
+             wrm_compression_algorithm_));
 
 //        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
 //            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
@@ -853,7 +870,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         if (capture_bpp == USE_ORIGINAL_COLOR_DEPTH) {
             capture_bpp = player.info_bpp;
         }
-        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
+//        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
 
         {
             CaptureMaker capmake( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)

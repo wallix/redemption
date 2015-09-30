@@ -31,7 +31,7 @@ static inline unsigned ulong_from_cstr(const char * str) noexcept
         return strtol(str + 2, nullptr, 16);
     }
 
-    return atol(str);
+    return strtoul(str, nullptr, 10);
 }
 
 // 10 = 10, 0x10 = 16

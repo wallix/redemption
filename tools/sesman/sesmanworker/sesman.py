@@ -573,6 +573,7 @@ class Sesman():
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
                                , u'module'                  : u'transitory'
+                               , u'target_service'          : self.target_service_name
                                }
                 if not self.internal_target:
                     self.internal_target = True if self.target_service_name == u'INTERNAL' else False

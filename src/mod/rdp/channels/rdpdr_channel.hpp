@@ -1393,7 +1393,9 @@ public:
                                             std::string message("ReadRedirectedFileSystem=");
                                             message += std::get<2>(*target_iter).get()->c_str();
 
-                                            this->front.session_update(message.c_str());
+                                            bool contian_window_title = false;
+                                            this->front.session_update(message.c_str(),
+                                                contian_window_title);
                                         }
 
                                         std::get<3>(*target_iter) = true;
@@ -1457,7 +1459,9 @@ public:
                                             std::string message("WriteRedirectedFileSystem=");
                                             message += std::get<2>(*target_iter).get()->c_str();
 
-                                            this->front.session_update(message.c_str());
+                                            bool contian_window_title = false;
+                                            this->front.session_update(message.c_str(),
+                                                contian_window_title);
                                         }
 
                                         std::get<4>(*target_iter) = true;

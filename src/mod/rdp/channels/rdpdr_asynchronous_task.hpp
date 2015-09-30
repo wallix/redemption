@@ -98,7 +98,7 @@ public:
                     CompletionId,
                     0x00000000 /* STATUS_SUCCESS */
                 );
-            if (this->verbose) {
+            if (this->verbose & 0x00800000) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run");
                 device_io_response.log(LOG_INFO);
             }
@@ -106,7 +106,7 @@ public:
 
             out_stream.out_uint32_le(this->total_number_of_bytes_to_read);  // length(4)
 
-            if (this->verbose) {
+            if (this->verbose & 0x00800000) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
                     this->remaining_number_of_bytes_to_read);
             }
@@ -125,7 +125,7 @@ public:
         const uint32_t number_of_bytes_to_read =
             std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read);
 
-        if (this->verbose) {
+        if (this->verbose & 0x00800000) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesToRead=%u",
                 number_of_bytes_to_read);
         }
@@ -150,7 +150,7 @@ public:
 
         const uint32_t number_of_bytes_read = out_stream.p - saved_out_stream_p;
 
-        if (this->verbose) {
+        if (this->verbose & 0x00800000) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
                 number_of_bytes_read);
         }

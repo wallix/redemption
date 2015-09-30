@@ -301,6 +301,7 @@ public:
 
                         this->report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
+
                         return true;
                     }
                     else if (e.id == ERR_RDP_SERVER_REDIR) {
@@ -381,16 +382,20 @@ public:
         this->acl_serial.send_acl_data();
     }
 
-    void set_auth_channel_target(const char * target) override {
+    virtual void set_auth_channel_target(const char * target) override {
         this->ini.set_acl<cfg::context::auth_channel_target>(target);
     }
 
-    //virtual void set_auth_channel_result(const char * result)
+    //virtual void set_auth_channel_result(const char * result) override
     //{
     //    this->ini.get<cfg::context::auth_channel_result>().set_from_cstr(result);
     //}
 
-    void report(const char * reason, const char * message) override {
+    virtual void set_auth_error_message(const char * error_message) override {
+        this->ini.set<cfg::context::auth_error_message>(error_message);
+    }
+
+    virtual void report(const char * reason, const char * message) override {
         this->ini.ask<cfg::context::keepalive>();
 
         char report[1024];
@@ -401,8 +406,31 @@ public:
         this->ask_acl();
     }
 
-    virtual void set_auth_error_message(const char * error_message) {
-        this->ini.set<cfg::context::auth_error_message>(error_message);
+    virtual void log(const char * type, const char * data) const override {
+        const char * session_type = "Neutral";
+
+        if (!this->ini.get<cfg::context::module>().compare("RDP") ||
+            !this->ini.get<cfg::context::module>().compare("VNC"))
+            session_type = this->ini.get<cfg::context::module>().c_str();
+
+        LOG( LOG_INFO
+           , "[%s Session] "
+             "type='%s' "
+             "sesion_id='%s' "
+             "user='%s' "
+             "device='%s' "
+             "service='%s' "
+             "account='%s' "
+             "data='%s'"
+           , session_type
+           , type
+           , this->ini.get<cfg::context::session_id>().c_str()
+           , this->ini.get<cfg::globals::auth_user>().c_str()
+           , this->ini.get<cfg::globals::target_device>().c_str()
+           , this->ini.get<cfg::context::target_service>().c_str()
+           , this->ini.get<cfg::globals::target_user>().c_str()
+           , data
+           );
     }
 };
 

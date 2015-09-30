@@ -606,7 +606,10 @@ public:
         this->event.object_and_time = (this->open_session_timeout > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
-        strncpy(this->auth_channel, mod_rdp_params.auth_channel, sizeof(this->auth_channel) - 1);
+        strncpy(this->auth_channel,
+                (!strncmp(mod_rdp_params.auth_channel, "*", 2) ? "wablnch"
+                                                               : mod_rdp_params.auth_channel),
+                sizeof(this->auth_channel) - 1);
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
@@ -720,12 +723,11 @@ public:
         }
 
         if (this->enable_wab_agent) {
-
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
-            char pid_str[64];
-            snprintf(pid_str, sizeof(pid_str), "%u", ::getpid());
+            char pid_str[16];
+            snprintf(pid_str, sizeof(pid_str), "%d", ::getpid());
             const size_t pid_str_len = ::strlen(pid_str);
 
             const char * pid_tag ="{PID}";
@@ -819,7 +821,7 @@ public:
         }
 
         if (this->acl) {
-            this->acl->report("CONNECTION_SUCCESSFUL", "Ok.");
+            this->acl->report("CONNECTION_SUCCESSFUL", "OK.");
         }
 
         // this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
@@ -844,11 +846,11 @@ public:
         }
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %llu",
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %zu",
                 this->orders.recv_bmp_cache_count);
-            LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %llu",
+            LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %zu",
                 this->orders.recv_order_count);
-            LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %llu",
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
     }
@@ -1761,17 +1763,17 @@ public:
 
                                     // Inject a new channel for auth_channel virtual channel (wablauncher)
                                     if (this->auth_channel[0]) {
-                                        memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
-                                        cs_net.channelDefArray[num_channels].options =
+                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
                                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                                        cs_net.channelCount++;
                                         CHANNELS::ChannelDef def;
                                         memcpy(def.name, this->auth_channel, 8);
-                                        def.flags = cs_net.channelDefArray[num_channels].options;
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                                         if (this->verbose & 16){
-                                            def.log(num_channels);
+                                            def.log(cs_net.channelCount);
                                         }
                                         this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
                                     }
 
                                     if (this->enable_wab_agent) {
@@ -2659,6 +2661,15 @@ public:
                             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                             const char * reason = MCS::get_reason(mcs.reason);
                             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+
+                            if (this->acl) {
+                                this->end_session_reason.clear();
+                                this->end_session_message.clear();
+
+                                this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+
+                                this->acl->log("CNT event", "SESSION_DISCONNECTED");
+                            }
                             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
 
@@ -2788,6 +2799,10 @@ public:
                                             //this->check_data_pdu(PDUTYPE2_FONTMAP);
                                             this->connection_finalization_state = UP_AND_RUNNING;
 
+                                            if (this->acl && !this->deactivation_reactivation_in_progress) {
+                                                this->acl->log("CNT event", "SESSION_ESTABLISHED_SUCCESSFULLY");
+                                            }
+
                                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
                                             // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
                                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
@@ -2795,6 +2810,8 @@ public:
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
+
+                                            this->deactivation_reactivation_in_progress = false;
                                             break;
                                         case UP_AND_RUNNING:
                                             if (this->enable_transparent_mode)
@@ -3017,7 +3034,7 @@ public:
 //                                            this->orders.reset();
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
 
-                                            this->deactivation_reactivation_in_progress = false;
+//                                            this->deactivation_reactivation_in_progress = false;
                                         }
                                         break;
                                     case PDUTYPE_DEACTIVATEALLPDU:
@@ -3063,7 +3080,8 @@ public:
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     throw;
                 }
-                if (this->acl)
+                if (this->acl &&
+                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
@@ -4725,7 +4743,7 @@ public:
 
         if (this->acl)
         {
-            this->acl->report("OPEN_SESSION_SUCCESSFUL", "Ok.");
+            this->acl->report("OPEN_SESSION_SUCCESSFUL", "OK.");
         }
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
@@ -6032,6 +6050,9 @@ public:
             // this->draw_event(time(nullptr));
             this->send_disconnect_ultimatum();
         }
+        if (this->acl) {
+            this->acl->log("CNT event", "SESSION_ENDED");
+        }
     }
 
     //void send_shutdown_request() {
@@ -6112,7 +6133,7 @@ public:
                 LOG(LOG_INFO, "Agent channel data=\"%s\"", wab_agent_channel_message.c_str());
             }
 
-            //LOG(LOG_INFO, "<<<Get startup application>>>");
+            dont_send_to_front = true;
 
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Agent is ready.");
@@ -6214,9 +6235,11 @@ public:
                 std::string order(message, separator - message);
                 std::string parameters(separator + 1);
 
-                LOG(LOG_INFO,
-                    "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
-                    order.c_str(), parameters.c_str());
+                if (this->verbose & 1) {
+                    LOG(LOG_INFO,
+                        "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
+                        order.c_str(), parameters.c_str());
+                }
 
                 if (!order.compare("FocusOnPasswordTextBox")) {
                     this->front.focus_changed(!parameters.compare("yes"));
@@ -6248,7 +6271,13 @@ public:
         }
 
         if (!dont_send_to_front) {
-            this->front.session_update(wab_agent_channel_message.c_str());
+            bool contian_window_title = false;
+            this->front.session_update(wab_agent_channel_message.c_str(),
+                contian_window_title);
+
+            if (!contian_window_title && this->acl) {
+                this->acl->log("AGT event", wab_agent_channel_message.c_str());
+            }
         }
     }
 

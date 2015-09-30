@@ -716,7 +716,8 @@ protected:
     }
 
 public:
-    void session_update(const timeval & now, const char * message) override {
+    void session_update(const timeval & now, const char * message,
+            bool & out__contian_window_title) override {
         uint16_t message_length = ::strlen(message) + 1;    // Null-terminator is included.
 
         StaticOutStream<16> payload;
@@ -728,6 +729,8 @@ public:
         this->trans.send(message, message_length);
 
         this->last_sent_timer = this->timer;
+
+        out__contian_window_title = false;
     }
 };  // struct GraphicToFile
 

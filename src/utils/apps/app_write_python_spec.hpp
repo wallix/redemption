@@ -66,6 +66,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         if (bool(pack & Attribute::advanced)) this->out() << "#_advanced\n";
         if (bool(pack & Attribute::hidden)) this->out() << "#_hidden\n";
         if (bool(pack & Attribute::hex)) this->out() << "#_hex\n";
+        if (bool(pack & Attribute::password)) this->out() << "#_password\n";
         this->out() << static_cast<char const *>(pack) << " = ";
         this->inherit().write_type(this->get_type(this->has_user_type(pack), pack), this->inherit().get_default(pack, pack));
         this->out() << "\n";

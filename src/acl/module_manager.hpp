@@ -753,12 +753,20 @@ public:
 
                 static const char * name = "RDP Target";
 
+                if (acl) {
+                    acl->log("CNT event", "CREATE_CONNECTION");
+                }
+
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
                                             this->ini.get<cfg::debug::mod_rdp>());
 
-                if (client_sck == -1){
+                if (client_sck == -1) {
+                    if (acl) {
+                        acl->log("CNT event", "CONNECTION_FAILED");
+                    }
+
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
@@ -840,19 +848,32 @@ public:
 
                 UdevRandom gen;
 
-                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
-                this->mod = new ModWithSocket<mod_rdp>( *this
-                                                      , name
-                                                      , client_sck
-                                                      , this->ini.get<cfg::debug::mod_rdp>()
-                                                      , &this->ini.get_ref<cfg::context::auth_error_message>()
-                                                      , sock_mod_barrier()
-                                                      , this->front
-                                                      , client_info
-                                                      , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                      , gen
-                                                      , mod_rdp_params
-                                                      );
+                if (acl) {
+                    acl->log("CNT event", "CREATE_SESSION");
+                }
+
+                try {
+                    TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
+                    this->mod = new ModWithSocket<mod_rdp>( *this
+                                                          , name
+                                                          , client_sck
+                                                          , this->ini.get<cfg::debug::mod_rdp>()
+                                                          , &this->ini.get_ref<cfg::context::auth_error_message>()
+                                                          , sock_mod_barrier()
+                                                          , this->front
+                                                          , client_info
+                                                          , ini.get_ref<cfg::mod_rdp::redir_info>()
+                                                          , gen
+                                                          , mod_rdp_params
+                                                          );
+                }
+                catch (...) {
+                    if (acl) {
+                        acl->log("CNT event", "SESSION_CREATION_FAILED");
+                    }
+
+                    throw;
+                }
 
                 // DArray<Rect> rects(1);
                 // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
@@ -869,48 +890,69 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
                 static const char * name = "VNC Target";
 
+                if (acl) {
+                    acl->log("CNT event", "CREATE_CONNECTION");
+                }
 
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
                                             this->ini.get<cfg::debug::mod_vnc>());
 
-                if (client_sck == -1){
+                if (client_sck == -1) {
+                    if (acl) {
+                        acl->log("CNT event", "CONNECTION_FAILED");
+                    }
+
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
                 this->ini.set<cfg::context::auth_error_message>("failed authentification on remote VNC host");
 
-                this->mod = new ModWithSocket<mod_vnc>(
-                    *this
-                  , name
-                  , client_sck
-                  , this->ini.get<cfg::debug::mod_vnc>()
-                  , nullptr
-                  , sock_mod_barrier()
-                  , this->ini.get<cfg::globals::target_user>().c_str()
-                  , this->ini.get<cfg::context::target_password>().c_str()
-                  , this->front
-                  , this->front.client_info.width
-                  , this->front.client_info.height
-                  , this->ini.get<cfg::font>()
-                  , Translator(language(this->ini))
-                  , this->ini.get<cfg::theme>()
-                  , this->front.client_info.keylayout
-                  , this->front.keymap.key_flags
-                  , this->ini.get<cfg::mod_vnc::clipboard_up>()
-                  , this->ini.get<cfg::mod_vnc::clipboard_down>()
-                  , this->ini.get<cfg::mod_vnc::encodings>().c_str()
-                  , this->ini.get<cfg::mod_vnc::allow_authentification_retries>()
-                  , true
-                  , this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
-                  != configs::ClipboardEncodingType::latin1
-                    ? mod_vnc::ClipboardEncodingType::UTF8
-                    : mod_vnc::ClipboardEncodingType::Latin1
-                  , this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>()
-                  , this->ini.get<cfg::debug::mod_vnc>()
-                );
+                if (acl) {
+                    acl->log("CNT event", "CREATE_SESSION");
+                }
+
+                try {
+                    this->mod = new ModWithSocket<mod_vnc>(
+                        *this
+                      , name
+                      , client_sck
+                      , this->ini.get<cfg::debug::mod_vnc>()
+                      , nullptr
+                      , sock_mod_barrier()
+                      , this->ini.get<cfg::globals::target_user>().c_str()
+                      , this->ini.get<cfg::context::target_password>().c_str()
+                      , this->front
+                      , this->front.client_info.width
+                      , this->front.client_info.height
+                      , this->ini.get<cfg::font>()
+                      , Translator(language(this->ini))
+                      , this->ini.get<cfg::theme>()
+                      , this->front.client_info.keylayout
+                      , this->front.keymap.key_flags
+                      , this->ini.get<cfg::mod_vnc::clipboard_up>()
+                      , this->ini.get<cfg::mod_vnc::clipboard_down>()
+                      , this->ini.get<cfg::mod_vnc::encodings>().c_str()
+                      , this->ini.get<cfg::mod_vnc::allow_authentification_retries>()
+                      , true
+                      , this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
+                      != configs::ClipboardEncodingType::latin1
+                        ? mod_vnc::ClipboardEncodingType::UTF8
+                        : mod_vnc::ClipboardEncodingType::Latin1
+                      , this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>()
+                      , acl
+                      , this->ini.get<cfg::debug::mod_vnc>()
+                    );
+                }
+                catch (...) {
+                    if (acl) {
+                        acl->log("CNT event", "SESSION_CREATION_FAILED");
+                    }
+
+                    throw;
+                }
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();

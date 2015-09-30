@@ -649,10 +649,16 @@ public:
         }
     }
 
-    void session_update(const timeval & now, const char * message) override {
+    void session_update(const timeval & now, const char * message,
+            bool & out__contian_window_title) override {
         if (this->capture_wrm) {
-            this->pnc->session_update(now, message);
+            this->pnc->session_update(now, message,
+                out__contian_window_title);
+
+            return;
         }
+
+        out__contian_window_title = false;
     }
 };
 

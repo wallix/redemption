@@ -14,48 +14,24 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2013
+   Copyright (C) Wallix 2014
    Author(s): Christophe Grosjean
+
+   Unit test for char parse class
 
 */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBouncer2Mod
+#define BOOST_TEST_MODULE TestParse
 #include <boost/test/auto_unit_test.hpp>
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
+#define LOGPRINT
 
-#define LOGNULL
-//#define LOGPRINT
+#include "parser.hpp"
 
-#include "internal/bouncer2_mod.hpp"
-#include "../../front/fake_front.hpp"
-
-BOOST_AUTO_TEST_CASE(TestBouncer2Mod)
+BOOST_AUTO_TEST_CASE(TestParse)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-
-    FakeFront front(info, 0);
-
-    Inifile ini;
-
-    Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
-
-    Bouncer2Mod d(front, 800, 600, ini.get<cfg::font>());
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    // to fix compilator optimisation
-    BStream().headroom();
-
-
+    BOOST_CHECK_EQUAL(ulong_from_cstr("2281701377"), 0x88000001);
 }
+
