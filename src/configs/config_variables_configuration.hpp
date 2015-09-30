@@ -16,7 +16,7 @@ namespace cfg {
         }
         using type = Font;
         font(char const * filename) : value(filename) {}
-    type value;
+        type value;
     };
 
     struct client {

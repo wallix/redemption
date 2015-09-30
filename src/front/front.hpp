@@ -1127,16 +1127,16 @@ public:
             X224::RecvFactory fx224(this->trans, &end, array_size);
             InStream x224_data(array, end - array);
 
-            X224::DT_TPDU_Recv_new_stream x224(x224_data);
-            MCS::CONNECT_INITIAL_PDU_Recv_new_stream mcs_ci(x224.payload, MCS::BER_ENCODING);
+            X224::DT_TPDU_Recv x224(x224_data);
+            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
 
             // GCC User Data
             // -------------
-            GCC::Create_Request_Recv_new_stream gcc_cr(mcs_ci.payload);
+            GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
             TODO("ensure gcc_data substream is fully consumed")
 
             while (gcc_cr.payload.in_check_rem(4)) {
-                GCC::UserData::RecvFactory_new_stream f(gcc_cr.payload);
+                GCC::UserData::RecvFactory f(gcc_cr.payload);
                 switch (f.tag) {
                     case CS_CORE:
                     {
@@ -1362,7 +1362,7 @@ public:
                     GCC::Create_Response_Send(gcc_header, packed_size);
                 },
                 [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
-                    MCS::CONNECT_RESPONSE_Send_new_stream mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
+                    MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
                 },
                 write_x224_dt_tpdu_fn{}
             );
@@ -1534,7 +1534,7 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SEC::SecExchangePacket_Recv sec(mcs.payload);
+                SEC::SecExchangePacket_Recv_new_stream sec(mcs.payload);
 
                 TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                 uint8_t client_random[64];
@@ -1608,10 +1608,10 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+            SEC::SecSpecialPacket_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if (this->verbose & 128) {
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.get_data(), sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
             }
 
             if (!(sec.flags & SEC::SEC_INFO_PKT)) {
@@ -1803,10 +1803,10 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+            SEC::SecSpecialPacket_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if ((this->verbose & (128 | 2)) == (128 | 2)) {
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.get_data(), sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
             }
 
             // Licensing
@@ -1898,8 +1898,7 @@ public:
                 if (this->verbose & 2) {
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                InStream tmp_sec_payload(sec.payload.p, sec.payload.capacity - sec.payload.get_offset());
-                ShareControl_Recv sctrl(tmp_sec_payload);
+                ShareControl_Recv sctrl(sec.payload);
 
                 switch (sctrl.pduType) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
@@ -1961,7 +1960,7 @@ public:
                 }
                 TODO("Check why this is necessary when using loop connection ?")
             }
-            sec.payload.p = sec.payload.end;
+            sec.payload.in_skip_bytes(sec.payload.in_remain());
         }
         break;
 
@@ -2126,10 +2125,10 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+                SEC::Sec_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
                 if (this->verbose & 128) {
                     LOG(LOG_INFO, "sec decrypted payload:");
-                    hexdump_d(sec.payload.get_data(), sec.payload.size());
+                    hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
                 }
 
                 if (this->verbose & 8) {
@@ -2185,12 +2184,11 @@ public:
                             LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
                         }
                     }
-                    sec.payload.p += chunk_size;
+                    sec.payload.in_skip_bytes(chunk_size);
                 }
                 else {
-                    while (sec.payload.p < sec.payload.end) {
-                        InStream tmp_sec_payload(sec.payload.p, sec.payload.capacity - sec.payload.get_offset());
-                        ShareControl_Recv sctrl(tmp_sec_payload);
+                    while (sec.payload.get_current() < sec.payload.get_data_end()) {
+                        ShareControl_Recv sctrl(sec.payload);
 
                         switch (sctrl.pduType) {
                         case PDUTYPE_DEMANDACTIVEPDU:
@@ -2266,7 +2264,7 @@ public:
                         }
 
                         TODO("check all sctrl.payload data is consumed")
-                        sec.payload.in_skip_bytes(sctrl.payload.get_current() - sec.payload.p);
+                        sec.payload.in_skip_bytes(sctrl.payload.get_current() - sec.payload.get_current());
                     }
                 }
 

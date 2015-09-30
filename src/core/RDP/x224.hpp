@@ -1480,66 +1480,9 @@ namespace X224
         } tpdu_hdr;
 
         size_t _header_size;
-        SubStream payload;
-
-        explicit DT_TPDU_Recv(InStream & stream)
-        : Recv(stream)
-        , tpdu_hdr([&](){
-            if (!stream.in_check_rem(3)){
-                LOG(LOG_ERR, "Truncated TPDU header: expected=3 remains=%u", stream.in_remain());
-                throw Error(ERR_X224);
-            }
-
-            uint8_t LI = stream.in_uint8();
-            uint8_t  code = stream.in_uint8();
-            if (!(code == X224::DT_TPDU)){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", code);
-                throw Error(ERR_X224);
-            }
-
-            uint8_t eot = stream.in_uint8();
-            if (eot != EOT_EOT){
-                LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
-                throw Error(ERR_X224);
-            }
-            return DT_Header{LI, code, eot};
-        }())
-        , _header_size([&](){
-            const size_t header_size = X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI;
-            if (header_size != stream.get_offset()){
-                LOG(LOG_ERR, "DT TPDU header should be terminated, got trailing data %u",
-                    stream.get_offset() - header_size);
-                throw Error(ERR_X224);
-            }
-            return header_size;
-        }())
-        , payload([&](){
-            size_t payload_size = stream.get_capacity() - this->_header_size;
-            if (!stream.in_check_rem(payload_size)){
-                LOG(LOG_ERR, "Truncated DT TPDU data: expected=%u remains=%u", payload_size, stream.in_remain());
-                throw Error(ERR_X224);
-            }
-            return SubStream(stream, this->_header_size, payload_size);
-        }())
-        // ========= Constructor's body ============
-        {
-            stream.in_skip_bytes(stream.get_capacity() - this->_header_size);
-        }
-    }; // END CLASS DT_TPDU_Recv
-
-    struct DT_TPDU_Recv_new_stream : public Recv
-    {
-        struct DT_Header
-        {
-            uint8_t LI;
-            uint8_t code;
-            uint8_t eot;
-        } tpdu_hdr;
-
-        size_t _header_size;
         InStream payload;
 
-        explicit DT_TPDU_Recv_new_stream(InStream & stream)
+        explicit DT_TPDU_Recv(InStream & stream)
         : Recv(stream)
         , tpdu_hdr([&](){
             if (!stream.in_check_rem(3)){

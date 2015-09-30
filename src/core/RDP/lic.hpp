@@ -1416,6 +1416,100 @@ namespace LIC
             stream.end = stream.p;
 
         }
+
+        explicit NewLicenseRequest_Recv(InStream & stream)
+        {
+            const unsigned expected =
+                /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
+                   client_random(SEC_RANDOM_SIZE) + ignored(2) + lenLicensingBlob(2)
+                 */
+                12 + SEC_RANDOM_SIZE + 4;
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence NewLicenseRequest_Recv : Truncated data, need=%d, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
+            this->tag = stream.in_uint8();
+            this->flags = stream.in_uint8();
+            this->wMsgSize = stream.in_uint16_le();
+
+            this->dwPreferredKeyExchangeAlg = stream.in_uint32_le();
+            this->dwPlatformId = stream.in_uint32_le();
+            stream.in_copy_bytes(this->client_random, SEC_RANDOM_SIZE); // client_random
+
+            // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
+            // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
+            // This BLOB contains an encrypted 48-byte random number. For instructions
+            // on how to encrypt this random number, see section 5.1.2.1.
+
+            // 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
+            // --------------------------------------------------------
+            // The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary
+            // length binary licensing data.
+
+            // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+            // the binary information. If wBlobLen is set to 0, then the contents
+            // of this field SHOULD be ignored.
+
+            // +------------------------------------+-------------------------------------+
+            // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
+            // |                                    | Platform Challenge Response PDU     |
+            // |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
+            // |                                    | 2.2.2.5).                           |
+            // +------------------------------------+-------------------------------------+
+            // | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
+            // |                                    | New License Request PDU ([MS-RDPELE]|
+            // |                                    | sections 2.2.2.3 and 2.2.2.2).      |
+            // +------------------------------------+-------------------------------------+
+            // | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
+            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+            // +------------------------------------+-------------------------------------+
+            // | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
+            // |                                    | 2.2.1.12).                          |
+            // +------------------------------------+-------------------------------------+
+            // | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
+            // |                                    | PDU and Upgrade License PDU         |
+            // |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
+            // |                                    | 2.2.2.6).                           |
+            // +------------------------------------+-------------------------------------+
+            // | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
+            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+            // +------------------------------------+-------------------------------------+
+            // | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
+            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+            // +------------------------------------+-------------------------------------+
+            // | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
+            // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+            // +------------------------------------+-------------------------------------+
+            // | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
+            // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+            // +------------------------------------+-------------------------------------+
+
+            // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+            // binary information in the blobData field. If wBlobLen is set to 0, then the
+            // blobData field is not include " in the Licensing Binary BLOB structure and the
+            // contents of the wBlobType field SHOULD be ignored.
+
+            // blobData (variable): Variable-length binary data. The size of this data in
+            // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
+            // is not include " in the Licensing Binary BLOB structure.
+
+            stream.in_skip_bytes(2); /* wBlobType */
+            uint16_t lenLicensingBlob = stream.in_uint16_le();
+
+            if (!stream.in_check_rem(lenLicensingBlob)){
+                LOG(LOG_ERR, "Licence NewLicenseRequest_Recv : Truncated blobData, need=%d, remains=%u",
+                    lenLicensingBlob, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
+            stream.in_skip_bytes(lenLicensingBlob); /* blobData */
+
+            TODO("Add missing fields");
+            //stream.end = stream.p;
+            stream = InStream(stream.get_data(), stream.get_offset());
+        }
     };
 
 

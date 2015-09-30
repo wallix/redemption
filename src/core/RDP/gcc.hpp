@@ -268,54 +268,9 @@ namespace GCC
 
     class Create_Request_Recv {
         public:
-        SubStream payload;
-
-        explicit Create_Request_Recv(Stream & stream)
-            : payload([&stream](){
-                if (!stream.in_check_rem(23)){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
-                    throw Error(ERR_GCC);
-                }
-
-                // Key select object (0) of type OBJECT_IDENTIFIER
-                // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
-                stream.in_skip_bytes(7);
-
-                uint16_t length_with_header = stream.in_2BUE();
-
-                // ConnectGCCPDU
-                // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
-                // select optional userData from ConferenceCreateRequest
-                // ConferenceCreateRequest::conferenceName
-                // UserData (SET OF SEQUENCE), one set of UserData
-                // UserData::value present + select h221NonStandard (1)
-                // h221NonStandard, client-to-server H.221 key, "Duca"
-
-                stream.in_skip_bytes(12);
-                uint16_t length = stream.in_2BUE();
-
-                if (length_with_header != length + 14){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
-                    throw Error(ERR_GCC);
-                }
-
-                if (length != stream.in_remain()){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.in_remain());
-                    throw Error(ERR_GCC);
-                }
-                return SubStream(stream, stream.get_offset(), stream.in_remain());
-            }())
-        // Body of constructor
-        {
-            stream.in_skip_bytes(this->payload.size());
-        }
-    };
-
-    class Create_Request_Recv_new_stream {
-        public:
         InStream payload;
 
-        explicit Create_Request_Recv_new_stream(InStream & stream)
+        explicit Create_Request_Recv(InStream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
                     LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.get_capacity());
@@ -618,14 +573,13 @@ namespace GCC
         }
     };
 
-    class Create_Response_Recv {
-        public:
-        SubStream payload;
+    struct Create_Response_Recv {
+        InStream payload;
 
-        explicit Create_Response_Recv(Stream & stream)
+        explicit Create_Response_Recv(InStream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
-                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
                 TODO("We should actually read and decode data here. Merely skipping the block is evil")
@@ -637,7 +591,7 @@ namespace GCC
                     throw Error(ERR_GCC);
                 }
 
-                return SubStream(stream, stream.get_offset(), stream.in_remain());
+                return InStream(stream.get_current(), stream.in_remain());
             }())
         {
         }
@@ -681,44 +635,13 @@ namespace GCC
 
     namespace UserData
     {
-
         struct RecvFactory
-        {
-            uint16_t tag;
-            uint16_t length;
-            SubStream payload;
-
-            explicit RecvFactory(Stream & stream)
-            : tag([&stream](){
-                if (!stream.in_check_rem(4)){
-                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");
-                    throw Error(ERR_GCC);
-                }
-                return stream.in_uint16_le();
-            }())
-            , length(stream.in_uint16_le())
-            , payload([&stream, this](){
-                LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
-                if (!stream.in_check_rem(length - 4)){
-                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
-                                     " tag=%u length=%u available_length=%u",
-                                     tag, length, stream.size() - 4);
-                    throw Error(ERR_GCC);
-                }
-                return SubStream(stream, stream.get_offset() - 4, this->length);
-            }())
-            {
-                stream.in_skip_bytes(this->length - 4);
-            }
-        };
-
-        struct RecvFactory_new_stream
         {
             uint16_t tag;
             uint16_t length;
             InStream payload;
 
-            explicit RecvFactory_new_stream(InStream & stream)
+            explicit RecvFactory(InStream & stream)
             : tag([&stream](){
                 if (!stream.in_check_rem(4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");
@@ -865,6 +788,38 @@ namespace GCC
             }
 
             void recv(Stream & stream)
+            {
+                if (!stream.in_check_rem(8)){
+                    LOG(LOG_ERR, "SC_CORE short header");
+                    throw Error(ERR_GCC);
+                }
+
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+                this->version = stream.in_uint32_le();
+                if (this->length < 12) {
+                    if (this->length != 8) {
+                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                        throw Error(ERR_GCC);
+                    }
+                    return;
+                }
+                this->clientRequestedProtocols = stream.in_uint32_le();
+                if (this->length < 16) {
+                    if (this->length != 12) {
+                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                        throw Error(ERR_GCC);
+                    }
+                    return;
+                }
+                this->earlyCapabilityFlags = stream.in_uint32_le();
+                if (this->length != 16) {
+                    LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                    throw Error(ERR_GCC);
+                }
+            }
+
+            void recv(InStream & stream)
             {
                 if (!stream.in_check_rem(8)){
                     LOG(LOG_ERR, "SC_CORE short header");
@@ -2445,6 +2400,44 @@ namespace GCC
                 }
             }
 
+            void recv(InStream & stream, bool bogus_sc_net_size)
+            {
+                if (!stream.in_check_rem(8)){
+                    LOG(LOG_ERR, "SCNet::recv short header");
+                    throw Error(ERR_GCC);
+                }
+
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+
+                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%d size=%d", this->length, stream.get_capacity());
+                    throw Error(ERR_GCC);
+                }
+
+                this->MCSChannelId = stream.in_uint16_le();
+                this->channelCount = stream.in_uint16_le();
+
+                if (!this->channelCount && (this->length == 10) && bogus_sc_net_size) {
+                    LOG(LOG_WARNING, "SCNet::recv accepts VirtualBox bogus TS_UD_SC_NET data block.");
+                }
+                else if (this->length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
+                if (this->channelCount >= 32) {
+                    LOG(LOG_ERR, "SCNet::recv channel count out of range (%u)", this->channelCount);
+                    throw Error(ERR_CHANNEL_OUT_OF_RANGE);
+                }
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    this->channelDefArray[i].id = stream.in_uint16_le();
+                }
+                if (this->channelCount & 1){
+                    stream.in_skip_bytes(2);
+                }
+            }
+
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
@@ -3188,6 +3181,169 @@ namespace GCC
                             X509_free(this->x509.cert[i].cert);
                         }
                         this->x509.cert[i].cert = d2i_X509(nullptr, const_cast<const uint8_t **>(&stream.p), this->x509.cert[i].len);
+                    }
+                    stream.in_skip_bytes(16); /* Padding */
+                }
+            }
+
+            void recv(InStream & stream)
+            {
+                if (!stream.in_check_rem(4)){
+                    LOG(LOG_ERR, "SC_SECURITY short header");
+                    throw Error(ERR_GCC);
+                }
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+                if ((this->length <= 4) || !stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "SC_SECURITY bad header length");
+                    throw Error(ERR_GCC);
+                }
+                this->encryptionMethod = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+                this->encryptionLevel = stream.in_uint32_le();  /* 1 = low, 2 = medium, 3 = high */
+
+                if ((this->encryptionMethod == 0) && (this->encryptionLevel == 0)){
+                    this->serverRandomLen = 0;
+                    this->encryptionLevel = 0;
+                }
+                if (((this->encryptionLevel == 0) || (this->encryptionMethod == 0))
+                && (this->length != 12)) {
+                    LOG(LOG_ERR, "SC_SECURITY bad header length, no encryption length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+                if (this->length == 12) {
+                    if ((this->encryptionLevel != 0)||(this->encryptionMethod != 0)){
+                        LOG(LOG_ERR, "SC_SECURITY short header with encription method=%u level=%u",
+                            this->encryptionMethod, this->encryptionLevel);
+                        throw Error(ERR_GCC);
+                    }
+                    return;
+                }
+
+                if ((this->encryptionLevel == 0) || (encryptionMethod == 0)){
+                    LOG(LOG_ERR, "SC_SECURITY encryption header but no encryption setted : method=%u level=%u",
+                        this->encryptionMethod, this->encryptionLevel);
+                    throw Error(ERR_GCC);
+                }
+
+                // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
+                // the serverRandom field. If the encryptionMethod and encryptionLevel fields
+                // are both set to 0 then the contents of this field MUST be ignored and the
+                // serverRandom field MUST NOT be present. Otherwise, this field MUST be set to
+                // 32 bytes.
+                this->serverRandomLen = stream.in_uint32_le();
+
+                // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
+                //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
+                //  are both set to 0 then the contents of this field MUST be ignored and the
+                // serverCertificate field MUST NOT be present.
+
+                this->serverCertLen = stream.in_uint32_le();
+
+                if (this->serverRandomLen != SEC_RANDOM_SIZE) {
+                    LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %d, expected %d",
+                         this->serverRandomLen, SEC_RANDOM_SIZE);
+                    throw Error(ERR_GCC);
+                }
+
+                if (!stream.in_check_rem(this->serverCertLen)) {
+                    LOG(LOG_ERR, "SCSecutity recv: serverCertLen %d, not enough data available (%u)",
+                         this->serverCertLen, stream.in_remain());
+                    throw Error(ERR_GCC);
+                }
+                // serverRandom (variable): The variable-length server random value used to
+                // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
+                // given by the serverRandomLen field. If the encryptionMethod and
+                // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
+
+                stream.in_copy_bytes(this->serverRandom, this->serverRandomLen);
+                uint32_t certType = stream.in_uint32_le();
+                this->dwVersion = certType & 0x7FFFFFFF;
+                this->temporary = 0 != (certType & 0x80000000);
+                if (this->dwVersion == CERT_CHAIN_VERSION_1){
+                    // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
+                    //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
+                    this->proprietaryCertificate.dwSigAlgId = stream.in_uint32_le();
+
+                    // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
+                    //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
+                    this->proprietaryCertificate.dwKeyAlgId = stream.in_uint32_le();
+
+                    // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                    //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
+                    //  (0x0006).
+                    this->proprietaryCertificate.wPublicKeyBlobType = stream.in_uint16_le();
+
+                    // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                    //  of the PublicKeyBlob field.
+                    this->proprietaryCertificate.wPublicKeyBlobLen = stream.in_uint16_le();
+
+                    if ((this->proprietaryCertificate.wPublicKeyBlobLen != 92) &&
+                        (this->proprietaryCertificate.wPublicKeyBlobLen != 284)) {
+                        LOG(LOG_ERR, "Unsupported RSA Key blob len in certificate %u (expected 92 or 284)",
+                            this->proprietaryCertificate.wPublicKeyBlobLen);
+                        throw Error(ERR_GCC);
+                    }
+                    LOG(LOG_INFO, "RSA Key blob len in certificate is %u", this->proprietaryCertificate.wPublicKeyBlobLen);
+
+                    this->proprietaryCertificate.RSAPK.magic = stream.in_uint32_le();
+                    if (this->proprietaryCertificate.RSAPK.magic != RSA_MAGIC) {
+                            LOG(LOG_ERR, "Bad RSA magic 0x%x", this->proprietaryCertificate.RSAPK.magic);
+                            throw Error(ERR_GCC);
+                    }
+                    this->proprietaryCertificate.RSAPK.keylen = stream.in_uint32_le();
+                    if ((this->proprietaryCertificate.RSAPK.keylen != 72) &&
+                        (this->proprietaryCertificate.RSAPK.keylen != 264)) {
+                        LOG(LOG_WARNING, "Bad server public key len in certificate %u (expected 72 or 264)",
+                            this->proprietaryCertificate.RSAPK.keylen);
+                        throw Error(ERR_GCC);
+                    }
+                    this->proprietaryCertificate.RSAPK.bitlen = stream.in_uint32_le();
+                    this->proprietaryCertificate.RSAPK.datalen = stream.in_uint32_le();
+                    stream.in_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
+                    stream.in_copy_bytes(this->proprietaryCertificate.RSAPK.modulus,
+                                         /*SEC_MODULUS_SIZE + SEC_PADDING_SIZE*/this->proprietaryCertificate.RSAPK.keylen);
+
+
+                    // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                    //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
+                    //  (0x0008).
+                    this->proprietaryCertificate.wSignatureBlobType = stream.in_uint16_le();
+                    if (this->proprietaryCertificate.wSignatureBlobType != BB_RSA_SIGNATURE_BLOB){
+                        LOG(LOG_ERR, "RSA Signature blob expected, got %x",
+                            this->proprietaryCertificate.wSignatureBlobType);
+                        throw Error(ERR_GCC);
+                    }
+
+                    // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                    //  of the SignatureKeyBlob field.
+                    this->proprietaryCertificate.wSignatureBlobLen = stream.in_uint16_le();
+
+                    // SignatureBlob (variable): Variable-length signature of the certificate
+                    // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
+                    // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
+                    if (this->proprietaryCertificate.wSignatureBlobLen != 72){
+                        LOG(LOG_ERR, "RSA Signature blob len too large in certificate %u (expected 72)",
+                            this->proprietaryCertificate.wSignatureBlobLen);
+                        throw Error(ERR_GCC);
+                    }
+                    stream.in_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64 + SEC_PADDING_SIZE);
+                }
+                else {
+                    this->x509.certCount = stream.in_uint32_le();
+                    if (this->x509.certCount > 32){
+                        LOG(LOG_ERR, "More than 32 certificates (count=%u), this is probably an attack",
+                            this->x509.certCount);
+                        throw Error(ERR_GCC);
+                    }
+
+                    for (size_t i = 0; i < this->x509.certCount ; i++){
+                        this->x509.cert[i].len = stream.in_uint32_le();
+                        if (this->x509.cert[i].cert) {
+                            X509_free(this->x509.cert[i].cert);
+                        }
+                        auto p = stream.get_current();
+                        this->x509.cert[i].cert = d2i_X509(nullptr, const_cast<const uint8_t **>(&p), this->x509.cert[i].len);
+                        stream.in_skip_bytes(p - stream.get_current());
                     }
                     stream.in_skip_bytes(16); /* Padding */
                 }

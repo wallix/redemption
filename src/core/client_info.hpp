@@ -160,6 +160,73 @@ struct ClientInfo {
 
         this->remote_program = (infoPacket.flags & INFO_RAIL);
     }
+
+    void process_logon_info( InStream & stream
+                           , bool ignore_logon_password
+                           , uint32_t performance_flags_default
+                           , uint32_t performance_flags_force_present
+                           , uint32_t performance_flags_force_not_present
+                           , uint32_t password_printing_mode
+                           , bool verbose
+                           )
+    {
+        InfoPacket infoPacket;
+
+        infoPacket.recv(stream);
+        if (verbose) {
+            infoPacket.log("Receiving from client", password_printing_mode);
+        }
+
+        memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));
+        memcpy(this->username, infoPacket.UserName, sizeof(infoPacket.UserName));
+        if (!ignore_logon_password){
+            memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
+        }
+        else{
+            if (verbose){
+                LOG(LOG_INFO, "client info: logon password %s ignored",
+                    ::get_printable_password(this->password, password_printing_mode));
+            }
+        }
+
+        this->rdp5_performanceflags = infoPacket.extendedInfoPacket.performanceFlags;
+
+        if (this->rdp5_performanceflags == 0){
+            this->rdp5_performanceflags = performance_flags_default;
+        }
+        this->rdp5_performanceflags |= performance_flags_force_present;
+        this->rdp5_performanceflags &= ~performance_flags_force_not_present;
+
+        if (verbose){
+            LOG(LOG_INFO,
+                "client info: performance flags before=0x%08X after=0x%08X default=0x%08X present=0x%08X not-present=0x%08X",
+                infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags, performance_flags_default,
+                performance_flags_force_present, performance_flags_force_not_present);
+        }
+
+        const uint32_t mandatory_flags = INFO_MOUSE
+                                       | INFO_DISABLECTRLALTDEL
+                                       | INFO_UNICODE
+                                       | INFO_MAXIMIZESHELL
+                                       ;
+
+        if ((infoPacket.flags & mandatory_flags) != mandatory_flags){
+            throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
+        }
+        if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
+            this->sound_code = 1;
+        }
+        TODO("for now not allowing both autologon and mce");
+        if ((infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){
+            this->rdp_autologin = 1;
+        }
+        if (infoPacket.flags & INFO_COMPRESSION){
+            this->rdp_compression      = 1;
+            this->rdp_compression_type = ((infoPacket.flags & CompressionTypeMask) >> 9);
+        }
+
+        this->remote_program = (infoPacket.flags & INFO_RAIL);
+    }
 };
 
 #endif

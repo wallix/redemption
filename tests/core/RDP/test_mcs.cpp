@@ -110,17 +110,17 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
 
     BOOST_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
-    BOOST_CHECK_EQUAL(263, mcs.payload.size()); // USER_DATA (after len)
+    BOOST_CHECK_EQUAL(263, mcs.payload.in_remain()); // USER_DATA (after len)
     BOOST_CHECK_EQUAL(mcs.payload.get_capacity(), payload.get_capacity() - mcs._header_size);
 }
 
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t payload_length = 263;
     MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
-    BOOST_CHECK_EQUAL(106, stream.size());
+    BOOST_CHECK_EQUAL(106, stream.get_offset());
 
     const char * expected =
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
@@ -148,9 +148,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
  /* 0050 */ "\xeb\x03\x00\x00\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
    , payload_length);
 
-    BStream payload(65536);
-    t.recv(&payload.end, payload_length);
+    uint8_t buf[65536];
+    auto end = buf;
+    t.recv(&end, payload_length);
 
+    InStream payload(buf, payload_length);
     MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
     BOOST_CHECK_EQUAL(102, mcs.tag);
@@ -168,17 +170,17 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
     BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(54, mcs.payload.size());
-    BOOST_CHECK_EQUAL(39, payload_length - mcs.payload.size());
+    BOOST_CHECK_EQUAL(54, mcs.payload.get_capacity());
+    BOOST_CHECK_EQUAL(39, payload_length - mcs.payload.get_capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t payload_size = 54;
     size_t header_size = 39;
     MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
-    BOOST_CHECK_EQUAL(header_size, stream.size());
+    BOOST_CHECK_EQUAL(header_size, stream.get_offset());
 
     const char * expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
@@ -236,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
 {
-    BStream stream(2048);
+    StaticOutStream<2048> stream;
     size_t payload_size = 1024;
     size_t header_size = 43;
     try {
@@ -244,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
     }
     catch (...) {
     };
-    BOOST_CHECK_EQUAL(header_size, stream.size());
+    BOOST_CHECK_EQUAL(header_size, stream.get_offset());
 
     const char * expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
@@ -302,12 +304,12 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
 
 BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 {
-    OutPerBStream stream(1024);
+    StaticOutPerStream<1024> stream;
     size_t length = 5;
     int subheight = 0;
     int subinterval = 0;
     MCS::ErectDomainRequest_Send mcs(stream, subheight, subinterval, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x04"  // ErectDomainRequest * 4
@@ -322,7 +324,6 @@ BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 
 BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
 {
-    BStream stream(1024);
     size_t length = 5;
     GeneratorTransport t(
         "\x04"  // ErectDomainRequest * 4
@@ -331,8 +332,11 @@ BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
         "\x01"  // subInterval len
         "\x00"  // subInterval
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::ErectDomainRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL(MCS::MCSPDU_ErectDomainRequest , mcs.type);
@@ -342,10 +346,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
 
 BOOST_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t length = 2;
     MCS::DisconnectProviderUltimatum_Send mcs(stream, MCS::RN_DOMAIN_DISCONNECTED, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x20"  // DisconnectProviderUltimatum * 4
@@ -357,14 +361,16 @@ BOOST_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
 
 BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
 {
-    BStream stream(1024);
     size_t length = 2;
     GeneratorTransport t(
         "\x20"  // DisconnectProviderUltimatum * 4
         "\x00"  // reason
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::DisconnectProviderUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_DisconnectProviderUltimatum , mcs.type);
@@ -374,10 +380,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
 
 BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t length = 1;
     MCS::AttachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x28"  // AttachUserRequest * 4
@@ -388,14 +394,16 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
 
 BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 {
-    BStream stream(1024);
     size_t length = 1;
     GeneratorTransport t(
         "\x28"  // AttachUserRequest * 4
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
     try {
+        InStream stream(buf, length);
         MCS::AttachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
         BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserRequest , mcs.type);
     }
@@ -406,10 +414,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 
 BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t length = 2;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, false, 0, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x2C"  //  AttachUserConfirm * 4
@@ -421,14 +429,16 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
 
 BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
 {
-    BStream stream(1024);
     size_t length = 2;
     GeneratorTransport t(
         "\x2C"  // AttachUserConfirm * 4
         "\x00"
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
@@ -438,10 +448,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
 
 BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t length = 4;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, true, 1, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x2E"  //  AttachUserConfirm * 4
@@ -454,15 +464,17 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
 
 BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
 {
-    BStream stream(1024);
     size_t length = 4;
     GeneratorTransport t(
         "\x2E"  // AttachUserConfirm * 4
         "\x00"
         "\x00\x01"
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
@@ -473,10 +485,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
 
 BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t length = 5;
     MCS::ChannelJoinRequest_Send mcs(stream, 3, 1004, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x38"  // ChannelJoinRequest * 4
@@ -489,14 +501,17 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
 
 BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 {
-    BStream stream(1024);
     size_t length = 5;
     GeneratorTransport t(
         "\x38"  // ChannelJoinRequest * 4
         "\x00\x03" // userId = 3
         "\x03\xec" // channelId = 1004
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
+
+    InStream stream(buf, length);
 
     MCS::ChannelJoinRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
@@ -507,10 +522,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 
 BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
 {
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     size_t length = 8;
     MCS::ChannelJoinConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, 3, 1004, true, 1004, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x3E"  // ChannelJoinConfirm * 4
@@ -525,7 +540,6 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
 
 BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 {
-    BStream stream(1024);
     size_t length = 8;
     GeneratorTransport t(
         "\x3E"  // ChannelJoinConfirm * 4
@@ -534,8 +548,11 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
         "\x03\xec" // requested = 1004
         "\x03\xec" // channelId = 1004
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::ChannelJoinConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinConfirm , mcs.type);
@@ -548,10 +565,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
 {
-    OutPerBStream stream(1024);
+    StaticOutPerStream<1024> stream;
     size_t length = 8;
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x64"  // SendDataRequest * 4
@@ -565,7 +582,6 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
 
 BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 {
-    BStream stream(1024);
     size_t length = 8 + 379;
     GeneratorTransport t(
         "\x64"  // SendDataRequest * 4
@@ -603,8 +619,11 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::SendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataRequest , mcs.type);
@@ -612,15 +631,15 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.size());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.get_capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
 {
-    OutPerBStream stream(1024);
+    StaticOutPerStream<1024> stream;
     size_t length = 8;
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.size());
+    BOOST_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x68"  // SendDataIndication * 4
@@ -634,7 +653,6 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
 
 BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
 {
-    BStream stream(1024);
     size_t length = 8 + 379;
     GeneratorTransport t(
         "\x68"  // SendDataIndication * 4
@@ -672,8 +690,11 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication , mcs.type);
@@ -681,13 +702,12 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.size());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.get_capacity());
 }
 
 
 BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
 {
-    BStream stream(1024);
     size_t length = 8 + 363;
     GeneratorTransport t(
         "\x68"      // SendDataIndication * 4
@@ -722,8 +742,11 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
 /* 0160 */ "\x00\x00\x00\x00\x00\x18\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0170 */ "\x00\x00\x00\x00"                                                 //....
    , length);
-    t.recv(&stream.end, length);
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
 
+    InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication, mcs.type);
@@ -731,13 +754,13 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004),             mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1),                 mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3),                 mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(363),              mcs.payload.size());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(363),              mcs.payload.get_capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
 {
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::PlumbDomainIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -748,7 +771,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::PlumbDomainIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -759,7 +782,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::MergeChannelRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -770,7 +793,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::MergeChannelRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -782,7 +805,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
 
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::MergeChannelsConfirm_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -793,7 +816,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::MergeChannelsConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -805,7 +828,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
 
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::MergeTokensRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -816,7 +839,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::MergeTokensRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -828,7 +851,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
 
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::MergeTokensRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -839,7 +862,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::MergeTokensConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -850,7 +873,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::PurgeTokensIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -861,7 +884,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::PurgeTokensIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -872,7 +895,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::RejectMCSPDUUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -883,7 +906,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::RejectMCSPDUUltimatum_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -894,7 +917,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::DetachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -905,7 +928,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::DetachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -916,7 +939,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::DetachUserIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -927,7 +950,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::DetachUserIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -938,7 +961,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelLeaveRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -949,7 +972,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelLeaveRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -960,7 +983,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelConveneRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -971,7 +994,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelConveneRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -982,7 +1005,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelConveneConfirm_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -993,7 +1016,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelConveneConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1004,7 +1027,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelDisbandRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1015,7 +1038,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelDisbandRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1026,7 +1049,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelDisbandIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1037,7 +1060,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelDisbandIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1048,7 +1071,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelAdmitRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1059,7 +1082,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelAdmitRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1070,7 +1093,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelAdmitIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1081,7 +1104,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelAdmitIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1092,7 +1115,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelExpelRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1103,7 +1126,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelExpelRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1114,7 +1137,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::ChannelExpelIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1125,7 +1148,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::ChannelExpelIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1136,7 +1159,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::UniformSendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1147,7 +1170,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::UniformSendDataRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1158,7 +1181,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::UniformSendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1169,7 +1192,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::UniformSendDataIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1180,7 +1203,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenGrabRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1191,7 +1214,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenGrabRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1202,7 +1225,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenGrabConfirm_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1213,7 +1236,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenGrabConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1224,7 +1247,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenInhibitRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1235,7 +1258,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenInhibitRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1246,7 +1269,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenInhibitConfirm_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1257,7 +1280,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenInhibitConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1268,7 +1291,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenGiveRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1279,7 +1302,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenGiveRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1290,7 +1313,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenGiveRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1301,7 +1324,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenGiveIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1312,7 +1335,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenGiveIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1323,7 +1346,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenGiveResponse_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1334,7 +1357,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenGiveResponse_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1345,7 +1368,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenGiveConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1356,7 +1379,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenGiveConfirm_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1367,7 +1390,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenPleaseRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1378,7 +1401,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenPleaseRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1389,7 +1412,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenPleaseIndication_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1400,7 +1423,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenPleaseIndication_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1411,7 +1434,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenReleaseRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1422,7 +1445,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenReleaseRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1433,7 +1456,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenReleaseConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1444,7 +1467,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenReleaseConfirm_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1455,7 +1478,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenTestRequest_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1466,7 +1489,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticInStream<1024> stream;
         try {
             MCS::TokenTestRequest_Recv mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);
@@ -1477,7 +1500,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
     }
 
     {
-        BStream stream(1024);
+        StaticOutStream<1024> stream;
         try {
             MCS::TokenTestConfirm_Send mcs(stream, MCS::PER_ENCODING);
             BOOST_CHECK(false);

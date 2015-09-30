@@ -161,14 +161,13 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     GCC::Create_Request_Send(gcc_header, stream.size());
     t.send(gcc_header);
 
-    BStream stream2(65536);
-    stream2.out_copy_bytes(gcc_conference_create_request_expected,
-                  sizeof(gcc_conference_create_request_expected)-1); // -1 to ignore final 0
-    stream2.mark_end();
-    stream2.rewind();
+    constexpr std::size_t sz = sizeof(gcc_conference_create_request_expected)-1; // -1 to ignore final 0
+    uint8_t buf[sz];
+    OutStream(buf).out_copy_bytes(gcc_conference_create_request_expected, sz);
 
     try {
-        GCC::Create_Request_Recv header(stream2);
+        InStream in_stream(buf);
+        GCC::Create_Request_Recv header(in_stream);
     } catch(Error const &) {
         BOOST_CHECK(false);
     };

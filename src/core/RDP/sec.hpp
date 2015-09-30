@@ -693,6 +693,46 @@ enum {
         }
     };
 
+    struct SecExchangePacket_Recv_new_stream
+    {
+        uint32_t basicSecurityHeader;
+        uint32_t length;
+        InStream payload;
+
+        explicit SecExchangePacket_Recv_new_stream(InStream & stream)
+            : basicSecurityHeader([&stream](){
+                const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %u",
+                       expected, stream.in_remain());
+                    throw Error(ERR_SEC);
+                }
+
+                uint32_t basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
+                if (!(basicSecurityHeader & SEC_EXCHANGE_PKT)) {
+                    LOG(LOG_ERR, "Expecting SEC_EXCHANGE_PKT, got (%x)", basicSecurityHeader);
+                    throw Error(ERR_SEC);
+                }
+                return basicSecurityHeader;
+            }())
+            , length([&stream](){
+                uint32_t length = stream.in_uint32_le();
+                if (length != stream.in_remain()){
+                    LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, stream.in_remain());
+                }
+                return length;
+            }())
+            , payload(stream.get_current(), stream.in_remain() - 8)
+        {
+            if (this->payload.get_capacity() != 64){
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.get_capacity());
+                throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
+            }
+            // Skip payload and 8 bytes trailing padding
+            stream.in_skip_bytes(this->payload.get_capacity() + 8);
+        }
+    };
+
     struct SecExchangePacket_Send
     {
         SecExchangePacket_Send(Stream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){

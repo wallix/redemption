@@ -1804,7 +1804,7 @@ public:
                                 );
                             },
                             [this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
-                                MCS::CONNECT_INITIAL_Send_new_stream mcs(mcs_header, packet_size, MCS::BER_ENCODING);
+                                MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
                                 (void)mcs;
                             },
                             write_x224_dt_tpdu_fn{}
@@ -2082,7 +2082,7 @@ public:
                             uint8_t * end = array;
                             X224::RecvFactory f(this->nego.trans, &end, array_size);
                             InStream stream(array, end - array);
-                            X224::DT_TPDU_Recv_new_stream x224(stream);
+                            X224::DT_TPDU_Recv x224(stream);
                             InStream & mcs_cjcf_data = x224.payload;
                             MCS::AttachUserConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                             if (mcs.initiator_flag){
@@ -2120,7 +2120,7 @@ public:
                                 X224::RecvFactory f(this->nego.trans, &end, array_size);
                                 InStream x224_data(array, end - array);
 
-                                X224::DT_TPDU_Recv_new_stream x224(x224_data);
+                                X224::DT_TPDU_Recv x224(x224_data);
                                 InStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                                 TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
@@ -2296,10 +2296,10 @@ public:
                         uint8_t * end = array;
                         X224::RecvFactory f(this->nego.trans, &end, array_size);
                         InStream stream(array, end - array);
-                        X224::DT_TPDU_Recv_new_stream x224(stream);
+                        X224::DT_TPDU_Recv x224(stream);
                         TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
                         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-                        MCS::SendDataIndication_Recv_new_stream mcs(x224.payload, MCS::PER_ENCODING);
+                        MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
                         SEC::SecSpecialPacket_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
@@ -2651,7 +2651,7 @@ public:
                             break;
                         }
 
-                        X224::DT_TPDU_Recv_new_stream x224(stream);
+                        X224::DT_TPDU_Recv x224(stream);
 
                         const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
@@ -2674,7 +2674,7 @@ public:
                         }
 
 
-                        MCS::SendDataIndication_Recv_new_stream mcs(x224.payload, MCS::PER_ENCODING);
+                        MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
                         SEC::Sec_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
