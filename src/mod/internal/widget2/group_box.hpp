@@ -70,7 +70,7 @@ public:
         this->drawable.text_metrics(this->font, "bp", tmp, h);
         this->drawable.text_metrics(this->font, this->buffer, w, tmp);
 
-        BStream deltaPoints(256);
+        StaticOutStream<256> deltaPoints;
 
         deltaPoints.out_sint16_le(border - (text_indentation - text_margin + 1));
         deltaPoints.out_sint16_le(0);
@@ -87,12 +87,11 @@ public:
         deltaPoints.out_sint16_le(-(this->rect.cx - border * 2 - w - text_indentation + x_offset));
         deltaPoints.out_sint16_le(0);
 
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
+        InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
         RDPPolyline polyline_box( this->rect.x + text_indentation - text_margin
                                 , this->rect.y + h / 2
-                                , 0x0D, 0, this->fg_color, 5, deltaPoints);
+                                , 0x0D, 0, this->fg_color, 5, in_deltaPoints);
         this->drawable.draw(polyline_box, clip);
 
 

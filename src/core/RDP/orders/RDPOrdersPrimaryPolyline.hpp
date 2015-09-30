@@ -222,6 +222,21 @@ public:
         }
     }
 
+    RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, uint32_t PenColor,
+        uint8_t NumDeltaEntries, InStream & deltaEncodedPoints) {
+        this->xStart          = xStart;
+        this->yStart          = yStart;
+        this->bRop2           = bRop2;
+        this->BrushCacheEntry = BrushCacheEntry;
+        this->PenColor        = PenColor;
+        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaEncodedPoints) / sizeof(this->deltaEncodedPoints[0]));
+        ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
+        for (int i = 0; i < this->NumDeltaEntries; i++) {
+            this->deltaEncodedPoints[i].xDelta = deltaEncodedPoints.in_sint16_le();
+            this->deltaEncodedPoints[i].yDelta = deltaEncodedPoints.in_sint16_le();
+        }
+    }
+
     bool operator==(const RDPPolyline & other) const {
         return  (this->xStart          == other.xStart)
              && (this->yStart          == other.yStart)

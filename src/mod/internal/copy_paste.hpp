@@ -211,10 +211,9 @@ public:
 
 private:
     template<class PDU, class... Args>
-    void send_to_front_channel_and_set_buf_size(size_t buf_size, PDU && pdu, Args && ...args) {
-        BStream out_s(buf_size);
+    void send_to_front_channel_(OutStream & out_s, PDU && pdu, Args && ...args) {
         pdu.emit(out_s, args...);
-        const size_t length     = out_s.size();
+        const size_t length     = out_s.get_offset();
         const size_t chunk_size = length;
         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                       CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
@@ -222,7 +221,8 @@ private:
 
     template<class PDU, class... Args>
     void send_to_front_channel(PDU && pdu, Args && ...args) {
-        this->send_to_front_channel_and_set_buf_size(256, std::move(pdu), args...);
+        StaticOutStream<256> out_s;
+        this->send_to_front_channel_(out_s, std::move(pdu), args...);
     }
 };
 

@@ -73,16 +73,16 @@ static inline bool check_file_hash_sha256(
 }
 
 static inline int extract_file_info( const char * space_separated_values
-                     , Stream & file_name
-                     , Stream & _4kb_hash
-                     , Stream & full_hash) {
-    file_name.reset();
-    _4kb_hash.reset();
-    full_hash.reset();
+                     , OutStream & file_name
+                     , StaticOutStream<HASH_LEN> & _4kb_hash
+                     , StaticOutStream<HASH_LEN> & full_hash) {
+    file_name.rewind();
+    _4kb_hash.rewind();
+    full_hash.rewind();
 
-    if ((_4kb_hash.get_capacity() < HASH_LEN / 2) || (full_hash.get_capacity() < HASH_LEN / 2)) {
-        return -1;
-    }
+    //if ((_4kb_hash.get_capacity() < HASH_LEN / 2) || (full_hash.get_capacity() < HASH_LEN / 2)) {
+    //    return -1;
+    //}
 
     size_t len = strlen(space_separated_values);
 
@@ -115,7 +115,6 @@ static inline int extract_file_info( const char * space_separated_values
 
         full_hash.out_uint8((uint8_t)code);
     }
-    full_hash.mark_end();
 
     // first 4 kb hash
     point_end = point_start;
@@ -131,7 +130,6 @@ static inline int extract_file_info( const char * space_separated_values
 
         _4kb_hash.out_uint8((uint8_t)code);
     }
-    _4kb_hash.mark_end();
 
     // end timestamp
     for (/*point_end = point_start, */point_start--;
@@ -160,7 +158,6 @@ static inline int extract_file_info( const char * space_separated_values
 //LOG(LOG_INFO, "filename='%.*s'", (unsigned)(point_end - point_start), point_start);
     file_name.out_copy_bytes(point_start, (point_end - point_start));
     file_name.out_uint8(0);
-    file_name.mark_end();
 
     return 1;
 }
@@ -170,7 +167,7 @@ static inline int extract_file_info( const char * space_separated_values
 template <typename FileDescriptor>
 int read_line(  FileDescriptor fd
               , int (*fp_read)(FileDescriptor, char *, unsigned int)
-              , Stream & opaque_stream
+              , OutStream & opaque_stream
               , int & opaque_data
               , char * line_buf
               , size_t line_len) {
@@ -187,7 +184,7 @@ int read_line(  FileDescriptor fd
     do {
         // Finds newline in buffer.
         for (psz = opaque_stream.get_data();
-             (psz != opaque_stream.p) && ((psz - opaque_stream.get_data()) < (ssize_t)(internal_line_len - 1));
+             (psz != opaque_stream.get_current()) && ((psz - opaque_stream.get_data()) < (ssize_t)(internal_line_len - 1));
              psz++) {
             if (*psz == '\n') {
                 psz++;
@@ -203,9 +200,9 @@ int read_line(  FileDescriptor fd
 
             internal_line_buf[len] = '\0';
 
-            memmove(opaque_stream.get_data(), psz, opaque_stream.p - opaque_stream.get_data() - len);
+            memmove(opaque_stream.get_data(), psz, opaque_stream.get_current() - opaque_stream.get_data() - len);
 
-            opaque_stream.p -= len;
+            opaque_stream.rewind(opaque_stream.get_offset() - len);
 
             // A newline is read or ...
             if ((internal_line_buf[len - 1] == '\n') ||
@@ -226,10 +223,10 @@ int read_line(  FileDescriptor fd
             return opaque_data;
         }
 
-        int number_of_bytes_read = fp_read(fd, reinterpret_cast<char *>(opaque_stream.p), opaque_stream.tailroom());
+        int number_of_bytes_read = fp_read(fd, reinterpret_cast<char *>(opaque_stream.get_current()), opaque_stream.tailroom());
 
         if (number_of_bytes_read > 0) {
-            opaque_stream.p += number_of_bytes_read;
+            opaque_stream.out_skip_bytes(number_of_bytes_read);
         }
         else {
             opaque_data = number_of_bytes_read;
@@ -351,7 +348,7 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
         }
 
         if (cf_struct != nullptr) {
-            BStream opaque_stream(2048);
+            StaticOutStream<2048> opaque_stream;
 
             int opaque_data = 1;
 
@@ -365,9 +362,9 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
                ) {
                 result = true;
 
-                BStream file_name(1024);
-                BStream _4kb_hash(HASH_LEN);
-                BStream full_hash(HASH_LEN);
+                StaticOutStream<1024> file_name;
+                StaticOutStream<HASH_LEN> _4kb_hash;
+                StaticOutStream<HASH_LEN> full_hash;
 
                 char line[1024];
                 //int  line_len;
@@ -381,7 +378,7 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
                                         , cctx->hmac_key
                                         , sizeof(cctx->hmac_key)
                                         , _4kb_hash.get_data()
-                                        , _4kb_hash.size()
+                                        , _4kb_hash.get_offset()
                                         , 4096) == false)
                            )
                           || ((!quick_check)
@@ -389,7 +386,7 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
                                         , cctx->hmac_key
                                         , sizeof(cctx->hmac_key)
                                         , full_hash.get_data()
-                                        , full_hash.size()
+                                        , full_hash.get_offset()
                                         , 0) == false)
                            ))) {
                         result = false; break;

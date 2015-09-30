@@ -761,6 +761,15 @@ struct FormatListPDU : public CliprdrHeader {
         stream.mark_end();
     }
 
+    void emit(OutStream & stream) {
+        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        stream.out_uint32_le(CF_TEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+    }
+
     void emit_ex(Stream & stream, bool unicodetext) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);

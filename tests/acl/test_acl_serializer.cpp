@@ -108,11 +108,11 @@ inline void execute_test_initem(Stream & stream, AclSerializer & acl, const auth
     // create stream with key , ask
     stream.out_string(string_from_authid(authid));
     stream.out_string(value);
-    stream.mark_end();
-    stream.rewind();
+
+    AclSerializer::ArrayItemsView view{stream.get_data(), stream.get_data() + stream.get_offset()};
 
     // execute in_item
-    acl.in_item(stream);
+    acl.in_item(view);
 }
 
 template<class Cfg, class U>
@@ -170,15 +170,15 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
 BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
 {
     Inifile ini;
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     LogTransport trans;
     AclSerializer acl(ini, trans, 0);
 
     ini.set_acl<cfg::context::password>("VerySecurePassword");
     BOOST_CHECK(!ini.is_asked<cfg::context::password>());
-    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
-    stream.mark_end();
-    stream.rewind();
-    acl.in_items(stream);
+    auto s = string_from_authid(AUTHID_PASSWORD);
+    stream.out_copy_bytes(s, strlen(s)); stream.out_copy_bytes("\nASK\n", 5);
+    AclSerializer::ArrayItemsView view{stream.get_data(), stream.get_data() + stream.get_offset()};
+    acl.in_items(view);
     BOOST_CHECK(ini.is_asked<cfg::context::password>());
 }

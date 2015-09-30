@@ -62,31 +62,36 @@ public:
         }
     }
 
-    void in_items(Stream & stream)
+    struct ArrayItemsView {
+        uint8_t * p;
+        uint8_t * end;
+    };
+
+    void in_items(ArrayItemsView & view)
     {
         if (this->verbose & 0x40){
             LOG(LOG_INFO, "auth::in_items");
         }
-        for (; stream.p < stream.end ; this->in_item(stream)){
+        for (; view.p < view.end ; this->in_item(view)){
             ;
         }
     }
 
-    void in_item(Stream & stream)
+    void in_item(ArrayItemsView & view)
     {
-        const char * keyword = reinterpret_cast<const char*>(stream.p);
-        const uint8_t * start = stream.p;
-        for ( ; stream.p < stream.end; ++stream.p){
-            if (*stream.p == '\n') {
-                *stream.p = 0;
-                ++stream.p;
+        const char * keyword = reinterpret_cast<const char*>(view.p);
+        const uint8_t * start = view.p;
+        for ( ; view.p < view.end; ++view.p){
+            if (*view.p == '\n') {
+                *view.p = 0;
+                ++view.p;
                 break;
             }
         }
-        const char * value = reinterpret_cast<const char*>(stream.p);
-        for ( ; stream.p < stream.end; ++stream.p){
-            if (*stream.p == '\n') {
-                *stream.p = 0;
+        const char * value = reinterpret_cast<const char*>(view.p);
+        for ( ; view.p < view.end; ++view.p){
+            if (*view.p == '\n') {
+                *view.p = 0;
 
                 if (auto field = this->ini.get_acl_field(authid_from_string(keyword))) {
                     if ((0 == strncasecmp(value, "ask", 3))) {
@@ -118,37 +123,38 @@ public:
                     LOG(LOG_WARNING, "AclSerializer::in_item(stream): unknown strauthid=\"%s\"", keyword);
                 }
 
-                stream.p = stream.p+1;
+                view.p = view.p+1;
                 return;
             }
         }
         LOG(LOG_WARNING, "Unexpected exit while parsing ACL message");
-        hexdump(start, stream.p-start);
+        hexdump(start, view.p-start);
         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
 
     void incoming()
     {
-        BStream stream(HEADER_SIZE);
-        this->auth_trans.recv(&stream.end, HEADER_SIZE);
+        constexpr std::size_t buf_capacity = HEADER_SIZE < 65536 ? 65536 : HEADER_SIZE;
+        uint8_t buf[buf_capacity];
+        auto end = buf;
+        this->auth_trans.recv(&end, HEADER_SIZE);
 
-        size_t size = stream.in_uint32_be();
+        size_t size = Parse(buf).in_uint32_be();
 
-        if (size > 65536){
+        if (size > buf_capacity){
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
         }
-        if (size > stream.endroom()) {
-            stream.init(size);
-        }
 
-        this->auth_trans.recv(&stream.end, size);
+        end = buf;
+        this->auth_trans.recv(&end, size);
 
         if (this->verbose & 0x40){
             LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
         }
         bool flag = this->ini.get<cfg::context::session_id>().empty();
-        this->in_items(stream);
+        ArrayItemsView view{buf, buf+size};
+        this->in_items(view);
         if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
             int child_pid = getpid();
             char old_session_file[256];

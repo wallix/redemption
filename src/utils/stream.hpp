@@ -856,7 +856,7 @@ using StaticOutStream = BasicStaticStream<N, OutStream>;
 template<std::size_t N>
 using StaticInStream = BasicStaticStream<N, InStream>;
 
-template<std::size_t LenMax>
+template<std::size_t OrignalLen>
 struct StreamBufMaker
 {
     StreamBufMaker() = default;
@@ -879,7 +879,7 @@ struct StreamBufMaker
     }
 
 private:
-    uint8_t buf_[LenMax];
+    uint8_t buf_[OrignalLen];
     std::unique_ptr<uint8_t[]> dyn_buf_;
 };
 
