@@ -364,7 +364,9 @@ private:
                     std::string message("SendFileToServerClipboard=");
                     message += fd.fileName();
 
-                    this->front.session_update(message.c_str());
+                    bool contian_window_title = false;
+                    this->front.session_update(message.c_str(),
+                        contian_window_title);
                 }
 
                 this->file_descriptor_stream.reset();
@@ -380,7 +382,9 @@ private:
                     std::string message("SendFileToServerClipboard=");
                     message += fd.fileName();
 
-                    this->front.session_update(message.c_str());
+                    bool contian_window_title = false;
+                    this->front.session_update(message.c_str(),
+                        contian_window_title);
                 }
             }
 
@@ -862,7 +866,9 @@ public:
                     std::string message("SendFileToClientClipboard=");
                     message += fd.fileName();
 
-                    this->front.session_update(message.c_str());
+                    bool contian_window_title = false;
+                    this->front.session_update(message.c_str(),
+                        contian_window_title);
                 }
 
                 this->file_descriptor_stream.reset();
@@ -878,7 +884,9 @@ public:
                     std::string message("SendFileToClientClipboard=");
                     message += fd.fileName();
 
-                    this->front.session_update(message.c_str());
+                    bool contian_window_title = false;
+                    this->front.session_update(message.c_str(),
+                        contian_window_title);
                 }
             }
 

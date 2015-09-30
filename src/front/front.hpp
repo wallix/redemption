@@ -2413,28 +2413,18 @@ public:
         this->focus_on_password_textbox = on_password_textbox;
     }
 
-    void session_update(const char * message) override {
-        LOG( LOG_INFO
-           , "[RDP Session] type='AGT event' "
-             "sesion_id='%s' "
-             "user='%s' "
-             "device='%s' "
-             "service='%s' "
-             "account='%s' "
-             "data='%s'",
-            this->ini.get<cfg::context::session_id>().c_str(),
-            this->ini.get<cfg::globals::auth_user>().c_str(),
-            this->ini.get<cfg::globals::target_device>().c_str(),
-            this->ini.get<cfg::context::target_service>().c_str(),
-            this->ini.get<cfg::globals::target_user>().c_str(),
-            message);
-
+    void session_update(const char * message, bool & out__contian_window_title) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
 
-            this->capture->session_update(now, message);
+            this->capture->session_update(now, message,
+                out__contian_window_title);
+
+            return;
         }
+
+        out__contian_window_title = false;
     }
 
     virtual bool disable_input_event_and_graphics_update(bool disable) override {

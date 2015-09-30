@@ -184,6 +184,8 @@ private:
 
     uint32_t clipboard_general_capability_flags = 0;
 
+    auth_api * acl;
+
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
@@ -204,6 +206,7 @@ public:
            , bool is_socket_transport
            , ClipboardEncodingType clipboard_server_encoding_type
            , uint32_t bogus_clipboard_infinite_loop
+           , auth_api * acl
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -234,6 +237,7 @@ public:
     , is_socket_transport(is_socket_transport)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
+    , acl(acl)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -242,6 +246,7 @@ public:
         if (inflateInit(&this->zstrm) != Z_OK)
         {
             LOG(LOG_ERR, "vnc zlib initialization failed");
+
             throw Error(ERR_VNC_ZLIB_INITIALIZATION);
         }
 
@@ -631,6 +636,10 @@ public:
                 memset(cursor.data + 29 * (32 * 3), 0xff, 9);
                 memset(cursor.mask, 0xff, 32 * (32 / 8));
                 this->front.server_set_pointer(cursor);
+
+                if (this->acl) {
+                    this->acl->log("CNT event", "SESSION_ESTABLISHED_SUCCESSFULLY");
+                }
 
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
                 this->front.begin_update();
@@ -2721,6 +2730,13 @@ private:
                 const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
                 this->gd->draw(cmd2, dst_tile, tiled_bmp);
             }
+        }
+    }
+
+public:
+    void disconnect() {
+        if (this->acl) {
+            this->acl->log("CNT event", "SESSION_ENDED");
         }
     }
 };
