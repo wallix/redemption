@@ -143,6 +143,11 @@ struct SharedHeader {
         stream.out_uint16_le(static_cast<uint16_t>(this->packet_id));
     }
 
+    inline void emit(OutStream & stream) const {
+        stream.out_uint16_le(static_cast<uint16_t>(this->component));
+        stream.out_uint16_le(static_cast<uint16_t>(this->packet_id));
+    }
+
     inline void receive(Stream & stream) {
         {
             const unsigned expected = 4;  // Component(2) + PacketId(2)
@@ -1394,6 +1399,12 @@ public:
         stream.out_uint32_le(this->IoStatus_);
     }
 
+    inline void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->DeviceId_);
+        stream.out_uint32_le(this->CompletionId_);
+        stream.out_uint32_le(this->IoStatus_);
+    }
+
     inline void receive(Stream & stream) {
         {
             const unsigned expected = 12;   // DeviceId(4) + CompletionId(4) + IoStatus(4)
@@ -1527,6 +1538,11 @@ public:
     , Information(Information) {}
 
     inline void emit(Stream & stream) const {
+        stream.out_uint32_le(this->FileId_);
+        stream.out_uint8(this->Information);
+    }
+
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileId_);
         stream.out_uint8(this->Information);
     }

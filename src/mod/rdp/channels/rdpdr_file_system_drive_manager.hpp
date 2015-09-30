@@ -108,7 +108,7 @@ public:
             uint32_t verbose) {
         REDASSERT(this->fd > -1);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -123,12 +123,10 @@ public:
         }
         out_stream.out_uint32_le(0);    // OutputBufferLength(4)
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
     }
 
@@ -142,7 +140,7 @@ public:
             uint32_t verbose) {
         REDASSERT(this->fd > -1);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         switch (server_drive_query_volume_information_request.FsInformationClass()) {
             case rdpdr::FileFsVolumeInformation:
@@ -314,12 +312,10 @@ public:
             break;
         }
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
     }
 
@@ -332,7 +328,7 @@ public:
             uint32_t verbose) {
         REDASSERT(this->fd > -1);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         struct stat64 sb;
         ::fstat64(this->fd, &sb);
@@ -434,12 +430,10 @@ public:
             //break;
         }
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
     }
 
@@ -676,8 +670,32 @@ public:
         uint32_t verbose) = 0;
 
 protected:
-    static inline void MakeClientDriveIoResponse(
+    static void MakeClientDriveIoResponse(
             Stream & out_stream,
+            rdpdr::DeviceIORequest const & device_io_request,
+            const char * message,
+            uint32_t IoStatus,
+            uint32_t verbose) {
+        const rdpdr::SharedHeader shared_header(
+                rdpdr::Component::RDPDR_CTYP_CORE,
+                rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
+            );
+        shared_header.emit(out_stream);
+
+        const rdpdr::DeviceIOResponse device_io_response(
+                device_io_request.DeviceId(),
+                device_io_request.CompletionId(),
+                IoStatus
+            );
+        if (verbose) {
+            LOG(LOG_INFO, message);
+            device_io_response.log(LOG_INFO);
+        }
+        device_io_response.emit(out_stream);
+    }
+
+    static void MakeClientDriveIoResponse(
+            OutStream & out_stream,
             rdpdr::DeviceIORequest const & device_io_request,
             const char * message,
             uint32_t IoStatus,
@@ -707,18 +725,16 @@ protected:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
-
-        out_stream.mark_end();
 
         uint32_t out_flags =
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(),
+            out_flags, out_stream.get_data(), out_stream.get_offset(),
             to_server_sender, verbose);
     }
 
@@ -730,7 +746,7 @@ protected:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
@@ -739,13 +755,11 @@ protected:
 
         // Padding(1), optional
 
-        out_stream.mark_end();
-
         uint32_t out_flags =
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(),
+            out_flags, out_stream.get_data(), out_stream.get_offset(),
             to_server_sender, verbose);
     }
 
@@ -757,20 +771,18 @@ public:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
 
         out_stream.out_clear_bytes(5);  // Padding(5)
 
-        out_stream.mark_end();
-
         uint32_t out_flags =
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(),
+            out_flags, out_stream.get_data(), out_stream.get_offset(),
             to_server_sender, verbose);
     }
 
@@ -888,7 +900,7 @@ public:
             return 0xC0000001;  // STATUS_UNSUCCESSFUL
         } (this->dir, last_error);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -907,12 +919,10 @@ public:
         }
         device_create_response.emit(out_stream);
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
 
         //if (this->dir) {
@@ -943,7 +953,7 @@ public:
         this->dir = nullptr;
         this->fd  = -1;
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -955,12 +965,10 @@ public:
         // Device Close Response (DR_CLOSE_RSP)
         out_stream.out_clear_bytes(5);  // Padding(5);
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
 
         REDASSERT(!this->dir);
@@ -975,7 +983,7 @@ public:
             uint32_t verbose) {
         REDASSERT(this->dir);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -986,12 +994,10 @@ public:
 
         out_stream.out_uint32_le(0);    // Length(4)
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
     }
 
@@ -1029,7 +1035,7 @@ public:
         }
         while (ent);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         if (!ent) {
             this->MakeClientDriveIoResponse(
@@ -1163,12 +1169,10 @@ public:
             }
         }
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
     }
 };  // ManagedDirectory
@@ -1309,7 +1313,7 @@ public:
             return 0xC0000001;  // STATUS_UNSUCCESSFUL
         } (this->fd, last_error);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -1328,12 +1332,10 @@ public:
         }
         device_create_response.emit(out_stream);
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
 
         //if (this->fd > -1) {
@@ -1359,7 +1361,7 @@ public:
 
         this->fd = -1;
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -1371,12 +1373,10 @@ public:
         // Device Close Response (DR_CLOSE_RSP)
         out_stream.out_clear_bytes(5);  // Padding(5);
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
 
         REDASSERT(this->fd == -1);
@@ -1397,7 +1397,7 @@ public:
 
         struct stat64 sb;
         if (::fstat64(this->fd, &sb)) {
-            BStream out_stream(512);
+            StaticOutStream<512> out_stream;
 
             ManagedFileSystemObject::MakeClientDriveIoResponse(
                   out_stream
@@ -1408,13 +1408,11 @@ public:
 
             out_stream.out_uint32_le(0);    // Length(4)
 
-            out_stream.mark_end();
-
             uint32_t out_flags =
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
             out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-                out_flags, out_stream.get_data(), out_stream.size(),
+                out_flags, out_stream.get_data(), out_stream.get_offset(),
                 to_server_sender, verbose);
 
             return;
@@ -1440,7 +1438,7 @@ public:
             uint32_t verbose) override {
         REDASSERT(this->fd > -1);
 
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -1455,12 +1453,10 @@ public:
         }
         out_stream.out_uint32_le(0);    // OutputBufferLength(4)
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
     }
 
@@ -1512,7 +1508,7 @@ public:
 
 
         if (!remaining_number_of_bytes_to_write) {
-            BStream out_stream(65536);
+            StaticOutStream<65536> out_stream;
 
             this->MakeClientDriveIoResponse(
                 out_stream,
@@ -1524,12 +1520,10 @@ public:
             out_stream.out_uint32_le(Length);   // Length(4)
             out_stream.out_uint8(0);            // Padding(1), optional
 
-            out_stream.mark_end();
-
             uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
             out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-                out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+                out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
                 verbose);
         }
     }
@@ -1541,7 +1535,7 @@ public:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) override {
-        BStream out_stream(65536);
+        StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
             out_stream,
@@ -1553,12 +1547,10 @@ public:
         out_stream.out_uint32_le(0);    // Length(4)
         out_stream.out_uint8(0);        // Padding(1)
 
-        out_stream.mark_end();
-
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.size(), to_server_sender,
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
     }
 };  // ManagedFile
@@ -2119,7 +2111,7 @@ public:
         //    }
         //}
 
-        BStream out_stream(1024);
+        StaticOutStream<1024> out_stream;
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
@@ -2128,18 +2120,16 @@ public:
         out_stream.out_uint32_le(1);                        // DeviceCount(4)
         out_stream.out_uint32_le(old_wab_agent_drive_id);   // DeviceIds(variable)
 
-        out_stream.mark_end();
-
         if (verbose) {
             LOG(LOG_INFO,
                 "FileSystemDriveManager::DisableWABAgentDrive");
         }
 
         to_server_sender(
-                out_stream.size(),
+                out_stream.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                 out_stream.get_data(),
-                out_stream.size()
+                out_stream.get_offset()
             );
     }
 };  // FileSystemDriveManager

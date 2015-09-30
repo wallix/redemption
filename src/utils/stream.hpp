@@ -479,6 +479,19 @@ public:
         this->p+=8;
     }
 
+    void out_sint64_le(int64_t v) {
+        REDASSERT(this->has_room(8));
+        this->p[0] = v & 0xFF;
+        this->p[1] = (v >> 8) & 0xFF;
+        this->p[2] = (v >> 16) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
+        this->p[4] = (v >> 32) & 0xFF;
+        this->p[5] = (v >> 40) & 0xFF;
+        this->p[6] = (v >> 48) & 0xFF;
+        this->p[7] = (v >> 56) & 0xFF;
+        this->p+=8;
+    }
+
     void out_skip_bytes(unsigned int n) {
         REDASSERT(this->has_room(n));
         this->p+=n;
