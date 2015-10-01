@@ -1534,7 +1534,7 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SEC::SecExchangePacket_Recv_new_stream sec(mcs.payload);
+                SEC::SecExchangePacket_Recv sec(mcs.payload);
 
                 TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                 uint8_t client_random[64];
@@ -1608,7 +1608,7 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            SEC::SecSpecialPacket_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if (this->verbose & 128) {
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
@@ -1803,7 +1803,7 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            SEC::SecSpecialPacket_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if ((this->verbose & (128 | 2)) == (128 | 2)) {
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
@@ -2125,7 +2125,7 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SEC::Sec_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
+                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
                 if (this->verbose & 128) {
                     LOG(LOG_INFO, "sec decrypted payload:");
                     hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());

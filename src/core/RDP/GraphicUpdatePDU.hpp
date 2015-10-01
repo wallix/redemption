@@ -37,29 +37,6 @@
 
 static inline void send_data_indication_ex( Transport & trans
                                           , int encryptionLevel, CryptContext & encrypt
-                                          , uint16_t initiator, HStream & stream)
-{
-    BStream security_header(256);
-    SEC::Sec_Send sec(security_header, stream, 0, encrypt, encryptionLevel);
-    stream.copy_to_head(security_header.get_data(), security_header.size());
-
-    OutPerBStream mcs_header(256);
-    MCS::SendDataIndication_Send mcs( mcs_header
-                                    , initiator
-                                    , GCC::MCS_GLOBAL_CHANNEL
-                                    , 1 // dataPriority
-                                    , 3 // segmentation
-                                    , stream.size()
-                                    , MCS::PER_ENCODING);
-
-    BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-
-    trans.send(x224_header, mcs_header, stream);
-}
-
-static inline void send_data_indication_ex( Transport & trans
-                                          , int encryptionLevel, CryptContext & encrypt
                                           , uint16_t initiator
                                           , StaticOutReservedStreamHelper<1024, 65536-1024> & stream)
 {
@@ -112,56 +89,6 @@ void send_data_indication_ex( Transport & trans
             X224::DT_TPDU_Send(x224_header, packet_size);
         }
     );
-}
-
-void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_support
-                       , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
-                       , CryptContext & encrypt, uint16_t initiator, HStream & data
-                       , uint32_t log_condition, uint32_t verbose) {
-    REDASSERT(!compression_support || mppc_enc);
-
-    HStream data_compressed(1024, 65565);
-    std::reference_wrapper<HStream> data_(data);
-
-    uint8_t compressionFlags = 0;
-
-    if (compression_support) {
-        uint16_t compressed_data_size = 0;
-
-        mppc_enc->compress( data.get_data(), data.size()
-                          , compressionFlags, compressed_data_size
-                          , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
-                          );
-
-        if (compressionFlags & PACKET_COMPRESSED) {
-            mppc_enc->get_compressed_data(data_compressed);
-            data_compressed.mark_end();
-            data_ = std::ref(data_compressed);
-        }
-    }
-
-
-    StaticOutStream<256> share_data_header;
-    ShareData share_data(share_data_header);
-    share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
-                         , data.size() + 18 /* TS_SHAREDATAHEADER(18) */
-                         , compressionFlags
-                         , (compressionFlags ? data_.get().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
-                         );
-    share_data.emit_end();
-    data_.get().copy_to_head(share_data_header.get_data(), share_data_header.get_offset());
-
-    BStream share_ctrl_header(256);
-    ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
-                     , data_.get().size());
-    data_.get().copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
-
-    if (verbose & log_condition) {
-        LOG(LOG_INFO, "Sec clear payload to send:");
-        hexdump_d(data_.get().get_data(), data_.get().size());
-    }
-
-    ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, data_.get());
 }
 
 void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_support
@@ -224,198 +151,6 @@ enum ServerUpdateType {
     SERVER_UPDATE_POINTER_CACHED,
     SERVER_UPDATE_POINTER_POSITION
 };
-
-void send_server_update( Transport & trans, bool fastpath_support, bool compression_support
-                       , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
-                       , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type
-                       , uint16_t data_extra, HStream & data_common, uint32_t verbose) {
-    if (verbose & 4) {
-        LOG( LOG_INFO
-           , "send_server_update: fastpath_support=%s compression_support=%s shareId=%u "
-             "encryptionLevel=%d initiator=%u type=%d data_extra=%u"
-           , (fastpath_support ? "yes" : "no"), (compression_support ? "yes" : "no"), shareId
-           , encryptionLevel, initiator, type, data_extra
-           );
-    }
-
-    REDASSERT(!compression_support || mppc_enc);
-
-    if (fastpath_support) {
-        uint8_t compressionFlags = 0;
-        uint8_t updateCode       = 0;
-
-        switch (type) {
-            case SERVER_UPDATE_GRAPHICS_ORDERS:
-                {
-                    updateCode = FastPath::FASTPATH_UPDATETYPE_ORDERS;
-
-                    StaticOutStream<2> data;
-                    data.out_uint16_le(data_extra);
-
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
-                }
-                break;
-
-            case SERVER_UPDATE_GRAPHICS_BITMAP:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_BITMAP;
-                break;
-
-            case SERVER_UPDATE_GRAPHICS_PALETTE:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_PALETTE;
-                break;
-
-            case SERVER_UPDATE_GRAPHICS_SYNCHRONIZE:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE;
-                break;
-
-            case SERVER_UPDATE_POINTER_COLOR:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_COLOR;
-                break;
-
-            case SERVER_UPDATE_POINTER_CACHED:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
-                break;
-
-            case SERVER_UPDATE_POINTER_POSITION:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_PTR_POSITION;
-                break;
-
-            default:
-                REDASSERT(false);
-                break;
-        }
-
-        uint8_t compression = 0;
-
-        HStream data_common_compressed(1024, 65565);
-        std::reference_wrapper<HStream> data_common_(data_common);
-
-        if (compression_support) {
-            uint16_t compressed_data_size;
-
-            mppc_enc->compress( data_common.get_data(), data_common.size()
-                              , compressionFlags, compressed_data_size
-                              , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
-                              );
-
-            if (compressionFlags & PACKET_COMPRESSED) {
-                compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
-
-                mppc_enc->get_compressed_data(data_common_compressed);
-                data_common_compressed.mark_end();
-                data_common_ = std::ref(data_common_compressed);
-            }
-        }
-
-        StaticOutStream<8> update_header;
-        // Fast-Path Update (TS_FP_UPDATE)
-        FastPath::Update_Send Upd( update_header
-                                 , data_common_.get().size()
-                                 , updateCode
-                                 , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                 , compression
-                                 , compressionFlags
-                                 );
-        data_common_.get().copy_to_head(update_header.get_data(), update_header.get_offset());
-
-        StaticOutStream<256> server_update_header;
-         // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-        FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
-                                                , data_common_.get().get_data()
-                                                , data_common_.get().size()
-                                                , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
-                                                , encrypt
-                                                );
-        data_common_.get().copy_to_head(server_update_header.get_data(), server_update_header.get_offset());
-
-        trans.send(data_common_.get().get_data(), data_common_.get().size());
-    }
-    else {
-        uint8_t pduType2 = 0;
-
-        switch (type) {
-            case SERVER_UPDATE_GRAPHICS_ORDERS:
-                {
-                    pduType2 = PDUTYPE2_UPDATE;
-
-                    StaticOutStream<64> data;
-
-                    data.out_uint16_le(RDP_UPDATE_ORDERS);
-                    data.out_clear_bytes(2);
-                    data.out_uint16_le(data_extra);
-                    data.out_clear_bytes(2);
-
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
-                }
-                break;
-
-            case SERVER_UPDATE_GRAPHICS_BITMAP:
-            case SERVER_UPDATE_GRAPHICS_PALETTE:
-                pduType2 = PDUTYPE2_UPDATE;
-                break;
-
-            case SERVER_UPDATE_GRAPHICS_SYNCHRONIZE:
-                {
-                    pduType2 = PDUTYPE2_UPDATE;
-
-                    StaticOutStream<64> data;
-
-                    data.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
-                    data.out_clear_bytes(2);
-
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
-                }
-                break;
-
-            case SERVER_UPDATE_POINTER_COLOR:
-            case SERVER_UPDATE_POINTER_CACHED:
-            case SERVER_UPDATE_POINTER_POSITION:
-                {
-                    pduType2 = PDUTYPE2_POINTER;
-
-                    uint16_t updateType = 0;
-                    switch (type) {
-                        case SERVER_UPDATE_POINTER_COLOR:
-                            updateType = RDP_POINTER_COLOR;
-                            break;
-
-                        case SERVER_UPDATE_POINTER_CACHED:
-                            updateType = RDP_POINTER_CACHED;
-                            break;
-
-                        case SERVER_UPDATE_POINTER_POSITION:
-                            updateType = RDP_POINTER_MOVE;
-                            break;
-
-                        default:
-                            REDASSERT(false);
-                            break;
-                    }
-
-                    StaticOutStream<64> data;
-
-                    data.out_uint16_le(updateType);
-                    data.out_clear_bytes(2);
-
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
-                }
-                break;
-
-            default:
-                REDASSERT(false);
-                break;
-        }
-
-        const uint32_t log_condition = (128 | 4);
-        send_share_data_ex( trans, pduType2, compression_support, mppc_enc, shareId
-                          , encryptionLevel, encrypt, initiator, data_common
-                          , log_condition, verbose);
-    }
-
-    if (verbose & 4) {
-        LOG(LOG_INFO, "send_server_update done");
-    }
-}   // send_server_update
 
 void send_server_update( Transport & trans, bool fastpath_support, bool compression_support
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
@@ -910,7 +645,7 @@ protected:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void GenerateColorPointerUpdateData(Stream & stream, int cache_idx, const Pointer & cursor)
+    void GenerateColorPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
     {
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
@@ -974,17 +709,16 @@ protected:
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
-        stream.mark_end();
     }
 
-    void send_pointer(int cache_idx, const Pointer & cursor) throw(Error) override {
+    void send_pointer(int cache_idx, const Pointer & cursor) override {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
                 cache_idx, cursor.x, cursor.y);
         }
 
-        HStream stream(1024, 65536);
-        GenerateColorPointerUpdateData(stream, cache_idx, cursor);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
 
         ::send_server_update( *this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
@@ -1032,9 +766,8 @@ protected:
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
         }
 
-        HStream stream(1024, 65536);
-        stream.out_uint16_le(cache_idx);
-        stream.mark_end();
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        stream.get_data_stream().out_uint16_le(cache_idx);
 
         ::send_server_update( *this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
@@ -1052,10 +785,9 @@ public:
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }
 
-        HStream stream(1024, 4096);
-        stream.out_uint16_le(xPos);
-        stream.out_uint16_le(yPos);
-        stream.mark_end();
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        stream.get_data_stream().out_uint16_le(xPos);
+        stream.get_data_stream().out_uint16_le(yPos);
 
         ::send_server_update( *this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel

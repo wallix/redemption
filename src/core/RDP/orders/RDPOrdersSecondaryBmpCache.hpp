@@ -473,42 +473,6 @@ class RDPBmpCache {
         : id(0), idx(0), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
     }
 
-    void emit(uint8_t session_color_depth, Stream & stream, const int bitmap_cache_version,
-        const int use_bitmap_comp, const int use_compact_packets) const
-    {
-        using namespace RDP;
-        switch (bitmap_cache_version){
-        case 0:
-        case 1:
-            if (use_bitmap_comp){
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache compressed V1*/");
-                }
-                this->emit_v1_compressed(session_color_depth, stream, use_compact_packets);
-            }
-            else {
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache raw V1 */");
-                }
-                this->emit_raw_v1(stream);
-            }
-        break;
-        default:
-            if (use_bitmap_comp){
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
-                }
-                this->emit_v2_compressed(session_color_depth, stream);
-            }
-            else {
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache raw V2 */");
-                }
-                this->emit_raw_v2(stream);
-            }
-        }
-    }
-
     void emit(uint8_t session_color_depth, OutStream & stream, const int bitmap_cache_version,
         const int use_bitmap_comp, const int use_compact_packets) const
     {
@@ -543,54 +507,6 @@ class RDPBmpCache {
                 this->emit_raw_v2(stream);
             }
         }
-    }
-
-    void emit_v1_compressed(uint8_t session_color_depth, Stream & stream, const int use_compact_packets) const {
-        using namespace RDP;
-
-        int order_flags = STANDARD | SECONDARY;
-        stream.out_uint8(order_flags);
-        /* length after type minus 7 */
-        uint32_t offset_header = stream.get_offset();
-        stream.out_uint16_le(0); // placeholder for size after type - 7
-
-         // flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
-        stream.out_uint16_le(use_compact_packets?NO_BITMAP_COMPRESSION_HDR:8); // flags
-        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
-
-        uint32_t offset_after_type = stream.get_offset();
-        stream.out_uint8(this->id);
-        stream.out_clear_bytes(1); /* pad */
-
-        stream.out_uint8(this->bmp.cx());
-        stream.out_uint8(this->bmp.cy());
-        stream.out_uint8(this->bmp.bpp());
-
-        uint32_t offset = stream.get_offset();
-        stream.out_uint16_le(0); // placeholder for bufsize
-        stream.out_uint16_le(this->idx);
-
-        uint32_t offset_compression_header = stream.get_offset();
-        if (!use_compact_packets){
-            if (this->verbose){
-                LOG(LOG_INFO, "/* Use compression headers */");
-            }
-            stream.out_clear_bytes(2); /* pad */
-            stream.out_uint16_le(0); // placeholder for bufsize
-            stream.out_uint16_le(this->bmp.bmp_size() / this->bmp.cy());
-            stream.out_uint16_le(this->bmp.bmp_size()); // final size
-        }
-
-        uint32_t offset_buf_start = stream.get_offset();
-        this->bmp.compress(session_color_depth, stream);
-        uint32_t bufsize = stream.get_offset() - offset_buf_start;
-
-        if (!use_compact_packets){
-            stream.set_out_uint16_le(bufsize, offset_compression_header + 2);
-        }
-
-        stream.set_out_uint16_le(stream.get_offset() - offset_compression_header, offset);
-        stream.set_out_uint16_le(stream.get_offset() - offset_after_type - 7, offset_header);
     }
 
     void emit_v1_compressed(uint8_t session_color_depth, OutStream & stream, const int use_compact_packets) const {
@@ -639,71 +555,6 @@ class RDPBmpCache {
 
         stream.set_out_uint16_le(stream.get_offset() - offset_compression_header, offset);
         stream.set_out_uint16_le(stream.get_offset() - offset_after_type - 7, offset_header);
-    }
-
-    void emit_raw_v1(Stream & stream) const
-    {
-        using namespace RDP;
-
-        TODO(" this should become some kind of emit header");
-        uint8_t control = STANDARD | SECONDARY;
-        stream.out_uint8(control);
-        stream.out_uint16_le(9 + this->bmp.bmp_size()  - 7); // length after orderType - 7
-        stream.out_uint16_le(8);        // extraFlags
-        stream.out_uint8(TS_CACHE_BITMAP_UNCOMPRESSED); // type
-
-        // cacheId (1 byte): An 8-bit, unsigned integer. The bitmap cache into
-        //  which to store the bitmap data. The bitmap cache ID MUST be in the
-        // range negotiated by the Bitmap Cache Capability Set (Revision 1)
-        //  (see [MS-RDPBCGR] section 2.2.7.1.4.1).
-        stream.out_uint8(this->id);
-
-        // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in
-        // this field are arbitrary and MUST be ignored.
-        stream.out_clear_bytes(1);
-
-        // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
-        // bitmap in pixels.
-        assert(this->bmp.cx() == align4(this->bmp.cx()));
-        stream.out_uint8(this->bmp.cx());
-
-        // bitmapHeight (1 byte): An 8-bit, unsigned integer. The height of the
-        //  bitmap in pixels.
-        stream.out_uint8(this->bmp.cy());
-
-        // bitmapBitsPerPel (1 byte): An 8-bit, unsigned integer. The color
-        //  depth of the bitmap data in bits-per-pixel. This field MUST be one
-        //  of the following values.
-        //  0x08 8-bit color depth.
-        //  0x10 16-bit color depth.
-        //  0x18 24-bit color depth.
-        //  0x20 32-bit color depth.
-        stream.out_uint8(this->bmp.bpp());
-
-        // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
-        //  bytes of the data in the bitmapComprHdr and bitmapDataStream
-        //  fields.
-        stream.out_uint16_le(this->bmp.bmp_size());
-
-        // cacheIndex (2 bytes): A 16-bit, unsigned integer. An entry in the
-        // bitmap cache (specified by the cacheId field) where the bitmap MUST
-        // be stored. The bitmap cache index MUST be in the range negotiated by
-        // the Bitmap Cache Capability Set (Revision 1) (see [MS-RDPBCGR]
-        // section 2.2.7.1.4.1).
-        stream.out_uint16_le(this->idx);
-
-        // bitmapDataStream (variable): A variable-length byte array containing
-        //  bitmap data (the format of this data is defined in [MS-RDPBCGR]
-        // section 2.2.9.1.1.3.1.2.2).
-
-        // bitmapDataStream (variable): A variable-sized array of bytes.
-        //  Uncompressed bitmap data represents a bitmap as a bottom-up,
-        //  left-to-right series of pixels. Each pixel is a whole
-        //  number of bytes. Each row contains a multiple of four bytes
-        // (including up to three bytes of padding, as necessary).
-
-        // Note: we ensure bitmap with is multiple of 4, thus there won't be any padding ever
-        stream.out_copy_bytes(this->bmp.data(), this->bmp.bmp_size());
     }
 
     void emit_raw_v1(OutStream & stream) const
@@ -915,54 +766,6 @@ class RDPBmpCache {
           BITMAPCACHE_WAITING_LIST_INDEX = 32767
     };
 
-    void emit_v2_compressed(uint8_t session_color_depth, Stream & stream) const
-    {
-        using namespace RDP;
-
-        int Bpp = nbbytes(this->bmp.bpp());
-
-        stream.out_uint8(STANDARD | SECONDARY);
-
-        uint32_t offset_header = stream.get_offset();
-        stream.out_uint16_le(0); // placeholder for length after type minus 7
-        uint16_t cbr2_flags = (((  CBR2_NO_BITMAP_COMPRESSION_HDR
-                                 | (this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0)
-                                 | (this->do_not_cache ? CBR2_DO_NOT_CACHE           : 0)) << 7) & 0xFF80);
-        uint16_t cbr2_bpp = (((Bpp + 2) << 3) & 0x78);
-        stream.out_uint16_le(cbr2_flags | cbr2_bpp | (this->id & 7));
-        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
-
-
-        if (this->persistent) {
-            union {
-                uint8_t  sig_8[20];
-                uint32_t sig_32[2];
-            } sig;
-            this->bmp.compute_sha1(sig.sig_8);
-            uint32_t * Key1 = sig.sig_32;
-            uint32_t * Key2 = Key1 + 1;
-            stream.out_uint32_le(*Key1);
-            stream.out_uint32_le(*Key2);
-            if (this->verbose & 512) {
-                LOG(LOG_INFO, "id=%u Key1=%08X Key2=%08X", this->id, *Key1, *Key2);
-                LOG(LOG_INFO, "Persistent key");
-                hexdump_d(sig.sig_8, 8);
-            }
-        }
-
-        stream.out_2BUE(this->bmp.cx());
-        stream.out_2BUE(this->bmp.cy());
-        uint32_t offset_bitmapLength = stream.get_offset();
-        TODO("define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.");
-        stream.out_uint16_be(0);
-        stream.out_2BUE(this->do_not_cache ? BITMAPCACHE_WAITING_LIST_INDEX : this->idx);
-        uint32_t offset_startBitmap = stream.get_offset();
-        this->bmp.compress(session_color_depth, stream);
-
-        stream.set_out_uint16_be((stream.get_offset() - offset_startBitmap) | 0x4000, offset_bitmapLength); // set the actual size
-        stream.set_out_uint16_le(stream.get_offset() - (offset_header+12), offset_header); // length after type minus 7
-    }
-
     void emit_v2_compressed(uint8_t session_color_depth, OutStream & stream) const
     {
         using namespace RDP;
@@ -1009,112 +812,6 @@ class RDPBmpCache {
 
         stream.set_out_uint16_be((stream.get_offset() - offset_startBitmap) | 0x4000, offset_bitmapLength); // set the actual size
         stream.set_out_uint16_le(stream.get_offset() - (offset_header+12), offset_header); // length after type minus 7
-    }
-
-    void emit_raw_v2(Stream & stream) const
-    {
-        using namespace RDP;
-        TODO(" this should become some kind of emit header");
-        uint8_t control = STANDARD | SECONDARY;
-        stream.out_uint8(control);
-
-        uint32_t offset_header = stream.get_offset();
-        stream.out_uint16_le(0); // placeholder for length after type minus 7
-
-        int bitsPerPixelId = nbbytes(this->bmp.bpp())+2;
-
-        TODO(" some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.");
-        uint16_t flags = ((this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0) |
-                          (this->do_not_cache ? CBR2_DO_NOT_CACHE           : 0));
-
-        // header::extraFlags : (flags:9, bitsPerPixelId:3, cacheId:3)
-        stream.out_uint16_le((flags << 7)
-            |((bitsPerPixelId << 3)& 0x78)
-            | (this->id & 7));
-
-        // header::orderType
-        stream.out_uint8(TS_CACHE_BITMAP_UNCOMPRESSED_REV2);
-
-        if (this->persistent) {
-            union {
-                uint8_t  sig_8[20];
-                uint32_t sig_32[2];
-            } sig;
-            this->bmp.compute_sha1(sig.sig_8);
-            uint32_t * Key1 = sig.sig_32;
-            uint32_t * Key2 = Key1 + 1;
-            stream.out_uint32_le(*Key1);
-            stream.out_uint32_le(*Key2);
-            if (this->verbose & 512) {
-                LOG(LOG_INFO, "Key1=%08X Key2=%08X", *Key1, *Key2);
-                LOG(LOG_INFO, "Persistent key");
-                hexdump_d(sig.sig_8, 8);
-            }
-        }
-
-        // key1 and key1 are not here because flags is not set
-        // to CBR2_PERSISTENT_KEY_PRESENT
-        // ---------------------------------------------------
-        // key1 (4 bytes): A 32-bit, unsigned integer. The low 32 bits of the 64-bit
-        //                 persistent bitmap cache key.
-
-        // key2 (4 bytes): A 32-bit, unsigned integer. The high 32 bits of the
-        //                 64-bit persistent bitmap cache key.
-
-        // bitmapWidth (variable): A Two-Byte Unsigned Encoding (section
-        //                         2.2.2.2.1.2.1.2) structure. The width of the
-        //                         bitmap in pixels.
-        stream.out_2BUE(this->bmp.cx());
-
-        // bitmapHeight (variable): A Two-Byte Unsigned Encoding (section
-        //                          2.2.2.2.1.2.1.2) structure. The height of the
-        //                          bitmap in pixels.
-        stream.out_2BUE(this->bmp.cy());
-
-        // bitmapLength (variable): A Four-Byte Unsigned Encoding (section
-        //                          2.2.2.2.1.2.1.4) structure. The size in bytes
-        //                          of the data in the bitmapComprHdr and
-        //                          bitmapDataStream fields.
-        stream.out_uint16_be(this->bmp.bmp_size() | 0x4000);
-
-        // cacheIndex (variable): A Two-Byte Unsigned Encoding (section
-        //                        2.2.2.2.1.2.1.2) structure. An entry in the bitmap
-        //                        cache (specified by the cacheId field) where the
-        //                        bitmap MUST be stored. If the CBR2_DO_NOT_CACHE
-        //                        flag is not set in the header field, the bitmap
-        //                        cache index MUST be in the range negotiated by the
-        //                        Bitmap Cache Capability Set (Revision 2) (see
-        //                        [MS-RDPBCGR] section 2.2.7.1.4.2). Otherwise, if
-        //                        the CBR2_DO_NOT_CACHE flag is set, the cacheIndex
-        //                        MUST be set to BITMAPCACHE_WAITING_LIST_INDEX
-        //                        (32767).
-        stream.out_2BUE(this->do_not_cache ? BITMAPCACHE_WAITING_LIST_INDEX : this->idx);
-
-        // No compression header in our case
-        // ---------------------------------
-        // bitmapComprHdr (8 bytes): Optional Compressed Data Header structure (see
-        //                           [MS-RDPBCGR] section 2.2.9.1.1.3.1.2.3)
-        //                           describing the bitmap data in the
-        //                           bitmapDataStream. This field MUST be present if
-        //                           the TS_CACHE_BITMAP_COMPRESSED_REV2 (0x05) flag
-        //                           is present in the header field, but the
-        //                           CBR2_NO_BITMAP_COMPRESSION_HDR (0x08) flag is
-        //                           not.
-
-        // bitmapDataStream (variable): A variable-length byte array containing
-        //                              bitmap data (the format of this data is
-        //                              defined in [MS-RDPBCGR] section
-        //                              2.2.9.1.1.3.1.2.2).
-
-        // Uncompressed bitmap data represents a bitmap as a bottom-up,
-        //  left-to-right series of pixels. Each pixel is a whole
-        //  number of bytes. Each row contains a multiple of four bytes
-        // (including up to three bytes of padding, as necessary).
-
-        // for uncompressed bitmaps the format is quite simple
-        stream.out_copy_bytes(this->bmp.data(), this->bmp.bmp_size());
-
-        stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
     }
 
     void emit_raw_v2(OutStream & stream) const

@@ -36,7 +36,6 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
     using namespace RDP;
 
     {
-        BStream stream;
         ClientInfo ci;
         ci.bitmap_cache_version = 1;
         const int use_bitmap_comp = 0;
@@ -48,7 +47,9 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         };
         Bitmap bmp(24, 24, nullptr, 8, 1, data, sizeof(data), false);
         RDPBmpCache newcmd(bmp, 1, 10, false, false);
-        newcmd.emit(24, stream, ci.bitmap_cache_version, use_bitmap_comp, ci.use_compact_packets);
+        uint8_t buf[65536];
+        OutStream out_stream(buf);
+        newcmd.emit(24, out_stream, ci.bitmap_cache_version, use_bitmap_comp, ci.use_compact_packets);
 
         uint8_t datas[] = {
             STANDARD | SECONDARY,       // control = 0x03
@@ -67,13 +68,13 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
             0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
         };
 
-        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Bmp Cache 1");
-        stream.mark_end();
-        stream.p = stream.get_data();
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Bmp Cache 1");
 
-        uint8_t control = stream.in_uint8();
+        InStream in_stream(buf, out_stream.get_offset());
+
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
-        RDPSecondaryOrderHeader header(stream);
+        RDPSecondaryOrderHeader header(in_stream);
         BOOST_CHECK_EQUAL(static_cast<uint16_t>(33) - 7, header.order_length); // length after type - 7
         BOOST_CHECK_EQUAL((unsigned)0x08, header.flags);
         BOOST_CHECK_EQUAL((unsigned)TS_CACHE_BITMAP_UNCOMPRESSED, header.type);

@@ -533,10 +533,9 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     Bitmap good16(24, bloc64x64);
     drawable.draw(RDPMemBlt(0, Rect(200, 200, good16.cx(), good16.cy()), 0xCC, 0, 0, 0), scr, good16);
 
-    BStream stream(8192);
+    StaticOutStream<8192> stream;
     good16.compress(24, stream);
-    stream.mark_end();
-    Bitmap bogus(24, 24, nullptr, 64, 64, stream.get_data(), stream.size(), true);
+    Bitmap bogus(24, 24, nullptr, 64, 64, stream.get_data(), stream.get_offset(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), scr, bogus);
 
 //     FILE * f = fopen("/tmp/test_bmp.png", "wb");

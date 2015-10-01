@@ -2301,7 +2301,7 @@ public:
                         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
-                        SEC::SecSpecialPacket_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
+                        SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
                         if (sec.flags & SEC::SEC_LICENSE_PKT) {
                             LIC::RecvFactory flic(sec.payload);
@@ -2675,7 +2675,7 @@ public:
 
 
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                        SEC::Sec_Recv_new_stream sec(mcs.payload, this->decrypt, this->encryptionLevel);
+                        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
                             if (this->verbose & 16) {

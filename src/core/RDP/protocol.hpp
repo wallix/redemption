@@ -131,17 +131,6 @@ namespace RDP {
 struct OrdersUpdate_Recv {
     uint16_t number_orders;
 
-    OrdersUpdate_Recv(Stream & stream, bool fast_path) {
-        if (fast_path) {
-            this->number_orders = stream.in_uint16_le();
-        }
-        else {
-            stream.in_skip_bytes(2);    /* pad2OctetsA */
-            this->number_orders = stream.in_uint16_le();
-            stream.in_skip_bytes(2);    /* pad2OctetsB */
-        }
-    }
-
     OrdersUpdate_Recv(InStream & stream, bool fast_path) {
         if (fast_path) {
             this->number_orders = stream.in_uint16_le();
@@ -195,10 +184,6 @@ struct OrdersUpdate_Recv {
 
 struct DrawingOrder_RecvFactory {
     uint8_t control_flags;
-
-    explicit DrawingOrder_RecvFactory(Stream & stream) {
-        this->control_flags = stream.in_uint8();
-    }
 
     explicit DrawingOrder_RecvFactory(InStream & stream) {
         this->control_flags = stream.in_uint8();
@@ -259,26 +244,6 @@ struct DrawingOrder_RecvFactory {
 // blue (1 byte): An 8-bit, unsigned integer. The blue RGB color component.
 
 struct UpdatePaletteData_Recv {
-    UpdatePaletteData_Recv(Stream & stream, bool fast_path, BGRPalette & palette) {
-        if (fast_path) {
-            stream.in_skip_bytes(2);    // updateType(2)
-        }
-
-        stream.in_skip_bytes(2);    // pad2Octets(2)
-
-        uint32_t numberColors = stream.in_uint32_le();
-        assert(numberColors == 256);
-
-        uint8_t r, g, b;
-
-        for (uint32_t i = 0; i < numberColors; i++) {
-            r = stream.in_uint8();
-            g = stream.in_uint8();
-            b = stream.in_uint8();
-            palette.set_color(i, (r << 16) | (g << 8) | b);
-        }
-    }
-
     UpdatePaletteData_Recv(InStream & stream, bool fast_path, BGRPalette & palette) {
         if (fast_path) {
             stream.in_skip_bytes(2);    // updateType(2)

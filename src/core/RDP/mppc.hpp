@@ -31,7 +31,6 @@
 
 #include "log.hpp"
 #include "error.hpp"
-class Stream;
 class OutStream;
 
 // 3.1.8 MPPC-Based Bulk Data Compression
@@ -545,7 +544,6 @@ public:
 
     virtual void dump(bool mini_dump) const = 0;
 
-    virtual void get_compressed_data(Stream & stream) const = 0;
     virtual void get_compressed_data(OutStream & stream) const = 0;
 };  // struct rdp_mppc_enc
 

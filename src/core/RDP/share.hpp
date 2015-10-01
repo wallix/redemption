@@ -123,39 +123,6 @@ struct ShareFlow_Recv
     uint8_t flowNumber;
     uint16_t mcs_channel;
 
-    explicit ShareFlow_Recv(Stream & stream)
-    : flowMarker([&stream]{
-        if (!stream.in_check_rem(2+1+1+1+1+2)){
-            LOG(LOG_ERR,
-                "Truncated "
-                "[2: ShareFlow PDU packet]"
-                "[1: ShareFlow pad]"
-                "[1: ShareFlow PDU type]"
-                "[1: flow Identifier]"
-                "[1: flow number]"
-                "[2: ShareFlow PDU packet] , remains=%u", stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-        return stream.in_uint16_le();
-    }())
-    , pad(stream.in_uint8())
-    , pduTypeFlow(stream.in_uint8())
-    , flowIdentifier(stream.in_uint8())
-    , flowNumber(stream.in_uint8())
-    , mcs_channel(stream.in_uint16_le())
-    {
-        LOG(LOG_INFO, "Flow control packet %0.4x (offset=%u)", this->flowMarker, stream.get_offset());
-        if (this->flowMarker != 0x8000) {
-            LOG(LOG_ERR, "Expected flow control packet, got %0.4x", this->flowMarker);
-            throw Error(ERR_SEC);
-        }
-
-        LOG(LOG_INFO, "PDUTypeFlow=%u", this->pduTypeFlow);
-        if (stream.in_remain()) {
-            LOG(LOG_INFO, "trailing bytes in FlowPDU, remains %u bytes", stream.in_remain());
-        }
-    }
-
     explicit ShareFlow_Recv(InStream & stream)
     : flowMarker([&stream]{
         if (!stream.in_check_rem(2+1+1+1+1+2)){
@@ -315,18 +282,6 @@ struct ShareControl_Recv
 struct ShareControl_Send
 //##############################################################################
 {
-    ShareControl_Send(Stream & stream, uint8_t pduType, uint16_t PDUSource, uint16_t payload_len)
-    {
-        enum {
-            versionLow = 0x10,
-            versionHigh = 0
-        };
-        stream.out_uint16_le(payload_len + 6);
-        stream.out_uint16_le(versionHigh | versionLow | pduType);
-        stream.out_uint16_le(PDUSource);
-        stream.mark_end();
-    }
-
     ShareControl_Send(OutStream & stream, uint8_t pduType, uint16_t PDUSource, uint16_t payload_len)
     {
         enum {
@@ -694,7 +649,7 @@ struct ShareData
 struct FlowPDU_Send
 //##############################################################################
 {
-    FlowPDU_Send(Stream & stream, uint8_t flow_pdu_type, uint8_t flow_identifier,
+    FlowPDU_Send(OutStream & stream, uint8_t flow_pdu_type, uint8_t flow_identifier,
                  uint8_t flow_number, uint16_t pdu_source)
     {
         stream.out_uint16_le(0x8000);
@@ -703,7 +658,6 @@ struct FlowPDU_Send
         stream.out_uint8(flow_identifier);
         stream.out_uint8(flow_number);
         stream.out_uint16_le(pdu_source);
-        stream.mark_end();
     }
 }; // END CLASS FlowPDU_Send
 // FlowPDU ::= SEQUENCE {

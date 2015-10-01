@@ -187,11 +187,8 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 
     Bitmap capture_bmp(16, bmp);
 
-    BStream bmp_stream(65535);
+    StaticOutStream<65535> bmp_stream;
     capture_bmp.compress(16, bmp_stream);
-    bmp_stream.mark_end();
-
-
 
     RDPBitmapData bitmap_data;
 
@@ -207,14 +204,14 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 //    bitmap_data.flags                   = 0;
 //    bitmap_data.bitmap_length           = 643;
 //    bitmap_data.bitmap_length           = capture_bmp.bmp_size();
-    bitmap_data.bitmap_length           = bmp_stream.size();
+    bitmap_data.bitmap_length           = bmp_stream.get_offset();
     bitmap_data.cb_comp_main_body_size  = 0;
     bitmap_data.cb_scan_width           = 0;
     bitmap_data.cb_uncompressed_size    = 0;
 
 //    gd.draw(bitmap_data, raw_bitmap, sizeof(raw_bitmap), bmp);
 //    gd.draw(bitmap_data, capture_bmp.data(), capture_bmp.bmp_size(), capture_bmp);
-    gd.draw(bitmap_data, bmp_stream.get_data(), bmp_stream.size(), capture_bmp);
+    gd.draw(bitmap_data, bmp_stream.get_data(), bmp_stream.get_offset(), capture_bmp);
 
     char message[1024];
     if (!check_sig(gd, message,

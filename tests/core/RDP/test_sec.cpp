@@ -60,8 +60,6 @@ BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 
 BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 {
-    BStream stream(1024);
-
     const char sec_pkt[] =
         "\x01\x00\x00\x00" // 0x00000001 = SEC_EXCHANGE_PKT
         "\x48\x00\x00\x00" // 0x00000048 = 72 (64 bytes key + 8 bytes padding)
@@ -73,20 +71,22 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
     ;
     size_t length = sizeof(sec_pkt)-1;
     GeneratorTransport t(sec_pkt, length);
-    t.recv(&stream.end, length);
 
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
+
+    InStream stream(buf, length);
     SEC::SecExchangePacket_Recv sec(stream);
     BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_EXCHANGE_PKT, sec.basicSecurityHeader);
-    BOOST_CHECK_EQUAL(length - 16, sec.payload.size());
-    BOOST_CHECK_EQUAL(64, sec.payload.size());
+    BOOST_CHECK_EQUAL(length - 16, sec.payload.get_capacity());
+    BOOST_CHECK_EQUAL(64, sec.payload.get_capacity());
     // We won't compare padding
-    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.get_data(), sec.payload.size()));
+    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.get_data(), sec.payload.get_capacity()));
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 {
-    BStream stream(1024);
-
     const char sec_pkt[] =
         "\x48\x00\x00\x00\xf6\xc8\x5c\xd6\xe4\x2e\xd3\x88\x66\x93\x36\x57"
         "\x73\x09\x8b\xf8\xa7\xdb\x68\xf6\xaf\x75\x3a\x1a\x74\x6b\x56\xe0"
@@ -112,7 +112,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
     ;
     size_t length = sizeof(sec_pkt) - 1;
     GeneratorTransport t(sec_pkt, length);
-    t.recv(&stream.end, length);
+
+    uint8_t buf[1024];
+    auto end = buf;
+    t.recv(&end, length);
+
+    InStream stream(buf, length);
 
     CryptContext decrypt;
     decrypt.encryptionMethod = 1;
@@ -145,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         /* 0120 */ "\x00\x00\x00\x00\xc4\xff\xff\xff\x01\x00\x00\x00\x07\x00\x00\x00" //................
         /* 0130 */ "\x00\x00\x64\x00\x00\x00"
         ;
-    BOOST_CHECK_EQUAL(sizeof(expected)-1, sec.payload.size());
+    BOOST_CHECK_EQUAL(sizeof(expected)-1, sec.payload.get_capacity());
     BOOST_CHECK_EQUAL(0, memcmp(expected, sec.payload.get_data(), sizeof(expected)-1));
 }
 

@@ -87,12 +87,11 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
         sizeof(gcc_conference_create_request_expected),
         256);
 
-    BStream stream(65536);
+    StaticOutStream<65536> stream;
     stream.out_copy_bytes(gcc_user_data, sizeof(gcc_user_data)-1); // -1 to ignore final 0
-    stream.mark_end();
 
     OutPerBStream gcc_header(65536);
-    GCC::Create_Request_Send(gcc_header, stream.size());
+    GCC::Create_Request_Send(gcc_header, stream.get_offset());
     t.send(gcc_header);
 
     constexpr std::size_t sz = sizeof(gcc_conference_create_request_expected)-1;  // -1 to ignore final 0
@@ -118,19 +117,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
         "\x00\x00\x00\x00" // TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
     ;
 
-    BStream stream(12);
+    uint8_t buf[12];
     GCC::UserData::SCCore sc_core;
     sc_core.length = 12;
     sc_core.version = 0x0080004;
     sc_core.clientRequestedProtocols = 0;
-    sc_core.emit(stream);
-    BOOST_CHECK_EQUAL(12, stream.size());
-    BOOST_CHECK(0 == memcmp(expected, stream.get_data(), 12));
+    OutStream out_stream(buf);
+    sc_core.emit(out_stream);
+    BOOST_CHECK_EQUAL(12, out_stream.get_offset());
+    BOOST_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
 
-    stream.p = stream.get_data();
     GCC::UserData::SCCore sc_core2;
 
-    sc_core2.recv(stream);
+    InStream in_stream(buf);
+    sc_core2.recv(in_stream);
     BOOST_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
     BOOST_CHECK_EQUAL(12, sc_core2.length);
     BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
@@ -151,7 +151,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
         "\x00\x00"         // padding
     ;
 
-    BStream stream(16);
+    uint8_t buf[16];
+    OutStream out_stream(buf);
     GCC::UserData::SCNet sc_net;
     sc_net.length = 16;
     sc_net.MCSChannelId = 1003;
@@ -159,17 +160,16 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     sc_net.channelDefArray[0].id = 1004;
     sc_net.channelDefArray[1].id = 1005;
     sc_net.channelDefArray[2].id = 1006;
-    sc_net.emit(stream);
-    BOOST_CHECK_EQUAL(16, stream.size());
-    BOOST_CHECK(0 == memcmp(expected, stream.get_data(), 12));
-
-    stream.p = stream.get_data();
+    sc_net.emit(out_stream);
+    BOOST_CHECK_EQUAL(16, out_stream.get_offset());
+    BOOST_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
 
     try {
         GCC::UserData::SCNet sc_net2;
 
         const bool bogus_sc_net_size = false;
-        sc_net2.recv(stream, bogus_sc_net_size);
+        InStream in_stream(buf);
+        sc_net2.recv(in_stream, bogus_sc_net_size);
         BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
         BOOST_CHECK_EQUAL(16, sc_net2.length);
         BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
@@ -203,9 +203,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
                            // | CHANNEL_OPTION_COMPRESS_RDP
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(256);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr std::size_t sz = sizeof(indata) - 1;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    InStream stream(buf, sz);
     GCC::UserData::CSNet cs_net;
     cs_net.recv(stream);
     BOOST_CHECK_EQUAL(CS_NET, cs_net.userDataType);
@@ -233,9 +236,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(256);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr std::size_t sz = sizeof(indata) - 1;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -253,9 +259,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(256);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr std::size_t sz = sizeof(indata) - 1;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -362,9 +371,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     /* 0580 */ "\x00\x00"                                                         //..
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(8192);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr std::size_t sz = sizeof(indata) - 1;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -406,9 +418,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
         /* 00e0 */ "\x99\xb1\x15\x7c\x00\x00\x00\x00\x00\x00\x00\x00"                 //...|........
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(8192);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr std::size_t sz = sizeof(indata) - 1;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -441,9 +456,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
         "\x00\x00\x00\x00" // TS_UD_CS_CLUSTER::RedirectedSessionID
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(256);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr std::size_t sz = sizeof(indata) - 1;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    InStream stream(buf, sz);
     GCC::UserData::CSCluster cs_cluster;
     cs_cluster.recv(stream);
     BOOST_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
@@ -496,9 +514,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
         "\x00\x00\x00\x00" // TS_UD_CS_CORE::serverSelectedProtocol
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(256);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr std::size_t sz = sizeof(indata) - 1;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    InStream stream(buf, sz);
     GCC::UserData::CSCore cs_core;
     cs_core.recv(stream);
     BOOST_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
@@ -526,10 +547,13 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
         "\x00\x00\x00\x00" // TS_UD_CS_SEC::extEncryptionMethods
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(256);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr auto sz = sizeof(indata) - 1u;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
     GCC::UserData::CSSecurity cs_security;
+    InStream stream(buf);
     cs_security.recv(stream);
     BOOST_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
     BOOST_CHECK_EQUAL(12, cs_security.length);
@@ -572,10 +596,13 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
         /* 01a0 */ "\xcb\x4c\x09\x25\x00\x00\x00\x00\x00\x00\x00\x00"             //.L.%........
     ;
 
-    GeneratorTransport gt(indata, sizeof(indata) - 1);
-    BStream stream(8192);
-    gt.recv(&stream.end, sizeof(indata) - 1);
+    constexpr auto sz = sizeof(indata) - 1u;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
     GCC::UserData::SCSecurity sc_sec1;
+    InStream stream(buf);
     sc_sec1.recv(stream);
     BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
     BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
@@ -594,11 +621,10 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
 
     sc_sec1.log("Server Received");
 
-    stream.reset();
-
-    sc_sec1.emit(stream);
+    OutStream out_stream(buf);
+    sc_sec1.emit(out_stream);
 
     CheckTransport ct(indata, sizeof(indata));
 
-    ct.send(stream);
+    ct.send(out_stream.get_data(), out_stream.get_offset());
 }

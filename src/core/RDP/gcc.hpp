@@ -421,83 +421,7 @@ namespace GCC
     // 14 76 0a 01 01 00 01 c0 00 4d 63 44 6e
     // 81 08
 
-    class Create_Response_Send {
-        public:
-        Create_Response_Send(Stream & stream, size_t payload_size) {
-            // ConnectData
-            // 00 05 -> Key::object length = 5 bytes
-            // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
-            stream.out_uint16_be(5);
-            stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
-
-            // 2a -> ConnectData::connectPDU length = 42 bytes
-            // This length MUST be ignored by the client.
-            stream.out_uint8(0x2a);
-
-            // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
-            // PDU:
-            // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
-
-            // 0x14:
-            // 0 - extension bit (ConnectGCCPDU)
-            // 0 - --\ ...
-            // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
-            // 1 - --/ of type ConferenceCreateResponse
-            // 0 - extension bit (ConferenceCreateResponse)
-            // 1 - ConferenceCreateResponse::userData present
-            // 0 - padding
-            // 0 - padding
-            stream.out_uint8(0x10 | 4);
-
-            // ConferenceCreateResponse::nodeID
-            //  = 0x760a + 1001 = 30218 + 1001 = 31219
-            //  (minimum for UserID is 1001)
-            stream.out_uint16_be(0x760a);
-
-            // ConferenceCreateResponse::tag length = 1 byte
-            stream.out_uint8(1);
-
-            // ConferenceCreateResponse::tag = 1
-            stream.out_uint8(1);
-
-            // 0x00:
-            // 0 - extension bit (Result)
-            // 0 - --\ ...
-            // 0 -   | ConferenceCreateResponse::result = success (0)
-            // 0 - --/
-            // 0 - padding
-            // 0 - padding
-            // 0 - padding
-            // 0 - padding
-            stream.out_uint8(0);
-
-            // number of UserData sets = 1
-            stream.out_uint8(1);
-
-            // 0xc0:
-            // 1 - UserData::value present
-            // 1 - CHOICE: From Key select h221NonStandard (1)
-            //               of type H221NonStandardIdentifier
-            // 0 - padding
-            // 0 - padding
-            // 0 - padding
-            // 0 - padding
-            // 0 - padding
-            // 0 - padding
-            stream.out_uint8(0xc0);
-
-            // h221NonStandard length = 0 + 4 = 4 octets
-            //   (minimum for H221NonStandardIdentifier is 4)
-            stream.out_uint8(0);
-
-            // h221NonStandard (server-to-client H.221 key) = "McDn"
-            stream.out_copy_bytes("McDn", 4);
-
-            // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
-            stream.out_uint16_be(0x8000 | payload_size);
-            stream.mark_end();
-        }
-
+    struct Create_Response_Send {
         Create_Response_Send(OutStream & stream, size_t payload_size) {
             // ConnectData
             // 00 05 -> Key::object length = 5 bytes
@@ -744,28 +668,6 @@ namespace GCC
             {
             }
 
-            void emit(Stream & stream)
-            {
-                if (this->length != 8
-                && this->length != 12
-                && this->length != 16) {
-                    LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
-                    throw Error(ERR_GCC);
-                };
-
-                stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);
-                stream.out_uint32_le(this->version);
-
-                if (this->length >= 12){
-                    stream.out_uint32_le(this->clientRequestedProtocols);
-                }
-                if (this->length >= 16){
-                    stream.out_uint32_le(this->earlyCapabilityFlags);
-                }
-                stream.mark_end();
-            }
-
             void emit(OutStream & stream)
             {
                 if (this->length != 8
@@ -784,38 +686,6 @@ namespace GCC
                 }
                 if (this->length >= 16){
                     stream.out_uint32_le(this->earlyCapabilityFlags);
-                }
-            }
-
-            void recv(Stream & stream)
-            {
-                if (!stream.in_check_rem(8)){
-                    LOG(LOG_ERR, "SC_CORE short header");
-                    throw Error(ERR_GCC);
-                }
-
-                this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
-                this->version = stream.in_uint32_le();
-                if (this->length < 12) {
-                    if (this->length != 8) {
-                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
-                        throw Error(ERR_GCC);
-                    }
-                    return;
-                }
-                this->clientRequestedProtocols = stream.in_uint32_le();
-                if (this->length < 16) {
-                    if (this->length != 12) {
-                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
-                        throw Error(ERR_GCC);
-                    }
-                    return;
-                }
-                this->earlyCapabilityFlags = stream.in_uint32_le();
-                if (this->length != 16) {
-                    LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
-                    throw Error(ERR_GCC);
                 }
             }
 
@@ -1252,64 +1122,6 @@ namespace GCC
                 memset(this->clientDigProductId, 0, 64);
             }
 
-            void recv(Stream & stream)
-            {
-                if (!stream.in_check_rem(36)){
-                    LOG(LOG_ERR, "CSCore::recv short header");
-                    throw Error(ERR_GCC);
-                }
-
-                this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
-
-                if (!stream.in_check_rem(this->length - 4)){
-                    LOG(LOG_ERR, "CSCore::recv short length=%d", this->length);
-                    throw Error(ERR_GCC);
-                }
-
-                this->version = stream.in_uint32_le();
-                this->desktopWidth = stream.in_uint16_le();
-                this->desktopHeight = stream.in_uint16_le();
-                this->colorDepth = stream.in_uint16_le();
-                this->SASSequence = stream.in_uint16_le();
-                this->keyboardLayout = stream.in_uint32_le();
-                this->clientBuild = stream.in_uint32_le();
-                // utf16 hostname fixed length,
-                // including mandatory terminal 0
-                // length is a number of utf16 characters
-                stream.in_utf16(this->clientName, 16);
-                this->keyboardType = stream.in_uint32_le();
-                this->keyboardSubType = stream.in_uint32_le();
-                this->keyboardFunctionKey = stream.in_uint32_le();
-                // utf16 fixed length,
-                // including mandatory terminal 0
-                // length is a number of utf16 characters
-                stream.in_utf16(this->imeFileName, 32);
-                // --------------------- Optional Fields ---------------------------------------
-                if (this->length < 134) { return; }
-                this->postBeta2ColorDepth = stream.in_uint16_le();
-                if (this->length < 136) { return; }
-                this->clientProductId = stream.in_uint16_le();
-                if (this->length < 140) { return; }
-                this->serialNumber = stream.in_uint32_le();
-                if (this->length < 142) { return; }
-                this->highColorDepth = stream.in_uint16_le();
-                if (this->length < 144) { return; }
-                this->supportedColorDepths = stream.in_uint16_le();
-                if (this->length < 146) { return; }
-                this->earlyCapabilityFlags = stream.in_uint16_le();
-                if (this->length < 210) { return; }
-                stream.in_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
-                if (this->length < 211) { return; }
-                this->connectionType = stream.in_uint8();
-                if (this->length < 212) { return; }
-                this->pad1octet = stream.in_uint8();
-                if (this->length < 216) { return; }
-                this->serverSelectedProtocol = stream.in_uint32_le();
-                TODO("Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2");
-
-            }
-
             void recv(InStream & stream)
             {
                 if (!stream.in_check_rem(36)){
@@ -1368,34 +1180,6 @@ namespace GCC
 
             }
 
-            void emit(Stream & stream)
-            {
-                stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);
-                stream.out_uint32_le(this->version);
-                stream.out_uint16_le(this->desktopWidth);
-                stream.out_uint16_le(this->desktopHeight);
-                stream.out_uint16_le(this->colorDepth);
-                stream.out_uint16_le(this->SASSequence);
-                stream.out_uint32_le(this->keyboardLayout);
-                stream.out_uint32_le(this->clientBuild);
-                // utf16 hostname fixed length,
-                // including mandatory terminal 0
-                // length is a number of utf16 characters
-                stream.out_utf16(this->clientName, 16);
-                stream.out_uint32_le(this->keyboardType);
-                stream.out_uint32_le(this->keyboardSubType);
-                stream.out_uint32_le(this->keyboardFunctionKey);
-                // utf16 fixed length,
-                // including mandatory terminal 0
-                // length is a number of utf16 characters
-                stream.out_utf16(this->imeFileName, 32);
-
-                // --------------------- Optional Fields ---------------------------------------
-                this->emit_optional(stream);
-                stream.mark_end();
-            }
-
             void emit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
@@ -1424,30 +1208,6 @@ namespace GCC
             }
 
             private:
-            void emit_optional(Stream & stream)
-            {
-                if (this->length < 134) { return; }
-                stream.out_uint16_le(this->postBeta2ColorDepth);
-                if (this->length < 136) { return; }
-                stream.out_uint16_le(this->clientProductId);
-                if (this->length < 140) { return; }
-                stream.out_uint32_le(this->serialNumber);
-                if (this->length < 142) { return; }
-                stream.out_uint16_le(this->highColorDepth);
-                if (this->length < 144) { return; }
-                stream.out_uint16_le(this->supportedColorDepths);
-                if (this->length < 146) { return; }
-                stream.out_uint16_le(this->earlyCapabilityFlags);
-                if (this->length < 210) { return; }
-                stream.out_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
-                if (this->length < 211) { return; }
-                stream.out_uint8(this->connectionType);
-                if (this->length < 212) { return; }
-                stream.out_uint8(this->pad1octet);
-                if (this->length < 216) { return; }
-                stream.out_uint32_le(this->serverSelectedProtocol);
-            }
-
             void emit_optional(OutStream & stream)
             {
                 if (this->length < 134) { return; }
@@ -1709,44 +1469,12 @@ namespace GCC
             {
             }
 
-            void emit(Stream & stream)
-            {
-                stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);
-                stream.out_uint32_le(this->flags);
-                stream.out_uint32_le(this->redirectedSessionID);
-                stream.mark_end();
-            }
-
             void emit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
                 stream.out_uint32_le(this->flags);
                 stream.out_uint32_le(this->redirectedSessionID);
-            }
-
-            void recv(Stream & stream)
-            {
-                if (!stream.in_check_rem(12)){
-                    LOG(LOG_ERR, "CS_CORE short header");
-                    throw Error(ERR_GCC);
-                }
-
-                this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
-
-                if (this->length != 12){
-                    LOG(LOG_ERR, "CSCluster::recv bad header length=%d", this->length);
-                    if (this->permissive) {
-                        stream.in_skip_bytes(this->length - 4);
-                        return;
-                    }
-                    throw Error(ERR_GCC);
-                }
-
-                this->flags = stream.in_uint32_le();
-                this->redirectedSessionID = stream.in_uint32_le();
             }
 
             void recv(InStream & stream)
@@ -1880,7 +1608,7 @@ namespace GCC
             , monitorDefArray()
             , permissive(false) {}
 
-            void emit(Stream & stream) {
+            void emit(OutStream & stream) {
                 REDASSERT((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));
 
                 stream.out_uint16_le(this->userDataType);
@@ -1896,66 +1624,6 @@ namespace GCC
                     stream.out_sint32_le(this->monitorDefArray[i].right);
                     stream.out_sint32_le(this->monitorDefArray[i].bottom);
                     stream.out_uint32_le(this->monitorDefArray[i].flags);
-                }
-
-                stream.mark_end();
-            }
-
-            void recv(Stream & stream) {
-                if (!stream.in_check_rem(4)) {
-                    LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%u",
-                        stream.in_remain());
-                    throw Error(ERR_GCC);
-                }
-
-                this->userDataType = stream.in_uint16_le();
-                this->length       = stream.in_uint16_le();
-
-                if (!stream.in_check_rem(4)) {
-                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=4 remains=%u",
-                        stream.in_remain());
-                    throw Error(ERR_GCC);
-                }
-
-                this->flags        = stream.in_uint32_le();
-                this->monitorCount = stream.in_uint32_le();
-
-                if ((this->monitorCount < 1) || (this->monitorCount > MAX_MONITOR_COUNT)) {
-                    LOG(LOG_ERR, "CSMonitor::recv monitor count out of range (%u)", this->monitorCount);
-                    this->monitorCount = 0;
-                    if (this->permissive) {
-                        stream.in_skip_bytes(this->length - 12 /*header(4) + flags(4) + monitorCount(4)*/);
-                        return;
-                    }
-                    throw Error(ERR_GCC);
-                }
-
-                unsigned expected = 4 + 4 + 4 + this->monitorCount * 20;    // header(4) + flags(4) + monitorCount(4) + monitorCount * monitorDefArray(20)
-
-                if ((this->length != expected) && (!this->permissive || (this->length < expected))) {
-                    LOG(LOG_ERR, "CSMonitor::recv bad header length, expecting=%u got=%u",
-                        expected, this->length);
-                    throw Error(ERR_GCC);
-                }
-
-                expected = this->monitorCount * 20;    // monitorCount * monitorDefArray(20)
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=%u remains=%u",
-                        expected, stream.in_remain());
-                    throw Error(ERR_GCC);
-                }
-
-                for (uint32_t i = 0; i < this->monitorCount; i++) {
-                    this->monitorDefArray[i].left   = stream.in_sint32_le();
-                    this->monitorDefArray[i].top    = stream.in_sint32_le();
-                    this->monitorDefArray[i].right  = stream.in_sint32_le();
-                    this->monitorDefArray[i].bottom = stream.in_sint32_le();
-                    this->monitorDefArray[i].flags  = stream.in_uint32_le();
-                }
-
-                expected = 4 + 4 + 4 + this->monitorCount * 20;    // header(4) + flags(4) + monitorCount(4) + monitorCount * monitorDefArray(20)
-                if ((this->length > expected) && this->permissive) {
-                    stream.in_skip_bytes(this->length - expected);
                 }
             }
 
@@ -2141,19 +1809,6 @@ namespace GCC
 
             bool permissive = false;
 
-            void emit(Stream & stream)
-            {
-                stream.out_uint16_le(this->userDataType);
-                this->length = this->channelCount * 12 + 8;
-                stream.out_uint16_le(this->length);
-                stream.out_uint32_le(this->channelCount);
-                for (size_t i = 0; i < this->channelCount ; i++){
-                    stream.out_copy_bytes(this->channelDefArray[i].name, 8);
-                    stream.out_uint32_le(this->channelDefArray[i].options);
-                }
-                stream.mark_end();
-            }
-
             void emit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
@@ -2163,48 +1818,6 @@ namespace GCC
                 for (size_t i = 0; i < this->channelCount ; i++){
                     stream.out_copy_bytes(this->channelDefArray[i].name, 8);
                     stream.out_uint32_le(this->channelDefArray[i].options);
-                }
-            }
-
-            void recv(Stream & stream)
-            {
-
-                if (!stream.in_check_rem(8)){
-                    LOG(LOG_ERR, "CSNet::recv short header");
-                    throw Error(ERR_GCC);
-                }
-
-                this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
-
-                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
-                    LOG(LOG_ERR, "CSNet::recv bad header length=%u", this->length);
-                    throw Error(ERR_GCC);
-                }
-
-                this->channelCount = stream.in_uint32_le();
-                if (this->channelCount >= 31) {
-                    LOG(LOG_ERR, "cs_net::recv channel count out of range (%u)", this->channelCount);
-                    this->channelCount = 0;
-                    if (this->permissive) {
-                        stream.in_skip_bytes(this->length - 8);
-                        return;
-                    }
-                    throw Error(ERR_CHANNEL_OUT_OF_RANGE);
-                }
-                if ((12 * this->channelCount + 8) != (this->length)) {
-                    LOG(LOG_ERR, "CSNet::recv length=%u and 12 * channelcount=%u not matching, ",
-                        this->length - 8, this->channelCount);
-                    if (this->permissive) {
-                        stream.in_skip_bytes(this->length - 8);
-                        return;
-                    }
-                    throw Error(ERR_GCC);
-                }
-
-                for (size_t i = 0; i < this->channelCount ; i++){
-                    stream.in_copy_bytes(this->channelDefArray[i].name, 8);
-                    this->channelDefArray[i].options = stream.in_uint32_le();
                 }
             }
 
@@ -2331,22 +1944,6 @@ namespace GCC
             {
             }
 
-            void emit(Stream & stream)
-            {
-                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
-                stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);
-                stream.out_uint16_le(this->MCSChannelId);
-                stream.out_uint16_le(this->channelCount);
-                for (size_t i = 0; i < this->channelCount ; i++){
-                    stream.out_uint16_le(this->channelDefArray[i].id);
-                }
-                if (this->channelCount & 1){
-                    stream.out_uint16_le(0);
-                }
-                stream.mark_end();
-            }
-
             void emit(OutStream & stream)
             {
                 this->length = 8 + 4 * ((this->channelCount+1) >> 1);
@@ -2359,44 +1956,6 @@ namespace GCC
                 }
                 if (this->channelCount & 1){
                     stream.out_uint16_le(0);
-                }
-            }
-
-            void recv(Stream & stream, bool bogus_sc_net_size)
-            {
-                if (!stream.in_check_rem(8)){
-                    LOG(LOG_ERR, "SCNet::recv short header");
-                    throw Error(ERR_GCC);
-                }
-
-                this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
-
-                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
-                    LOG(LOG_ERR, "SCNet::recv bad header length=%d size=%d", this->length, stream.size());
-                    throw Error(ERR_GCC);
-                }
-
-                this->MCSChannelId = stream.in_uint16_le();
-                this->channelCount = stream.in_uint16_le();
-
-                if (!this->channelCount && (this->length == 10) && bogus_sc_net_size) {
-                    LOG(LOG_WARNING, "SCNet::recv accepts VirtualBox bogus TS_UD_SC_NET data block.");
-                }
-                else if (this->length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
-                    LOG(LOG_ERR, "SCNet::recv bad header length=%d", this->length);
-                    throw Error(ERR_GCC);
-                }
-
-                if (this->channelCount >= 32) {
-                    LOG(LOG_ERR, "SCNet::recv channel count out of range (%u)", this->channelCount);
-                    throw Error(ERR_CHANNEL_OUT_OF_RANGE);
-                }
-                for (size_t i = 0; i < this->channelCount ; i++){
-                    this->channelDefArray[i].id = stream.in_uint16_le();
-                }
-                if (this->channelCount & 1){
-                    stream.in_skip_bytes(2);
                 }
             }
 
@@ -2918,60 +2477,6 @@ namespace GCC
                 }
             }
 
-            void emit(Stream & stream)
-            {
-                stream.out_uint16_le(SC_SECURITY);
-
-                if ((this->encryptionMethod == 0) && (this->encryptionLevel == 0)){
-                    this->length = 12;
-                    this->serverRandomLen = 0;
-                    this->encryptionLevel = 0;
-                    stream.out_uint16_le(this->length); // length, including tag and length fields
-                    stream.out_uint32_le(this->encryptionMethod); // encryptionMethod
-                    stream.out_uint32_le(this->encryptionLevel); // encryptionLevel
-                }
-                else {
-                    stream.out_uint16_le(this->length); // length, including tag and length fields
-                    stream.out_uint32_le(this->encryptionMethod); // key len 1 = 40 bit 2 = 128 bit
-                    stream.out_uint32_le(this->encryptionLevel);
-                    stream.out_uint32_le(this->serverRandomLen);  // random len
-                    stream.out_uint32_le(this->serverCertLen); // len of rsa info(certificate)
-                    stream.out_copy_bytes(this->serverRandom, this->serverRandomLen);
-
-                    // --------------------------------------------------------------
-                    /* here to end is certificate */
-                    /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TermService\Parameters\Certificate */
-                    stream.out_uint32_le(this->dwVersion|(this->temporary << 31));
-
-                    if ((this->dwVersion & 0x7FFFFFFF) == CERT_CHAIN_VERSION_1){
-                        stream.out_uint32_le(this->proprietaryCertificate.dwSigAlgId);
-                        stream.out_uint32_le(this->proprietaryCertificate.dwKeyAlgId);
-
-                        stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobType);
-                        stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobLen);
-                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.magic);
-                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.keylen);
-                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.bitlen);
-                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.datalen);
-                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.modulus,
-                                              /*SEC_MODULUS_SIZE*/this->proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
-                        stream.out_clear_bytes(SEC_PADDING_SIZE);
-
-                        stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobType);
-                        stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobLen); /* len */
-                        stream.out_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64); /* pub sig */
-                        stream.out_clear_bytes(8); /* pad */
-                    }
-                    else {
-                        // send chain of certificates
-                    }
-                    /* end certificate */
-                    // --------------------------------------------------------------
-                }
-                stream.mark_end();
-            }
-
             void emit(OutStream & stream)
             {
                 stream.out_uint16_le(SC_SECURITY);
@@ -3022,167 +2527,6 @@ namespace GCC
                     }
                     /* end certificate */
                     // --------------------------------------------------------------
-                }
-            }
-
-            void recv(Stream & stream)
-            {
-                if (!stream.in_check_rem(4)){
-                    LOG(LOG_ERR, "SC_SECURITY short header");
-                    throw Error(ERR_GCC);
-                }
-                this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
-                if ((this->length <= 4) || !stream.in_check_rem(this->length - 4)){
-                    LOG(LOG_ERR, "SC_SECURITY bad header length");
-                    throw Error(ERR_GCC);
-                }
-                this->encryptionMethod = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
-                this->encryptionLevel = stream.in_uint32_le();  /* 1 = low, 2 = medium, 3 = high */
-
-                if ((this->encryptionMethod == 0) && (this->encryptionLevel == 0)){
-                    this->serverRandomLen = 0;
-                    this->encryptionLevel = 0;
-                }
-                if (((this->encryptionLevel == 0) || (this->encryptionMethod == 0))
-                && (this->length != 12)) {
-                    LOG(LOG_ERR, "SC_SECURITY bad header length, no encryption length=%d", this->length);
-                    throw Error(ERR_GCC);
-                }
-                if (this->length == 12) {
-                    if ((this->encryptionLevel != 0)||(this->encryptionMethod != 0)){
-                        LOG(LOG_ERR, "SC_SECURITY short header with encription method=%u level=%u",
-                            this->encryptionMethod, this->encryptionLevel);
-                        throw Error(ERR_GCC);
-                    }
-                    return;
-                }
-
-                if ((this->encryptionLevel == 0) || (encryptionMethod == 0)){
-                    LOG(LOG_ERR, "SC_SECURITY encryption header but no encryption setted : method=%u level=%u",
-                        this->encryptionMethod, this->encryptionLevel);
-                    throw Error(ERR_GCC);
-                }
-
-                // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
-                // the serverRandom field. If the encryptionMethod and encryptionLevel fields
-                // are both set to 0 then the contents of this field MUST be ignored and the
-                // serverRandom field MUST NOT be present. Otherwise, this field MUST be set to
-                // 32 bytes.
-                this->serverRandomLen = stream.in_uint32_le();
-
-                // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
-                //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
-                //  are both set to 0 then the contents of this field MUST be ignored and the
-                // serverCertificate field MUST NOT be present.
-
-                this->serverCertLen = stream.in_uint32_le();
-
-                if (this->serverRandomLen != SEC_RANDOM_SIZE) {
-                    LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %d, expected %d",
-                         this->serverRandomLen, SEC_RANDOM_SIZE);
-                    throw Error(ERR_GCC);
-                }
-
-                if (!stream.in_check_rem(this->serverCertLen)) {
-                    LOG(LOG_ERR, "SCSecutity recv: serverCertLen %d, not enough data available (%u)",
-                         this->serverCertLen, stream.size() - stream.get_offset());
-                    throw Error(ERR_GCC);
-                }
-                // serverRandom (variable): The variable-length server random value used to
-                // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
-                // given by the serverRandomLen field. If the encryptionMethod and
-                // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
-
-                stream.in_copy_bytes(this->serverRandom, this->serverRandomLen);
-                uint32_t certType = stream.in_uint32_le();
-                this->dwVersion = certType & 0x7FFFFFFF;
-                this->temporary = 0 != (certType & 0x80000000);
-                if (this->dwVersion == CERT_CHAIN_VERSION_1){
-                    // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
-                    //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
-                    this->proprietaryCertificate.dwSigAlgId = stream.in_uint32_le();
-
-                    // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
-                    //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
-                    this->proprietaryCertificate.dwKeyAlgId = stream.in_uint32_le();
-
-                    // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
-                    //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
-                    //  (0x0006).
-                    this->proprietaryCertificate.wPublicKeyBlobType = stream.in_uint16_le();
-
-                    // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
-                    //  of the PublicKeyBlob field.
-                    this->proprietaryCertificate.wPublicKeyBlobLen = stream.in_uint16_le();
-
-                    if ((this->proprietaryCertificate.wPublicKeyBlobLen != 92) &&
-                        (this->proprietaryCertificate.wPublicKeyBlobLen != 284)) {
-                        LOG(LOG_ERR, "Unsupported RSA Key blob len in certificate %u (expected 92 or 284)",
-                            this->proprietaryCertificate.wPublicKeyBlobLen);
-                        throw Error(ERR_GCC);
-                    }
-                    LOG(LOG_INFO, "RSA Key blob len in certificate is %u", this->proprietaryCertificate.wPublicKeyBlobLen);
-
-                    this->proprietaryCertificate.RSAPK.magic = stream.in_uint32_le();
-                    if (this->proprietaryCertificate.RSAPK.magic != RSA_MAGIC) {
-                            LOG(LOG_ERR, "Bad RSA magic 0x%x", this->proprietaryCertificate.RSAPK.magic);
-                            throw Error(ERR_GCC);
-                    }
-                    this->proprietaryCertificate.RSAPK.keylen = stream.in_uint32_le();
-                    if ((this->proprietaryCertificate.RSAPK.keylen != 72) &&
-                        (this->proprietaryCertificate.RSAPK.keylen != 264)) {
-                        LOG(LOG_WARNING, "Bad server public key len in certificate %u (expected 72 or 264)",
-                            this->proprietaryCertificate.RSAPK.keylen);
-                        throw Error(ERR_GCC);
-                    }
-                    this->proprietaryCertificate.RSAPK.bitlen = stream.in_uint32_le();
-                    this->proprietaryCertificate.RSAPK.datalen = stream.in_uint32_le();
-                    stream.in_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                    stream.in_copy_bytes(this->proprietaryCertificate.RSAPK.modulus,
-                                         /*SEC_MODULUS_SIZE + SEC_PADDING_SIZE*/this->proprietaryCertificate.RSAPK.keylen);
-
-
-                    // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
-                    //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
-                    //  (0x0008).
-                    this->proprietaryCertificate.wSignatureBlobType = stream.in_uint16_le();
-                    if (this->proprietaryCertificate.wSignatureBlobType != BB_RSA_SIGNATURE_BLOB){
-                        LOG(LOG_ERR, "RSA Signature blob expected, got %x",
-                            this->proprietaryCertificate.wSignatureBlobType);
-                        throw Error(ERR_GCC);
-                    }
-
-                    // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
-                    //  of the SignatureKeyBlob field.
-                    this->proprietaryCertificate.wSignatureBlobLen = stream.in_uint16_le();
-
-                    // SignatureBlob (variable): Variable-length signature of the certificate
-                    // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
-                    // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
-                    if (this->proprietaryCertificate.wSignatureBlobLen != 72){
-                        LOG(LOG_ERR, "RSA Signature blob len too large in certificate %u (expected 72)",
-                            this->proprietaryCertificate.wSignatureBlobLen);
-                        throw Error(ERR_GCC);
-                    }
-                    stream.in_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64 + SEC_PADDING_SIZE);
-                }
-                else {
-                    this->x509.certCount = stream.in_uint32_le();
-                    if (this->x509.certCount > 32){
-                        LOG(LOG_ERR, "More than 32 certificates (count=%u), this is probably an attack",
-                            this->x509.certCount);
-                        throw Error(ERR_GCC);
-                    }
-
-                    for (size_t i = 0; i < this->x509.certCount ; i++){
-                        this->x509.cert[i].len = stream.in_uint32_le();
-                        if (this->x509.cert[i].cert) {
-                            X509_free(this->x509.cert[i].cert);
-                        }
-                        this->x509.cert[i].cert = d2i_X509(nullptr, const_cast<const uint8_t **>(&stream.p), this->x509.cert[i].len);
-                    }
-                    stream.in_skip_bytes(16); /* Padding */
                 }
             }
 
@@ -3451,39 +2795,12 @@ namespace GCC
             {
             }
 
-            void emit(Stream & stream)
-            {
-                stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);
-                stream.out_uint32_le(this->encryptionMethods);
-                stream.out_uint32_le(this->extEncryptionMethods);
-                stream.mark_end();
-            }
-
             void emit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
                 stream.out_uint32_le(this->encryptionMethods);
                 stream.out_uint32_le(this->extEncryptionMethods);
-            }
-
-            void recv(Stream & stream)
-            {
-                if (!stream.in_check_rem(12)){
-                    LOG(LOG_ERR, "CS_SECURITY short header");
-                    throw Error(ERR_GCC);
-                }
-                this->userDataType         = stream.in_uint16_le();
-                this->length               = stream.in_uint16_le();
-
-                if (this->length != 12){
-                    LOG(LOG_ERR, "CS_SECURITY bad header length=%d", this->length);
-                    throw Error(ERR_GCC);
-                }
-
-                this->encryptionMethods    = stream.in_uint32_le();
-                this->extEncryptionMethods = stream.in_uint32_le();
             }
 
             void recv(InStream & stream)
