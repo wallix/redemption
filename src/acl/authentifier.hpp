@@ -432,6 +432,36 @@ public:
            , data
            );
     }
+
+    virtual void log2(const char * type, const char * data, const char * info)
+            const override {
+        const char * session_type = "Neutral";
+
+        if (!this->ini.get<cfg::context::module>().compare("RDP") ||
+            !this->ini.get<cfg::context::module>().compare("VNC"))
+            session_type = this->ini.get<cfg::context::module>().c_str();
+
+        LOG( LOG_INFO
+           , "[%s Session] "
+             "type='%s' "
+             "sesion_id='%s' "
+             "user='%s' "
+             "device='%s' "
+             "service='%s' "
+             "account='%s' "
+             "data='%s' "
+             "info='%s'"
+           , session_type
+           , type
+           , this->ini.get<cfg::context::session_id>().c_str()
+           , this->ini.get<cfg::globals::auth_user>().c_str()
+           , this->ini.get<cfg::globals::target_device>().c_str()
+           , this->ini.get<cfg::context::target_service>().c_str()
+           , this->ini.get<cfg::globals::target_user>().c_str()
+           , data
+           , info
+           );
+    }
 };
 
 

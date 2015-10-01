@@ -33,6 +33,8 @@ public:
     virtual void report(const char * reason, const char * message) = 0;
 
     virtual void log(const char * type, const char * data) const = 0;
+    virtual void log2(const char * type, const char * data, const char * info)
+        const = 0;
 };
 
 
@@ -45,6 +47,8 @@ class NullAuthentifier : public auth_api {
     virtual void report(const char * reason, const char * message) override {}
 
     virtual void log(const char * type, const char * data) const override {}
+    virtual void log2(const char * type, const char * data, const char * info)
+        const override {}
 };
 
 
