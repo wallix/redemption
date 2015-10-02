@@ -36,14 +36,14 @@
 BOOST_AUTO_TEST_CASE(TestPolygonSCEmpty)
 {
     using namespace RDP;
-    BStream stream(1000);
+    StaticOutStream<1000> out_stream;
     RDPOrderCommon state_common(POLYGONSC, Rect(700, 200, 100, 200));
     RDPPolygonSC state_Polygon;
 
-    BOOST_CHECK_EQUAL(0, (stream.get_offset()));
+    BOOST_CHECK_EQUAL(0, (out_stream.get_offset()));
 
     RDPOrderCommon newcommon(POLYGONSC, Rect(0, 400, 800, 76));
-    RDPPolygonSC().emit(stream, newcommon, state_common, state_Polygon);
+    RDPPolygonSC().emit(out_stream, newcommon, state_common, state_Polygon);
 
     uint8_t datas[7] = {
         SMALL | BOUNDS | STANDARD | DELTA,
@@ -53,14 +53,14 @@ BOOST_AUTO_TEST_CASE(TestPolygonSCEmpty)
         0x90,
         0x01,
         0x4C };
-    check_datas(stream.get_offset(), stream.get_data(), 7, datas, "polygonsc draw 01");
+    check_datas(out_stream.get_offset(), out_stream.get_data(), 7, datas, "polygonsc draw 01");
 
-    stream.mark_end(); stream.p = stream.get_data();
+    InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
     RDPOrderCommon common_cmd = state_common;
-    uint8_t control = stream.in_uint8();
+    uint8_t control = in_stream.in_uint8();
     BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-    RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+    RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
     BOOST_CHECK_EQUAL((uint8_t)POLYGONSC, common_cmd.order);
     BOOST_CHECK_EQUAL(0, common_cmd.clip.x);
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonSCEmpty)
     BOOST_CHECK_EQUAL(76, common_cmd.clip.cy);
 
     RDPPolygonSC cmd;
-    cmd.receive(stream, header);
+    cmd.receive(in_stream, header);
 
     check<RDPPolygonSC>(common_cmd, cmd,
                         RDPOrderCommon(POLYGONSC, Rect(0, 400, 800, 76)),
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonSCEmpty)
 BOOST_AUTO_TEST_CASE(TestPolygonSC)
 {
     using namespace RDP;
-    BStream stream(1000);
+    StaticOutStream<1000> out_stream;
 
     RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
     RDPPolygonSC state_polygonSC;
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonSC)
     RDPPolygonSC polygonSC(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints);
 
 
-    polygonSC.emit(stream, newcommon, state_common, state_polygonSC);
+    polygonSC.emit(out_stream, newcommon, state_common, state_polygonSC);
 
     BOOST_CHECK_EQUAL((uint8_t)POLYGONSC, newcommon.order);
     BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
@@ -130,14 +130,14 @@ BOOST_AUTO_TEST_CASE(TestPolygonSC)
         0x98, 0x24, 0x14, 0x80, 0xA0, 0x62, 0x32, 0x32,
         0x4E, 0x32, 0x62, 0xFF, 0x60
     };
-    check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "PolygonSC 1");
+    check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "PolygonSC 1");
 
-    stream.mark_end(); stream.p = stream.get_data();
+    InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
     RDPOrderCommon common_cmd = state_common;
-    uint8_t control = stream.in_uint8();
+    uint8_t control = in_stream.in_uint8();
     BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-    RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+    RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
     BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
     BOOST_CHECK_EQUAL((uint32_t)0x67, header.fields);
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonSC)
     BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
     RDPPolygonSC cmd = state_polygonSC;
-    cmd.receive(stream, header);
+    cmd.receive(in_stream, header);
 
     deltaPoints.reset();
 

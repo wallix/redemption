@@ -85,56 +85,6 @@ class RDPLineTo {
              ;
     }
 
-    void emit(Stream & stream,
-            RDPOrderCommon & common,
-            const RDPOrderCommon & oldcommon,
-            const RDPLineTo & oldcmd) const
-    {
-        using namespace RDP;
-        RDPPrimaryOrderHeader header(STANDARD, 0);
-
-        TODO("check that");
-        if (!(common.clip.contains_pt(this->startx, this->starty)
-           && common.clip.contains_pt(this->endx, this->endy))){
-           header.control |= BOUNDS;
-        }
-
-        header.control |= (is_1_byte(this->startx - oldcmd.startx)
-                 && is_1_byte(this->starty - oldcmd.starty)
-                 && is_1_byte(this->endx - oldcmd.endx)
-                 && is_1_byte(this->endy - oldcmd.endy)) * DELTA;
-
-        header.fields =
-                (this->back_mode  != oldcmd.back_mode  ) * 0x001
-              | (this->startx     != oldcmd.startx     ) * 0x002
-              | (this->starty     != oldcmd.starty     ) * 0x004
-              | (this->endx       != oldcmd.endx       ) * 0x008
-              | (this->endy       != oldcmd.endy       ) * 0x010
-              | (this->back_color != oldcmd.back_color ) * 0x020
-              | (this->rop2       != oldcmd.rop2       ) * 0x040
-              | (this->pen.style  != oldcmd.pen.style  ) * 0x080
-              | (this->pen.width  != oldcmd.pen.width  ) * 0x100
-              | (this->pen.color  != oldcmd.pen.color  ) * 0x200
-              ;
-
-        common.emit(stream, header, oldcommon);
-
-        if (header.fields & 0x001) { stream.out_uint16_le(this->back_mode); }
-
-        header.emit_coord(stream, 0x02, this->startx, oldcmd.startx);
-        header.emit_coord(stream, 0x04, this->starty, oldcmd.starty);
-        header.emit_coord(stream, 0x08, this->endx,   oldcmd.endx);
-        header.emit_coord(stream, 0x10, this->endy,   oldcmd.endy);
-
-        if (header.fields & 0x20) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
-        }
-        if (header.fields & 0x40) { stream.out_uint8(this->rop2); }
-        header.emit_pen(stream, 0x80, this->pen, oldcmd.pen);
-    }
-
     void emit(OutStream & stream,
             RDPOrderCommon & common,
             const RDPOrderCommon & oldcommon,
@@ -183,33 +133,6 @@ class RDPLineTo {
         }
         if (header.fields & 0x40) { stream.out_uint8(this->rop2); }
         header.emit_pen(stream, 0x80, this->pen, oldcmd.pen);
-    }
-
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
-    {
-        using namespace RDP;
-
-        if (header.fields & 0x001) {
-            this->back_mode = stream.in_uint16_le();
-        }
-
-        header.receive_coord(stream, 0x002, this->startx);
-        header.receive_coord(stream, 0x004, this->starty);
-        header.receive_coord(stream, 0x008, this->endx);
-        header.receive_coord(stream, 0x010, this->endy);
-
-        if (header.fields & 0x020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = r + (g << 8) + (b << 16);
-        }
-
-        if (header.fields & 0x040) {
-            this->rop2 = stream.in_uint8();
-        }
-
-        header.receive_pen(stream, 0x080, this->pen);
     }
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header)

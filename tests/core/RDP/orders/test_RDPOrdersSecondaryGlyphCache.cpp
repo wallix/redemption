@@ -59,12 +59,12 @@ BOOST_AUTO_TEST_CASE(TestGlyphCache)
 /* 0100 */ 0x00, 0x06, 0x00, 0xdb, 0xdb, 0xdb, 0xff, 0x66, 0x66, 0x00, 0x00,                 // .......ff..
     };
 
-    FixedSizeStream stream(data, sizeof(data));
+    InStream in_stream(data);
 
-    RDPSecondaryOrderHeader header(stream);
+    RDPSecondaryOrderHeader header(in_stream);
 
     RDPGlyphCache cmd;
-    cmd.receive(stream, header);
+    cmd.receive(in_stream, header);
 
     BOOST_CHECK_EQUAL(283, header.order_length);
     BOOST_CHECK_EQUAL(CG_GLYPH_UNICODE_PRESENT, header.flags);

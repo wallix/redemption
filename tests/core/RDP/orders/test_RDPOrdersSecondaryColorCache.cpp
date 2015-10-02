@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(TestColCache)
     using namespace RDP;
 
     {
-        BStream stream(65536);
+        StaticOutStream<65536> out_stream;
 
         BGRPalette palette{BGRPalette::no_init()};
         for (int i = 0; i < 256; ++i){
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestColCache)
         }
         RDPColCache newcmd(0, palette);
 
-        newcmd.emit(stream);
+        newcmd.emit(out_stream);
 
         uint8_t datas[] = {
             STANDARD | SECONDARY,       // control = 0x03
@@ -121,14 +121,14 @@ BOOST_AUTO_TEST_CASE(TestColCache)
             04, 07, 03, 00, 05, 07, 03, 00, 06, 07, 03, 00, 07, 07, 03, 00,
         };
 
-        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Color Cache 1");
-        stream.mark_end(); stream.p = stream.get_data();
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Color Cache 1");
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
-        RDPSecondaryOrderHeader header(stream);
+        RDPSecondaryOrderHeader header(in_stream);
         RDPColCache cmd(0, newcmd.palette);
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPColCache>(cmd, newcmd, "Color Cache 1");
     }

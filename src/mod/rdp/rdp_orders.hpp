@@ -349,29 +349,6 @@ private:
         this->gly_cache.set_glyph(std::move(fi), cacheId, cacheIndex);
     }
 
-    void process_glyphcache(Stream & stream, const RDPSecondaryOrderHeader &/* header*/) {
-        if (this->verbose & 64) {
-            LOG(LOG_INFO, "rdp_orders_process_glyphcache");
-        }
-        const uint8_t cacheId = stream.in_uint8();
-        const uint8_t nglyphs = stream.in_uint8();
-        for (uint8_t i = 0; i < nglyphs; i++) {
-            const uint16_t cacheIndex = stream.in_uint16_le();
-            const int16_t  offset     = stream.in_sint16_le();
-            const int16_t  baseline   = stream.in_sint16_le();
-            const uint16_t width      = stream.in_uint16_le();
-            const uint16_t height     = stream.in_uint16_le();
-
-            const unsigned int   datasize = (height * nbbytes(width) + 3) & ~3;
-            const uint8_t      * data     = stream.in_uint8p(datasize);
-
-            this->server_add_char(cacheId, cacheIndex, offset, baseline, width, height, data);
-        }
-        if (this->verbose & 64) {
-            LOG(LOG_INFO, "rdp_orders_process_glyphcache done");
-        }
-    }
-
     void process_glyphcache(InStream & stream, const RDPSecondaryOrderHeader &/* header*/) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache");
@@ -392,20 +369,6 @@ private:
         }
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache done");
-        }
-    }
-
-    void process_colormap(Stream & stream, const RDPSecondaryOrderHeader & header, RDPGraphicDevice & gd) {
-        if (this->verbose & 64) {
-            LOG(LOG_INFO, "process_colormap");
-        }
-        RDPColCache colormap;
-        colormap.receive(stream, header);
-        RDPColCache cmd(colormap.cacheIndex, colormap.palette);
-        gd.draw(cmd);
-
-        if (this->verbose & 64) {
-            LOG(LOG_INFO, "process_colormap done");
         }
     }
 

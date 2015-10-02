@@ -81,50 +81,6 @@ class RDPDestBlt {
              ;
     }
 
-    void emit(Stream & stream,
-              RDPOrderCommon & common,
-              const RDPOrderCommon & oldcommon,
-              const RDPDestBlt & oldcmd) const
-    {
-        using namespace RDP;
-        RDPPrimaryOrderHeader header(STANDARD, 0);
-
-        if (!common.clip.contains(this->rect)){
-            header.control |= BOUNDS;
-        }
-
-        // DESTBLT fields bytes (1 byte)
-        // ------------------------------
-        // 0x01: x coordinate
-        // 0x02: y coordinate
-        // 0x04: cx coordinate
-        // 0x08: cy coordinate
-        // 0x10: rop byte
-
-        DeltaRect dr(this->rect, oldcmd.rect);
-
-        // RDP specs says that we can have DELTA only if we
-        // have bounds. Can't see the rationale and rdesktop don't do it
-        // by the book. Behavior should be checked with server and clients
-        // from Microsoft. Looks like an error in RDP specs.
-        header.control |= dr.fully_relative() * DELTA;
-
-        header.fields = (dr.dleft   != 0) * 0x01
-                      | (dr.dtop    != 0) * 0x02
-                      | (dr.dwidth  != 0) * 0x04
-                      | (dr.dheight != 0) * 0x08
-                      | (this->rop  != oldcmd.rop) * 0x10
-                      ;
-
-        common.emit(stream, header, oldcommon);
-
-        header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
-
-        if (header.fields & 0x10){
-            stream.out_uint8(this->rop);
-        }
-    }
-
     void emit(OutStream & stream,
               RDPOrderCommon & common,
               const RDPOrderCommon & oldcommon,
@@ -166,17 +122,6 @@ class RDPDestBlt {
 
         if (header.fields & 0x10){
             stream.out_uint8(this->rop);
-        }
-    }
-
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
-    {
-        using namespace RDP;
-
-        header.receive_rect(stream, 0x01, this->rect);
-
-        if (header.fields & 0x10) {
-            this->rop = stream.in_uint8();
         }
     }
 

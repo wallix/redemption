@@ -144,53 +144,6 @@ public:
         return RDP::ELLIPSESC;
     }
 
-    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
-              const RDPEllipseSC & oldcmd) const {
-        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
-
-        if (!common.clip.contains(this->el.get_rect())){
-            header.control |= RDP::BOUNDS;
-        }
-
-        const int16_t oldleft   = oldcmd.el.left();
-        const int16_t oldtop    = oldcmd.el.top();
-        const int16_t oldright  = oldcmd.el.right();
-        const int16_t oldbottom = oldcmd.el.bottom();
-
-        header.control |= (is_1_byte(this->el.left() - oldleft) &&
-                           is_1_byte(this->el.top() - oldtop) &&
-                           is_1_byte(this->el.right() - oldright) &&
-                           is_1_byte(this->el.bottom() - oldbottom)) * RDP::DELTA;
-
-        header.fields =
-            ( this->el.left()   != oldleft        ) * 0x0001
-            |(this->el.top()    != oldtop         ) * 0x0002
-            |(this->el.right()  != oldright       ) * 0x0004
-            |(this->el.bottom() != oldbottom      ) * 0x0008
-            |(this->bRop2    != oldcmd.bRop2   ) * 0x0010
-            |(this->fillMode != oldcmd.fillMode) * 0x0020
-            |(this->color    != oldcmd.color   ) * 0x0040;
-
-        common.emit(stream, header, oldcommon);
-        header.emit_coord(stream, 0x0001, this->el.left(),   oldleft);
-        header.emit_coord(stream, 0x0002, this->el.top(),    oldtop);
-        header.emit_coord(stream, 0x0004, this->el.right(),  oldright);
-        header.emit_coord(stream, 0x0008, this->el.bottom(), oldbottom);
-
-        if (header.fields & 0x0010) { stream.out_uint8(this->bRop2); }
-
-        if (header.fields & 0x0020) { stream.out_uint8(this->fillMode); }
-
-        if (header.fields & 0x0040) {
-            stream.out_uint8(this->color);
-            stream.out_uint8(this->color >> 8);
-            stream.out_uint8(this->color >> 16);
-        }
-
-        // LOG(LOG_INFO, "RDPEllipseSC::emit: header fields=0x%02X", header.fields);
-        // LOG(LOG_INFO, "RDPEllipseSC::emit: header color=0x%02X", this->color);
-    }
-
     void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
               const RDPEllipseSC & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
@@ -236,33 +189,6 @@ public:
 
         // LOG(LOG_INFO, "RDPEllipseSC::emit: header fields=0x%02X", header.fields);
         // LOG(LOG_INFO, "RDPEllipseSC::emit: header color=0x%02X", this->color);
-    }
-
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
-        // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
-        int16_t leftRect   = this->el.left();
-        int16_t topRect    = this->el.top();
-        int16_t rightRect  = this->el.right();
-        int16_t bottomRect = this->el.bottom();
-        header.receive_coord(stream, 0x0001, leftRect);
-        header.receive_coord(stream, 0x0002, topRect);
-        header.receive_coord(stream, 0x0004, rightRect);
-        header.receive_coord(stream, 0x0008, bottomRect);
-
-        this->el = Ellipse(leftRect, topRect, rightRect, bottomRect);
-
-        if (header.fields & 0x0010) {
-            this->bRop2  = stream.in_uint8();
-        }
-        if (header.fields & 0x0020) {
-            this->fillMode  = stream.in_uint8();
-        }
-        if (header.fields & 0x0040) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->color = r + (g << 8) + (b << 16);
-        }
     }
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {

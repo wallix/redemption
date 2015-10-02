@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         BOOST_CHECK_EQUAL((unsigned)TS_CACHE_BITMAP_UNCOMPRESSED, header.type);
 
         RDPBmpCache cmd;
-//        cmd.receive(stream, control, header);
+//        cmd.receive(in_stream, control, header);
 
 //        check<RDPColCache>(cmd, newcmd, "Color Cache 1");
     }

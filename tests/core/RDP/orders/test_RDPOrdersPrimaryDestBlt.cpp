@@ -35,14 +35,14 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     using namespace RDP;
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         // DESTBLT = 0, hence we won't have order change
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
         RDPDestBlt state_destblt(Rect(), 0);
 
         RDPOrderCommon newcommon(DESTBLT, Rect(311, 0, 800, 600));
-        RDPDestBlt(Rect(300, 400, 50, 60), 0xFF).emit(stream, newcommon, state_common, state_destblt);
+        RDPDestBlt(Rect(300, 400, 50, 60), 0xFF).emit(out_stream, newcommon, state_common, state_destblt);
 
         uint8_t datas[11] = {
             STANDARD | BOUNDS | LASTBOUNDS,
@@ -53,20 +53,20 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
             0x3c, 0x00,  // cy = 60
             0xFF,        // rop
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 11, datas, "DestBlt 1");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 11, datas, "DestBlt 1");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)DESTBLT, common_cmd.order);
 
         RDPDestBlt cmd(Rect(), 0);
 
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPDestBlt>(common_cmd, cmd,
             RDPOrderCommon(DESTBLT, Rect(311, 0, 800, 600)),

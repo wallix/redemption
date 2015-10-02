@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
     using namespace RDP;
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPMultiDstBlt state_multidstblt;
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
         RDPMultiDstBlt multidstblt(316, 378, 200, 200, 0x55, 20, deltaRectangles);
 
 
-        multidstblt.emit(stream, newcommon, state_common, state_multidstblt);
+        multidstblt.emit(out_stream, newcommon, state_common, state_multidstblt);
 
         BOOST_CHECK_EQUAL((uint8_t)MULTIDSTBLT, newcommon.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
@@ -85,14 +85,14 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
  /* 0040 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,  // ................
  /* 0050 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,                          // ............
         };
-        check_datas(stream.p - stream.get_data(), stream.get_data(), sizeof(datas), datas, "MultiDstBlt 1");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "MultiDstBlt 1");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
         BOOST_CHECK_EQUAL((uint32_t)0x7F, header.fields);
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPMultiDstBlt cmd = state_multidstblt;
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         deltaRectangles.reset();
 

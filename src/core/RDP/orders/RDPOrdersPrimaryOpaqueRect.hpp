@@ -47,72 +47,6 @@ class RDPOpaqueRect {
 
     // order to stream returns true if state clip must be changed
     // it does not change state by itself
-    void emit(Stream & stream,
-                RDPOrderCommon & common,
-                const RDPOrderCommon & oldcommon,
-                const RDPOpaqueRect & oldcmd) const
-    {
-        using namespace RDP;
-        RDPPrimaryOrderHeader header(STANDARD, 0);
-
-        if (!common.clip.contains(this->rect)){
-            header.control |= BOUNDS;
-        }
-
-        // OPAQUERECT fields bytes (1 byte)
-        // ------------------------------
-        // 0x01: x coordinate
-        // 0x02: y coordinate
-        // 0x04: cx coordinate
-        // 0x08: cy coordinate
-        // 0x10: red color byte
-        // 0x20: green color byte
-        // 0x40: blue color byte
-
-        // Note by CGR:
-        // ------------
-        // As far as we can see the OPAQUERECT fields called "red" "green" and
-        // "blue" don't care much for actual color components. Really they
-        // should be called "first color byte", "second color byte" and "third
-        // color byte". They are red green and blue only in 24 bits. In 15 or 16
-        // one byte is always empty and changing green component will
-        // change both used bytes.
-
-        DeltaRect dr(this->rect, oldcmd.rect);
-
-        // RDP specs says that we can have DELTA only if we
-        // have bounds. Can't see the rationale and rdesktop don't do it
-        // by the book. Behavior should be checked with server and clients
-        // from Microsoft. Looks like an error in RDP specs.
-        header.control |= dr.fully_relative() * DELTA;
-
-        uint32_t diff_color = this->color ^ oldcmd.color;
-
-//        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
-
-        header.fields =   (dr.dleft                != 0) * 0x01
-                        | (dr.dtop                 != 0) * 0x02
-                        | (dr.dwidth               != 0) * 0x04
-                        | (dr.dheight              != 0) * 0x08
-                        | ((diff_color & 0x0000FF) != 0) * 0x10
-                        | ((diff_color & 0x00FF00) != 0) * 0x20
-                        | ((diff_color & 0xFF0000) != 0) * 0x40
-                        ;
-
-        common.emit(stream, header, oldcommon);
-        header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
-
-        if (header.fields & 0x10){
-            stream.out_uint8(this->color);
-        }
-        if (header.fields & 0x20){
-            stream.out_uint8(this->color >> 8);
-        }
-        if (header.fields & 0x40){
-            stream.out_uint8(this->color >> 16);
-        }
-    }
-
     void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
@@ -177,28 +111,6 @@ class RDPOpaqueRect {
         if (header.fields & 0x40){
             stream.out_uint8(this->color >> 16);
         }
-    }
-
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
-    {
-        using namespace RDP;
-
-        header.receive_rect(stream, 0x01, this->rect);
-
-        uint8_t r = this->color;
-        uint8_t g = this->color >> 8;
-        uint8_t b = this->color >> 16;
-
-        if (header.fields & 0x10) {
-            r = stream.in_uint8();
-        }
-        if (header.fields & 0x20) {
-            g = stream.in_uint8();
-        }
-        if (header.fields & 0x40) {
-            b = stream.in_uint8();
-        }
-        this->color = r|(g << 8)|(b<<16);
     }
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header)

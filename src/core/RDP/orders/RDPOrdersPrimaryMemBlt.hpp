@@ -126,72 +126,6 @@ class RDPMemBlt {
              ;
     }
 
-    void emit(Stream & stream,
-                RDPOrderCommon & common,
-                const RDPOrderCommon & oldcommon,
-                const RDPMemBlt & oldcmd) const
-    {
-        using namespace RDP;
-        RDPPrimaryOrderHeader header(STANDARD, 0);
-
-        if (!common.clip.contains(this->rect)){
-            header.control |= BOUNDS;
-        }
-
-        // MEMBLT fields bytes
-        // ------------------------------
-        // 0x01: cacheId
-        // 0x02: x coordinate
-        // 0x04: y coordinate
-        // 0x08: cx coordinate
-        // 0x10: cy coordinate
-        // 0x20: rop byte
-        // 0x40: srcx
-        // 0x80: srcy
-
-        // 0x100: cacheidx
-
-        DeltaRect dr(this->rect, oldcmd.rect);
-
-        // RDP specs says that we can have DELTA only if we
-        // have bounds. Can't see the rationale and rdesktop don't do it
-        // by the book. Behavior should be checked with server and clients
-        // from Microsoft. Looks like an error in RDP specs.
-        header.control |= ((dr.fully_relative()
-                   && is_1_byte(this->srcx - oldcmd.srcx)
-                   && is_1_byte(this->srcy - oldcmd.srcy))
-                                                           * DELTA);
-
-        header.fields = (this->cache_id != oldcmd.cache_id  ) * 0x001
-                      | (dr.dleft   != 0                    ) * 0x002
-                      | (dr.dtop    != 0                    ) * 0x004
-                      | (dr.dwidth  != 0                    ) * 0x008
-                      | (dr.dheight != 0                    ) * 0x010
-                      | (this->rop != oldcmd.rop            ) * 0x020
-                      | ((this->srcx - oldcmd.srcx) != 0    ) * 0x040
-                      | ((this->srcy - oldcmd.srcy) != 0    ) * 0x080
-                      | (this->cache_idx != oldcmd.cache_idx) * 0x100
-                      ;
-
-        common.emit(stream, header, oldcommon);
-
-        if (header.fields & 0x01){
-            stream.out_uint16_le(this->cache_id);
-        }
-
-        header.emit_rect(stream, 0x02, this->rect, oldcmd.rect);
-
-        if (header.fields & 0x20){
-            stream.out_uint8(this->rop);
-        }
-
-        header.emit_src(stream, 0x40, this->srcx, this->srcy, oldcmd.srcx, oldcmd.srcy);
-
-        if (header.fields & 0x100){
-            stream.out_uint16_le(this->cache_idx);
-        }
-    }
-
     void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
@@ -255,27 +189,6 @@ class RDPMemBlt {
 
         if (header.fields & 0x100){
             stream.out_uint16_le(this->cache_idx);
-        }
-    }
-
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
-    {
-        using namespace RDP;
-
-        if (header.fields & 0x01) {
-            this->cache_id = stream.in_uint16_le();
-        }
-
-        header.receive_rect(stream, 0x02, this->rect);
-
-        if (header.fields & 0x20) {
-            this->rop = stream.in_uint8();
-        }
-
-        header.receive_src(stream, 0x40, this->srcx, this->srcy);
-
-        if (header.fields & 0x100) {
-            this->cache_idx = stream.in_uint16_le();
         }
     }
 

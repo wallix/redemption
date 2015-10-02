@@ -168,26 +168,6 @@ public:
         }
     }
 
-    void emit(Stream & stream) const
-    {
-        using namespace RDP;
-
-        uint8_t control = STANDARD | SECONDARY;
-        stream.out_uint8(control);
-        uint16_t len = (this->size + 6) - 7;    // length after type minus 7
-        stream.out_uint16_le(len);
-        stream.out_uint16_le(0);    // flags
-        stream.out_uint8(TS_CACHE_BRUSH); // type
-
-        stream.out_uint8(this->cacheIndex);
-        stream.out_uint8(this->bpp);
-        stream.out_uint8(this->width);
-        stream.out_uint8(this->height);
-        stream.out_uint8(this->type);
-        stream.out_uint8(this->size);
-        stream.out_copy_bytes(this->data, this->size);
-    }
-
     void emit(OutStream & stream) const
     {
         using namespace RDP;
@@ -208,7 +188,7 @@ public:
         stream.out_copy_bytes(this->data, this->size);
     }
 
-    void receive(Stream & stream, const RDPSecondaryOrderHeader &/* header*/)
+    void receive(InStream & stream, const RDPSecondaryOrderHeader &/* header*/)
     {
         using namespace RDP;
 
@@ -220,7 +200,7 @@ public:
         uint8_t size     = stream.in_uint8();
         if (this->size < size) {
             free(this->data);
-            this->data   = (uint8_t *)malloc(size);
+            this->data   = static_cast<uint8_t *>(malloc(size));
         }
         this->size       = size;
         memcpy(this->data, stream.in_uint8p(this->size), this->size);
