@@ -53,7 +53,7 @@ private:
     const bool param_dont_log_data_into_wrm;
 
     std::unique_ptr<uint8_t[]> file_descriptor_data;
-    FixedSizeStream            file_descriptor_stream;
+    OutStream                  file_descriptor_stream;
 
     FrontAPI& front;
 
@@ -97,15 +97,14 @@ private:
     void send_pdu_to_client(bool response_ok, Args&&... args) {
         PDU             pdu(response_ok);
 
-        uint8_t         out_data[256];
-        WriteOnlyStream out_stream(out_data, sizeof(out_data));
+        StaticOutStream<256> out_stream;
 
         pdu.emit(out_stream, args...);
 
-        const uint32_t total_length      = out_stream.size();
+        const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        const uint8_t* chunk_data        = out_data;
+        const uint8_t* chunk_data        = out_stream.get_data();
         const uint32_t chunk_data_length = total_length;
 
         this->send_message_to_client(
@@ -119,15 +118,14 @@ private:
     void send_pdu_to_server(bool response_ok, Args&&... args) {
         PDU             pdu(response_ok);
 
-        uint8_t         out_data[256];
-        WriteOnlyStream out_stream(out_data, sizeof(out_data));
+        StaticOutStream<256> out_stream;
 
         pdu.emit(out_stream, args...);
 
-        const uint32_t total_length      = out_stream.size();
+        const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        const uint8_t* chunk_data        = out_data;
+        const uint8_t* chunk_data        = out_stream.get_data();
         const uint32_t chunk_data_length = total_length;
 
         this->send_message_to_server(
@@ -138,7 +136,7 @@ private:
     }
 
     bool process_client_clipboard_capabilities_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         {
             const unsigned int expected = 10;   // msgFlags(2) + dataLen(4) +
@@ -185,7 +183,7 @@ private:
     }
 
     bool process_client_file_contents_request_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         if (!this->param_clipboard_file_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -202,7 +200,7 @@ private:
     }
 
     bool process_client_format_data_request_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         if (!this->param_clipboard_down_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -237,14 +235,14 @@ private:
     }
 
     bool process_client_format_data_response_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         if (this->param_dont_log_data_into_syslog) {
             return true;
         }
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            const auto saved_chunk_p = chunk.p;
+            const auto saved_chunk_p = chunk.get_current();
 
             {
                 const unsigned int expected = 6;    // msgFlags(2) +
@@ -277,7 +275,7 @@ private:
             if (this->requestedFormatId == RDPECLIP::CF_TEXT) {
                 const size_t length_of_data_to_dump =
                     std::min(chunk.in_remain(), max_length_of_data_to_dump);
-                const std::string data_to_dump(::char_ptr_cast(chunk.p),
+                const std::string data_to_dump(::char_ptr_cast(chunk.get_current()),
                     length_of_data_to_dump);
                 LOG(LOG_INFO, data_to_dump.c_str());
             }
@@ -295,14 +293,14 @@ private:
                 uint8_t * const utf8_string = static_cast<uint8_t *>(
                     ::alloca(size_of_utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.p, length_of_data_to_dump / 2, utf8_string,
+                    chunk.get_current(), length_of_data_to_dump / 2, utf8_string,
                     size_of_utf8_string);
                 const std::string data_to_dump(::char_ptr_cast(utf8_string),
                     length_of_utf8_string);
                 LOG(LOG_INFO, data_to_dump.c_str());
             }
 
-            chunk.p = saved_chunk_p;
+            chunk.rewind(saved_chunk_p - chunk.get_data());
         }
 
         //LOG(LOG_INFO,
@@ -312,7 +310,7 @@ private:
 
         if (this->client_file_list_format_id &&
             (this->requestedFormatId == this->client_file_list_format_id)) {
-            const auto saved_chunk_p = chunk.p;
+            const auto saved_chunk_p = chunk.get_current();
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 {
@@ -347,17 +345,18 @@ private:
 
                 REDASSERT(chunk.in_remain() >= complementary_data_length);
 
-                this->file_descriptor_stream.out_copy_bytes(chunk.p,
+                this->file_descriptor_stream.out_copy_bytes(chunk.get_current(),
                     complementary_data_length);
 
                 chunk.in_skip_bytes(complementary_data_length);
 
-                this->file_descriptor_stream.mark_end();
-                this->file_descriptor_stream.rewind();
-
                 RDPECLIP::FileDescriptor fd;
 
-                fd.receive(this->file_descriptor_stream);
+                InStream in_stream(
+                    this->file_descriptor_stream.get_data(),
+                    this->file_descriptor_stream.get_offset()
+                );
+                fd.receive(in_stream);
                 fd.log(LOG_INFO);
 
                 if (!this->param_dont_log_data_into_wrm) {
@@ -369,7 +368,7 @@ private:
                         contian_window_title);
                 }
 
-                this->file_descriptor_stream.reset();
+                this->file_descriptor_stream.rewind();
             }
 
             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
@@ -389,10 +388,10 @@ private:
             }
 
             if (chunk.in_remain()) {
-                this->file_descriptor_stream.reset();
+                this->file_descriptor_stream.rewind();
 
                 this->file_descriptor_stream.out_copy_bytes(
-                    chunk.p, chunk.in_remain());
+                    chunk.get_current(), chunk.in_remain());
 
                 chunk.in_skip_bytes(chunk.in_remain());
             }
@@ -401,14 +400,14 @@ private:
                 this->requestedFormatId = 0;
             }
 
-            chunk.p = saved_chunk_p;
+            chunk.rewind(saved_chunk_p - chunk.get_data());
         }
 
         return true;
     }   // process_client_format_data_response_pdu
 
     bool process_client_format_list_pdu(uint32_t total_length, uint32_t flags,
-        ReadOnlyStream& chunk)
+        InStream& chunk)
     {
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized) {
@@ -488,7 +487,7 @@ private:
                 uint8_t * const utf8_string = static_cast<uint8_t *>(
                     ::alloca(size_of_utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.p, format_name_length, utf8_string,
+                    chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -536,7 +535,7 @@ private:
                 }
 
                 const uint32_t formatId           = chunk.in_uint32_le();
-                const size_t   format_name_length = UTF16StrLen(chunk.p) + 1;
+                const size_t   format_name_length = UTF16StrLen(chunk.get_current()) + 1;
 
                 const size_t size_of_utf8_string =
                     format_name_length *
@@ -544,7 +543,7 @@ private:
                 uint8_t * const utf8_string = static_cast<uint8_t *>(
                     ::alloca(size_of_utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.p, format_name_length, utf8_string,
+                    chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -590,7 +589,7 @@ public:
                 chunk_data, chunk_data_length);
         }
 
-        ReadOnlyStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* msgType(2) */)) {
@@ -693,7 +692,7 @@ public:
     }   // process_client_message
 
     bool process_server_clipboard_capabilities_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
@@ -727,7 +726,7 @@ public:
     }
 
     bool process_server_file_contents_request_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         if (!this->param_clipboard_file_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -744,7 +743,7 @@ public:
     }
 
     bool process_server_format_data_request_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         if (!this->param_clipboard_up_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -767,14 +766,14 @@ public:
     }
 
     bool process_server_format_data_response_pdu(uint32_t total_length,
-        uint32_t flags, ReadOnlyStream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         if (this->param_dont_log_data_into_syslog) {
             return true;
         }
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            const auto saved_chunk_p = chunk.p;
+            const auto saved_chunk_p = chunk.get_current();
 
             chunk.in_skip_bytes(2 /* msgFlags(2) */);
 
@@ -793,7 +792,7 @@ public:
             if (this->requestedFormatId == RDPECLIP::CF_TEXT) {
                 const size_t length_of_data_to_dump =
                     std::min(chunk.in_remain(), max_length_of_data_to_dump);
-                const std::string data_to_dump(::char_ptr_cast(chunk.p),
+                const std::string data_to_dump(::char_ptr_cast(chunk.get_current()),
                     length_of_data_to_dump);
                 LOG(LOG_INFO, data_to_dump.c_str());
             }
@@ -811,14 +810,14 @@ public:
                 uint8_t * const utf8_string = static_cast<uint8_t *>(
                     ::alloca(size_of_utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.p, length_of_data_to_dump / 2, utf8_string,
+                    chunk.get_current(), length_of_data_to_dump / 2, utf8_string,
                     size_of_utf8_string);
                 const std::string data_to_dump(::char_ptr_cast(utf8_string),
                     length_of_utf8_string);
                 LOG(LOG_INFO, data_to_dump.c_str());
             }
 
-            chunk.p = saved_chunk_p;
+            chunk.rewind(saved_chunk_p - chunk.get_data());
         }
 
         //LOG(LOG_INFO,
@@ -828,7 +827,7 @@ public:
 
         if (this->server_file_list_format_id &&
             (this->requestedFormatId == this->server_file_list_format_id)) {
-            const auto saved_chunk_p = chunk.p;
+            const auto saved_chunk_p = chunk.get_current();
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
@@ -849,17 +848,18 @@ public:
 
                 REDASSERT(chunk.in_remain() >= complementary_data_length);
 
-                this->file_descriptor_stream.out_copy_bytes(chunk.p,
+                this->file_descriptor_stream.out_copy_bytes(chunk.get_current(),
                     complementary_data_length);
 
                 chunk.in_skip_bytes(complementary_data_length);
 
-                this->file_descriptor_stream.mark_end();
-                this->file_descriptor_stream.rewind();
-
                 RDPECLIP::FileDescriptor fd;
 
-                fd.receive(this->file_descriptor_stream);
+                InStream in_stream(
+                    this->file_descriptor_stream.get_data(),
+                    this->file_descriptor_stream.get_offset()
+                );
+                fd.receive(in_stream);
                 fd.log(LOG_INFO);
 
                 if (!this->param_dont_log_data_into_wrm) {
@@ -871,7 +871,7 @@ public:
                         contian_window_title);
                 }
 
-                this->file_descriptor_stream.reset();
+                this->file_descriptor_stream.rewind();
             }
 
             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
@@ -891,10 +891,10 @@ public:
             }
 
             if (chunk.in_remain()) {
-                this->file_descriptor_stream.reset();
+                this->file_descriptor_stream.rewind();
 
                 this->file_descriptor_stream.out_copy_bytes(
-                    chunk.p, chunk.in_remain());
+                    chunk.get_current(), chunk.in_remain());
 
                 chunk.in_skip_bytes(chunk.in_remain());
             }
@@ -903,14 +903,14 @@ public:
                 this->requestedFormatId = 0;
             }
 
-            chunk.p = saved_chunk_p;
+            chunk.rewind(saved_chunk_p - chunk.get_data());
         }
 
         return true;
     }   // process_server_format_data_response_pdu
 
     bool process_server_format_list_pdu(uint32_t total_length, uint32_t flags,
-        ReadOnlyStream& chunk)
+        InStream& chunk)
     {
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized) {
@@ -954,7 +954,7 @@ public:
                 uint8_t * const utf8_string = static_cast<uint8_t *>(
                     ::alloca(size_of_utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.p, format_name_length, utf8_string,
+                    chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -990,7 +990,7 @@ public:
             for (uint32_t remaining_data_length = dataLen;
                  remaining_data_length; ) {
                 const uint32_t formatId           = chunk.in_uint32_le();
-                const size_t   format_name_length = UTF16StrLen(chunk.p) + 1;
+                const size_t   format_name_length = UTF16StrLen(chunk.get_current()) + 1;
 
                 const size_t size_of_utf8_string =
                     format_name_length *
@@ -998,7 +998,7 @@ public:
                 uint8_t * const utf8_string = static_cast<uint8_t *>(
                     ::alloca(size_of_utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.p, format_name_length, utf8_string,
+                    chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -1044,7 +1044,7 @@ public:
                 chunk_data, chunk_data_length);
         }
 
-        ReadOnlyStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* msgType(2) */)) {

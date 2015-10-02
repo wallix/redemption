@@ -44,16 +44,15 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
         0x0f
     };
 
-    BStream s;
+    StaticOutStream<65536> s;
 
     s.out_copy_bytes(packet, sizeof(packet));
-    s.mark_end();
-    s.rewind();
 
     uint8_t sig[20];
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req(s);
+    InStream in_s(s.get_data(), s.get_offset());
+    TSRequest ts_req(in_s);
 
     BOOST_CHECK_EQUAL(ts_req.version, 2);
 
@@ -61,12 +60,12 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
     BOOST_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    BStream to_send;
+    StaticOutStream<65536> to_send;
 
-    BOOST_CHECK_EQUAL(to_send.size(), 0);
+    BOOST_CHECK_EQUAL(to_send.get_offset(), 0);
     ts_req.emit(to_send);
 
-    BOOST_CHECK_EQUAL(to_send.size(), 0x37 + 2);
+    BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
     char message[1024];
     if (!check_sig(to_send, message, reinterpret_cast<const char *>(sig))){

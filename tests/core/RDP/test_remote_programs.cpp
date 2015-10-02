@@ -31,21 +31,21 @@
 
 BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 {
-    BStream stream(128);
+    uint8_t buf[128];
+
+    OutStream out_stream(buf);
 
     const uint8_t order_data[] = "0123456789";
 
-    RAILPDUHeader_Send header_s(stream);
+    RAILPDUHeader_Send header_s(out_stream);
     header_s.emit_begin(TS_RAIL_ORDER_EXEC);
 
-    stream.out_copy_bytes(order_data, sizeof(order_data));
-    stream.mark_end();
+    out_stream.out_copy_bytes(order_data, sizeof(order_data));
 
     header_s.emit_end();
 
-    stream.rewind();
-
-    RAILPDUHeader_Recv header_r(stream);
+    InStream in_stream(buf, out_stream.get_offset());
+    RAILPDUHeader_Recv header_r(in_stream);
 
     BOOST_CHECK_EQUAL(header_r.orderType(), TS_RAIL_ORDER_EXEC);
     BOOST_CHECK_EQUAL(header_r.orderLength(),
@@ -54,29 +54,29 @@ BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 
 BOOST_AUTO_TEST_CASE(TestHandshakePDU)
 {
-    BStream stream(128);
+    uint8_t buf[128];
 
-    HandshakePDU_Send handshake_pdu_s(stream, 0x01020304);
+    OutStream out_stream(buf);
+    HandshakePDU_Send handshake_pdu_s(out_stream, 0x01020304);
 
-    stream.rewind();
-
-    HandshakePDU_Recv handshake_pdu_r(stream);
+    InStream in_stream(buf, out_stream.get_offset());
+    HandshakePDU_Recv handshake_pdu_r(in_stream);
 
     BOOST_CHECK_EQUAL(handshake_pdu_r.buildNumber(), 0x01020304);
 }
 
 BOOST_AUTO_TEST_CASE(ClientExecutePDU)
 {
-    BStream stream(2048);
+    uint8_t buf[2048];
 
-    ClientExecutePDU_Send client_execute_pdu_s(stream,
+    OutStream out_stream(buf);
+    ClientExecutePDU_Send client_execute_pdu_s(out_stream,
         TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY,
         "%%SystemRoot%%\\system32\\notepad.exe", "%%HOMEDRIVE%%%%HOMEPATH%%",
         "");
 
-    stream.rewind();
-
-    ClientExecutePDU_Recv client_execute_pdu_r(stream);
+    InStream in_stream(buf, out_stream.get_offset());
+    ClientExecutePDU_Recv client_execute_pdu_r(in_stream);
 
     BOOST_CHECK_EQUAL(client_execute_pdu_r.Flags(),
         TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY);
@@ -90,28 +90,28 @@ BOOST_AUTO_TEST_CASE(ClientExecutePDU)
 
 BOOST_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
 {
-    BStream stream(128);
+    uint8_t buf[128];
 
-    ClientSystemParametersUpdatePDU_Send client_system_parameters_update_pdu_s(stream, SPI_SETHIGHCONTRAST);
+    OutStream out_stream(buf);
+    ClientSystemParametersUpdatePDU_Send client_system_parameters_update_pdu_s(out_stream, SPI_SETHIGHCONTRAST);
 
-    stream.rewind();
-
-    ClientSystemParametersUpdatePDU_Recv client_system_parameters_update_pdu_r(stream);
+    InStream in_stream(buf, out_stream.get_offset());
+    ClientSystemParametersUpdatePDU_Recv client_system_parameters_update_pdu_r(in_stream);
 
     BOOST_CHECK_EQUAL(client_system_parameters_update_pdu_r.SystemParam(), SPI_SETHIGHCONTRAST);
 }
 
 BOOST_AUTO_TEST_CASE(HighContrastSystemInformationStructure)
 {
-    BStream stream(2048);
+    uint8_t buf[2048];
 
+    OutStream out_stream(buf);
     HighContrastSystemInformationStructure_Send high_contrast_system_information_structure_s(
-        stream, 0x10101010, "ColorScheme");
+        out_stream, 0x10101010, "ColorScheme");
 
-    stream.rewind();
-
+    InStream in_stream(buf, out_stream.get_offset());
     HighContrastSystemInformationStructure_Recv high_contrast_system_information_structure_r(
-        stream);
+        in_stream);
 
     BOOST_CHECK_EQUAL(high_contrast_system_information_structure_r.Flags(),
         0x10101010);

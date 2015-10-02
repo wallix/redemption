@@ -163,7 +163,7 @@ namespace MCS
         return *stream.get_data() >> 2;
     }
 
-    //int peekBerEncodedMCSType(const Stream & stream) {
+    //int peekBerEncodedMCSType(const InStream & stream) {
     //    if (!stream.in_check_rem(2)){
     //        throw Error(ERR_MCS);
     //    }
@@ -174,208 +174,9 @@ namespace MCS
 
     struct InBerStream
     {
-
-        Stream & stream;
-
-        explicit InBerStream(Stream & stream)
-        : stream(stream)
-        {
-        }
-
-        // =========================================================================
-        // BER encoding rules support methods
-        // =========================================================================
-
-        enum {
-            BER_TAG_BOOLEAN      =    1,
-            BER_TAG_INTEGER      =    2,
-            BER_TAG_OCTET_STRING =    4,
-            BER_TAG_RESULT       =   10
-        };
-
-
-        // return string length or -1 on error
-        int in_ber_octet_string_with_check(uint8_t * target, uint16_t target_len)
-        {
-            bool in_result;
-            uint8_t tag = this->in_uint8_with_check(in_result);
-            if (!in_result) {
-                LOG(LOG_ERR, "Truncated BER octet string (need=1, remain=0)");
-                return -1;
-            }
-            if (tag != BER_TAG_OCTET_STRING){
-                LOG(LOG_ERR, "Octet string BER tag (%u) expected, got %u", BER_TAG_OCTET_STRING, tag);
-                return -1;
-            }
-            size_t len = this->in_ber_len_with_check(in_result);
-            if (!in_result){
-                return -1;
-            }
-            if (!this->in_check_rem(len)){
-                LOG(LOG_ERR, "Truncated BER octet string (need=%u, remain=%u)",
-                    len, this->stream.in_remain());
-                return -1;
-            }
-            if (len > target_len){
-                LOG(LOG_ERR, "target string too large (max=%u, got=%u)", target_len, len);
-                return -1;
-            }
-            this->stream.in_copy_bytes(target, len);
-            return len;
-        }
-
-        // return 0 if false, 1 if true, -1 on error
-        int in_ber_boolean_with_check()
-        {
-            bool in_result;
-            uint8_t tag = this->in_uint8_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Truncated BER boolean tag (need=1, remain=0)");
-                return -1;
-            }
-            if (tag != BER_TAG_BOOLEAN){
-                LOG(LOG_ERR, "Boolean BER tag (%u) expected, got %u", BER_TAG_BOOLEAN, tag);
-                return -1;
-            }
-            size_t len = this->in_ber_len_with_check(in_result);
-            if (!in_result){
-                return -1;
-            }
-            if (len != 1){
-                LOG(LOG_ERR, "Boolean BER should be one byte");
-                return -1;
-            }
-            if (!this->stream.in_check_rem(1)){
-                LOG(LOG_ERR, "Truncated BER boolean value (need=1, remain=0)");
-                return -1;
-            }
-            return this->stream.in_uint8();
-        }
-
-        int in_ber_int_with_check(bool & result){
-            int v = 0;
-
-            result = true;
-
-            unsigned expected = 2; /* tag(1) + len(1) */
-            if (this->stream.in_check_rem(expected)){
-               uint8_t tag = this->stream.in_uint8();
-               if (tag == BER_TAG_INTEGER){
-                   uint8_t len = this->stream.in_uint8();
-                   if (this->stream.in_check_rem(len)){
-                       v = this->stream.in_bytes_be(len);
-                   }
-                   else {
-                       LOG(LOG_ERR, "Truncated BER integer data (need=%u, remain=%u)",
-                           len, this->stream.in_remain());
-                       result = false;
-                   }
-               }
-               else {
-                   LOG(LOG_ERR, "Integer BER tag (%u) expected, got %u", BER_TAG_INTEGER, tag);
-                   result = false;
-               }
-            }
-            else {
-                LOG(LOG_ERR, "Truncated BER integer (need=%u, remain=%u)",
-                    expected, this->stream.in_remain());
-                result = false;
-            }
-            return v;
-        }
-
-
-        //unsigned int in_ber_len() {
-        //    uint8_t l = this->stream.in_uint8();
-        //    if (l & 0x80) {
-        //        const uint8_t nbbytes = (uint8_t)(l & 0x7F);
-        //        unsigned int len = 0;
-        //        for (uint8_t i = 0 ; i < nbbytes ; i++) {
-        //            len = (len << 8) | this->stream.in_uint8();
-        //        }
-        //        return len;
-        //    }
-        //    return l;
-        //}
-
-        unsigned int in_ber_len_with_check(bool & result) {
-            uint8_t l = 0;
-
-            result = true;
-
-            if (this->stream.in_check_rem(1))
-            {
-                l = this->stream.in_uint8();
-                if (l & 0x80) {
-                    const uint8_t nbbytes = (uint8_t)(l & 0x7F);
-
-                    if (this->stream.in_check_rem(nbbytes)){
-                        unsigned int len = 0;
-                        for (uint8_t i = 0 ; i < nbbytes ; i++) {
-                            len = (len << 8) | this->stream.in_uint8();
-                        }
-                        return len;
-                    }
-                    else {
-                        LOG(LOG_ERR, "Truncated PER length (need=%u, remain=%u)",
-                            nbbytes, this->stream.in_remain());
-                        l = 0;
-                        result = false;
-                    }
-                }
-            }
-            else {
-                result = false;
-                LOG(LOG_ERR, "Truncated BER length (need=1, remain=0)");
-            }
-            return l;
-        }
-
-        uint16_t in_uint16_be_with_check(bool & result) {
-            if (this->in_check_rem(2)){
-                result = true;
-                return this->stream.in_uint16_be();
-            }
-
-            result = false;
-            return 0;
-        }
-
-        unsigned char in_uint8_with_check(bool & result) {
-            if (this->stream.in_check_rem(1)){
-                result = true;
-                return this->stream.in_uint8();
-            }
-
-            result = false;
-            return 0;
-        }
-
-        unsigned in_bytes_le(const uint8_t nb){
-            return this->stream.in_bytes_le(nb);
-        }
-
-
-        bool in_check_rem(const unsigned n) const {
-            // returns true if there is enough data available to read n bytes
-            return this->stream.in_check_rem(n);
-        }
-
-        size_t in_remain() const {
-            return this->stream.in_remain();
-        }
-
-        uint32_t get_offset() const {
-            return this->stream.get_offset();
-        }
-
-    };
-
-    struct InBerStream_new_stream
-    {
         InStream & stream;
 
-        explicit InBerStream_new_stream(InStream & stream)
+        explicit InBerStream(InStream & stream)
         : stream(stream)
         {
         }
@@ -583,106 +384,9 @@ namespace MCS
             BER_TAG_MCS_DOMAIN_PARAMS = 0x30
         };
 
-        Stream & stream;
-
-        explicit OutBerStream(Stream & stream)
-        : stream(stream)
-        {
-        }
-
-        void out_ber_len(unsigned int v){
-            if (v < 0x80){
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-            else if (v < 0x100) {
-                this->stream.out_uint8(0x81);
-                this->stream.out_uint8(v);
-            }
-            else {
-                this->stream.out_uint8(0x82);
-                this->stream.out_uint16_be(v);
-            }
-        }
-
-        void out_ber_integer(unsigned int v){
-            this->stream.out_uint8(BER_TAG_INTEGER);
-            if (v < 0x80) {
-                this->stream.out_uint8(1);
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-            else if (v < 0xfff8) { // Actually ffff should also work, but it would break old code
-                this->stream.out_uint8(2);
-                this->stream.out_uint8((uint8_t)(v >> 8));
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-            else {
-                this->stream.out_uint8(3);
-                this->stream.out_uint8((uint8_t)(v >> 16));
-                this->stream.out_uint8((uint8_t)(v >> 8));
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-        }
-
-        void set_out_ber_len_uint7(unsigned int v, size_t offset){
-            if (v >= 0x80) {
-                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-            }
-            this->stream.set_out_uint8((uint8_t)v, offset+0);
-        }
-
-        void out_ber_len_uint7(unsigned int v){
-            if (v >= 0x80) {
-                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-            }
-            this->stream.out_uint8(static_cast<uint8_t>(v));
-        }
-
-        void set_out_ber_len_uint16(unsigned int v, size_t offset){
-            this->stream.set_out_uint8(0x82, offset+0);
-            this->stream.set_out_uint16_be(v, offset+1);
-        }
-
-        void out_ber_len_uint16(unsigned int v){
-            this->stream.out_uint8(0x82);
-            this->stream.out_uint16_be(v);
-        }
-
-        void mark_end() {
-            this->stream.mark_end();
-        }
-
-        uint32_t get_offset() const {
-            return this->stream.get_offset();
-        }
-
-        void out_uint16_be(unsigned int v) {
-            return this->stream.out_uint16_be(v);
-        }
-
-        void out_uint8(unsigned char v) {
-            return this->stream.out_uint8(v);
-        }
-    };
-
-    struct OutBerStream_new_stream
-    {
-        // =========================================================================
-        // BER encoding rules support methods
-        // =========================================================================
-
-        enum {
-            BER_TAG_BOOLEAN      =    1,
-            BER_TAG_INTEGER      =    2,
-            BER_TAG_OCTET_STRING =    4,
-            BER_TAG_RESULT       =   10,
-            BER_TAG_MCS_DOMAIN_PARAMS = 0x30
-        };
-
         OutStream & stream;
 
-        explicit OutBerStream_new_stream(OutStream & stream)
+        explicit OutBerStream(OutStream & stream)
         : stream(stream)
         {
         }
@@ -761,7 +465,7 @@ namespace MCS
 
     struct CONNECT_INITIAL_Send
     {
-        OutBerStream_new_stream ber_stream;
+        OutBerStream ber_stream;
 
         CONNECT_INITIAL_Send(OutStream & stream, size_t payload_length, int encoding)
         : ber_stream(stream)
@@ -998,79 +702,11 @@ namespace MCS
             }
             return 0;
         }
-
-        int recv(InBerStream_new_stream & ber_stream){
-            enum {
-                BER_TAG_MCS_DOMAIN_PARAMS = 0x30
-            };
-
-            bool in_result;
-
-            uint8_t tag = ber_stream.in_uint8_with_check(in_result);
-            if (!in_result){
-               LOG(LOG_ERR, "Domain Parameters BER tag expected");
-            }
-            if (BER_TAG_MCS_DOMAIN_PARAMS != tag){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS (%u) expected, got %u",
-                    BER_TAG_MCS_DOMAIN_PARAMS, tag);
-                return -1;
-            }
-            size_t len = ber_stream.in_ber_len_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::len error");
-                return -1;
-            }
-            size_t start_offset = ber_stream.get_offset();
-            this->maxChannelIds = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxChannelIds tag error");
-                return -1;
-            }
-            this->maxUserIds = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxUserIds tag error");
-                return -1;
-            }
-            this->maxTokenIds = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxTokenIds tag error");
-                return -1;
-            }
-            this->numPriorities = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::numPriorities tag error");
-                return -1;
-            }
-            this->minThroughput = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::minThroughput tag error");
-                return -1;
-            }
-            this->maxHeight = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxHeight tag error");
-                return -1;
-            }
-            this->maxMCSPDUsize = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
-                return -1;
-            }
-            this->protocolVersion = ber_stream.in_ber_int_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::protocolVersion tag error");
-                return -1;
-            }
-            if (ber_stream.get_offset() != start_offset + len){
-                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", ber_stream.get_offset() - start_offset, len);
-            }
-            return 0;
-        }
     };
 
     struct CONNECT_INITIAL_PDU_Recv
     {
-        InBerStream_new_stream ber_stream;
+        InBerStream ber_stream;
 
         size_t _header_size;
 
@@ -1291,7 +927,7 @@ namespace MCS
 
     struct CONNECT_RESPONSE_PDU_Recv
     {
-        InBerStream_new_stream ber_stream;
+        InBerStream ber_stream;
 
         uint16_t tag;
         size_t tag_len;
@@ -1436,7 +1072,7 @@ namespace MCS
 
     struct CONNECT_RESPONSE_Send
     {
-        OutBerStream_new_stream ber_stream;
+        OutBerStream ber_stream;
 
         CONNECT_RESPONSE_Send(OutStream & stream, size_t payload_length, int encoding)
         : ber_stream(stream)
@@ -1572,68 +1208,6 @@ namespace MCS
         uint8_t type;
         uint32_t subHeight;
         uint32_t subInterval;
-
-        ErectDomainRequest_Recv(Stream & stream, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-
-            if (!stream.in_check_rem(1)){
-                LOG(LOG_ERR, "Truncated ErectDomainRequest need 1, got 0");
-                throw Error(ERR_MCS);
-            }
-            uint8_t tag = stream.in_uint8();
-
-            if ((MCS::MCSPDU_ErectDomainRequest << 2) != tag){
-                LOG(LOG_ERR, "ErectDomainRequest tag (%u) expected, got %u",
-                    (MCS::MCSPDU_ErectDomainRequest << 2), tag);
-                throw Error(ERR_MCS);
-            }
-            this->type = MCS::MCSPDU_ErectDomainRequest;
-
-            {
-                if (!stream.in_check_rem(2)) {
-                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %u)", stream.size());
-                    throw Error(ERR_MCS);
-                }
-                uint16_t len = stream.in_2BUE();
-                // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
-                if (len == 0) {
-                    len = 1;
-                }
-                if (len > 4) {
-                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
-                    throw Error(ERR_MCS);
-                }
-                if (!stream.in_check_rem(len)) {
-                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
-                    throw Error(ERR_MCS);
-                }
-                this->subHeight = stream.in_bytes_be(len);
-            }
-            {
-                if (!stream.in_check_rem(2)) {
-                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subInterval len : (need 2, available %u)", stream.size());
-                    throw Error(ERR_MCS);
-                }
-                uint16_t len = stream.in_2BUE();
-                // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
-                if (len == 0) {
-                    len = 1;
-                }
-                if (len > 4) {
-                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
-                    throw Error(ERR_MCS);
-                }
-                if (!stream.in_check_rem(len)) {
-                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
-                    throw Error(ERR_MCS);
-                }
-                this->subInterval = stream.in_bytes_be(len);
-            }
-        }
 
         ErectDomainRequest_Recv(InStream & stream, int encoding)
         {
@@ -1918,19 +1492,6 @@ namespace MCS
 
     struct DisconnectProviderUltimatum_Send
     {
-        DisconnectProviderUltimatum_Send(Stream & stream, uint8_t reason, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            uint16_t data = ( (MCS::MCSPDU_DisconnectProviderUltimatum << 10)
-                            | (reason << 7)
-                            );
-            stream.out_uint16_be(data);
-            stream.mark_end();
-        }
-
         DisconnectProviderUltimatum_Send(OutStream & stream, uint8_t reason, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -1948,29 +1509,6 @@ namespace MCS
     {
         uint8_t type;
         t_reasons reason;
-        DisconnectProviderUltimatum_Recv(Stream & stream, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-
-            const unsigned expected = 2; /* tag(1) + reason(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated DisconnectProviderUltimatum: expected=%u, remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS);
-            }
-
-            uint16_t tag = stream.in_uint16_be();
-            if ((tag >> 10) != MCS::MCSPDU_DisconnectProviderUltimatum) {
-                LOG(LOG_ERR, "DisconnectProviderUltimatum tag (%u) expected, got %u",
-                   MCS::MCSPDU_DisconnectProviderUltimatum, (tag >> 10));
-                throw Error(ERR_MCS);
-            }
-            this->type   = MCS::MCSPDU_DisconnectProviderUltimatum;
-            this->reason = static_cast<t_reasons>((tag & 0x0380) >> 7);
-        }
 
         DisconnectProviderUltimatum_Recv(InStream & stream, int encoding)
         {
@@ -2005,11 +1543,6 @@ namespace MCS
 
     struct RejectMCSPDUUltimatum_Send
     {
-        RejectMCSPDUUltimatum_Send(Stream & stream, int encoding)
-        {
-            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
-            throw Error(ERR_MCS);
-        }
         RejectMCSPDUUltimatum_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
@@ -2019,11 +1552,6 @@ namespace MCS
 
     struct RejectMCSPDUUltimatum_Recv
     {
-        RejectMCSPDUUltimatum_Recv(Stream & stream, int encoding)
-        {
-            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
-            throw Error(ERR_MCS);
-        }
         RejectMCSPDUUltimatum_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
@@ -2071,16 +1599,6 @@ namespace MCS
 
     struct AttachUserRequest_Send
     {
-        AttachUserRequest_Send(Stream & stream, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8(MCS::MCSPDU_AttachUserRequest << 2);
-            stream.mark_end();
-        }
-
         AttachUserRequest_Send(OutStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -2094,25 +1612,6 @@ namespace MCS
     struct AttachUserRequest_Recv
     {
         uint8_t type;
-        AttachUserRequest_Recv(Stream & stream, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-
-            if (!stream.in_check_rem(1)){
-                LOG(LOG_ERR, "Truncated AttachUserRequest: expected=1, remains=0");
-                throw Error(ERR_MCS);
-            }
-
-            uint8_t tag = stream.in_uint8();
-            if ((MCS::MCSPDU_AttachUserRequest << 2) != tag){
-                LOG(LOG_ERR, "AttachUserRequest tag (%u) expected, got %u", MCS::MCSPDU_AttachUserRequest << 2, tag);
-                throw Error(ERR_MCS);
-            }
-            this->type = MCS::MCSPDU_AttachUserRequest;
-        }
 
         AttachUserRequest_Recv(InStream & stream, int encoding)
         {
@@ -2245,20 +1744,6 @@ namespace MCS
 
     struct AttachUserConfirm_Send
     {
-        AttachUserConfirm_Send(Stream & stream, uint8_t result, bool initiator_flag, uint16_t initiator, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8((MCS::MCSPDU_AttachUserConfirm << 2) | initiator_flag * 2);
-            stream.out_uint8(result);
-            if (initiator_flag){
-                stream.out_uint16_be(initiator);
-            }
-            stream.mark_end();
-        }
-
         AttachUserConfirm_Send(OutStream & stream, uint8_t result, bool initiator_flag, uint16_t initiator, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -2279,39 +1764,6 @@ namespace MCS
         uint8_t result;
         bool initiator_flag;
         uint16_t initiator;
-
-        AttachUserConfirm_Recv(Stream & stream, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-
-            const unsigned expected = 2; /* tag(1) + result(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated AttachUserConfirm: expected=%u, remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS);
-            }
-
-            uint8_t tag = stream.in_uint8();
-            this->initiator_flag = (tag & 2) != 0;
-            if ((tag & 0xFC) != MCS::MCSPDU_AttachUserConfirm << 2){
-                LOG(LOG_ERR, "AttachUserConfirm tag (%u) expected, got %u",
-                    MCS::MCSPDU_AttachUserConfirm << 2, (tag & 0xFC));
-                throw Error(ERR_MCS);
-            }
-            this->type = MCS::MCSPDU_AttachUserConfirm;
-            this->result = stream.in_uint8();
-            if (this->initiator_flag){
-                if (!stream.in_check_rem(2)){
-                   LOG(LOG_ERR, "Truncated AttachUserConfirm indicator: expected=2, remains=%u",
-                       stream.in_remain());
-                   throw Error(ERR_MCS);
-                }
-                this->initiator = stream.in_uint16_be();
-            }
-        }
 
         AttachUserConfirm_Recv(InStream & stream, int encoding)
         {
@@ -2481,18 +1933,6 @@ namespace MCS
 
     struct ChannelJoinRequest_Send
     {
-        ChannelJoinRequest_Send(Stream & stream, uint16_t initiator, uint16_t channelId, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8(MCS::MCSPDU_ChannelJoinRequest << 2);
-            stream.out_uint16_be(initiator);
-            stream.out_uint16_be(channelId);
-            stream.mark_end();
-        }
-
         ChannelJoinRequest_Send(OutStream & stream, uint16_t initiator, uint16_t channelId, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -2510,30 +1950,6 @@ namespace MCS
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;
-
-        ChannelJoinRequest_Recv(Stream & stream, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-
-            const unsigned expected = 5; /* tag(1) + initiator(2) + channelId(2) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated ChannelJoinRequest: expected=%u, remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS);
-            }
-
-            uint8_t tag = stream.in_uint8();
-            if (tag != (MCS::MCSPDU_ChannelJoinRequest << 2)){
-                LOG(LOG_ERR, "ChannelJoinRequest tag (%u) expected, got %u", MCS::MCSPDU_ChannelJoinRequest << 2, tag);
-                throw Error(ERR_MCS);
-            }
-            this->type = MCS::MCSPDU_ChannelJoinRequest;
-            this->initiator = stream.in_uint16_be();
-            this->channelId = stream.in_uint16_be();
-        }
 
         ChannelJoinRequest_Recv(InStream & stream, int encoding)
         {
@@ -2636,28 +2052,6 @@ namespace MCS
 
     struct ChannelJoinConfirm_Send
     {
-        ChannelJoinConfirm_Send(Stream & stream
-                               , uint8_t result
-                               , uint16_t initiator
-                               , uint16_t requested
-                               , bool channelId_flag
-                               , uint16_t channelId
-                               , int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8((MCSPDU_ChannelJoinConfirm << 2) | 2 * channelId_flag);
-            stream.out_uint8(result); // Result = rt_successfull
-            stream.out_uint16_be(initiator);
-            stream.out_uint16_be(requested);
-            if (channelId_flag){
-                stream.out_uint16_be(channelId);
-            }
-            stream.mark_end();
-        }
-
         ChannelJoinConfirm_Send(OutStream & stream
                                , uint8_t result
                                , uint16_t initiator
@@ -2688,49 +2082,6 @@ namespace MCS
         uint16_t requested; // -- may be zero
         bool channelId_flag;
         uint16_t channelId;
-
-        ChannelJoinConfirm_Recv(Stream & stream, int encoding)
-        : type(MCS::MCSPDU_ChannelJoinConfirm)
-        , result(0)
-        , initiator(0)
-        , requested(0)
-        , channelId_flag(false)
-        , channelId(0)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-
-            const unsigned expected = 6; /* tag(1) + result(1) + initiator(2) + requested(2) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated ChannelJoinConfirm: expected=%u, remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS);
-            }
-
-            uint8_t tag = stream.in_uint8();
-            if ((tag & 0xFC) != (MCS::MCSPDU_ChannelJoinConfirm << 2)){
-                LOG(LOG_ERR, "ChannelJoinConfirm tag (%u) expected, got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, (tag & 0xFC));
-                throw Error(ERR_MCS);
-            }
-            this->result    = stream.in_uint8();
-            this->initiator = stream.in_uint16_be();
-            this->requested = stream.in_uint16_be();
-            this->channelId_flag = (tag & 2) != 0;
-            if ((tag & 2) && this->result){
-                LOG(LOG_ERR, "ChannelJoinConfirm provided a channel while result is negative (%u)", this->result);
-                throw Error(ERR_MCS);
-            }
-            if (this->channelId_flag){
-                if (!stream.in_check_rem(2)){
-                   LOG(LOG_ERR, "Truncated ChannelJoinConfirm indicator: expected=2, remains=%u",
-                       stream.in_remain());
-                   throw Error(ERR_MCS);
-                }
-                this->channelId = stream.in_uint16_be();
-            }
-        }
 
         ChannelJoinConfirm_Recv(InStream & stream, int encoding)
         : type(MCS::MCSPDU_ChannelJoinConfirm)

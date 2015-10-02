@@ -49,8 +49,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream out_s(65536);
-
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
@@ -70,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     uint8_t byte;
     uint8_t eventCode;
-    BStream out_payload(65536);
+    StaticOutStream<65536> out_payload;
 
     for (uint8_t i = 0; i < in_cie.numEvents; i++){
         byte = in_cie.payload.in_uint8();
@@ -109,10 +107,13 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
 
-    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, decrypt, 0, 0);
+    StaticOutStream<65536> out_s;
 
-    out_t.send(out_s);
-    out_t.send(out_payload);
+    FastPath::ClientInputEventPDU_Send out_cie(
+        out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
+
+    out_t.send(out_s.get_data(), out_s.get_offset());
+    out_t.send(out_payload.get_data(), out_payload.get_offset());
 
     BOOST_CHECK_EQUAL(true, out_t.get_status());
 }
@@ -129,8 +130,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
-
-    BStream out_s(65536);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -152,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     uint8_t byte;
     uint8_t eventCode;
-    BStream out_payload(65536);
+    StaticOutStream<65536> out_payload;
 
     for (uint8_t i = 0; i < in_cie.numEvents; i++){
         byte = in_cie.payload.in_uint8();
@@ -193,10 +192,13 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
 
-    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, decrypt, 0, 0);
+    StaticOutStream<65536> out_s;
 
-    out_t.send(out_s);
-    out_t.send(out_payload);
+    FastPath::ClientInputEventPDU_Send out_cie(
+        out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
+
+    out_t.send(out_s.get_data(), out_s.get_offset());
+    out_t.send(out_payload.get_data(), out_payload.get_offset());
 
     BOOST_CHECK_EQUAL(true, out_t.get_status());
 }
@@ -214,8 +216,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream out_s(65536);
-
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
@@ -231,7 +231,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     };
 
     uint8_t i = 0;
-    BStream out_payload(65536);
 
     while (in_su.payload.in_remain()) {
         FastPath::Update_Recv in_upd(in_su.payload, nullptr);

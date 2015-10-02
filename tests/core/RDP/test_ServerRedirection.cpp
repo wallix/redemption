@@ -45,12 +45,13 @@ BOOST_AUTO_TEST_CASE(TestServerRedirectionPDU)
 
     srv_redir_init.log(LOG_INFO, "test server_redirection_pdu");
 
-    BStream buffer;
-    srv_redir_init.emit(buffer);
-    buffer.rewind();
+    uint8_t buf[65536];
+    OutStream out_buffer(buf);
+    srv_redir_init.emit(out_buffer);
 
     ServerRedirectionPDU srv_redir_target;
-    srv_redir_target.receive(buffer);
+    InStream in_stream(buf, out_buffer.get_offset());
+    srv_redir_target.receive(in_stream);
 
     srv_redir_target.log(LOG_INFO, "test 2 server_redirection_pdu");
 

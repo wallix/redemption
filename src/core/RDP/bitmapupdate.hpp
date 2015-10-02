@@ -219,50 +219,6 @@ struct RDPBitmapData {
     , cb_uncompressed_size(0) {
     }
 
-    void emit(Stream & stream) const {
-        unsigned expected;
-
-        if (    (this->flags & BITMAP_COMPRESSION)
-            && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
-            expected = 26; /* destLeft(2) + destTop(2) + destRight(2) +
-                              destBottom(2) + width(2) + height(2) +
-                              bitsPerPixel(2) + flags(2) + bitmapLength(2) +
-                              cbCompFirstRowSize(2) + cbCompMainBodySize(2) +
-                              cbScanWidth(2) + cbUncompressedSize(2) */
-        }
-        else {
-            expected = 18; /* destLeft(2) + destTop(2) + destRight(2) +
-                              destBottom(2) + width(2) + height(2) +
-                              bitsPerPixel(2) + flags(2) + bitmapLength(2) */
-        }
-
-        if (!stream.has_room(expected)) {
-            LOG( LOG_ERR
-               , "BitmapData::emit - stream too small, need=%u, remains=%u"
-               , expected
-               , static_cast<unsigned>(stream.tailroom()));
-            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
-        }
-
-        stream.out_uint16_le(this->dest_left);
-        stream.out_uint16_le(this->dest_top);
-        stream.out_uint16_le(this->dest_right);
-        stream.out_uint16_le(this->dest_bottom);
-        stream.out_uint16_le(this->width);
-        stream.out_uint16_le(this->height);
-        stream.out_uint16_le(this->bits_per_pixel);
-        stream.out_uint16_le(this->flags);
-        stream.out_uint16_le(this->bitmap_length);
-
-        if (    (this->flags & BITMAP_COMPRESSION)
-            && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
-            stream.out_uint16_le(0x0000);   /* cbCompFirstRowSize (2 bytes) */
-            stream.out_uint16_le(this->cb_comp_main_body_size);
-            stream.out_uint16_le(this->cb_scan_width);
-            stream.out_uint16_le(this->cb_uncompressed_size);
-        }
-    }
-
     void emit(OutStream & stream) const {
         unsigned expected;
 
@@ -304,52 +260,6 @@ struct RDPBitmapData {
             stream.out_uint16_le(this->cb_comp_main_body_size);
             stream.out_uint16_le(this->cb_scan_width);
             stream.out_uint16_le(this->cb_uncompressed_size);
-        }
-    }
-
-    void receive(Stream & stream) {
-        unsigned expected = 18; /* destLeft(2) + destTop(2) + destRight(2) +
-                                   destBottom(2) + width(2) + height(2) +
-                                   bitsPerPixel(2) + flags(2) + bitmapLength(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_ERR
-               , "BitmapData::receive TS_BITMAP_DATA - Truncated data, need=%u, remains=%u"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        this->dest_left      = stream.in_uint16_le();
-        this->dest_top       = stream.in_uint16_le();
-        this->dest_right     = stream.in_uint16_le();
-        this->dest_bottom    = stream.in_uint16_le();
-        this->width          = stream.in_uint16_le();
-        this->height         = stream.in_uint16_le();
-        this->bits_per_pixel = stream.in_uint16_le();
-        this->flags          = stream.in_uint16_le();
-        this->bitmap_length  = stream.in_uint16_le();
-
-        REDASSERT(   (this->bits_per_pixel == 32)
-                  || (this->bits_per_pixel == 24)
-                  || (this->bits_per_pixel == 16)
-                  || (this->bits_per_pixel == 15)
-                  || (this->bits_per_pixel == 8 ));
-
-        if (    (this->flags & BITMAP_COMPRESSION)
-            && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
-            expected = 8; /* cbCompFirstRowSize(2) + cbCompMainBodySize(2) +
-                             cbScanWidth(2) + cbUncompressedSize(2) */
-            if (!stream.in_check_rem(expected)) {
-                LOG( LOG_ERR
-                   , "BitmapData::receive TS_CD_HEADER - Truncated data, need=18, remains=%u"
-                   , stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            stream.in_skip_bytes(2);    /* cbCompFirstRowSize (2 bytes) */
-
-            this->cb_comp_main_body_size = stream.in_uint16_le();
-            this->cb_scan_width          = stream.in_uint16_le();
-            this->cb_uncompressed_size   = stream.in_uint16_le();
         }
     }
 

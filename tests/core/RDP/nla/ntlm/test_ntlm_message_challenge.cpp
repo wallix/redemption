@@ -32,7 +32,7 @@
 
 BOOST_AUTO_TEST_CASE(TestChallenge)
 {
-    BStream s;
+    StaticOutStream<65536> s;
     // ===== NTLMSSP_CHALLENGE =====
     uint8_t packet2[] = {
         0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x02,
@@ -58,15 +58,13 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
 
     LOG(LOG_INFO, "=================================\n");
-    s.init(sizeof(packet2));
     s.out_copy_bytes(packet2, sizeof(packet2));
-    s.mark_end();
-    s.rewind();
 
     uint8_t sig[20];
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req2(s);
+    InStream in_s(s.get_data(), s.get_offset());
+    TSRequest ts_req2(in_s);
 
     BOOST_CHECK_EQUAL(ts_req2.version, 2);
 
@@ -74,12 +72,12 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     BOOST_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
-    BStream to_send2;
+    StaticOutStream<65536> to_send2;
 
-    BOOST_CHECK_EQUAL(to_send2.size(), 0);
+    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0);
     ts_req2.emit(to_send2);
 
-    BOOST_CHECK_EQUAL(to_send2.size(), 0x94 + 3);
+    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
     char message[1024];
     if (!check_sig(to_send2, message, (const char *)sig)){

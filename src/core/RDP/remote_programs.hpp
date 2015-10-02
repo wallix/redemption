@@ -132,7 +132,7 @@ class RAILPDUHeader_Recv {
     uint16_t orderLength_;
 
 public:
-    explicit RAILPDUHeader_Recv(Stream & stream) {
+    explicit RAILPDUHeader_Recv(InStream & stream) {
         const unsigned expected = 4;    // orderType(2) + orderLength(2)
 
         if (!stream.in_check_rem(expected)) {
@@ -151,11 +151,11 @@ public:
 };
 
 class RAILPDUHeader_Send {
-    Stream   & stream;
-    uint32_t   offset_of_orderLength;
+    OutStream & stream;
+    uint32_t    offset_of_orderLength;
 
 public:
-    explicit RAILPDUHeader_Send(Stream & stream)
+    explicit RAILPDUHeader_Send(OutStream & stream)
     : stream(stream), offset_of_orderLength(0) {}
 
     void emit_begin(uint16_t orderType) {
@@ -163,8 +163,6 @@ public:
 
         this->offset_of_orderLength = this->stream.get_offset();
         this->stream.out_clear_bytes(2);
-
-        this->stream.mark_end();
     }
 
     void emit_end() {
@@ -203,18 +201,6 @@ class HandshakePDU_Recv {
     uint32_t buildNumber_;
 
 public:
-    explicit HandshakePDU_Recv(Stream & stream) {
-        const unsigned expected = 4;    // buildNumber(4)
-
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Handshake PDU: expected=%u remains=%u",
-                expected, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
-
-        this->buildNumber_ = stream.in_uint32_le();
-    }
-
     explicit HandshakePDU_Recv(InStream & stream) {
         const unsigned expected = 4;    // buildNumber(4)
 
@@ -232,10 +218,8 @@ public:
 
 class HandshakePDU_Send {
 public:
-    HandshakePDU_Send(Stream & stream, uint32_t buildNumber) {
+    HandshakePDU_Send(OutStream & stream, uint32_t buildNumber) {
         stream.out_uint32_le(buildNumber);
-
-        stream.mark_end();
     }
 };
 
@@ -283,21 +267,6 @@ class ClientInformationPDU_Recv {
     uint32_t Flags_;
 
 public:
-    explicit ClientInformationPDU_Recv(Stream & stream) {
-        {
-            const unsigned expected = 4;    // Flags(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Information PDU: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
-
-        this->Flags_ = stream.in_uint32_le();
-    }
-
     explicit ClientInformationPDU_Recv(InStream & stream) {
         {
             const unsigned expected = 4;    // Flags(4)
@@ -318,10 +287,8 @@ public:
 
 class ClientInformationPDU_Send {
 public:
-    ClientInformationPDU_Send(Stream & stream, uint32_t Flags) {
+    ClientInformationPDU_Send(OutStream & stream, uint32_t Flags) {
         stream.out_uint32_le(Flags);
-
-        stream.mark_end();
     }
 };
 
@@ -446,58 +413,6 @@ class ClientExecutePDU_Recv {
     std::string arguments_;
 
 public:
-    explicit ClientExecutePDU_Recv(Stream & stream) {
-        {
-            const unsigned expected =
-                8;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Execute PDU: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
-
-        this->Flags_            = stream.in_uint16_le();
-        this->ExeOrFileLength   = stream.in_uint16_le();
-        this->WorkingDirLength  = stream.in_uint16_le();
-        this->ArgumentsLen      = stream.in_uint16_le();
-
-        auto get_non_null_terminated_utf16_string =
-            [&stream] (std::string & out,
-                       size_t length_of_utf16_data_in_bytes) {
-                if (!stream.in_check_rem(length_of_utf16_data_in_bytes)) {
-                    LOG(LOG_ERR,
-                        "Truncated Client Execute PDU: expected=%u remains=%u",
-                        length_of_utf16_data_in_bytes, stream.in_remain());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-                uint8_t * const utf16_data = static_cast<uint8_t *>(
-                    ::alloca(length_of_utf16_data_in_bytes));
-                stream.in_copy_bytes(utf16_data,
-                    length_of_utf16_data_in_bytes);
-
-                const size_t size_of_utf8_string =
-                    length_of_utf16_data_in_bytes / 2 *
-                    maximum_length_of_utf8_character_in_bytes + 1;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
-                const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    utf16_data, length_of_utf16_data_in_bytes / 2,
-                    utf8_string, size_of_utf8_string);
-                out.assign(::char_ptr_cast(utf8_string),
-                    length_of_utf8_string);
-            };
-
-        get_non_null_terminated_utf16_string(this->exe_or_file_,
-            this->ExeOrFileLength);
-        get_non_null_terminated_utf16_string(this->working_dir_,
-            this->WorkingDirLength);
-        get_non_null_terminated_utf16_string(this->arguments_,
-            this->ArgumentsLen);
-    }
-
     explicit ClientExecutePDU_Recv(InStream & stream) {
         {
             const unsigned expected =
@@ -561,7 +476,7 @@ public:
 
 class ClientExecutePDU_Send {
 public:
-    ClientExecutePDU_Send(Stream & stream, uint16_t Flags,
+    ClientExecutePDU_Send(OutStream & stream, uint16_t Flags,
                           const char * exe_or_file, const char * working_dir,
                           const char * arguments) {
         stream.out_uint16_le(Flags);
@@ -603,8 +518,6 @@ public:
         put_non_null_terminate_utf16_string(
             arguments, maximum_length_of_Arguments_in_bytes,
             offset_of_Arguments);
-
-        stream.mark_end();
     }
 };
 
@@ -736,21 +649,6 @@ class ClientSystemParametersUpdatePDU_Recv {
     uint32_t SystemParam_;
 
 public:
-    explicit ClientSystemParametersUpdatePDU_Recv(Stream & stream) {
-        {
-            const unsigned expected = 4;    // SystemParam(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client System Parameters Update PDU: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
-
-        this->SystemParam_ = stream.in_uint32_le();
-    }
-
     explicit ClientSystemParametersUpdatePDU_Recv(InStream & stream) {
         {
             const unsigned expected = 4;    // SystemParam(4)
@@ -771,10 +669,8 @@ public:
 
 class ClientSystemParametersUpdatePDU_Send {
 public:
-    ClientSystemParametersUpdatePDU_Send(Stream & stream, uint32_t SystemParam) {
+    ClientSystemParametersUpdatePDU_Send(OutStream & stream, uint32_t SystemParam) {
         stream.out_uint32_le(SystemParam);
-
-        stream.mark_end();
     }
 };
 
@@ -817,53 +713,6 @@ class HighContrastSystemInformationStructure_Recv {
     std::string ColorScheme_;
 
 public:
-    explicit HighContrastSystemInformationStructure_Recv(Stream & stream) {
-        {
-            const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated High Contrast System Information Structure: expected=%u remains=%u (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
-
-        this->Flags_            = stream.in_uint32_le();
-        this->ColorSchemeLength = stream.in_uint32_le();
-
-        if (!stream.in_check_rem(this->ColorSchemeLength)) {
-            LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%u (1)",
-                this->ColorSchemeLength, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
-
-        REDASSERT(this->ColorSchemeLength >= 2 /* CbString(2) */);
-
-        const uint16_t CbString = stream.in_uint16_le();
-
-        if (!stream.in_check_rem(CbString)) {
-            LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%u (2)",
-                this->ColorSchemeLength, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(CbString));
-
-        stream.in_copy_bytes(unicode_data, CbString);
-
-        const size_t size_of_utf8_string =
-                    CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            unicode_data, CbString / 2, utf8_string, size_of_utf8_string);
-        this->ColorScheme_.assign(::char_ptr_cast(utf8_string),
-            length_of_utf8_string);
-    }
-
     explicit HighContrastSystemInformationStructure_Recv(InStream & stream) {
         {
             const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
@@ -918,7 +767,7 @@ public:
 
 class HighContrastSystemInformationStructure_Send {
 public:
-    HighContrastSystemInformationStructure_Send(Stream & stream, uint32_t Flags,
+    HighContrastSystemInformationStructure_Send(OutStream & stream, uint32_t Flags,
                                                 const char * color_scheme) {
         stream.out_uint32_le(Flags);
 
@@ -935,8 +784,6 @@ public:
         stream.out_uint16_le(size_of_unicode_data);
 
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
-
-        stream.mark_end();
     }
 };
 

@@ -95,9 +95,9 @@ struct CopyPasteFront : FakeFront
 private:
     template<class PDU, class... Args>
     void send_to_server(PDU && pdu, Args && ...args) {
-        BStream out_s(256);
+        StaticOutStream<256> out_s;
         pdu.emit(out_s, std::move(args)...);
-        InStream in_s(out_s.get_data(), out_s.size());
+        InStream in_s(out_s.get_data(), out_s.get_offset());
         this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
     }
 
