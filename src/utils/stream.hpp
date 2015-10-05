@@ -2048,45 +2048,4 @@ public:
     }
 };
 
-// SubStream does not allocate any buffer
-// (and the buffer pointed to should probably not be modifiable,
-// but I'm not yet doing any distinction between stream that can or can't be modified
-// many at some future time)
-class SubStream : public Stream {
-    public:
-    SubStream(){}  // not yet initialized
-
-    explicit SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
-    {
-        if ((offset + new_size) > stream.size()){
-            LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.size()),
-                static_cast<unsigned>(offset),
-                static_cast<unsigned>(new_size));
-            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
-        }
-        this->p = this->data = stream.get_data() + offset;
-        this->capacity = (new_size == 0)?(stream.size() - offset):new_size;
-        this->end = this->data + this->capacity;
-    }
-
-    explicit SubStream(const InStream & stream, size_t offset = 0, size_t new_size = 0)
-    {
-        if ((offset + new_size) > stream.get_capacity()){
-            LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.get_capacity()),
-                static_cast<unsigned>(offset),
-                static_cast<unsigned>(new_size));
-            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
-        }
-        TODO("IMPORTANT: This is bad cast")
-        this->p = this->data = const_cast<uint8_t *>(stream.get_data()) + offset;
-        this->capacity = (new_size == 0)?(stream.get_capacity() - offset):new_size;
-        this->end = this->data + this->capacity;
-    }
-
-    // Not allowed on SubStreams
-    void init(size_t) override {}
-};
-
 #endif
