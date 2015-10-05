@@ -306,17 +306,12 @@ public:
     : FileAttributes(FileAttributes)
     , ReparseTag(ReparseTag) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->FileAttributes);
-        stream.out_uint32_le(this->ReparseTag);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileAttributes);
         stream.out_uint32_le(this->ReparseTag);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // FileAttributes(4) + ReparseTag(4)
 
@@ -460,17 +455,6 @@ public:
     , ChangeTime(ChangeTime)
     , FileAttributes_(FileAttributes) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint64_le(this->CreationTime);
-        stream.out_uint64_le(this->LastAccessTime_);
-        stream.out_uint64_le(this->LastWriteTime_);
-        stream.out_uint64_le(this->ChangeTime);
-
-        stream.out_uint32_le(this->FileAttributes_);
-
-        // Reserved(4), MUST NOT be transmitted.
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint64_le(this->CreationTime);
         stream.out_uint64_le(this->LastAccessTime_);
@@ -482,7 +466,7 @@ public:
         // Reserved(4), MUST NOT be transmitted.
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 36;   // CreationTime(8) + LastAccessTime(8) +
                                             //     LastWriteTime(8) + ChangeTime(8) +
@@ -724,65 +708,6 @@ public:
     , FileAttributes(FileAttributes)
     , file_name(file_name) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->NextEntryOffset);
-        stream.out_uint32_le(this->FileIndex);
-
-        stream.out_uint64_le(this->CreationTime);
-        stream.out_uint64_le(this->LastAccessTime);
-        stream.out_uint64_le(this->LastWriteTime);
-        stream.out_uint64_le(this->ChangeTime);
-
-        stream.out_sint64_le(this->EndOfFile);
-        stream.out_sint64_le(this->AllocationSize);
-
-        stream.out_uint32_le(this->FileAttributes);
-
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
-
-        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
-
-        stream.out_uint32_le(this->EaSize);
-
-        const size_t maximum_length_of_ShortName_in_bytes = (this->short_name.length() + 1) * 2;
-
-        uint8_t * const ShortName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_ShortName_in_bytes));
-        size_t size_of_ShortName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->short_name.c_str()), ShortName_unicode_data,
-            maximum_length_of_ShortName_in_bytes);
-        if (size_of_ShortName_unicode_data > 0) {
-            // Writes null terminator.
-            ShortName_unicode_data[size_of_ShortName_unicode_data    ] =
-            ShortName_unicode_data[size_of_ShortName_unicode_data + 1] = 0;
-            size_of_ShortName_unicode_data += 2;
-
-            REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
-        }
-
-        stream.out_sint8(size_of_ShortName_unicode_data);   // ShortNameLength(1)
-
-        // Reserved(1), MUST NOT be transmitted.
-
-        stream.out_copy_bytes(ShortName_unicode_data, size_of_ShortName_unicode_data);
-        if (size_of_ShortName_unicode_data < 24  /* ShortName(24) */) {
-            stream.out_clear_bytes(24 /* ShortName(24) */ - size_of_ShortName_unicode_data);
-        }
-
-        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
@@ -842,7 +767,7 @@ public:
         stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 93;   // NextEntryOffset(4) + FileIndex(4) +
                                             //     CreationTime(8) + LastAccessTime(8) +
@@ -1210,40 +1135,6 @@ public:
     , FileAttributes(FileAttributes)
     , file_name(file_name) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->NextEntryOffset);
-        stream.out_uint32_le(this->FileIndex);
-
-        stream.out_uint64_le(this->CreationTime);
-        stream.out_uint64_le(this->LastAccessTime);
-        stream.out_uint64_le(this->LastWriteTime);
-        stream.out_uint64_le(this->ChangeTime);
-
-        stream.out_sint64_le(this->EndOfFile);
-        stream.out_sint64_le(this->AllocationSize);
-
-        stream.out_uint32_le(this->FileAttributes);
-
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
-
-        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
-
-        stream.out_uint32_le(this->EaSize);
-
-        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
@@ -1278,7 +1169,7 @@ public:
         stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 68;   // NextEntryOffset(4) + FileIndex(4) +
                                             //     CreationTime(8) + LastAccessTime(8) +
@@ -1461,28 +1352,6 @@ public:
     explicit FileNamesInformation(const char * file_name)
     : file_name(file_name) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->NextEntryOffset);
-        stream.out_uint32_le(this->FileIndex);
-
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
-
-        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
-
-        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
@@ -1505,7 +1374,7 @@ public:
         stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // NextEntryOffset(4) + FileIndex(4)
             if (!stream.in_check_rem(expected)) {
@@ -1709,18 +1578,6 @@ public:
     , DeletePending(DeletePending)
     , Directory(Directory) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_sint64_le(this->AllocationSize);
-        stream.out_sint64_le(this->EndOfFile);
-
-        stream.out_uint32_le(this->NumberOfLinks);
-
-        stream.out_uint8(this->DeletePending);
-        stream.out_uint8(this->Directory);
-
-        // Reserved(2), MUST NOT be transmitted.
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->AllocationSize);
         stream.out_sint64_le(this->EndOfFile);
@@ -1733,7 +1590,7 @@ public:
         // Reserved(2), MUST NOT be transmitted.
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 22;   // AllocationSize(8) + EndOfFile(8) +
                                             //     NumberOfLinks(4) + DeletePending(1) +
@@ -1963,23 +1820,6 @@ public:
     , MaximumComponentNameLength(MaximumComponentNameLength)
     , file_system_name(file_system_name) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->FileSystemAttributes_);
-        stream.out_sint32_le(this->MaximumComponentNameLength);
-
-        const size_t maximum_length_of_FileSystemName_in_bytes = this->file_system_name.length() * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileSystemName_in_bytes));
-        const size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()), unicode_data,
-            maximum_length_of_FileSystemName_in_bytes);
-
-        stream.out_uint32_le(size_of_unicode_data); // FileSystemNameLength(4)
-
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileSystemAttributes_);
         stream.out_sint32_le(this->MaximumComponentNameLength);
@@ -1997,7 +1837,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                             //     FileSystemNameLength(4)
@@ -2164,14 +2004,6 @@ public:
     , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
     , BytesPerSector(BytesPerSector) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_sint64_le(this->TotalAllocationUnits);
-        stream.out_sint64_le(this->CallerAvailableAllocationUnits);
-        stream.out_sint64_le(this->ActualAvailableAllocationUnits);
-        stream.out_uint32_le(this->SectorsPerAllocationUnit);
-        stream.out_uint32_le(this->BytesPerSector);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->TotalAllocationUnits);
         stream.out_sint64_le(this->CallerAvailableAllocationUnits);
@@ -2180,7 +2012,7 @@ public:
         stream.out_uint32_le(this->BytesPerSector);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;   // TotalAllocationUnits(8) +
                                             //     CallerAvailableAllocationUnits(8)
@@ -2303,13 +2135,6 @@ public:
     , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
     , BytesPerSector(BytesPerSector) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_sint64_le(this->TotalAllocationUnits);
-        stream.out_sint64_le(this->AvailableAllocationUnits);
-        stream.out_uint32_le(this->SectorsPerAllocationUnit);
-        stream.out_uint32_le(this->BytesPerSector);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->TotalAllocationUnits);
         stream.out_sint64_le(this->AvailableAllocationUnits);
@@ -2317,7 +2142,7 @@ public:
         stream.out_uint32_le(this->BytesPerSector);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 24;   // TotalAllocationUnits(8) +
                                             //     AvailableAllocationUnits(8) +
@@ -2449,32 +2274,6 @@ public:
     , SupportsObjects(SupportsObjects)
     , volume_label(volume_label) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint64_le(this->VolumeCreationTime);
-        stream.out_uint32_le(this->VolumeSerialNumber);
-
-        // The null-terminator is included.
-        const size_t maximum_length_of_VolumeLabel_in_bytes = (this->volume_label.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_VolumeLabel_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()), unicode_data,
-            maximum_length_of_VolumeLabel_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
-
-        stream.out_uint32_le(size_of_unicode_data); // VolumeLabelLength(4)
-
-        stream.out_uint8(this->SupportsObjects);
-
-        // Reserved(1), MUST NOT be transmitted.
-
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint64_le(this->VolumeCreationTime);
         stream.out_uint32_le(this->VolumeSerialNumber);
@@ -2501,7 +2300,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 17;   // VolumeCreationTime(8) + VolumeSerialNumber(4) +
                                             //     VolumeLabelLength(4) + SupportsObjects(1)
@@ -2735,17 +2534,12 @@ public:
     : DeviceType(DeviceType)
     , Characteristics(Characteristics) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->DeviceType);
-        stream.out_uint32_le(this->Characteristics);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceType);
         stream.out_uint32_le(this->Characteristics);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // DeviceType(4) + Characteristics(4)
             if (!stream.in_check_rem(expected)) {

@@ -138,17 +138,12 @@ struct SharedHeader {
     : component(component)
     , packet_id(packet_id) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint16_le(static_cast<uint16_t>(this->component));
-        stream.out_uint16_le(static_cast<uint16_t>(this->packet_id));
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint16_le(static_cast<uint16_t>(this->component));
         stream.out_uint16_le(static_cast<uint16_t>(this->packet_id));
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 4;  // Component(2) + PacketId(2)
 
@@ -456,7 +451,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceType_);
         stream.out_uint32_le(this->DeviceId_);
 
@@ -467,7 +462,7 @@ public:
         stream.out_copy_bytes(this->device_data.get_data(), this->device_data.get_capacity());
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 20;  // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
 
@@ -498,7 +493,7 @@ public:
             }
         }
 
-        this->device_data.resize(stream.p, DeviceDataLength);
+        this->device_data.resize(stream.get_current(), DeviceDataLength);
         stream.in_skip_bytes(DeviceDataLength);
     }
 
@@ -671,7 +666,7 @@ class DeviceIORequest {
     uint32_t MinorFunction_ = 0;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->FileId_);
         stream.out_uint32_le(this->CompletionId_);
@@ -679,7 +674,7 @@ public:
         stream.out_uint32_le(this->MinorFunction_);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 20;  // DeviceId(4) + FileId(4) + CompletionId(4) +
                                            //     MajorFunction(4) + MinorFunction(4)
@@ -846,7 +841,7 @@ class DeviceCreateRequest {
     std::string path;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DesiredAccess_);
         stream.out_uint64_le(this->AllocationSize);
         stream.out_uint32_le(this->FileAttributes);
@@ -872,7 +867,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // DesiredAccess(4) + AllocationSize(8) +
                                            //     FileAttributes(4) + SharedAccess(4) +
@@ -1003,11 +998,11 @@ public:
 //  to any value, and MUST be ignored on receipt.
 
 class DeviceCloseRequest {
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_clear_bytes(32); // Padding(32)
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // Padding(32)
 
@@ -1094,12 +1089,12 @@ class DeviceReadRequest {
     uint64_t Offset_ = 0LLU;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length_);
         stream.out_uint64_le(this->Offset_);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 12;  // Length(4) + Offset(8)
 
@@ -1271,7 +1266,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(DeviceControlRequest);
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->OutputBufferLength);
 
         stream.out_uint32_le(this->input_buffer.get_capacity());    // InputBufferLength(4)
@@ -1284,7 +1279,7 @@ public:
             this->input_buffer.get_capacity());
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // OutputBufferLength(4) + InputBufferLength(4) +
                                            //     IoControlCode(4) + Padding(20)
@@ -1317,7 +1312,7 @@ public:
             }
         }
 
-        this->input_buffer.resize(stream.p, InputBufferLength);
+        this->input_buffer.resize(stream.get_current(), InputBufferLength);
         stream.in_skip_bytes(InputBufferLength);
     }
 
@@ -1393,19 +1388,13 @@ public:
     , CompletionId_(CompletionId)
     , IoStatus_(IoStatus) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->DeviceId_);
-        stream.out_uint32_le(this->CompletionId_);
-        stream.out_uint32_le(this->IoStatus_);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->CompletionId_);
         stream.out_uint32_le(this->IoStatus_);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // DeviceId(4) + CompletionId(4) + IoStatus(4)
 
@@ -1537,17 +1526,12 @@ public:
     : FileId_(FileId)
     , Information(Information) {}
 
-    inline void emit(Stream & stream) const {
-        stream.out_uint32_le(this->FileId_);
-        stream.out_uint8(this->Information);
-    }
-
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileId_);
         stream.out_uint8(this->Information);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 5;   // FileId(4) + Information(1)
 
@@ -1738,12 +1722,12 @@ public:
     ServerDeviceAnnounceResponse(uint32_t device_id, uint32_t result_code) :
         DeviceId_(device_id), ResultCode_(result_code) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->ResultCode_);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;   // DeviceId(4) + ResultCode(4)
 
@@ -1817,13 +1801,13 @@ class ServerAnnounceRequest {
     uint16_t ClientId_     = 0;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint16_le(this->VersionMajor);
         stream.out_uint16_le(this->VersionMinor_);
         stream.out_uint16_le(this->ClientId_);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
 
@@ -1918,13 +1902,13 @@ public:
     , VersionMinor(VersionMinor)
     , ClientId(ClientId) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint16_le(this->VersionMajor);
         stream.out_uint16_le(this->VersionMinor);
         stream.out_uint32_le(this->ClientId);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
 
@@ -2021,7 +2005,7 @@ public:
     explicit ClientNameRequest(const char * computer_name)
     : computer_name(computer_name) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->UnicodeFlag);
         stream.out_uint32_le(this->CodePage);
 
@@ -2055,7 +2039,7 @@ public:
         }
     }
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 12;  // UnicodeFlag(4) + CodePage(4) +
                                            //     ComputerNameLen(4)
@@ -2332,7 +2316,7 @@ public:
     , extraFlags2(extraFlags2)
     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
 
-    inline void emit(Stream & stream, uint32_t version) const {
+    inline void emit(OutStream & stream, uint32_t version) const {
         stream.out_uint32_le(this->osType);
         stream.out_uint32_le(this->osVersion);
         stream.out_uint16_le(this->protocolMajorVersion);
@@ -2347,7 +2331,7 @@ public:
         }
     }
 
-    inline void receive(Stream & stream, uint32_t version) {
+    inline void receive(InStream & stream, uint32_t version) {
         {
             const unsigned expected = 32 +  // osType(4) + osVersion(4) + protocolMajorVersion(2) +
                                             // protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) +
@@ -2628,7 +2612,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
         stream.out_uint32_le(this->query_buffer.get_capacity());    // Length(4)
@@ -2638,7 +2622,7 @@ public:
         stream.out_copy_bytes(this->query_buffer.get_data(), this->query_buffer.get_capacity());
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
 
@@ -2668,7 +2652,7 @@ public:
             }
         }
 
-        this->query_buffer.resize(stream.p, Length);
+        this->query_buffer.resize(stream.get_current(), Length);
         stream.in_skip_bytes(Length);
     }
 
@@ -2860,7 +2844,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryVolumeInformationRequest);
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
         stream.out_uint32_le(this->query_volume_buffer.get_capacity()); // Length(4)
@@ -2871,7 +2855,7 @@ public:
             this->query_volume_buffer.get_capacity());
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
 
@@ -2902,7 +2886,7 @@ public:
             }
         }
 
-        this->query_volume_buffer.resize(stream.p, Length);
+        this->query_volume_buffer.resize(stream.get_current(), Length);
         stream.in_skip_bytes(Length);
     }
 
@@ -3054,14 +3038,14 @@ class ServerDriveSetInformationRequest {
     uint32_t Length_             = 0;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint32_le(this->Length_);
 
         stream.out_clear_bytes(24); // Padding(24)
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + Length(4) +
                                            //     Padding(24)
@@ -3156,7 +3140,7 @@ class RDPFileRenameInformation {
     std::string file_name;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint8(this->replace_if_exists_ ? ((uint8_t)-1) : 0);
         stream.out_uint8(this->RootDirectory_);
 
@@ -3178,7 +3162,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);  // FileName(variable)
     }
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 6;  // ReplaceIfExists(1) + RootDirectory(1) +
                                            //     FileNameLength(4)
@@ -3356,7 +3340,7 @@ class ServerDriveQueryDirectoryRequest {
     std::string path;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint8(this->InitialQuery_);
 
@@ -3380,7 +3364,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + InitialQuery(1) +
                                            //     PathLength(4) + Padding(23)

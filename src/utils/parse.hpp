@@ -28,9 +28,10 @@
 
 class Parse {
 public:
-    uint8_t const * p;
+    uint8_t const * p = nullptr;
 
 public:
+    Parse() = default;
     explicit Parse(uint8_t const * p) : p(p) {}
 
     int8_t in_sint8(void) {
@@ -87,6 +88,12 @@ public:
     int32_t in_sint32_be(void) {
         uint64_t v = this->in_uint32_be();
         return static_cast<int32_t>((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
+    }
+
+    int64_t in_sint64_le(void) {
+        int64_t res;
+        *(reinterpret_cast<uint64_t *>(&res)) = this->in_uint64_le();
+        return res;
     }
 
     uint64_t in_uint64_le(void) {

@@ -52,8 +52,8 @@ enum {
 
 class InStream
 {
-    uint8_t const * begin;
-    uint8_t const * end;
+    uint8_t const * begin = nullptr;
+    uint8_t const * end = nullptr;
     // relative coordinate between begin and end (at begin, p = 0)
     Parse p;
 
@@ -89,7 +89,7 @@ public:
     {
     }
 
-    InStream() = delete;
+    InStream() = default;
     InStream(InStream &&) = default;
     InStream & operator=(InStream &&) = default;
     InStream & operator=(InStream const &) = delete;
@@ -206,6 +206,10 @@ public:
 
     int32_t in_sint32_be(void) {
         return this->p.in_sint32_be();
+    }
+
+    int64_t in_sint64_le(void) {
+        return this->p.in_sint64_le();
     }
 
     // ---------------------------------------------------------------------------

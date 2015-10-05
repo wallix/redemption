@@ -182,7 +182,7 @@ public:
     }
 
     RDPMultiPatBlt( const Rect & _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
-                  , uint8_t nDeltaEntries, Stream & deltaEncodedRectangles)
+                  , uint8_t nDeltaEntries, InStream & deltaEncodedRectangles)
     : rect(_rect)
     , nLeftRect(rect.x)
     , nTopRect(rect.y)

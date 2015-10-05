@@ -194,9 +194,9 @@ class IconInfo {
     uint16_t Height     = 0;
 
     struct array_view { uint8_t const * p; std::size_t sz; };
-    array_view bits_mask {};
-    array_view color_table {};
-    array_view bits_color {};
+    array_view bits_mask {nullptr, 0u};
+    array_view color_table {nullptr, 0u};
+    array_view bits_color {nullptr, 0u};
 
 public:
     void emit(OutStream & stream) const {
