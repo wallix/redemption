@@ -4249,11 +4249,10 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
 
     Bitmap bmp(filename);
 
-    BStream compressed_bitmap_data(65536);
+    StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
-    compressed_bitmap_data.mark_end();
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     BOOST_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -4266,11 +4265,10 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
 
     Bitmap bmp(filename);
 
-    BStream compressed_bitmap_data(65536);
+    StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
-    compressed_bitmap_data.mark_end();
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     BOOST_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -4283,11 +4281,10 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
 
     Bitmap bmp(filename);
 
-    BStream compressed_bitmap_data(65536);
+    StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
-    compressed_bitmap_data.mark_end();
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     BOOST_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -4300,11 +4297,10 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
 
     Bitmap bmp(filename);
 
-    BStream compressed_bitmap_data(65536);
+    StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
-    compressed_bitmap_data.mark_end();
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     BOOST_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }

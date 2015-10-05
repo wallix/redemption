@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 {
     Inifile ini;
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
     stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
@@ -88,12 +88,12 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     // CASE EXCEPTION
     // try exception
-    stream.reset();
+    stream.rewind();
     stream.out_uint32_be(0xFFFFFFFF);
     stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
     stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
 
-    GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
+    GeneratorTransport transexcpt(reinterpret_cast<char *>(stream.get_current()) ,stream.get_offset());
     AclSerializer aclexcpt(ini, transexcpt, 0);
     try {
         aclexcpt.incoming();
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
 }
 
-inline void execute_test_initem(Stream & stream, AclSerializer & acl, const authid_t authid, const char * value)
+inline void execute_test_initem(OutStream & stream, AclSerializer & acl, const authid_t authid, const char * value)
 {
     // create stream with key , ask
     stream.out_string(string_from_authid(authid));
@@ -118,7 +118,7 @@ inline void execute_test_initem(Stream & stream, AclSerializer & acl, const auth
 template<class Cfg, class U>
 inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t authid, U const & defaut)
 {
-    BStream stream(2048);
+    StaticOutStream<2048> stream;
 
     // Set defaut value to strauthid key
     ini.set_acl<Cfg>(defaut);
@@ -132,7 +132,7 @@ inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t a
 template<class Cfg>
 inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid_t authid, char const * value)
 {
-    BStream stream(2048);
+    StaticOutStream<2048> stream;
     // set strauthid key to be asked
     ini.ask<Cfg>();
     BOOST_CHECK(ini.is_asked<Cfg>());
@@ -146,7 +146,7 @@ inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid
 BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
 {
     Inifile ini;
-    BStream stream(1);
+    StaticOutStream<1> stream;
     LogTransport trans;
     AclSerializer acl(ini, trans, 0);
 

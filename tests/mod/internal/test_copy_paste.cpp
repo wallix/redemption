@@ -73,13 +73,14 @@ struct CopyPasteFront : FakeFront
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
             {
                 RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-                BStream stream(65535);
+                constexpr std::size_t buf_sz = 65535;
+                uint8_t buf[buf_sz];
                 size_t unicode_data_length = ::UTF8toUTF16(byte_ptr_cast(this->str.c_str()),
-                    stream.p, stream.get_capacity());
-                stream.p[unicode_data_length    ] = 0;
-                stream.p[unicode_data_length + 1] = 0;
+                    buf, buf_sz);
+                buf[unicode_data_length    ] = 0;
+                buf[unicode_data_length + 1] = 0;
                 unicode_data_length += 2;
-                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), stream.p, unicode_data_length);
+                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), buf, unicode_data_length);
             }
             break;
             default:

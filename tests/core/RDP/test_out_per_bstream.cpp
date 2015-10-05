@@ -23,7 +23,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOutPerBStream
+#define BOOST_TEST_MODULE TestOutPerStream
 #include <boost/test/auto_unit_test.hpp>
 
 //#define LOGNULL
@@ -32,62 +32,53 @@
 #include "stream.hpp"
 #include "RDP/out_per_bstream.hpp"
 
-BOOST_AUTO_TEST_CASE(TestOutPerBStream)
+BOOST_AUTO_TEST_CASE(TestOutPerStream)
 {
     // test we can create a Stream object
-    OutPerBStream out_per_stream;
-    Stream * s = &out_per_stream;
-    BOOST_CHECK(s);
+    uint8_t buf[3];
+    OutPerStream out_per_stream(buf);
 
-    BOOST_CHECK(s->get_capacity() == AUTOSIZE);
-
-    s->init(8192);
-    BOOST_CHECK(s->get_capacity() == 8192);
-    BOOST_CHECK(s->get_data());
-    BOOST_CHECK(s->get_data() == s->p);
-    BOOST_CHECK(s->get_data() == s->end);
+    BOOST_CHECK(out_per_stream.get_capacity() == 3);
+    BOOST_CHECK(out_per_stream.get_data());
+    BOOST_CHECK(out_per_stream.get_data() == out_per_stream.get_current());
 }
 
 
-BOOST_AUTO_TEST_CASE(TestOutPerBStream_per_integer_large)
+BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_large)
 {
     // test we can create a Stream object
-    OutPerBStream stream;
+    StaticOutPerStream<256> stream;
     stream.out_per_integer(0x12345678);
-    stream.mark_end();
-    BOOST_CHECK_EQUAL(5, stream.size());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x04\x12\x34\x56\x78", stream.size()));
+    BOOST_CHECK_EQUAL(5, stream.get_offset());
+    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x04\x12\x34\x56\x78", stream.get_offset()));
 }
 
-BOOST_AUTO_TEST_CASE(TestOutPerBStream_per_integer_large2)
+BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_large2)
 {
     // test we can create a Stream object
-    OutPerBStream stream;
+    StaticOutPerStream<256> stream;
     stream.out_per_integer(0x00345678);
-    stream.mark_end();
-    BOOST_CHECK_EQUAL(5, stream.size());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x04\x00\x34\x56\x78", stream.size()));
+    BOOST_CHECK_EQUAL(5, stream.get_offset());
+    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x04\x00\x34\x56\x78", stream.get_offset()));
 }
 
 
-BOOST_AUTO_TEST_CASE(TestOutPerBStream_per_integer_medium)
+BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_medium)
 {
     // test we can create a Stream object
-    OutPerBStream stream;
+    StaticOutPerStream<256> stream;
     stream.out_per_integer(0x1234);
-    stream.mark_end();
-    BOOST_CHECK_EQUAL(3, stream.size());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x02\x12\x34", stream.size()));
+    BOOST_CHECK_EQUAL(3, stream.get_offset());
+    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x02\x12\x34", stream.get_offset()));
 }
 
-BOOST_AUTO_TEST_CASE(TestOutPerBStream_per_integer_small)
+BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
 {
     // test we can create a Stream object
-    OutPerBStream stream;
+    StaticOutPerStream<256> stream;
     stream.out_per_integer(0x12);
-    stream.mark_end();
-    BOOST_CHECK_EQUAL(2, stream.size());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.size()));
+    BOOST_CHECK_EQUAL(2, stream.get_offset());
+    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.get_offset()));
 }
 
 #include "test_transport.hpp"

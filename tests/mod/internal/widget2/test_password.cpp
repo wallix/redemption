@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_delete;
 
     keymap.event(0, 16, decoded_data, ctrl_alt_delete); // 'a'
@@ -927,7 +927,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     BOOST_CHECK(notifier.event == 0);
 
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_delete;
 
     keymap.event(0, 17, decoded_data, ctrl_alt_delete); // 'z'

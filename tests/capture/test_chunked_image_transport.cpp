@@ -329,8 +329,11 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     ;
 
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
-    BStream stream(8);
-    in_png_trans.recv(&stream.end, 8); // skip first chunk header
+    constexpr std::size_t sz_buf = 8;
+    uint8_t buf[sz_buf];
+    auto end = buf;
+    in_png_trans.recv(&end, sz_buf); // skip first chunk header
+    InStream stream(buf);
 
 //    in_png_trans.recv(&stream.end, 107); // skip first chunk header
 

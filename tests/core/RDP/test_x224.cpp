@@ -613,11 +613,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
 
 BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
 {
-    BStream payload(256);
+    StaticOutStream<256> payload;
     payload.out_copy_bytes("\x12\x34\x56\x78\x9A", 5);
-    payload.end = payload.p;
 
-    size_t payload_len = payload.end - payload.get_data();
+    size_t payload_len = payload.get_offset();
     StaticOutStream<256> stream;
     X224::DT_TPDU_Send x224(stream, payload_len);
 

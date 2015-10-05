@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
         RDPMultiDstBlt state_multidstblt;
         RDPOrderCommon newcommon(MULTIDSTBLT, Rect(0, 0, 1024, 768));
 
-        BStream deltaRectangles(1024);
+        StaticOutStream<1024> deltaRectangles;
 
         deltaRectangles.out_sint16_le(316);
         deltaRectangles.out_sint16_le(378);
@@ -58,10 +58,9 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
             deltaRectangles.out_sint16_le(10);
         }
 
-        deltaRectangles.mark_end();
-        deltaRectangles.rewind();
+        InStream in_deltaRectangles(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
-        RDPMultiDstBlt multidstblt(316, 378, 200, 200, 0x55, 20, deltaRectangles);
+        RDPMultiDstBlt multidstblt(316, 378, 200, 200, 0x55, 20, in_deltaRectangles);
 
 
         multidstblt.emit(out_stream, newcommon, state_common, state_multidstblt);
@@ -102,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
         RDPMultiDstBlt cmd = state_multidstblt;
         cmd.receive(in_stream, header);
 
-        deltaRectangles.reset();
+        deltaRectangles.rewind();
 
         deltaRectangles.out_sint16_le(316);
         deltaRectangles.out_sint16_le(378);
@@ -116,12 +115,11 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
             deltaRectangles.out_sint16_le(10);
         }
 
-        deltaRectangles.mark_end();
-        deltaRectangles.rewind();
+        in_deltaRectangles = InStream(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
         check<RDPMultiDstBlt>(common_cmd, cmd,
             RDPOrderCommon(MULTIDSTBLT, Rect(0, 0, 0, 0)),
-            RDPMultiDstBlt(316, 378, 200, 200, 0x55, 20, deltaRectangles),
+            RDPMultiDstBlt(316, 378, 200, 200, 0x55, 20, in_deltaRectangles),
             "MultiDstBlt 2");
     }
 }

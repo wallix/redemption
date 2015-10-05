@@ -130,7 +130,7 @@ public:
     }
 
     RDPMultiDstBlt(int16_t nLeftRect, int16_t nTopRect, int16_t nWidth, int16_t nHeight, uint8_t bRop, uint8_t nDeltaEntries,
-        Stream & deltaEncodedRectangles)
+        InStream & deltaEncodedRectangles)
     : nLeftRect(nLeftRect)
     , nTopRect(nTopRect)
     , nWidth(nWidth)

@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;

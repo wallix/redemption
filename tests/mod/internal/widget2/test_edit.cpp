@@ -379,7 +379,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool ctrl_alt_delete;
 
     keymap.event(0, 16, decoded_data, ctrl_alt_delete); // 'a'
@@ -625,7 +625,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_delete;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
