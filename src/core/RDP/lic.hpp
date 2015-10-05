@@ -2621,10 +2621,9 @@ namespace LIC
                 throw Error(ERR_LIC);
             }
 
-            SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
-
+            uint8_t * data = const_cast<uint8_t*>(stream.get_current());
             // size, in, out
-            rc4.crypt(data.size(), data.get_data(), data.get_data());
+            rc4.crypt(this->licenseInfo.wBlobLen, data, data);
 
             expected = 8; /* dwVersion(4) + cbScope(4) */
             if (!stream.in_check_rem(expected)){
@@ -2813,10 +2812,9 @@ namespace LIC
             SslRC4 rc4;
             rc4.set_key(license_key, 16);
 
-            SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
-
+            uint8_t * data = const_cast<uint8_t*>(stream.get_current());
             // size, in, out
-            rc4.crypt(data.size(), data.get_data(), data.get_data());
+            rc4.crypt(this->licenseInfo.wBlobLen, data, data);
 
             expected = 8; /* dwVersion(4) + cbScope(4) */
             if (!stream.in_check_rem(expected)){

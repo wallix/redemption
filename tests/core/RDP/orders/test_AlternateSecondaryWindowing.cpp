@@ -35,13 +35,10 @@ BOOST_AUTO_TEST_CASE(TestWindowingCommon)
     WindowInformationCommonHeader wch_s(WINDOW_ORDER_TYPE_WINDOW, WindowId);
 
     uint8_t data[256];
-    FixedSizeStream out_stream(data, sizeof(data));
+    OutStream out_stream(data, sizeof(data));
 
     wch_s.emit_begin(out_stream);
-    out_stream.mark_end();
     wch_s.emit_end();
-
-    out_stream.rewind();
 
     WindowInformationCommonHeader wch_r;
     wch_r.receive(in_stream);

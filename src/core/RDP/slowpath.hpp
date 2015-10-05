@@ -813,16 +813,16 @@ struct GraphicsUpdate_Recv {
 /*
     struct PaletteUpdateData_Recv {
         uint32_t  numberColors;
-        SubStream payload;
+        InStream payload;
 
         PaletteUpdateData_Recv(InStream & stream)
         : numberColors([&](){
             stream.in_skip_bytes(2); // pad2Octets
             return stream.in_uint32_le();})
         // red(1) + green(1) + blue(1)
-        , payload(stream, stream.get_offset(), this->numberColors * 3)
+        , payload(stream.get_current(), this->numberColors * 3)
         {
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 */

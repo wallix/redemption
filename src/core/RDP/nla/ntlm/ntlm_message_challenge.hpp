@@ -250,6 +250,28 @@ struct NTLMChallengeMessage : public NTLMMessage {
         this->AvPairList.recv(this->TargetInfo.Buffer);
     }
 
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
+        bool res;
+        res = NTLMMessage::recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
+        this->TargetName.recv(stream);
+        this->negoFlags.recv(stream);
+        stream.in_copy_bytes(this->serverChallenge, 8);
+        // this->serverChallenge = stream.in_uint64_le();
+        stream.in_skip_bytes(8);
+        this->TargetInfo.recv(stream);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
+        // PAYLOAD
+        this->TargetName.read_payload(stream, pBegin);
+        this->TargetInfo.read_payload(stream, pBegin);
+        this->AvPairList.recv(this->TargetInfo.Buffer);
+    }
+
     //void avpair_decode() {
     //    this->TargetInfo.Buffer.reset();
     //    this->AvPairList.emit(this->TargetInfo.Buffer);

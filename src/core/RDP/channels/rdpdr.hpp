@@ -188,7 +188,7 @@ struct SharedHeader {
         return "<unknown>";
     }
 
-    inline static size_t size() {
+    constexpr static size_t size() {
         return 4;   // Component(2) + PacketId(2)
     }
 
@@ -428,7 +428,7 @@ class DeviceAnnounceHeader {
 
     uint8_t  PreferredDosName_[8 /* PreferredDosName(8) */ + 1] = { 0 };
 
-    StaticStream device_data;
+    struct { uint8_t const * p; std::size_t sz; } device_data = {nullptr, 0u};
 
 public:
     DeviceAnnounceHeader() = default;
@@ -438,7 +438,7 @@ public:
                          uint8_t const * device_data_p, size_t device_data_size)
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
-    , device_data(device_data_p, device_data_size) {
+    , device_data{device_data_p, device_data_size} {
         ::memcpy(this->PreferredDosName_, preferred_dos_name,
                  std::min<size_t>( 8 // PreferredDosName(8)
                                  , ::strlen(preferred_dos_name))
@@ -457,9 +457,9 @@ public:
 
         stream.out_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
 
-        stream.out_uint32_le(this->device_data.get_capacity()); // DeviceDataLength(4)
+        stream.out_uint32_le(this->device_data.sz); // DeviceDataLength(4)
 
-        stream.out_copy_bytes(this->device_data.get_data(), this->device_data.get_capacity());
+        stream.out_copy_bytes(this->device_data.p, this->device_data.sz);
     }
 
     inline void receive(InStream & stream) {
@@ -493,7 +493,7 @@ public:
             }
         }
 
-        this->device_data.resize(stream.get_current(), DeviceDataLength);
+        this->device_data = {stream.get_current(), DeviceDataLength};
         stream.in_skip_bytes(DeviceDataLength);
     }
 
@@ -508,7 +508,7 @@ public:
     inline size_t size() const {
         return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
                     // DeviceDataLength(4)
-            this->device_data.get_capacity() /* DeviceData(variable) */
+            this->device_data.sz /* DeviceData(variable) */
             ;
     }
 
@@ -540,7 +540,7 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, buffer);
         if (level == LOG_INFO) {
-            hexdump(this->device_data.get_data(), this->device_data.get_capacity());
+            hexdump(this->device_data.p, this->device_data.sz);
         }
     }
 };  // DeviceAnnounceHeader
@@ -1259,7 +1259,7 @@ class DeviceControlRequest {
     uint32_t OutputBufferLength = 0;
     uint32_t IoControlCode_     = 0;
 
-    StaticStream input_buffer;
+    struct { uint8_t const * p; std::size_t sz; } input_buffer = {nullptr, 0u};
 
 public:
     DeviceControlRequest() = default;
@@ -1269,14 +1269,13 @@ public:
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->OutputBufferLength);
 
-        stream.out_uint32_le(this->input_buffer.get_capacity());    // InputBufferLength(4)
+        stream.out_uint32_le(this->input_buffer.sz);    // InputBufferLength(4)
 
         stream.out_uint32_le(this->IoControlCode_);
 
         stream.out_clear_bytes(20); // Padding(20)
 
-        stream.out_copy_bytes(this->input_buffer.get_data(),
-            this->input_buffer.get_capacity());
+        stream.out_copy_bytes(this->input_buffer.p, this->input_buffer.sz);
     }
 
     inline void receive(InStream & stream) {
@@ -1312,7 +1311,7 @@ public:
             }
         }
 
-        this->input_buffer.resize(stream.get_current(), InputBufferLength);
+        this->input_buffer = {stream.get_current(), InputBufferLength};
         stream.in_skip_bytes(InputBufferLength);
     }
 
@@ -1323,7 +1322,7 @@ private:
         size_t length = ::snprintf(buffer, size,
             "DeviceControlRequest: OutputBufferLength=%u InputBufferLength=%zu "
                 "IoControlCode=0x%X",
-            this->OutputBufferLength, this->input_buffer.get_capacity(),
+            this->OutputBufferLength, this->input_buffer.sz,
             this->IoControlCode_);
         return ((length < size) ? length : size - 1);
     }
@@ -2605,7 +2604,7 @@ enum {
 class ServerDriveQueryInformationRequest {
     uint32_t FsInformationClass_ = 0;
 
-    StaticStream query_buffer;
+    struct { uint8_t const * p; std::size_t sz; } query_buffer = {nullptr, 0u};
 
 public:
     ServerDriveQueryInformationRequest() = default;
@@ -2615,11 +2614,11 @@ public:
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
-        stream.out_uint32_le(this->query_buffer.get_capacity());    // Length(4)
+        stream.out_uint32_le(this->query_buffer.sz);    // Length(4)
 
         stream.out_clear_bytes(24); // Padding(24)
 
-        stream.out_copy_bytes(this->query_buffer.get_data(), this->query_buffer.get_capacity());
+        stream.out_copy_bytes(this->query_buffer.p, this->query_buffer.sz);
     }
 
     inline void receive(InStream & stream) {
@@ -2652,7 +2651,7 @@ public:
             }
         }
 
-        this->query_buffer.resize(stream.get_current(), Length);
+        this->query_buffer = {stream.get_current(), Length};
         stream.in_skip_bytes(Length);
     }
 
@@ -2673,7 +2672,7 @@ private:
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             this->get_FsInformationClass_name(this->FsInformationClass_),
-            this->FsInformationClass_, this->query_buffer.get_capacity());
+            this->FsInformationClass_, this->query_buffer.sz);
         return ((length < size) ? length : size - 1);
     }
 
@@ -2837,7 +2836,7 @@ enum {
 class ServerDriveQueryVolumeInformationRequest {
     uint32_t FsInformationClass_ = 0;
 
-    StaticStream query_volume_buffer;
+    struct { uint8_t const * p; std::size_t sz; } query_volume_buffer = {nullptr, 0u};
 
 public:
     ServerDriveQueryVolumeInformationRequest() = default;
@@ -2847,12 +2846,12 @@ public:
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
-        stream.out_uint32_le(this->query_volume_buffer.get_capacity()); // Length(4)
+        stream.out_uint32_le(this->query_volume_buffer.sz); // Length(4)
 
         stream.out_clear_bytes(24); // Padding(24)
 
-        stream.out_copy_bytes(this->query_volume_buffer.get_data(),
-            this->query_volume_buffer.get_capacity());
+        stream.out_copy_bytes(this->query_volume_buffer.p,
+            this->query_volume_buffer.sz);
     }
 
     inline void receive(InStream & stream) {
@@ -2886,7 +2885,7 @@ public:
             }
         }
 
-        this->query_volume_buffer.resize(stream.get_current(), Length);
+        this->query_volume_buffer = {stream.get_current(), Length};
         stream.in_skip_bytes(Length);
     }
 
@@ -2909,7 +2908,7 @@ private:
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             this->get_FsInformationClass_name(this->FsInformationClass_),
-            this->FsInformationClass_, this->query_volume_buffer.get_capacity());
+            this->FsInformationClass_, this->query_volume_buffer.sz);
         return ((length < size) ? length : size - 1);
     }
 

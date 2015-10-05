@@ -417,7 +417,50 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->EncryptedRandomSessionKey.read_payload(stream, pBegin);
     }
 
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
+        bool res;
+        res = NTLMMessage::recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
+        this->LmChallengeResponse.recv(stream);
+        this->NtChallengeResponse.recv(stream);
+        this->DomainName.recv(stream);
+        this->UserName.recv(stream);
+        this->Workstation.recv(stream);
+        this->EncryptedRandomSessionKey.recv(stream);
+        this->negoFlags.recv(stream);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
+        uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
+        if (this->NtChallengeResponse.bufferOffset < min_offset)
+            min_offset = this->NtChallengeResponse.bufferOffset;
+        if (this->DomainName.bufferOffset < min_offset)
+            min_offset = this->DomainName.bufferOffset;
+        if (this->UserName.bufferOffset < min_offset)
+            min_offset = this->UserName.bufferOffset;
+        if (this->Workstation.bufferOffset < min_offset)
+            min_offset = this->Workstation.bufferOffset;
+        if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
+            min_offset = this->EncryptedRandomSessionKey.bufferOffset;
+        if (min_offset + pBegin > stream.get_current()) {
+            this->has_mic = true;
+            stream.in_copy_bytes(this->MIC, 16);
+        }
+        else {
+            this->has_mic = false;
+        }
 
+        // PAYLOAD
+        this->LmChallengeResponse.read_payload(stream, pBegin);
+        this->NtChallengeResponse.read_payload(stream, pBegin);
+        this->DomainName.read_payload(stream, pBegin);
+        this->UserName.read_payload(stream, pBegin);
+        this->Workstation.read_payload(stream, pBegin);
+        this->EncryptedRandomSessionKey.read_payload(stream, pBegin);
+    }
 };
 
 // 2.2.2.3   LM_RESPONSE

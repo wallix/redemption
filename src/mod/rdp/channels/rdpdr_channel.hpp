@@ -635,7 +635,7 @@ private:
                     uint8_t const * data =
                         std::get<1>(*iter).get();
 
-                    ReadOnlyStream header_stream(data,
+                    InStream header_stream(data,
                             rdpdr::SharedHeader::size() +
                             12  // DeviceCount(4) + DeviceType(4) + DeviceId(4)
                         );

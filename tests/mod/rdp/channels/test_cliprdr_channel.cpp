@@ -132,18 +132,16 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
         &to_client_sender, &to_server_sender, front,
         clipboard_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -163,11 +161,10 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -187,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {
@@ -243,18 +240,16 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
         &to_client_sender, &to_server_sender, front,
         clipboard_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -274,11 +269,10 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -298,7 +292,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {
@@ -354,18 +348,16 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
         &to_client_sender, &to_server_sender, front,
         clipboard_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -385,11 +377,10 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -409,7 +400,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {
@@ -465,18 +456,16 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
         &to_client_sender, &to_server_sender, front,
         clipboard_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -496,11 +485,10 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -520,7 +508,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {

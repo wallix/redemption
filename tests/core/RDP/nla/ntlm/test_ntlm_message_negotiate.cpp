@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
     NTLMNegotiateMessage NegoMsg;
 
-    StaticStream nego(ts_req.negoTokens.get_data(), ts_req.negoTokens.size());
+    InStream nego(ts_req.negoTokens.get_data(), ts_req.negoTokens.size());
     NegoMsg.recv(nego);
 
 

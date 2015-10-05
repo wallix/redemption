@@ -130,6 +130,16 @@ struct NTLMMessage {
         return res;
     }
 
+    bool recv(InStream & stream) {
+        bool res = true;
+        uint8_t received_sig[8];
+        stream.in_copy_bytes(received_sig, 8);
+        res &= (!memcmp(this->signature, received_sig, 8));
+        uint32_t type = stream.in_uint32_le();
+        res &= (static_cast<uint32_t>(this->msgType) == type);
+        return res;
+    }
+
 };
 
 // 2.2.2.10   VERSION
@@ -242,6 +252,15 @@ struct NtlmVersion {
     }
 
     void recv(Stream & stream) {
+        this->ignore_version = false;
+        this->ProductMajorVersion = stream.in_uint8();
+        this->ProductMinorVersion = stream.in_uint8();
+        this->ProductBuild = stream.in_uint16_le();
+        stream.in_skip_bytes(3);
+        this->NtlmRevisionCurrent = stream.in_uint8();
+    }
+
+    void recv(InStream & stream) {
         this->ignore_version = false;
         this->ProductMajorVersion = stream.in_uint8();
         this->ProductMinorVersion = stream.in_uint8();
@@ -504,6 +523,10 @@ struct NtlmNegotiateFlags {
         this->flags = stream.in_uint32_le();
     }
 
+    void recv(InStream & stream) {
+        this->flags = stream.in_uint32_le();
+    }
+
     void print()
     {
 	int i;
@@ -556,8 +579,14 @@ struct NtlmField {
         this->bufferOffset = stream.in_uint32_le();
     }
 
+    void recv(InStream & stream) {
+        this->len = stream.in_uint16_le();
+        this->maxLen = stream.in_uint16_le();
+        this->bufferOffset = stream.in_uint32_le();
+    }
+
     void read_payload(Stream & stream, uint8_t * pBegin) {
-	if (this->len > 0) {
+        if (this->len > 0) {
             uint8_t * pEnd = pBegin + this->bufferOffset + this->len;
             if (pEnd > stream.p) {
                 if (pEnd > stream.end) {
@@ -572,8 +601,26 @@ struct NtlmField {
             this->Buffer.rewind();
         }
     }
+
+    void read_payload(InStream & stream, uint8_t const * pBegin) {
+        if (this->len > 0) {
+            uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+            if (pEnd > stream.get_current()) {
+                if (pEnd > stream.get_data_end()) {
+                    LOG(LOG_ERR, "INVALID stream read");
+                    return;
+                }
+                stream.in_skip_bytes(pEnd - stream.get_current());;
+            }
+            this->Buffer.init(this->len);
+            this->Buffer.out_copy_bytes(pBegin + this->bufferOffset, this->len);
+            this->Buffer.mark_end();
+            this->Buffer.rewind();
+        }
+    }
+
     void write_payload(Stream & stream) {
-	if (this->len > 0) {
+        if (this->len > 0) {
             stream.out_copy_bytes(this->Buffer.get_data(), this->len);
         }
     }

@@ -269,18 +269,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
         &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -300,11 +298,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -324,7 +321,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {
@@ -394,18 +391,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
         &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -425,11 +420,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -449,7 +443,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {
@@ -519,18 +513,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
         &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -550,11 +542,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -574,7 +565,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {
@@ -644,18 +635,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
         &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t         virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    WriteOnlyStream virtual_channel_stream(virtual_channel_data,
-                                           sizeof(virtual_channel_data));
-
-    virtual_channel_stream.reset();
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
 
     bool end_of_file_reached = false;
 
     try
     {
         while (true) {
-            t.recv(reinterpret_cast<char**>(&virtual_channel_stream.end),
+            auto end = virtual_channel_data;
+            t.recv(&end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -675,11 +664,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
             //    ", chunk_data_length=" << chunk_data_length <<
             //    std::endl;
 
-            virtual_channel_stream.reset();
+            end = virtual_channel_data;
+            uint8_t * chunk_data = end;
 
-            uint8_t * chunk_data = virtual_channel_stream.end;
-
-            t.recv(&virtual_channel_stream.end, chunk_data_length);
+            t.recv(&end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -699,7 +687,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
                 BOOST_CHECK(false == (bool)out_asynchronous_task);
             }
 
-            virtual_channel_stream.reset();
+            virtual_channel_stream.rewind();
         }
     }
     catch (Error & e) {

@@ -204,6 +204,24 @@ struct NTLMNegotiateMessage : public NTLMMessage {
         this->Workstation.read_payload(stream, pBegin);
     }
 
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
+        bool res;
+        res = NTLMMessage::recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
+        this->negoFlags.recv(stream);
+        this->DomainName.recv(stream);
+        this->Workstation.recv(stream);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
+        // PAYLOAD
+        this->DomainName.read_payload(stream, pBegin);
+        this->Workstation.read_payload(stream, pBegin);
+    }
+
 
     //bool check_negotiate_flag_received() {
     //    uint32_t flags = this->negoFlags.flags;
