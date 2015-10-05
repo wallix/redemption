@@ -231,7 +231,7 @@ public:
 
     RDPPolygonCB(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
                  uint32_t backColor, uint32_t foreColor, const RDPBrush & brush,
-                 uint8_t NumDeltaEntries, Stream & deltaPoints)
+                 uint8_t NumDeltaEntries, InStream & deltaPoints)
         : xStart(xStart)
         , yStart(yStart)
         , bRop2(bRop2)

@@ -147,7 +147,7 @@ public:
     }
 
     RDPMultiScrBlt( const Rect & _rect, uint8_t bRop, int16_t nXSrc, int16_t nYSrc, uint8_t nDeltaEntries
-                  , Stream & deltaEncodedRectangles)
+                  , InStream & deltaEncodedRectangles)
     : rect(_rect)
     , nLeftRect(rect.x)
     , nTopRect(rect.y)

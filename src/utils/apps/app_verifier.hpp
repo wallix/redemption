@@ -252,7 +252,7 @@ bool check_file_hash(
 // opaque_data should be initialize with 1 before the first call to read_line.
 /*
 static inline int crypto_read_line(crypto_file * cf_struct
-              , Stream & opaque_stream
+              , InStream & opaque_stream
               , int & opaque_data
               , char * line_buf
               , size_t line_len) {

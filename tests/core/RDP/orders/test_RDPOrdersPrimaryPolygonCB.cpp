@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         RDPPolygonCB state_polygonCB;
         RDPOrderCommon newcommon(POLYGONCB, Rect(0, 0, 1024, 768));
 
-        BStream deltaPoints(1024);
+        StaticOutStream<1024> deltaPoints;
 
         deltaPoints.out_sint16_le(0);
         deltaPoints.out_sint16_le(20);
@@ -111,12 +111,11 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         deltaPoints.out_sint16_le(-160);
         deltaPoints.out_sint16_le(0);
 
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
+        InStream deltaPoints_in(deltaPoints.get_data(), deltaPoints.get_offset());
 
         RDPPolygonCB polygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
                                RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
-                               7, deltaPoints);
+                               7, deltaPoints_in);
 
 
         polygonCB.emit(out_stream, newcommon, state_common, state_polygonCB);
@@ -160,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         RDPPolygonCB cmd = state_polygonCB;
         cmd.receive(in_stream, header);
 
-        deltaPoints.reset();
+        deltaPoints.rewind();
 
         deltaPoints.out_sint16_le(0);
         deltaPoints.out_sint16_le(20);
@@ -183,14 +182,13 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         deltaPoints.out_sint16_le(-160);
         deltaPoints.out_sint16_le(0);
 
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
+        deltaPoints_in = InStream(deltaPoints.get_data(), deltaPoints.get_offset());
 
         check<RDPPolygonCB>(common_cmd, cmd,
                             RDPOrderCommon(POLYGONCB, Rect(0, 0, 0, 0)),
                             RDPPolygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
                                          RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
-                                         7, deltaPoints),
+                                         7, deltaPoints_in),
                             "PolygonSC 1");
     }
 

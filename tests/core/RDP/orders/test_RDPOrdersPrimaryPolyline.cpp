@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         RDPPolyline state_polyline;
         RDPOrderCommon newcommon(POLYLINE, Rect(0, 0, 1024, 768));
 
-        BStream deltaPoints(1024);
+        StaticOutStream<1024> deltaPoints;
 
         deltaPoints.out_sint16_le(0);
         deltaPoints.out_sint16_le(20);
@@ -67,10 +67,9 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         deltaPoints.out_sint16_le(-160);
         deltaPoints.out_sint16_le(0);
 
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
+        InStream deltaPoints_in(deltaPoints.get_data(), deltaPoints.get_offset());
 
-        RDPPolyline polyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints);
+        RDPPolyline polyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints_in);
 
 
         polyline.emit(out_stream, newcommon, state_common, state_polyline);
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         RDPPolyline cmd = state_polyline;
         cmd.receive(in_stream, header);
 
-        deltaPoints.reset();
+        deltaPoints.rewind();
 
         deltaPoints.out_sint16_le(0);
         deltaPoints.out_sint16_le(20);
@@ -129,12 +128,11 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         deltaPoints.out_sint16_le(-160);
         deltaPoints.out_sint16_le(0);
 
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
+        deltaPoints_in = InStream(deltaPoints.get_data(), deltaPoints.get_offset());
 
         check<RDPPolyline>(common_cmd, cmd,
             RDPOrderCommon(POLYLINE, Rect(0, 0, 0, 0)),
-            RDPPolyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints),
+            RDPPolyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints_in),
             "Polyline 2");
     }
 }

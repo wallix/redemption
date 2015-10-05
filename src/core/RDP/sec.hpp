@@ -695,14 +695,6 @@ enum {
 
     struct SecExchangePacket_Send
     {
-        SecExchangePacket_Send(Stream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){
-            stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
-            stream.out_uint32_le(keylen_in_bytes + 8);
-            stream.out_copy_bytes(client_encrypted_key, keylen_in_bytes);
-            const uint8_t null[8] = {};
-            stream.out_copy_bytes(null, 8);
-            stream.mark_end();
-        }
         SecExchangePacket_Send(OutStream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){
             stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
             stream.out_uint32_le(keylen_in_bytes + 8);
@@ -854,20 +846,6 @@ enum {
 
     struct Sec_Send
     {
-        Sec_Send(Stream & stream, Stream & data, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
-            flags |= encryptionLevel?SEC_ENCRYPT:0;
-            if (flags) {
-                stream.out_uint32_le(flags);
-            }
-            if (flags & SEC_ENCRYPT){
-                uint8_t signature[8] = {};
-                crypt.sign(data.get_data(), data.size(), signature);
-                stream.out_copy_bytes(signature, 8);
-                crypt.decrypt(data.get_data(), data.size());
-            }
-            stream.mark_end();
-        }
-
         Sec_Send(OutStream & stream, uint8_t * data, size_t len, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
             flags |= encryptionLevel?SEC_ENCRYPT:0;
             if (flags) {

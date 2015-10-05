@@ -198,7 +198,7 @@ public:
     }
 
     RDPPolygonSC(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
-                 uint32_t BrushColor, uint8_t NumDeltaEntries, Stream & deltaPoints) {
+                 uint32_t BrushColor, uint8_t NumDeltaEntries, InStream & deltaPoints) {
         this->xStart          = xStart;
         this->yStart          = yStart;
         this->bRop2           = bRop2;
