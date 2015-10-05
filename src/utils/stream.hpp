@@ -2043,69 +2043,6 @@ public:
     }
 };
 
-class HStream : public BStream {
-public:
-    size_t    reserved_leading_space;
-    uint8_t * data_start;
-
-    explicit HStream(size_t reserved_leading_space, size_t total_size = AUTOSIZE)
-            : BStream(total_size)
-            , reserved_leading_space(reserved_leading_space) {
-        if (reserved_leading_space > total_size) {
-            LOG( LOG_ERR
-               , "failed to allocate buffer : total_size=%u, reserved_leading_space=%u\n"
-               , total_size, reserved_leading_space);
-            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_RESERVED_LEADING_SPACE);
-        }
-
-        this->p          += this->reserved_leading_space;
-        this->data_start  = this->p;
-        this->end         = this->p;
-    }
-
-    void copy_to_head(const uint8_t * v, size_t n) {
-        if (this->data_start - this->data >= static_cast<ssize_t>(n)) {
-            ::memcpy(this->data_start - n , v, n);
-            this->data_start = this->data_start - n;
-        }
-        else {
-            LOG( LOG_ERR
-               , "reserved leading space too small : size available = %d, size asked = %d\n"
-               , this->data_start - this->data
-               , static_cast<int>(n));
-            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
-        }
-    }
-
-    size_t headroom() const override {
-        return this->data_start - this->data;
-    }
-
-    uint8_t * get_data() const override {
-        return this->data_start;
-    }
-
-    void init(size_t body_size) override {
-        BStream::init(this->reserved_leading_space + body_size);
-
-        this->p          += this->reserved_leading_space;
-        this->data_start  = this->p;
-        this->end         = this->p;
-    }
-
-    void reset() override {
-        BStream::reset();
-
-        this->p          += this->reserved_leading_space;
-        this->data_start  = this->p;
-        this->end         = this->p;
-    }
-
-    void rewind() override {
-        this->data_start = this->p = this->data + this->reserved_leading_space;
-    }
-};
-
 // SubStream does not allocate any buffer
 // (and the buffer pointed to should probably not be modifiable,
 // but I'm not yet doing any distinction between stream that can or can't be modified

@@ -442,7 +442,8 @@ protected:
             return;
         }
 
-        BStream stream(length + 8);
+        StreamBufMaker<65535> stream_maker;
+        OutStream stream = stream_maker.reserve_out_stream((length + 8);
 
         stream.out_uint8(6);                      // message-type : ClientCutText
         stream.out_clear_bytes(3);                // padding
