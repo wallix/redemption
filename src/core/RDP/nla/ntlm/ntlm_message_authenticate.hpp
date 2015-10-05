@@ -371,6 +371,42 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         stream.mark_end();
     }
 
+    void emit(OutStream & stream) {
+        uint32_t currentOffset = this->PayloadOffset;
+        if (this->version.ignore_version) {
+            currentOffset -= 8;
+        }
+        if (this->has_mic) {
+            currentOffset += 16;
+        }
+        NTLMMessage::emit(stream);
+        currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->DomainName.emit(stream, currentOffset);
+        currentOffset += this->UserName.emit(stream, currentOffset);
+        currentOffset += this->Workstation.emit(stream, currentOffset);
+        currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
+        this->negoFlags.emit(stream);
+        this->version.emit(stream);
+
+        if (this->has_mic) {
+            if (this->ignore_mic) {
+                stream.out_clear_bytes(16);
+            }
+            else {
+                stream.out_copy_bytes(this->MIC, 16);
+            }
+        }
+
+        // PAYLOAD
+        this->LmChallengeResponse.write_payload(stream);
+        this->NtChallengeResponse.write_payload(stream);
+        this->DomainName.write_payload(stream);
+        this->UserName.write_payload(stream);
+        this->Workstation.write_payload(stream);
+        this->EncryptedRandomSessionKey.write_payload(stream);
+    }
+
 
     void recv(Stream & stream) {
         uint8_t * pBegin = stream.p;

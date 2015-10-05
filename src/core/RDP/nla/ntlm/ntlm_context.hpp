@@ -1085,13 +1085,13 @@ struct NTLMContext {
             LOG(LOG_INFO, "NTLMContext Write Negotiate");
         }
         this->ntlm_client_build_negotiate();
-        BStream out_stream;
+        StaticOutStream<65535> out_stream;
         this->NEGOTIATE_MESSAGE.emit(out_stream);
-        output_buffer->Buffer.init(out_stream.size());
-        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.size());
+        output_buffer->Buffer.init(out_stream.get_offset());
+        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
 
-        this->SavedNegotiateMessage.init(out_stream.size());
-        this->SavedNegotiateMessage.copy(out_stream.get_data(), out_stream.size());
+        this->SavedNegotiateMessage.init(out_stream.get_offset());
+        this->SavedNegotiateMessage.copy(out_stream.get_data(), out_stream.get_offset());
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
     }
@@ -1100,17 +1100,14 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Read Negotiate");
         }
-        BStream in_stream;
-        in_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
-                                 input_buffer->Buffer.size());
-        in_stream.mark_end();
-        in_stream.rewind();
+        InStream in_stream(input_buffer->Buffer.get_data(),
+                           input_buffer->Buffer.size());
         this->NEGOTIATE_MESSAGE.recv(in_stream);
         if (!this->ntlm_check_nego())
             return SEC_E_INVALID_TOKEN;
 
-        this->SavedNegotiateMessage.init(in_stream.size());
-        this->SavedNegotiateMessage.copy(in_stream.get_data(), in_stream.size());
+        this->SavedNegotiateMessage.init(in_stream.get_offset());
+        this->SavedNegotiateMessage.copy(in_stream.get_data(), in_stream.get_offset());
 
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1120,13 +1117,13 @@ struct NTLMContext {
             LOG(LOG_INFO, "NTLMContext Write Challenge");
         }
         this->ntlm_server_build_challenge();
-        BStream out_stream;
+        StaticOutStream<65535> out_stream;
         this->CHALLENGE_MESSAGE.emit(out_stream);
-        output_buffer->Buffer.init(out_stream.size());
-        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.size());
+        output_buffer->Buffer.init(out_stream.get_offset());
+        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
 
-        this->SavedChallengeMessage.init(out_stream.size());
-        this->SavedChallengeMessage.copy(out_stream.get_data(), out_stream.size());
+        this->SavedChallengeMessage.init(out_stream.get_offset());
+        this->SavedChallengeMessage.copy(out_stream.get_data(), out_stream.get_offset());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1135,14 +1132,11 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
         }
-        BStream in_stream;
-        in_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
-                                 input_buffer->Buffer.size());
-        in_stream.mark_end();
-        in_stream.rewind();
+        InStream in_stream(input_buffer->Buffer.get_data(),
+                           input_buffer->Buffer.size());
         this->CHALLENGE_MESSAGE.recv(in_stream);
-        this->SavedChallengeMessage.init(in_stream.size());
-        this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.size());
+        this->SavedChallengeMessage.init(in_stream.get_offset());
+        this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.get_offset());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1160,24 +1154,24 @@ struct NTLMContext {
                                              id.Domain.size(),
                                              this->Workstation.get_data(),
                                              this->Workstation.size());
-        BStream out_stream;
+        StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
             this->AUTHENTICATE_MESSAGE.ignore_mic = true;
             this->AUTHENTICATE_MESSAGE.emit(out_stream);
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
-            this->SavedAuthenticateMessage.init(out_stream.size());
+            this->SavedAuthenticateMessage.init(out_stream.get_offset());
             this->SavedAuthenticateMessage.copy(out_stream.get_data(),
-                                                out_stream.size());
+                                                out_stream.get_offset());
             this->ntlm_compute_MIC();
             memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
         }
-        out_stream.reset();
+        out_stream.rewind();
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
         this->AUTHENTICATE_MESSAGE.emit(out_stream);
-        output_buffer->Buffer.init(out_stream.size());
-        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.size());
+        output_buffer->Buffer.init(out_stream.get_offset());
+        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
 
         return SEC_I_COMPLETE_NEEDED;
     }
@@ -1185,18 +1179,20 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Read Authenticate");
         }
-        BStream in_stream;
-        in_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
-                                 input_buffer->Buffer.size());
-        in_stream.mark_end();
-        in_stream.rewind();
+        InStream in_stream(input_buffer->Buffer.get_data(), input_buffer->Buffer.size());
         this->AUTHENTICATE_MESSAGE.recv(in_stream);
         if (this->AUTHENTICATE_MESSAGE.has_mic) {
             this->UseMIC = true;
-            memset(in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
-            this->SavedAuthenticateMessage.init(in_stream.size());
-            this->SavedAuthenticateMessage.copy(in_stream.get_data(),
-                                                in_stream.size());
+            this->SavedAuthenticateMessage.init(in_stream.get_offset());
+            constexpr std::size_t null_data_sz = 16;
+            uint8_t const null_data[null_data_sz]{0u};
+            auto const p = in_stream.get_data();
+            std::size_t offset = 0u;
+            this->SavedAuthenticateMessage.copy(p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset, offset);
+            offset += this->AUTHENTICATE_MESSAGE.PayloadOffset;
+            this->SavedAuthenticateMessage.copy(null_data, null_data_sz, offset);
+            offset += null_data_sz;
+            this->SavedAuthenticateMessage.copy(p + offset, in_stream.get_offset() - offset, offset);
         }
         this->identity.User.init(this->AUTHENTICATE_MESSAGE.UserName.Buffer.size());
         this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.Buffer.get_data(),

@@ -228,6 +228,31 @@ struct NTLMChallengeMessage : public NTLMMessage {
         stream.mark_end();
     }
 
+    void emit(OutStream & stream) {
+        this->TargetInfo.Buffer.reset();
+        this->AvPairList.emit(this->TargetInfo.Buffer);
+
+        uint32_t currentOffset = this->PayloadOffset;
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.ntlm_get_version_info();
+        }
+        else {
+            currentOffset -= 8;
+        }
+        NTLMMessage::emit(stream);
+        currentOffset += this->TargetName.emit(stream, currentOffset);
+        this->negoFlags.emit(stream);
+        stream.out_copy_bytes(this->serverChallenge, 8);
+        stream.out_clear_bytes(8);
+        /*currentOffset +=*/ this->TargetInfo.emit(stream, currentOffset);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.emit(stream);
+        }
+        // PAYLOAD
+        this->TargetName.write_payload(stream);
+        this->TargetInfo.write_payload(stream);
+    }
+
     void recv(Stream & stream) {
         uint8_t * pBegin = stream.p;
         bool res;

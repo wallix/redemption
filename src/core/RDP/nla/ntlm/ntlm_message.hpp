@@ -120,6 +120,11 @@ struct NTLMMessage {
         stream.out_uint32_le(this->msgType);
     }
 
+    void emit(OutStream & stream) const {
+        stream.out_copy_bytes(this->signature, 8);
+        stream.out_uint32_le(this->msgType);
+    }
+
     bool recv(Stream & stream) {
         bool res = true;
         uint8_t received_sig[8];
@@ -241,6 +246,16 @@ struct NtlmVersion {
     }
 
     void emit(Stream & stream) {
+        if (this->ignore_version) {
+            return;
+        }
+        stream.out_uint8(this->ProductMajorVersion);
+        stream.out_uint8(this->ProductMinorVersion);
+        stream.out_uint16_le(this->ProductBuild);
+        stream.out_clear_bytes(3);
+        stream.out_uint8(this->NtlmRevisionCurrent);
+    }
+    void emit(OutStream & stream) {
         if (this->ignore_version) {
             return;
         }
@@ -513,9 +528,11 @@ struct NtlmNegotiateFlags {
     {
     }
 
-    ~NtlmNegotiateFlags() {
-    }
     void emit(Stream & stream) {
+        stream.out_uint32_le(this->flags);
+    }
+
+    void emit(OutStream & stream) {
         stream.out_uint32_le(this->flags);
     }
 
@@ -562,6 +579,18 @@ struct NtlmField {
     ~NtlmField() {}
 
     unsigned int emit(Stream & stream, unsigned int currentOffset) {
+        this->len = this->Buffer.size();
+        this->maxLen = this->len;
+        this->bufferOffset = currentOffset;
+        // currentOffset += this->len;
+
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->maxLen);
+        stream.out_uint32_le(this->bufferOffset);
+        return this->len;
+    }
+
+    unsigned int emit(OutStream & stream, unsigned int currentOffset) {
         this->len = this->Buffer.size();
         this->maxLen = this->len;
         this->bufferOffset = currentOffset;
@@ -620,6 +649,11 @@ struct NtlmField {
     }
 
     void write_payload(Stream & stream) {
+        if (this->len > 0) {
+            stream.out_copy_bytes(this->Buffer.get_data(), this->len);
+        }
+    }
+    void write_payload(OutStream & stream) {
         if (this->len > 0) {
             stream.out_copy_bytes(this->Buffer.get_data(), this->len);
         }
