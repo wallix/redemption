@@ -44,13 +44,11 @@ BOOST_AUTO_TEST_CASE(TestAvPair)
     BOOST_CHECK_EQUAL(listAvPair.length(), 2);
     BOOST_CHECK_EQUAL(listAvPair.packet_length(), 21);
 
-    BStream stream;
+    StaticOutStream<65535> stream;
 
     listAvPair.emit(stream);
-    BOOST_CHECK_EQUAL(listAvPair.packet_length(), stream.size());
+    BOOST_CHECK_EQUAL(listAvPair.packet_length(), stream.get_offset());
     listAvPair.print();
-
-
 }
 
 
@@ -66,15 +64,9 @@ BOOST_AUTO_TEST_CASE(TestAvPairRecv)
         0x07, 0x00, 0x08, 0x00, 0xa9, 0x8d, 0x9b, 0x1a,
         0x6c, 0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
-    BStream stream;
-    stream.out_copy_bytes(TargetInfo, sizeof(TargetInfo));
-    stream.mark_end();
-    stream.rewind();
-
     NtlmAvPairList avpairlist;
 
-    avpairlist.recv(stream);
+    InStream in_stream(TargetInfo);
+    avpairlist.recv(in_stream);
     avpairlist.print();
-
-
 }

@@ -118,10 +118,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
                       0);
     // hexdump_c(ChallengeMsg.TargetInfo.Buffer.get_data(),
     //           ChallengeMsg.TargetInfo.Buffer.size());
-    BStream servChall;
-    servChall.out_copy_bytes(ChallengeMsg.serverChallenge, 8);
-    servChall.mark_end();
-    servChall.rewind();
+    InStream servChall(ChallengeMsg.serverChallenge, 8);
     uint64_t servchallengeinteger = servChall.in_uint64_le();
     BOOST_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
 
@@ -131,14 +128,13 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
-    BStream tosend;
+    StaticOutStream<65535> tosend;
     ChallengeMsg.emit(tosend);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
-    tosend.mark_end();
-    tosend.rewind();
-    ChallengeMsgDuplicate.recv(tosend);
+    InStream in_tosend(tosend.get_data(), tosend.get_offset());
+    ChallengeMsgDuplicate.recv(in_tosend);
 
     BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
     // ChallengeMsgDuplicate.negoFlags.print();
@@ -148,10 +144,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
     BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
-    BStream servChall2;
-    servChall2.out_copy_bytes(ChallengeMsgDuplicate.serverChallenge, 8);
-    servChall2.mark_end();
-    servChall2.rewind();
+    InStream servChall2(ChallengeMsgDuplicate.serverChallenge, 8);
     uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
     BOOST_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
 

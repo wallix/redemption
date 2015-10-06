@@ -261,14 +261,13 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
                              AuthMsg.EncryptedRandomSessionKey.len),
                       0);
 
-    BStream tosend;
+    StaticOutStream<65635> tosend;
     AuthMsg.emit(tosend);
 
     NTLMAuthenticateMessage AuthMsgDuplicate;
 
-    tosend.mark_end();
-    tosend.rewind();
-    AuthMsgDuplicate.recv(tosend);
+    InStream in_tosend(tosend.get_data(), tosend.get_offset());
+    AuthMsgDuplicate.recv(in_tosend);
 
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
     // AuthMsgDuplicate.negoFlags.print();
