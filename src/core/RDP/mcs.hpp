@@ -149,13 +149,6 @@ namespace MCS
         "rt-user-rejected"
     };
 
-    int peekPerEncodedMCSType(const Stream & stream) {
-        if (!stream.in_check_rem(1)){
-            throw Error(ERR_MCS);
-        }
-        return *stream.get_data() >> 2;
-    }
-
     int peekPerEncodedMCSType(const InStream & stream) {
         if (!stream.in_check_rem(1)){
             throw Error(ERR_MCS);

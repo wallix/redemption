@@ -352,8 +352,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
                 , decrypt
                 );
 
-            send(out_t, SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            send(out_t, out_s);       // Fast-Path Update (TS_FP_UPDATE)
+            out_t.send(SvrUpdPDU_s.get_data(), SvrUpdPDU_s.get_offset()); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            out_t.send(out_s.get_data(), out_s.get_offset());           // Fast-Path Update (TS_FP_UPDATE)
         }
     }
 

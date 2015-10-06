@@ -142,19 +142,13 @@ struct NtlmAvPair {
         }
     }
 
-    void emit(Stream & stream) {
-        stream.out_uint16_le(this->AvId);
-        stream.out_uint16_le(this->AvLen);
-        stream.out_copy_bytes(this->Value.buf, this->Value.sz);
-    }
-
     void emit(OutStream & stream) {
         stream.out_uint16_le(this->AvId);
         stream.out_uint16_le(this->AvLen);
         stream.out_copy_bytes(this->Value.buf, this->Value.sz);
     }
 
-    // void recv(Stream & stream) {
+    // void recv(OutStream & stream) {
     //     this->AvId = stream.in_uint16_le();
     //     this->AvLen = stream.in_uint16_le();
     //     this->Value.init(this->AvLen);
@@ -226,17 +220,6 @@ struct NtlmAvPairList {
        return res;
     }
 
-    void emit(Stream & stream) {
-        for (int i = 1; i < AV_ID_MAX; i++) {
-            if (this->list[i]) {
-                this->list[i]->emit(stream);
-            }
-        }
-        // ASSUME this->list[MsvAvEOL] != nullptr
-        this->list[MsvAvEOL]->emit(stream);
-        stream.mark_end();
-    }
-
     void emit(OutStream & stream) {
         for (int i = 1; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
@@ -245,20 +228,6 @@ struct NtlmAvPairList {
         }
         // ASSUME this->list[MsvAvEOL] != nullptr
         this->list[MsvAvEOL]->emit(stream);
-    }
-
-    void recv(Stream & stream) {
-        for (int i = 0; i < AV_ID_MAX; i++) {
-            NTLM_AV_ID id = static_cast<NTLM_AV_ID>(stream.in_uint16_le());
-            uint16_t length = stream.in_uint16_le();
-            if (id == MsvAvEOL) {
-                // ASSUME last element is MsvAvEOL
-                stream.in_skip_bytes(length);
-                break;
-            }
-            this->add(id, stream.p, length);
-            stream.in_skip_bytes(length);
-        }
     }
 
     void recv(InStream & stream) {

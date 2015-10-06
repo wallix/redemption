@@ -164,20 +164,6 @@ private:
     }
 
 public:
-
-    TODO("All these functions should be changed after Stream refactoring to remove dependency between transport and Stream")
-
-    void send(Stream const & stream)
-    {
-        this->send(stream.get_data(), stream.size());
-    }
-
-    void send(InStream const & stream)
-    {
-        this->send(stream.get_data(), stream.get_capacity());
-    }
-
-
     virtual bool disconnect()
     {
         return true;
@@ -208,22 +194,5 @@ private:
     Transport(const Transport &) = delete;
     Transport& operator=(const Transport &) = delete;
 };
-
-/**
- * \addtogroup transport-utility
- * @{
- */
-inline void send(Transport & trans, const char * const buffer, size_t len) {
-    trans.send(buffer, len);
-}
-
-inline void send(Transport & trans, const unsigned char * const buffer, size_t len) {
-    trans.send(buffer, len);
-}
-
-inline void send(Transport & trans, OutStream & stream) {
-    trans.send(stream.get_data(), stream.get_offset());
-}
-/** @} */
 
 #endif

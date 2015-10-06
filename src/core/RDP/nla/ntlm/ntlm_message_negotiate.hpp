@@ -166,23 +166,6 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     {
     }
 
-    void emit(Stream & stream) {
-        uint32_t currentOffset = this->PayloadOffset;
-        if (this->version.ignore_version) {
-            currentOffset -= 8;
-        }
-        NTLMMessage::emit(stream);
-        this->negoFlags.emit(stream);
-        currentOffset += this->DomainName.emit(stream, currentOffset);
-        currentOffset += this->Workstation.emit(stream, currentOffset);
-        this->version.emit(stream);
-
-        // PAYLOAD
-        this->DomainName.write_payload(stream);
-        this->Workstation.write_payload(stream);
-        stream.mark_end();
-    }
-
     void emit(OutStream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
@@ -197,24 +180,6 @@ struct NTLMNegotiateMessage : public NTLMMessage {
         // PAYLOAD
         this->DomainName.write_payload(stream);
         this->Workstation.write_payload(stream);
-    }
-
-    void recv(Stream & stream) {
-        uint8_t * pBegin = stream.p;
-        bool res;
-        res = NTLMMessage::recv(stream);
-        if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
-        }
-        this->negoFlags.recv(stream);
-        this->DomainName.recv(stream);
-        this->Workstation.recv(stream);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.recv(stream);
-        }
-        // PAYLOAD
-        this->DomainName.read_payload(stream, pBegin);
-        this->Workstation.read_payload(stream, pBegin);
     }
 
     void recv(InStream & stream) {

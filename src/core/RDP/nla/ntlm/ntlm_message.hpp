@@ -115,24 +115,9 @@ struct NTLMMessage {
 
     virtual ~NTLMMessage() {}
 
-    void emit(Stream & stream) const {
-        stream.out_copy_bytes(this->signature, 8);
-        stream.out_uint32_le(this->msgType);
-    }
-
     void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->signature, 8);
         stream.out_uint32_le(this->msgType);
-    }
-
-    bool recv(Stream & stream) {
-        bool res = true;
-        uint8_t received_sig[8];
-        stream.in_copy_bytes(received_sig, 8);
-        res &= (!memcmp(this->signature, received_sig, 8));
-        uint32_t type = stream.in_uint32_le();
-        res &= (static_cast<uint32_t>(this->msgType) == type);
-        return res;
     }
 
     bool recv(InStream & stream) {
@@ -245,16 +230,6 @@ struct NtlmVersion {
         this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
-    void emit(Stream & stream) {
-        if (this->ignore_version) {
-            return;
-        }
-        stream.out_uint8(this->ProductMajorVersion);
-        stream.out_uint8(this->ProductMinorVersion);
-        stream.out_uint16_le(this->ProductBuild);
-        stream.out_clear_bytes(3);
-        stream.out_uint8(this->NtlmRevisionCurrent);
-    }
     void emit(OutStream & stream) {
         if (this->ignore_version) {
             return;
@@ -264,15 +239,6 @@ struct NtlmVersion {
         stream.out_uint16_le(this->ProductBuild);
         stream.out_clear_bytes(3);
         stream.out_uint8(this->NtlmRevisionCurrent);
-    }
-
-    void recv(Stream & stream) {
-        this->ignore_version = false;
-        this->ProductMajorVersion = stream.in_uint8();
-        this->ProductMinorVersion = stream.in_uint8();
-        this->ProductBuild = stream.in_uint16_le();
-        stream.in_skip_bytes(3);
-        this->NtlmRevisionCurrent = stream.in_uint8();
     }
 
     void recv(InStream & stream) {
@@ -528,16 +494,8 @@ struct NtlmNegotiateFlags {
     {
     }
 
-    void emit(Stream & stream) {
-        stream.out_uint32_le(this->flags);
-    }
-
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->flags);
-    }
-
-    void recv(Stream & stream) {
-        this->flags = stream.in_uint32_le();
     }
 
     void recv(InStream & stream) {
@@ -546,19 +504,19 @@ struct NtlmNegotiateFlags {
 
     void print()
     {
-	int i;
-	const char* str;
+        int i;
+        const char* str;
 
-	LOG(LOG_INFO, "negotiateFlags \"0x%08X\"{", this->flags);
+        LOG(LOG_INFO, "negotiateFlags \"0x%08X\"{", this->flags);
 
-	for (i = 31; i >= 0; i--) {
+        for (i = 31; i >= 0; i--) {
             if ((this->flags >> i) & 1) {
                 str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
                 LOG(LOG_INFO, "\t%s (%d),", str, (31 - i));
             }
         }
 
-	LOG(LOG_INFO, "}");
+        LOG(LOG_INFO, "}");
     }
 
 };
@@ -627,18 +585,6 @@ struct NtlmField {
 
     ~NtlmField() {}
 
-    unsigned int emit(Stream & stream, unsigned int currentOffset) {
-        this->len = this->buffer.size();
-        this->maxLen = this->len;
-        this->bufferOffset = currentOffset;
-        // currentOffset += this->len;
-
-        stream.out_uint16_le(this->len);
-        stream.out_uint16_le(this->maxLen);
-        stream.out_uint32_le(this->bufferOffset);
-        return this->len;
-    }
-
     unsigned int emit(OutStream & stream, unsigned int currentOffset) {
         this->len = this->buffer.size();
         this->maxLen = this->len;
@@ -651,33 +597,10 @@ struct NtlmField {
         return this->len;
     }
 
-    void recv(Stream & stream) {
-        this->len = stream.in_uint16_le();
-        this->maxLen = stream.in_uint16_le();
-        this->bufferOffset = stream.in_uint32_le();
-    }
-
     void recv(InStream & stream) {
         this->len = stream.in_uint16_le();
         this->maxLen = stream.in_uint16_le();
         this->bufferOffset = stream.in_uint32_le();
-    }
-
-    void read_payload(Stream & stream, uint8_t * pBegin) {
-        if (this->len > 0) {
-            uint8_t * pEnd = pBegin + this->bufferOffset + this->len;
-            if (pEnd > stream.p) {
-                if (pEnd > stream.end) {
-                    LOG(LOG_ERR, "INVALID stream read");
-                    return;
-                }
-                stream.p = pEnd;
-            }
-            this->buffer.init(this->len);
-            this->buffer.ostream.out_copy_bytes(pBegin + this->bufferOffset, this->len);
-            this->buffer.mark_end();
-            this->buffer.ostream.rewind();
-        }
     }
 
     void read_payload(InStream & stream, uint8_t const * pBegin) {
@@ -697,11 +620,6 @@ struct NtlmField {
         }
     }
 
-    void write_payload(Stream & stream) {
-        if (this->len > 0) {
-            stream.out_copy_bytes(this->buffer.get_data(), this->len);
-        }
-    }
     void write_payload(OutStream & stream) {
         if (this->len > 0) {
             stream.out_copy_bytes(this->buffer.get_data(), this->len);

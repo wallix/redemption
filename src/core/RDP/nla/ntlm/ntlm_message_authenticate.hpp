@@ -334,43 +334,6 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     ~NTLMAuthenticateMessage() override {}
 
-    void emit(Stream & stream) {
-        uint32_t currentOffset = this->PayloadOffset;
-        if (this->version.ignore_version) {
-            currentOffset -= 8;
-        }
-        if (this->has_mic) {
-            currentOffset += 16;
-        }
-        NTLMMessage::emit(stream);
-        currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
-        currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
-        currentOffset += this->DomainName.emit(stream, currentOffset);
-        currentOffset += this->UserName.emit(stream, currentOffset);
-        currentOffset += this->Workstation.emit(stream, currentOffset);
-        currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
-        this->negoFlags.emit(stream);
-        this->version.emit(stream);
-
-        if (this->has_mic) {
-            if (this->ignore_mic) {
-                stream.out_clear_bytes(16);
-            }
-            else {
-                stream.out_copy_bytes(this->MIC, 16);
-            }
-        }
-
-        // PAYLOAD
-        this->LmChallengeResponse.write_payload(stream);
-        this->NtChallengeResponse.write_payload(stream);
-        this->DomainName.write_payload(stream);
-        this->UserName.write_payload(stream);
-        this->Workstation.write_payload(stream);
-        this->EncryptedRandomSessionKey.write_payload(stream);
-        stream.mark_end();
-    }
-
     void emit(OutStream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
@@ -405,52 +368,6 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->UserName.write_payload(stream);
         this->Workstation.write_payload(stream);
         this->EncryptedRandomSessionKey.write_payload(stream);
-    }
-
-
-    void recv(Stream & stream) {
-        uint8_t * pBegin = stream.p;
-        bool res;
-        res = NTLMMessage::recv(stream);
-        if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
-        }
-        this->LmChallengeResponse.recv(stream);
-        this->NtChallengeResponse.recv(stream);
-        this->DomainName.recv(stream);
-        this->UserName.recv(stream);
-        this->Workstation.recv(stream);
-        this->EncryptedRandomSessionKey.recv(stream);
-        this->negoFlags.recv(stream);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.recv(stream);
-        }
-        uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
-        if (this->NtChallengeResponse.bufferOffset < min_offset)
-            min_offset = this->NtChallengeResponse.bufferOffset;
-        if (this->DomainName.bufferOffset < min_offset)
-            min_offset = this->DomainName.bufferOffset;
-        if (this->UserName.bufferOffset < min_offset)
-            min_offset = this->UserName.bufferOffset;
-        if (this->Workstation.bufferOffset < min_offset)
-            min_offset = this->Workstation.bufferOffset;
-        if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
-            min_offset = this->EncryptedRandomSessionKey.bufferOffset;
-        if (min_offset + pBegin > stream.p) {
-            this->has_mic = true;
-            stream.in_copy_bytes(this->MIC, 16);
-        }
-        else {
-            this->has_mic = false;
-        }
-
-        // PAYLOAD
-        this->LmChallengeResponse.read_payload(stream, pBegin);
-        this->NtChallengeResponse.read_payload(stream, pBegin);
-        this->DomainName.read_payload(stream, pBegin);
-        this->UserName.read_payload(stream, pBegin);
-        this->Workstation.read_payload(stream, pBegin);
-        this->EncryptedRandomSessionKey.read_payload(stream, pBegin);
     }
 
     void recv(InStream & stream) {
@@ -565,15 +482,10 @@ struct LMv2_Response {
         , ClientChallenge()
     {
     }
-    ~LMv2_Response() {}
-    void emit(Stream & stream) {
+
+    void emit(OutStream & stream) {
         stream.out_copy_bytes(this->Response, 16);
         stream.out_copy_bytes(this->ClientChallenge, 8);
-    }
-
-    void recv(Stream & stream) {
-        stream.in_copy_bytes(this->Response, 16);
-        stream.in_copy_bytes(this->ClientChallenge, 8);
     }
 
     void recv(InStream & stream) {
@@ -669,9 +581,9 @@ struct NTLMv2_Client_Challenge {
         , ClientChallenge()
     {
     }
-    ~NTLMv2_Client_Challenge() {}
-    void emit(Stream & stream) {
-	// ULONG length;
+
+    void emit(OutStream & stream) {
+        // ULONG length;
 
         this->RespType = 0x01;
         this->HiRespType = 0x01;
@@ -684,20 +596,6 @@ struct NTLMv2_Client_Challenge {
         stream.out_clear_bytes(4);
         this->AvPairList.emit(stream);
         stream.out_clear_bytes(4);
-    }
-
-
-    void recv(Stream & stream) {
-    // size_t size;
-        this->RespType = stream.in_uint8();
-    this->HiRespType = stream.in_uint8();
-        stream.in_skip_bytes(2);
-        stream.in_skip_bytes(4);
-        stream.in_copy_bytes(this->Timestamp, 8);
-        stream.in_copy_bytes(this->ClientChallenge, 8);
-        stream.in_skip_bytes(4);
-        this->AvPairList.recv(stream);
-        stream.in_skip_bytes(4);
     }
 
     void recv(InStream & stream) {
@@ -749,16 +647,10 @@ struct NTLMv2_Response {
         : Response()
     {
     }
-    ~NTLMv2_Response() {}
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         stream.out_copy_bytes(this->Response, 16);
         this->Challenge.emit(stream);
-    }
-
-    void recv(Stream & stream) {
-        stream.in_copy_bytes(this->Response, 16);
-        this->Challenge.recv(stream);
     }
 
     void recv(InStream & stream) {

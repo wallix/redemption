@@ -3095,7 +3095,7 @@ public:
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                     try {
-                        send(this->nego.trans, stream);
+                        this->nego.trans.send(stream.get_data(), stream.get_offset());
                         LOG(LOG_INFO, "Connection to server closed");
                     }
                     catch(Error const & e){

@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     StaticOutPerStream<65536> gcc_header;
     GCC::Create_Request_Send(gcc_header, stream.get_offset());
-    send(t, gcc_header);
+    t.send(gcc_header.get_data(), gcc_header.get_offset());
 
     constexpr std::size_t sz = sizeof(gcc_conference_create_request_expected)-1;  // -1 to ignore final 0
     uint8_t buf[sz];
@@ -626,5 +626,5 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
 
     CheckTransport ct(indata, sizeof(indata));
 
-    send(ct, out_stream);
+    ct.send(out_stream.get_data(), out_stream.get_offset());
 }

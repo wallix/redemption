@@ -202,33 +202,6 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     ~NTLMChallengeMessage() override {}
 
-    void emit(Stream & stream) {
-        this->TargetInfo.buffer.reset();
-        this->AvPairList.emit(this->TargetInfo.buffer.ostream);
-        this->TargetInfo.buffer.mark_end();
-
-        uint32_t currentOffset = this->PayloadOffset;
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.ntlm_get_version_info();
-        }
-        else {
-            currentOffset -= 8;
-        }
-        NTLMMessage::emit(stream);
-        currentOffset += this->TargetName.emit(stream, currentOffset);
-        this->negoFlags.emit(stream);
-        stream.out_copy_bytes(this->serverChallenge, 8);
-        stream.out_clear_bytes(8);
-        /*currentOffset +=*/ this->TargetInfo.emit(stream, currentOffset);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.emit(stream);
-        }
-        // PAYLOAD
-        this->TargetName.write_payload(stream);
-        this->TargetInfo.write_payload(stream);
-        stream.mark_end();
-    }
-
     void emit(OutStream & stream) {
         this->TargetInfo.buffer.reset();
         this->AvPairList.emit(this->TargetInfo.buffer.ostream);
@@ -255,30 +228,6 @@ struct NTLMChallengeMessage : public NTLMMessage {
         this->TargetInfo.write_payload(stream);
     }
 
-    void recv(Stream & stream) {
-        uint8_t * pBegin = stream.p;
-        bool res;
-        res = NTLMMessage::recv(stream);
-        if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
-        }
-        this->TargetName.recv(stream);
-        this->negoFlags.recv(stream);
-        stream.in_copy_bytes(this->serverChallenge, 8);
-        // this->serverChallenge = stream.in_uint64_le();
-        stream.in_skip_bytes(8);
-        this->TargetInfo.recv(stream);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.recv(stream);
-        }
-        // PAYLOAD
-        this->TargetName.read_payload(stream, pBegin);
-        this->TargetInfo.read_payload(stream, pBegin);
-        InStream in_stream(this->TargetInfo.buffer.ostream.get_data(), this->TargetInfo.buffer.ostream.tailroom());
-        this->AvPairList.recv(in_stream);
-        this->TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
-    }
-
     void recv(InStream & stream) {
         uint8_t const * pBegin = stream.get_current();
         bool res;
@@ -298,7 +247,7 @@ struct NTLMChallengeMessage : public NTLMMessage {
         // PAYLOAD
         this->TargetName.read_payload(stream, pBegin);
         this->TargetInfo.read_payload(stream, pBegin);
-        InStream in_stream(this->TargetInfo.buffer.ostream.get_data(), this->TargetInfo.buffer.ostream.tailroom());
+        auto in_stream = this->TargetInfo.buffer.in_stream();
         this->AvPairList.recv(in_stream);
         this->TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
     }

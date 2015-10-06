@@ -480,14 +480,8 @@ namespace SlowPath {
     };
 
     struct MouseEvent_Send {
-        MouseEvent_Send(  Stream & stream, uint16_t pointerFlags, uint16_t xPos
-                        , uint16_t yPos) {
-            stream.out_uint16_le(pointerFlags);
-            stream.out_uint16_le(xPos);
-            stream.out_uint16_le(yPos);
-        }
-        MouseEvent_Send(  OutStream & stream, uint16_t pointerFlags, uint16_t xPos
-                        , uint16_t yPos) {
+        MouseEvent_Send( OutStream & stream, uint16_t pointerFlags, uint16_t xPos
+                       , uint16_t yPos) {
             stream.out_uint16_le(pointerFlags);
             stream.out_uint16_le(xPos);
             stream.out_uint16_le(yPos);

@@ -484,22 +484,6 @@ enum {
 
 // Inheritance is only used to check if we have enough data available
 struct CheckShareData_Recv {
-    explicit CheckShareData_Recv(const Stream & stream) {
-        // share_id(4)
-        // + ignored(1)
-        // + streamid(1)
-        // + len(2)
-        // + pdutype2(1)
-        // + compressedType(1)
-        // + compressedLen(2)
-        const unsigned expected = 12;
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
-                expected, stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-    }
-
     explicit CheckShareData_Recv(const InStream & stream) {
         // share_id(4)
         // + ignored(1)

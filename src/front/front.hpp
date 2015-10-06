@@ -1769,7 +1769,7 @@ public:
                         (void)sec;
 
                         auto packet = hstream.copy_to_head(tmp_sec_header);
-                        sec_header = make_skip_out_stream(packet.data(), packet.size());
+                        sec_header = OutStream(packet.data(), packet.size(), packet.size());
                     }
                 );
 

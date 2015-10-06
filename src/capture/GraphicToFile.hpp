@@ -541,7 +541,7 @@ public:
     void send_orders_chunk()
     {
         send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
-        ::send(this->trans, this->stream_orders);
+        this->trans.send(this->stream_orders.get_data(), this->stream_orders.get_offset());
         this->order_count = 0;
         this->stream_orders.rewind();
     }
@@ -667,7 +667,7 @@ public:
     void send_bitmaps_chunk()
     {
         send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
-        ::send(this->trans, this->stream_bitmaps);
+        this->trans.send(this->stream_bitmaps.get_data(), this->stream_bitmaps.get_offset());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
     }

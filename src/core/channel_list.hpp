@@ -367,33 +367,29 @@ namespace CHANNELS {
           Transport & trans, CryptContext & crypt_context, int encryptionLevel
         , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
         , const uint8_t * chunk, size_t chunk_size) {
-            size_t const header_sz = 65536;
-            uint8_t buf[header_sz];
-            size_t const headroom = 1024;
-            OutStream stream(buf + headroom, header_sz - headroom);
+            write_packets(
+                trans,
+                [&](StreamSize<65536-1024>, OutStream & stream) {
+                    stream.out_uint32_le(length);
+                    stream.out_uint32_le(flags);
+                    stream.out_copy_bytes(chunk, chunk_size);
 
-            stream.out_uint32_le(length);
-            stream.out_uint32_le(flags);
-            stream.out_copy_bytes(chunk, chunk_size);
+                    if (enable_verbose && (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0))) {
+                        LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);
+                        hexdump_d(stream.get_data(), stream.get_offset());
+                    }
+                },
+                [&](StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) {
+                    SEC::Sec_Send(sec_header, packet_data, packet_size, 0, crypt_context, encryptionLevel);
 
-
-            if (enable_verbose && (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0))) {
-                LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);
-                hexdump_d(stream.get_data(), stream.get_offset());
-            }
-
-            StaticOutStream<256> x224_header;
-            StaticOutPerStream<256> mcs_header;
-            StaticOutStream<256> sec_header;
-
-            SEC::Sec_Send(sec_header, stream.get_data(), stream.get_offset(), 0, crypt_context, encryptionLevel);
-            size_t const payload_len = sec_header.get_offset() + stream.get_offset();
-            MCS_SendData( mcs_header, userId, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header, mcs_header.get_offset() + payload_len);
-
-            auto start = copy_to_head(buf, headroom, x224_header, mcs_header, sec_header);
-
-            trans.send(InStream(start, stream.get_current() - start));
+                },
+                [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+                    MCS_SendData(static_cast<OutPerStream&>(mcs_header), userId, channelId, 1, 3, packet_size, MCS::PER_ENCODING);
+                },
+                [&](StreamSize<256>, OutStream & x224_header, std::size_t packet_size) {
+                    X224::DT_TPDU_Send(x224_header, packet_size);
+                }
+            );
         }
     };  // struct VirtualChannelPDU
 }   // namespace CHANNELS
