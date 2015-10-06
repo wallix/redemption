@@ -169,8 +169,8 @@ private:
         {"disable_osd", {"(hidden with insert or left click)",
                          "(cacher avec insert ou clic gauche)"}},
         {"disconnected_by_otherconnection",
-            {"Another user connected to the remote computer, so your connection was lost.",
-             "Un autre utilisateur s'est connecté à l'ordinateur distant, provoquant la perte de votre connexion."}},
+            {"Another user connected to the resource, so your connection was lost.",
+             "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."}},
         }}
     {
         std::sort(this->trans.begin(), this->trans.end());
