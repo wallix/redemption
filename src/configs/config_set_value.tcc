@@ -364,6 +364,12 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "language")) {
             ::configs::parse(static_cast<cfg::translation::language&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "password_en")) {
+            ::configs::parse(static_cast<cfg::translation::password_en&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "password_fr")) {
+            ::configs::parse(static_cast<cfg::translation::password_fr&>(this->variables).value, value);
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
