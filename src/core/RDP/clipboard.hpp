@@ -512,6 +512,13 @@ class GeneralCapabilitySet {
     uint32_t generalFlags_     = 0;
 
 public:
+    GeneralCapabilitySet() = default;
+
+    GeneralCapabilitySet(uint32_t version, uint32_t generalFlags) {
+        this->version       = version;
+        this->generalFlags_ = generalFlags;
+    }
+
     void emit(OutStream & stream) {
         stream.out_uint16_le(this->capabilitySetType);
         stream.out_uint16_le(this->lengthCapability);

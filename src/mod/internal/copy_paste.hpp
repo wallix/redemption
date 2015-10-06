@@ -91,6 +91,17 @@ public:
         this->channel_ = front.get_channel_list().get_by_name(channel_names::cliprdr);
 
         if (this->channel_) {
+            StaticOutStream<256> out_s;
+            RDPECLIP::ClipboardCapabilitiesPDU general_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
+            general_pdu.emit(out_s);
+            RDPECLIP::GeneralCapabilitySet general_caps(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+            general_caps.emit(out_s);
+
+            const size_t length     = out_s.get_offset();
+            const size_t chunk_size = length;
+            this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                          CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+
             this->send_to_front_channel(RDPECLIP::ServerMonitorReadyPDU());
             return true;
         }
@@ -132,19 +143,31 @@ public:
         InStream stream(chunk.get_data(), chunk.get_capacity());
 
         if (this->long_data_response_size) {
-            if (this->long_data_response_size < stream.in_remain()) {
-                LOG( LOG_ERR
-                   , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
-                   , this->long_data_response_size, stream.in_remain());
-                throw Error(ERR_RDP_PROTOCOL);
+            size_t available_data_length =
+                std::min<size_t>(this->long_data_response_size, stream.in_remain());
+
+//            if (this->long_data_response_size < stream.in_remain()) {
+//                LOG( LOG_ERR
+//                   , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+//                   , this->long_data_response_size, stream.in_remain());
+//                throw Error(ERR_RDP_PROTOCOL);
+//            }
+
+            if (available_data_length) {
+//            this->long_data_response_size -= stream.in_remain();
+                this->long_data_response_size -= available_data_length;
+//            this->clipboard_str_.utf16_push_back(stream.p, stream.in_remain() / 2);
+                this->clipboard_str_.utf16_push_back(stream.get_current(), available_data_length / 2);
             }
 
-            this->long_data_response_size -= stream.in_remain();
-            this->clipboard_str_.utf16_push_back(stream.get_current(), stream.in_remain() / 2);
+//            if (!this->long_data_response_size && this->paste_edit_) {
+            if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
+                if (this->paste_edit_) {
+                    this->paste_edit_->insert_text(this->clipboard_str_.c_str());
+                    this->paste_edit_ = nullptr;
+                }
 
-            if (!this->long_data_response_size && this->paste_edit_) {
-                this->paste_edit_->insert_text(this->clipboard_str_.c_str());
-                this->paste_edit_ = nullptr;
+                this->long_data_response_size = 0;
             }
 
             return ;

@@ -660,28 +660,42 @@ struct LogonInfoField_Recv {
 // +--------------------------------+------------------------------------------+
 // | Value                          | Meaning                                  |
 // +--------------------------------+------------------------------------------+
-// | LOGON_MSG_NO_PERMISSION        | The user does not have permission to log |
-// | 0xFFFFFFFA                     | on.                                      |
+// | LOGON_MSG_DISCONNECT_REFUSED   | The "Disconnection Refused" dialog is    |
+// | 0xFFFFFFF9                     | being displayed by Winlogon. The session |
+// |                                | identifier is specified by the           |
+// |                                | ErrorNotificationData field.             |
 // +--------------------------------+------------------------------------------+
-// | LOGON_MSG_BUMP_OPTIONS         | Session contention UI is being           |
-// | 0xFFFFFFFB                     | displayed.                               |
+// | LOGON_MSG_NO_PERMISSION        | The "No Permission" dialog is being      |
+// | 0xFFFFFFFA                     | displayed by Winlogon. The session       |
+// |                                | identifier is specified by the           |
+// |                                | ErrorNotificationData field.             |
 // +--------------------------------+------------------------------------------+
-// | LOGON_MSG_SESSION_RECONNECT    | Session reconnection UI is being         |
-// | 0xFFFFFFFC                     | displayed.                               |
+// | LOGON_MSG_BUMP_OPTIONS         | The "Session Contention" dialog is being |
+// | 0xFFFFFFFB                     | displayed by Winlogon. The session       |
+// |                                | identifier is specified by the           |
+// |                                | ErrorNotificationData field.             |
 // +--------------------------------+------------------------------------------+
-// | LOGON_MSG_SESSION_TERMINATE    | The session is being terminated.         |
-// | 0xFFFFFFFD                     |                                          |
+// | LOGON_MSG_SESSION_RECONNECT    | The "Session Reconnection" dialog is     |
+// | 0xFFFFFFFC                     | being displayed by Winlogon. The session |
+// |                                | identifier is specified by the           |
+// |                                | ErrorNotificationData field.             |
 // +--------------------------------+------------------------------------------+
-// | LOGON_MSG_SESSION_CONTINUE     | The logon process is continuing.         |
-// | 0xFFFFFFFE                     |                                          |
+// | LOGON_MSG_SESSION_TERMINATE    | The session is being terminated. The     |
+// | 0xFFFFFFFD                     | session identifier is specified by the   |
+// |                                | ErrorNotificationData field.             |
+// +--------------------------------+------------------------------------------+
+// | LOGON_MSG_SESSION_CONTINUE     | The logon process is continuing. The     |
+// | 0xFFFFFFFE                     | session identifier is specified by the   |
+// |                                | ErrorNotificationData field.             |
 // +--------------------------------+------------------------------------------+
 
 enum {
-      LOGON_MSG_NO_PERMISSION     = 0xFFFFFFFA
-    , LOGON_MSG_BUMP_OPTIONS      = 0xFFFFFFFB
-    , LOGON_MSG_SESSION_RECONNECT = 0xFFFFFFFC
-    , LOGON_MSG_SESSION_TERMINATE = 0xFFFFFFFD
-    , LOGON_MSG_SESSION_CONTINUE  = 0xFFFFFFFE
+      LOGON_MSG_DISCONNECT_REFUSED = 0xFFFFFFF9
+    , LOGON_MSG_NO_PERMISSION      = 0xFFFFFFFA
+    , LOGON_MSG_BUMP_OPTIONS       = 0xFFFFFFFB
+    , LOGON_MSG_SESSION_RECONNECT  = 0xFFFFFFFC
+    , LOGON_MSG_SESSION_TERMINATE  = 0xFFFFFFFD
+    , LOGON_MSG_SESSION_CONTINUE   = 0xFFFFFFFE
 };
 
 // ErrorNotificationType (4 bytes): A 32-bit, unsigned integer. The type code
@@ -692,20 +706,20 @@ enum {
 // +------------------------------+--------------------------------------------+
 // | LOGON_FAILED_BAD_PASSWORD    | The logon process failed. The logon        |
 // | 0x00000000                   | credentials which were supplied are        |
-// |                              | invalid.                                   |
+// |                              | invalid. The user's focus SHOULD be        |
+// |                              | directed to the WinLogon screen.           |
 // +------------------------------+--------------------------------------------+
 // | LOGON_FAILED_UPDATE_PASSWORD | The logon process failed. The user cannot  |
 // | 0x00000001                   | continue with the logon process until the  |
-// |                              | password is changed.                       |
+// |                              | password is changed. The user's focus      |
+// |                              | SHOULD be directed to the WinLogon screen. |
 // +------------------------------+--------------------------------------------+
-// | LOGON_FAILED_OTHER           | The logon process failed. The reason for   |
-// | 0x00000002                   | the failure can be deduced from the        |
-// |                              | ErrorNotificationData field.               |
+// | LOGON_FAILED_OTHER           | The logon process failed. The user's focus |
+// |                              | SHOULD be directed to the WinLogon screen. |
 // +------------------------------+--------------------------------------------+
-// | LOGON_WARNING                | The user received a warning during the     |
-// | 0x00000003                   | logon process. The reason for the warning  |
-// |                              | can be deduced from the                    |
-// |                              | ErrorNotificationData field.               |
+// | LOGON_WARNING                | The logon process has displayed a warning. |
+// | 0x00000003                   | The user's focus SHOULD be directed to the |
+// |                              | WinLogon screen.                           |
 // +------------------------------+--------------------------------------------+
 
 enum {
@@ -731,22 +745,27 @@ struct LogonErrorsInfo_Recv {
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->ErrorNotificationData = stream.in_uint32_le();
         this->ErrorNotificationType = stream.in_uint32_le();
+        this->ErrorNotificationData = stream.in_uint32_le();
 
-        LOG(LOG_INFO,
-            "ErrorNotificationData=%s(0x%08X) \"%s\" ErrorNotificationType=%s(0x%08X) \"%s\"",
-            ErrorNotificationDataToString(this->ErrorNotificationData),
-            this->ErrorNotificationData,
-            ErrorNotificationDataToMessage(this->ErrorNotificationData),
-            ErrorNotificationTypeToString(this->ErrorNotificationType),
-            this->ErrorNotificationType,
-            ErrorNotificationTypeToMessage(this->ErrorNotificationType));
+        if ((this->ErrorNotificationType != LOGON_MSG_SESSION_CONTINUE) ||
+            (this->ErrorNotificationData != LOGON_FAILED_OTHER)) {
+            LOG(LOG_INFO,
+                "ErrorNotificationType=%s(0x%08X) \"%s\" ErrorNotificationData=%s(0x%08X) \"%s\"",
+                ErrorNotificationTypeToString(this->ErrorNotificationType),
+                this->ErrorNotificationType,
+                ErrorNotificationTypeToMessage(this->ErrorNotificationType),
+                ErrorNotificationDataToString(this->ErrorNotificationData),
+                this->ErrorNotificationData,
+                ErrorNotificationDataToMessage(this->ErrorNotificationData));
+        }
     }
 
-    static const char * ErrorNotificationDataToString(
+    static const char * ErrorNotificationTypeToString(
             uint32_t ErrorNotificationData) {
         switch (ErrorNotificationData) {
+        case LOGON_MSG_DISCONNECT_REFUSED:
+            return "LOGON_MSG_DISCONNECT_REFUSED";
         case LOGON_MSG_NO_PERMISSION:
             return "LOGON_MSG_NO_PERMISSION";
         case LOGON_MSG_BUMP_OPTIONS:
@@ -763,15 +782,17 @@ struct LogonErrorsInfo_Recv {
         }
     }
 
-    static const char * ErrorNotificationDataToMessage(
+    static const char * ErrorNotificationTypeToMessage(
             uint32_t ErrorNotificationData) {
         switch (ErrorNotificationData) {
+        case LOGON_MSG_DISCONNECT_REFUSED:
+            return "The \"Disconnection Refused\" dialog is being displayed by Winlogon.";
         case LOGON_MSG_NO_PERMISSION:
-            return "The user does not have permission to log on.";
+            return "The \"No Permission\" dialog is being displayed by Winlogon.";
         case LOGON_MSG_BUMP_OPTIONS:
-            return "Session contention UI is being displayed.";
+            return "The \"Session Contention\" dialog is being displayed by Winlogon.";
         case LOGON_MSG_SESSION_RECONNECT:
-            return "Session reconnection UI is being displayed.";
+            return "The \"Session Reconnection\" dialog is being displayed by Winlogon.";
         case LOGON_MSG_SESSION_TERMINATE:
             return "The session is being terminated.";
         case LOGON_MSG_SESSION_CONTINUE:
@@ -782,7 +803,7 @@ struct LogonErrorsInfo_Recv {
         }
     }
 
-    static const char * ErrorNotificationTypeToString(
+    static const char * ErrorNotificationDataToString(
             uint32_t ErrorNotificationType) {
         switch (ErrorNotificationType) {
         case LOGON_FAILED_BAD_PASSWORD:
@@ -799,7 +820,7 @@ struct LogonErrorsInfo_Recv {
         }
     }
 
-    static const char * ErrorNotificationTypeToMessage(
+    static const char * ErrorNotificationDataToMessage(
             uint32_t ErrorNotificationType) {
         switch (ErrorNotificationType) {
         case LOGON_FAILED_BAD_PASSWORD:
@@ -810,13 +831,9 @@ struct LogonErrorsInfo_Recv {
                 "The user cannot continue with the logon process until the "
                 "password is changed.";
         case LOGON_FAILED_OTHER:
-            return "The logon process failed. "
-                "The reason for the failure can be deduced from the "
-                "ErrorNotificationData field.";
+            return "The logon process failed.";
         case LOGON_WARNING:
-            return "The user received a warning during the logon process. "
-                "The reason for the warning can be deduced from the "
-                "ErrorNotificationData field.";
+            return "The logon process has displayed a warning.";
 
         default:
             return "Unexpected Error Notification Type.";

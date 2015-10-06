@@ -137,7 +137,7 @@ public:
     }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        if (this->copy_paste) {
+        if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
