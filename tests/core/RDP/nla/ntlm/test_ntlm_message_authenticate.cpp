@@ -162,7 +162,8 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
-    lmResponse.recv(AuthMsg.LmChallengeResponse.Buffer);
+    InStream in_stream(AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.in_sz);
+    lmResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
     // hexdump_c(lmResponse.Response, 16);
@@ -186,7 +187,8 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // NtChallengeResponse
     NTLMv2_Response ntResponse;
-    ntResponse.recv(AuthMsg.NtChallengeResponse.Buffer);
+    in_stream = InStream(AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.in_sz);
+    ntResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
     // hexdump_c(ntResponse.Response, 16);
@@ -226,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t domainname_match[] =
         "\x77\x00\x69\x00\x6e\x00\x37\x00";
     BOOST_CHECK_EQUAL(memcmp(domainname_match,
-                             AuthMsg.DomainName.Buffer.get_data(),
+                             AuthMsg.DomainName.buffer.ostream.get_data(),
                              AuthMsg.DomainName.len),
                       0);
 
@@ -236,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t username_match[] =
         "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00";
     BOOST_CHECK_EQUAL(memcmp(username_match,
-                             AuthMsg.UserName.Buffer.get_data(),
+                             AuthMsg.UserName.buffer.ostream.get_data(),
                              AuthMsg.UserName.len),
                       0);
 
@@ -246,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t workstation_match[] =
         "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00";
     BOOST_CHECK_EQUAL(memcmp(workstation_match,
-                             AuthMsg.Workstation.Buffer.get_data(),
+                             AuthMsg.Workstation.buffer.ostream.get_data(),
                              AuthMsg.Workstation.len),
                       0);
 
@@ -257,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t encryptedrandomsessionkey_match[] =
         "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba";
     BOOST_CHECK_EQUAL(memcmp(encryptedrandomsessionkey_match,
-                             AuthMsg.EncryptedRandomSessionKey.Buffer.get_data(),
+                             AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
                              AuthMsg.EncryptedRandomSessionKey.len),
                       0);
 

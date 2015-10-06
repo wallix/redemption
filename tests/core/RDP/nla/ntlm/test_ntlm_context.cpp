@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
                                                    userName, sizeof(userName),
                                                    userDomain, sizeof(userDomain));
 
-    BStream & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
+    auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
     // LOG(LOG_INFO, "==== LmChallengeResponse =====");
     // hexdump_c(LmChallengeResponse.get_data(), LmChallengeResponse.size());
     BOOST_CHECK_EQUAL(memcmp(
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
                              LmChallengeResponse.get_data(),
                              LmChallengeResponse.size()),
                       0);
-    BStream & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
+    auto & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
     // LOG(LOG_INFO, "==== NtChallengeResponse =====");
     // hexdump_c(NtChallengeResponse.get_data(), NtChallengeResponse.size());
     BOOST_CHECK_EQUAL(memcmp(
@@ -389,22 +389,22 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
         client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
     if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-        BStream & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.Buffer;
+        auto & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.buffer;
         workstationbuff.reset();
-        workstationbuff.out_copy_bytes(workstation, sizeof(workstation));
+        workstationbuff.ostream.out_copy_bytes(workstation, sizeof(workstation));
         workstationbuff.mark_end();
     }
 
     flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-    BStream & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.Buffer;
+    auto & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.buffer;
     domain.reset();
-    domain.out_copy_bytes(userDomain, sizeof(userDomain));
+    domain.ostream.out_copy_bytes(userDomain, sizeof(userDomain));
     domain.mark_end();
 
-    BStream & user = client_context.AUTHENTICATE_MESSAGE.UserName.Buffer;
+    auto & user = client_context.AUTHENTICATE_MESSAGE.UserName.buffer;
 
     user.reset();
-    user.out_copy_bytes(userName, sizeof(userName));
+    user.ostream.out_copy_bytes(userName, sizeof(userName));
     user.mark_end();
 
     client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();

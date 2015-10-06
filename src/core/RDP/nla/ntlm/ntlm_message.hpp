@@ -567,7 +567,56 @@ struct NtlmField {
     uint16_t len;           /* 2 Bytes */
     uint16_t maxLen;        /* 2 Bytes */
     uint32_t bufferOffset;  /* 4 Bytes */
-    BStream Buffer;
+    struct Buffer {
+        std::unique_ptr<uint8_t[]> dynbuf;
+        uint8_t buf[65535];
+        std::size_t sz_buf;
+        OutStream ostream;
+        std::size_t in_sz;
+
+        Buffer()
+        : sz_buf(sizeof(this->buf))
+        , ostream(this->buf)
+        , in_sz(0)
+        {}
+
+        Buffer(Buffer const &) = delete;
+
+        void init(std::size_t sz) {
+            auto p = this->ostream.get_data();
+            if (sz > this->sz_buf) {
+                p = this->buf;
+                if (sz > sizeof(sizeof(this->buf))) {
+                    p = new uint8_t[sz];
+                    this->dynbuf.reset(p);
+                    this->sz_buf = sz;
+                }
+            }
+            this->in_sz = 0;
+            this->ostream = OutStream(p, sz);
+        }
+
+        void mark_end() {
+            this->in_sz = this->ostream.get_offset();
+        }
+
+        uint8_t * get_data() {
+            return this->ostream.get_data();
+        }
+
+        std::size_t size() const {
+            return this->in_sz;
+        }
+
+        InStream in_stream() const {
+            return InStream(this->ostream.get_data(), this->in_sz);
+        }
+
+        void reset() {
+            this->ostream.rewind();
+            this->in_sz = 0;
+        }
+    } buffer;
 
     NtlmField()
         : len(0)
@@ -579,7 +628,7 @@ struct NtlmField {
     ~NtlmField() {}
 
     unsigned int emit(Stream & stream, unsigned int currentOffset) {
-        this->len = this->Buffer.size();
+        this->len = this->buffer.size();
         this->maxLen = this->len;
         this->bufferOffset = currentOffset;
         // currentOffset += this->len;
@@ -591,7 +640,7 @@ struct NtlmField {
     }
 
     unsigned int emit(OutStream & stream, unsigned int currentOffset) {
-        this->len = this->Buffer.size();
+        this->len = this->buffer.size();
         this->maxLen = this->len;
         this->bufferOffset = currentOffset;
         // currentOffset += this->len;
@@ -624,10 +673,10 @@ struct NtlmField {
                 }
                 stream.p = pEnd;
             }
-            this->Buffer.init(this->len);
-            this->Buffer.out_copy_bytes(pBegin + this->bufferOffset, this->len);
-            this->Buffer.mark_end();
-            this->Buffer.rewind();
+            this->buffer.init(this->len);
+            this->buffer.ostream.out_copy_bytes(pBegin + this->bufferOffset, this->len);
+            this->buffer.mark_end();
+            this->buffer.ostream.rewind();
         }
     }
 
@@ -641,21 +690,21 @@ struct NtlmField {
                 }
                 stream.in_skip_bytes(pEnd - stream.get_current());;
             }
-            this->Buffer.init(this->len);
-            this->Buffer.out_copy_bytes(pBegin + this->bufferOffset, this->len);
-            this->Buffer.mark_end();
-            this->Buffer.rewind();
+            this->buffer.init(this->len);
+            this->buffer.ostream.out_copy_bytes(pBegin + this->bufferOffset, this->len);
+            this->buffer.mark_end();
+            this->buffer.ostream.rewind();
         }
     }
 
     void write_payload(Stream & stream) {
         if (this->len > 0) {
-            stream.out_copy_bytes(this->Buffer.get_data(), this->len);
+            stream.out_copy_bytes(this->buffer.get_data(), this->len);
         }
     }
     void write_payload(OutStream & stream) {
         if (this->len > 0) {
-            stream.out_copy_bytes(this->Buffer.get_data(), this->len);
+            stream.out_copy_bytes(this->buffer.get_data(), this->len);
         }
     }
 

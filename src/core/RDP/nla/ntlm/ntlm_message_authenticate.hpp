@@ -576,6 +576,11 @@ struct LMv2_Response {
         stream.in_copy_bytes(this->ClientChallenge, 8);
     }
 
+    void recv(InStream & stream) {
+        stream.in_copy_bytes(this->Response, 16);
+        stream.in_copy_bytes(this->ClientChallenge, 8);
+    }
+
 };
 
 // 2.2.2.6   NTLM v1 Response: NTLM_RESPONSE
@@ -683,9 +688,9 @@ struct NTLMv2_Client_Challenge {
 
 
     void recv(Stream & stream) {
-	// size_t size;
+    // size_t size;
         this->RespType = stream.in_uint8();
-	this->HiRespType = stream.in_uint8();
+    this->HiRespType = stream.in_uint8();
         stream.in_skip_bytes(2);
         stream.in_skip_bytes(4);
         stream.in_copy_bytes(this->Timestamp, 8);
@@ -695,6 +700,18 @@ struct NTLMv2_Client_Challenge {
         stream.in_skip_bytes(4);
     }
 
+    void recv(InStream & stream) {
+        // size_t size;
+        this->RespType = stream.in_uint8();
+        this->HiRespType = stream.in_uint8();
+        stream.in_skip_bytes(2);
+        stream.in_skip_bytes(4);
+        stream.in_copy_bytes(this->Timestamp, 8);
+        stream.in_copy_bytes(this->ClientChallenge, 8);
+        stream.in_skip_bytes(4);
+        this->AvPairList.recv(stream);
+        stream.in_skip_bytes(4);
+    }
 };
 
 // 2.2.2.8   NTLM2 V2 Response: NTLMv2_RESPONSE
@@ -740,6 +757,11 @@ struct NTLMv2_Response {
     }
 
     void recv(Stream & stream) {
+        stream.in_copy_bytes(this->Response, 16);
+        this->Challenge.recv(stream);
+    }
+
+    void recv(InStream & stream) {
         stream.in_copy_bytes(this->Response, 16);
         this->Challenge.recv(stream);
     }

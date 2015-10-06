@@ -396,7 +396,7 @@ struct NTLMContext {
         // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
         // Z(n) = { 0x00, ... , 0x00 } n times
         // ServerName = AvPairs received in Challenge message
-        BStream & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.Buffer;
+        auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
         // BStream AvPairsStream;
         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
         size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
@@ -436,11 +436,11 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Compute response: NtChallengeResponse");
         }
-        BStream & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
+        auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
         // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
         NtChallengeResponse.reset();
-        NtChallengeResponse.out_copy_bytes(NtProofStr, sizeof(NtProofStr));
-        NtChallengeResponse.out_copy_bytes(temp, temp_size);
+        NtChallengeResponse.ostream.out_copy_bytes(NtProofStr, sizeof(NtProofStr));
+        NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
         NtChallengeResponse.mark_end();
 
         if (this->verbose & 0x400) {
@@ -458,7 +458,7 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Compute response: LmChallengeResponse");
         }
-        BStream & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
+        auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
         // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
         SslHMAC_Md5 hmac_md5lmresp(ResponseKeyLM, sizeof(ResponseKeyLM));
         LmChallengeResponse.reset();
@@ -467,8 +467,8 @@ struct NTLMContext {
         uint8_t LCResponse[16] = {};
         hmac_md5lmresp.final(LCResponse, 16);
 
-        LmChallengeResponse.out_copy_bytes(LCResponse, 16);
-        LmChallengeResponse.out_copy_bytes(this->ClientChallenge, 8);
+        LmChallengeResponse.ostream.out_copy_bytes(LCResponse, 16);
+        LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
         LmChallengeResponse.mark_end();
 
         if (this->verbose & 0x400) {
@@ -504,15 +504,15 @@ struct NTLMContext {
         this->ntlm_rc4k(this->SessionBaseKey, 16,
                         this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
-        BStream & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.Buffer;
+        auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
         AuthEncryptedRSK.reset();
-        AuthEncryptedRSK.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
+        AuthEncryptedRSK.ostream.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
         AuthEncryptedRSK.mark_end();
     }
     // server method to decrypt exported session key from authenticate message with
     // session base key computed with Responses.
     void ntlm_decrypt_exported_session_key() {
-        BStream & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.Buffer;
+        auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Decrypt RandomSessionKey");
         }
@@ -675,16 +675,17 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Check NtResponse");
         }
-        BStream & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
-        BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
-        BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
+        auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+        auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         size_t temp_size = AuthNtResponse.size() - 16;
         // LOG(LOG_INFO, "tmp size = %u", temp_size);
         uint8_t NtProofStr_from_msg[16] = {};
-        AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
+        InStream in_AuthNtResponse(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom());
+        in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
         uint8_t * temp = new uint8_t[temp_size];
-        AuthNtResponse.in_copy_bytes(temp, temp_size);
-        AuthNtResponse.rewind();
+        in_AuthNtResponse.in_copy_bytes(temp, temp_size);
+        AuthNtResponse.ostream.rewind();
 
         uint8_t NtProofStr[16] = {};
         uint8_t ResponseKeyNT[16] = {};
@@ -717,17 +718,18 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Check LmResponse");
         }
-        BStream & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
-        BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
-        BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        auto & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
+        auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+        auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         size_t lm_response_size = AuthLmResponse.size(); // should be 24
         if (lm_response_size != 24) {
             return false;
         }
         uint8_t response[16] = {};
-        AuthLmResponse.in_copy_bytes(response, 16);
-        AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
-        AuthLmResponse.rewind();
+        InStream in_AuthLmResponse(AuthLmResponse.ostream.get_current(), AuthLmResponse.ostream.tailroom());
+        in_AuthLmResponse.in_copy_bytes(response, 16);
+        in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
+        AuthLmResponse.ostream.rewind();
 
         uint8_t compute_response[16] = {};
         uint8_t ResponseKeyLM[16] = {};
@@ -751,12 +753,13 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Compute Session Base Key");
         }
-        BStream & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
-        BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
-        BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
+        auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+        auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         uint8_t NtProofStr[16] = {};
-        AuthNtResponse.in_copy_bytes(NtProofStr, 16);
-        AuthNtResponse.rewind();
+        InStream(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom())
+            .in_copy_bytes(NtProofStr, 16);
+        AuthNtResponse.ostream.rewind();
         uint8_t ResponseKeyNT[16] = {};
         this->NTOWFv2_FromHash(hash, hash_size,
                                UserName.get_data(), UserName.size(),
@@ -900,21 +903,20 @@ struct NTLMContext {
         }
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            BStream & workstationbuff = this->NEGOTIATE_MESSAGE.Workstation.Buffer;
+            auto & workstationbuff = this->NEGOTIATE_MESSAGE.Workstation.buffer;
             workstationbuff.reset();
-            workstationbuff.out_copy_bytes(this->Workstation.get_data(),
-                                           this->Workstation.size());
+            workstationbuff.ostream.out_copy_bytes(this->Workstation.get_data(),
+                                                   this->Workstation.size());
             workstationbuff.mark_end();
         }
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
-            BStream & domain = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
+            auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             domain.reset();
-            domain.out_copy_bytes(this->identity.Domain.get_data(),
-                                  this->identity.Domain.size());
+            domain.ostream.out_copy_bytes(this->identity.Domain.get_data(),
+                                          this->identity.Domain.size());
             domain.mark_end();
         }
-
 
         this->state = NTLM_STATE_CHALLENGE;
     }
@@ -974,24 +976,24 @@ struct NTLMContext {
 
         if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
             // If flag is not set, encryted session key buffer is not send
-            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.Buffer.reset();
+            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.reset();
         }
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            BStream & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.Buffer;
+            auto & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.buffer;
             workstationbuff.reset();
-            workstationbuff.out_copy_bytes(workstation, work_size);
+            workstationbuff.ostream.out_copy_bytes(workstation, work_size);
             workstationbuff.mark_end();
         }
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-        BStream & domain = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
+        auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         domain.reset();
-        domain.out_copy_bytes(userDomain, domain_size);
+        domain.ostream.out_copy_bytes(userDomain, domain_size);
         domain.mark_end();
 
-        BStream & user = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        auto & user = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         user.reset();
-        user.out_copy_bytes(userName, user_size);
+        user.ostream.out_copy_bytes(userName, user_size);
         user.mark_end();
 
         // this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
@@ -1194,14 +1196,14 @@ struct NTLMContext {
             offset += null_data_sz;
             this->SavedAuthenticateMessage.copy(p + offset, in_stream.get_offset() - offset, offset);
         }
-        this->identity.User.init(this->AUTHENTICATE_MESSAGE.UserName.Buffer.size());
-        this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.Buffer.get_data(),
-                                  this->AUTHENTICATE_MESSAGE.UserName.Buffer.size());
+        this->identity.User.init(this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
+        this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.get_data(),
+                                  this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
         // LOG(LOG_INFO, "USER from authenticate size = %u", this->identity.User.size());
         // hexdump_c(this->identity.User.get_data(), this->identity.User.size());
-        this->identity.Domain.init(this->AUTHENTICATE_MESSAGE.DomainName.Buffer.size());
-        this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.Buffer.get_data(),
-                                    this->AUTHENTICATE_MESSAGE.DomainName.Buffer.size());
+        this->identity.Domain.init(this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
+        this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.get_data(),
+                                    this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
         // LOG(LOG_INFO, "DOMAIN from authenticate size = %u", this->identity.Domain.size());
         // hexdump_c(this->identity.Domain.get_data(), this->identity.Domain.size());
 

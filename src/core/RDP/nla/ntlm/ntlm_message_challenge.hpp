@@ -203,8 +203,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
     ~NTLMChallengeMessage() override {}
 
     void emit(Stream & stream) {
-        this->TargetInfo.Buffer.reset();
-        this->AvPairList.emit(this->TargetInfo.Buffer);
+        this->TargetInfo.buffer.reset();
+        this->AvPairList.emit(this->TargetInfo.buffer.ostream);
+        this->TargetInfo.buffer.mark_end();
 
         uint32_t currentOffset = this->PayloadOffset;
         if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
@@ -229,8 +230,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
     }
 
     void emit(OutStream & stream) {
-        this->TargetInfo.Buffer.reset();
-        this->AvPairList.emit(this->TargetInfo.Buffer);
+        this->TargetInfo.buffer.reset();
+        this->AvPairList.emit(this->TargetInfo.buffer.ostream);
+        this->TargetInfo.buffer.mark_end();
 
         uint32_t currentOffset = this->PayloadOffset;
         if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
@@ -272,7 +274,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
         // PAYLOAD
         this->TargetName.read_payload(stream, pBegin);
         this->TargetInfo.read_payload(stream, pBegin);
-        this->AvPairList.recv(this->TargetInfo.Buffer);
+        InStream in_stream(this->TargetInfo.buffer.ostream.get_data(), this->TargetInfo.buffer.ostream.tailroom());
+        this->AvPairList.recv(in_stream);
+        this->TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
     }
 
     void recv(InStream & stream) {
@@ -294,7 +298,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
         // PAYLOAD
         this->TargetName.read_payload(stream, pBegin);
         this->TargetInfo.read_payload(stream, pBegin);
-        this->AvPairList.recv(this->TargetInfo.Buffer);
+        InStream in_stream(this->TargetInfo.buffer.ostream.get_data(), this->TargetInfo.buffer.ostream.tailroom());
+        this->AvPairList.recv(in_stream);
+        this->TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
     }
 
     //void avpair_decode() {

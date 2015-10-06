@@ -100,11 +100,11 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     uint8_t targetname_match[] =
         "\x57\x00\x49\x00\x4e\x00\x37\x00";
     BOOST_CHECK_EQUAL(memcmp(targetname_match,
-                             ChallengeMsg.TargetName.Buffer.get_data(),
+                             ChallengeMsg.TargetName.buffer.ostream.get_data(),
                              ChallengeMsg.TargetName.len),
                       0);
-    // hexdump_c(ChallengeMsg.TargetName.Buffer.get_data(),
-    //           ChallengeMsg.TargetName.Buffer.size());
+    // hexdump_c(ChallengeMsg.TargetName.buffer.ostream.get_data(),
+    //           ChallengeMsg.TargetName.buffer.ostream.size());
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
     uint8_t targetinfo_match[] =
@@ -113,11 +113,11 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
         "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
         "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
     BOOST_CHECK_EQUAL(memcmp(targetinfo_match,
-                             ChallengeMsg.TargetInfo.Buffer.get_data(),
+                             ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
                              ChallengeMsg.TargetInfo.len),
                       0);
-    // hexdump_c(ChallengeMsg.TargetInfo.Buffer.get_data(),
-    //           ChallengeMsg.TargetInfo.Buffer.size());
+    // hexdump_c(ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
+    //           ChallengeMsg.TargetInfo.buffer.ostream.size());
     InStream servChall(ChallengeMsg.serverChallenge, 8);
     uint64_t servchallengeinteger = servChall.in_uint64_le();
     BOOST_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
