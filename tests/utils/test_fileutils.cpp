@@ -27,9 +27,11 @@
 #define LOGNULL
 #include "fileutils.hpp"
 
+#include <unistd.h> // for getgid
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
 
 BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
 {
@@ -516,4 +518,14 @@ BOOST_AUTO_TEST_CASE(TestPathNCopy)
     catch (Error & e) {
         BOOST_CHECK_EQUAL(e.id, ERR_PATH_TOO_LONG);
     };
+}
+
+BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
+{
+    char tmpdirname[128];
+    sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
+    BOOST_CHECK(nullptr != mkdtemp(tmpdirname));
+    
+    recursive_create_directory(tmpdirname, 0777, getgid(), 255);
+    recursive_delete_directory(tmpdirname);
 }

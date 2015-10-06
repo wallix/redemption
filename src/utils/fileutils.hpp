@@ -46,9 +46,9 @@ static inline int filesize(const char * path)
     return -1;
 }
 
-static inline bool file_exist(const char * filename) {
-    struct stat buffer;
-    return (stat (filename, &buffer) == 0);
+static inline bool file_exist(const char * path) {
+    struct stat sb;
+    return (stat(path, &sb) == 0);
 }
 
 static inline
@@ -335,14 +335,13 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
 
 
 TODO("Add unit tests for recursive_create_directory")
-static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255) {
-    int    status;
-    char * copy_directory;
+static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255) 
+{
     char * pTemp;
     char * pSearch;
 
-    status         = 0;
-    copy_directory = strdup(directory);
+    int    status         = 0;
+    char * copy_directory = strdup(directory);
 
     if (copy_directory == nullptr) {
         return -1;
@@ -389,6 +388,9 @@ static inline int recursive_delete_directory(const char * directory_path) {
 
             entry_path_length = strlen(directory_path) + strlen(ent->d_name) + 2;
             entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
+
+//            entry_path = new uint8_t [entry_path_length];
+//            std::unique_ptr<uint8_t[]> entry_path_ptr;
 
             if (entry_path) {
                 struct stat statbuf;
