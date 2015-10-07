@@ -422,6 +422,9 @@ void config_spec_definition(Writer && W)
     W.start_section("translation");
     {
         W.member(A, type_<Language>{}, "language", set(Language::en), r);
+
+        W.member(A, type_<std::string>(), "password_en", set(""), r);
+        W.member(A, type_<std::string>(), "password_fr", set(""), r);
     }
     W.stop_section();
 

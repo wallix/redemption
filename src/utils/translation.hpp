@@ -23,6 +23,7 @@
 
 #include <array>
 #include <algorithm>
+#include "config.hpp"
 #include "log.hpp"
 
 struct Translation
@@ -64,6 +65,8 @@ private:
 
     language_t lang;
     trans_t trans;
+
+    Inifile * ini = nullptr;
 
     Translation()
     : lang(EN)
@@ -166,8 +169,8 @@ private:
         {"disable_osd", {"(hidden with insert or left click)",
                          "(cacher avec insert ou clic gauche)"}},
         {"disconnected_by_otherconnection",
-            {"Another user connected to the remote computer, so your connection was lost.",
-             "Un autre utilisateur s'est connecté à l'ordinateur distant, provoquant la perte de votre connexion."}},
+            {"Another user connected to the resource, so your connection was lost.",
+             "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."}},
         }}
     {
         std::sort(this->trans.begin(), this->trans.end());
@@ -188,7 +191,26 @@ public:
         return true;
     }
 
+    void set_ini(Inifile * ini) {
+        this->ini = ini;
+    }
+
     const char * translate(const char * key) const {
+        if (this->ini) {
+            if (this->lang == Translation::EN) {
+                if ((0 == strcmp("password", key)) &&
+                    !this->ini->get<cfg::translation::password_en>().empty()) {
+                    return this->ini->get<cfg::translation::password_en>().c_str();
+                }
+            }
+            else if (this->lang == Translation::FR) {
+                if ((0 == strcmp("password", key)) &&
+                    !this->ini->get<cfg::translation::password_fr>().empty()) {
+                    return this->ini->get<cfg::translation::password_fr>().c_str();
+                }
+            }
+        }
+
         auto it = std::lower_bound(trans.begin(), trans.end(), key);
         return it == trans.end() || *it != key ? nullptr : it->translation[this->lang];
     }
@@ -199,14 +221,13 @@ static inline const char * TR(const char * key, Translation::language_t lang)
 {
     const char * res = nullptr;
 
-    if (!res || !*res || 0 == strcmp(res, "ASK")) {
-        TRANSLATIONCONF.set_lang(lang);
-        res = TRANSLATIONCONF.translate(key);
-        if (!res) {
-            LOG(LOG_INFO, "Translation not found for '%s'", key);
-            res = key;
-        }
+    TRANSLATIONCONF.set_lang(lang);
+    res = TRANSLATIONCONF.translate(key);
+    if (!res) {
+        LOG(LOG_INFO, "Translation not found for '%s'", key);
+        res = key;
     }
+
     return res;
 }
 
@@ -222,5 +243,13 @@ struct Translator {
 private:
     Translation::language_t lang;
 };
+
+inline Translation::language_t language(Inifile const & ini) {
+    return static_cast<Translation::language_t>(ini.get<cfg::translation::language>());
+}
+
+inline Translation::language_t language(configs::Language lang) {
+    return static_cast<Translation::language_t>(lang);
+}
 
 #endif

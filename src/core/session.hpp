@@ -134,6 +134,8 @@ public:
             , perf_pid(getpid())
             , perf_file(nullptr) {
         try {
+            TRANSLATIONCONF.set_ini(&ini);
+
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.get<cfg::debug::front>());
             wait_obj front_event;
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
