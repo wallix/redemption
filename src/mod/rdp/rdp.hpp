@@ -375,6 +375,7 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string end_session_message;
 
     const unsigned certificate_change_action;
+    const char * certif_path;
 
     bool enable_polygonsc;
     bool enable_polygoncb;
@@ -531,6 +532,19 @@ public:
         , open_session_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
         , certificate_change_action(mod_rdp_params.certificate_change_action)
+        , certif_path([](const char * device_id){
+            size_t lg_certif_path = strlen(CERTIF_PATH);
+            size_t lg_dev_id = strlen(device_id);
+            char * buffer(new(std::nothrow) char[lg_certif_path + lg_dev_id + 2]);
+            if (!buffer){
+                throw Error(ERR_PATH_TOO_LONG);
+            }
+            memcpy(buffer, CERTIF_PATH, lg_certif_path);
+            buffer[lg_certif_path] =  '/';
+            memcpy(buffer+lg_certif_path+1, device_id, lg_dev_id+1);
+            return buffer;
+        }(mod_rdp_params.device_id))
+
         , enable_polygonsc(false)
         , enable_polygoncb(false)
         , enable_polyline(false)
@@ -833,6 +847,7 @@ public:
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
+        delete [] this->certif_path;
     }
 
 protected:
@@ -1562,7 +1577,7 @@ public:
                     }
                     switch (this->nego.state){
                     default:
-                        this->nego.server_event(this->certificate_change_action == 1);
+                        this->nego.server_event(this->certificate_change_action == 1, this->certif_path);
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         {

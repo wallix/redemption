@@ -107,8 +107,8 @@ BOOST_AUTO_TEST_CASE(TestNego)
     RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false);
     nego.test = true;
     nego.set_identity(user, domain, pass, host);
-    nego.server_event(true);
-    nego.server_event(true);
+    nego.server_event(true, "/tmp/certif");
+    nego.server_event(true, "/tmp/certif");
 }
 
 

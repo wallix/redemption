@@ -136,7 +136,7 @@ struct RdpNego
         }
     }
 
-    void server_event(bool ignore_certificate_change)
+    void server_event(bool ignore_certificate_change, const char * certif_path)
     {
         switch (this->state){
         case NEGO_STATE_INITIAL:
@@ -155,15 +155,15 @@ struct RdpNego
         default:
         case NEGO_STATE_NLA:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
-            this->recv_connection_confirm(ignore_certificate_change);
+            this->recv_connection_confirm(ignore_certificate_change, certif_path);
         break;
         case NEGO_STATE_TLS:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
-            this->recv_connection_confirm(ignore_certificate_change);
+            this->recv_connection_confirm(ignore_certificate_change, certif_path);
         break;
         case NEGO_STATE_RDP:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
-            this->recv_connection_confirm(ignore_certificate_change);
+            this->recv_connection_confirm(ignore_certificate_change, certif_path);
         break;
         }
     }
@@ -277,7 +277,7 @@ struct RdpNego
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-    void recv_connection_confirm(bool ignore_certificate_change)
+    void recv_connection_confirm(bool ignore_certificate_change, const char * certif_path)
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
@@ -303,7 +303,7 @@ struct RdpNego
                 //     this->restricted_admin_mode = true;
                 // }
                 LOG(LOG_INFO, "activating SSL");
-                this->trans.enable_client_tls(ignore_certificate_change, CERTIF_PATH);
+                this->trans.enable_client_tls(ignore_certificate_change, certif_path);
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(this->trans, this->user,
                                    this->domain, this->password,
@@ -355,7 +355,7 @@ struct RdpNego
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
-                this->trans.enable_client_tls(ignore_certificate_change, CERTIF_PATH);
+                this->trans.enable_client_tls(ignore_certificate_change, certif_path);
                 this->state = NEGO_STATE_FINAL;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE

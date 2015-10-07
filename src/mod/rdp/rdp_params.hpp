@@ -80,6 +80,7 @@ struct ModRDPParams {
     uint32_t      open_session_timeout;
 
     unsigned certificate_change_action;
+    const char * device_id;
 
     const char * extra_orders;
 
@@ -164,7 +165,7 @@ struct ModRDPParams {
         , open_session_timeout(0)
 
         , certificate_change_action(0)
-
+        , device_id("")
         , extra_orders("")
 
         , enable_persistent_disk_bitmap_cache(false)
@@ -190,6 +191,11 @@ struct ModRDPParams {
         , verbose(verbose)
         , cache_verbose(0)
     {}
+    
+    ~ModRDPParams()
+    {
+        TODO("Making it a unique_ptr would avoid need for delete");
+    }
 
     void log() const {
         LOG(LOG_INFO,

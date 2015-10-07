@@ -389,9 +389,6 @@ static inline int recursive_delete_directory(const char * directory_path) {
             entry_path_length = strlen(directory_path) + strlen(ent->d_name) + 2;
             entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
 
-//            entry_path = new uint8_t [entry_path_length];
-//            std::unique_ptr<uint8_t[]> entry_path_ptr;
-
             if (entry_path) {
                 struct stat statbuf;
 

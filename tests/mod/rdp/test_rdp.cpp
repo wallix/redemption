@@ -179,6 +179,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , 2
                                , 0
                                );
+    mod_rdp_params.device_id                       = "device_id";
     mod_rdp_params.enable_tls                      = false;
     mod_rdp_params.enable_nla                      = false;
     //mod_rdp_params.enable_krb                      = false;
