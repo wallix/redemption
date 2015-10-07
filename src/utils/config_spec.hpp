@@ -142,6 +142,7 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "host", str_authid{"ip_client"}, rw);
         W.member(type_<std::string>(), "target", str_authid{"ip_target"}, rw);
         W.member(type_<std::string>(), "target_device", r);
+        W.member(type_<std::string>(), "device_id", r);
         W.member(type_<std::string>(), "target_user", str_authid{"target_login"}, rw);
         W.member(type_<std::string>(), "target_application", r);
         W.member(type_<std::string>(), "target_application_account", r);
