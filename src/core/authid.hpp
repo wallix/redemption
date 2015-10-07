@@ -27,9 +27,9 @@
 
 static inline authid_t authid_from_string(const char * strauthid) {
     authid_t res = AUTHID_UNKNOWN;
-    for (int i = 0; i < MAX_AUTHID - 1 ; i++) {
+    for (unsigned i = 0; i < MAX_AUTHID; i++) {
         if (0 == strcmp(authstr[i], strauthid)) {
-            res = static_cast<authid_t>(i + 1);
+            res = static_cast<authid_t>(i);
             break;
         }
     }
@@ -37,9 +37,9 @@ static inline authid_t authid_from_string(const char * strauthid) {
 }
 
 static inline const char * string_from_authid(authid_t authid) {
-    if (authid == AUTHID_UNKNOWN || authid >= MAX_AUTHID)
+    if (authid >= authid_t::MAX_AUTHID)
         return "";
-    return authstr[static_cast<unsigned>(authid) - 1];
+    return authstr[static_cast<unsigned>(authid)];
 }
 
 #endif

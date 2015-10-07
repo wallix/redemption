@@ -65,10 +65,10 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     BStream stream(1024);
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
-    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_GLOBALS_AUTH_USER)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_CONTEXT_PASSWORD)); stream.out_string("\nASK\n");
 
-    stream.out_string(string_from_authid(AUTHID_SESSION_ID)); stream.out_string("\n!6455\n");
+    stream.out_string(string_from_authid(AUTHID_CONTEXT_SESSION_ID)); stream.out_string("\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
@@ -90,8 +90,8 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     // try exception
     stream.reset();
     stream.out_uint32_be(0xFFFFFFFF);
-    stream.out_string(string_from_authid(AUTHID_AUTH_USER)); stream.out_string("\nASK\n");
-    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_GLOBALS_AUTH_USER)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_CONTEXT_PASSWORD)); stream.out_string("\nASK\n");
 
     GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
     AclSerializer aclexcpt(ini, transexcpt, 0);
@@ -151,16 +151,16 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
     AclSerializer acl(ini, trans, 0);
 
     // SOME NORMAL CASE
-    test_initem_ask<cfg::context::password>(ini,acl, AUTHID_PASSWORD, "SecureLinux");
-    test_initem_ask<cfg::context::selector_current_page>(ini,acl, AUTHID_SELECTOR_CURRENT_PAGE, 0);
-    test_initem_receive<cfg::context::selector_current_page>(ini,acl, AUTHID_SELECTOR_CURRENT_PAGE, "\n2\n");
-    test_initem_receive<cfg::context::password>(ini,acl, AUTHID_PASSWORD, "\n!SecureLinux\n");
+    test_initem_ask<cfg::context::password>(ini,acl, AUTHID_CONTEXT_PASSWORD, "SecureLinux");
+    test_initem_ask<cfg::context::selector_current_page>(ini,acl, AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE, 0);
+    test_initem_receive<cfg::context::selector_current_page>(ini,acl, AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE, "\n2\n");
+    test_initem_receive<cfg::context::password>(ini,acl, AUTHID_CONTEXT_PASSWORD, "\n!SecureLinux\n");
 
     // CASE EXCEPTION
     // try exception
     // stream.init(strlen(STRAUTHID_AUTH_USER "didier"));
     try{
-        test_initem_receive<cfg::globals::auth_user>(ini, acl, AUTHID_AUTH_USER, "didier");
+        test_initem_receive<cfg::globals::auth_user>(ini, acl, AUTHID_GLOBALS_AUTH_USER, "didier");
         BOOST_CHECK(!"No exception throw");
     } catch (const Error & e) {
          BOOST_CHECK_EQUAL((uint32_t)ERR_ACL_UNEXPECTED_IN_ITEM_OUT, (uint32_t)e.id);
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
 
     ini.set_acl<cfg::context::password>("VerySecurePassword");
     BOOST_CHECK(!ini.is_asked<cfg::context::password>());
-    stream.out_string(string_from_authid(AUTHID_PASSWORD)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(AUTHID_CONTEXT_PASSWORD)); stream.out_string("\nASK\n");
     stream.mark_end();
     stream.rewind();
     acl.in_items(stream);

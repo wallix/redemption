@@ -20,7 +20,7 @@ namespace cfg {
     };
 
     struct client {
-        // AUTHID_KEYBOARD_LAYOUT
+        // AUTHID_CLIENT_KEYBOARD_LAYOUT
         struct keyboard_layout {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
@@ -95,7 +95,7 @@ namespace cfg {
         };
 
         // If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
-        // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS
+        // AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS
         struct disable_tsk_switch_shortcuts {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -185,7 +185,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_OPT_BITRATE
+        // AUTHID_CONTEXT_OPT_BITRATE
         struct opt_bitrate {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -194,7 +194,7 @@ namespace cfg {
             using type = unsigned;
             type value{40000};
         };
-        // AUTHID_OPT_FRAMERATE
+        // AUTHID_CONTEXT_OPT_FRAMERATE
         struct opt_framerate {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -203,7 +203,7 @@ namespace cfg {
             using type = unsigned;
             type value{5};
         };
-        // AUTHID_OPT_QSCALE
+        // AUTHID_CONTEXT_OPT_QSCALE
         struct opt_qscale {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -213,7 +213,7 @@ namespace cfg {
             type value{15};
         };
 
-        // AUTHID_OPT_BPP
+        // AUTHID_CONTEXT_OPT_BPP
         struct opt_bpp {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -222,7 +222,7 @@ namespace cfg {
             using type = unsigned;
             type value{24};
         };
-        // AUTHID_OPT_HEIGHT
+        // AUTHID_CONTEXT_OPT_HEIGHT
         struct opt_height {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -231,7 +231,7 @@ namespace cfg {
             using type = unsigned;
             type value{600};
         };
-        // AUTHID_OPT_WIDTH
+        // AUTHID_CONTEXT_OPT_WIDTH
         struct opt_width {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -244,7 +244,7 @@ namespace cfg {
         // auth_error_message is left as std::string type
         // because SocketTransport and ReplayMod take it as argument on
         // constructor and modify it as a std::string
-        // AUTHID_AUTH_ERROR_MESSAGE
+        // AUTHID_CONTEXT_AUTH_ERROR_MESSAGE
         struct auth_error_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -254,7 +254,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_SELECTOR
+        // AUTHID_CONTEXT_SELECTOR
         struct selector {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -263,7 +263,7 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // AUTHID_SELECTOR_CURRENT_PAGE
+        // AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE
         struct selector_current_page {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -272,7 +272,7 @@ namespace cfg {
             using type = unsigned;
             type value{1};
         };
-        // AUTHID_SELECTOR_DEVICE_FILTER
+        // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
         struct selector_device_filter {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -281,7 +281,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_SELECTOR_GROUP_FILTER
+        // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
         struct selector_group_filter {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -290,7 +290,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_SELECTOR_PROTO_FILTER
+        // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
         struct selector_proto_filter {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -299,7 +299,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_SELECTOR_LINES_PER_PAGE
+        // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
         struct selector_lines_per_page {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -308,7 +308,7 @@ namespace cfg {
             using type = unsigned;
             type value{0};
         };
-        // AUTHID_SELECTOR_NUMBER_OF_PAGES
+        // AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES
         struct selector_number_of_pages {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -318,7 +318,7 @@ namespace cfg {
             type value{1};
         };
 
-        // AUTHID_TARGET_PASSWORD
+        // AUTHID_CONTEXT_TARGET_PASSWORD
         struct target_password {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -327,7 +327,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_TARGET_HOST
+        // AUTHID_CONTEXT_TARGET_HOST
         struct target_host {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -336,7 +336,7 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-        // AUTHID_TARGET_SERVICE
+        // AUTHID_CONTEXT_TARGET_SERVICE
         struct target_service {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -345,7 +345,7 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-        // AUTHID_TARGET_PORT
+        // AUTHID_CONTEXT_TARGET_PORT
         struct target_port {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -354,7 +354,7 @@ namespace cfg {
             using type = unsigned;
             type value{3389};
         };
-        // AUTHID_TARGET_PROTOCOL
+        // AUTHID_CONTEXT_TARGET_PROTOCOL
         struct target_protocol {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -364,7 +364,7 @@ namespace cfg {
             type value{"RDP"};
         };
 
-        // AUTHID_PASSWORD
+        // AUTHID_CONTEXT_PASSWORD
         struct password {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -374,7 +374,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_REPORTING
+        // AUTHID_CONTEXT_REPORTING
         struct reporting {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -384,7 +384,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_AUTH_CHANNEL_ANSWER
+        // AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER
         struct auth_channel_answer {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -393,7 +393,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_AUTH_CHANNEL_RESULT
+        // AUTHID_CONTEXT_AUTH_CHANNEL_RESULT
         struct auth_channel_result {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -402,7 +402,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_AUTH_CHANNEL_TARGET
+        // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
         struct auth_channel_target {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -412,7 +412,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_MESSAGE
+        // AUTHID_CONTEXT_MESSAGE
         struct message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -423,7 +423,7 @@ namespace cfg {
         };
 
         TODO("why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button")
-        // AUTHID_ACCEPT_MESSAGE
+        // AUTHID_CONTEXT_ACCEPT_MESSAGE
         struct accept_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
@@ -432,7 +432,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_DISPLAY_MESSAGE
+        // AUTHID_CONTEXT_DISPLAY_MESSAGE
         struct display_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
@@ -442,7 +442,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_REJECTED
+        // AUTHID_CONTEXT_REJECTED
         struct rejected {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -452,7 +452,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_AUTHENTICATED
+        // AUTHID_CONTEXT_AUTHENTICATED
         struct authenticated {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -462,7 +462,7 @@ namespace cfg {
             type value{0};
         };
 
-        // AUTHID_KEEPALIVE
+        // AUTHID_CONTEXT_KEEPALIVE
         struct keepalive {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -472,7 +472,7 @@ namespace cfg {
             type value{0};
         };
 
-        // AUTHID_SESSION_ID
+        // AUTHID_CONTEXT_SESSION_ID
         struct session_id {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -482,7 +482,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_END_DATE_CNX
+        // AUTHID_CONTEXT_END_DATE_CNX
         struct end_date_cnx {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -491,7 +491,7 @@ namespace cfg {
             using type = unsigned;
             type value{0};
         };
-        // AUTHID_END_TIME
+        // AUTHID_CONTEXT_END_TIME
         struct end_time {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -501,7 +501,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_MODE_CONSOLE
+        // AUTHID_CONTEXT_MODE_CONSOLE
         struct mode_console {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -510,7 +510,7 @@ namespace cfg {
             using type = std::string;
             type value{"allow"};
         };
-        // AUTHID_TIMEZONE
+        // AUTHID_CONTEXT_TIMEZONE
         struct timezone {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -520,7 +520,7 @@ namespace cfg {
             type value{-3600};
         };
 
-        // AUTHID_REAL_TARGET_DEVICE
+        // AUTHID_CONTEXT_REAL_TARGET_DEVICE
         struct real_target_device {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -530,7 +530,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_AUTHENTICATION_CHALLENGE
+        // AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE
         struct authentication_challenge {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -540,7 +540,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_TICKET
+        // AUTHID_CONTEXT_TICKET
         struct ticket {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -549,7 +549,7 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-        // AUTHID_COMMENT
+        // AUTHID_CONTEXT_COMMENT
         struct comment {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -558,7 +558,7 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-        // AUTHID_DURATION
+        // AUTHID_CONTEXT_DURATION
         struct duration {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -567,7 +567,7 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-        // AUTHID_WAITINFORETURN
+        // AUTHID_CONTEXT_WAITINFORETURN
         struct waitinforeturn {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -576,7 +576,7 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-        // AUTHID_SHOWFORM
+        // AUTHID_CONTEXT_SHOWFORM
         struct showform {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -585,7 +585,7 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // AUTHID_FORMFLAG
+        // AUTHID_CONTEXT_FORMFLAG
         struct formflag {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
@@ -595,7 +595,7 @@ namespace cfg {
             type value{0};
         };
 
-        // AUTHID_MODULE
+        // AUTHID_CONTEXT_MODULE
         struct module {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -604,7 +604,7 @@ namespace cfg {
             using type = std::string;
             type value{"login"};
         };
-        // AUTHID_FORCEMODULE
+        // AUTHID_CONTEXT_FORCEMODULE
         struct forcemodule {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -613,7 +613,7 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // AUTHID_PROXY_OPT
+        // AUTHID_CONTEXT_PROXY_OPT
         struct proxy_opt {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -814,7 +814,7 @@ namespace cfg {
     };
 
     struct globals {
-        // AUTHID_CAPTURE_CHUNK
+        // AUTHID_GLOBALS_CAPTURE_CHUNK
         struct capture_chunk {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -824,7 +824,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_AUTH_USER
+        // AUTHID_GLOBALS_AUTH_USER
         struct auth_user {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -833,7 +833,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_HOST
+        // AUTHID_GLOBALS_HOST
         struct host {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -842,7 +842,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_TARGET
+        // AUTHID_GLOBALS_TARGET
         struct target {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -851,7 +851,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_TARGET_DEVICE
+        // AUTHID_GLOBALS_TARGET_DEVICE
         struct target_device {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -860,7 +860,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_DEVICE_ID
+        // AUTHID_GLOBALS_DEVICE_ID
         struct device_id {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -869,7 +869,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_TARGET_USER
+        // AUTHID_GLOBALS_TARGET_USER
         struct target_user {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -878,7 +878,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_TARGET_APPLICATION
+        // AUTHID_GLOBALS_TARGET_APPLICATION
         struct target_application {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -887,7 +887,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_TARGET_APPLICATION_ACCOUNT
+        // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
         struct target_application_account {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -896,7 +896,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_TARGET_APPLICATION_PASSWORD
+        // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
         struct target_application_password {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -998,7 +998,7 @@ namespace cfg {
             using type = ::configs::StaticNilString<8>;
             type value{::configs::null_fill()};
         };
-        // AUTHID_OPT_FILE_ENCRYPTION
+        // AUTHID_GLOBALS_ENABLE_FILE_ENCRYPTION
         struct enable_file_encryption {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
@@ -1046,7 +1046,7 @@ namespace cfg {
             type value{WRM_PATH};
         };
 
-        // AUTHID_ALTERNATE_SHELL
+        // AUTHID_GLOBALS_ALTERNATE_SHELL
         struct alternate_shell {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1055,7 +1055,7 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
-        // AUTHID_SHELL_WORKING_DIRECTORY
+        // AUTHID_GLOBALS_SHELL_WORKING_DIRECTORY
         struct shell_working_directory {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1065,7 +1065,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_OPT_MOVIE
+        // AUTHID_GLOBALS_MOVIE
         struct movie {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1074,7 +1074,7 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // AUTHID_OPT_MOVIE_PATH
+        // AUTHID_GLOBALS_MOVIE_PATH
         struct movie_path {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1115,7 +1115,7 @@ namespace cfg {
             type value{1};
         };
 
-        // AUTHID_OPT_WABAGENT
+        // AUTHID_GLOBALS_ENABLE_WAB_AGENT
         struct enable_wab_agent {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1124,7 +1124,7 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // AUTHID_ENABLE_WAB_AGENT_LOADING_MASK
+        // AUTHID_GLOBALS_ENABLE_WAB_AGENT_LOADING_MASK
         struct enable_wab_agent_loading_mask {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1133,7 +1133,7 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
-        // AUTHID_OPT_WABAGENT_LAUNCH_TIMEOUT
+        // AUTHID_GLOBALS_WAB_AGENT_LAUNCH_TIMEOUT
         struct wab_agent_launch_timeout {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1145,7 +1145,7 @@ namespace cfg {
         // Specifies the action to be performed is the launch of agent fails.
         //   0: disconnects session
         //   1: remains connected
-        // AUTHID_OPT_WABAGENT_ON_LAUNCH_FAILURE
+        // AUTHID_GLOBALS_WAB_AGENT_ON_LAUNCH_FAILURE
         struct wab_agent_on_launch_failure {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1154,7 +1154,7 @@ namespace cfg {
             using type = ::configs::Range<unsigned, 0, 1, 0>;
             type value{0};
         };
-        // AUTHID_OPT_WABAGENT_KEEPALIVE_TIMEOUT
+        // AUTHID_GLOBALS_WAB_AGENT_KEEPALIVE_TIMEOUT
         struct wab_agent_keepalive_timeout {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1341,7 +1341,7 @@ namespace cfg {
         };
 
         // Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
-        // AUTHID_RDP_BOGUS_SC_NET_SIZE
+        // AUTHID_MOD_RDP_BOGUS_SC_NET_SIZE
         struct bogus_sc_net_size {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1351,7 +1351,7 @@ namespace cfg {
             type value{1};
         };
 
-        // AUTHID_OPT_CLIENT_DEVICE_ANNOUNCE_TIMEOUT
+        // AUTHID_MOD_RDP_CLIENT_DEVICE_ANNOUNCE_TIMEOUT
         struct client_device_announce_timeout {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1361,7 +1361,7 @@ namespace cfg {
             type value{1000};
         };
 
-        // AUTHID_OPT_PROXY_MANAGED_DRIVES
+        // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
         struct proxy_managed_drives {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1385,7 +1385,7 @@ namespace cfg {
 
     struct mod_vnc {
         // Enable or disable the clipboard from client (client to server).
-        // AUTHID_VNC_CLIPBOARD_UP
+        // AUTHID_MOD_VNC_CLIPBOARD_UP
         struct clipboard_up {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1395,7 +1395,7 @@ namespace cfg {
             type value{};
         };
         // Enable or disable the clipboard from server (server to client).
-        // AUTHID_VNC_CLIPBOARD_DOWN
+        // AUTHID_MOD_VNC_CLIPBOARD_DOWN
         struct clipboard_down {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1429,7 +1429,7 @@ namespace cfg {
 
         // VNC server clipboard data encoding type.
         //   latin1 (default) or utf-8
-        // AUTHID_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
+        // AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
         struct server_clipboard_encoding_type {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1439,7 +1439,7 @@ namespace cfg {
             type value{static_cast< ::configs::ClipboardEncodingType>(1)};
         };
 
-        // AUTHID_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
+        // AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
         struct bogus_clipboard_infinite_loop {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1451,7 +1451,7 @@ namespace cfg {
     };
 
     struct translation {
-        // AUTHID_LANGUAGE
+        // AUTHID_TRANSLATION_LANGUAGE
         struct language {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1460,7 +1460,7 @@ namespace cfg {
             using type = ::configs::Language;
             type value{static_cast< ::configs::Language>(0)};
         };
-        // AUTHID_PASSWORD_EN
+        // AUTHID_TRANSLATION_PASSWORD_EN
         struct password_en {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1469,7 +1469,7 @@ namespace cfg {
             using type = std::string;
             type value{""};
         };
-        // AUTHID_PASSWORD_FR
+        // AUTHID_TRANSLATION_PASSWORD_FR
         struct password_fr {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1581,7 +1581,7 @@ namespace cfg {
         // Disable keyboard log:
         //   1: disable keyboard log in syslog
         //   2: disable keyboard log in recorded sessions
-        // AUTHID_DISABLE_KEYBOARD_LOG
+        // AUTHID_VIDEO_DISABLE_KEYBOARD_LOG
         struct disable_keyboard_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1594,7 +1594,7 @@ namespace cfg {
         // Disable clipboard log:
         //   1: disable clipboard log in syslog
         //   2: disable clipboard log in recorded sessions
-        // AUTHID_DISABLE_CLIPBOARD_LOG
+        // AUTHID_VIDEO_DISABLE_CLIPBOARD_LOG
         struct disable_clipboard_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1607,7 +1607,7 @@ namespace cfg {
         // Disable (redirected) file system log:
         //   1: disable (redirected) file system log in syslog
         //   2: disable (redirected) file system log in recorded sessions
-        // AUTHID_DISABLE_FILE_SYSTEM_LOG
+        // AUTHID_VIDEO_DISABLE_FILE_SYSTEM_LOG
         struct disable_file_system_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
@@ -1617,7 +1617,7 @@ namespace cfg {
             type value{};
         };
 
-        // AUTHID_RT_DISPLAY
+        // AUTHID_VIDEO_RT_DISPLAY
         struct rt_display {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
