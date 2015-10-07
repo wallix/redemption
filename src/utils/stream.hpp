@@ -25,23 +25,16 @@
 #ifndef _REDEMPTION_UTILS_STREAM_HPP_
 #define _REDEMPTION_UTILS_STREAM_HPP_
 
-#include "log.hpp"
-
-#include <stdio.h>
-#include <string.h> // for memcpy, memset
-
-#include "error.hpp"
+#include "log.hpp" // REDASSERT
 #include "bitfu.hpp"
 #include "utf.hpp"
-
 #include "parse.hpp"
-
-#include "exchange.hpp"
 #include "make_unique.hpp"
 
-#include <new>
 #include <memory>
 #include <initializer_list>
+
+#include <cstring> // for memcpy, memset
 
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
@@ -63,7 +56,7 @@ public:
     , end(array + len)
     , p(this->begin + offset)
     {
-        assert(len >= offset);
+        REDASSERT(len >= offset);
     }
 
     explicit InStream(char const * array, std::size_t len, std::size_t offset = 0)
@@ -388,7 +381,7 @@ public:
     , end(array + len)
     , p(this->begin + offset)
     {
-        assert(len >= offset);
+        REDASSERT(len >= offset);
     }
 
     explicit OutStream(char * array, std::size_t len, std::size_t offset = 0)
@@ -908,30 +901,6 @@ private:
 // class DynamicOutStream;
 // class DynamicInStream;
 
-namespace details_ {
-    inline void copy_to_head_impl(char * & buf) {}
-
-    template<class InStream, class... InStreams>
-    void copy_to_head_impl(char * & buf, InStream const & in_stream, InStreams const & ... in_streams) {
-        copy_to_head_impl(buf, in_streams...);
-        buf -= in_stream.get_offset();
-        memcpy(buf, in_stream.get_data(), in_stream.get_offset());
-    }
-}
-
-template<class... InStream>
-char * copy_to_head(char * buf, std::size_t headroom, InStream const & ... in_streams) {
-#ifndef NDEBUG
-    std::size_t len_streams = 0;
-    (void)std::initializer_list<int>{(len_streams += in_streams.get_offset(), 1)...};
-    REDASSERT(len_streams <= headroom);
-#endif
-    auto start = buf + headroom;
-    details_::copy_to_head_impl(start, in_streams...);
-    return start;
-}
-
-
 struct OutReservedStreamHelper
 {
     OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len)
@@ -962,7 +931,7 @@ struct OutReservedStreamHelper
     }
 
     Packet copy_to_head(OutStream const & stream) {
-        assert(stream.get_offset() <= this->reserved_leading_space);
+        REDASSERT(stream.get_offset() <= this->reserved_leading_space);
         this->buf -= stream.get_offset();
         this->reserved_leading_space -= stream.get_offset();
         memcpy(this->buf, stream.get_data(), stream.get_offset());
@@ -972,7 +941,7 @@ struct OutReservedStreamHelper
 
     Packet copy_to_head(OutStream const & stream1, OutStream const & stream2) {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
-        assert(total_stream_size <= this->reserved_leading_space);
+        REDASSERT(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
         this->buf -= total_stream_size;
 
@@ -986,7 +955,7 @@ struct OutReservedStreamHelper
 
     Packet copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
-        assert(total_stream_size <= this->reserved_leading_space);
+        REDASSERT(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
         this->buf -= total_stream_size;
 

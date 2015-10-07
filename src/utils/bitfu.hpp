@@ -24,8 +24,8 @@
 #ifndef _REDEMPTION_UTILS_BITFU_HPP_
 #define _REDEMPTION_UTILS_BITFU_HPP_
 
-#include <stdint.h>
-#include <assert.h>
+#include <cstdint>
+#include <cstddef>
 
 static inline uint16_t align4(int value) noexcept
 {
@@ -42,7 +42,7 @@ static inline uint32_t nbbytes_large(unsigned value) noexcept
     return ((value+7) / 8);
 }
 
-static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned value)
+static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned value) noexcept
 {
     for (uint8_t b = 0 ; b < nb ; ++b){
         ptr[b] = static_cast<uint8_t>(value >> (8 * b));
@@ -50,7 +50,7 @@ static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned 
 }
 
 // Output a uint32 into a buffer (little-endian)
-static inline void buf_out_uint32(uint8_t* buffer, int value)
+static inline void buf_out_uint32(uint8_t* buffer, int value) noexcept
 {
   buffer[0] = value & 0xff;
   buffer[1] = (value >> 8) & 0xff;
@@ -59,7 +59,7 @@ static inline void buf_out_uint32(uint8_t* buffer, int value)
 }
 
 // this name because the fonction below is only defined for 1 to 4/8 bytes (works on underlying unsigned)
-static inline unsigned in_uint32_from_nb_bytes_le(const uint8_t nb, const uint8_t * ptr)
+static inline unsigned in_uint32_from_nb_bytes_le(const uint8_t nb, const uint8_t * ptr) noexcept
 {
     unsigned res = 0;
     for (int b = 0 ; b < nb ; ++b){
@@ -70,7 +70,7 @@ static inline unsigned in_uint32_from_nb_bytes_le(const uint8_t nb, const uint8_
 
 
 // this name because the fonction below is only defined for 1 to 4/8 bytes (works on underlying unsigned)
-static inline unsigned in_uint32_from_nb_bytes_be(const uint8_t nb, const uint8_t * ptr)
+static inline unsigned in_uint32_from_nb_bytes_be(const uint8_t nb, const uint8_t * ptr) noexcept
 {
     unsigned res = 0;
     for (int b = 0 ; b < nb ; ++b){
@@ -81,14 +81,15 @@ static inline unsigned in_uint32_from_nb_bytes_be(const uint8_t nb, const uint8_
 
 // The  rmemcpy() function copies n bytes from memory area src to memory area dest inverting end and beginning.
 // The memory areas must not overlap.
-static inline void rmemcpy(uint8_t *dest, const uint8_t *src, size_t n)
+static inline void rmemcpy(uint8_t *dest, const uint8_t *src, size_t n) noexcept
 {
     for (size_t i = 0; i < n ; i++){
         dest[n-1-i] = src[i];
     }
 }
 
-static inline void reverseit(uint8_t *buffer, size_t n){
+static inline void reverseit(uint8_t *buffer, size_t n) noexcept
+{
     for (size_t i = 0 ; i < n / 2; i++){
         uint8_t tmp = buffer[n-1-i];
         buffer[n-1-i] = buffer[i];
