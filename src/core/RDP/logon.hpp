@@ -28,6 +28,7 @@
 
 #include "cast.hpp"
 #include "log.hpp"
+#include "error.hpp"
 #include "stream.hpp"
 #include "get_printable_password.hpp"
 

@@ -25,6 +25,7 @@
 
 #include "common.hpp"
 #include "stream.hpp"
+#include "error.hpp"
 
 // 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
 // ===========================================================

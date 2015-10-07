@@ -26,6 +26,7 @@
 
 #include "common.hpp"
 #include "stream.hpp"
+#include "error.hpp"
 
 // 2.2.7.1.4 Bitmap Cache Capability Set
 

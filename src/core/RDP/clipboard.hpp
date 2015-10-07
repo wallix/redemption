@@ -24,6 +24,7 @@
 #include <cinttypes>
 
 #include "stream.hpp"
+#include "error.hpp"
 #include "cast.hpp"
 
 namespace RDPECLIP {

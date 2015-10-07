@@ -23,10 +23,9 @@
 #define _REDEMPTION_CORE_RDP_SERVERREDIRECTION_HPP_
 
 #include "log.hpp"
+#include "error.hpp"
 #include "stream.hpp"
 #include "redirection_info.hpp"
-#include <utility>
-
 
 
 // [MS-RDPBCGR] - 2.2.13.1 Server Redirection Packet

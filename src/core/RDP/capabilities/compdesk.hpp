@@ -26,6 +26,7 @@
 
 #include "common.hpp"
 #include "stream.hpp"
+#include "error.hpp"
 
 // 2.2.7.2.8 Desktop Composition Capability Set (TS_COMPDESK_CAPABILITYSET)
 // ========================================================================

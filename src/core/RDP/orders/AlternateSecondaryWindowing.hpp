@@ -23,6 +23,7 @@
 
 #include "cast.hpp"
 #include "log.hpp"
+#include "error.hpp"
 #include "noncopyable.hpp"
 #include "stream.hpp"
 

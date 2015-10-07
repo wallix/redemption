@@ -27,9 +27,10 @@
 #ifndef _REDEMPTION_UTILS_SSL_CALLS_HPP_
 #define _REDEMPTION_UTILS_SSL_CALLS_HPP_
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
 
 #include "error.hpp"
 #include "openssl_crypto.hpp"
