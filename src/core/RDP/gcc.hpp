@@ -2657,7 +2657,7 @@ namespace GCC
                             X509_free(this->x509.cert[i].cert);
                         }
                         auto p = stream.get_current();
-                        this->x509.cert[i].cert = d2i_X509(nullptr, const_cast<const uint8_t **>(&p), this->x509.cert[i].len);
+                        this->x509.cert[i].cert = d2i_X509(nullptr, &p, this->x509.cert[i].len);
                         stream.in_skip_bytes(p - stream.get_current());
                     }
                     stream.in_skip_bytes(16); /* Padding */

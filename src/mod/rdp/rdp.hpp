@@ -137,8 +137,7 @@ protected:
             }
 
             this->front.send_to_channel(this->channel,
-                const_cast<uint8_t*>(chunk_data), total_length,
-                chunk_data_length, flags);
+                chunk_data, total_length, chunk_data_length, flags);
         }
     };
 

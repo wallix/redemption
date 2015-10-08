@@ -37,7 +37,7 @@ const SecPkgInfo KERBEROS_SecPkgInfo = {
     Kerberos_Comment        // Comment
 };
 static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
-	{ 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
+    { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
 
 struct KERBEROSContext {
     gss_ctx_id_t gss_ctx;

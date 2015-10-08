@@ -48,7 +48,7 @@ public:
         try {
             uint8_t array[AUTOSIZE];
 
-            static_assert(AUTOSIZE >= TRANSPARENT_CHUNK_HEADER_SIZE, "");
+            static_assert(sizeof(array) >= static_cast<std::size_t>(TRANSPARENT_CHUNK_HEADER_SIZE), "");
             InStream header(array, TRANSPARENT_CHUNK_HEADER_SIZE);
 
             uint8_t * end = array;
@@ -96,7 +96,7 @@ public:
                             this->consumer->get_channel_list().get_by_name(mod_channel_name);
                         if (front_channel) {
                             this->consumer->send_to_channel(*front_channel,
-                                const_cast<uint8_t *>(payload.in_uint8p(length)), length, chunk_size, flags);
+                                payload.in_uint8p(length), length, chunk_size, flags);
                         }
                     }
                     break;
