@@ -51,9 +51,9 @@ BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
         0xe0, 0x4e, 0x7d, 0xdc, 0x12, 0x1d, 0x41, 0xf1, 0xd8, 0x17, 0x86, 0x0e, 0x79, 0x9b, 0x4f, 0x44,
         0xb2, 0x82, 0xf0, 0x93, 0x17, 0xf8, 0x59, 0xc9, 0x7b, 0xba, 0x2a, 0x22, 0x59, 0x45, 0xa7, 0x3a
         };
-    size_t length = sizeof(sec_pkt);
+    size_t length = sizeof(sec_pkt) - 1;
     StaticOutStream<1024> stream;
-    SEC::SecExchangePacket_Send sec(stream, client_encrypted_key, 64);
+    SEC::SecExchangePacket_Send sec(stream, client_encrypted_key, sizeof(client_encrypted_key));
 
     BOOST_CHECK_EQUAL(0, memcmp(sec_pkt, stream.get_data(), length));
 }
