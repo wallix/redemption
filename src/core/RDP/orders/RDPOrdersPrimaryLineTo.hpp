@@ -85,7 +85,7 @@ class RDPLineTo {
              ;
     }
 
-    void emit(Stream & stream,
+    void emit(OutStream & stream,
             RDPOrderCommon & common,
             const RDPOrderCommon & oldcommon,
             const RDPLineTo & oldcmd) const
@@ -135,7 +135,7 @@ class RDPLineTo {
         header.emit_pen(stream, 0x80, this->pen, oldcmd.pen);
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;
 

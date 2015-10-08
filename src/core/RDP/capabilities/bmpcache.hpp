@@ -26,6 +26,7 @@
 
 #include "common.hpp"
 #include "stream.hpp"
+#include "error.hpp"
 
 // 2.2.7.1.4 Bitmap Cache Capability Set
 
@@ -104,7 +105,7 @@ struct BmpCacheCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream)override {
+    void emit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->pad1);
@@ -121,7 +122,7 @@ struct BmpCacheCaps : public Capability {
         stream.out_uint16_le(this->cache2MaximumCellSize);
     }
 
-    void recv(Stream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len) override {
         this->len = len;
 
         /* pad1(4) + pad2(4) + pad3(4) + pad4(4) + pad5(4) + pad6(4) + cache0Entries(2) + cache0MaximumCellSize(2) +

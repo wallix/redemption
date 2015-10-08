@@ -37,42 +37,49 @@
 
 static inline void send_data_indication_ex( Transport & trans
                                           , int encryptionLevel, CryptContext & encrypt
-                                          , uint16_t initiator, HStream & stream)
+                                          , uint16_t initiator
+                                          , StaticOutReservedStreamHelper<1024, 65536-1024> & stream)
 {
-    BStream security_header(256);
-    SEC::Sec_Send sec(security_header, stream, 0, encrypt, encryptionLevel);
-    stream.copy_to_head(security_header.get_data(), security_header.size());
+    StaticOutStream<256> security_header;
+    SEC::Sec_Send sec(security_header, stream.get_packet().data(), stream.get_packet().size(), 0, encrypt, encryptionLevel);
+    stream.copy_to_head(security_header);
 
-    OutPerBStream mcs_header(256);
-    MCS::SendDataIndication_Send mcs( mcs_header
+    StaticOutStream<256> mcs_header;
+    MCS::SendDataIndication_Send mcs( static_cast<OutPerStream &>(static_cast<OutStream &>(mcs_header))
                                     , initiator
                                     , GCC::MCS_GLOBAL_CHANNEL
                                     , 1 // dataPriority
                                     , 3 // segmentation
-                                    , stream.size()
+                                    , stream.get_packet().size()
                                     , MCS::PER_ENCODING);
 
-    BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
+    StaticOutStream<256> x224_header;
+    X224::DT_TPDU_Send(x224_header, stream.get_packet().size() + mcs_header.get_offset());
 
-    trans.send(x224_header, mcs_header, stream);
+    auto packet = stream.copy_to_head(x224_header, mcs_header);
+    trans.send(packet.data(), packet.size());
 }
 
-template<class DataWriter>
-void send_data_indication_ex( Transport & trans, DataWriter data_writer
+template<class... DataWriter>
+void send_data_indication_ex( Transport & trans
+                            , uint16_t channelId
                             , int encryptionLevel, CryptContext & encrypt
-                            , uint16_t initiator)
+                            , uint16_t initiator, DataWriter... data_writer)
 {
     write_packets(
         trans,
+#ifdef IN_IDE_PARSER
         data_writer,
+#else
+        data_writer...,
+#endif
         [&](StreamSize<256>, OutStream & security_header, uint8_t * data, std::size_t data_sz) {
             SEC::Sec_Send sec(security_header, data, data_sz, 0, encrypt, encryptionLevel);
         },
         [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
             MCS::SendDataIndication_Send mcs( static_cast<OutPerStream &>(mcs_header)
                                             , initiator
-                                            , GCC::MCS_GLOBAL_CHANNEL
+                                            , channelId
                                             , 1 // dataPriority
                                             , 3 // segmentation
                                             , packet_size
@@ -86,49 +93,50 @@ void send_data_indication_ex( Transport & trans, DataWriter data_writer
 
 void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_support
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
-                       , CryptContext & encrypt, uint16_t initiator, HStream & data
+                       , CryptContext & encrypt, uint16_t initiator
+                       , StaticOutReservedStreamHelper<1024, 65536-1024> & data
                        , uint32_t log_condition, uint32_t verbose) {
     REDASSERT(!compression_support || mppc_enc);
 
-    HStream data_compressed(1024, 65565);
-    std::reference_wrapper<HStream> data_(data);
+    StaticOutReservedStreamHelper<1024, 65536-1024> data_compressed;
+    std::reference_wrapper<StaticOutReservedStreamHelper<1024, 65536-1024> > data_(data);
 
     uint8_t compressionFlags = 0;
 
     if (compression_support) {
         uint16_t compressed_data_size = 0;
 
-        mppc_enc->compress( data.get_data(), data.size()
+        mppc_enc->compress( data.get_packet().data()
+                          , data.get_packet().size()
                           , compressionFlags, compressed_data_size
                           , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
                           );
 
         if (compressionFlags & PACKET_COMPRESSED) {
-            mppc_enc->get_compressed_data(data_compressed);
-            data_compressed.mark_end();
+            mppc_enc->get_compressed_data(data_compressed.get_data_stream());
             data_ = std::ref(data_compressed);
         }
     }
 
 
-    BStream share_data_header(256);
+    StaticOutStream<256> share_data_header;
     ShareData share_data(share_data_header);
     share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
-                         , data.size() + 18 /* TS_SHAREDATAHEADER(18) */
+                         , data.get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */
                          , compressionFlags
-                         , (compressionFlags ? data_.get().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
+                         , (compressionFlags ? data_.get().get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
                          );
     share_data.emit_end();
-    data_.get().copy_to_head(share_data_header.get_data(), share_data_header.size());
+    data_.get().copy_to_head(share_data_header);
 
-    BStream share_ctrl_header(256);
+    StaticOutStream<256> share_ctrl_header;
     ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
-                     , data_.get().size());
-    data_.get().copy_to_head(share_ctrl_header.get_data(), share_ctrl_header.size());
+                     , data_.get().get_packet().size());
+    data_.get().copy_to_head(share_ctrl_header);
 
     if (verbose & log_condition) {
         LOG(LOG_INFO, "Sec clear payload to send:");
-        hexdump_d(data_.get().get_data(), data_.get().size());
+        hexdump_d(data_.get().get_packet().data(), data_.get().get_packet().size());
     }
 
     ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, data_.get());
@@ -147,7 +155,9 @@ enum ServerUpdateType {
 void send_server_update( Transport & trans, bool fastpath_support, bool compression_support
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type
-                       , uint16_t data_extra, HStream & data_common, uint32_t verbose) {
+                       , uint16_t data_extra
+                       , StaticOutReservedStreamHelper<1024, 65536-1024> & data_common
+                       , uint32_t verbose) {
     if (verbose & 4) {
         LOG( LOG_INFO
            , "send_server_update: fastpath_support=%s compression_support=%s shareId=%u "
@@ -160,9 +170,6 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
     REDASSERT(!compression_support || mppc_enc);
 
     if (fastpath_support) {
-        HStream data_common_compressed(1024, 65565);
-        std::reference_wrapper<HStream> data_common_(data_common);
-
         uint8_t compressionFlags = 0;
         uint8_t updateCode       = 0;
 
@@ -174,7 +181,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     StaticOutStream<2> data;
                     data.out_uint16_le(data_extra);
 
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
+                    data_common.copy_to_head(data);
                 }
                 break;
 
@@ -209,10 +216,14 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
         uint8_t compression = 0;
 
+        StaticOutReservedStreamHelper<1024, 65536-1024> data_common_compressed;
+        std::reference_wrapper<StaticOutReservedStreamHelper<1024, 65536-1024> > data_common_(data_common);
+
         if (compression_support) {
             uint16_t compressed_data_size;
 
-            mppc_enc->compress( data_common.get_data(), data_common.size()
+            mppc_enc->compress( data_common.get_packet().data()
+                              , data_common.get_packet().size()
                               , compressionFlags, compressed_data_size
                               , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
                               );
@@ -220,8 +231,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             if (compressionFlags & PACKET_COMPRESSED) {
                 compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
 
-                mppc_enc->get_compressed_data(data_common_compressed);
-                data_common_compressed.mark_end();
+                mppc_enc->get_compressed_data(data_common_compressed.get_data_stream());
                 data_common_ = std::ref(data_common_compressed);
             }
         }
@@ -229,25 +239,27 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
         StaticOutStream<8> update_header;
         // Fast-Path Update (TS_FP_UPDATE)
         FastPath::Update_Send Upd( update_header
-                                 , data_common_.get().size()
+                                 , data_common_.get().get_packet().size()
                                  , updateCode
                                  , FastPath::FASTPATH_FRAGMENT_SINGLE
                                  , compression
                                  , compressionFlags
                                  );
-        data_common_.get().copy_to_head(update_header.get_data(), update_header.get_offset());
+        data_common_.get().copy_to_head(update_header);
 
         StaticOutStream<256> server_update_header;
          // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
         FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
-                                                , data_common_.get().get_data()
-                                                , data_common_.get().size()
+                                                , data_common_.get().get_packet().data()
+                                                , data_common_.get().get_packet().size()
                                                 , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                                                 , encrypt
                                                 );
-        data_common_.get().copy_to_head(server_update_header.get_data(), server_update_header.get_offset());
+        data_common_.get().copy_to_head(server_update_header);
 
-        trans.send(data_common_.get().get_data(), data_common_.get().size());
+        auto packet = data_common_.get().get_packet();
+
+        trans.send(packet.data(), packet.size());
     }
     else {
         uint8_t pduType2 = 0;
@@ -264,7 +276,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     data.out_uint16_le(data_extra);
                     data.out_clear_bytes(2);
 
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
+                    data_common.copy_to_head(data);
                 }
                 break;
 
@@ -282,7 +294,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     data.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
                     data.out_clear_bytes(2);
 
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
+                    data_common.copy_to_head(data);
                 }
                 break;
 
@@ -316,7 +328,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     data.out_uint16_le(updateType);
                     data.out_clear_bytes(2);
 
-                    data_common.copy_to_head(data.get_data(), data.get_offset());
+                    data_common.copy_to_head(data);
                 }
                 break;
 
@@ -403,8 +415,8 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 //   field of the Drawing Order identifies the type of drawing order.
 
 class GraphicsUpdatePDU : public RDPSerializer {
-    HStream buffer_stream_orders;
-    HStream buffer_stream_bitmaps;
+    StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
+    StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
 
     uint16_t     & userid;
     int          & shareid;
@@ -438,11 +450,11 @@ public:
                      , bool compression
                      , uint32_t verbose
                      )
-        : RDPSerializer( trans, this->buffer_stream_orders
-                       , this->buffer_stream_bitmaps, bpp, bmp_cache, gly_cache, pointer_cache
+        : RDPSerializer( trans
+                       , this->buffer_stream_orders.get_data_stream()
+                       , this->buffer_stream_bitmaps.get_data_stream()
+                       , bpp, bmp_cache, gly_cache, pointer_cache
                        , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, ini, verbose)
-        , buffer_stream_orders(1024, 65536)
-        , buffer_stream_bitmaps(1024, 65536)
         , userid(userid)
         , shareid(shareid)
         , encryptionLevel(encryptionLevel)
@@ -492,7 +504,6 @@ protected:
                 LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d"
                    , this->order_count);
             }
-            this->stream_orders.mark_end();
 
             ::send_server_update( *this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
@@ -500,7 +511,7 @@ protected:
                                 , this->order_count, this->buffer_stream_orders, this->verbose);
 
             this->order_count = 0;
-            this->stream_orders.reset();
+            this->buffer_stream_orders.rewind();
             this->init_orders();
         }
     }
@@ -513,7 +524,6 @@ protected:
                    , this->bitmap_count, this->offset_bitmap_count);
             }
             this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
-            this->stream_bitmaps.mark_end();
 
             ::send_server_update( *this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt
@@ -521,7 +531,7 @@ protected:
                                 , this->buffer_stream_bitmaps, this->verbose);
 
             this->bitmap_count = 0;
-            this->stream_bitmaps.reset();
+            this->buffer_stream_bitmaps.rewind();
             this->init_bitmaps();
         }
     }
@@ -635,7 +645,7 @@ protected:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void GenerateColorPointerUpdateData(Stream & stream, int cache_idx, const Pointer & cursor)
+    void GenerateColorPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
     {
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
@@ -699,17 +709,16 @@ protected:
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
-        stream.mark_end();
     }
 
-    void send_pointer(int cache_idx, const Pointer & cursor) throw(Error) override {
+    void send_pointer(int cache_idx, const Pointer & cursor) override {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
                 cache_idx, cursor.x, cursor.y);
         }
 
-        HStream stream(1024, 65536);
-        GenerateColorPointerUpdateData(stream, cache_idx, cursor);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
 
         ::send_server_update( *this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
@@ -757,9 +766,8 @@ protected:
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
         }
 
-        HStream stream(1024, 65536);
-        stream.out_uint16_le(cache_idx);
-        stream.mark_end();
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        stream.get_data_stream().out_uint16_le(cache_idx);
 
         ::send_server_update( *this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
@@ -777,10 +785,9 @@ public:
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }
 
-        HStream stream(1024, 4096);
-        stream.out_uint16_le(xPos);
-        stream.out_uint16_le(yPos);
-        stream.mark_end();
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        stream.get_data_stream().out_uint16_le(xPos);
+        stream.get_data_stream().out_uint16_le(yPos);
 
         ::send_server_update( *this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel

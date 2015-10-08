@@ -38,10 +38,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
     BOOST_CHECK_EQUAL(frameacknowledge_caps.len, static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE));
     BOOST_CHECK_EQUAL(frameacknowledge_caps.maxUnacknowledgedFrameCount, static_cast<uint32_t>(65536));
 
-    BStream stream(1024);
-    frameacknowledge_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    frameacknowledge_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     FrameAcknowledgeCaps frameacknowledge_caps2;
 

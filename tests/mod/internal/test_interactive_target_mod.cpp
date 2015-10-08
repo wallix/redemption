@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
 
     InteractiveTargetMod d(ini, front, 800, 600);
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
 
     uint16_t keyboardFlags = 0 ;

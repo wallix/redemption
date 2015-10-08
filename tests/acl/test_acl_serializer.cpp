@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 {
     Inifile ini;
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
     stream.out_string(string_from_authid(AUTHID_GLOBALS_AUTH_USER)); stream.out_string("\nASK\n");
@@ -88,12 +88,12 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     // CASE EXCEPTION
     // try exception
-    stream.reset();
+    stream.rewind();
     stream.out_uint32_be(0xFFFFFFFF);
     stream.out_string(string_from_authid(AUTHID_GLOBALS_AUTH_USER)); stream.out_string("\nASK\n");
     stream.out_string(string_from_authid(AUTHID_CONTEXT_PASSWORD)); stream.out_string("\nASK\n");
 
-    GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
+    GeneratorTransport transexcpt(reinterpret_cast<char *>(stream.get_current()) ,stream.get_offset());
     AclSerializer aclexcpt(ini, transexcpt, 0);
     try {
         aclexcpt.incoming();
@@ -103,22 +103,22 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
 }
 
-inline void execute_test_initem(Stream & stream, AclSerializer & acl, const authid_t authid, const char * value)
+inline void execute_test_initem(OutStream & stream, AclSerializer & acl, const authid_t authid, const char * value)
 {
     // create stream with key , ask
     stream.out_string(string_from_authid(authid));
     stream.out_string(value);
-    stream.mark_end();
-    stream.rewind();
+
+    AclSerializer::ArrayItemsView view{stream.get_data(), stream.get_data() + stream.get_offset()};
 
     // execute in_item
-    acl.in_item(stream);
+    acl.in_item(view);
 }
 
 template<class Cfg, class U>
 inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t authid, U const & defaut)
 {
-    BStream stream(2048);
+    StaticOutStream<2048> stream;
 
     // Set defaut value to strauthid key
     ini.set_acl<Cfg>(defaut);
@@ -132,7 +132,7 @@ inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t a
 template<class Cfg>
 inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid_t authid, char const * value)
 {
-    BStream stream(2048);
+    StaticOutStream<2048> stream;
     // set strauthid key to be asked
     ini.ask<Cfg>();
     BOOST_CHECK(ini.is_asked<Cfg>());
@@ -146,7 +146,7 @@ inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid
 BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
 {
     Inifile ini;
-    BStream stream(1);
+    StaticOutStream<1> stream;
     LogTransport trans;
     AclSerializer acl(ini, trans, 0);
 
@@ -170,15 +170,15 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
 BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
 {
     Inifile ini;
-    BStream stream(1024);
+    StaticOutStream<1024> stream;
     LogTransport trans;
     AclSerializer acl(ini, trans, 0);
 
     ini.set_acl<cfg::context::password>("VerySecurePassword");
     BOOST_CHECK(!ini.is_asked<cfg::context::password>());
-    stream.out_string(string_from_authid(AUTHID_CONTEXT_PASSWORD)); stream.out_string("\nASK\n");
-    stream.mark_end();
-    stream.rewind();
-    acl.in_items(stream);
+    auto s = string_from_authid(AUTHID_CONTEXT_PASSWORD);
+    stream.out_copy_bytes(s, strlen(s)); stream.out_copy_bytes("\nASK\n", 5);
+    AclSerializer::ArrayItemsView view{stream.get_data(), stream.get_data() + stream.get_offset()};
+    acl.in_items(view);
     BOOST_CHECK(ini.is_asked<cfg::context::password>());
 }

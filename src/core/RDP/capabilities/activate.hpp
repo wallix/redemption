@@ -72,7 +72,7 @@ struct ActivationCaps : public Capability {
     {
     }
     ~ActivationCaps() override {}
-    void emit(Stream & stream)override {
+    void emit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->helpKeyFlag);
@@ -81,7 +81,7 @@ struct ActivationCaps : public Capability {
         stream.out_uint16_le(this->windowManagerKeyFlag);
     }
 
-    void recv(Stream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)override {
         this->len = len;
         this->helpKeyFlag = stream.in_uint16_le();
         this->helpKeyIndexFlag = stream.in_uint16_le();

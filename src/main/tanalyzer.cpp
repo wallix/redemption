@@ -161,13 +161,13 @@ public:
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->channel_list;
     }
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , size_t length, size_t chunk_size, int flags) override {
         LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%u chunk_size=%u flags=0x%X",
             channel.name, channel.chanid, length, chunk_size, flags);
     }
 
-    void send_global_palette() throw(Error) override { REDASSERT(false); }
+    void send_global_palette() override { REDASSERT(false); }
     void set_mod_palette(const BGRPalette & palette) override { REDASSERT(false); }
 
     int server_resize(int width, int height, int bpp) override {
@@ -175,11 +175,10 @@ public:
         return 1;
     };
 
-    void send_data_indication_ex(uint16_t channelId, HStream & stream) override {
-        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, stream.size());
+    void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
+        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, data_size);
 
-        stream.p = stream.get_data();
-
+        InStream stream(data, data_size);
         ShareControl_Recv sctrl(stream);
 
         switch (sctrl.pduType) {
@@ -321,7 +320,7 @@ public:
         }
     }
 
-    void process_orders(Stream & stream, bool fast_path) {
+    void process_orders(InStream & stream, bool fast_path) {
         RDP::OrdersUpdate_Recv odrs_upd_r(stream, fast_path);
 
         int processed = 0;
@@ -330,7 +329,7 @@ public:
 
             if ((drawodr_rf.control_flags & (RDP::STANDARD | RDP::SECONDARY)) == (RDP::STANDARD | RDP::SECONDARY)) {
                 RDPSecondaryOrderHeader sec_odr_h(stream);
-                uint8_t * next_order = stream.p + sec_odr_h.order_data_length();
+                uint8_t const * next_order = stream.get_current() + sec_odr_h.order_data_length();
                 switch (sec_odr_h.type) {
                     case RDP::TS_CACHE_BITMAP_COMPRESSED:
                         LOG(LOG_INFO, "process_orders: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", sec_odr_h.type);
@@ -362,7 +361,7 @@ public:
                         LOG(LOG_INFO, "process_orders: ***** Received unexpected Secondary Drawing Order, type=0x%X *****", sec_odr_h.type);
                     break;
                 }
-                stream.p = next_order;
+                stream.in_skip_bytes(next_order - stream.get_current());
             }
             else if ((drawodr_rf.control_flags & (RDP::STANDARD | RDP::SECONDARY)) == RDP::STANDARD) {
                 RDPPrimaryOrderHeader pri_ord_h = this->common.receive(stream, drawodr_rf.control_flags);

@@ -126,27 +126,29 @@ enum NTLM_AV_ID {
 struct NtlmAvPair {
     uint16_t AvId;
     uint16_t AvLen;
-    BStream Value;
+    struct {
+        uint8_t buf[65535];
+        std::size_t sz;
+    } Value;
 
-    NtlmAvPair(NTLM_AV_ID id, const uint8_t * value, size_t length)
+    NtlmAvPair(NTLM_AV_ID id, const uint8_t * value, std::size_t length)
         : AvId(id)
         , AvLen(length)
-        , Value(length)
     {
+        this->Value.sz = length;
         if (value) {
-            this->Value.out_copy_bytes(value, length);
-            this->Value.mark_end();
-            this->Value.rewind();
+            memcpy(this->Value.buf, value, length);
+            this->Value.sz = length;
         }
     }
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         stream.out_uint16_le(this->AvId);
         stream.out_uint16_le(this->AvLen);
-        stream.out_copy_bytes(this->Value.get_data(), this->Value.size());
+        stream.out_copy_bytes(this->Value.buf, this->Value.sz);
     }
 
-    // void recv(Stream & stream) {
+    // void recv(OutStream & stream) {
     //     this->AvId = stream.in_uint16_le();
     //     this->AvLen = stream.in_uint16_le();
     //     this->Value.init(this->AvLen);
@@ -158,7 +160,7 @@ struct NtlmAvPair {
 
     void print() {
         LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", this->AvId, this->AvLen);
-        this->Value.print();
+        hexdump8_c(this->Value.buf, this->Value.sz);
     }
 };
 
@@ -218,7 +220,7 @@ struct NtlmAvPairList {
        return res;
     }
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         for (int i = 1; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
                 this->list[i]->emit(stream);
@@ -226,10 +228,9 @@ struct NtlmAvPairList {
         }
         // ASSUME this->list[MsvAvEOL] != nullptr
         this->list[MsvAvEOL]->emit(stream);
-        stream.mark_end();
     }
 
-    void recv(Stream & stream) {
+    void recv(InStream & stream) {
         for (int i = 0; i < AV_ID_MAX; i++) {
             NTLM_AV_ID id = static_cast<NTLM_AV_ID>(stream.in_uint16_le());
             uint16_t length = stream.in_uint16_le();
@@ -238,7 +239,7 @@ struct NtlmAvPairList {
                 stream.in_skip_bytes(length);
                 break;
             }
-            this->add(id, stream.p, length);
+            this->add(id, stream.get_current(), length);
             stream.in_skip_bytes(length);
         }
     }

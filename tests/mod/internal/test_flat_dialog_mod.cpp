@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
 
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
 
     uint16_t keyboardFlags = 0 ;

@@ -473,10 +473,7 @@ class RDPBmpCache {
         : id(0), idx(0), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
     }
 
-    ~RDPBmpCache() {
-    }
-
-    void emit(uint8_t session_color_depth, Stream & stream, const int bitmap_cache_version,
+    void emit(uint8_t session_color_depth, OutStream & stream, const int bitmap_cache_version,
         const int use_bitmap_comp, const int use_compact_packets) const
     {
         using namespace RDP;
@@ -512,7 +509,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed(uint8_t session_color_depth, Stream & stream, const int use_compact_packets) const {
+    void emit_v1_compressed(uint8_t session_color_depth, OutStream & stream, const int use_compact_packets) const {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -560,7 +557,7 @@ class RDPBmpCache {
         stream.set_out_uint16_le(stream.get_offset() - offset_after_type - 7, offset_header);
     }
 
-    void emit_raw_v1(Stream & stream) const
+    void emit_raw_v1(OutStream & stream) const
     {
         using namespace RDP;
 
@@ -769,7 +766,7 @@ class RDPBmpCache {
           BITMAPCACHE_WAITING_LIST_INDEX = 32767
     };
 
-    void emit_v2_compressed(uint8_t session_color_depth, Stream & stream) const
+    void emit_v2_compressed(uint8_t session_color_depth, OutStream & stream) const
     {
         using namespace RDP;
 
@@ -817,8 +814,7 @@ class RDPBmpCache {
         stream.set_out_uint16_le(stream.get_offset() - (offset_header+12), offset_header); // length after type minus 7
     }
 
-
-    void emit_raw_v2(Stream & stream) const
+    void emit_raw_v2(OutStream & stream) const
     {
         using namespace RDP;
         TODO(" this should become some kind of emit header");
@@ -924,7 +920,7 @@ class RDPBmpCache {
         stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
     }
 
-    void receive(Stream & stream, const RDPSecondaryOrderHeader & header, const BGRPalette & palette, uint8_t session_color_depth)
+    void receive(InStream & stream, const RDPSecondaryOrderHeader & header, const BGRPalette & palette, uint8_t session_color_depth)
     {
         switch (header.type){
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
@@ -945,7 +941,7 @@ class RDPBmpCache {
         }
     }
 
-    void receive_raw_v2( Stream & stream, const RDPSecondaryOrderHeader & header
+    void receive_raw_v2( InStream & stream, const RDPSecondaryOrderHeader & header
                        , const BGRPalette & palette, uint8_t session_color_depth)
     {
         using namespace RDP;
@@ -1017,7 +1013,7 @@ class RDPBmpCache {
         }
     }
 
-    void receive_raw_v1(Stream & stream, const RDPSecondaryOrderHeader &/* header*/
+    void receive_raw_v1(InStream & stream, const RDPSecondaryOrderHeader &/* header*/
                        , const BGRPalette & palette, uint8_t session_color_depth)
     {
 //        LOG(LOG_INFO, "receive raw v1");
@@ -1098,7 +1094,7 @@ class RDPBmpCache {
         }
     }
 
-    void receive_compressed_v2( Stream & stream, const RDPSecondaryOrderHeader & header
+    void receive_compressed_v2( InStream & stream, const RDPSecondaryOrderHeader & header
                               , const BGRPalette & palette, uint8_t session_color_depth)
     {
         using namespace RDP;
@@ -1198,7 +1194,7 @@ class RDPBmpCache {
         }
     }
 
-    void receive_compressed_v1( Stream & stream, const RDPSecondaryOrderHeader & header
+    void receive_compressed_v1( InStream & stream, const RDPSecondaryOrderHeader & header
                               , const BGRPalette & palette, uint8_t session_color_depth)
     {
         int flags = header.flags;

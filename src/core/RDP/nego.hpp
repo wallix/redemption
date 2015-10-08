@@ -435,7 +435,6 @@ struct RdpNego
     void send_negotiation_request()
     {
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
-        BStream stream;
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
         char * cookie_or_token = this->lb_info?this->lb_info:cookie;
@@ -452,12 +451,13 @@ struct RdpNego
             rdp_neg_requestedProtocols |= X224::PROTOCOL_HYBRID;
         }
 
+        StaticOutStream<65536> stream;
         X224::CR_TPDU_Send(stream, cookie_or_token,
                            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
                            // X224::RESTRICTED_ADMIN_MODE_REQUIRED,
                            0,
                            rdp_neg_requestedProtocols);
-        this->trans.send(stream);
+        this->trans.send(stream.get_data(), stream.get_offset());
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 

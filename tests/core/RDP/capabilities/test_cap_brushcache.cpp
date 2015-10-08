@@ -38,10 +38,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)
     BOOST_CHECK_EQUAL(brushcache_caps.len, static_cast<uint16_t>(CAPLEN_BRUSH));
     BOOST_CHECK_EQUAL(brushcache_caps.brushSupportLevel, static_cast<uint32_t>(BRUSH_COLOR_8X8));
 
-    BStream stream(1024);
-    brushcache_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    brushcache_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
 
     BrushCacheCaps brushcache_caps2;

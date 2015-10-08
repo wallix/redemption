@@ -170,7 +170,7 @@ public:
             && (this->brush == other.brush));
     }
 
-    void emit(Stream & stream,
+    void emit(OutStream & stream,
               RDPOrderCommon & common,
               const RDPOrderCommon & oldcommon,
               const RDPEllipseCB & oldcmd) const
@@ -233,7 +233,7 @@ public:
         header.emit_brush(stream, 0x0100, this->brush, oldcmd.brush);
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
     {
         // using namespace RDP;
         int16_t  leftRect   = this->el.left();

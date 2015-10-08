@@ -44,10 +44,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
     BOOST_CHECK_EQUAL(control_caps.controlInterest, static_cast<uint16_t>(2));
     BOOST_CHECK_EQUAL(control_caps.detachInterest, static_cast<uint16_t>(3));
 
-    BStream stream(1024);
-    control_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    control_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     ControlCaps control_caps2;
 

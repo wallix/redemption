@@ -337,7 +337,7 @@ class ModuleManager : public MMIni
 
     struct sock_mod_barrier {};
     template<class Mod>
-    struct ModWithSocket : private SocketTransport, Mod
+    struct ModWithSocket final : private SocketTransport, Mod
     {
     private:
         ModuleManager & mm;
@@ -408,7 +408,7 @@ public:
                 mod.draw(RDPOpaqueRect(r, background_color), r);
 
 
-                BStream deltaPoints(256);
+                StaticOutStream<256> deltaPoints;
 
                 deltaPoints.out_sint16_le(r.cx - 1);
                 deltaPoints.out_sint16_le(0);
@@ -422,11 +422,10 @@ public:
                 deltaPoints.out_sint16_le(0);
                 deltaPoints.out_sint16_le(-r.cy + 1);
 
-                deltaPoints.mark_end();
-                deltaPoints.rewind();
+                InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
                 RDPPolyline polyline_box( r.x, r.y
-                                        , 0x0D, 0, BLACK, 4, deltaPoints);
+                                        , 0x0D, 0, BLACK, 4, in_deltaPoints);
                 mod.draw(polyline_box, r);
 
 

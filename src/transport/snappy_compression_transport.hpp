@@ -68,24 +68,24 @@ private:
                 temp_data_length -= data_length;
             }
             else {
-                BStream data_stream(SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
+                uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
-                this->source_transport.recv(&data_stream.end, sizeof(uint16_t));  // compressed_data_length(2);
+                auto end = data_buf;
+                this->source_transport.recv(&end, sizeof(uint16_t));  // compressed_data_length(2);
 
-                const uint16_t compressed_data_length = data_stream.in_uint16_le();
+                const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
                 if (this->verbose) {
                     LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%u", compressed_data_length);
                 }
 
-                data_stream.reset();
-
-                this->source_transport.recv(&data_stream.end, compressed_data_length);
+                end = data_buf;
+                this->source_transport.recv(&end, compressed_data_length);
 
                 this->uncompressed_data        = this->uncompressed_data_buffer;
                 this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
 
                 snappy_status status = ::snappy_uncompress(
-                      reinterpret_cast<char *>(data_stream.get_data()) , data_stream.size()
+                      reinterpret_cast<char *>(data_buf) , end-data_buf
                     , reinterpret_cast<char *>(this->uncompressed_data), &this->uncompressed_data_length);
                 if (this->verbose & 0x2 || (status != SNAPPY_OK)) {
                     LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
@@ -143,16 +143,15 @@ private:
             LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: data_length=%u", data_length);
         }
 
-        BStream data_stream(SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
+        StaticOutStream<SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH> data_stream;
         size_t  compressed_data_length = data_stream.get_capacity();
 
         uint32_t compressed_data_length_offset = data_stream.get_offset();
         data_stream.out_skip_bytes(sizeof(uint16_t));
-        data_stream.mark_end();
         compressed_data_length -= sizeof(uint16_t);
 
         snappy_status status = ::snappy_compress( reinterpret_cast<const char *>(data), data_length
-                                                , reinterpret_cast<char *>(data_stream.end), &compressed_data_length);
+                                                , reinterpret_cast<char *>(data_stream.get_current()), &compressed_data_length);
         if (this->verbose & 0x2 || (status != SNAPPY_OK)) {
             LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
                , "SnappyCompressionOutTransport::compress: snappy_compress return %d", status);
@@ -162,11 +161,10 @@ private:
         }
 
         data_stream.out_skip_bytes(compressed_data_length);
-        data_stream.mark_end();
 
         data_stream.set_out_uint16_le(compressed_data_length, compressed_data_length_offset);
 
-        this->target_transport.send(data_stream);
+        this->target_transport.send(data_stream.get_data(), data_stream.get_offset());
     }
 
     void do_send(const char * const buffer, size_t len) override {

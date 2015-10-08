@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     const int layout = 0x040C;
     keymap.init_layout(layout);
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_delete;
 
     BOOST_CHECK_EQUAL(false, keymap.is_shift_pressed());
@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TestDeadKeys)
     keymap.init_layout(layout);
     BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_delete;
 
     keymap.event(0x0000, 0x1A, decoded_data, ctrl_alt_delete); // '^' down dead key
@@ -415,7 +415,7 @@ BOOST_AUTO_TEST_CASE(TestKeymapBuffer)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_delete;
 
     BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
@@ -480,7 +480,7 @@ BOOST_AUTO_TEST_CASE(TestKeyPad)
     // all lock keys are supposed to be inactive at this, point
     BOOST_CHECK_EQUAL(0, keymap.key_flags);
 
-    BStream decoded_data(256);
+    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_delete;
 
     keymap.event(0x0000, 0x45, decoded_data, ctrl_alt_delete); // activate numlock

@@ -357,7 +357,7 @@ public:
              ;
     }
 
-    void emit( Stream & stream
+    void emit( OutStream & stream
              , RDPOrderCommon & common
              , const RDPOrderCommon & oldcommon
              , const RDPGlyphIndex & oldcmd) const {
@@ -458,7 +458,7 @@ public:
         }
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         if (header.fields & 0x001) { this->cache_id       = stream.in_uint8(); }
         if (header.fields & 0x002) { this->fl_accel       = stream.in_uint8(); }
         if (header.fields & 0x004) { this->ui_charinc     = stream.in_uint8(); }

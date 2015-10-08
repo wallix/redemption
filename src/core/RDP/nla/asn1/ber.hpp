@@ -57,7 +57,7 @@ namespace BER {
     // ==========================
     //   LENGTH
     // ==========================
-    bool read_length(Stream & s, int & length) {
+    bool read_length(InStream & s, int & length) {
         if (!s.in_check_rem(1)) {
             return false;
         }
@@ -83,7 +83,7 @@ namespace BER {
         return true;
     }
 
-    int write_length(Stream & s, int length) {
+    int write_length(OutStream & s, int length) {
         int res = 1;
         if (length > 0xFF) {
             s.out_uint8(0x82);
@@ -116,7 +116,7 @@ namespace BER {
     // ==========================
     //   UNIVERSAL TAG
     // ==========================
-    bool read_universal_tag(Stream & s, uint8_t tag, bool pc) {
+    bool read_universal_tag(InStream & s, uint8_t tag, bool pc) {
         uint8_t byte;
         if (!s.in_check_rem(1))
             return false;
@@ -126,7 +126,7 @@ namespace BER {
         return true;
     }
 
-    int write_universal_tag(Stream & s, uint8_t tag, bool pc) {
+    int write_universal_tag(OutStream & s, uint8_t tag, bool pc) {
         s.out_uint8(CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag));
         return 1;
     }
@@ -134,7 +134,7 @@ namespace BER {
     // ==========================
     //   APPLICATION TAG
     // ==========================
-    //bool read_application_tag(Stream & s, uint8_t tag, int & length) {
+    //bool read_application_tag(InStream & s, uint8_t tag, int & length) {
     //    uint8_t byte;
     //    if (tag > 30) {
     //        if (!s.in_check_rem(1))
@@ -165,7 +165,7 @@ namespace BER {
     //    return true;
     //}
 
-    //void write_application_tag(Stream & s, uint8_t tag, int length) {
+    //void write_application_tag(OutStream & s, uint8_t tag, int length) {
     //    if (tag > 30) {
     //        s.out_uint8(CLASS_APPL | PC_CONSTRUCT | TAG_MASK);
     //        s.out_uint8(tag);
@@ -180,7 +180,7 @@ namespace BER {
     // ==========================
     //   CONTEXTUAL TAG
     // ==========================
-    bool read_contextual_tag(Stream & s, uint8_t tag, int & length, bool pc) {
+    bool read_contextual_tag(InStream & s, uint8_t tag, int & length, bool pc) {
         uint8_t byte;
         if (!s.in_check_rem(1))
             return false;
@@ -193,7 +193,7 @@ namespace BER {
         return read_length(s, length);
     }
 
-    int write_contextual_tag(Stream & s, uint8_t tag, int length, bool pc) {
+    int write_contextual_tag(OutStream & s, uint8_t tag, int length, bool pc) {
         s.out_uint8(CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag));
         return 1 + write_length(s, length);
     }
@@ -205,7 +205,7 @@ namespace BER {
     // ==========================
     //   SEQUENCE TAG
     // ==========================
-    bool read_sequence_tag(Stream & s, int & length) {
+    bool read_sequence_tag(InStream & s, int & length) {
         uint8_t byte;
         if (!s.in_check_rem(1))
             return false;
@@ -218,7 +218,7 @@ namespace BER {
 
     }
 
-    int write_sequence_tag(Stream & s, int length) {
+    int write_sequence_tag(OutStream & s, int length) {
         s.out_uint8(CLASS_UNIV | PC_CONSTRUCT | (TAG_MASK & TAG_SEQUENCE));
         return 1 + write_length(s, length);
     }
@@ -234,7 +234,7 @@ namespace BER {
     // ==========================
     //   ENUMERATED
     // ==========================
-    //bool read_enumerated(Stream & s, uint8_t & enumerated, uint8_t count) {
+    //bool read_enumerated(InStream & s, uint8_t & enumerated, uint8_t count) {
     //    int length;
     //    if (!read_universal_tag(s, TAG_ENUMERATED, false) ||
     //        !read_length(s, length)) {
@@ -251,7 +251,7 @@ namespace BER {
     //    return true;
     //}
 
-    //void write_enumerated(Stream & s, uint8_t enumerated, uint8_t count) {
+    //void write_enumerated(OutStream & s, uint8_t enumerated, uint8_t count) {
     //    write_universal_tag(s, TAG_ENUMERATED, false);
     //    write_length(s, 1);
     //    s.out_uint8(enumerated);
@@ -260,7 +260,7 @@ namespace BER {
     // ==========================
     //   BIT STRING
     // ==========================
-    // bool read_bit_string(Stream & s, int & length, uint8_t & padding) {
+    // bool read_bit_string(InStream & s, int & length, uint8_t & padding) {
     //     if (!read_universal_tag(s, TAG_BIT_STRING, false) ||
     //         !read_length(s, length)) {
     //         return false;
@@ -275,7 +275,7 @@ namespace BER {
     // ==========================
     //   OCTET STRING
     // ==========================
-    int write_octet_string(Stream & s, const uint8_t * oct_str, int length) {
+    int write_octet_string(OutStream & s, const uint8_t * oct_str, int length) {
         int size = 0;
         size += write_universal_tag(s, TAG_OCTET_STRING, false);
         size += write_length(s, length);
@@ -285,12 +285,12 @@ namespace BER {
     }
 
 
-    bool read_octet_string_tag(Stream & s, int & length) {
+    bool read_octet_string_tag(InStream & s, int & length) {
         return read_universal_tag(s, TAG_OCTET_STRING, false)
             && read_length(s, length);
     }
 
-    int write_octet_string_tag(Stream & s, int length) {
+    int write_octet_string_tag(OutStream & s, int length) {
         write_universal_tag(s, TAG_OCTET_STRING, false);
         write_length(s, length);
         return 1 + _ber_sizeof_length(length);
@@ -304,7 +304,7 @@ namespace BER {
             + sizeof_octet_string(length);
     }
 
-    int write_sequence_octet_string(Stream & stream, uint8_t context,
+    int write_sequence_octet_string(OutStream & stream, uint8_t context,
                                         const uint8_t * value, int length) {
         return write_contextual_tag(stream, context, sizeof_octet_string(length), true)
             + write_octet_string(stream, value, length);
@@ -313,7 +313,7 @@ namespace BER {
     // ==========================
     //   GENERAL STRING
     // ==========================
-    //int write_general_string(Stream & s, const uint8_t * oct_str, int length) {
+    //int write_general_string(OutStream & s, const uint8_t * oct_str, int length) {
     //    int size = 0;
     //    size += write_universal_tag(s, TAG_GENERAL_STRING, false);
     //    size += write_length(s, length);
@@ -321,11 +321,11 @@ namespace BER {
     //    size += length;
     //    return size;
     //}
-    //bool read_general_string_tag(Stream & s, int & length) {
+    //bool read_general_string_tag(InStream & s, int & length) {
     //    return read_universal_tag(s, TAG_GENERAL_STRING, false)
     //        && read_length(s, length);
     //}
-    //int write_general_string_tag(Stream & s, int length) {
+    //int write_general_string_tag(OutStream & s, int length) {
     //    write_universal_tag(s, TAG_GENERAL_STRING, false);
     //    write_length(s, length);
     //    return 1 + _ber_sizeof_length(length);
@@ -336,7 +336,7 @@ namespace BER {
     // ==========================
     //   BOOL
     // ==========================
-    //bool read_bool(Stream & s, bool & value) {
+    //bool read_bool(InStream & s, bool & value) {
     //    int length;
     //    if (!read_universal_tag(s, TAG_BOOLEAN, false) ||
     //        !read_length(s, length)) {
@@ -351,7 +351,7 @@ namespace BER {
     //    return true;
     //}
 
-    //void write_bool(Stream & s, bool value) {
+    //void write_bool(OutStream & s, bool value) {
     //    write_universal_tag(s, TAG_BOOLEAN, false);
     //    write_length(s, 1);
     //    s.out_uint8(value ? 0xFF : 0);
@@ -360,7 +360,7 @@ namespace BER {
     // ==========================
     //   INTEGER
     // ==========================
-    bool read_integer(Stream & s, uint32_t & value) {
+    bool read_integer(InStream & s, uint32_t & value) {
         int length;
         if (!read_universal_tag(s, TAG_INTEGER, false) ||
             !read_length(s, length) ||
@@ -390,7 +390,7 @@ namespace BER {
         return true;
     }
 
-    int write_integer(Stream & s, uint32_t value)
+    int write_integer(OutStream & s, uint32_t value)
     {
         if (value <  0x80) {
             write_universal_tag(s, TAG_INTEGER, false);
@@ -437,7 +437,7 @@ namespace BER {
         return 0;
     }
 
-    //bool read_integer_length(Stream & s, int & length)
+    //bool read_integer_length(InStream & s, int & length)
     //{
     //    return read_universal_tag(s, TAG_INTEGER, false)
     //        && read_length(s, length);

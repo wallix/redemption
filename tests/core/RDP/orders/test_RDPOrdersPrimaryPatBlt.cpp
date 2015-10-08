@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         // 0x0200: Brush style (1 byte)
         // 0x0400: Brush Hatch (1 byte) + Extra if style == 0x3
 
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         // DESTBLT = 0, hence we won't have order change
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
                   0xFF,
                   0x102030, 0x112233,
                   RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
-                  ).emit(stream, newcommon, state_common, state_patblt);
+                  ).emit(out_stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[30] = {
             CHANGE | STANDARD | BOUNDS | LASTBOUNDS,
@@ -80,20 +80,20 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
             0xDD,        // brush.hatch
             1, 2, 3, 4, 5, 6, 7   // brush.extra
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 30, datas, "PatBlt 1");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 30, datas, "PatBlt 1");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)PATBLT, common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, 0, 0, RDPBrush());
 
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     }
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         // DESTBLT = 0, hence we won't have order change
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
                   0xFF,
                   0x102030, 0x112233,
                   RDPBrush(3, 4, 1, 0xDD)
-                  ).emit(stream, newcommon, state_common, state_patblt);
+                  ).emit(out_stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[23] = {
             CHANGE | STANDARD | BOUNDS | LASTBOUNDS,
@@ -132,20 +132,20 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
             0x01,        // brush.style
             0xDD,        // brush.hatch
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 23, datas, "PatBlt 2");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 23, datas, "PatBlt 2");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)PATBLT, common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, 0, 0, RDPBrush());
 
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     }
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
         RDPPatBlt state_patblt(Rect(), 0, 0, 0, RDPBrush(0, 0, 0x03, 0xDD));
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
                   0xFF,
                   0x102030, 0x112233,
                   RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
-                  ).emit(stream, newcommon, state_common, state_patblt);
+                  ).emit(out_stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[28] = {
             CHANGE | STANDARD | BOUNDS | LASTBOUNDS,
@@ -183,20 +183,20 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
             0x04,        // brush_org_y
             1, 2, 3, 4, 5, 6, 7   // brush_extra
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 28, datas, "PatBlt 3");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 28, datas, "PatBlt 3");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)PATBLT, common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, 0, 0, RDPBrush(0, 0, 3, 0xDD));
 
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),

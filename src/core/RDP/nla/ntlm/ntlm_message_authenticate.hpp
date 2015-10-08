@@ -334,7 +334,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     ~NTLMAuthenticateMessage() override {}
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
             currentOffset -= 8;
@@ -368,12 +368,10 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->UserName.write_payload(stream);
         this->Workstation.write_payload(stream);
         this->EncryptedRandomSessionKey.write_payload(stream);
-        stream.mark_end();
     }
 
-
-    void recv(Stream & stream) {
-        uint8_t * pBegin = stream.p;
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
         bool res;
         res = NTLMMessage::recv(stream);
         if (!res) {
@@ -400,7 +398,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
             min_offset = this->Workstation.bufferOffset;
         if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
             min_offset = this->EncryptedRandomSessionKey.bufferOffset;
-        if (min_offset + pBegin > stream.p) {
+        if (min_offset + pBegin > stream.get_current()) {
             this->has_mic = true;
             stream.in_copy_bytes(this->MIC, 16);
         }
@@ -416,8 +414,6 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->Workstation.read_payload(stream, pBegin);
         this->EncryptedRandomSessionKey.read_payload(stream, pBegin);
     }
-
-
 };
 
 // 2.2.2.3   LM_RESPONSE
@@ -486,13 +482,13 @@ struct LMv2_Response {
         , ClientChallenge()
     {
     }
-    ~LMv2_Response() {}
-    void emit(Stream & stream) {
+
+    void emit(OutStream & stream) {
         stream.out_copy_bytes(this->Response, 16);
         stream.out_copy_bytes(this->ClientChallenge, 8);
     }
 
-    void recv(Stream & stream) {
+    void recv(InStream & stream) {
         stream.in_copy_bytes(this->Response, 16);
         stream.in_copy_bytes(this->ClientChallenge, 8);
     }
@@ -585,9 +581,9 @@ struct NTLMv2_Client_Challenge {
         , ClientChallenge()
     {
     }
-    ~NTLMv2_Client_Challenge() {}
-    void emit(Stream & stream) {
-	// ULONG length;
+
+    void emit(OutStream & stream) {
+        // ULONG length;
 
         this->RespType = 0x01;
         this->HiRespType = 0x01;
@@ -602,11 +598,10 @@ struct NTLMv2_Client_Challenge {
         stream.out_clear_bytes(4);
     }
 
-
-    void recv(Stream & stream) {
-	// size_t size;
+    void recv(InStream & stream) {
+        // size_t size;
         this->RespType = stream.in_uint8();
-	this->HiRespType = stream.in_uint8();
+        this->HiRespType = stream.in_uint8();
         stream.in_skip_bytes(2);
         stream.in_skip_bytes(4);
         stream.in_copy_bytes(this->Timestamp, 8);
@@ -615,7 +610,6 @@ struct NTLMv2_Client_Challenge {
         this->AvPairList.recv(stream);
         stream.in_skip_bytes(4);
     }
-
 };
 
 // 2.2.2.8   NTLM2 V2 Response: NTLMv2_RESPONSE
@@ -653,14 +647,13 @@ struct NTLMv2_Response {
         : Response()
     {
     }
-    ~NTLMv2_Response() {}
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         stream.out_copy_bytes(this->Response, 16);
         this->Challenge.emit(stream);
     }
 
-    void recv(Stream & stream) {
+    void recv(InStream & stream) {
         stream.in_copy_bytes(this->Response, 16);
         this->Challenge.recv(stream);
     }

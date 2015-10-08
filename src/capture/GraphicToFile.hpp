@@ -92,8 +92,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     CompressionOutTransportWrapper compression_wrapper;
     Transport & trans_target;
     Transport & trans;
-    BStream buffer_stream_orders;
-    BStream buffer_stream_bitmaps;
+    StaticOutStream<65536> buffer_stream_orders;
+    StaticOutStream<65536> buffer_stream_bitmaps;
 
     timeval last_sent_timer;
     timeval timer;
@@ -138,8 +138,6 @@ public:
     , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
-    , buffer_stream_orders(65536)
-    , buffer_stream_bitmaps(65536)
     , last_sent_timer()
     , timer(now)
     , width(width)
@@ -274,7 +272,6 @@ public:
             payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.get_offset());
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
-        payload.mark_end();
 
         send_wrm_chunk(this->trans, TIMESTAMP, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
@@ -468,7 +465,6 @@ public:
         }
 
         //------------------------------ missing variable length ---------------
-        payload.mark_end();
 
         send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
@@ -544,11 +540,10 @@ protected:
 public:
     void send_orders_chunk()
     {
-        this->stream_orders.mark_end();
-        send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count);
-        this->trans.send(this->stream_orders);
+        send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
+        this->trans.send(this->stream_orders.get_data(), this->stream_orders.get_offset());
         this->order_count = 0;
-        this->stream_orders.reset();
+        this->stream_orders.rewind();
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
@@ -671,11 +666,10 @@ public:
 
     void send_bitmaps_chunk()
     {
-        this->stream_bitmaps.mark_end();
-        send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.size(), this->bitmap_count);
-        this->trans.send(this->stream_bitmaps);
+        send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
+        this->trans.send(this->stream_bitmaps.get_data(), this->stream_bitmaps.get_offset());
         this->bitmap_count = 0;
-        this->stream_bitmaps.reset();
+        this->stream_bitmaps.rewind();
     }
 
     void server_set_pointer(const Pointer & cursor) override {
@@ -701,7 +695,6 @@ protected:
         payload.out_uint8(cache_idx);
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
-        payload.mark_end();
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->trans.send(cursor.data, cursor.data_size());
@@ -719,7 +712,6 @@ protected:
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
-        payload.mark_end();
         this->trans.send(payload.get_data(), payload.get_offset());
     }
 
@@ -731,8 +723,6 @@ public:
         StaticOutStream<16> payload;
         payload.out_timeval_to_uint64le_usec(now);
         payload.out_uint16_le(message_length);
-
-        payload.mark_end();
 
         send_wrm_chunk(this->trans, SESSION_UPDATE, payload.get_offset() + message_length, 1);
         this->trans.send(payload.get_data(), payload.get_offset());

@@ -53,9 +53,4 @@ BOOST_AUTO_TEST_CASE(TestBouncer2Mod)
 
     Bouncer2Mod d(front, 800, 600, ini.get<cfg::font>());
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
-    // to fix compilator optimisation
-    BStream().headroom();
-
-
 }

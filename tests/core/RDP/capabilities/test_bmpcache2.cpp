@@ -30,10 +30,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCache2)
 {
     BmpCache2Caps cap;
 
-    BStream stream(1024);
-    cap.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    cap.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     BmpCache2Caps cap2;
     cap2.recv(stream, CAPLEN_BITMAPCACHE_REV2);

@@ -1052,7 +1052,7 @@ class RDPPatBlt {
              ;
     }
 
-    void emit(Stream & stream,
+    void emit(OutStream & stream,
             RDPOrderCommon & common,
             const RDPOrderCommon & oldcommon,
             const RDPPatBlt & oldcmd) const
@@ -1123,7 +1123,7 @@ class RDPPatBlt {
         header.emit_brush(stream, 0x80, this->brush, oldcmd.brush);
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;
 

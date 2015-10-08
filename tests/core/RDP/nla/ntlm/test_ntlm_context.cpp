@@ -67,18 +67,11 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
         /* 0060 */ "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
         /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
 
-    BStream s;
-    s.out_copy_bytes(nego_string, sizeof(nego_string) - 1);
-    s.mark_end();
-    s.rewind();
-
+    InStream s(nego_string, sizeof(nego_string) - 1);
     context.server = false;
     context.NEGOTIATE_MESSAGE.recv(s);
 
-    s.reset();
-    s.out_copy_bytes(challenge_string, sizeof(challenge_string) - 1);
-    s.mark_end();
-    s.rewind();
+    s = InStream(challenge_string, sizeof(challenge_string) - 1);
     context.CHALLENGE_MESSAGE.recv(s);
 
     const uint8_t password[] = {
@@ -108,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
                                                    userName, sizeof(userName),
                                                    userDomain, sizeof(userDomain));
 
-    BStream & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
+    auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
     // LOG(LOG_INFO, "==== LmChallengeResponse =====");
     // hexdump_c(LmChallengeResponse.get_data(), LmChallengeResponse.size());
     BOOST_CHECK_EQUAL(memcmp(
@@ -118,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
                              LmChallengeResponse.get_data(),
                              LmChallengeResponse.size()),
                       0);
-    BStream & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
+    auto & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
     // LOG(LOG_INFO, "==== NtChallengeResponse =====");
     // hexdump_c(NtChallengeResponse.get_data(), NtChallengeResponse.size());
     BOOST_CHECK_EQUAL(memcmp(
@@ -337,8 +330,11 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
     };
 
     // Initialization
-    BStream client_to_server;
-    BStream server_to_client;
+    uint8_t client_to_server_buf[65535];
+    InStream in_client_to_server(client_to_server_buf);
+    OutStream out_client_to_server(client_to_server_buf);
+    uint8_t server_to_client_buf[65535];
+    OutStream out_server_to_client(server_to_client_buf);
 
     bool result;
 
@@ -356,9 +352,8 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
         client_context.NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
 
     // send NEGOTIATE MESSAGE
-    client_context.NEGOTIATE_MESSAGE.emit(client_to_server);
-    client_to_server.rewind();
-    server_context.NEGOTIATE_MESSAGE.recv(client_to_server);
+    client_context.NEGOTIATE_MESSAGE.emit(out_client_to_server);
+    server_context.NEGOTIATE_MESSAGE.recv(in_client_to_server);
 
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     result = server_context.ntlm_check_nego();
@@ -373,9 +368,9 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
         server_context.CHALLENGE_MESSAGE.version.ntlm_get_version_info();
 
     // send CHALLENGE MESSAGE
-    server_context.CHALLENGE_MESSAGE.emit(server_to_client);
-    server_to_client.rewind();
-    client_context.CHALLENGE_MESSAGE.recv(server_to_client);
+    server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
+    InStream in_server_to_client(out_server_to_client.get_data(), out_server_to_client.get_offset());
+    client_context.CHALLENGE_MESSAGE.recv(in_server_to_client);
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
@@ -394,32 +389,32 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
         client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
     if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-        BStream & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.Buffer;
+        auto & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.buffer;
         workstationbuff.reset();
-        workstationbuff.out_copy_bytes(workstation, sizeof(workstation));
+        workstationbuff.ostream.out_copy_bytes(workstation, sizeof(workstation));
         workstationbuff.mark_end();
     }
 
     flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-    BStream & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.Buffer;
+    auto & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.buffer;
     domain.reset();
-    domain.out_copy_bytes(userDomain, sizeof(userDomain));
+    domain.ostream.out_copy_bytes(userDomain, sizeof(userDomain));
     domain.mark_end();
 
-    BStream & user = client_context.AUTHENTICATE_MESSAGE.UserName.Buffer;
+    auto & user = client_context.AUTHENTICATE_MESSAGE.UserName.buffer;
 
     user.reset();
-    user.out_copy_bytes(userName, sizeof(userName));
+    user.ostream.out_copy_bytes(userName, sizeof(userName));
     user.mark_end();
 
     client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
 
     // send AUTHENTICATE MESSAGE
-    client_to_server.reset();
-    client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
-    client_to_server.rewind();
-    server_context.AUTHENTICATE_MESSAGE.recv(client_to_server);
+    out_client_to_server.rewind();
+    client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
+    in_client_to_server.rewind();
+    server_context.AUTHENTICATE_MESSAGE.recv(in_client_to_server);
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
@@ -511,8 +506,10 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
     };
 
     // Initialization
-    BStream client_to_server;
-    BStream server_to_client;
+    uint8_t client_to_server_buf[65535];
+    OutStream out_client_to_server(client_to_server_buf);
+    uint8_t server_to_client_buf[65535];
+    OutStream out_server_to_client(server_to_client_buf);
 
     // client_context.init();
     // server_context.init();
@@ -525,31 +522,31 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
     client_context.ntlm_client_build_negotiate();
 
     // send NEGOTIATE MESSAGE
-    client_context.NEGOTIATE_MESSAGE.emit(client_to_server);
+    client_context.NEGOTIATE_MESSAGE.emit(out_client_to_server);
 
-    client_context.SavedNegotiateMessage.init(client_to_server.size());
+    client_context.SavedNegotiateMessage.init(out_client_to_server.get_offset());
     memcpy(client_context.SavedNegotiateMessage.get_data(),
-           client_to_server.get_data(), client_to_server.size());
-    client_to_server.rewind();
+           out_client_to_server.get_data(), out_client_to_server.get_offset());
 
-    server_context.NEGOTIATE_MESSAGE.recv(client_to_server);
-    server_context.SavedNegotiateMessage.init(client_to_server.size());
+    InStream in_client_to_server(out_client_to_server.get_data(), out_client_to_server.get_offset());
+    server_context.NEGOTIATE_MESSAGE.recv(in_client_to_server);
+    server_context.SavedNegotiateMessage.init(in_client_to_server.get_offset());
     memcpy(server_context.SavedNegotiateMessage.get_data(),
-           client_to_server.get_data(), client_to_server.size());
+           in_client_to_server.get_data(), in_client_to_server.get_offset());
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     server_context.ntlm_server_build_challenge();
 
     // send CHALLENGE MESSAGE
-    server_context.CHALLENGE_MESSAGE.emit(server_to_client);
-    server_context.SavedChallengeMessage.init(server_to_client.size());
+    server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
+    server_context.SavedChallengeMessage.init(out_server_to_client.get_offset());
     memcpy(server_context.SavedChallengeMessage.get_data(),
-           server_to_client.get_data(), server_to_client.size());
+           out_server_to_client.get_data(), out_server_to_client.get_offset());
 
-    server_to_client.rewind();
-    client_context.CHALLENGE_MESSAGE.recv(server_to_client);
-    client_context.SavedChallengeMessage.init(server_to_client.size());
+    InStream in_server_to_client(out_server_to_client.get_data(), out_server_to_client.get_offset());
+    client_context.CHALLENGE_MESSAGE.recv(in_server_to_client);
+    client_context.SavedChallengeMessage.init(in_server_to_client.get_offset());
     memcpy(client_context.SavedChallengeMessage.get_data(),
-           server_to_client.get_data(), server_to_client.size());
+           in_server_to_client.get_data(), in_server_to_client.get_offset());
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
     client_context.ntlm_client_build_authenticate(password, sizeof(password),
@@ -558,29 +555,29 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
                                                   workstation, sizeof(workstation));
 
     // send AUTHENTICATE MESSAGE
-    client_to_server.reset();
+    out_client_to_server.rewind();
     if (client_context.UseMIC) {
-            client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
-            client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
-            client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
+        client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
+        client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
+        client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
 
-            client_context.SavedAuthenticateMessage.init(client_to_server.size());
-            memcpy(client_context.SavedAuthenticateMessage.get_data(), client_to_server.get_data(),
-                   client_to_server.size());
-            client_context.ntlm_compute_MIC();
-            memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
+        client_context.SavedAuthenticateMessage.init(out_client_to_server.get_offset());
+        memcpy(client_context.SavedAuthenticateMessage.get_data(), out_client_to_server.get_data(),
+               out_client_to_server.get_offset());
+        client_context.ntlm_compute_MIC();
+        memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
     }
-    client_to_server.reset();
-    client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
-    client_to_server.rewind();
-    server_context.AUTHENTICATE_MESSAGE.recv(client_to_server);
+    out_client_to_server.rewind();
+    client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
+    in_client_to_server = InStream(out_client_to_server.get_data(), out_client_to_server.get_offset());
+    server_context.AUTHENTICATE_MESSAGE.recv(in_client_to_server);
     if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
         server_context.UseMIC = true;
-        memset(client_to_server.get_data() +
+        memset(client_to_server_buf +
                server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
-        server_context.SavedAuthenticateMessage.init(client_to_server.size());
+        server_context.SavedAuthenticateMessage.init(in_client_to_server.get_offset());
         memcpy(server_context.SavedAuthenticateMessage.get_data(),
-               client_to_server.get_data(), client_to_server.size());
+               in_client_to_server.get_data(), in_client_to_server.get_offset());
     }
 
     // SERVER PROCEED RESPONSE CHECKING
@@ -639,7 +636,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
                         16));
 
 }
-
 
 
 

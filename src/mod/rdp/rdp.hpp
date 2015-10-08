@@ -465,6 +465,26 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     };
 
+    TODO("duplicated code in front")
+    struct write_x224_dt_tpdu_fn
+    {
+        void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
+            X224::DT_TPDU_Send(x224_header, sz);
+        }
+    };
+
+    struct write_sec_send_fn
+    {
+        uint32_t flags;
+        CryptContext & encrypt;
+        int encryption_level;
+
+        void operator()(StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
+            SEC::Sec_Send sec(sec_header, packet_data, packet_size, this->flags, this->encrypt, this->encryption_level);
+            (void)sec;
+        }
+    };
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -1100,7 +1120,7 @@ public:
         }
     }
 
-    void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
+    void send_to_front_channel( const char * const mod_channel_name, uint8_t const * data
                               , size_t length, size_t chunk_size, int flags) override {
         if (this->transparent_recorder) {
             this->transparent_recorder->send_to_front_channel( mod_channel_name, data, length
@@ -1139,7 +1159,7 @@ public:
     }
 
     void send_to_mod_channel( const char * const front_channel_name
-                                    , Stream & chunk
+                                    , InStream & chunk
                                     , size_t length
                                     , uint32_t flags) override {
         if (this->verbose & 16) {
@@ -1166,25 +1186,25 @@ public:
             this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
         }
         else {
-            this->send_to_channel(*mod_channel, chunk, length, flags);
+            this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
     }
 
 private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
-                                     Stream & chunk, size_t length, uint32_t flags) {
+                                     InStream & chunk, size_t length, uint32_t flags) {
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
-        channel.process_client_message(length, flags, chunk.p, chunk.in_remain());
+        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef * rail_channel,
-                                  Stream & chunk, size_t length, uint32_t flags) {
+                                  InStream & chunk, size_t length, uint32_t flags) {
         //LOG(LOG_INFO, "mod_rdp::send_to_mod_rail_channel: chunk.size=%u length=%u",
         //    chunk.size(), length);
         //hexdump_d(chunk.get_data(), chunk.size());
 
-        const auto saved_chunk_p = chunk.p;
+        const auto saved_chunk_p = chunk.get_current();
 
         const uint16_t orderType   = chunk.in_uint16_le();
         const uint16_t orderLength = chunk.in_uint16_le();
@@ -1424,14 +1444,12 @@ private:
             break;
         }
 
-        chunk.p = saved_chunk_p;
-
-        this->send_to_channel(*rail_channel, chunk, length, flags);
+        this->send_to_channel(*rail_channel, saved_chunk_p, chunk.get_capacity(), length, flags);
     }   // send_to_mod_rail_channel
 
 private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
-                                   Stream & chunk, size_t length, uint32_t flags) {
+                                   InStream & chunk, size_t length, uint32_t flags) {
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
             if (this->verbose && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
@@ -1440,13 +1458,13 @@ private:
                         "send Chunked Virtual Channel Data transparently.");
             }
 
-            this->send_to_channel(*rdpdr_channel, chunk, length, flags);
+            this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
             return;
         }
 
         BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
 
-        channel.process_client_message(length, flags, chunk.p, chunk.in_remain());
+        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
 
 public:
@@ -1458,24 +1476,27 @@ public:
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-        BStream stream_data(65536);
+        StaticOutStream<65536> stream_data;
         uint32_t data_size = std::min(::strlen(string_data) + 1, stream_data.get_capacity());
 
         stream_data.out_copy_bytes(string_data, data_size);
-        stream_data.mark_end();
 
         virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
                             , this->userid, this->auth_channel_chanid
-                            , stream_data.size()
+                            , stream_data.get_offset()
                             , this->auth_channel_flags
                             , stream_data.get_data()
-                            , stream_data.size());
+                            , stream_data.get_offset());
     }
 
-    void send_to_channel(const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length, uint32_t flags) {
+private:
+    void send_to_channel(
+        const CHANNELS::ChannelDef & channel,
+        uint8_t const * chunk, std::size_t chunk_size,
+        size_t length, uint32_t flags
+    ) {
         if (this->verbose & 16) {
-            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", static_cast<unsigned>(length)
-                 , (unsigned)chunk.size());
+            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
             channel.log(-1u);
         }
 
@@ -1483,14 +1504,14 @@ public:
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
-        if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+        if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
-                                              , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
+                                              , this->userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
-            uint8_t const * virtual_channel_data = chunk.get_data();
+            uint8_t const * virtual_channel_data = chunk;
             size_t          remaining_data_length = length;
 
             auto get_channel_control_flags = [] (uint32_t flags, size_t data_length,
@@ -1528,42 +1549,44 @@ public:
         }
     }
 
-    void send_data_request(uint16_t channelId, HStream & stream) {
+    template<class... WriterData>
+    void send_data_request(uint16_t channelId, WriterData... writer_data) {
         if (this->verbose & 16) {
             LOG(LOG_INFO, "send data request");
         }
 
-        BStream x224_header(256);
-        OutPerBStream mcs_header(256);
-
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
-                                      3, stream.size(), MCS::PER_ENCODING);
-
-        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-
-        this->nego.trans.send(x224_header, mcs_header, stream);
+        write_packets(
+            this->nego.trans,
+#ifdef IN_IDE_PARSER
+            writer_data,
+#else
+            writer_data...,
+#endif
+            [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+                MCS::SendDataRequest_Send mcs(
+                    static_cast<OutPerStream&>(mcs_header), this->userid,
+                    channelId, 1, 3, packet_size, MCS::PER_ENCODING
+                );
+                (void)mcs;
+            },
+            write_x224_dt_tpdu_fn{}
+        );
 
         if (this->verbose & 16) {
             LOG(LOG_INFO, "send data request done");
         }
     }
 
-    void send_data_request_ex(uint16_t channelId, HStream & stream) {
-        BStream x224_header(256);
-        OutPerBStream mcs_header(256);
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
-        stream.copy_to_head(sec_header.get_data(), sec_header.size());
-
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
-                                      3, stream.size(), MCS::PER_ENCODING);
-
-        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-
-        this->nego.trans.send(x224_header, mcs_header, stream);
+    template<class... WriterData>
+    void send_data_request_ex(uint16_t channelId, WriterData ... writer_data) {
+        this->send_data_request(
+            channelId,
+            writer_data...,
+            write_sec_send_fn{0, this->encrypt, this->encryptionLevel}
+        );
     }
 
+public:
     void draw_event(time_t now) override {
         if (!this->event.waked_up_by_time &&
             (!this->enable_wab_agent || !this->wab_agent_event.set_state || !this->wab_agent_event.waked_up_by_time)) {
@@ -1580,228 +1603,229 @@ public:
                         this->nego.server_event(this->certificate_change_action == 1, this->certif_path);
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
-                        {
-                            // Basic Settings Exchange
-                            // -----------------------
+                        // Basic Settings Exchange
+                        // -----------------------
 
-                            // Basic Settings Exchange: Basic settings are exchanged between the client and
-                            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-                            // Connect Initial PDU contains a GCC Conference Create Request, while the
-                            // Connect Response PDU contains a GCC Conference Create Response.
+                        // Basic Settings Exchange: Basic settings are exchanged between the client and
+                        // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+                        // Connect Initial PDU contains a GCC Conference Create Request, while the
+                        // Connect Response PDU contains a GCC Conference Create Response.
 
-                            // These two Generic Conference Control (GCC) packets contain concatenated
-                            // blocks of settings data (such as core data, security data and network data)
-                            // which are read by client and server
+                        // These two Generic Conference Control (GCC) packets contain concatenated
+                        // blocks of settings data (such as core data, security data and network data)
+                        // which are read by client and server
 
 
-                            // Client                                                     Server
-                            //    |--------------MCS Connect Initial PDU with-------------> |
-                            //                   GCC Conference Create Request
-                            //    | <------------MCS Connect Response PDU with------------- |
-                            //                   GCC conference Create Response
+                        // Client                                                     Server
+                        //    |--------------MCS Connect Initial PDU with-------------> |
+                        //                   GCC Conference Create Request
+                        //    | <------------MCS Connect Response PDU with------------- |
+                        //                   GCC conference Create Response
 
-                            /* Generic Conference Control (T.124) ConferenceCreateRequest */
-
-                            HStream stream(1024, 65536);
-                            // ------------------------------------------------------------
-                            GCC::UserData::CSCore cs_core;
-                            cs_core.version = this->use_rdp5?0x00080004:0x00080001;
-                            cs_core.desktopWidth = this->front_width;
-                            cs_core.desktopHeight = this->front_height;
-                            //cs_core.highColorDepth = this->front_bpp;
-                            cs_core.highColorDepth = ((this->front_bpp == 32)
-                                ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
-                            cs_core.keyboardLayout = this->keylayout;
-                            if (this->front_bpp == 32) {
-                                cs_core.supportedColorDepths = 15;
-                                cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
-                            }
-
-                            uint16_t hostlen = strlen(hostname);
-                            uint16_t maxhostlen = std::min((uint16_t)15, hostlen);
-                            for (size_t i = 0; i < maxhostlen ; i++){
-                                cs_core.clientName[i] = hostname[i];
-                            }
-                            memset(&(cs_core.clientName[hostlen]), 0, 16-hostlen);
-
-                            if (this->nego.tls){
-                                cs_core.serverSelectedProtocol = this->nego.selected_protocol;
-                            }
-                            if (this->verbose & 1) {
-                                cs_core.log("Sending to Server");
-                            }
-                            cs_core.emit(stream);
-                            // ------------------------------------------------------------
-
-                            GCC::UserData::CSCluster cs_cluster;
-                            TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
-                            if (this->server_redirection_support) {
-                                LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
-                                if (!this->nego.tls){
-                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
-                                    cs_cluster.flags |= (2 << 2); // REDIRECTION V3
-                                } else {
-                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
-                                    cs_cluster.flags |= (3 << 2);  // REDIRECTION V4
-                                }
-                                if (this->redir_info.valid) {
-                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
-                                    cs_cluster.redirectedSessionID = this->redir_info.session_id;
-                                    LOG(LOG_INFO, "Effective Redirection SessionId=%u",
-                                        cs_cluster.redirectedSessionID);
-                                }
-                            }
-                            if (this->console_session) {
-                                cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
-                            }
-                            // if (!this->nego.tls){
-                            //     if (this->console_session){
-                            //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
-                            //     }
-                            //     else {
-                            //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
-                            //     }
-                            //     }
-                            // else {
-                            //     cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
-                            //     if (this->console_session){
-                            //         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
-                            //     }
-                            // }
-                            if (this->verbose & 1) {
-                                cs_cluster.log("Sending to server");
-                            }
-                            cs_cluster.emit(stream);
-                            // ------------------------------------------------------------
-                            GCC::UserData::CSSecurity cs_security;
-                            if (this->verbose & 1) {
-                                cs_security.log("Sending to server");
-                            }
-                            cs_security.emit(stream);
-                            // ------------------------------------------------------------
-
-                            const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
-                            size_t num_channels = channel_list.size();
-                            if ((num_channels > 0) || this->auth_channel[0] ||
-                                this->file_system_drive_manager.HasManagedDrive()) {
-                                /* Here we need to put channel information in order
-                                   to redirect channel data
-                                   from client to server passing through the "proxy" */
-                                GCC::UserData::CSNet cs_net;
-                                cs_net.channelCount = num_channels;
-                                bool has_rdpdr_channel  = false;
-                                bool has_rdpsnd_channel = false;
-                                for (size_t index = 0; index < num_channels; index++) {
-                                    const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                    if (this->authorization_channels.is_authorized(channel_item.name) ||
-                                        (!strcmp(channel_item.name, channel_names::rdpdr) &&
-                                         this->file_system_drive_manager.HasManagedDrive())
-                                       ) {
-                                        if (!strcmp(channel_item.name, channel_names::rdpdr)) {
-                                            has_rdpdr_channel = true;
-                                        }
-                                        memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
-                                    }
-                                    else {
-                                        memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
-                                    }
-                                    cs_net.channelDefArray[index].options = channel_item.flags;
-                                    CHANNELS::ChannelDef def;
-                                    memcpy(def.name, cs_net.channelDefArray[index].name, 8);
-                                    def.flags = channel_item.flags;
-                                    if (this->verbose & 16) {
-                                        def.log(index);
-                                    }
-                                    this->mod_channel_list.push_back(def);
+                        /* Generic Conference Control (T.124) ConferenceCreateRequest */
+                        write_packets(
+                            this->nego.trans,
+                            [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
+                                // ------------------------------------------------------------
+                                GCC::UserData::CSCore cs_core;
+                                cs_core.version = this->use_rdp5?0x00080004:0x00080001;
+                                cs_core.desktopWidth = this->front_width;
+                                cs_core.desktopHeight = this->front_height;
+                                //cs_core.highColorDepth = this->front_bpp;
+                                cs_core.highColorDepth = ((this->front_bpp == 32)
+                                    ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
+                                cs_core.keyboardLayout = this->keylayout;
+                                if (this->front_bpp == 32) {
+                                    cs_core.supportedColorDepths = 15;
+                                    cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
                                 }
 
-                                // Inject a new channel for file system virtual channel (rdpdr)
-                                if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
-                                    ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                             "%s", channel_names::rdpdr);
-                                    cs_net.channelDefArray[cs_net.channelCount].options =
-                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
-                                    CHANNELS::ChannelDef def;
-                                    ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
-                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                    if (this->verbose & 16){
-                                        def.log(cs_net.channelCount);
-                                    }
-                                    this->mod_channel_list.push_back(def);
-                                    cs_net.channelCount++;
+                                uint16_t hostlen = strlen(hostname);
+                                uint16_t maxhostlen = std::min((uint16_t)15, hostlen);
+                                for (size_t i = 0; i < maxhostlen ; i++){
+                                    cs_core.clientName[i] = hostname[i];
                                 }
+                                memset(&(cs_core.clientName[hostlen]), 0, 16-hostlen);
 
-                                // The RDPDR channel advertised by the client is ONLY accepted by the RDP
-                                //  server 2012 if the RDPSND channel is also advertised.
-                                if (this->file_system_drive_manager.HasManagedDrive() &&
-                                    !has_rdpsnd_channel) {
-                                    ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                             "%s", channel_names::rdpsnd);
-                                    cs_net.channelDefArray[cs_net.channelCount].options =
-                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
-                                    CHANNELS::ChannelDef def;
-                                    ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
-                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                    if (this->verbose & 16){
-                                        def.log(cs_net.channelCount);
-                                    }
-                                    this->mod_channel_list.push_back(def);
-                                    cs_net.channelCount++;
+                                if (this->nego.tls){
+                                    cs_core.serverSelectedProtocol = this->nego.selected_protocol;
                                 }
-
-                                // Inject a new channel for auth_channel virtual channel (wablauncher)
-                                if (this->auth_channel[0]) {
-                                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
-                                    cs_net.channelDefArray[cs_net.channelCount].options =
-                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                                    CHANNELS::ChannelDef def;
-                                    memcpy(def.name, this->auth_channel, 8);
-                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                    if (this->verbose & 16){
-                                        def.log(cs_net.channelCount);
-                                    }
-                                    this->mod_channel_list.push_back(def);
-                                    cs_net.channelCount++;
-                                }
-
-                                if (this->enable_wab_agent) {
-                                    const char * wab_agent_channel_name = "wabagt\0\0";
-                                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, wab_agent_channel_name, 8);
-                                    cs_net.channelDefArray[cs_net.channelCount].options =
-                                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                                    CHANNELS::ChannelDef def;
-                                    memcpy(def.name, wab_agent_channel_name, 8);
-                                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                    if (this->verbose & 16){
-                                        def.log(cs_net.channelCount);
-                                    }
-                                    this->mod_channel_list.push_back(def);
-                                    cs_net.channelCount++;
-                                }
-
                                 if (this->verbose & 1) {
-                                    cs_net.log("Sending to server");
+                                    cs_core.log("Sending to Server");
                                 }
-                                cs_net.emit(stream);
-                            }
-                            // ------------------------------------------------------------
+                                cs_core.emit(stream);
+                                // ------------------------------------------------------------
 
-                            OutPerBStream gcc_header(65536);
-                            GCC::Create_Request_Send(gcc_header, stream.size());
+                                GCC::UserData::CSCluster cs_cluster;
+                                TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
+                                if (this->server_redirection_support) {
+                                    LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
+                                    if (!this->nego.tls){
+                                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
+                                        cs_cluster.flags |= (2 << 2); // REDIRECTION V3
+                                    } else {
+                                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
+                                        cs_cluster.flags |= (3 << 2);  // REDIRECTION V4
+                                    }
+                                    if (this->redir_info.valid) {
+                                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                                        cs_cluster.redirectedSessionID = this->redir_info.session_id;
+                                        LOG(LOG_INFO, "Effective Redirection SessionId=%u",
+                                            cs_cluster.redirectedSessionID);
+                                    }
+                                }
+                                if (this->console_session) {
+                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                                }
+                                // if (!this->nego.tls){
+                                //     if (this->console_session){
+                                //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+                                //     }
+                                //     else {
+                                //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+                                //     }
+                                //     }
+                                // else {
+                                //     cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
+                                //     if (this->console_session){
+                                //         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
+                                //     }
+                                // }
+                                if (this->verbose & 1) {
+                                    cs_cluster.log("Sending to server");
+                                }
+                                cs_cluster.emit(stream);
+                                // ------------------------------------------------------------
+                                GCC::UserData::CSSecurity cs_security;
+                                if (this->verbose & 1) {
+                                    cs_security.log("Sending to server");
+                                }
+                                cs_security.emit(stream);
+                                // ------------------------------------------------------------
 
-                            BStream mcs_header(65536);
-                            MCS::CONNECT_INITIAL_Send mcs(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
+                                const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
+                                size_t num_channels = channel_list.size();
+                                if ((num_channels > 0) || this->auth_channel[0] ||
+                                    this->file_system_drive_manager.HasManagedDrive()) {
+                                    /* Here we need to put channel information in order
+                                    to redirect channel data
+                                    from client to server passing through the "proxy" */
+                                    GCC::UserData::CSNet cs_net;
+                                    cs_net.channelCount = num_channels;
+                                    bool has_rdpdr_channel  = false;
+                                    bool has_rdpsnd_channel = false;
+                                    for (size_t index = 0; index < num_channels; index++) {
+                                        const CHANNELS::ChannelDef & channel_item = channel_list[index];
+                                        if (this->authorization_channels.is_authorized(channel_item.name) ||
+                                            (!strcmp(channel_item.name, channel_names::rdpdr) &&
+                                            this->file_system_drive_manager.HasManagedDrive())
+                                        ) {
+                                            if (!strcmp(channel_item.name, channel_names::rdpdr)) {
+                                                has_rdpdr_channel = true;
+                                            }
+                                            memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
+                                        }
+                                        else {
+                                            memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                                        }
+                                        cs_net.channelDefArray[index].options = channel_item.flags;
+                                        CHANNELS::ChannelDef def;
+                                        memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                                        def.flags = channel_item.flags;
+                                        if (this->verbose & 16) {
+                                            def.log(index);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                    }
 
-                            BStream x224_header(256);
-                            X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-                            this->nego.trans.send(x224_header, mcs_header, gcc_header, stream);
+                                    // Inject a new channel for file system virtual channel (rdpdr)
+                                    if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
+                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                                "%s", channel_names::rdpdr);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
+                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
+                                        CHANNELS::ChannelDef def;
+                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                        if (this->verbose & 16){
+                                            def.log(cs_net.channelCount);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
+                                    }
 
-                            this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
-                        }
+                                    // The RDPDR channel advertised by the client is ONLY accepted by the RDP
+                                    //  server 2012 if the RDPSND channel is also advertised.
+                                    if (this->file_system_drive_manager.HasManagedDrive() &&
+                                        !has_rdpsnd_channel) {
+                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                                "%s", channel_names::rdpsnd);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
+                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
+                                        CHANNELS::ChannelDef def;
+                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                        if (this->verbose & 16){
+                                            def.log(cs_net.channelCount);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
+                                    }
+
+                                    // Inject a new channel for auth_channel virtual channel (wablauncher)
+                                    if (this->auth_channel[0]) {
+                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
+                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                                        CHANNELS::ChannelDef def;
+                                        memcpy(def.name, this->auth_channel, 8);
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                        if (this->verbose & 16){
+                                            def.log(cs_net.channelCount);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
+                                    }
+
+                                    if (this->enable_wab_agent) {
+                                        const char * wab_agent_channel_name = "wabagt\0\0";
+                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, wab_agent_channel_name, 8);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
+                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                                        CHANNELS::ChannelDef def;
+                                        memcpy(def.name, wab_agent_channel_name, 8);
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                        if (this->verbose & 16){
+                                            def.log(cs_net.channelCount);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
+                                    }
+
+                                    if (this->verbose & 1) {
+                                        cs_net.log("Sending to server");
+                                    }
+                                    cs_net.emit(stream);
+                                }
+                            },
+                            [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
+                                GCC::Create_Request_Send(
+                                    static_cast<OutPerStream&>(gcc_header),
+                                    packet_size
+                                );
+                            },
+                            [this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+                                MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
+                                (void)mcs;
+                            },
+                            write_x224_dt_tpdu_fn{}
+                        );
+
+                        this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                         break;
                     }
                     break;
@@ -2037,28 +2061,28 @@ public:
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
                     }
-                    {
-                        BStream x224_header(256);
-                        OutPerBStream mcs_header(256);
-                        HStream data(512, 512);
-                        data.mark_end();
-
-                        MCS::ErectDomainRequest_Send mcs(mcs_header, 0, 0, MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header, mcs_header.size());
-                        this->nego.trans.send(x224_header, mcs_header, data);
-                    }
+                    write_packets(
+                        this->nego.trans,
+                        [](StreamSize<256>, OutStream & mcs_header){
+                            MCS::ErectDomainRequest_Send mcs(
+                                static_cast<OutPerStream&>(mcs_header),
+                                0, 0, MCS::PER_ENCODING
+                            );
+                            (void)mcs;
+                        },
+                        write_x224_dt_tpdu_fn{}
+                    );
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "Send MCS::AttachUserRequest");
                     }
-                    {
-                        BStream x224_header(256);
-                        HStream mcs_data(256, 512);
-
-                        MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
-
-                        X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                        this->nego.trans.send(x224_header, mcs_data);
-                    }
+                    write_packets(
+                        this->nego.trans,
+                        [](StreamSize<256>, OutStream & mcs_data){
+                            MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
+                            (void)mcs;
+                        },
+                        write_x224_dt_tpdu_fn{}
+                    );
                     this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
                     break;
 
@@ -2074,9 +2098,8 @@ public:
                             X224::RecvFactory f(this->nego.trans, &end, array_size);
                             InStream stream(array, end - array);
                             X224::DT_TPDU_Recv x224(stream);
-                            SubStream & payload = x224.payload;
-
-                            MCS::AttachUserConfirm_Recv mcs(payload, MCS::PER_ENCODING);
+                            InStream & mcs_cjcf_data = x224.payload;
+                            MCS::AttachUserConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                             if (mcs.initiator_flag){
                                 this->userid = mcs.initiator;
                             }
@@ -2092,15 +2115,20 @@ public:
                             }
 
                             for (size_t index = 0; index < num_channels+2; index++) {
-                                BStream x224_header(256);
-                                HStream mcs_cjrq_data(256, 512);
                                 if (this->verbose & 16){
                                     LOG(LOG_INFO, "cjrq[%u] = %u", index, channels_id[index]);
                                 }
-                                MCS::ChannelJoinRequest_Send(mcs_cjrq_data, this->userid, channels_id[index], MCS::PER_ENCODING);
-                                X224::DT_TPDU_Send(x224_header, mcs_cjrq_data.size());
-                                this->nego.trans.send(x224_header, mcs_cjrq_data);
-
+                                write_packets(
+                                    this->nego.trans,
+                                    [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
+                                        MCS::ChannelJoinRequest_Send mcs(
+                                            mcs_cjrq_data, this->userid,
+                                            channels_id[index], MCS::PER_ENCODING
+                                        );
+                                        (void)mcs;
+                                    },
+                                    write_x224_dt_tpdu_fn{}
+                                );
                                 constexpr size_t array_size = AUTOSIZE;
                                 uint8_t array[array_size];
                                 uint8_t * end = array;
@@ -2108,7 +2136,7 @@ public:
                                 InStream x224_data(array, end - array);
 
                                 X224::DT_TPDU_Recv x224(x224_data);
-                                SubStream & mcs_cjcf_data = x224.payload;
+                                InStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                                 TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
                                 if (this->verbose & 16){
@@ -2155,10 +2183,15 @@ public:
                                 LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
                                     this->server_public_key_len);
                             }
-                            HStream stream(512, 512 + this->server_public_key_len + 32);
-                            SEC::SecExchangePacket_Send mcs(stream, client_crypt_random,
-                                this->server_public_key_len);
-                            this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
+                            this->send_data_request(
+                                GCC::MCS_GLOBAL_CHANNEL,
+                                dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                                    SEC::SecExchangePacket_Send mcs(
+                                        stream, this->client_crypt_random, this->server_public_key_len
+                                    );
+                                    (void)mcs;
+                                })
+                            );
                         }
 
                         // Secure Settings Exchange
@@ -2304,50 +2337,52 @@ public:
                                     /* Store first 16 bytes of session key as MAC secret */
                                     memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
                                     memcpy(this->lic_layer_license_key, keyblock.get_LicensingEncryptionKey(), 16);
-
-                                    BStream sec_header(256);
-                                    HStream lic_data(1024, 65535);
-
-                                    if (this->lic_layer_license_size > 0) {
-                                        uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                                        buf_out_uint32(hwid, 2);
-                                        memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
-
-                                        /* Generate a signature for the HWID buffer */
-                                        uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
-
-                                        uint8_t lenhdr[4];
-                                        buf_out_uint32(lenhdr, sizeof(hwid));
-
-                                        Sign sign(this->lic_layer_license_sign_key, 16);
-                                        sign.update(lenhdr, sizeof(lenhdr));
-                                        sign.update(hwid, sizeof(hwid));
-
-                                        assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
-                                        sign.final(signature, sizeof(signature));
-
-
-                                        /* Now encrypt the HWID */
-
-                                        SslRC4 rc4;
-                                        rc4.set_key(this->lic_layer_license_key, 16);
-
-                                        // in, out
-                                        rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
-
-                                        LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2,
-                                                                    this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
-                                    }
-                                    else {
-                                        LIC::NewLicenseRequest_Send(lic_data, this->use_rdp5?3:2, username, hostname);
-                                    }
-
-                                    SEC::Sec_Send sec(sec_header, lic_data,
-                                        SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                                    lic_data.copy_to_head(sec_header.get_data(), sec_header.size());
-
-                                    this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
                                 }
+                                this->send_data_request(
+                                    GCC::MCS_GLOBAL_CHANNEL,
+                                    [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
+                                        if (this->lic_layer_license_size > 0) {
+                                            uint8_t hwid[LIC::LICENSE_HWID_SIZE];
+                                            buf_out_uint32(hwid, 2);
+                                            memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+
+                                            /* Generate a signature for the HWID buffer */
+                                            uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
+
+                                            uint8_t lenhdr[4];
+                                            buf_out_uint32(lenhdr, sizeof(hwid));
+
+                                            Sign sign(this->lic_layer_license_sign_key, 16);
+                                            sign.update(lenhdr, sizeof(lenhdr));
+                                            sign.update(hwid, sizeof(hwid));
+
+                                            assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                            sign.final(signature, sizeof(signature));
+
+
+                                            /* Now encrypt the HWID */
+
+                                            SslRC4 rc4;
+                                            rc4.set_key(this->lic_layer_license_key, 16);
+
+                                            // in, out
+                                            rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
+
+                                            LIC::ClientLicenseInfo_Send(
+                                                lic_data, this->use_rdp5?3:2,
+                                                this->lic_layer_license_size,
+                                                this->lic_layer_license_data,
+                                                hwid, signature
+                                            );
+                                        }
+                                        else {
+                                            LIC::NewLicenseRequest_Send(
+                                                lic_data, this->use_rdp5?3:2, username, hostname
+                                            );
+                                        }
+                                    },
+                                    write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
+                                );
                                 break;
                             case LIC::PLATFORM_CHALLENGE:
                                 if (this->verbose & 2){
@@ -2355,7 +2390,6 @@ public:
                                 }
                                 {
                                     LIC::PlatformChallenge_Recv lic(sec.payload);
-
 
                                     uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
                                     uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
@@ -2396,13 +2430,15 @@ public:
                                     // size, in, out
                                     rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
-                                    BStream sec_header(256);
-                                    HStream lic_data(1024, 65535);
-
-                                    LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
-                                    SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                                    lic_data.copy_to_head(sec_header.get_data(), sec_header.size());
-                                    this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
+                                    this->send_data_request(
+                                        GCC::MCS_GLOBAL_CHANNEL,
+                                        [&, this](StreamSize<65535 - 1024>, OutStream & lic_data) {
+                                            LIC::ClientPlatformChallengeResponse_Send(
+                                                lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig
+                                            );
+                                        },
+                                        write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
+                                    );
                                 }
                                 break;
                             case LIC::NEW_LICENSE:
@@ -2454,18 +2490,17 @@ public:
                                 break;
                             }
 
-                            if (sec.payload.p != sec.payload.end){
+                            if (sec.payload.get_current() != sec.payload.get_data_end()){
                                 LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
                                 throw Error(ERR_SEC);
                             }
                         }
                         else {
                             LOG(LOG_WARNING, "Failed to get expected license negotiation PDU");
-                            hexdump(x224.payload.get_data(), x224.payload.size());
+                            hexdump(x224.payload.get_data(), x224.payload.get_capacity());
                             //throw Error(ERR_SEC);
                             this->state = MOD_RDP_CONNECTED;
-                            sec.payload.p = sec.payload.end;
-                            hexdump(sec.payload.get_data(), sec.payload.size());
+                            hexdump(sec.payload.get_data(), sec.payload.get_capacity());
                         }
                     }
                     break;
@@ -2697,17 +2732,18 @@ public:
                             }
                             else {
                                 this->send_to_front_channel(
-                                    mod_channel.name, sec.payload.p, length, chunk_size, flags
+                                    mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
                                 );
                             }
-                            sec.payload.p = sec.payload.end;
+                            sec.payload.in_skip_bytes(sec.payload.in_remain());
                         }
                         else {
-                            uint8_t * next_packet = sec.payload.p;
-                            while (next_packet < sec.payload.end) {
-                                sec.payload.p = next_packet;
+                            uint8_t const * next_packet = sec.payload.get_current();
+                            while (next_packet < sec.payload.get_data_end()) {
+                                sec.payload.rewind();
+                                sec.payload.in_skip_bytes(next_packet - sec.payload.get_data());
 
-                                uint8_t * current_packet = next_packet;
+                                uint8_t const * current_packet = next_packet;
 
                                 if  (peekFlowPDU(sec.payload)){
                                     if (this->verbose & 128) {
@@ -2719,7 +2755,7 @@ public:
                                     //     this->send_flow_response_pdu(sctrl.flow_id,
                                     //                                  sctrl.flow_number);
                                     // }
-                                    next_packet = sec.payload.p;
+                                    next_packet = sec.payload.get_current();
                                 }
                                 else {
                                     ShareControl_Recv sctrl(sec.payload);
@@ -2746,7 +2782,7 @@ public:
                                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
                                         case WAITING_CTL_COOPERATE:
@@ -2757,7 +2793,7 @@ public:
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
                                         case WAITING_GRANT_CONTROL_COOPERATE:
@@ -2768,7 +2804,7 @@ public:
                                             this->connection_finalization_state = WAITING_FONT_MAP;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
                                             break;
                                         case WAITING_FONT_MAP:
@@ -2787,7 +2823,7 @@ public:
                                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.p = sdata.payload.end;
+                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                             }
 
                                             this->deactivation_reactivation_in_progress = false;
@@ -2795,23 +2831,29 @@ public:
                                         case UP_AND_RUNNING:
                                             if (this->enable_transparent_mode)
                                             {
-                                                sec.payload.p = current_packet;
+                                                sec.payload.rewind();
+                                                sec.payload.in_skip_bytes(current_packet - sec.payload.get_data());
 
-                                                HStream copy_stream(1024, 65535);
-
+                                                StaticOutStream<65535> copy_stream;
                                                 copy_stream.out_copy_bytes(current_packet, next_packet - current_packet);
-                                                copy_stream.mark_end();
 
                                                 //total_data_received += copy_stream.size();
                                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
 
                                                 if (this->transparent_recorder) {
-                                                    this->transparent_recorder->send_data_indication_ex(mcs.channelId,
-                                                        copy_stream);
+                                                    this->transparent_recorder->send_data_indication_ex(
+                                                        mcs.channelId,
+                                                        copy_stream.get_data(),
+                                                        copy_stream.get_offset()
+                                                    );
                                                 }
-                                                this->front.send_data_indication_ex(mcs.channelId, copy_stream);
+                                                this->front.send_data_indication_ex(
+                                                    mcs.channelId,
+                                                    copy_stream.get_data(),
+                                                    copy_stream.get_offset()
+                                                );
 
-                                                next_packet = sec.payload.end;
+                                                next_packet = sec.payload.get_data_end();
 
                                                 break;
                                             }
@@ -2864,23 +2906,23 @@ public:
                                                 case PDUTYPE2_CONTROL:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SYNCHRONIZE:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_POINTER:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
                                                     this->process_pointer_pdu(sdata.payload, this);
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_PLAY_SOUND:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SAVE_SESSION_INFO:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
@@ -2906,14 +2948,14 @@ public:
 
                                                         this->front.set_keyboard_indicators(LedFlags);
 
-                                                        REDASSERT(sdata.payload.p == sdata.payload.end);
+                                                        REDASSERT(sdata.payload.get_current() == sdata.payload.get_data_end());
                                                     }
                                                     break;
 
                                                 default:
                                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                                     TODO("CGR: Data should actually be consumed");
-                                                        sdata.payload.p = sdata.payload.end;
+                                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 }
                                             }
@@ -2970,7 +3012,7 @@ public:
                                             uint32_t sessionId = sctrl.payload.in_uint32_le();
                                             (void)sessionId;
 
-                                            this->send_confirm_active(this);
+                                            this->send_confirm_active();
                                             this->send_synchronise();
                                             this->send_control(RDP_CTL_COOPERATE);
                                             this->send_control(RDP_CTL_REQUEST_CONTROL);
@@ -3064,15 +3106,18 @@ public:
                     this->end_session_message.clear();
                 }
 
-                BStream stream(256);
-                X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-                try {
-                    this->nego.trans.send(stream);
-                    LOG(LOG_INFO, "Connection to server closed");
+                {
+                    StaticOutStream<256> stream;
+                    X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+                    try {
+                        this->nego.trans.send(stream.get_data(), stream.get_offset());
+                        LOG(LOG_INFO, "Connection to server closed");
+                    }
+                    catch(Error const & e){
+                        LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
+                    };
                 }
-                catch(Error const & e){
-                    LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
-                };
+
                 this->event.signal = BACK_EVENT_NEXT;
 
                 if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
@@ -3155,22 +3200,24 @@ public:
                     }
                     this->wab_agent_keep_alive_received = false;
 
-                    BStream out_s(1024);
+                    StaticOutStream<1024> out_s;
 
                     const size_t message_length_offset = out_s.get_offset();
                     out_s.out_clear_bytes(sizeof(uint16_t));
 
-                    out_s.out_string("Request=Keep-Alive");
+                    {
+                        char string[] = "Request=Keep-Alive";
+                        out_s.out_copy_bytes(string, sizeof(string)-1u);
+                    }
                     out_s.out_clear_bytes(1);   // Null character
 
                     out_s.set_out_uint16_le(
                         out_s.get_offset() - message_length_offset - sizeof(uint16_t),
                         message_length_offset);
 
-                    out_s.mark_end();
-
+                    InStream in_s(out_s.get_data(), out_s.get_offset());
                     this->send_to_mod_channel(
-                        "wabagt", out_s, out_s.size(),
+                        "wabagt", in_s, in_s.get_capacity(),
                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                     );
 
@@ -3224,287 +3271,283 @@ public:
 
     // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
-    void send_confirm_active(mod_api * mod) throw(Error) {
+    void send_confirm_active() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
 
-        BStream stream(65536);
+        this->send_data_request_ex(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this](StreamSize<65536>, OutStream & stream) {
+                RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
 
-        RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
+                confirm_active_pdu.emit_begin(this->share_id);
 
-        confirm_active_pdu.emit_begin(this->share_id);
+                GeneralCaps general_caps;
+                general_caps.extraflags  =
+                    this->use_rdp5
+                    ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
+                    : 0
+                    ;
+                // Slow/Fast-path
+                general_caps.extraflags |=
+                    this->enable_fastpath_server_update
+                    ? FASTPATH_OUTPUT_SUPPORTED
+                    : 0
+                    ;
+                if (this->enable_transparent_mode) {
+                    this->front.retrieve_client_capability_set(general_caps);
+                }
+                if (this->verbose & 1) {
+                    general_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(general_caps);
 
-        GeneralCaps general_caps;
-        general_caps.extraflags  =
-            this->use_rdp5
-            ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
-            : 0
-            ;
-        // Slow/Fast-path
-        general_caps.extraflags |=
-            this->enable_fastpath_server_update
-            ? FASTPATH_OUTPUT_SUPPORTED
-            : 0
-            ;
-        if (this->enable_transparent_mode) {
-            this->front.retrieve_client_capability_set(general_caps);
-        }
-        if (this->verbose & 1) {
-            general_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(general_caps);
+                BitmapCaps bitmap_caps;
+                TODO("Client SHOULD set this field to the color depth requested in the Client Core Data")
+                bitmap_caps.preferredBitsPerPixel = this->bpp;
+                //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
+                bitmap_caps.desktopWidth          = this->front_width;
+                bitmap_caps.desktopHeight         = this->front_height;
+                bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
+                //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
+                bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
+                if (this->enable_transparent_mode) {
+                    this->front.retrieve_client_capability_set(bitmap_caps);
+                }
+                if (this->verbose & 1) {
+                    bitmap_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(bitmap_caps);
 
-        BitmapCaps bitmap_caps;
-        TODO("Client SHOULD set this field to the color depth requested in the Client Core Data")
-        bitmap_caps.preferredBitsPerPixel = this->bpp;
-        //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
-        bitmap_caps.desktopWidth          = this->front_width;
-        bitmap_caps.desktopHeight         = this->front_height;
-        bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
-        //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
-        bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-        if (this->enable_transparent_mode) {
-            this->front.retrieve_client_capability_set(bitmap_caps);
-        }
-        if (this->verbose & 1) {
-            bitmap_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(bitmap_caps);
+                OrderCaps order_caps;
+                order_caps.numberFonts                                   = 0;
+                order_caps.orderFlags                                    = /*0x2a*/
+                                                                            NEGOTIATEORDERSUPPORT   /* 0x02 */
+                                                                        | ZEROBOUNDSDELTASSUPPORT /* 0x08 */
+                                                                        | COLORINDEXSUPPORT       /* 0x20 */
+                                                                        | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
+                                                                        ;
+                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]        = (this->enable_multipatblt     ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]        = (this->enable_multiscrblt     ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt         ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
+                order_caps.orderSupport[UnusedIndex3]                    = 1;
+                order_caps.orderSupport[UnusedIndex5]                    = 1;
+                order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc       ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb       ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline        ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc       ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
 
-        OrderCaps order_caps;
-        order_caps.numberFonts                                   = 0;
-        order_caps.orderFlags                                    = /*0x2a*/
-                                                                    NEGOTIATEORDERSUPPORT   /* 0x02 */
-                                                                  | ZEROBOUNDSDELTASSUPPORT /* 0x08 */
-                                                                  | COLORINDEXSUPPORT       /* 0x20 */
-                                                                  | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
-                                                                  ;
-        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]        = (this->enable_multipatblt     ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]        = (this->enable_multiscrblt     ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt         ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
-        order_caps.orderSupport[UnusedIndex3]                    = 1;
-        order_caps.orderSupport[UnusedIndex5]                    = 1;
-        order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc       ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb       ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline        ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc       ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+                order_caps.textFlags                                     = 0x06a1;
+                order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
+                order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
 
-        order_caps.textFlags                                     = 0x06a1;
-        order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
-        order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+                // Apparently, these primary drawing orders are supported
+                // by both rdesktop and xfreerdp :
+                // TS_NEG_DSTBLT_INDEX
+                // TS_NEG_PATBLT_INDEX
+                // TS_NEG_SCRBLT_INDEX
+                // TS_NEG_MEMBLT_INDEX
+                // TS_NEG_LINETO_INDEX
+                // others orders may not be supported.
 
-        // Apparently, these primary drawing orders are supported
-        // by both rdesktop and xfreerdp :
-        // TS_NEG_DSTBLT_INDEX
-        // TS_NEG_PATBLT_INDEX
-        // TS_NEG_SCRBLT_INDEX
-        // TS_NEG_MEMBLT_INDEX
-        // TS_NEG_LINETO_INDEX
-        // others orders may not be supported.
+                // intersect with client order capabilities
+                // which may not be supported by clients.
+                this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
 
-        // intersect with client order capabilities
-        // which may not be supported by clients.
-        this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_MULTISCRBLT_INDEX,        order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_MEMBLT_INDEX,             order_caps.orderSupport);
+                if ((this->verbose & 1) && (!order_caps.orderSupport[TS_NEG_MEMBLT_INDEX])) {
+                    LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
+                }
+                this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX,         order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,           order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX,         order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
+                this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
 
-        this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MULTISCRBLT_INDEX,        order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MEMBLT_INDEX,             order_caps.orderSupport);
-        if ((this->verbose & 1) && (!order_caps.orderSupport[TS_NEG_MEMBLT_INDEX])) {
-            LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
-        }
-        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX,         order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,           order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX,         order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
+                this->front.intersect_order_caps_ex(order_caps);
 
-        this->front.intersect_order_caps_ex(order_caps);
-
-        // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
-        //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
-        if (this->enable_transparent_mode) {
-            this->front.retrieve_client_capability_set(order_caps);
-        }
-        if (this->verbose & 1) {
-            order_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(order_caps);
+                // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
+                //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
+                if (this->enable_transparent_mode) {
+                    this->front.retrieve_client_capability_set(order_caps);
+                }
+                if (this->verbose & 1) {
+                    order_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(order_caps);
 
 
-        BmpCacheCaps bmpcache_caps;
-        bmpcache_caps.cache0Entries         = 0x258;
-        bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
-        bmpcache_caps.cache1Entries         = 0x12c;
-        bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
-        bmpcache_caps.cache2Entries         = 0x106;
-        bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+                BmpCacheCaps bmpcache_caps;
+                bmpcache_caps.cache0Entries         = 0x258;
+                bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
+                bmpcache_caps.cache1Entries         = 0x12c;
+                bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
+                bmpcache_caps.cache2Entries         = 0x106;
+                bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
 
-        BmpCache2Caps bmpcache2_caps;
-        bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
-        bmpcache2_caps.numCellCaches        = 3;
-        bmpcache2_caps.bitmapCache0CellInfo = 120;
-        bmpcache2_caps.bitmapCache1CellInfo = 120;
-        bmpcache2_caps.bitmapCache2CellInfo = (2553 | 0x80000000);
+                BmpCache2Caps bmpcache2_caps;
+                bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
+                bmpcache2_caps.numCellCaches        = 3;
+                bmpcache2_caps.bitmapCache0CellInfo = 120;
+                bmpcache2_caps.bitmapCache1CellInfo = 120;
+                bmpcache2_caps.bitmapCache2CellInfo = (2553 | 0x80000000);
 
-        bool use_bitmapcache_rev2 = false;
+                bool use_bitmapcache_rev2 = false;
 
-        if (this->enable_transparent_mode) {
-            if (!this->front.retrieve_client_capability_set(bmpcache_caps)) {
-                this->front.retrieve_client_capability_set(bmpcache2_caps);
-                use_bitmapcache_rev2 = true;
+                if (this->enable_transparent_mode) {
+                    if (!this->front.retrieve_client_capability_set(bmpcache_caps)) {
+                        this->front.retrieve_client_capability_set(bmpcache2_caps);
+                        use_bitmapcache_rev2 = true;
+                    }
+                }
+                else {
+                    use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
+                }
+
+                if (use_bitmapcache_rev2) {
+                    if (this->verbose & 1) {
+                        bmpcache2_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(bmpcache2_caps);
+
+                    if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
+                        this->orders.create_cache_bitmap(this->bpp,
+                            120,   nbbytes(this->bpp) * 16 * 16, false,
+                            120,   nbbytes(this->bpp) * 32 * 32, false,
+                            2553,  nbbytes(this->bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->cache_verbose);
+                    }
+                }
+                else {
+                    if (this->verbose & 1) {
+                        bmpcache_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(bmpcache_caps);
+
+                    if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
+                        this->orders.create_cache_bitmap(this->bpp,
+                            0x258, nbbytes(this->bpp) * 0x100,   false,
+                            0x12c, nbbytes(this->bpp) * 0x400,   false,
+                            0x106, nbbytes(this->bpp) * 0x1000,  false,
+                            this->cache_verbose);
+                    }
+                }
+
+                ColorCacheCaps colorcache_caps;
+                if (this->verbose & 1) {
+                    colorcache_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(colorcache_caps);
+
+                ActivationCaps activation_caps;
+                if (this->verbose & 1) {
+                    activation_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(activation_caps);
+
+                ControlCaps control_caps;
+                if (this->verbose & 1) {
+                    control_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(control_caps);
+
+                PointerCaps pointer_caps;
+                pointer_caps.len                       = 10;
+                if (this->enable_new_pointer == false) {
+                    pointer_caps.pointerCacheSize      = 0;
+                    pointer_caps.colorPointerCacheSize = 20;
+                    pointer_caps.len                   = 8;
+                    REDASSERT(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
+                }
+                if (this->verbose & 1) {
+                    pointer_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(pointer_caps);
+
+                ShareCaps share_caps;
+                if (this->verbose & 1) {
+                    share_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(share_caps);
+
+                InputCaps input_caps;
+                if (this->verbose & 1) {
+                    input_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(input_caps);
+
+                SoundCaps sound_caps;
+                if (this->verbose & 1) {
+                    sound_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(sound_caps);
+
+                FontCaps font_caps;
+                if (this->verbose & 1) {
+                    font_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(font_caps);
+
+                GlyphCacheCaps glyphcache_caps;
+                if (this->enable_glyph_cache) {
+                    this->front.retrieve_client_capability_set(glyphcache_caps);
+
+                    glyphcache_caps.FragCache         = 0;  // Not yet supported
+                    glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
+                }
+                if (this->verbose & 1) {
+                    glyphcache_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(glyphcache_caps);
+
+                if (this->remote_program) {
+                    RailCaps rail_caps;
+                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
+                    if (this->verbose & 1) {
+                        rail_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(rail_caps);
+
+                    WindowListCaps window_list_caps;
+                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+                    window_list_caps.NumIconCaches = 3;
+                    window_list_caps.NumIconCacheEntries = 12;
+                    if (this->verbose & 1) {
+                        window_list_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(window_list_caps);
+                }
+                confirm_active_pdu.emit_end();
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
+                // containing information about the packet. The type subfield of the pduType
+                // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
+                ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU,
+                    this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
             }
-        }
-        else {
-            use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
-        }
-
-        if (use_bitmapcache_rev2) {
-            if (this->verbose & 1) {
-                bmpcache2_caps.log("Sending to server");
-            }
-            confirm_active_pdu.emit_capability_set(bmpcache2_caps);
-
-            if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
-                this->orders.create_cache_bitmap(this->bpp,
-                    120,   nbbytes(this->bpp) * 16 * 16, false,
-                    120,   nbbytes(this->bpp) * 32 * 32, false,
-                    2553,  nbbytes(this->bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
-                    this->cache_verbose);
-            }
-        }
-        else {
-            if (this->verbose & 1) {
-                bmpcache_caps.log("Sending to server");
-            }
-            confirm_active_pdu.emit_capability_set(bmpcache_caps);
-
-            if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
-                this->orders.create_cache_bitmap(this->bpp,
-                    0x258, nbbytes(this->bpp) * 0x100,   false,
-                    0x12c, nbbytes(this->bpp) * 0x400,   false,
-                    0x106, nbbytes(this->bpp) * 0x1000,  false,
-                    this->cache_verbose);
-            }
-        }
-
-        ColorCacheCaps colorcache_caps;
-        if (this->verbose & 1) {
-            colorcache_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(colorcache_caps);
-
-        ActivationCaps activation_caps;
-        if (this->verbose & 1) {
-            activation_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(activation_caps);
-
-        ControlCaps control_caps;
-        if (this->verbose & 1) {
-            control_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(control_caps);
-
-        PointerCaps pointer_caps;
-        pointer_caps.len                       = 10;
-        if (this->enable_new_pointer == false) {
-            pointer_caps.pointerCacheSize      = 0;
-            pointer_caps.colorPointerCacheSize = 20;
-            pointer_caps.len                   = 8;
-            REDASSERT(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
-        }
-        if (this->verbose & 1) {
-            pointer_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(pointer_caps);
-
-        ShareCaps share_caps;
-        if (this->verbose & 1) {
-            share_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(share_caps);
-
-        InputCaps input_caps;
-        if (this->verbose & 1) {
-            input_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(input_caps);
-
-        SoundCaps sound_caps;
-        if (this->verbose & 1) {
-            sound_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(sound_caps);
-
-        FontCaps font_caps;
-        if (this->verbose & 1) {
-            font_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(font_caps);
-
-        GlyphCacheCaps glyphcache_caps;
-        if (this->enable_glyph_cache) {
-            this->front.retrieve_client_capability_set(glyphcache_caps);
-
-            glyphcache_caps.FragCache         = 0;  // Not yet supported
-            glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
-        }
-        if (this->verbose & 1) {
-            glyphcache_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(glyphcache_caps);
-
-        if (this->remote_program) {
-            RailCaps rail_caps;
-            rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
-            if (this->verbose & 1) {
-                rail_caps.log("Sending to server");
-            }
-            confirm_active_pdu.emit_capability_set(rail_caps);
-
-            WindowListCaps window_list_caps;
-            window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
-            window_list_caps.NumIconCaches = 3;
-            window_list_caps.NumIconCacheEntries = 12;
-            if (this->verbose & 1) {
-                window_list_caps.log("Sending to server");
-            }
-            confirm_active_pdu.emit_capability_set(window_list_caps);
-        }
-        confirm_active_pdu.emit_end();
-
-        // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
-        // containing information about the packet. The type subfield of the pduType
-        // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU,
-            this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        );
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
@@ -3512,7 +3555,7 @@ public:
         }
     }   // send_confirm_active
 
-    void process_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
+    void process_pointer_pdu(InStream & stream, mod_api * mod)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
@@ -3572,7 +3615,7 @@ public:
         }
     }
 
-    void process_palette(Stream & stream, bool fast_path) {
+    void process_palette(InStream & stream, bool fast_path) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_palette");
         }
@@ -4344,7 +4387,7 @@ public:
         ERRINFO_DECRYPTFAILED2                    = 0x00001195
     };
 
-    void process_disconnect_pdu(Stream & stream) {
+    void process_disconnect_pdu(InStream & stream) {
         uint32_t errorInfo = stream.in_uint32_le();
         switch (errorInfo){
         case ERRINFO_RPC_INITIATED_DISCONNECT:
@@ -4731,7 +4774,7 @@ public:
         }
     }
 
-    void process_save_session_info(Stream & stream) {
+    void process_save_session_info(InStream & stream) {
         RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
 
         switch (ssipdudata.infoType) {
@@ -4780,11 +4823,11 @@ public:
         break;
         }
 
-        stream.p = stream.end;
+        stream.in_skip_bytes(stream.in_remain());
     }
 
     TODO("CGR: this can probably be unified with process_confirm_active in front")
-    void process_server_caps(Stream & stream, uint16_t len) {
+    void process_server_caps(InStream & stream, uint16_t len) {
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
@@ -4833,7 +4876,7 @@ public:
                 throw Error(ERR_MCS_PDU_TRUNCATED);
             }
 
-            uint8_t * next = stream.p + expected;
+            uint8_t const * next = stream.get_current() + expected;
             switch (capset_type) {
             case CAPSTYPE_GENERAL:
                 {
@@ -4895,7 +4938,7 @@ public:
                 }
                 break;
             }
-            stream.p = next;
+            stream.in_skip_bytes(next - stream.get_current());
         }
 
         if (this->verbose & 32){
@@ -4903,34 +4946,30 @@ public:
         }
     }   // process_server_caps
 
-    void send_control(int action) throw(Error) {
+    void send_control(int action) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_control");
         }
 
-        BStream stream(256);
+        this->send_data_request_ex(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this, action](StreamSize<256>, OutStream & stream) {
+                ShareData sdata(stream);
+                sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
+                // Payload
+                stream.out_uint16_le(action);
+                stream.out_uint16_le(0); /* userid */
+                stream.out_uint32_le(0); /* control id */
 
-        // Payload
-        stream.out_uint16_le(action);
-        stream.out_uint16_le(0); /* userid */
-        stream.out_uint32_le(0); /* control id */
-        stream.mark_end();
+                // Packet trailer
+                sdata.emit_end();
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            }
+        );
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_control done");
@@ -4942,31 +4981,37 @@ public:
        before in process_data case. The problem is that
        we don't save the bitmap key list attached with rdp_bmpcache2 capability
        message so we can't develop this function yet */
-
-    void send_persistent_key_list_pdu(BStream & pdu_data_stream) throw(Error) {
-        BStream persistent_key_list_stream(65535);
-
-        ShareData sdata(persistent_key_list_stream);
-        sdata.emit_begin(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, this->share_id, RDP::STREAM_MED);
-
-        // Payload
-        persistent_key_list_stream.out_copy_bytes(pdu_data_stream);
-        persistent_key_list_stream.mark_end();
-
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, persistent_key_list_stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(persistent_key_list_stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    template<class DataWriter>
+    void send_persistent_key_list_pdu(DataWriter data_writer) {
+        this->send_pdu_type2(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, RDP::STREAM_MED, data_writer);
     }
 
-    void send_persistent_key_list_regular() throw(Error) {
+    template<class DataWriter>
+    void send_pdu_type2(uint8_t pdu_type2, uint8_t stream_id, DataWriter data_writer) {
+        using packet_size_t = decltype(details_::packet_size(data_writer));
+        this->send_data_request_ex(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this, &data_writer, pdu_type2, stream_id](
+                StreamSize<256 + packet_size_t{}>, OutStream & stream) {
+                ShareData sdata(stream);
+                sdata.emit_begin(pdu_type2, this->share_id, stream_id);
+                {
+                    OutStream substream(stream.get_current(), packet_size_t{});
+                    data_writer(packet_size_t{}, substream);
+                    stream.out_skip_bytes(substream.get_offset());
+                }
+                sdata.emit_end();
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                ShareControl_Send(
+                    sctrl_header, PDUTYPE_DATAPDU,
+                    this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size
+                );
+            }
+        );
+    }
+
+    void send_persistent_key_list_regular() {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular");
         }
@@ -5025,11 +5070,11 @@ public:
 
                         //pklpdu.log(LOG_INFO, "Send to server");
 
-                        BStream pdu_data_stream(65535);
-                        pklpdu.emit(pdu_data_stream);
-                        pdu_data_stream.mark_end();
-
-                        this->send_persistent_key_list_pdu(pdu_data_stream);
+                        this->send_persistent_key_list_pdu(
+                            [&pklpdu](StreamSize<2048>, OutStream & pdu_data_stream) {
+                                pklpdu.emit(pdu_data_stream);
+                            }
+                        );
 
                         pklpdu.reset();
 
@@ -5044,7 +5089,7 @@ public:
         }
     }   // send_persistent_key_list_regular
 
-    void send_persistent_key_list_transparent() throw(Error) {
+    void send_persistent_key_list_transparent() {
         if (!this->persistent_key_list_transport) {
             return;
         }
@@ -5053,40 +5098,34 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_transparent");
         }
 
-        BStream pdu_data_stream(65535);
+        try
+        {
+            while (1) {
+                this->send_persistent_key_list_pdu(
+                    [this](StreamSize<65535>, OutStream & pdu_data_stream) {
+                        uint8_t * data = pdu_data_stream.get_data();
+                        uint8_t * end = data;
+                        this->persistent_key_list_transport->recv(&end, 2/*pdu_size(2)*/);
+                        std::size_t pdu_size = Parse(data).in_uint16_le();
+                        end = data;
+                        this->persistent_key_list_transport->recv(&end, pdu_size);
+                        pdu_data_stream.out_skip_bytes(pdu_size);
 
-        bool bContinue = true;
-        while (bContinue) {
-            try
-            {
-                pdu_data_stream.reset();
-
-                this->persistent_key_list_transport->recv(&pdu_data_stream.end, 2/*pdu_size(2)*/);
-
-                uint16_t pdu_size = pdu_data_stream.in_uint16_le();
-
-
-                pdu_data_stream.reset();
-
-                this->persistent_key_list_transport->recv(&pdu_data_stream.end, pdu_size);
-
-                if (this->verbose & 1) {
-                    SubStream stream(pdu_data_stream);
-                    RDP::PersistentKeyListPDUData pklpdu;
-                    pklpdu.receive(stream);
-                    pklpdu.log(LOG_INFO, "Send to server");
-                }
-
-                this->send_persistent_key_list_pdu(pdu_data_stream);
+                        if (this->verbose & 1) {
+                            InStream stream(data, pdu_size);
+                            RDP::PersistentKeyListPDUData pklpdu;
+                            pklpdu.receive(stream);
+                            pklpdu.log(LOG_INFO, "Send to server");
+                        }
+                    }
+                );
             }
-            catch (Error & e)
-            {
-                if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                    LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);
-                    throw;
-                }
-
-                bContinue = false;
+        }
+        catch (Error const & e)
+        {
+            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);
+                throw;
             }
         }
 
@@ -5095,7 +5134,7 @@ public:
         }
     }
 
-    void send_persistent_key_list() throw(Error) {
+    void send_persistent_key_list() {
         if (this->enable_transparent_mode) {
             this->send_persistent_key_list_transparent();
         }
@@ -5105,64 +5144,39 @@ public:
     }
 
     TODO("CGR: duplicated code in front")
-    void send_synchronise() throw(Error) {
+    void send_synchronise() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
         }
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
-        // Payload
-        stream.out_uint16_le(1); /* type */
-        stream.out_uint16_le(1002);
-        stream.mark_end();
-
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_pdu_type2(
+            PDUTYPE2_SYNCHRONIZE, RDP::STREAM_MED,
+            [](StreamSize<4>, OutStream & stream) {
+                stream.out_uint16_le(1); /* type */
+                stream.out_uint16_le(1002);
+            }
+        );
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise done");
         }
     }
 
-    void send_fonts(int seq) throw(Error) {
+    void send_fonts(int seq) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_fonts");
         }
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
-        // Payload
-        stream.out_uint16_le(0); /* number of fonts */
-        stream.out_uint16_le(0); /* pad? */
-        stream.out_uint16_le(seq); /* unknown */
-        stream.out_uint16_le(0x32); /* entry size */
-        stream.mark_end();
-
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_pdu_type2(
+            PDUTYPE2_FONTLIST, RDP::STREAM_MED,
+            [seq](StreamSize<8>, OutStream & stream){
+                // Payload
+                stream.out_uint16_le(0); /* number of fonts */
+                stream.out_uint16_le(0); /* pad? */
+                stream.out_uint16_le(seq); /* unknown */
+                stream.out_uint16_le(0x32); /* entry size */
+            }
+        );
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_fonts done");
@@ -5171,78 +5185,71 @@ public:
 
 public:
 
-    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         }
-        BStream stream(65536);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
-        // Payload
-        stream.out_uint16_le(1); /* number of events */
-        stream.out_uint16_le(0);
-        stream.out_uint32_le(time);
-        stream.out_uint16_le(message_type);
-        stream.out_uint16_le(device_flags);
-        stream.out_uint16_le(param1);
-        stream.out_uint16_le(param2);
-        stream.mark_end();
-
-        // Packet trailer
-        sdata.emit_end();
-
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(stream);
-        target_stream.mark_end();
-
-        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_pdu_type2(
+            PDUTYPE2_INPUT, RDP::STREAM_HI,
+            [&](StreamSize<16>, OutStream & stream){
+                // Payload
+                stream.out_uint16_le(1); /* number of events */
+                stream.out_uint16_le(0);
+                stream.out_uint32_le(time);
+                stream.out_uint16_le(message_type);
+                stream.out_uint16_le(device_flags);
+                stream.out_uint16_le(param1);
+                stream.out_uint16_le(param2);
+            }
+        );
 
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
         }
     }
 
-    void send_input_fastpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+    void send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
         }
 
-        BStream fastpath_header(256);
-        HStream stream(256, 512);
+        write_packets(
+            this->nego.trans,
+            [&](StreamSize<256>, OutStream & stream) {
+                switch (message_type) {
+                case RDP_INPUT_SCANCODE:
+                    FastPath::KeyboardEvent_Send(stream, device_flags, param1);
+                    break;
 
-        switch (message_type) {
-        case RDP_INPUT_SCANCODE:
-            FastPath::KeyboardEvent_Send(stream, (uint16_t)device_flags, param1);
-            break;
+                case RDP_INPUT_SYNCHRONIZE:
+                    FastPath::SynchronizeEvent_Send(stream, param1);
+                    break;
 
-        case RDP_INPUT_SYNCHRONIZE:
-            FastPath::SynchronizeEvent_Send(stream, param1);
-            break;
+                case RDP_INPUT_MOUSE:
+                    FastPath::MouseEvent_Send(stream, device_flags, param1, param2);
+                    break;
 
-        case RDP_INPUT_MOUSE:
-            FastPath::MouseEvent_Send(stream, (uint16_t)device_flags, param1, param2);
-            break;
-
-        default:
-            LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", message_type);
-            throw Error(ERR_RDP_FASTPATH);
-        }
-
-        FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-
-        this->nego.trans.send(fastpath_header, stream);
+                default:
+                    LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", message_type);
+                    throw Error(ERR_RDP_FASTPATH);
+                }
+            },
+            [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
+                FastPath::ClientInputEventPDU_Send out_cie(
+                    fastpath_header, packet_data, packet_size, 1,
+                    this->encrypt, this->encryptionLevel, this->encryptionMethod
+                );
+                (void)out_cie;
+            }
+        );
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
         }
     }
 
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) {
         if (this->enable_fastpath_client_input_event == false) {
             this->send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
@@ -5360,7 +5367,7 @@ public:
 
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
-    void process_color_pointer_pdu(Stream & stream) throw(Error) {
+    void process_color_pointer_pdu(InStream & stream) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
@@ -5370,9 +5377,9 @@ public:
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
 
-        struct Pointer & cursor = this->cursors[pointer_cache_idx];
+        Pointer & cursor = this->cursors[pointer_cache_idx];
 
-        memset(&cursor, 0, sizeof(struct Pointer));
+        memset(&cursor, 0, sizeof(Pointer));
         cursor.bpp = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
@@ -5411,7 +5418,7 @@ public:
     // have already been cached using either the Color Pointer Update
     // (section 2.2.9.1.1.4.4) or New Pointer Update (section 2.2.9.1.1.4.5).
 
-    void process_cached_pointer_pdu(Stream & stream)
+    void process_cached_pointer_pdu(InStream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
@@ -5454,7 +5461,7 @@ public:
     // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
     // +---------------------------+-----------------------------+
 
-    void process_system_pointer_pdu(Stream & stream)
+    void process_system_pointer_pdu(InStream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
@@ -5463,7 +5470,7 @@ public:
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
-                struct Pointer cursor;
+                Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
             }
@@ -5584,8 +5591,7 @@ public:
     //  is presented in the color depth described in the xorBpp field (for 8 bpp, each byte
     //  contains one palette index; for 4 bpp, there are two palette indices per byte).
 
-
-    void process_new_pointer_pdu(Stream & stream) throw(Error) {
+    void process_new_pointer_pdu(InStream & stream) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
@@ -5672,9 +5678,9 @@ public:
         }
         else {
             TODO("move that into cursor")
-            this->to_regular_pointer(stream.p, dlen, data_bpp, cursor.data, sizeof(cursor.data));
+            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data, sizeof(cursor.data));
             stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.p, mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
             stream.in_skip_bytes(mlen);
         }
 
@@ -5684,7 +5690,7 @@ public:
         }
     }   // process_new_pointer_pdu
 
-    void process_bitmap_updates(Stream & stream, bool fast_path) {
+    void process_bitmap_updates(InStream & stream, bool fast_path) {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
@@ -5881,44 +5887,42 @@ public:
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
-        HStream stream(1024, 2048);
 
         InfoPacket infoPacket( this->use_rdp5
-                               , this->domain
-                               , this->username
-                               , password
-                               , this->program
-                               , this->directory
-                               , this->performanceFlags
-                               , this->clientAddr
-                               );
+                             , this->domain
+                             , this->username
+                             , password
+                             , this->program
+                             , this->directory
+                             , this->performanceFlags
+                             , this->clientAddr
+                             );
 
-        if (this->rdp_compression) {
-            infoPacket.flags |= INFO_COMPRESSION;
-            infoPacket.flags &= ~CompressionTypeMask;
-            infoPacket.flags |= ((this->rdp_compression - 1) << 9);
-        }
+        this->send_data_request(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
+                if (this->rdp_compression) {
+                    infoPacket.flags |= INFO_COMPRESSION;
+                    infoPacket.flags &= ~CompressionTypeMask;
+                    infoPacket.flags |= ((this->rdp_compression - 1) << 9);
+                }
 
-        if (this->enable_wab_agent) {
-            infoPacket.flags &= ~INFO_MAXIMIZESHELL;
-        }
+                if (this->enable_wab_agent) {
+                    infoPacket.flags &= ~INFO_MAXIMIZESHELL;
+                }
 
-        if (this->remote_program) {
-            infoPacket.flags |= INFO_RAIL;
-        }
+                if (this->remote_program) {
+                    infoPacket.flags |= INFO_RAIL;
+                }
 
-        infoPacket.emit(stream);
-        stream.mark_end();
-
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
-        stream.copy_to_head(sec_header.get_data(), sec_header.size());
+                infoPacket.emit(stream);
+            },
+            write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
+        );
 
         if (this->verbose & 1) {
             infoPacket.log("Send data request", this->password_printing_mode, !this->enable_wab_agent);
         }
-        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->open_session_timeout) {
             this->open_session_timeout_checker.restart_timeout(
@@ -6090,11 +6094,13 @@ public:
         if (this->verbose & 1){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }
-        BStream x224_header(256);
-        HStream mcs_data(256, 512);
-        MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_data.size());
-        this->nego.trans.send(x224_header, mcs_data);
+        write_packets(
+            this->nego.trans,
+            [](StreamSize<256>, OutStream & mcs_data) {
+                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+            },
+            write_x224_dt_tpdu_fn{}
+        );
     }
 
     //void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
@@ -6109,10 +6115,10 @@ public:
     //}
 
     void process_auth_event(const CHANNELS::ChannelDef & auth_channel,
-            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         REDASSERT(stream.in_remain() == chunk_size);
 
-        std::string auth_channel_message(char_ptr_cast(stream.p), stream.in_remain());
+        std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
 
@@ -6125,13 +6131,13 @@ public:
     }
 
     void process_wab_agent_event(const CHANNELS::ChannelDef & wab_agent_channel,
-            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         REDASSERT(stream.in_remain() == chunk_size);
 
         uint16_t message_length = stream.in_uint16_le();
         REDASSERT(message_length == stream.in_remain());
         (void)message_length; // disable -Wunused-variable if REDASSERT is disable
-        std::string wab_agent_channel_message(char_ptr_cast(stream.p), stream.in_remain());
+        std::string wab_agent_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
 
@@ -6162,21 +6168,26 @@ public:
                 this->verbose);
 
             {
-                BStream out_s(32768);
+                StaticOutStream<32768> out_s;
 
                 const size_t message_length_offset = out_s.get_offset();
                 out_s.out_clear_bytes(sizeof(uint16_t));
 
-                out_s.out_string("StartupApplication=");
+                {
+                    char cstr[] = "StartupApplication=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
+                }
+
                 if (this->real_alternate_shell.empty()) {
-                    out_s.out_string("[Windows Explorer]");
+                    char cstr[] = "[Windows Explorer]";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
                 }
                 else {
                     if (!this->real_working_dir.empty()) {
-                        out_s.out_string(this->real_working_dir.c_str());
+                        out_s.out_copy_bytes(this->real_working_dir.data(), this->real_working_dir.size());
                     }
                     out_s.out_uint8('|');
-                    out_s.out_string(this->real_alternate_shell.c_str());
+                    out_s.out_copy_bytes(this->real_alternate_shell.data(), this->real_alternate_shell.size());
                 }
                 out_s.out_clear_bytes(1);   // Null character
 
@@ -6184,10 +6195,8 @@ public:
                     out_s.get_offset() - message_length_offset - sizeof(uint16_t),
                     message_length_offset);
 
-                out_s.mark_end();
-
                 this->send_to_channel(
-                    wab_agent_channel, out_s, out_s.size(),
+                    wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                 );
             }
@@ -6197,22 +6206,23 @@ public:
 
             if (this->wab_agent_keepalive_timeout > 0) {
                 {
-                    BStream out_s(1024);
+                    StaticOutStream<1024> out_s;
 
                     const size_t message_length_offset = out_s.get_offset();
                     out_s.out_clear_bytes(sizeof(uint16_t));
 
-                    out_s.out_string("Request=Keep-Alive");
+                    {
+                        char cstr[] = "Request=Keep-Alive";
+                        out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
+                    }
                     out_s.out_clear_bytes(1);   // Null character
 
                     out_s.set_out_uint16_le(
                         out_s.get_offset() - message_length_offset - sizeof(uint16_t),
                         message_length_offset);
 
-                    out_s.mark_end();
-
                     this->send_to_channel(
-                        wab_agent_channel, out_s, out_s.size(),
+                        wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                     );
                 }
@@ -6279,27 +6289,27 @@ public:
     }
 
     void process_cliprdr_event(
-            const CHANNELS::ChannelDef & cliprdr_channel, Stream & stream,
+            const CHANNELS::ChannelDef & cliprdr_channel, InStream & stream,
             uint32_t length, uint32_t flags, size_t chunk_size) {
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, stream.p, chunk_size,
+        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
             out_asynchronous_task);
 
         REDASSERT(!out_asynchronous_task);
     }   // process_cliprdr_event
 
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
-            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         REDASSERT(stream.in_remain() == chunk_size);
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::process_rail_event: Server RAIL PDU.");
         }
 
-        const auto saved_stream_p = stream.p;
+        const auto saved_stream_p = stream.get_current();
 
         const uint16_t orderType   = stream.in_uint16_le();
         const uint16_t orderLength = stream.in_uint16_le();
@@ -6309,15 +6319,13 @@ public:
                 orderType, orderLength);
         }
 
-        stream.p = saved_stream_p;
-
         this->send_to_front_channel(
-            rail_channel.name, stream.p, length, chunk_size, flags
+            rail_channel.name, saved_stream_p, length, chunk_size, flags
         );
     }
 
     void process_rdpdr_event(const CHANNELS::ChannelDef & rdpdr_channel,
-            Stream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
             if (this->verbose && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
@@ -6327,7 +6335,7 @@ public:
             }
 
             this->send_to_front_channel(
-                channel_names::rdpdr, stream.p, length, chunk_size, flags);
+                channel_names::rdpdr, stream.get_current(), length, chunk_size, flags);
             return;
         }
 
@@ -6335,7 +6343,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, stream.p, chunk_size,
+        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
             out_asynchronous_task);
 
         if (out_asynchronous_task) {

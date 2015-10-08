@@ -64,7 +64,7 @@ LOG(LOG_INFO, "cacheId=%u cacheIndex=%u", cacheId, cacheIndex);
     gly_cache.set_glyph(std::move(fi), cacheId, cacheIndex);
 }
 
-inline void process_glyphcache(GlyphCache & gly_cache, Stream & stream) {
+inline void process_glyphcache(GlyphCache & gly_cache, InStream & stream) {
     const uint8_t cacheId = stream.in_uint8();
     const uint8_t nglyphs = stream.in_uint8();
     for (uint8_t i = 0; i < nglyphs; i++) {
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
 /* 0090 */ 0x01, 0x08, 0x02, 0x07, 0x03, 0x0b, 0x04, 0x07, 0x04, 0x05, 0x05, 0x05, 0x04, 0x07, 0xff, 0x00,  // ................
 /* 00a0 */ 0x10,                                               // .
         };
-        StaticStream stream(glyph_cache_data, sizeof(glyph_cache_data));
+        InStream stream(glyph_cache_data);
         process_glyphcache(gly_cache, stream);
 
         Rect rect_bk(22, 746, 56, 14);

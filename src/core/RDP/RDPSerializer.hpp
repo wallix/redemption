@@ -136,8 +136,8 @@ struct RDPSerializer : public RDPGraphicDevice
     using RDPGraphicDevice::draw;
 
 protected:
-    Stream & stream_orders;
-    Stream & stream_bitmaps;
+    OutStream & stream_orders;
+    OutStream & stream_bitmaps;
 
 private:
     uint8_t bpp;
@@ -187,8 +187,8 @@ protected:
 
 public:
     RDPSerializer( Transport * trans
-                 , Stream & stream_orders
-                 , Stream & stream_bitmaps
+                 , OutStream & stream_orders
+                 , OutStream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
                  , GlyphCache & glyph_cache

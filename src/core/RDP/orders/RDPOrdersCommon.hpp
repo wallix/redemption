@@ -492,7 +492,7 @@ public:
         , FrameMarker          = 0x0D
     };
 
-    explicit AltsecDrawingOrderHeader(Stream & stream) {
+    explicit AltsecDrawingOrderHeader(InStream & stream) {
         this->controlFlags = stream.in_uint8();
 
         this->class_    = (this->controlFlags & 0x03);
@@ -577,7 +577,7 @@ class Bounds {
           ;
     }
 
-    void emit(Stream & stream)
+    void emit(OutStream & stream)
     {
         using namespace RDP;
 
@@ -605,7 +605,7 @@ class RDPPrimaryOrderHeader
     RDPPrimaryOrderHeader(uint8_t control, uint32_t fields)
         : control(control), fields(fields) {}
 
-    void emit_coord(Stream & stream, uint32_t base, int16_t coord, int16_t oldcoord) const {
+    void emit_coord(OutStream & stream, uint32_t base, int16_t coord, int16_t oldcoord) const {
         using namespace RDP;
 
         if (this->control & DELTA){
@@ -620,7 +620,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void receive_coord(Stream & stream, uint32_t base, int16_t & coord) const
+    void receive_coord(InStream & stream, uint32_t base, int16_t & coord) const
     {
         using namespace RDP;
 
@@ -636,8 +636,8 @@ class RDPPrimaryOrderHeader
         }
     }
 
-
-    void emit_rect(Stream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const {
+    void emit_rect(OutStream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const
+    {
         using namespace RDP;
 
         if (this->control & DELTA){
@@ -670,7 +670,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void receive_rect(Stream & stream, uint32_t base, Rect & rect) const
+    void receive_rect(InStream & stream, uint32_t base, Rect & rect) const
     {
         using namespace RDP;
 
@@ -704,10 +704,10 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emit_src(Stream & stream, uint32_t base,
+    void emit_src(OutStream & stream, uint32_t base,
                   uint16_t srcx, uint16_t srcy,
-                  uint16_t oldx, uint16_t oldy) const {
-
+                  uint16_t oldx, uint16_t oldy) const
+    {
         using namespace RDP;
 
         if (this->control & DELTA){
@@ -728,7 +728,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void receive_src(Stream & stream, uint32_t base,
+    void receive_src(InStream & stream, uint32_t base,
                      uint16_t & srcx, uint16_t & srcy) const
     {
         using namespace RDP;
@@ -751,7 +751,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emit_pen(Stream & stream, uint32_t base,
+    void emit_pen(OutStream & stream, uint32_t base,
                   const RDPPen & pen,
                   const RDPPen & old_pen) const {
 
@@ -769,7 +769,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void receive_pen(Stream & stream, uint32_t base, RDPPen & pen) const
+    void receive_pen(InStream & stream, uint32_t base, RDPPen & pen) const
     {
         using namespace RDP;
 
@@ -789,7 +789,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emit_brush(Stream & stream, uint32_t base,
+    void emit_brush(OutStream & stream, uint32_t base,
                   const RDPBrush & brush,
                   const RDPBrush & old_brush) const {
 
@@ -818,7 +818,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void receive_brush(Stream & stream, uint32_t base, RDPBrush & brush) const
+    void receive_brush(InStream & stream, uint32_t base, RDPBrush & brush) const
     {
         using namespace RDP;
 
@@ -869,7 +869,7 @@ class RDPOrderCommon {
     }
 
 private:
-    void _emit(Stream & stream, RDPPrimaryOrderHeader & header)
+    void _emit(OutStream & stream, RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;
 
@@ -937,9 +937,8 @@ private:
     }
 
 public:
-    void emit(Stream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
+    void emit(OutStream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
     {
-
         using namespace RDP;
 
         Bounds bounds(oldcommon.clip, this->clip);
@@ -962,9 +961,8 @@ public:
         }
     }
 
-    const  RDPPrimaryOrderHeader receive(Stream & stream, uint8_t control)
+    const  RDPPrimaryOrderHeader receive(InStream & stream, uint8_t control)
     {
-
         using namespace RDP;
 
         RDPPrimaryOrderHeader header(control, 0);
@@ -1218,7 +1216,7 @@ class RDPSecondaryOrderHeader {
     unsigned flags;
     unsigned type;
 
-    explicit RDPSecondaryOrderHeader(Stream & stream) {
+    explicit RDPSecondaryOrderHeader(InStream & stream) {
         this->order_length = stream.in_uint16_le();
         this->flags        = stream.in_uint16_le();
         this->type         = stream.in_uint8();

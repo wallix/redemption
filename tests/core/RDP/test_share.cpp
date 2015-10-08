@@ -33,16 +33,16 @@
 
 BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 {
-    BStream stream(65536);
+    StaticOutStream<65536> stream;
     memset(stream.get_data(), 0, 65536);
 
     ShareData sdata(stream);
     sdata.emit_begin(PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     sdata.emit_end();
 
-    BStream sctrl_header(256);
-    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, 1, stream.size());
-    BOOST_CHECK_EQUAL(6, sctrl_header.size());
+    StaticOutStream<256> sctrl_header;
+    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, 1, stream.get_offset());
+    BOOST_CHECK_EQUAL(6, sctrl_header.get_offset());
 
     uint8_t * data = sctrl_header.get_data();
     BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
@@ -61,14 +61,14 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 
 
     // concatenate Data and control before checking read
-    BStream stream2(65536);
-    stream2.out_copy_bytes(sctrl_header.get_data(), sctrl_header.size());
-    stream2.out_copy_bytes(stream.get_data(), stream.size());
-    stream2.mark_end();
-    stream2.p = stream2.get_data();
+    StaticOutStream<65536> stream2;
+    stream2.out_copy_bytes(sctrl_header.get_data(), sctrl_header.get_offset());
+    stream2.out_copy_bytes(stream.get_data(), stream.get_offset());
 
-    ShareControl_Recv sctrl2(stream2);
-    BOOST_CHECK_EQUAL((unsigned)PDUTYPE_DATAPDU, (unsigned)sctrl2.pduType);
+    InStream in_stream2(stream2.get_data(), stream2.get_offset());
+
+    ShareControl_Recv sctrl2(in_stream2);
+    BOOST_CHECK_EQUAL(unsigned(PDUTYPE_DATAPDU), unsigned(sctrl2.pduType));
     BOOST_CHECK_EQUAL(18, sctrl2.totalLength);
     BOOST_CHECK_EQUAL(1, sctrl2.PDUSource);
 }
@@ -76,14 +76,14 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 
 BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 {
-    BStream stream(65536);
+    StaticOutStream<65536> stream;
     ShareData sdata(stream);
     sdata.emit_begin(PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     sdata.emit_end();
 
-    BStream sctrl_header(256);
-    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, 1, stream.size());
-    BOOST_CHECK_EQUAL(6, sctrl_header.size());
+    StaticOutStream<256> sctrl_header;
+    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, 1, stream.get_offset());
+    BOOST_CHECK_EQUAL(6, sctrl_header.get_offset());
 
     uint8_t * data = sctrl_header.get_data();
     BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
@@ -101,14 +101,14 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
     BOOST_CHECK_EQUAL(0, (data[11] << 8) + data[10]);
 
     // concatenate Data and control before checking read
-    BStream stream2(65536);
-    stream2.out_copy_bytes(sctrl_header.get_data(), sctrl_header.size());
-    stream2.out_copy_bytes(stream.get_data(), stream.size());
-    stream2.mark_end();
-    stream2.p = stream2.get_data();
+    StaticOutStream<65536> stream2;
+    stream2.out_copy_bytes(sctrl_header.get_data(), sctrl_header.get_offset());
+    stream2.out_copy_bytes(stream.get_data(), stream.get_offset());
 
-    ShareControl_Recv sctrl2(stream2);
-    BOOST_CHECK_EQUAL((unsigned)PDUTYPE_DATAPDU, (unsigned)sctrl2.pduType);
+    InStream in_stream2(stream2.get_data(), stream2.get_offset());
+
+    ShareControl_Recv sctrl2(in_stream2);
+    BOOST_CHECK_EQUAL(unsigned(PDUTYPE_DATAPDU), unsigned(sctrl2.pduType));
     BOOST_CHECK_EQUAL(18, sctrl2.totalLength);
     BOOST_CHECK_EQUAL(1, sctrl2.PDUSource);
 }

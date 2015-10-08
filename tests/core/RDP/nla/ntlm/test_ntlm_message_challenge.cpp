@@ -32,7 +32,7 @@
 
 BOOST_AUTO_TEST_CASE(TestChallenge)
 {
-    BStream s;
+    StaticOutStream<65536> s;
     // ===== NTLMSSP_CHALLENGE =====
     uint8_t packet2[] = {
         0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x02,
@@ -58,15 +58,13 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
 
     LOG(LOG_INFO, "=================================\n");
-    s.init(sizeof(packet2));
     s.out_copy_bytes(packet2, sizeof(packet2));
-    s.mark_end();
-    s.rewind();
 
     uint8_t sig[20];
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req2(s);
+    InStream in_s(s.get_data(), s.get_offset());
+    TSRequest ts_req2(in_s);
 
     BOOST_CHECK_EQUAL(ts_req2.version, 2);
 
@@ -74,12 +72,12 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     BOOST_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
-    BStream to_send2;
+    StaticOutStream<65536> to_send2;
 
-    BOOST_CHECK_EQUAL(to_send2.size(), 0);
+    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0);
     ts_req2.emit(to_send2);
 
-    BOOST_CHECK_EQUAL(to_send2.size(), 0x94 + 3);
+    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
     char message[1024];
     if (!check_sig(to_send2, message, (const char *)sig)){
@@ -91,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     hexdump_c(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
     // ChallengeMsg.recv(ts_req2.negoTokens);
 
-    StaticStream token(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
+    InStream token(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
     ChallengeMsg.recv(token);
 
     BOOST_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
@@ -102,11 +100,11 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     uint8_t targetname_match[] =
         "\x57\x00\x49\x00\x4e\x00\x37\x00";
     BOOST_CHECK_EQUAL(memcmp(targetname_match,
-                             ChallengeMsg.TargetName.Buffer.get_data(),
+                             ChallengeMsg.TargetName.buffer.ostream.get_data(),
                              ChallengeMsg.TargetName.len),
                       0);
-    // hexdump_c(ChallengeMsg.TargetName.Buffer.get_data(),
-    //           ChallengeMsg.TargetName.Buffer.size());
+    // hexdump_c(ChallengeMsg.TargetName.buffer.ostream.get_data(),
+    //           ChallengeMsg.TargetName.buffer.ostream.size());
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
     uint8_t targetinfo_match[] =
@@ -115,15 +113,12 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
         "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
         "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
     BOOST_CHECK_EQUAL(memcmp(targetinfo_match,
-                             ChallengeMsg.TargetInfo.Buffer.get_data(),
+                             ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
                              ChallengeMsg.TargetInfo.len),
                       0);
-    // hexdump_c(ChallengeMsg.TargetInfo.Buffer.get_data(),
-    //           ChallengeMsg.TargetInfo.Buffer.size());
-    BStream servChall;
-    servChall.out_copy_bytes(ChallengeMsg.serverChallenge, 8);
-    servChall.mark_end();
-    servChall.rewind();
+    // hexdump_c(ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
+    //           ChallengeMsg.TargetInfo.buffer.ostream.size());
+    InStream servChall(ChallengeMsg.serverChallenge, 8);
     uint64_t servchallengeinteger = servChall.in_uint64_le();
     BOOST_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
 
@@ -133,14 +128,13 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
-    BStream tosend;
+    StaticOutStream<65535> tosend;
     ChallengeMsg.emit(tosend);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
-    tosend.mark_end();
-    tosend.rewind();
-    ChallengeMsgDuplicate.recv(tosend);
+    InStream in_tosend(tosend.get_data(), tosend.get_offset());
+    ChallengeMsgDuplicate.recv(in_tosend);
 
     BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
     // ChallengeMsgDuplicate.negoFlags.print();
@@ -150,10 +144,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
     BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
-    BStream servChall2;
-    servChall2.out_copy_bytes(ChallengeMsgDuplicate.serverChallenge, 8);
-    servChall2.mark_end();
-    servChall2.rewind();
+    InStream servChall2(ChallengeMsgDuplicate.serverChallenge, 8);
     uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
     BOOST_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
 

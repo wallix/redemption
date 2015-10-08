@@ -231,7 +231,7 @@ public:
 
     RDPPolygonCB(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
                  uint32_t backColor, uint32_t foreColor, const RDPBrush & brush,
-                 uint8_t NumDeltaEntries, Stream & deltaPoints)
+                 uint8_t NumDeltaEntries, InStream & deltaPoints)
         : xStart(xStart)
         , yStart(yStart)
         , bRop2(bRop2)
@@ -262,7 +262,7 @@ public:
              ;
     }
 
-    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
+    void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
               const RDPPolygonCB & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
@@ -365,7 +365,7 @@ public:
         }
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         // LOG(LOG_INFO, "RDPPolygonSC::receive: header fields=0x%02X", header.fields);
 
         header.receive_coord(stream, 0x0001, this->xStart);
@@ -401,14 +401,14 @@ public:
             uint8_t cbData = stream.in_uint8();
             // LOG(LOG_INFO, "cbData=%d", cbData);
 
-            SubStream rgbData(stream, stream.get_offset(), cbData);
+            InStream rgbData(stream.get_current(), cbData);
             stream.in_skip_bytes(cbData);
-            // hexdump_d(rgbData.p, rgbData.size());
+            // hexdump_d(rgbData.get_current(), rgbData.get_capacity());
 
             uint8_t zeroBitsSize = ((this->NumDeltaEntries + 3) / 4);
             // LOG(LOG_INFO, "zeroBitsSize=%d", zeroBitsSize);
 
-            SubStream zeroBits(rgbData, rgbData.get_offset(), zeroBitsSize);
+            InStream zeroBits(rgbData.get_current(), zeroBitsSize);
             rgbData.in_skip_bytes(zeroBitsSize);
 
             uint8_t zeroBit = 0;

@@ -59,10 +59,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     BOOST_CHECK_EQUAL(general_caps.refreshRectSupport, static_cast<uint8_t>(1));
     BOOST_CHECK_EQUAL(general_caps.suppressOutputSupport, static_cast<uint8_t>(1));
 
-    BStream stream(1024);
-    general_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    general_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     GeneralCaps general_caps2;
 

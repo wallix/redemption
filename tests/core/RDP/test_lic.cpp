@@ -167,10 +167,7 @@ BOOST_AUTO_TEST_CASE(Test_lic_new_licence)
         0xed, 0xe8, 0xbf, 0xd6, 0x13, 0xa0, 0xf5, 0x80, 0x4a, 0xe5, 0xff, 0x85, 0x16, 0xfa, 0xcb, 0x1f
 };
 
-    BStream stream(2048);
-    memcpy(stream.get_data(), indata, sizeof(indata));
-    stream.end += sizeof(indata);
-
+    InStream stream(indata);
     uint8_t license_key[16] = {};
     LIC::NewLicense_Recv lic(stream, license_key);
     BOOST_CHECK_EQUAL(LIC::NEW_LICENSE, lic.wMsgType);
@@ -460,10 +457,7 @@ BOOST_AUTO_TEST_CASE(Test_lic_upgrade_licence)
         0xed, 0xe8, 0xbf, 0xd6, 0x13, 0xa0, 0xf5, 0x80, 0x4a, 0xe5, 0xff, 0x85, 0x16, 0xfa, 0xcb, 0x1f
 };
 
-    BStream stream(2048);
-    memcpy(stream.get_data(), indata, sizeof(indata));
-    stream.end += sizeof(indata);
-
+    InStream stream(indata);
     uint8_t license_key[16] = {};
     LIC::NewLicense_Recv lic(stream, license_key);
     BOOST_CHECK_EQUAL((uint8_t)LIC::UPGRADE_LICENSE, lic.wMsgType);

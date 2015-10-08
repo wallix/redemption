@@ -23,10 +23,9 @@
 #define _REDEMPTION_CORE_RDP_SERVERREDIRECTION_HPP_
 
 #include "log.hpp"
+#include "error.hpp"
 #include "stream.hpp"
 #include "redirection_info.hpp"
-#include <utility>
-
 
 
 // [MS-RDPBCGR] - 2.2.13.1 Server Redirection Packet
@@ -310,7 +309,7 @@ struct ServerRedirectionPDU {
     {
     }
 
-    unsigned recv_field_process(Stream & stream, uint8_t* field, size_t field_size,
+    unsigned recv_field_process(InStream & stream, uint8_t* field, size_t field_size,
                                 uint32_t & field_length) {
         unsigned offset = 0;
         field_length = stream.in_uint32_le();
@@ -326,7 +325,7 @@ struct ServerRedirectionPDU {
         return offset;
     }
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         unsigned offset = 0;
         unsigned expected = 12; /* Flags(2) + Length(2) +
                                    SessionID(4) + RedirFlags(4) */
@@ -394,7 +393,7 @@ struct ServerRedirectionPDU {
         }
     }
 
-    void emit(Stream & stream) const {
+    void emit(OutStream & stream) const {
         unsigned expected = 12; /* Flags(2) + Length(2) +
                                    SessionID(4) + RedirFlags(4) */
         if (!stream.has_room(expected)) {
@@ -447,7 +446,6 @@ struct ServerRedirectionPDU {
             stream.out_copy_bytes(this->TargetNetAddresses,
                                   this->TargetNetAddressesLength);
         }
-        stream.mark_end();
     }
 
     bool DontStoreUsername() {

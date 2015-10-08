@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
     using namespace RDP;
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         uint16_t cache_id = 1;
         uint16_t cache_idx = 15;
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         RDPMemBlt state_memblt(cache_id, Rect(310, 390, 10, 10), 0xFF, 0, 0, cache_idx);
 
         RDPOrderCommon newcommon(MEMBLT, Rect(311, 0, 800, 600));
-        RDPMemBlt(cache_id, Rect(300, 400, 50, 60), 0xFF, 3, 4, cache_idx).emit(stream, newcommon, state_common, state_memblt);
+        RDPMemBlt(cache_id, Rect(300, 400, 50, 60), 0xFF, 3, 4, cache_idx).emit(out_stream, newcommon, state_common, state_memblt);
 
         uint8_t datas[9] = {
             SMALL | CHANGE | STANDARD | BOUNDS | DELTA | LASTBOUNDS,
@@ -57,14 +57,14 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
               3,    // srcx = 0 + 3 = 3
               4,    // srcy = 0 + 4 = 4
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 9, datas, "MemBlt 1");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 9, datas, "MemBlt 1");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)MEMBLT, common_cmd.order);
 
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         RDPMemBlt cmd(cache_id, Rect(310, 390, 10, 10), 0xFF, 0, 0, cache_idx);
 
 
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPMemBlt>(common_cmd, cmd,
             RDPOrderCommon(MEMBLT, Rect(311, 0, 800, 600)),
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
     }
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         uint16_t cache_id = 1;
         uint16_t cache_idx = 15;
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         RDPMemBlt state_memblt(0, Rect(), 0, 0, 0, 0);
 
         RDPOrderCommon newcommon(MEMBLT, Rect(311, 0, 800, 600));
-        RDPMemBlt(cache_id, Rect(300, 400, 50, 60), 0xFF, 3, 4, cache_idx).emit(stream, newcommon, state_common, state_memblt);
+        RDPMemBlt(cache_id, Rect(300, 400, 50, 60), 0xFF, 3, 4, cache_idx).emit(out_stream, newcommon, state_common, state_memblt);
 
         uint8_t datas[21] = {
             CHANGE | STANDARD | BOUNDS | LASTBOUNDS,
@@ -106,14 +106,14 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
             0x04, 0x00,  // srcy = 4
             0x0F, 0      // cache_idx
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 21, datas, "MemBlt 2");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 21, datas, "MemBlt 2");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)MEMBLT, common_cmd.order);
 
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         RDPMemBlt cmd(0, Rect(), 0, 0, 0, 0);
 
 
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPMemBlt>(common_cmd, cmd,
             RDPOrderCommon(MEMBLT, Rect(311, 0, 800, 600)),

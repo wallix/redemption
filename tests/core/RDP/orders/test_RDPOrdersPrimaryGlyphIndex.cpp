@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
     using namespace RDP;
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
         TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                              5, 6,
                              12, (const uint8_t*)"Hello, World");
 
-        newcmd.emit(stream, newcommon, state_common, statecmd);
+        newcmd.emit(out_stream, newcommon, state_common, statecmd);
 
         BOOST_CHECK_EQUAL((uint8_t)GLYPHINDEX, newcommon.order);
         BOOST_CHECK_EQUAL(Rect(5, 0, 800, 600), newcommon.clip);
@@ -75,13 +75,13 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
             0x0c, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64,
         };
 
-        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Text 1");
-        stream.mark_end(); stream.p = stream.get_data();
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Text 1");
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)0x0D, header.control);
         BOOST_CHECK_EQUAL((uint32_t)0x3fffff, header.fields);
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         BOOST_CHECK_EQUAL(Rect(5, 0, 800, 600), common_cmd.clip);
 
         RDPGlyphIndex cmd = statecmd;
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         if (!(RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
                 == cmd.brush)){
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
     using namespace RDP;
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
         TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
 
         RDPOrderCommon state_common(RDP::PATBLT, Rect(0, 0, 1024, 768));
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
                                                 "\x08\x09"
                              );
 
-        newcmd.emit(stream, newcommon, state_common, statecmd);
+        newcmd.emit(out_stream, newcommon, state_common, statecmd);
 
         BOOST_CHECK_EQUAL((uint8_t)GLYPHINDEX, newcommon.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), newcommon.clip);
@@ -162,15 +162,14 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
             , 0x08, 0x09
         };
 
-        check_datas(stream.p - stream.get_data(), stream.get_data(), sizeof(datas), datas, "Text 2");
-        stream.mark_end();
-        stream.p = stream.get_data();
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Text 2");
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t        control    = stream.in_uint8();
+        uint8_t        control    = in_stream.in_uint8();
         BOOST_CHECK(control & STANDARD);
 
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
         BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
         BOOST_CHECK_EQUAL((uint32_t)0x3803fb, header.fields);
 
@@ -178,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
         BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), common_cmd.clip);
 
         RDPGlyphIndex cmd = statecmd;
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         BOOST_CHECK(RDPBrush(0, 0, 0x0, 0x0, (const uint8_t *)"\0\0\0\0\0\0\0") == cmd.brush);
 

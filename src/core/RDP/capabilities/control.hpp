@@ -73,7 +73,7 @@ struct ControlCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream)override {
+    void emit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->controlFlags);
@@ -82,7 +82,7 @@ struct ControlCaps : public Capability {
         stream.out_uint16_le(this->detachInterest);
     }
 
-    void recv(Stream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)override {
         this->len = len;
         this->controlFlags = stream.in_uint16_le();
         this->remoteDetachFlag = stream.in_uint16_le();

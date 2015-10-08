@@ -44,16 +44,15 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
         0x0f
     };
 
-    BStream s;
+    StaticOutStream<65536> s;
 
     s.out_copy_bytes(packet, sizeof(packet));
-    s.mark_end();
-    s.rewind();
 
     uint8_t sig[20];
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req(s);
+    InStream in_s(s.get_data(), s.get_offset());
+    TSRequest ts_req(in_s);
 
     BOOST_CHECK_EQUAL(ts_req.version, 2);
 
@@ -61,12 +60,11 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     BOOST_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    BStream to_send;
+    StaticOutStream<65536> to_send;
 
-    BOOST_CHECK_EQUAL(to_send.size(), 0);
     ts_req.emit(to_send);
 
-    BOOST_CHECK_EQUAL(to_send.size(), 0x37 + 2);
+    BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
     char message[1024];
     if (!check_sig(to_send, message, reinterpret_cast<const char *>(sig))){
@@ -100,14 +98,13 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
 
     LOG(LOG_INFO, "=================================\n");
-    s.init(sizeof(packet2));
-    s.out_copy_bytes(packet2, sizeof(packet2));
-    s.mark_end();
     s.rewind();
+    s.out_copy_bytes(packet2, sizeof(packet2));
 
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req2(s);
+    in_s = InStream(s.get_data(), s.get_offset());
+    TSRequest ts_req2(in_s);
 
     BOOST_CHECK_EQUAL(ts_req2.version, 2);
 
@@ -115,12 +112,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     BOOST_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
-    BStream to_send2;
+    StaticOutStream<65536> to_send2;
 
-    BOOST_CHECK_EQUAL(to_send2.size(), 0);
+    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0);
     ts_req2.emit(to_send2);
 
-    BOOST_CHECK_EQUAL(to_send2.size(), 0x94 + 3);
+    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
     if (!check_sig(to_send2, message, (const char *)sig)){
         BOOST_CHECK_MESSAGE(false, message);
@@ -206,15 +203,14 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     };
 
     LOG(LOG_INFO, "=================================\n");
-    s.init(sizeof(packet3));
-    s.out_copy_bytes(packet3, sizeof(packet3));
-    s.mark_end();
     s.rewind();
+    s.out_copy_bytes(packet3, sizeof(packet3));
     get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req3;
 
-    ts_req3.recv(s);
+    in_s = InStream(s.get_data(), s.get_offset());
+    ts_req3.recv(in_s);
 
     BOOST_CHECK_EQUAL(ts_req3.version, 2);
 
@@ -222,12 +218,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     BOOST_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
 
-    BStream to_send3;
+    StaticOutStream<65536> to_send3;
 
-    BOOST_CHECK_EQUAL(to_send3.size(), 0);
+    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0);
     ts_req3.emit(to_send3);
 
-    BOOST_CHECK_EQUAL(to_send3.size(), 0x241 + 4);
+    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
     if (!check_sig(to_send3, message, (const char *)sig)){
         BOOST_CHECK_MESSAGE(false, message);
@@ -278,13 +274,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     };
 
     LOG(LOG_INFO, "=================================\n");
-    s.init(sizeof(packet4));
-    s.out_copy_bytes(packet4, sizeof(packet4));
-    s.mark_end();
     s.rewind();
+    s.out_copy_bytes(packet4, sizeof(packet4));
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req4(s);
+    in_s = InStream(s.get_data(), s.get_offset());
+    TSRequest ts_req4(in_s);
 
     BOOST_CHECK_EQUAL(ts_req4.version, 2);
 
@@ -292,12 +287,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     BOOST_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req4.pubKeyAuth.size(), 0x11e);
 
-    BStream to_send4;
+    StaticOutStream<65536> to_send4;
 
-    BOOST_CHECK_EQUAL(to_send4.size(), 0);
+    BOOST_CHECK_EQUAL(to_send4.get_offset(), 0);
     ts_req4.emit(to_send4);
 
-    BOOST_CHECK_EQUAL(to_send4.size(), 0x12b + 4);
+    BOOST_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
 
     if (!check_sig(to_send4, message, (const char *)sig)){
         BOOST_CHECK_MESSAGE(false, message);
@@ -322,13 +317,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
         0x3e, 0xe9, 0x6b, 0x57
     };
     LOG(LOG_INFO, "=================================\n");
-    s.init(sizeof(packet5));
-    s.out_copy_bytes(packet5, sizeof(packet5));
-    s.mark_end();
     s.rewind();
+    s.out_copy_bytes(packet5, sizeof(packet5));
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req5(s);
+    in_s = InStream(s.get_data(), s.get_offset());
+    TSRequest ts_req5(in_s);
 
     BOOST_CHECK_EQUAL(ts_req5.version, 2);
 
@@ -336,12 +330,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     BOOST_CHECK_EQUAL(ts_req5.authInfo.size(), 0x51);
     BOOST_CHECK_EQUAL(ts_req5.pubKeyAuth.size(), 0);
 
-    BStream to_send5;
+    StaticOutStream<65536> to_send5;
 
-    BOOST_CHECK_EQUAL(to_send5.size(), 0);
+    BOOST_CHECK_EQUAL(to_send5.get_offset(), 0);
     ts_req5.emit(to_send5);
 
-    BOOST_CHECK_EQUAL(to_send5.size(), 0x5a + 2);
+    BOOST_CHECK_EQUAL(to_send5.get_offset(), 0x5a + 2);
 
     if (!check_sig(to_send5, message, (const char *)sig)){
         BOOST_CHECK_MESSAGE(false, message);
@@ -365,15 +359,15 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
                           user,   sizeof(user),
                           pass,   sizeof(pass));
 
-    BStream s;
+    StaticOutStream<65536> s;
 
     ts_cred.emit(s);
-    s.rewind();
-    BOOST_CHECK_EQUAL(s.size(), *(s.p + 1) + 2);
+    BOOST_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
 
     TSCredentials ts_cred_received;
 
-    ts_cred_received.recv(s);
+    InStream in_s(s.get_data(), s.get_offset());
+    ts_cred_received.recv(in_s);
 
     BOOST_CHECK_EQUAL(ts_cred_received.credType, 1);
     BOOST_CHECK_EQUAL(ts_cred_received.passCreds.domainName_length, sizeof(domain));

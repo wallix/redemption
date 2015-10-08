@@ -38,14 +38,14 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
     using namespace RDP;
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPMultiOpaqueRect state_multiopaquerect;
         state_multiopaquerect._Color=0x00D699;
         RDPOrderCommon newcommon(MULTIOPAQUERECT, Rect(0, 0, 1024, 768));
 
-        BStream deltaRectangles(1024);
+        StaticOutStream<1024> deltaRectangles;
 
         deltaRectangles.out_sint16_le(316);
         deltaRectangles.out_sint16_le(378);
@@ -59,13 +59,12 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
             deltaRectangles.out_sint16_le(10);
         }
 
-        deltaRectangles.mark_end();
-        deltaRectangles.rewind();
+        InStream in_deltaRectangles(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
-        RDPMultiOpaqueRect multiopaquerect(316, 378, 200, 200, 0x00000000, 20, deltaRectangles);
+        RDPMultiOpaqueRect multiopaquerect(316, 378, 200, 200, 0x00000000, 20, in_deltaRectangles);
 
 
-        multiopaquerect.emit(stream, newcommon, state_common, state_multiopaquerect);
+        multiopaquerect.emit(out_stream, newcommon, state_common, state_multiopaquerect);
 
         BOOST_CHECK_EQUAL((uint8_t)MULTIOPAQUERECT, newcommon.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
@@ -86,14 +85,14 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
  /* 0040 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,  // ................
  /* 0050 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,                          // ............
         };
-        check_datas(stream.p - stream.get_data(), stream.get_data(), sizeof(datas), datas, "MultiOpaqueRect 1");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "MultiOpaqueRect 1");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
         BOOST_CHECK_EQUAL((uint32_t)0x1BF, header.fields);
@@ -101,9 +100,9 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPMultiOpaqueRect cmd = state_multiopaquerect;
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
-        deltaRectangles.reset();
+        deltaRectangles.rewind();
 
         deltaRectangles.out_sint16_le(316);
         deltaRectangles.out_sint16_le(378);
@@ -117,12 +116,11 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
             deltaRectangles.out_sint16_le(10);
         }
 
-        deltaRectangles.mark_end();
-        deltaRectangles.rewind();
+        in_deltaRectangles = InStream(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
         check<RDPMultiOpaqueRect>(common_cmd, cmd,
             RDPOrderCommon(MULTIOPAQUERECT, Rect(0, 0, 0, 0)),
-            RDPMultiOpaqueRect(316, 378, 200, 200, 0x000000, 20, deltaRectangles),
+            RDPMultiOpaqueRect(316, 378, 200, 200, 0x000000, 20, in_deltaRectangles),
             "MultiOpaqueRect 2");
     }
 }

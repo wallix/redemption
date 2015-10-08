@@ -186,7 +186,7 @@ public:
                this->datasize();
     }
 
-    void emit(Stream & stream) const {
+    void emit(OutStream & stream) const {
         using namespace RDP;
         uint16_t size = this->datasize();
 
@@ -207,7 +207,7 @@ public:
         stream.out_copy_bytes(this->aj.get(), size);
     }
 
-    void receive(Stream & stream, const RDPSecondaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPSecondaryOrderHeader & header) {
         this->cacheId    = stream.in_uint8();
         this->cGlyphs    = stream.in_uint8();
         this->cacheIndex = stream.in_uint16_le();

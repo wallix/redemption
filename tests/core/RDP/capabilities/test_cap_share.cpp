@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
     BOOST_CHECK_EQUAL(share_caps.nodeId, static_cast<uint16_t>(0));
     BOOST_CHECK_EQUAL(share_caps.pad2octets, static_cast<uint16_t>(1));
 
-    BStream stream(1024);
-    share_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    share_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     ShareCaps share_caps2;
 

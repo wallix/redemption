@@ -35,14 +35,14 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     using namespace RDP;
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPLineTo state_lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
         RDPOrderCommon newcommon(LINE, Rect(10, 20, 30, 40));
 
         RDPLineTo(1, 0, 10, 40, 60, 0x102030, 0xFF, RDPPen(0, 1, 0x112233)
-                  ).emit(stream, newcommon, state_common, state_lineto);
+                  ).emit(out_stream, newcommon, state_common, state_lineto);
 
 
         BOOST_CHECK_EQUAL((uint8_t)LINE, newcommon.order);
@@ -62,14 +62,14 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
             01,              // pen width
             0x33, 0x22, 0x11 // pen color
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "LineTo 1");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "LineTo 1");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)0x1D, header.control);
         BOOST_CHECK_EQUAL((uint32_t)0x37D, header.fields);
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
         BOOST_CHECK_EQUAL(Rect(10, 20, 30, 40), common_cmd.clip);
 
         RDPLineTo cmd = state_lineto;
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPLineTo>(common_cmd, cmd,
             RDPOrderCommon(LINE, Rect(10, 20, 30, 40)),

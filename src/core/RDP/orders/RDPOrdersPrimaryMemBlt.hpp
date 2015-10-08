@@ -126,7 +126,7 @@ class RDPMemBlt {
              ;
     }
 
-    void emit(Stream & stream,
+    void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
                 const RDPMemBlt & oldcmd) const
@@ -192,7 +192,7 @@ class RDPMemBlt {
         }
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;
 

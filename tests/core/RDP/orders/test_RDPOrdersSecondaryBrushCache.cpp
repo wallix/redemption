@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
     using namespace RDP;
 
     {
-        BStream stream(65536);
+        StaticOutStream<65536> out_stream;
 
         uint8_t pattern[] = {
             0, 0, 0, 0, 0, 0, 0, 0,
@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
 
         RDPBrushCache newcmd(0, BMF_1BPP, 8, 8, 0, 8, pattern);
 
-        newcmd.emit(stream);
+        newcmd.emit(out_stream);
 
         uint8_t datas[] = {
             STANDARD | SECONDARY,       // control = 0x03
@@ -67,15 +67,15 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
         // BMF_24BPP && iBytes 28 : compression (16 bytes for 64 x 4 colors pixels, + 12 bytes color definitions)
         // Other iBytes values : uncompressed bitmap data
 
-        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Brush Cache 1BPP");
-        stream.mark_end(); stream.p = stream.get_data();
+        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Brush Cache 1BPP");
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
-        RDPSecondaryOrderHeader header(stream);
+        RDPSecondaryOrderHeader header(in_stream);
 
         RDPBrushCache cmd(0, BMF_1BPP, 8, 8, 0, 8, pattern);
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPBrushCache>(cmd, newcmd, "Brush Cache 1BPP");
     }

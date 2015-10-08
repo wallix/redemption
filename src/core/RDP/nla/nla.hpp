@@ -368,20 +368,20 @@ public:
         }
         this->credssp_encode_ts_credentials();
 
-        BStream ts_credentials_send;
+        StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
 
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TSCredentials */
 
-        this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
+        this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.get_offset());
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
         memset(Buffers[0].Buffer.get_data(), 0, Buffers[0].Buffer.size());
 
-        Buffers[1].Buffer.init(ts_credentials_send.size());
+        Buffers[1].Buffer.init(ts_credentials_send.get_offset());
         Buffers[1].Buffer.copy(ts_credentials_send.get_data(),
-                               ts_credentials_send.size());
+                               ts_credentials_send.get_offset());
 
 
         Message.cBuffers = 2;
@@ -440,7 +440,7 @@ public:
         if (status != SEC_E_OK)
             return status;
 
-        StaticStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
+        InStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
         this->ts_credentials.recv(decrypted_creds);
 
         // hexdump(this->ts_credentials.passCreds.userName,
@@ -457,9 +457,9 @@ public:
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "rdpCredssp::send");
         }
-        BStream ts_request_emit;
+        StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
-        this->trans.send(ts_request_emit);
+        this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
     }
     int credssp_recv() {
         // ad hoc read of ber encoding size.
@@ -488,12 +488,13 @@ public:
             length = byte;
             byte = 0;
         }
-        BStream ts_request_received(2 + byte + length);
+        StreamBufMaker<65536> ts_request_received_maker;
+        OutStream ts_request_received = ts_request_received_maker.reserve_out_stream(2 + byte + length);
         ts_request_received.out_copy_bytes(head, 2 + byte);
-        this->trans.recv(&ts_request_received.p, length);
-        ts_request_received.mark_end();
-        ts_request_received.rewind();
-        this->ts_request.recv(ts_request_received);
+        auto end = ts_request_received.get_current();
+        this->trans.recv(&end, length);
+        InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
+        this->ts_request.recv(in_stream);
 
         // hexdump_c(this->pubKeyAuth.get_data(), this->pubKeyAuth.size());
 

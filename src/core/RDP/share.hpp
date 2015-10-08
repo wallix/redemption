@@ -87,7 +87,7 @@ enum {
 // Return True if flowMarker is detected
 // In these case we have FlowTestPDU, FlowResponsePDU or FlowStopPDU
 // and not ShareControl header.
-inline bool peekFlowPDU(const Stream & stream) {
+inline bool peekFlowPDU(const InStream & stream) {
     if (!stream.in_check_rem(2)) {
         throw Error(ERR_SEC);
     }
@@ -123,7 +123,7 @@ struct ShareFlow_Recv
     uint8_t flowNumber;
     uint16_t mcs_channel;
 
-    explicit ShareFlow_Recv(Stream & stream)
+    explicit ShareFlow_Recv(InStream & stream)
     : flowMarker([&stream]{
         if (!stream.in_check_rem(2+1+1+1+1+2)){
             LOG(LOG_ERR,
@@ -221,18 +221,15 @@ struct ShareFlow_Recv
 // PDUSource (2 bytes): A 16-bit, unsigned integer. The channel ID which is the
 //   transmission source of the PDU.
 
-
-//##############################################################################
 struct ShareControl_Recv
-//##############################################################################
 {
     public:
     uint16_t totalLength;
     uint8_t pduType;
     uint16_t PDUSource;
-    SubStream payload;
+    InStream payload;
 
-    explicit ShareControl_Recv(Stream & stream)
+    explicit ShareControl_Recv(InStream & stream)
     : totalLength([&stream]() {
         if (!stream.in_check_rem(2+2)){
             LOG(LOG_ERR,
@@ -254,7 +251,7 @@ struct ShareControl_Recv
         if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4) {
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
-            return SubStream(stream, stream.get_offset(), 0);
+            return InStream(stream.get_current(), 0);
         }
 
         if (this->totalLength < 6) {
@@ -269,7 +266,7 @@ struct ShareControl_Recv
                 stream.in_remain());
             throw Error(ERR_SEC);
         }
-        return SubStream(stream, stream.get_offset(), this->totalLength - 6);
+        return InStream(stream.get_current(), this->totalLength - 6);
     }())
     // body of constructor
     {
@@ -277,7 +274,7 @@ struct ShareControl_Recv
             LOG(LOG_ERR, "Expected ShareControl header, got flowMarker");
             throw Error(ERR_SEC);
         }
-        stream.in_skip_bytes(this->payload.size());
+        stream.in_skip_bytes(this->payload.get_capacity());
     }
 }; // END CLASS ShareControl_Recv
 
@@ -285,18 +282,6 @@ struct ShareControl_Recv
 struct ShareControl_Send
 //##############################################################################
 {
-    ShareControl_Send(Stream & stream, uint8_t pduType, uint16_t PDUSource, uint16_t payload_len)
-    {
-        enum {
-            versionLow = 0x10,
-            versionHigh = 0
-        };
-        stream.out_uint16_le(payload_len + 6);
-        stream.out_uint16_le(versionHigh | versionLow | pduType);
-        stream.out_uint16_le(PDUSource);
-        stream.mark_end();
-    }
-
     ShareControl_Send(OutStream & stream, uint8_t pduType, uint16_t PDUSource, uint16_t payload_len)
     {
         enum {
@@ -499,7 +484,7 @@ enum {
 
 // Inheritance is only used to check if we have enough data available
 struct CheckShareData_Recv {
-    explicit CheckShareData_Recv(const Stream & stream) {
+    explicit CheckShareData_Recv(const InStream & stream) {
         // share_id(4)
         // + ignored(1)
         // + streamid(1)
@@ -517,7 +502,6 @@ struct CheckShareData_Recv {
 };
 
 struct ShareData_Recv : private CheckShareData_Recv
-//##############################################################################
 {
     public:
     uint32_t share_id;
@@ -528,10 +512,10 @@ struct ShareData_Recv : private CheckShareData_Recv
     uint16_t uncompressedLen;
     uint8_t compressedType;
     uint16_t compressedLen;
-    SubStream payload;
+    InStream payload;
 
 
-    explicit ShareData_Recv(Stream & stream, rdp_mppc_dec * dec = nullptr)
+    explicit ShareData_Recv(InStream & stream, rdp_mppc_dec * dec = nullptr)
     //==============================================================================
     : CheckShareData_Recv(stream)
     , share_id(stream.in_uint32_le())
@@ -554,10 +538,10 @@ struct ShareData_Recv : private CheckShareData_Recv
               dec->decompress(stream.get_data()+stream.get_offset(), stream.in_remain(),
                   this->compressedType, rdata, rlen);
 
-              return SubStream(StaticStream(rdata, rlen), 0, rlen);
+              return InStream(rdata, 0, rlen);
           }
           else {
-              return SubStream(stream, stream.get_offset(), stream.in_remain());
+              return InStream(stream.get_current(), stream.in_remain());
           }
       }())
     // BEGIN CONSTRUCTOR
@@ -581,8 +565,7 @@ struct ShareData_Recv : private CheckShareData_Recv
 struct ShareData
 //##############################################################################
 {
-    Stream & stream;
-    SubStream payload;
+    OutStream & stream;
 
     public:
     uint32_t share_id;
@@ -595,10 +578,9 @@ struct ShareData
 
     // CONSTRUCTOR
     //==============================================================================
-    explicit ShareData(Stream & stream)
+    explicit ShareData(OutStream & stream)
     //==============================================================================
     : stream(stream)
-    , payload(this->stream, 0)
     , share_id(0)
     , streamid(0)
     , len(0)
@@ -644,7 +626,6 @@ struct ShareData
                                      + 6,                   // TS_SHARECONTROLHEADER(6)
                                      6);
         }
-        stream.mark_end();
     } // END METHOD emit_end
 }; // END CLASS ShareData
 
@@ -652,7 +633,7 @@ struct ShareData
 struct FlowPDU_Send
 //##############################################################################
 {
-    FlowPDU_Send(Stream & stream, uint8_t flow_pdu_type, uint8_t flow_identifier,
+    FlowPDU_Send(OutStream & stream, uint8_t flow_pdu_type, uint8_t flow_identifier,
                  uint8_t flow_number, uint16_t pdu_source)
     {
         stream.out_uint16_le(0x8000);
@@ -661,7 +642,6 @@ struct FlowPDU_Send
         stream.out_uint8(flow_identifier);
         stream.out_uint8(flow_number);
         stream.out_uint16_le(pdu_source);
-        stream.mark_end();
     }
 }; // END CLASS FlowPDU_Send
 // FlowPDU ::= SEQUENCE {

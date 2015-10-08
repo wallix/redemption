@@ -91,7 +91,7 @@ struct WindowListCaps : public Capability {
     {
     }
 
-    void emit(Stream & stream)override {
+    void emit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->WndSupportLevel);
@@ -99,7 +99,7 @@ struct WindowListCaps : public Capability {
         stream.out_uint16_le(this->NumIconCacheEntries);
     }
 
-    void recv(Stream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)override {
         this->len = len;
         this->WndSupportLevel = stream.in_uint32_le();
         this->NumIconCaches = stream.in_uint8();

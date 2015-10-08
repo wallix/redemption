@@ -36,7 +36,7 @@ class GZipCompressionInTransport : public Transport {
 
     z_stream compression_stream;
 
-    BStream compressed_data;
+    uint8_t compressed_data_buf[GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
     uint8_t * uncompressed_data;
     size_t    uncompressed_data_length;
@@ -49,7 +49,6 @@ public:
     : Transport()
     , source_transport(st)
     , compression_stream()
-    , compressed_data(GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH)
     , uncompressed_data(nullptr)
     , uncompressed_data_length(0)
     , uncompressed_data_buffer()
@@ -83,15 +82,16 @@ private:
                 temp_data_length -= data_length;
             }
             else {
-                this->compressed_data.reset();
-
                 if (!this->inflate_pending) {
+                    auto end = this->compressed_data_buf;
                     this->source_transport.recv(
-                          &this->compressed_data.end
+                          &end
                         , 5                 // reset_decompressor(1) + compressed_data_length(4)
                         );
 
-                    if (this->compressed_data.in_uint8() == 1) {
+                    InStream compressed_data(this->compressed_data_buf);
+
+                    if (compressed_data.in_uint8() == 1) {
                         REDASSERT(this->inflate_pending == false);
 
                         if (this->verbose) {
@@ -105,18 +105,17 @@ private:
 (void)ret;
                     }
 
-                    const size_t compressed_data_length = this->compressed_data.in_uint32_le();
+                    const size_t compressed_data_length = compressed_data.in_uint32_le();
                     if (this->verbose) {
                         LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: compressed_data_length=%u"
                            , compressed_data_length);
                     }
 
-                    this->compressed_data.reset();
-
-                    this->source_transport.recv(&this->compressed_data.end, compressed_data_length);
+                    end = this->compressed_data_buf;
+                    this->source_transport.recv(&end, compressed_data_length);
 
                     this->compression_stream.avail_in = compressed_data_length;
-                    this->compression_stream.next_in  = this->compressed_data.get_data();
+                    this->compression_stream.next_in  = this->compressed_data_buf;
                 }
 
                 this->uncompressed_data = this->uncompressed_data_buffer;
@@ -348,7 +347,7 @@ private:
         if (!this->compressed_data_length)
             return;
 
-        BStream buffer_stream(128);
+        StaticOutStream<128> buffer_stream;
 
         buffer_stream.out_uint8(this->reset_compressor ? 1 : 0);
         this->reset_compressor = false;
@@ -360,8 +359,7 @@ private:
                , this->compressed_data_length);
         }
 
-        buffer_stream.mark_end();
-        this->target_transport.send(buffer_stream);
+        this->target_transport.send(buffer_stream.get_data(), buffer_stream.get_offset());
 
         this->target_transport.send(this->compressed_data, this->compressed_data_length);
 

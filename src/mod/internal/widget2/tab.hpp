@@ -418,7 +418,7 @@ public:
                 , clip);
 
             // Border.
-            BStream deltaPoints(256);
+            StaticOutStream<256> deltaPoints;
 
             deltaPoints.out_sint16_le(item_index_width);
             deltaPoints.out_sint16_le(0);
@@ -431,13 +431,12 @@ public:
                 deltaPoints.out_sint16_le(0);
             }
 
-            deltaPoints.mark_end();
-            deltaPoints.rewind();
+            InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
             RDPPolyline polyline_box( rect_tab.x + item_index_offset
                                     , rect_tab.y + ((current_item_index != item_index) ? 1 : 0)
                                     , 0x0D, 0, this->get_fg_color(), ((current_item_index != item_index) ? 3 : 2)
-                                    , deltaPoints);
+                                    , in_deltaPoints);
             this->drawable.draw(polyline_box, clip);
 
             if (draw_focus && (current_item_index == item_index)) {
@@ -473,7 +472,7 @@ public:
                               , rect_tab.cy - this->item_index_height - border_width_height * 2)
             , this->get_bg_color(), clip);
 
-        BStream deltaPoints(256);
+        StaticOutStream<256> deltaPoints;
 
         deltaPoints.out_sint16_le(0);
         deltaPoints.out_sint16_le(this->item_index_height - border_width_height);
@@ -493,13 +492,12 @@ public:
         deltaPoints.out_sint16_le(-(rect_tab.cx - item_index_offset - border_width_height * 2));
         deltaPoints.out_sint16_le(0);
 
-        deltaPoints.mark_end();
-        deltaPoints.rewind();
+        InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
         RDPPolyline polyline_box( rect_tab.x + first_item_index_offset_left
                                 , rect_tab.y + border_width_height
                                 , 0x0D, 0, this->get_fg_color(), 6
-                                , deltaPoints);
+                                , in_deltaPoints);
         this->drawable.draw(polyline_box, clip);
 
         this->drawable.end_update();

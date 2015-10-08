@@ -84,7 +84,7 @@ public:
             return true;
         }
 
-        BStream out_stream(CHANNELS::CHANNEL_CHUNK_LENGTH);
+        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream;
 
         uint32_t out_flags = 0;
 
@@ -111,16 +111,14 @@ public:
                     this->remaining_number_of_bytes_to_read);
             }
 
-            out_stream.mark_end();
-
             out_flags |= CHANNELS::CHANNEL_FLAG_FIRST;
 
             REDASSERT(!this->length);
 
-            this->length = out_stream.size() + this->total_number_of_bytes_to_read;
+            this->length = out_stream.get_offset() + this->total_number_of_bytes_to_read;
         }
 
-        const uint8_t * const saved_out_stream_p = out_stream.p;
+        const uint8_t * const saved_out_stream_p = out_stream.get_current();
 
         const uint32_t number_of_bytes_to_read =
             std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read);
@@ -133,7 +131,9 @@ public:
         this->transport->seek(this->Offset, SEEK_SET);
 
         try {
-            this->transport->recv(&out_stream.p, number_of_bytes_to_read);
+            auto end = out_stream.get_current();
+            this->transport->recv(&end, number_of_bytes_to_read);
+            out_stream.out_skip_bytes(number_of_bytes_to_read);
         }
         catch (const Error & e) {
             if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
@@ -146,9 +146,8 @@ public:
                     e.id);
             }
         }
-        out_stream.mark_end();
 
-        const uint32_t number_of_bytes_read = out_stream.p - saved_out_stream_p;
+        const uint32_t number_of_bytes_read = out_stream.get_current() - saved_out_stream_p;
 
         if (this->verbose & 0x00800000) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
@@ -164,7 +163,7 @@ public:
 
         REDASSERT(this->length);
 
-        this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.size());
+        this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.get_offset());
 
         return (this->remaining_number_of_bytes_to_read != 0);
     }

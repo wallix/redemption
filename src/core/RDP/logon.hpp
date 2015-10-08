@@ -28,6 +28,7 @@
 
 #include "cast.hpp"
 #include "log.hpp"
+#include "error.hpp"
 #include "stream.hpp"
 #include "get_printable_password.hpp"
 
@@ -772,7 +773,7 @@ struct InfoPacket {
         }
     }
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         this->flags |= ((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON;
         this->flags |= (this->rdp5_support != 0 ) * ( INFO_LOGONERRORS/* | INFO_NOAUDIOPLAYBACK*/ );
 
@@ -858,7 +859,7 @@ struct InfoPacket {
 
     } // END FUNCT : emit()
 
-    void recv(Stream & stream){
+    void recv(InStream & stream){
         unsigned expected =
               18 /* CodePage(4) + flags(4) + cbDomain(2) + cbUserName(2) + cbPassword(2) + cbAlternateShell(2) + cbWorkingDir(2) */
             ;
@@ -908,7 +909,7 @@ struct InfoPacket {
         stream.in_uni_to_ascii_str(this->WorkingDir, this->cbWorkingDir, sizeof(this->WorkingDir));
 
         TODO("Get extended data only if RDP is version 5 or above");
-        if (stream.p < stream.end) {
+        if (stream.get_current() < stream.get_data_end()) {
             this->rdp5_support = true;
             LOG(LOG_INFO, "RDP-5 Style logon");
 
@@ -963,34 +964,34 @@ struct InfoPacket {
                                         );
 
             // Client Time Zone data (skipped)
-            if (stream.p + 172 > stream.end){
+            if (stream.get_current() + 172 > stream.get_data_end()){
                 LOG(LOG_ERR, "Missing InfoPacket.clientTimeZone");
                 return;
             }
             stream.in_skip_bytes(172);
 
             // Client Session Id
-            if (stream.p + 4 > stream.end){
+            if (stream.get_current() + 4 > stream.get_data_end()){
                 LOG(LOG_ERR, "Missing InfoPacket.clientSessionId");
                 return;
             }
             this->extendedInfoPacket.clientSessionId = stream.in_uint32_le();
 
             // Performance Flags
-            if (stream.p + 4 > stream.end){
+            if (stream.get_current() + 4 > stream.get_data_end()){
                 LOG(LOG_ERR, "Missing InfoPacket.performanceFlags");
                 return;
             }
             this->extendedInfoPacket.performanceFlags = stream.in_uint32_le();
 
             // cbAutoReconnectCookie
-            if (stream.p + 2 > stream.end){
+            if (stream.get_current() + 2 > stream.get_data_end()){
                 LOG(LOG_ERR, "Missing InfoPacket.cbAutoReconnectLen");
                 return;
             }
             this->extendedInfoPacket.cbAutoReconnectLen = stream.in_uint16_le();
 
-            if (stream.p + this->extendedInfoPacket.cbAutoReconnectLen > stream.end) {
+            if (stream.get_current() + this->extendedInfoPacket.cbAutoReconnectLen > stream.get_data_end()) {
                 LOG(LOG_ERR, "Missing data for InfoPacket.cbAutoReconnectLen");
                 this->extendedInfoPacket.cbAutoReconnectLen = 0;
                 return;
@@ -999,14 +1000,14 @@ struct InfoPacket {
                                         this->extendedInfoPacket.cbAutoReconnectLen,
                                         sizeof(this->extendedInfoPacket.autoReconnectCookie));
 
-            if (stream.p + 4 > stream.end){
+            if (stream.get_current() + 4 > stream.get_data_end()){
                 // LOG(LOG_WARNING, "Missing InfoPacket.reserved"); // But seems to be OK
                 return;
             }
             this->extendedInfoPacket.reserved1 = stream.in_uint16_le();
             this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
          }
-         if (stream.p != stream.end){
+         if (stream.get_current() != stream.get_data_end()){
             LOG(LOG_ERR, "Trailing data in InfoPacket %d bytes", (signed)stream.in_remain());
          }
     } // END FUNCT : recv()

@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "ssl_calls.hpp"
+#include "stream.hpp"
 
 // Sent by server:
 // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
@@ -230,7 +231,8 @@ namespace LIC
         uint8_t tag;
         uint8_t flags;
         uint16_t wMsgSize;
-        explicit RecvFactory(Stream & stream)
+
+        explicit RecvFactory(InStream & stream)
         {
             if (!stream.in_check_rem(4)){
                 LOG(LOG_ERR, "Not enough data to read licence info header, need %u, got %u", 4, stream.in_remain());
@@ -239,13 +241,13 @@ namespace LIC
             this->tag = stream.in_uint8();
             this->flags = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
-            if (this->wMsgSize > stream.size()){
-                LOG(LOG_ERR, "Not enough data to read licence data, need %u, got %u", 4, this->wMsgSize, stream.size());
+            if (this->wMsgSize > stream.get_capacity()){
+                LOG(LOG_ERR, "Not enough data to read licence data, need %u, got %u", 4, this->wMsgSize, stream.get_capacity());
                 throw Error(ERR_LIC);
             }
             TODO("Factory does not read anything, write it using a cleaner method");
 //            stream.p -= 4;
-            stream.p = stream.get_data();
+            stream.rewind();
         }
     };
 
@@ -721,7 +723,7 @@ namespace LIC
         uint16_t wMsgSize;
         uint8_t server_random[SEC_RANDOM_SIZE];
 
-        explicit LicenseRequest_Recv(Stream & stream){
+        explicit LicenseRequest_Recv(InStream & stream){
             unsigned expected = 4 + SEC_RANDOM_SIZE; /* tag(1) + flags(1) + wMsgSize(2) + server_random(SEC_RANDOM_SIZE) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated License Request_Recv: need %u remains=%u",
@@ -736,9 +738,10 @@ namespace LIC
             stream.in_copy_bytes(this->server_random, SEC_RANDOM_SIZE);
 
             TODO("Add missing productInfo field");
-            stream.end = stream.p;
+            stream.in_skip_bytes(stream.in_remain());
 
-            if (stream.p != stream.end){
+            TODO("Never true");
+            if (stream.in_remain()){
                 LOG(LOG_ERR, "License Request_Recv: unparsed data %u", stream.in_remain());
                 throw Error(ERR_LIC);
             }
@@ -904,7 +907,7 @@ namespace LIC
 
     struct NewLicenseRequest_Send
     {
-        NewLicenseRequest_Send(Stream & stream, uint8_t version, const char * username, const char * hostname)
+        NewLicenseRequest_Send(OutStream & stream, uint8_t version, const char * username, const char * hostname)
         {
             uint8_t null_data[SEC_MODULUS_SIZE];
             memset(null_data, 0, sizeof(null_data));
@@ -1030,8 +1033,6 @@ namespace LIC
             stream.out_uint16_le(LIC::LICENSE_TAG_HOST);
             stream.out_uint16_le(hostlen);
             stream.out_copy_bytes(hostname, hostlen);
-            stream.mark_end();
-
         }
     };
 
@@ -1152,7 +1153,7 @@ namespace LIC
         uint8_t * hwid;
         uint8_t * signature;
 
-        explicit NewLicenseRequest_Recv(Stream & stream)
+        explicit NewLicenseRequest_Recv(InStream & stream)
         {
             const unsigned expected =
                 /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
@@ -1242,8 +1243,7 @@ namespace LIC
             stream.in_skip_bytes(lenLicensingBlob); /* blobData */
 
             TODO("Add missing fields");
-            stream.end = stream.p;
-
+            //stream.end = stream.p;
         }
     };
 
@@ -1626,7 +1626,7 @@ namespace LIC
 
     struct ClientLicenseInfo_Send
     {
-        ClientLicenseInfo_Send(Stream & stream,
+        ClientLicenseInfo_Send(OutStream & stream,
             uint8_t version, uint16_t license_size, uint8_t * license_data,
             uint8_t * hwid, uint8_t * signature)
         {
@@ -1743,7 +1743,6 @@ namespace LIC
             stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
             stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
             stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
-            stream.mark_end();
         }
     };
 
@@ -1790,7 +1789,7 @@ namespace LIC
         uint8_t * hwid;
         uint8_t * signature;
 
-        explicit ClientLicenseInfo_Recv(Stream & stream)
+        explicit ClientLicenseInfo_Recv(InStream & stream)
         {
             /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
              * client_random(SEC_RANDOM_SIZE) + wBlobType(2) + lenLicensingBlob(2)
@@ -1887,7 +1886,7 @@ namespace LIC
 //            stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
 
             TODO("Add missing fields");
-            stream.end = stream.p;
+            //stream.end = stream.p;
         }
     };
 
@@ -1978,7 +1977,7 @@ namespace LIC
         } encryptedPlatformChallenge;
         uint8_t MACData[LICENSE_SIGNATURE_SIZE];
 
-        explicit PlatformChallenge_Recv(Stream & stream){
+        explicit PlatformChallenge_Recv(InStream & stream){
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwConnectFlags(4) + wBlobType(2) + wBlobLen(2) +
              * blob(LICENSE_TOKEN_SIZE) + MACData(LICENSE_SIGNATURE_SIZE)
              */
@@ -2595,7 +2594,7 @@ namespace LIC
 
         uint8_t MACData[16];
 
-        NewLicense_Recv(Stream & stream, uint8_t license_key[]){
+        NewLicense_Recv(InStream & stream, uint8_t license_key[]){
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + wBlobType(2) + wBlobLen(2)
              */
             unsigned expected = 8;
@@ -2622,10 +2621,9 @@ namespace LIC
                 throw Error(ERR_LIC);
             }
 
-            SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
-
+            uint8_t * data = const_cast<uint8_t*>(stream.get_current());
             // size, in, out
-            rc4.crypt(data.size(), data.get_data(), data.get_data());
+            rc4.crypt(this->licenseInfo.wBlobLen, data, data);
 
             expected = 8; /* dwVersion(4) + cbScope(4) */
             if (!stream.in_check_rem(expected)){
@@ -2793,7 +2791,7 @@ namespace LIC
 
         uint8_t MACData[16];
 
-        UpgradeLicense_Recv(Stream & stream, uint8_t license_key[]){
+        UpgradeLicense_Recv(InStream & stream, uint8_t license_key[]){
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + wBlobType(2) + wBlobLen(2)
              */
             unsigned expected = 8;
@@ -2814,10 +2812,9 @@ namespace LIC
             SslRC4 rc4;
             rc4.set_key(license_key, 16);
 
-            SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
-
+            uint8_t * data = const_cast<uint8_t*>(stream.get_current());
             // size, in, out
-            rc4.crypt(data.size(), data.get_data(), data.get_data());
+            rc4.crypt(this->licenseInfo.wBlobLen, data, data);
 
             expected = 8; /* dwVersion(4) + cbScope(4) */
             if (!stream.in_check_rem(expected)){
@@ -2882,11 +2879,10 @@ namespace LIC
             }
             stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
 
-            if (stream.p != stream.end){
+            if (stream.in_remain()){
                 LOG(LOG_ERR, "UpgradeLicense_Recv : unparsed data %d", stream.in_remain());
                 throw Error(ERR_LIC);
             }
-
         }
     };
 
@@ -3051,8 +3047,8 @@ namespace LIC
         // The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
         ValidClientMessage validClientMessage;
 
-        explicit ErrorAlert_Recv(Stream & stream){
-            hexdump_d(stream.get_data(), stream.size());
+        explicit ErrorAlert_Recv(InStream & stream){
+            hexdump_d(stream.get_data(), stream.get_capacity());
 
             const unsigned expected =
                 16; /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwErrorCode(4) + dwStateTransition(4) + wBlobType(2) + wBlobLen(2) */
@@ -3110,7 +3106,7 @@ namespace LIC
         // The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
         ValidClientMessage validClientMessage;
 
-        ErrorAlert_Send(Stream & stream, uint8_t wMsgType, uint8_t bversion, ValidClientMessage & validClientMessage){
+        ErrorAlert_Send(OutStream & stream, uint8_t wMsgType, uint8_t bversion, ValidClientMessage & validClientMessage){
         }
     };
 
@@ -3301,9 +3297,8 @@ namespace LIC
     class ClientPlatformChallengeResponse_Send
     {
     public:
-        ClientPlatformChallengeResponse_Send(Stream & stream, int version, uint8_t * out_token, uint8_t * crypt_hwid, uint8_t * out_sig)
+        ClientPlatformChallengeResponse_Send(OutStream & stream, int version, uint8_t * out_token, uint8_t * crypt_hwid, uint8_t * out_sig)
         {
-
             stream.out_uint8(LIC::PLATFORM_CHALLENGE_RESPONSE);
             stream.out_uint8(version); /* version */
             stream.out_uint16_le(12+LIC::LICENSE_TOKEN_SIZE+LIC::LICENSE_HWID_SIZE+LIC::LICENSE_SIGNATURE_SIZE);
@@ -3333,8 +3328,6 @@ namespace LIC
             stream.out_copy_bytes(crypt_hwid, LIC::LICENSE_HWID_SIZE);
 
             stream.out_copy_bytes(out_sig, LIC::LICENSE_SIGNATURE_SIZE);
-            stream.mark_end();
-
         }
     };
 

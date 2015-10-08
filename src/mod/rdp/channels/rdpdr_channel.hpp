@@ -84,7 +84,7 @@ private:
             device_announce_collection_type& device_announces;
 
             std::unique_ptr<uint8_t[]> device_announce_data;
-            WriteOnlyStream            device_announce_stream;
+            OutStream                  device_announce_stream;
 
         public:
             ToDeviceAnnounceCollectionSender(
@@ -101,8 +101,7 @@ private:
                     this->device_announce_data =
                         std::make_unique<uint8_t[]>(total_length);
 
-                    this->device_announce_stream.~WriteOnlyStream();
-                    new (&this->device_announce_stream) WriteOnlyStream(
+                    this->device_announce_stream = OutStream(
                         this->device_announce_data.get(), total_length);
                 }
 
@@ -113,22 +112,19 @@ private:
                     chunk_data_length);
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    this->device_announce_stream.mark_end();
                     this->device_announces.push_back(
                         std::make_tuple(
-                            this->device_announce_stream.size(),
+                            this->device_announce_stream.get_offset(),
                             std::move(this->device_announce_data)));
 
-                    this->device_announce_stream.~WriteOnlyStream();
-                    new (&this->device_announce_stream) WriteOnlyStream(
-                        nullptr, 0);
+                    this->device_announce_stream = OutStream();
                 }
             }
         } to_device_announce_collection_sender;
 
     private:
         std::unique_ptr<uint8_t[]> current_device_announce_data;
-        WriteOnlyStream            current_device_announce_stream;
+        OutStream                  current_device_announce_stream;
 
         VirtualChannelDataSender* to_client_sender;
         VirtualChannelDataSender* to_server_sender;
@@ -149,7 +145,7 @@ private:
                     //     PreferredDosName(8) +
                     //     DeviceDataLength(4)
             ];
-        WriteOnlyStream remaining_device_announce_request_header_stream;
+        OutStream remaining_device_announce_request_header_stream;
 
         const uint32_t verbose;
 
@@ -173,10 +169,8 @@ private:
         , param_serial_port_authorized(serial_port_authorized)
         , param_smart_card_authorized(smart_card_authorized)
         , remaining_device_announce_request_header_stream(
-              this->remaining_device_announce_request_header_data,
-              sizeof(this->remaining_device_announce_request_header_data))
+              this->remaining_device_announce_request_header_data)
         , verbose(verbose) {
-            this->remaining_device_announce_request_header_stream.reset();
         }
 
     private:
@@ -239,7 +233,7 @@ private:
                     std::get<1>(this->device_announces.front()).get();
 
                 {
-                    ReadOnlyStream chunk(chunk_data, total_length);
+                    InStream chunk(chunk_data, total_length);
 
                     rdpdr::SharedHeader client_message_header;
 
@@ -321,7 +315,7 @@ private:
 
     public:
         void process_client_device_list_announce_request(
-            uint32_t total_length, uint32_t flags, Stream& chunk)
+            uint32_t total_length, uint32_t flags, InStream& chunk)
         {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
             {
@@ -351,7 +345,7 @@ private:
                         DeviceCount);
                 }
 
-                this->remaining_device_announce_request_header_stream.reset();
+                this->remaining_device_announce_request_header_stream.rewind();
             }
 
             while (chunk.in_remain())
@@ -369,39 +363,41 @@ private:
                             !this->remaining_device_announce_request_header_stream.get_offset());
 
                         this->remaining_device_announce_request_header_stream.out_copy_bytes(
-                            chunk.p, chunk.in_remain());
-                        this->remaining_device_announce_request_header_stream.mark_end();
+                            chunk.get_current(), chunk.in_remain());
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                             LOG(LOG_INFO,
                                 "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                                     "%u byte(s) of request header are saved.",
                                 uint32_t(
-                                    this->remaining_device_announce_request_header_stream.size()));
+                                    this->remaining_device_announce_request_header_stream.get_offset()));
                         }
 
                         break;
                     }
 
-                    Stream* device_announce_request_header_stream = &chunk;
+                    InStream* device_announce_request_header_stream = &chunk;
+                    InStream remaining_device_announce_request_header_stream_in;
 
                     if (this->remaining_device_announce_request_header_stream.get_offset()) {
                         const uint32_t needed_data_length =
                               20    // DeviceType(4) + DeviceId(4) +
                                     //     PreferredDosName(8) +
                                     //     DeviceDataLength(4)
-                            - this->remaining_device_announce_request_header_stream.size();
+                            - this->remaining_device_announce_request_header_stream.get_offset();
 
                         this->remaining_device_announce_request_header_stream.out_copy_bytes(
-                            chunk.p, needed_data_length);
+                            chunk.get_current(), needed_data_length);
 
                         chunk.in_skip_bytes(needed_data_length);
 
-                        this->remaining_device_announce_request_header_stream.mark_end();
-                        this->remaining_device_announce_request_header_stream.rewind();
-
+                        remaining_device_announce_request_header_stream_in = InStream(
+                            this->remaining_device_announce_request_header_stream.get_data(),
+                            this->remaining_device_announce_request_header_stream.get_offset());
                         device_announce_request_header_stream =
-                            &this->remaining_device_announce_request_header_stream;
+                            &remaining_device_announce_request_header_stream_in;
+
+                        this->remaining_device_announce_request_header_stream.rewind();
                     }
 
                     const uint32_t DeviceType =
@@ -424,7 +420,7 @@ private:
                     const uint32_t DeviceDataLength =
                         device_announce_request_header_stream->in_uint32_le();
 
-                    this->remaining_device_announce_request_header_stream.reset();
+                    this->remaining_device_announce_request_header_stream.rewind();
 
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
@@ -465,14 +461,12 @@ private:
                                 std::make_unique<uint8_t[]>(
                                     current_device_announce_data_length);
 
-                            this->current_device_announce_stream.~WriteOnlyStream();
-                            new (&this->current_device_announce_stream)
-                                WriteOnlyStream(
-                                    this->current_device_announce_data.get(),
-                                    current_device_announce_data_length);
+                            this->current_device_announce_stream = OutStream(
+                                this->current_device_announce_data.get(),
+                                current_device_announce_data_length);
                         }
                         else {
-                            this->current_device_announce_stream.reset();
+                            this->current_device_announce_stream.rewind();
                         }
 
                         this->length_of_remaining_device_data_to_be_processed =
@@ -508,8 +502,7 @@ private:
                             DeviceDataLength;
 
                         uint8_t out_data[512];
-                        WriteOnlyStream out_stream(out_data,
-                                                   sizeof(out_data));
+                        OutStream out_stream(out_data);
 
                         rdpdr::SharedHeader server_message_header(
                             rdpdr::Component::RDPDR_CTYP_CORE,
@@ -532,11 +525,9 @@ private:
                             server_device_announce_response.log(LOG_INFO);
                         }
 
-                        out_stream.mark_end();
-
                         REDASSERT(this->to_client_sender);
 
-                        const uint32_t total_length_      = out_stream.size();
+                        const uint32_t total_length_      = out_stream.get_offset();
                         const uint32_t flags_             =
                             CHANNELS::CHANNEL_FLAG_FIRST |
                             CHANNELS::CHANNEL_FLAG_LAST;
@@ -568,8 +559,7 @@ private:
                             chunk.in_remain());
 
                     this->current_device_announce_stream.out_copy_bytes(
-                        chunk.p, length_of_device_data_can_be_processed);
-                    this->current_device_announce_stream.mark_end();
+                        chunk.get_current(), length_of_device_data_can_be_processed);
 
                     chunk.in_skip_bytes(
                         length_of_device_data_can_be_processed);
@@ -579,11 +569,9 @@ private:
                     if (!this->length_of_remaining_device_data_to_be_processed)
                     {
                         const uint32_t data_length =
-                            this->current_device_announce_stream.size();
+                            this->current_device_announce_stream.get_offset();
 
-                        this->current_device_announce_stream.~WriteOnlyStream();
-                        new (&this->current_device_announce_stream)
-                            WriteOnlyStream(nullptr, 0);
+                        this->current_device_announce_stream = OutStream();
 
                         this->device_announces.push_back(
                             std::make_tuple(
@@ -607,7 +595,7 @@ private:
         }   // process_client_device_list_announce_request()
 
         void process_client_drive_device_list_remove(uint32_t total_length,
-                uint32_t flags, Stream& chunk) {
+                uint32_t flags, InStream& chunk) {
             {
                 const unsigned int expected = 4;    // DeviceCount(4)
                 if (!chunk.in_check_rem(expected)) {
@@ -647,7 +635,7 @@ private:
                     uint8_t const * data =
                         std::get<1>(*iter).get();
 
-                    ReadOnlyStream header_stream(data,
+                    InStream header_stream(data,
                             rdpdr::SharedHeader::size() +
                             12  // DeviceCount(4) + DeviceType(4) + DeviceId(4)
                         );
@@ -678,9 +666,8 @@ private:
                     + 4     // DeviceId(4)
                     * max_number_of_removable_device
                 ];
-            WriteOnlyStream client_drive_device_list_remove_stream(
-                client_drive_device_list_remove_data,
-                sizeof(client_drive_device_list_remove_data));
+            OutStream client_drive_device_list_remove_stream(
+                client_drive_device_list_remove_data);
 
             uint32_t number_of_removable_device = 0;
 
@@ -712,15 +699,13 @@ private:
             }
 
             if (number_of_removable_device) {
-                client_drive_device_list_remove_stream.mark_end();
-
                 client_drive_device_list_remove_stream.set_out_uint32_le(
                     number_of_removable_device, device_count_offset);
 
                 REDASSERT(this->to_server_sender);
 
                 const uint32_t total_length_      =
-                    client_drive_device_list_remove_stream.size();
+                    client_drive_device_list_remove_stream.get_offset();
                 const uint32_t flags_             =
                     CHANNELS::CHANNEL_FLAG_FIRST |
                     CHANNELS::CHANNEL_FLAG_LAST;
@@ -745,12 +730,12 @@ private:
         }
 
         void process_server_user_logged_on(uint32_t total_length,
-                uint32_t flags, Stream& chunk) {
+                uint32_t flags, InStream& chunk) {
             this->announce_device();
         }
 
         void process_server_device_announce_response(uint32_t total_length,
-                uint32_t flags, Stream& chunk) {
+                uint32_t flags, InStream& chunk) {
             this->waiting_for_server_device_announce_response = false;
 
             this->announce_device();
@@ -898,12 +883,11 @@ public:
     }
 
     void process_client_general_capability_set(uint32_t total_length,
-            uint32_t flags, Stream& chunk, uint32_t Version) {
+            uint32_t flags, InStream& chunk, uint32_t Version) {
         rdpdr::GeneralCapabilitySet general_capability_set;
 
-        uint8_t* const saved_general_capability_set_p = chunk.p;
-
-        general_capability_set.receive(chunk, Version);
+        InStream tmp_chunk = chunk.clone();
+        general_capability_set.receive(tmp_chunk, Version);
 
         const bool need_enable_user_loggedon_pdu =
             (!(general_capability_set.extendedPDU() &
@@ -920,8 +904,8 @@ public:
         }
 
         if (need_enable_user_loggedon_pdu || need_deny_asyncio) {
-            WriteOnlyStream out_stream(
-                saved_general_capability_set_p,
+            OutStream out_stream(
+                const_cast<uint8_t*>(chunk.get_current()),
                 rdpdr::GeneralCapabilitySet::size(Version));
 
             if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
@@ -951,8 +935,6 @@ public:
 
             general_capability_set.emit(out_stream, Version);
 
-            chunk.p = saved_general_capability_set_p;
-
             general_capability_set.receive(chunk, Version);
 
             if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
@@ -963,7 +945,7 @@ public:
     }   // process_client_general_capability_set
 
     bool process_client_core_capability_response(
-        uint32_t total_length, uint32_t flags, Stream& chunk)
+        uint32_t total_length, uint32_t flags, InStream& chunk)
     {
         REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
             (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
@@ -1047,7 +1029,7 @@ public:
     }   // process_client_core_capability_response
 
     bool process_client_device_list_announce_request(uint32_t total_length,
-        uint32_t flags, Stream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         this->device_redirection_manager.process_client_device_list_announce_request(
             total_length, flags, chunk);
@@ -1056,7 +1038,7 @@ public:
     }
 
     bool process_client_drive_query_information_response(
-        uint32_t total_length, uint32_t flags, Stream& chunk,
+        uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
         switch (FsInformationClass) {
@@ -1132,7 +1114,7 @@ public:
     }
 
     bool process_client_drive_query_volume_information_response(
-        uint32_t total_length, uint32_t flags, Stream& chunk,
+        uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
         switch (FsInformationClass) {
@@ -1179,7 +1161,7 @@ public:
     }
 
     bool process_client_drive_io_response(uint32_t total_length,
-        uint32_t flags, Stream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         REDASSERT(flags & CHANNELS::CHANNEL_FLAG_FIRST);
 
@@ -1531,7 +1513,7 @@ public:
                 chunk_data, chunk_data_length);
         }
 
-        ReadOnlyStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->client_message_header.receive(chunk);
@@ -1678,7 +1660,7 @@ public:
     }   // process_client_message
 
     bool process_server_announce_request(uint32_t total_length,
-        uint32_t flags, Stream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         rdpdr::ServerAnnounceRequest server_announce_request;
 
@@ -1696,8 +1678,7 @@ public:
         uint8_t message_buffer[1024];
 
         {
-            WriteOnlyStream out_stream(message_buffer,
-                sizeof(message_buffer));
+            OutStream out_stream(message_buffer);
 
             rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -1719,19 +1700,16 @@ public:
             }
             client_announce_reply.emit(out_stream);
 
-            out_stream.mark_end();
-
             this->send_message_to_server(
-                out_stream.size(),
+                out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
                 out_stream.get_data(),
-                out_stream.size());
+                out_stream.get_offset());
         }
 
         {
-            WriteOnlyStream out_stream(message_buffer,
-                sizeof(message_buffer));
+            OutStream out_stream(message_buffer);
 
             rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -1747,21 +1725,19 @@ public:
             }
             client_name_request.emit(out_stream);
 
-            out_stream.mark_end();
-
             this->send_message_to_server(
-                out_stream.size(),
+                out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
                 out_stream.get_data(),
-                out_stream.size());
+                out_stream.get_offset());
         }
 
         return false;
     }   // process_server_announce_request
 
     bool process_server_client_id_confirm(uint32_t total_length,
-        uint32_t flags, Stream& chunk)
+        uint32_t flags, InStream& chunk)
     {
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender())
@@ -1770,8 +1746,7 @@ public:
         uint8_t message_buffer[1024];
 
         {
-            WriteOnlyStream out_stream(message_buffer,
-                sizeof(message_buffer));
+            OutStream out_stream(message_buffer);
 
             const rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -1814,8 +1789,7 @@ public:
                     "FileSystemVirtualChannel::process_server_client_id_confirm:");
                 general_capability_set.log(LOG_INFO);
             }
-            general_capability_set.emit(out_stream,
-                general_capability_version);
+            general_capability_set.emit(out_stream, general_capability_version);
 
             // Print capability set
             out_stream.out_uint16_le(rdpdr::CAP_PRINTER_TYPE);
@@ -1849,21 +1823,19 @@ public:
                 );
             out_stream.out_uint32_le(rdpdr::DRIVE_CAPABILITY_VERSION_01);
 
-            out_stream.mark_end();
-
             this->send_message_to_server(
-                out_stream.size(),
+                out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
                 out_stream.get_data(),
-                out_stream.size());
+                out_stream.get_offset());
         }
 
         return false;
     }   // process_server_client_id_confirm
 
     bool process_server_create_drive_request(uint32_t total_length,
-        uint32_t flags, Stream& chunk,
+        uint32_t flags, InStream& chunk,
         std::unique_ptr<std::string>& file_path)
     {
         rdpdr::DeviceCreateRequest device_create_request;
@@ -1895,8 +1867,7 @@ public:
         {
             uint8_t message_buffer[1024];
 
-            WriteOnlyStream out_stream(message_buffer,
-                sizeof(message_buffer));
+            OutStream out_stream(message_buffer);
 
             const rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -1922,14 +1893,12 @@ public:
             }
             device_create_response.emit(out_stream);
 
-            out_stream.mark_end();
-
             this->send_message_to_server(
-                out_stream.size(),
+                out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
                 out_stream.get_data(),
-                out_stream.size());
+                out_stream.get_offset());
 
             return false;
         }
@@ -1941,7 +1910,7 @@ public:
     }   // process_server_create_drive_request
 
     bool process_server_drive_io_request(uint32_t total_length,
-        uint32_t flags, Stream& chunk,
+        uint32_t flags, InStream& chunk,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -2147,7 +2116,7 @@ public:
                 chunk_data, chunk_data_length);
         }
 
-        ReadOnlyStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->server_message_header.receive(chunk);

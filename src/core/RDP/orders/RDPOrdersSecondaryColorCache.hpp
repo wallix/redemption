@@ -88,7 +88,7 @@ public:
         : palette(palette)
         , cacheIndex(cacheIndex) {}
 
-    void emit(Stream & stream) const
+    void emit(OutStream & stream) const
     {
         using namespace RDP;
 
@@ -113,7 +113,7 @@ public:
         }
     }
 
-    void receive(Stream & stream, const RDPSecondaryOrderHeader &/* header*/)
+    void receive(InStream & stream, const RDPSecondaryOrderHeader &/* header*/)
     {
         using namespace RDP;
 

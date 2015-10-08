@@ -33,8 +33,6 @@
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/caches/glyphcache.hpp"
 
-class Stream;
-
 struct ClientInfo {
     int bpp = 0;
     uint16_t width = 0;
@@ -94,7 +92,7 @@ struct ClientInfo {
 
     ClientInfo() = default;
 
-    void process_logon_info( Stream & stream
+    void process_logon_info( InStream & stream
                            , bool ignore_logon_password
                            , uint32_t performance_flags_default
                            , uint32_t performance_flags_force_present

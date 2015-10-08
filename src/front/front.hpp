@@ -106,7 +106,7 @@
 #include <memory>
 
 
-class Front : public FrontAPI, public ActivityChecker{
+class Front final : public FrontAPI, public ActivityChecker{
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -892,7 +892,7 @@ public:
         }
     }
 
-    void disconnect() throw(Error)
+    void disconnect()
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Front::disconnect");
@@ -912,7 +912,7 @@ public:
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel
-                                , uint8_t * chunk
+                                , uint8_t const * chunk
                                 , size_t length
                                 , size_t chunk_size
                                 , int flags) override {
@@ -948,7 +948,7 @@ private:
     // The number of RGB triplets in the paletteData field.
     // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
 
-    void GeneratePaletteUpdateData(Stream & stream) {
+    void GeneratePaletteUpdateData(OutStream & stream) {
         const BGRPalette & palette = (this->mod_bpp == 8) ? this->mod_palette_rgb : this->palette332_rgb;
 
         // Payload
@@ -966,7 +966,6 @@ private:
             stream.out_uint8(g);
             stream.out_uint8(b);
         }
-        stream.mark_end();
     }
 
 public:
@@ -978,8 +977,8 @@ public:
 
             this->flush();
 
-            HStream stream(1024, 65536);
-            GeneratePaletteUpdateData(stream);
+            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+            GeneratePaletteUpdateData(stream.get_data_stream());
 
             ::send_server_update( this->trans
                                 , this->server_fastpath_update_support
@@ -999,7 +998,7 @@ public:
         }
     }
 
-    void incoming(Callback & cb) throw(Error)
+    void incoming(Callback & cb)
     {
         unsigned expected;
 
@@ -1133,8 +1132,7 @@ public:
 
             // GCC User Data
             // -------------
-            SubStream & gcc_data = mcs_ci.payload;
-            GCC::Create_Request_Recv gcc_cr(gcc_data);
+            GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
             TODO("ensure gcc_data substream is fully consumed")
 
             while (gcc_cr.payload.in_check_rem(4)) {
@@ -1364,7 +1362,7 @@ public:
                     GCC::Create_Response_Send(gcc_header, packed_size);
                 },
                 [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
-                    MCS::CONNECT_RESPONSE_Send_new_stream mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
+                    MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
                 },
                 write_x224_dt_tpdu_fn{}
             );
@@ -1613,7 +1611,7 @@ public:
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if (this->verbose & 128) {
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.get_data(), sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
             }
 
             if (!(sec.flags & SEC::SEC_INFO_PKT)) {
@@ -1771,7 +1769,7 @@ public:
                         (void)sec;
 
                         auto packet = hstream.copy_to_head(tmp_sec_header);
-                        sec_header = make_skip_out_stream(packet.data(), packet.size());
+                        sec_header = OutStream(packet.data(), packet.size(), packet.size());
                     }
                 );
 
@@ -1808,7 +1806,7 @@ public:
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if ((this->verbose & (128 | 2)) == (128 | 2)) {
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.get_data(), sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
             }
 
             // Licensing
@@ -1962,7 +1960,7 @@ public:
                 }
                 TODO("Check why this is necessary when using loop connection ?")
             }
-            sec.payload.p = sec.payload.end;
+            sec.payload.in_skip_bytes(sec.payload.in_remain());
         }
         break;
 
@@ -2130,7 +2128,7 @@ public:
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
                 if (this->verbose & 128) {
                     LOG(LOG_INFO, "sec decrypted payload:");
-                    hexdump_d(sec.payload.get_data(), sec.payload.size());
+                    hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
                 }
 
                 if (this->verbose & 8) {
@@ -2177,7 +2175,7 @@ public:
                             LOG(LOG_INFO, "Front::send_to_mod_channel");
                         }
 
-                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+                        InStream chunk(sec.payload.get_current(), chunk_size);
 
                         cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }
@@ -2186,10 +2184,10 @@ public:
                             LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
                         }
                     }
-                    sec.payload.p += chunk_size;
+                    sec.payload.in_skip_bytes(chunk_size);
                 }
                 else {
-                    while (sec.payload.p < sec.payload.end) {
+                    while (sec.payload.get_current() < sec.payload.get_data_end()) {
                         ShareControl_Recv sctrl(sec.payload);
 
                         switch (sctrl.pduType) {
@@ -2266,7 +2264,7 @@ public:
                         }
 
                         TODO("check all sctrl.payload data is consumed")
-                        sec.payload.p = sctrl.payload.p;
+                        sec.payload.in_skip_bytes(sctrl.payload.get_current() - sec.payload.get_current());
                     }
                 }
 
@@ -2334,9 +2332,25 @@ public:
         );
     }
 
-    inline void send_data_indication_ex(uint16_t channelId, HStream & stream) override {
-        ::send_data_indication_ex(this->trans, this->encryptionLevel, this->encrypt, this->userid, stream);
+    void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
+        this->send_data_indication_ex_impl(
+            channelId,
+            [&](StreamSize<65536>, OutStream & stream) {
+                stream.out_copy_bytes(data, data_size);
+            }
+        );
     }
+
+public:
+    template<class... Writer>
+    void send_data_indication_ex_impl(uint16_t channelId, Writer... writer) {
+        ::send_data_indication_ex(
+            this->trans, channelId, this->encryptionLevel, this->encrypt, this->userid,
+            writer...
+        );
+    }
+
+private:
 
     void send_fastpath_data(InStream & data) override {
         write_packets(
@@ -2448,7 +2462,7 @@ public:
             LOG(LOG_INFO, "Front::send_data_update_sync");
         }
 
-        HStream stream(1024, 65536);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
         ::send_server_update( this->trans
                             , this->server_fastpath_update_support
@@ -2472,185 +2486,185 @@ public:
             LOG(LOG_INFO, "Front::send_demand_active");
         }
 
-        size_t caps_count = 0;
+        this->send_data_indication_ex_impl(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this](StreamSize<65536>, OutStream & stream) {
+                size_t caps_count = 0;
 
-        HStream stream(1024, 65536);
+                // Payload
+                stream.out_uint32_le(this->share_id);
+                stream.out_uint16_le(4); /* 4 chars for RDP\0 */
 
-        // Payload
-        stream.out_uint32_le(this->share_id);
-        stream.out_uint16_le(4); /* 4 chars for RDP\0 */
+                /* 2 bytes size after num caps, set later */
+                uint32_t caps_size_offset = stream.get_offset();
+                stream.out_clear_bytes(2);
 
-        /* 2 bytes size after num caps, set later */
-        uint32_t caps_size_offset = stream.get_offset();
-        stream.out_clear_bytes(2);
+                stream.out_copy_bytes("RDP", 4);
 
-        stream.out_copy_bytes("RDP", 4);
+                /* 4 byte num caps, set later */
+                uint32_t caps_count_offset = stream.get_offset();
+                stream.out_clear_bytes(4);
 
-        /* 4 byte num caps, set later */
-        uint32_t caps_count_offset = stream.get_offset();
-        stream.out_clear_bytes(4);
+                GeneralCaps general_caps;
 
-        GeneralCaps general_caps;
+                if (this->fastpath_support) {
+                    general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
+                }
+                if (!this->server_capabilities_filename.empty()) {
+                    GeneralCapsLoader generalcaps_loader(general_caps);
 
-        if (this->fastpath_support) {
-            general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
-        }
-        if (!this->server_capabilities_filename.empty()) {
-            GeneralCapsLoader generalcaps_loader(general_caps);
+                    ConfigurationLoader cfg_loader(generalcaps_loader, this->server_capabilities_filename.c_str());
+                }
+                if (this->verbose) {
+                    general_caps.log("Sending to client");
+                }
+                general_caps.emit(stream);
+                caps_count++;
 
-            ConfigurationLoader cfg_loader(generalcaps_loader, this->server_capabilities_filename.c_str());
-        }
-        if (this->verbose) {
-            general_caps.log("Sending to client");
-        }
-        general_caps.emit(stream);
-        caps_count++;
+                BitmapCaps bitmap_caps;
+                bitmap_caps.preferredBitsPerPixel = this->client_info.bpp;
+                bitmap_caps.desktopWidth = this->client_info.width;
+                bitmap_caps.desktopHeight = this->client_info.height;
+                bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
+                if (!this->server_capabilities_filename.empty()) {
+                    BitmapCapsLoader bitmapcaps_loader(bitmap_caps);
 
-        BitmapCaps bitmap_caps;
-        bitmap_caps.preferredBitsPerPixel = this->client_info.bpp;
-        bitmap_caps.desktopWidth = this->client_info.width;
-        bitmap_caps.desktopHeight = this->client_info.height;
-        bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-        if (!this->server_capabilities_filename.empty()) {
-            BitmapCapsLoader bitmapcaps_loader(bitmap_caps);
+                    ConfigurationLoader cfg_loader(bitmapcaps_loader, this->server_capabilities_filename.c_str());
+                }
+                if (this->verbose) {
+                    bitmap_caps.log("Sending to client");
+                }
+                bitmap_caps.emit(stream);
+                caps_count++;
 
-            ConfigurationLoader cfg_loader(bitmapcaps_loader, this->server_capabilities_filename.c_str());
-        }
-        if (this->verbose) {
-            bitmap_caps.log("Sending to client");
-        }
-        bitmap_caps.emit(stream);
-        caps_count++;
+                FontCaps font_caps;
+                if (this->verbose) {
+                    font_caps.log("Sending to client");
+                }
+                font_caps.emit(stream);
+                caps_count++;
 
-        FontCaps font_caps;
-        if (this->verbose) {
-            font_caps.log("Sending to client");
-        }
-        font_caps.emit(stream);
-        caps_count++;
+                OrderCaps order_caps;
+                order_caps.pad4octetsA = 0x40420f00;
+                order_caps.numberFonts = 0x2f;
+                order_caps.orderFlags = 0x22;
+                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
+                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
+                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
+                order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+                order_caps.orderSupport[UnusedIndex3] = 1;
+                order_caps.textFlags = 0x06a1;
+                order_caps.pad4octetsB = 0x0f4240;
+                order_caps.desktopSaveSize = 0x0f4240;
+                order_caps.pad2octetsC = 1;
+                if (!this->server_capabilities_filename.empty()) {
+                    OrderCapsLoader ordercaps_loader(order_caps);
 
-        OrderCaps order_caps;
-        order_caps.pad4octetsA = 0x40420f00;
-        order_caps.numberFonts = 0x2f;
-        order_caps.orderFlags = 0x22;
-        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
-        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
-        order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
-        order_caps.orderSupport[UnusedIndex3] = 1;
-        order_caps.textFlags = 0x06a1;
-        order_caps.pad4octetsB = 0x0f4240;
-        order_caps.desktopSaveSize = 0x0f4240;
-        order_caps.pad2octetsC = 1;
-        if (!this->server_capabilities_filename.empty()) {
-            OrderCapsLoader ordercaps_loader(order_caps);
+                    ConfigurationLoader cfg_loader(ordercaps_loader, this->server_capabilities_filename.c_str());
+                }
+                if (this->verbose) {
+                    order_caps.log("Sending to client");
+                }
+                order_caps.emit(stream);
+                caps_count++;
 
-            ConfigurationLoader cfg_loader(ordercaps_loader, this->server_capabilities_filename.c_str());
-        }
-        if (this->verbose) {
-            order_caps.log("Sending to client");
-        }
-        order_caps.emit(stream);
-        caps_count++;
+                if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
+                    BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
+                    if (this->verbose) {
+                        bitmap_cache_host_support_caps.log("Sending to client");
+                    }
+                    bitmap_cache_host_support_caps.emit(stream);
+                    caps_count++;
+                }
 
-        if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
-            BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
-            if (this->verbose) {
-                bitmap_cache_host_support_caps.log("Sending to client");
+                ColorCacheCaps colorcache_caps;
+                if (this->verbose) {
+                    colorcache_caps.log("Sending to client");
+                }
+                colorcache_caps.emit(stream);
+                caps_count++;
+
+                PointerCaps pointer_caps;
+                pointer_caps.colorPointerCacheSize = 0x19;
+                pointer_caps.pointerCacheSize = 0x19;
+                if (this->verbose) {
+                    pointer_caps.log("Sending to client");
+                }
+                pointer_caps.emit(stream);
+                caps_count++;
+
+                ShareCaps share_caps;
+                share_caps.nodeId = this->userid + GCC::MCS_USERCHANNEL_BASE;
+                share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
+                if (this->verbose) {
+                    share_caps.log("Sending to client");
+                }
+                share_caps.emit(stream);
+                caps_count++;
+
+                InputCaps input_caps;
+
+                // Slow/Fast-path
+                input_caps.inputFlags          =
+                    INPUT_FLAG_SCANCODES
+                    | (  this->client_fastpath_input_event_support
+                    ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
+                input_caps.keyboardLayout      = 0;
+                input_caps.keyboardType        = 0;
+                input_caps.keyboardSubType     = 0;
+                input_caps.keyboardFunctionKey = 0;
+                if (this->verbose) {
+                    input_caps.log("Sending to client");
+                }
+                input_caps.emit(stream);
+                caps_count++;
+
+                if (this->client_info.remote_program) {
+                    RailCaps rail_caps;
+                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
+                    if (this->verbose) {
+                        rail_caps.log("Sending to client");
+                    }
+                    rail_caps.emit(stream);
+                    caps_count++;
+
+                    WindowListCaps window_list_caps;
+                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+                    window_list_caps.NumIconCaches = 3;
+                    window_list_caps.NumIconCacheEntries = 12;
+                    if (this->verbose) {
+                        window_list_caps.log("Sending to client");
+                    }
+                    window_list_caps.emit(stream);
+                    caps_count++;
+                }
+
+                size_t caps_size = stream.get_offset() - caps_count_offset;
+                stream.set_out_uint16_le(caps_size, caps_size_offset);
+                stream.set_out_uint32_le(caps_count, caps_count_offset);
+
+                stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
+
+            },
+            [this](StreamSize<0>, OutStream &, uint8_t  const * packet_data, std::size_t packet_size) {
+                if ((this->verbose & (128 | 1)) == (128 | 1)) {
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(packet_data, packet_size);
+                }
             }
-            bitmap_cache_host_support_caps.emit(stream);
-            caps_count++;
-        }
-
-        ColorCacheCaps colorcache_caps;
-        if (this->verbose) {
-            colorcache_caps.log("Sending to client");
-        }
-        colorcache_caps.emit(stream);
-        caps_count++;
-
-        PointerCaps pointer_caps;
-        pointer_caps.colorPointerCacheSize = 0x19;
-        pointer_caps.pointerCacheSize = 0x19;
-        if (this->verbose) {
-            pointer_caps.log("Sending to client");
-        }
-        pointer_caps.emit(stream);
-        caps_count++;
-
-        ShareCaps share_caps;
-        share_caps.nodeId = this->userid + GCC::MCS_USERCHANNEL_BASE;
-        share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
-        if (this->verbose) {
-            share_caps.log("Sending to client");
-        }
-        share_caps.emit(stream);
-        caps_count++;
-
-        InputCaps input_caps;
-
-        // Slow/Fast-path
-        input_caps.inputFlags          =
-              INPUT_FLAG_SCANCODES
-            | (  this->client_fastpath_input_event_support
-               ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
-        input_caps.keyboardLayout      = 0;
-        input_caps.keyboardType        = 0;
-        input_caps.keyboardSubType     = 0;
-        input_caps.keyboardFunctionKey = 0;
-        if (this->verbose) {
-            input_caps.log("Sending to client");
-        }
-        input_caps.emit(stream);
-        caps_count++;
-
-        if (this->client_info.remote_program) {
-            RailCaps rail_caps;
-            rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
-            if (this->verbose) {
-                rail_caps.log("Sending to client");
-            }
-            rail_caps.emit(stream);
-            caps_count++;
-
-            WindowListCaps window_list_caps;
-            window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
-            window_list_caps.NumIconCaches = 3;
-            window_list_caps.NumIconCacheEntries = 12;
-            if (this->verbose) {
-                window_list_caps.log("Sending to client");
-            }
-            window_list_caps.emit(stream);
-            caps_count++;
-        }
-
-        size_t caps_size = stream.get_offset() - caps_count_offset;
-        stream.set_out_uint16_le(caps_size, caps_size_offset);
-        stream.set_out_uint32_le(caps_count, caps_count_offset);
-
-        stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
-        stream.mark_end();
-
-        StaticOutStream<256> sctrl_header;
-        ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-        stream.copy_to_head(sctrl_header.get_data(), sctrl_header.get_offset());
-
-        if ((this->verbose & (128 | 1)) == (128 | 1)) {
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.get_data(), stream.size());
-        }
-
-        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, stream);
+        );
     }   // send_demand_active
 
-    void process_confirm_active(Stream & stream)
+    void process_confirm_active(InStream & stream)
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "process_confirm_active");
@@ -2681,9 +2695,9 @@ public:
             LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
         }
 
-        uint8_t * start = stream.p;
-        uint8_t* theoricCapabilitiesEnd = start + lengthCombinedCapabilities;
-        uint8_t* actualCapabilitiesEnd = stream.end;
+        uint8_t const * start = stream.get_current();
+        uint8_t const * theoricCapabilitiesEnd = start + lengthCombinedCapabilities;
+        uint8_t const * actualCapabilitiesEnd = stream.get_data_end();
 
         expected = 4; /* numberCapabilities(2) + pad(2) */
         if (!stream.in_check_rem(expected)) {
@@ -2699,23 +2713,23 @@ public:
             if (this->verbose & 32) {
                 LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
             }
-            if (stream.p + 4 > theoricCapabilitiesEnd) {
+            if (stream.get_current() + 4 > theoricCapabilitiesEnd) {
                 LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d",
                     lengthCombinedCapabilities,
-                    stream.p-start,
+                    stream.get_current()-start,
                     stream.in_remain());
             }
-            if (stream.p + 4 > actualCapabilitiesEnd) {
+            if (stream.get_current() + 4 > actualCapabilitiesEnd) {
                 LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d",
                     lengthCombinedCapabilities,
-                    stream.p-start,
+                    stream.get_current()-start,
                     stream.in_remain());
                 return;
             }
 
             uint16_t capset_type = stream.in_uint16_le();
             uint16_t capset_length = stream.in_uint16_le();
-            uint8_t * next = (stream.p + capset_length) - 4;
+            uint8_t const * next = (stream.get_current() + capset_length) - 4;
 
             switch (capset_type) {
             case CAPSTYPE_GENERAL: {
@@ -2991,11 +3005,11 @@ public:
                 }
                 break;
             }
-            if (stream.p > next) {
+            if (stream.get_current() > next) {
                 LOG(LOG_ERR, "read out of bound detected");
                 throw Error(ERR_MCS);
             }
-            stream.p = next;
+            stream.in_skip_bytes(next - stream.get_current());
         }
         // After Capabilities read optional SessionId
         if (stream.in_remain() >= 4) {
@@ -3003,7 +3017,7 @@ public:
             stream.in_skip_bytes(4); /* Session Id */
         }
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.p, stream.end);
+            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.get_current(), stream.get_data_end());
         }
     }
 
@@ -3074,11 +3088,10 @@ public:
             LOG(LOG_INFO, "send_synchronize");
         }
 
-        HStream stream(1024, 2048);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         // Payload
-        stream.out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
-        stream.out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
-        stream.mark_end();
+        stream.get_data_stream().out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
+        stream.get_data_stream().out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
@@ -3127,13 +3140,12 @@ public:
             LOG(LOG_INFO, "send_control action=%u", action);
         }
 
-        HStream stream(1024, 2048);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
         // Payload
-        stream.out_uint16_le(action);
-        stream.out_uint16_le(0); // userid
-        stream.out_uint32_le(1002); // control id
-        stream.mark_end();
+        stream.get_data_stream().out_uint16_le(action);
+        stream.get_data_stream().out_uint16_le(0); // userid
+        stream.get_data_stream().out_uint32_le(1002); // control id
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
@@ -3155,7 +3167,7 @@ public:
     }
 
     /*****************************************************************************/
-    void send_fontmap() throw(Error)
+    void send_fontmap()
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_fontmap");
@@ -3185,11 +3197,10 @@ public:
                                           0x2b, 0x00, 0x2a, 0x00
                                         };
 
-        HStream stream(1024, 4096);
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
         // Payload
-        stream.out_copy_bytes((char*)g_fontmap, 172);
-        stream.mark_end();
+        stream.get_data_stream().out_copy_bytes((char*)g_fontmap, 172);
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
@@ -3211,7 +3222,7 @@ public:
     }
 
     /* PDUTYPE_DATAPDU */
-    void process_data(Stream & stream, Callback & cb)
+    void process_data(InStream & stream, Callback & cb)
     {
         unsigned expected;
         if (this->verbose & 8) {
@@ -3228,7 +3239,7 @@ public:
                 unsigned(sdata_in.len),
                 unsigned(sdata_in.compressedLen),
                 unsigned(stream.in_remain()),
-                unsigned(sdata_in.payload.size())
+                unsigned(sdata_in.payload.get_capacity())
             );
         }
 
@@ -3238,7 +3249,7 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_UPDATE");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
             if (this->verbose & 8) {
@@ -3272,7 +3283,7 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
@@ -3438,14 +3449,14 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
 
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
@@ -3463,10 +3474,7 @@ public:
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect
 
-                HStream stream(1024, 2048);
-
-                // Payload
-                stream.mark_end();
+                StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
                 const uint32_t log_condition = (128 | 8);
                 ::send_share_data_ex( this->trans
@@ -3488,14 +3496,14 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
         {
@@ -3594,14 +3602,14 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_FONTMAP");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
             if (this->verbose & (4 | 8)) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
             if (this->verbose & 8) {
@@ -3656,56 +3664,56 @@ public:
             }
 
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_IME_STATUS");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_ARC_STATUS_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.p = sdata_in.payload.end;
+            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
 
         default:
@@ -3713,28 +3721,29 @@ public:
             break;
         }
 
-        stream.p = sdata_in.payload.p;
+        stream.in_skip_bytes(sdata_in.payload.get_current() - stream.get_current());
 
         if (this->verbose & (4 | 8)) {
             LOG(LOG_INFO, "process_data done");
         }
     }
 
-    void send_deactive() throw(Error)
+    void send_deactive()
     {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_deactive");
         }
 
-        HStream stream(1024, 1024 + 256);
-        ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
-
-        if ((this->verbose & (128 | 1)) == (128 | 1)) {
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.get_data(), stream.size());
-        }
-
-        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, stream);
+        this->send_data_indication_ex_impl(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [&](StreamSize<256>, OutStream & stream) {
+                ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
+                if ((this->verbose & (128 | 1)) == (128 | 1)) {
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(stream.get_data(), stream.get_offset());
+                }
+            }
+        );
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_deactive done");

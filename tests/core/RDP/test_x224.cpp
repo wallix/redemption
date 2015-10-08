@@ -293,9 +293,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
 {
-    BStream stream(256);
+    StaticOutStream<256> stream;
     X224::CR_TPDU_Send x224(stream, "", 0, 0, 0);
-    BOOST_CHECK_EQUAL(11, stream.size());
+    BOOST_CHECK_EQUAL(11, stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.get_data(), 11));
 }
 
@@ -344,11 +344,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 {
 
-    BStream stream(256);
+    StaticOutStream<256> stream;
     X224::CR_TPDU_Send(stream,
             "Cookie: mstshash=administrateur@qa\x0D\x0A",
             X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
-    BOOST_CHECK_EQUAL(55, stream.size());
+    BOOST_CHECK_EQUAL(55, stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp(
 /* 0000 */ "\x03\x00\x00\x37\x32\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
 /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69" //e: mstshash=admi |
@@ -360,10 +360,9 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet_forge)
 {
-    BStream stream(256);
+    StaticOutStream<256> stream;
     X224::CR_TPDU_Send(stream, "", X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
-    stream.mark_end();
-    hexdump_d(stream.get_data(), stream.size());
+    hexdump_d(stream.get_data(), stream.get_offset());
 }
 
 
@@ -412,9 +411,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_wrong_opcode)
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 {
-    BStream stream(256);
+    StaticOutStream<256> stream;
     X224::CC_TPDU_Send x224(stream, 0, 0, 0);
-    BOOST_CHECK_EQUAL(11, stream.size());
+    BOOST_CHECK_EQUAL(11, stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", stream.get_data(), 11));
 }
 
@@ -451,9 +450,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU_TLS)
 {
-    BStream stream(256);
+    StaticOutStream<256> stream;
     X224::CC_TPDU_Send x224(stream, X224::RDP_NEG_RSP, 0, X224::PROTOCOL_TLS);
-    BOOST_CHECK_EQUAL(19, stream.size());
+    BOOST_CHECK_EQUAL(19, stream.get_offset());
     BOOST_CHECK_EQUAL(0,
         memcmp("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00", stream.get_data(), 19));
 }
@@ -503,9 +502,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_wrong_opcode)
 
 BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
 {
-    BStream stream(256);
+    StaticOutStream<256> stream;
     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-    BOOST_CHECK_EQUAL(11, stream.size());
+    BOOST_CHECK_EQUAL(11, stream.get_offset());
     BOOST_CHECK_EQUAL(0,
         memcmp("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x00", stream.get_data(), 11));
 }
@@ -538,10 +537,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
 
 BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
 {
-    BStream stream(256);
+    StaticOutStream<256> stream;
     uint8_t invalid[2] = {0x06, 0x22};
     X224::ER_TPDU_Send x224(stream, X224::REASON_INVALID_TPDU_TYPE, 2, invalid);
-    BOOST_CHECK_EQUAL(13, stream.size());
+    BOOST_CHECK_EQUAL(13, stream.get_offset());
     BOOST_CHECK_EQUAL(0,
         memcmp("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", stream.get_data(), 13));
 }
@@ -587,9 +586,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
 
     BOOST_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(7, x224._header_size);
-    BOOST_CHECK_EQUAL(x224._header_size + x224.payload.size(), stream.get_capacity());
+    BOOST_CHECK_EQUAL(x224._header_size + x224.payload.get_capacity(), stream.get_capacity());
 
-    BOOST_CHECK_EQUAL(5, x224.payload.size());
+    BOOST_CHECK_EQUAL(5, x224.payload.get_capacity());
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
@@ -614,22 +613,21 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
 
 BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
 {
-    BStream payload(256);
+    StaticOutStream<256> payload;
     payload.out_copy_bytes("\x12\x34\x56\x78\x9A", 5);
-    payload.end = payload.p;
 
-    size_t payload_len = payload.end - payload.get_data();
-    BStream stream(256);
+    size_t payload_len = payload.get_offset();
+    StaticOutStream<256> stream;
     X224::DT_TPDU_Send x224(stream, payload_len);
 
-    BOOST_CHECK_EQUAL(7, stream.size());
+    BOOST_CHECK_EQUAL(7, stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0C\x02\xF0\x80", stream.get_data(), 7));
     BOOST_CHECK_EQUAL(5, payload_len);
     BOOST_CHECK_EQUAL(0, memcmp("\x12\x34\x56\x78\x9A", payload.get_data(), 5));
 
 
     CheckTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
-    t.send(stream.get_data(), stream.size());
+    t.send(stream.get_data(), stream.get_offset());
     t.send(payload.get_data(), payload_len);
     BOOST_CHECK_EQUAL(true, t.get_status());
 }

@@ -108,9 +108,9 @@ enum {
 struct SaveSessionInfoPDUData_Recv {
     uint32_t infoType;
 
-    SubStream payload;
+    InStream payload;
 
-    explicit SaveSessionInfoPDUData_Recv(Stream & stream) :
+    explicit SaveSessionInfoPDUData_Recv(InStream & stream) :
     infoType([&stream](){
         if (!stream.in_check_rem(4)) {
             LOG(LOG_ERR,
@@ -120,15 +120,15 @@ struct SaveSessionInfoPDUData_Recv {
         }
         return stream.in_uint32_le();
     }()),
-    payload(stream, stream.get_offset(), stream.in_remain())
+    payload(stream.get_current(), stream.in_remain())
     {
-        stream.in_skip_bytes(this->payload.size());
+        stream.in_skip_bytes(this->payload.get_capacity());
     }
 };
 
 /*
 struct SaveSessionInfoPDUData_Send {
-    SaveSessionInfoPDUData_Send(Stream & stream, uint32_t infoType) {
+    SaveSessionInfoPDUData_Send(OutStream & stream, uint32_t infoType) {
         stream.out_uint32_le(infoType);
     }
 };
@@ -215,7 +215,7 @@ struct LogonInfoVersion1_Recv {
     uint8_t  UserName[2048];
     uint32_t SessionId;
 
-    explicit LogonInfoVersion1_Recv(Stream & stream) :
+    explicit LogonInfoVersion1_Recv(InStream & stream) :
     cbDomain(0),
     cbUserName(0),
     SessionId(0) {
@@ -269,12 +269,12 @@ struct LogonInfoVersion1_Recv {
         LOG(LOG_INFO,
             "Logon Info Version 1 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
             this->Domain, this->UserName, this->SessionId);
-    }   // LogonInfoVersion1_Recv(Stream & stream)
+    }   // LogonInfoVersion1_Recv(InStream & stream)
 };  // struct LogonInfoVersion1_Recv
 
 /*
 struct LogonInfoVersion1_Send {
-    LogonInfoVersion1_Send(Stream & stream, const uint8_t * Domain,
+    LogonInfoVersion1_Send(OutStream & stream, const uint8_t * Domain,
         const uint8_t * UserName, uint32_t sessionId)
     {
         uint8_t utf16_Domain[52];
@@ -387,7 +387,7 @@ struct LogonInfoVersion2_Recv {
     uint8_t  Domain[512];
     uint8_t  UserName[4096];
 
-    explicit LogonInfoVersion2_Recv(Stream & stream) :
+    explicit LogonInfoVersion2_Recv(InStream & stream) :
     Version(0),
     Size(0),
     SessionId(0),
@@ -435,7 +435,7 @@ struct LogonInfoVersion2_Recv {
         LOG(LOG_INFO,
             "Logon Info Version 2 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
             this->Domain, this->UserName, this->SessionId);
-    }   // LogonInfoVersion2_Recv(Stream & stream)
+    }   // LogonInfoVersion2_Recv(InStream & stream)
 };  // struct LogonInfoVersion2_Recv
 
 // [MS-RDPBCGR] - 2.2.10.1.1.3 Plain Notify (TS_PLAIN_NOTIFY)
@@ -472,7 +472,7 @@ struct LogonInfoVersion2_Recv {
 struct PlainNotify_Recv {
     uint8_t  Pad[558];
 
-    explicit PlainNotify_Recv(Stream & stream) {
+    explicit PlainNotify_Recv(InStream & stream) {
         memset(Pad, 0, sizeof(Pad));
 
         const unsigned expected = 576;  // Pad(576)
@@ -568,9 +568,9 @@ struct LogonInfoExtended_Recv {
     uint16_t Length;
     uint32_t FieldsPresent;
 
-    SubStream payload;
+    InStream payload;
 
-    explicit LogonInfoExtended_Recv(Stream & stream)
+    explicit LogonInfoExtended_Recv(InStream & stream)
     : Length([&stream](){
         const unsigned expected = 2 +   // Length(2)
                                   4;    // FieldsPresent(4)
@@ -583,9 +583,9 @@ struct LogonInfoExtended_Recv {
         return stream.in_uint16_le();
     }())
     , FieldsPresent(stream.in_uint32_le())
-    , payload(stream, stream.get_offset(), stream.in_remain())
+    , payload(stream.get_current(), stream.in_remain())
     {
-        stream.in_skip_bytes(this->payload.size());
+        stream.in_skip_bytes(this->payload.get_capacity());
     }
 };
 
@@ -616,9 +616,9 @@ struct LogonInfoExtended_Recv {
 struct LogonInfoField_Recv {
     uint32_t cbFieldData;
 
-    SubStream payload;
+    InStream payload;
 
-    explicit LogonInfoField_Recv(Stream & stream)
+    explicit LogonInfoField_Recv(InStream & stream)
     : cbFieldData([&stream](){
         const unsigned expected = 4;    // cbFieldData(4)
         if (!stream.in_check_rem(expected)) {
@@ -630,9 +630,9 @@ struct LogonInfoField_Recv {
 
         return stream.in_uint32_le();
     }())
-    , payload(stream, stream.get_offset(), stream.in_remain())
+    , payload(stream.get_current(), stream.in_remain())
     {
-        stream.in_skip_bytes(this->payload.size());
+        stream.in_skip_bytes(this->payload.get_capacity());
     }
 };
 
@@ -733,7 +733,7 @@ struct LogonErrorsInfo_Recv {
     uint32_t ErrorNotificationData;
     uint32_t ErrorNotificationType;
 
-    explicit LogonErrorsInfo_Recv(Stream & stream) :
+    explicit LogonErrorsInfo_Recv(InStream & stream) :
     ErrorNotificationData(0),
     ErrorNotificationType(0) {
         const unsigned expected = 4 +   // ErrorNotificationData(4)

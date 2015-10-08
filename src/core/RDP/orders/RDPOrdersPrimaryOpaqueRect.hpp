@@ -47,7 +47,7 @@ class RDPOpaqueRect {
 
     // order to stream returns true if state clip must be changed
     // it does not change state by itself
-    void emit(Stream & stream,
+    void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
                 const RDPOpaqueRect & oldcmd) const
@@ -113,7 +113,7 @@ class RDPOpaqueRect {
         }
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;
 

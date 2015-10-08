@@ -24,6 +24,7 @@
 #include <cinttypes>
 
 #include "stream.hpp"
+#include "error.hpp"
 #include "cast.hpp"
 
 namespace RDPECLIP {
@@ -209,7 +210,7 @@ enum {
 struct RecvFactory {
     uint16_t msgType;
 
-    explicit RecvFactory(Stream & stream) {
+    explicit RecvFactory(InStream & stream) {
         const unsigned expected = 2;    /* msgType(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO, "RDPECLIP::RecvFactory truncated msgType, need=%u remains=%u"
@@ -218,7 +219,7 @@ struct RecvFactory {
         }
 
         this->msgType = stream.in_uint16_le();
-    }   // RecvFactory(Stream & stream)
+    }   // RecvFactory(InStream & stream)
 };
 
 struct CliprdrHeader {
@@ -244,14 +245,13 @@ protected:
         , dataLen_(dataLen) {
     }   // CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(this->dataLen_);
-        stream.mark_end();
-    }   // void emit(Stream & stream)
+    }   // void emit(OutStream & stream)
 
-    void recv(Stream & stream, const RecvFactory & recv_factory) {
+    void recv(InStream & stream, const RecvFactory & recv_factory) {
         const unsigned expected = 6;    /* msgFlags_(2) + dataLen_(4) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO, "RDPECLIP::recv truncated data, need=%u remains=%u"
@@ -325,15 +325,14 @@ public:
         cCapabilitiesSets(cCapabilitiesSets)
     {}
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
 
         stream.out_uint16_le(cCapabilitiesSets);
         stream.out_clear_bytes(2);  // pad1(2)
-        stream.mark_end();
-    }   // void emit(Stream & stream)
+    }   // void emit(OutStream & stream)
 
-    void recv(Stream & stream, const RecvFactory & recv_factory) {
+    void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
         const unsigned expected = 4;    // cCapabilitiesSets(2) + pad1(2)
@@ -392,7 +391,7 @@ enum {
 struct CapabilitySetRecvFactory {
     uint16_t capabilitySetType;
 
-    explicit CapabilitySetRecvFactory(Stream & stream) {
+    explicit CapabilitySetRecvFactory(InStream & stream) {
         const unsigned expected = 2;    /* capabilitySetType(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO
@@ -402,7 +401,7 @@ struct CapabilitySetRecvFactory {
         }
 
         this->capabilitySetType = stream.in_uint16_le();
-    }   // CapabilitySetRecvFactory(Stream & stream)
+    }   // CapabilitySetRecvFactory(InStream & stream)
 
     inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
         switch (capabilitySetType) {
@@ -521,16 +520,14 @@ public:
         this->generalFlags_ = generalFlags;
     }
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         stream.out_uint16_le(this->capabilitySetType);
         stream.out_uint16_le(this->lengthCapability);
         stream.out_uint32_le(this->version);
         stream.out_uint32_le(this->generalFlags_);
-
-        stream.mark_end();
     }
 
-    void recv(Stream & stream, const CapabilitySetRecvFactory & recv_factory) {
+    void recv(InStream & stream, const CapabilitySetRecvFactory & recv_factory) {
         REDASSERT(recv_factory.capabilitySetType == CB_CAPSTYPE_GENERAL);
 
         const unsigned expected = 10;   // lengthCapability(2) + version(4) +
@@ -664,29 +661,25 @@ struct FormatListPDU : public CliprdrHeader {
         , contians_data_in_text_format(false)
         , contians_data_in_unicodetext_format(false) {}
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
-
-        stream.mark_end();
     }
 
-    void emit_ex(Stream & stream, bool unicodetext) {
+    void emit_ex(OutStream & stream, bool unicodetext) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
-
-        stream.mark_end();
     }
 
-    void recv(Stream & stream, const RecvFactory & recv_factory) {
+    void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
         // [MS-RDPECLIP] 2.2.3.1.1.1 Short Format Name (CLIPRDR_SHORT_FORMAT_NAME)
@@ -750,7 +743,7 @@ struct FormatListPDU : public CliprdrHeader {
 
             stream.in_skip_bytes(32);   // formatName(32)
         }
-    }   // void recv(Stream & stream, const RecvFactory & recv_factory)
+    }   // void recv(InStream & stream, const RecvFactory & recv_factory)
 };  // struct FormatListPDU
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -823,14 +816,13 @@ struct FormatDataRequestPDU : public CliprdrHeader {
             , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
 
         stream.out_uint32_le(this->requestedFormatId);
-        stream.mark_end();
-    }   // void emit(Stream & stream)
+    }   // void emit(OutStream & stream)
 
-    void recv(Stream & stream, const RecvFactory & recv_factory) {
+    void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
         this->requestedFormatId = stream.in_uint32_le();
@@ -880,7 +872,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , 0) {
     }
 
-    void emit(Stream & stream, const uint8_t * data, size_t data_length) const {
+    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
@@ -894,11 +886,9 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         else {
             stream.out_uint32_le(0);    // dataLen(4)
         }
-
-        stream.mark_end();
     }
 
-    void emit_ex(Stream & stream, size_t data_length) const {
+    void emit_ex(OutStream & stream, size_t data_length) const {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
@@ -907,8 +897,6 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                 data_length :
                 0
             );
-
-        stream.mark_end();
     }
 
     using CliprdrHeader::recv;
@@ -921,7 +909,7 @@ struct FileContentsResponse : CliprdrHeader {
     : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
     {}
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
 //         stream.out_uint32_le(0);
 //         stream.out_uint64_le(0);
@@ -1091,7 +1079,7 @@ class FileDescriptor {
     std::string file_name;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->flags);
 
         stream.out_clear_bytes(32); // reserved1(32)
@@ -1120,7 +1108,7 @@ public:
             size_of_unicode_data);
     }
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 592;  // flags(4) + reserved1(32) +
                                             //     fileAttributes(4) +
@@ -1155,7 +1143,7 @@ public:
         uint8_t * const utf8_string = static_cast<uint8_t *>(
             ::alloca(size_of_utf8_string));
         const size_t length_of_utf8_string = ::UTF16toUTF8(
-            stream.p, 520 /* fileName(520) */ / 2, utf8_string,
+            stream.get_current(), 520 /* fileName(520) */ / 2, utf8_string,
             size_of_utf8_string);
         this->file_name.assign(::char_ptr_cast(utf8_string),
             length_of_utf8_string);

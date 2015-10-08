@@ -23,6 +23,7 @@
 
 #include "cast.hpp"
 #include "log.hpp"
+#include "error.hpp"
 #include "noncopyable.hpp"
 #include "stream.hpp"
 
@@ -65,14 +66,14 @@ class Rectangle {
     uint16_t Bottom = 0;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Left);
         stream.out_uint16_le(this->Top);
         stream.out_uint16_le(this->Right);
         stream.out_uint16_le(this->Bottom);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected =
                 8;  // Left(2) + Top(2) + Right(2) + Bottom(2)
@@ -193,12 +194,13 @@ class IconInfo {
     uint16_t Width      = 0;
     uint16_t Height     = 0;
 
-    StaticStream bits_mask;
-    StaticStream color_table;
-    StaticStream bits_color;
+    struct array_view { uint8_t const * p; std::size_t sz; };
+    array_view bits_mask {nullptr, 0u};
+    array_view color_table {nullptr, 0u};
+    array_view bits_color {nullptr, 0u};
 
 public:
-    void emit(Stream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->CacheEntry);
         stream.out_uint16_le(this->CacheId);
 
@@ -208,18 +210,18 @@ public:
         stream.out_uint16_le(this->Height);
 
         if ((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) {
-            stream.out_uint16_le(this->color_table.get_capacity());
+            stream.out_uint16_le(this->color_table.sz);
         }
 
-        stream.out_uint16_le(this->bits_mask.get_capacity());
-        stream.out_uint16_le(this->bits_color.get_capacity());
+        stream.out_uint16_le(this->bits_mask.sz);
+        stream.out_uint16_le(this->bits_color.sz);
 
-        stream.out_copy_bytes(this->bits_mask.get_data(), this->bits_mask.get_capacity());
-        stream.out_copy_bytes(this->color_table.get_data(), this->color_table.get_capacity());
-        stream.out_copy_bytes(this->bits_color.get_data(), this->bits_color.get_capacity());
+        stream.out_copy_bytes(this->bits_mask.p, this->bits_mask.sz);
+        stream.out_copy_bytes(this->color_table.p, this->color_table.sz);
+        stream.out_copy_bytes(this->bits_color.p, this->bits_color.sz);
     }
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 9;  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
@@ -282,13 +284,13 @@ public:
             }
         }
 
-        this->bits_mask.resize(stream.p, CbBitsMask);
+        this->bits_mask = {stream.get_current(), CbBitsMask};
         stream.in_skip_bytes(CbBitsMask);
 
-        this->color_table.resize(stream.p, CbColorTable);
+        this->color_table = {stream.get_current(), CbColorTable};
         stream.in_skip_bytes(CbColorTable);
 
-        this->bits_color.resize(stream.p, CbBitsColor);
+        this->bits_color = {stream.get_current(), CbBitsColor};
         stream.in_skip_bytes(CbBitsColor);
     }
 
@@ -296,9 +298,9 @@ public:
         return 9 +  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
             (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? 2 /* CbColorTable(2) */ : 0) +
             4 + // CbBitsMask(2) + CbBitsColor(2)
-            this->bits_mask.get_capacity() +
-            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.get_capacity() : 0) +
-            this->bits_color.get_capacity();
+            this->bits_mask.sz +
+            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.sz : 0) +
+            this->bits_color.sz;
     }
 
     size_t str(char * buffer, size_t size) const {
@@ -315,18 +317,18 @@ public:
                    ((size - length) - 1)
                   );
 
-        auto str_optional = [&length, buffer, size] (Stream const & optional, const char * label) {
-                if (optional.get_capacity()) {
-                    const size_t result = ::snprintf(
-                        buffer + length, size - length,
-                        " %s=%zu", label, optional.get_capacity());
-                    length += (
-                               (result < (size - length)) ?
-                               result :
-                               ((size - length) - 1)
-                              );
-                }
-            };
+        auto str_optional = [&length, buffer, size] (array_view const & optional, const char * label) {
+            if (optional.sz) {
+                const size_t result = ::snprintf(
+                    buffer + length, size - length,
+                    " %s=%zu", label, optional.sz);
+                length += (
+                            (result < (size - length)) ?
+                            result :
+                            ((size - length) - 1)
+                            );
+            }
+        };
 
         str_optional(this->color_table, "CbColorTable");
         str_optional(this->bits_mask,   "CbBitsMask");
@@ -366,12 +368,12 @@ class CachedIconInfo {
     uint8_t  CacheId    = 0;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint16_le(this->CacheEntry);
         stream.out_uint16_le(this->CacheId);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 4;  // CacheEntry(2) + CacheId(2)
 
@@ -446,7 +448,7 @@ class WindowInformationCommonHeader {
             uint32_t WindowId            = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
-    mutable Stream   * output_stream       = nullptr;
+    mutable OutStream* output_stream       = nullptr;
 
 protected:
     //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
@@ -457,7 +459,7 @@ protected:
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    inline void emit_begin(Stream & stream) const {
+    inline void emit_begin(OutStream & stream) const {
         REDASSERT(this->output_stream == nullptr);
 
         this->output_stream = &stream;
@@ -467,8 +469,6 @@ protected:
 
         stream.out_uint32_le(this->FieldsPresentFlags_);
         stream.out_uint32_le(this->WindowId);
-
-        stream.mark_end();
     }
 
     inline void emit_end() const {
@@ -479,7 +479,7 @@ protected:
             this->offset_of_OrderSize);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected =
                 10;  // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4)
@@ -905,7 +905,7 @@ class NewOrExistingWindow : public WindowInformationCommonHeader {
     std::vector<Rectangle> visibility_rects;
 
 public:
-    void emit(Stream & stream) const {
+    void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
@@ -971,7 +971,7 @@ public:
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             stream.out_uint16_le(this->NumWindowRects);
 
-            for (Rectangle rectangle : this->window_rects) {
+            for (Rectangle const & rectangle : this->window_rects) {
                 rectangle.emit(stream);
             }
         }
@@ -984,17 +984,15 @@ public:
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             stream.out_uint16_le(this->NumVisibilityRects);
 
-            for (Rectangle rectangle : this->visibility_rects) {
+            for (Rectangle const & rectangle : this->visibility_rects) {
                 rectangle.emit(stream);
             }
         }
 
-        stream.mark_end();
-
         WindowInformationCommonHeader::emit_end();
     }   // emit
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         WindowInformationCommonHeader::receive(stream);
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
@@ -1510,17 +1508,15 @@ class WindowIcon : public WindowInformationCommonHeader {
     IconInfo icon_info;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
 
         this->icon_info.emit(stream);
 
-        stream.mark_end();
-
         WindowInformationCommonHeader::emit_end();
     }   // emit
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         WindowInformationCommonHeader::receive(stream);
 
         this->icon_info.receive(stream);
@@ -1619,17 +1615,15 @@ class CachedIcon : public WindowInformationCommonHeader {
     CachedIconInfo cached_icon_info;
 
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
 
         this->cached_icon_info.emit(stream);
 
-        stream.mark_end();
-
         WindowInformationCommonHeader::emit_end();
     }   // emit
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         WindowInformationCommonHeader::receive(stream);
 
         this->cached_icon_info.receive(stream);
@@ -1705,15 +1699,13 @@ enum {
 
 class DeletedWindow : public WindowInformationCommonHeader {
 public:
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         WindowInformationCommonHeader::emit_begin(stream);
-
-        stream.mark_end();
 
         WindowInformationCommonHeader::emit_end();
     }   // emit
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         WindowInformationCommonHeader::receive(stream);
     }   // receive
 

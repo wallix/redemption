@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestRandom)
     Base64 b64converter;
 
     LCGRandom rand(0xA3F451);
-    BStream streamin(256);
+    StaticOutStream<256> streamin;
 
     uint32_t randsize = rand.rand32() % 64;
     unsigned int i = 0;
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestRandom)
 void testrandom(uint32_t seed, Base64 & b64converter) {
 
     LCGRandom rand(seed);
-    BStream streamin(256);
+    StaticOutStream<256> streamin;
 
     uint32_t randsize = rand.rand32() % 64;
     unsigned int i = 0;

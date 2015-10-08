@@ -49,7 +49,7 @@ namespace aux_ {
 #ifdef NDEBUG
 #define REDASSERT(x)
 #else
-# ifdef LOGPRINT
+# if defined(LOGPRINT) || defined(REDASSERT_AS_ASSERT)
 #  include <cassert>
 #  define REDASSERT(x) assert(x)
 # else
@@ -154,7 +154,7 @@ static inline void hexdump(const char * data, size_t size)
     char buffer[2048];
     for (size_t j = 0 ; j < size ; j += 16){
         char * line = buffer;
-        line += sprintf(line, "%.4x ", static_cast<unsigned>(static_cast<unsigned char>(j)));
+        line += sprintf(line, "%.4x ", static_cast<unsigned>(j));
         size_t i = 0;
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
@@ -190,7 +190,7 @@ static inline void hexdump_d(const char * data, size_t size, unsigned line_lengt
     char buffer[2048];
     for (size_t j = 0 ; j < size ; j += line_length){
         char * line = buffer;
-        line += sprintf(line, "/* %.4x */ ", static_cast<unsigned>(static_cast<unsigned char>(j)));
+        line += sprintf(line, "/* %.4x */ ", static_cast<unsigned>(j));
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
@@ -229,7 +229,7 @@ static inline void hexdump_c(const char * data, size_t size)
     char buffer[2048];
     for (size_t j = 0 ; j < size ; j += 16){
         char * line = buffer;
-        line += sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(static_cast<unsigned char>(j)));
+        line += sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(j));
         size_t i = 0;
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
@@ -268,7 +268,7 @@ static inline void hexdump96_c(const char * data, size_t size)
     const unsigned line_length = 96;
     for (size_t j = 0 ; j < size ; j += line_length){
         char * line = buffer;
-        line += sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(static_cast<unsigned char>(j)));
+        line += sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(j));
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
@@ -307,7 +307,7 @@ static inline void hexdump8_c(const char * data, size_t size)
     const unsigned line_length = 8;
     for (size_t j = 0 ; j < size ; j += line_length){
         char * line = buffer;
-        line += sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(static_cast<unsigned char>(j)));
+        line += sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(j));
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }

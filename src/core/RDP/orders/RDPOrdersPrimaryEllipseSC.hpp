@@ -144,7 +144,7 @@ public:
         return RDP::ELLIPSESC;
     }
 
-    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
+    void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
               const RDPEllipseSC & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
@@ -191,7 +191,7 @@ public:
         // LOG(LOG_INFO, "RDPEllipseSC::emit: header color=0x%02X", this->color);
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
         int16_t leftRect   = this->el.left();
         int16_t topRect    = this->el.top();

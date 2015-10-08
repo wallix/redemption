@@ -78,7 +78,7 @@ struct ServerAutoReconnectPacket_Recv {
     uint32_t LogonId;
     uint8_t  ArcRandomBits[16];
 
-    explicit ServerAutoReconnectPacket_Recv(Stream & stream) :
+    explicit ServerAutoReconnectPacket_Recv(InStream & stream) :
     cbLen(0),
     Version(0),
     LogonId(0) {

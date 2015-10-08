@@ -202,9 +202,10 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     ~NTLMChallengeMessage() override {}
 
-    void emit(Stream & stream) {
-        this->TargetInfo.Buffer.reset();
-        this->AvPairList.emit(this->TargetInfo.Buffer);
+    void emit(OutStream & stream) {
+        this->TargetInfo.buffer.reset();
+        this->AvPairList.emit(this->TargetInfo.buffer.ostream);
+        this->TargetInfo.buffer.mark_end();
 
         uint32_t currentOffset = this->PayloadOffset;
         if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
@@ -225,11 +226,10 @@ struct NTLMChallengeMessage : public NTLMMessage {
         // PAYLOAD
         this->TargetName.write_payload(stream);
         this->TargetInfo.write_payload(stream);
-        stream.mark_end();
     }
 
-    void recv(Stream & stream) {
-        uint8_t * pBegin = stream.p;
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
         bool res;
         res = NTLMMessage::recv(stream);
         if (!res) {
@@ -247,7 +247,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
         // PAYLOAD
         this->TargetName.read_payload(stream, pBegin);
         this->TargetInfo.read_payload(stream, pBegin);
-        this->AvPairList.recv(this->TargetInfo.Buffer);
+        auto in_stream = this->TargetInfo.buffer.in_stream();
+        this->AvPairList.recv(in_stream);
+        this->TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
     }
 
     //void avpair_decode() {

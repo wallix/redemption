@@ -54,6 +54,8 @@
 #include "fdbuf.hpp"
 #include "bitmap_data_allocator.hpp"
 
+#include "fdbuf.hpp"
+
 using std::size_t;
 
 class Bitmap
@@ -473,130 +475,131 @@ public:
                 }
             } header;
 
+            uint8_t stream_data[8192];
+            std::unique_ptr<uint8_t[]> stream_dyndata;
+            InStream stream(stream_data);
+
             TODO(" reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?");
-            int fd =  open(filename, O_RDONLY);
-            if (fd == -1) {
-                LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
-                this->load_error_bitmap();
-                // throw Error(ERR_BITMAP_LOAD_FAILED);
-                return ;
-            }
-
-            /* read file type */
-            if (read(fd, type1, 2) != 2) {
-                LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
-                close(fd);
-                this->load_error_bitmap();
-                // throw Error(ERR_BITMAP_LOAD_FAILED);
-                return ;
-            }
-            if ((type1[0] != 'B') || (type1[1] != 'M')) {
-                LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP file\n", filename);
-                close(fd);
-                this->load_error_bitmap();
-                // throw Error(ERR_BITMAP_LOAD_FAILED);
-                return ;
-            }
-
-            /* read file size */
-            TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.");
-                BStream stream(8192);
-            if (read(fd, stream.get_data(), 4) < 4){
-                LOG(LOG_ERR, "Widget_load: error read file size\n");
-                close(fd);
-                throw Error(ERR_BITMAP_LOAD_FAILED);
-            }
-            stream.end = stream.get_data() + 4;
             {
-                TODO("Check what is this size ? header size ? used as fixed below ?");
-                    /* uint32_t size = */ stream.in_uint32_le();
-            }
+                io::posix::fdbuf file;
+                int const fd_ = file.open(filename, O_RDONLY);
+                if (fd_ == -1) {
+                    LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
+                    this->load_error_bitmap();
+                    // throw Error(ERR_BITMAP_LOAD_FAILED);
+                    return ;
+                }
 
-            // skip some bytes to set file pointer to bmp header
-            lseek(fd, 14, SEEK_SET);
-            stream.init(8192);
-            if (read(fd, stream.get_data(), 40) < 40){
-                close(fd);
-                LOG(LOG_ERR, "Widget_load: error read file size (2)\n");
-                throw Error(ERR_BITMAP_LOAD_FAILED);
-            }
-            stream.end = stream.get_data() + 40;
-            TODO(" we should read header size and use it to read header instead of using magic constant 40");
-                header.size = stream.in_uint32_le();
-            if (header.size != 40){
-                LOG(LOG_INFO, "Wrong header size: expected 40, got %d", header.size);
-                assert(header.size == 40);
-            }
+                /* read file type */
+                if (file.read(type1, 2) != 2) {
+                    LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
+                    this->load_error_bitmap();
+                    // throw Error(ERR_BITMAP_LOAD_FAILED);
+                    return ;
+                }
+                if ((type1[0] != 'B') || (type1[1] != 'M')) {
+                    LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP file\n", filename);
+                    this->load_error_bitmap();
+                    // throw Error(ERR_BITMAP_LOAD_FAILED);
+                    return ;
+                }
 
-            header.image_width = stream.in_uint32_le();         // used
-            header.image_height = stream.in_uint32_le();        // used
-            header.planes = stream.in_uint16_le();
-            header.bit_count = stream.in_uint16_le();           // used
-            header.compression = stream.in_uint32_le();
-            header.image_size = stream.in_uint32_le();
-            header.x_pels_per_meter = stream.in_uint32_le();
-            header.y_pels_per_meter = stream.in_uint32_le();
-            header.clr_used = stream.in_uint32_le();            // used
-            header.clr_important = stream.in_uint32_le();
-
-            // skip header (including more fields that we do not read if any)
-            lseek(fd, 14 + header.size, SEEK_SET);
-
-            // compute pixel size (in Quartet) and read palette if needed
-            int file_Qpp = 1;
-            TODO(" add support for loading of 16 bits bmp from file");
-                switch (header.bit_count) {
-                    // Qpp = groups of 4 bytes per pixel
-                case 24:
-                    file_Qpp = 6;
-                    break;
-                case 8:
-                    file_Qpp = 2;
-                case 4:
-                    stream.init(8192);
-                    if (read(fd, stream.get_data(), header.clr_used * 4) < header.clr_used * 4){
-                        close(fd);
-                        throw Error(ERR_BITMAP_LOAD_FAILED);
-                    }
-                    stream.end = stream.get_data() + header.clr_used * 4;
-                    for (int i = 0; i < header.clr_used; i++) {
-                        uint8_t r = stream.in_uint8();
-                        uint8_t g = stream.in_uint8();
-                        uint8_t b = stream.in_uint8();
-                        stream.in_skip_bytes(1); // skip alpha channel
-                        palette1.set_color(i, (b << 16)|(g << 8)|r);
-                    }
-                    break;
-                default:
-                    LOG(LOG_ERR, "Widget_load: error bitmap file [%s]"
-                        " unsupported bpp %d\n", filename,
-                        header.bit_count);
-                    close(fd);
+                /* read file size */
+                TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.");
+                if (file.read(stream_data, 4) < 4){
+                    LOG(LOG_ERR, "Widget_load: error read file size\n");
                     throw Error(ERR_BITMAP_LOAD_FAILED);
                 }
+                stream = InStream(stream_data, 4);
+                {
+                    TODO("Check what is this size ? header size ? used as fixed below ?");
+                        /* uint32_t size = */ stream.in_uint32_le();
+                }
 
-            LOG(LOG_INFO, "loading file %d x %d x %d", header.image_width, header.image_height, header.bit_count);
+                // skip some bytes to set file pointer to bmp header
+                lseek(fd_, 14, SEEK_SET);
+                if (file.read(stream_data, 40) < 40){
+                    LOG(LOG_ERR, "Widget_load: error read file size (2)\n");
+                    throw Error(ERR_BITMAP_LOAD_FAILED);
+                }
+                stream = InStream(stream_data, 40);
+                TODO(" we should read header size and use it to read header instead of using magic constant 40");
+                    header.size = stream.in_uint32_le();
+                if (header.size != 40){
+                    LOG(LOG_INFO, "Wrong header size: expected 40, got %d", header.size);
+                    assert(header.size == 40);
+                }
 
-            // bitmap loaded from files are always converted to 24 bits
-            // this avoid palette problems for 8 bits,
-            // and 4 bits is not supported in other parts of code anyway
+                header.image_width = stream.in_uint32_le();         // used
+                header.image_height = stream.in_uint32_le();        // used
+                header.planes = stream.in_uint16_le();
+                header.bit_count = stream.in_uint16_le();           // used
+                header.compression = stream.in_uint32_le();
+                header.image_size = stream.in_uint32_le();
+                header.x_pels_per_meter = stream.in_uint32_le();
+                header.y_pels_per_meter = stream.in_uint32_le();
+                header.clr_used = stream.in_uint32_le();            // used
+                header.clr_important = stream.in_uint32_le();
 
-            // read bitmap data
-            {
-                size_t size = (header.image_width * header.image_height * file_Qpp) / 2;
-                stream.init(size);
-                int row_size = (header.image_width * file_Qpp) / 2;
-                int padding = align4(row_size) - row_size;
-                for (unsigned y = 0; y < header.image_height; y++) {
-                    int k = read(fd, stream.get_data() + y * row_size, row_size + padding);
-                    if (k != (row_size + padding)) {
-                        LOG(LOG_ERR, "Widget_load: read error reading bitmap file [%s] read\n", filename);
-                        close(fd);
+                // skip header (including more fields that we do not read if any)
+                lseek(fd_, 14 + header.size, SEEK_SET);
+
+                // compute pixel size (in Quartet) and read palette if needed
+                int file_Qpp = 1;
+                TODO(" add support for loading of 16 bits bmp from file");
+                    switch (header.bit_count) {
+                        // Qpp = groups of 4 bytes per pixel
+                    case 24:
+                        file_Qpp = 6;
+                        break;
+                    case 8:
+                        file_Qpp = 2;
+                    case 4:
+                        REDASSERT(header.clr_used * 4 <= 8192);
+                        if (file.read(stream_data, header.clr_used * 4) < header.clr_used * 4){
+                            throw Error(ERR_BITMAP_LOAD_FAILED);
+                        }
+                        stream = InStream(stream_data, header.clr_used * 4);
+                        for (int i = 0; i < header.clr_used; i++) {
+                            uint8_t r = stream.in_uint8();
+                            uint8_t g = stream.in_uint8();
+                            uint8_t b = stream.in_uint8();
+                            stream.in_skip_bytes(1); // skip alpha channel
+                            palette1.set_color(i, (b << 16)|(g << 8)|r);
+                        }
+                        break;
+                    default:
+                        LOG(LOG_ERR, "Widget_load: error bitmap file [%s]"
+                            " unsupported bpp %d\n", filename,
+                            header.bit_count);
                         throw Error(ERR_BITMAP_LOAD_FAILED);
                     }
+
+                LOG(LOG_INFO, "loading file %d x %d x %d", header.image_width, header.image_height, header.bit_count);
+
+                // bitmap loaded from files are always converted to 24 bits
+                // this avoid palette problems for 8 bits,
+                // and 4 bits is not supported in other parts of code anyway
+
+                // read bitmap data
+                {
+                    size_t size = (header.image_width * header.image_height * file_Qpp) / 2;
+                    auto p = stream_data;
+                    if (size > sizeof(stream_data)) {
+                        p = new uint8_t[size];
+                        stream_dyndata.reset(p);
+                    }
+                    int row_size = (header.image_width * file_Qpp) / 2;
+                    int padding = align4(row_size) - row_size;
+                    for (unsigned y = 0; y < header.image_height; y++) {
+                        int k = file.read(p + y * row_size, row_size + padding);
+                        if (k != (row_size + padding)) {
+                            LOG(LOG_ERR, "Widget_load: read error reading bitmap file [%s] read\n", filename);
+                            throw Error(ERR_BITMAP_LOAD_FAILED);
+                        }
+                    }
+                    stream = InStream(p, size);
                 }
-                close(fd); // from now on all is in memory
-                stream.end = stream.get_data() + size;
             }
 
             const uint8_t Bpp = 3;
@@ -1558,7 +1561,7 @@ public:
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
-    void compress(uint8_t session_color_depth, Stream & outbuffer) const
+    void compress(uint8_t session_color_depth, OutStream & outbuffer) const
     {
         if (this->data_bitmap->compressed_size()) {
             outbuffer.out_copy_bytes(this->data_bitmap->compressed_data(), this->data_bitmap->compressed_size());
@@ -1570,8 +1573,8 @@ public:
         }
 
         struct RLE_OutStream {
-            Stream & stream;
-            explicit RLE_OutStream(Stream & outbuffer)
+            OutStream & stream;
+            explicit RLE_OutStream(OutStream & outbuffer)
             : stream(outbuffer)
             {}
 
@@ -1945,7 +1948,7 @@ public:
             }
         } out(outbuffer);
 
-        uint8_t * tmp_data_compressed = out.stream.p;
+        uint8_t * tmp_data_compressed = out.stream.get_current();
 
         const uint8_t Bpp = nbbytes(this->bpp());
         const uint8_t * pmin = this->data_bitmap->get();
@@ -2099,7 +2102,7 @@ public:
         }
 
         // Memoize result of compression
-        this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, out.stream.p - tmp_data_compressed);
+        this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, out.stream.get_current() - tmp_data_compressed);
     }
 
     static void get_run(const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint32_t & run_length,
@@ -2138,7 +2141,7 @@ public:
         //LOG(LOG_INFO, "");
     }
 
-    static void compress_color_plane(uint16_t cx, uint16_t cy, Stream & outbuffer, uint8_t * color_plane) {
+    static void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8_t * color_plane) {
         //LOG(LOG_INFO, "compress_color_plane: cx=%u cy=%u", cx, cy);
         //hexdump_d(color_plane, cx * cy);
 
@@ -2277,12 +2280,12 @@ public:
     }
 
 private:
-    void compress60(Stream & outbuffer) const {
+    void compress60(OutStream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
         REDASSERT((this->bpp() == 24) || (this->bpp() == 32));
 
-        uint8_t * tmp_data_compressed = outbuffer.p;
+        uint8_t * tmp_data_compressed = outbuffer.get_current();
 
         const uint16_t cx = this->cx();
         const uint16_t cy = this->cy();
@@ -2341,7 +2344,7 @@ private:
         this->compress_color_plane(cx, cy, outbuffer, blue_plane);
 
         // Memoize result of compression
-        this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, outbuffer.p - tmp_data_compressed);
+        this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, outbuffer.get_current() - tmp_data_compressed);
         //LOG(LOG_INFO, "data_compressedsize=%u", this->data_compressedsize);
         //LOG(LOG_INFO, "bmp compress60: done");
     }

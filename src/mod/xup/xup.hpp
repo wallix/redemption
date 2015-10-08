@@ -90,9 +90,8 @@ enum {
     , t(t)
     , rop(0xCC)
     {
-        BStream stream(32768);
-        uint8_t * hdr = stream.p;
-        stream.p += 4;
+        StaticOutStream<256> stream;
+        stream.out_skip_bytes(4);
         stream.out_uint16_le(103);
         stream.out_uint32_le(200);
         /* x and y */
@@ -103,10 +102,8 @@ enum {
         stream.out_uint32_le(cxcy);
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
-        stream.mark_end();
-        stream.p = hdr;
-        stream.out_uint32_le(stream.size());
-        this->t.send(stream);
+        stream.set_out_uint32_le(stream.get_offset(), 0);
+        this->t.send(stream.get_data(), stream.get_offset());
     }
 
     ~xup_mod() override {}
@@ -173,8 +170,8 @@ enum {
 
     void x_input_event(const int msg, const long param1, const long param2, const long param3, const long param4)
     {
-        BStream stream(32768);
-        stream.out_uint32_le(0); // skip yet unknown len
+        StaticOutStream<256> stream;
+        stream.out_skip_bytes(4); // skip yet unknown len
         stream.out_uint16_le(103);
         stream.out_uint32_le(msg);
         stream.out_uint32_le(param1);
@@ -188,16 +185,32 @@ enum {
 
     void draw_event(time_t now) override {
         try{
-            BStream stream(32768);
-            this->t.recv(&stream.end, 8);
-            int type = stream.in_uint16_le();
-            int num_orders = stream.in_uint16_le();
-            int len = stream.in_uint32_le();
+            uint8_t buf[32768];
+            {
+                auto end = buf;
+                this->t.recv(&end, 8);
+            }
+            InStream stream(buf);
+            unsigned type = stream.in_uint16_le();
+            unsigned num_orders = stream.in_uint16_le();
+            unsigned len = stream.in_uint32_le();
             if (type == 1) {
-                stream.init(len);
-                this->t.recv(&stream.end, len);
+                std::unique_ptr<uint8_t[]> dynbuf;
+                {
+                    auto pbuf = buf;
+                    if (len > stream.get_capacity()) {
+                        pbuf = new uint8_t[len];
+                        dynbuf.reset(pbuf);
+                    }
+                    stream = InStream(pbuf, len);
+                }
 
-                for (int index = 0; index < num_orders; index++) {
+                {
+                    auto end = buf;
+                    this->t.recv(&end, len);
+                }
+
+                for (unsigned index = 0; index < num_orders; index++) {
                     type = stream.in_uint16_le();
                     switch (type) {
                     case 1:
@@ -419,7 +432,7 @@ enum {
 
     using RDPGraphicDevice::draw;
 
-    void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) override {
+    void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
     }
 };
 

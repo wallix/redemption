@@ -208,7 +208,7 @@ public:
     }
 
     RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, uint32_t PenColor,
-        uint8_t NumDeltaEntries, Stream & deltaEncodedPoints) {
+        uint8_t NumDeltaEntries, InStream & deltaEncodedPoints) {
         this->xStart          = xStart;
         this->yStart          = yStart;
         this->bRop2           = bRop2;
@@ -233,7 +233,7 @@ public:
              ;
     }
 
-    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
+    void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
         int16_t pointx = this->xStart;
@@ -320,9 +320,9 @@ public:
 
             stream.set_out_uint8(stream.get_offset() - offset_cbData - 1, offset_cbData);
         }
-    }   // void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const
+    }   // void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         // LOG(LOG_INFO, "RDPPolyline::receive: header fields=0x%02X", header.fields);
 
         header.receive_coord(stream, 0x0001, this->xStart);
@@ -350,14 +350,14 @@ public:
             uint8_t cbData = stream.in_uint8();
             // LOG(LOG_INFO, "cbData=%d", cbData);
 
-            SubStream rgbData(stream, stream.get_offset(), cbData);
+            InStream rgbData(stream.get_current(), cbData);
             stream.in_skip_bytes(cbData);
-            // hexdump_d(rgbData.p, rgbData.size());
+            //hexdump_d(rgbData.get_current(), rgbData.get_capacity());
 
             uint8_t zeroBitsSize = ((this->NumDeltaEntries + 3) / 4);
             // LOG(LOG_INFO, "zeroBitsSize=%d", zeroBitsSize);
 
-            SubStream zeroBits(rgbData, rgbData.get_offset(), zeroBitsSize);
+            InStream zeroBits(rgbData.get_current(), zeroBitsSize);
             rgbData.in_skip_bytes(zeroBitsSize);
 
             uint8_t zeroBit = 0;
@@ -383,7 +383,7 @@ public:
                 zeroBit <<= 2;
             }
         }
-    }   // void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    }   // void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = 0;

@@ -183,7 +183,7 @@ struct GlyphCacheCaps : public Capability {
     GlyphCacheCaps()
     : Capability(CAPSTYPE_GLYPHCACHE, LENGTH_CAPABILITY) {}
 
-    void emit(Stream & stream)override {
+    void emit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         for (uint8_t i = 0; i < NUMBER_OF_CACHE; ++i) {
@@ -195,7 +195,7 @@ struct GlyphCacheCaps : public Capability {
         stream.out_uint16_le(this->pad2octets);
     }
 
-    void recv(Stream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len) override {
         this->len               = len;
         for (uint8_t i = 0; i < NUMBER_OF_CACHE; ++i) {
             this->GlyphCache[i].CacheEntries         = stream.in_uint16_le();

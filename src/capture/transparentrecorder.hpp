@@ -33,16 +33,16 @@ public:
         this->send_meta_chunk();
     }
 
-    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+    void send_data_indication_ex(uint16_t channelId, uint8_t const * packet_data, std::size_t packet_size) {
         constexpr unsigned payload_size = 2;
         StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;
 
-        this->make_chunk_header(header, CHUNK_TYPE_SLOWPATH, payload_size + stream.size());
+        this->make_chunk_header(header, CHUNK_TYPE_SLOWPATH, payload_size + packet_size);
         header.out_uint16_le(channelId);
 
         assert(header.get_offset() == header.get_capacity());
         this->t->send(header.get_data(), header.get_offset());
-        this->t->send(stream.get_data(), stream.size());
+        this->t->send(packet_data, packet_size);
     }
 
     void send_fastpath_data(InStream & data) {
@@ -55,7 +55,7 @@ public:
     }
 
     void send_to_front_channel( const char * const mod_channel_name
-                              , uint8_t * data, size_t length
+                              , uint8_t const * data, size_t length
                               , size_t chunk_size, int flags) {
         constexpr unsigned payload_size = 9;
         StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;

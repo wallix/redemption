@@ -485,15 +485,15 @@ struct BitmapCodecCaps : public Capability {
         delete this->supportedBitmapCodecs;
     }
 
-    void emit(Stream & stream){
+    void emit(OutStream & stream) override {
         LOG(LOG_INFO, "BitmapCodec caps emit not implemented");
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(InStream & stream, uint16_t len) override {
         LOG(LOG_INFO, "BitmapCodec caps recv not implemented");
     }
 
-    void log(const char * msg){
+    void log(const char * msg) override {
         LOG(LOG_INFO, "%s BitmapCodec caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %u", this->supportedBitmapCodecs);
     }

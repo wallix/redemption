@@ -157,7 +157,7 @@ class RDPScrBlt {
              ;
     }
 
-    void emit(Stream & stream,
+    void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
                 const RDPScrBlt & oldcmd) const
@@ -213,7 +213,7 @@ class RDPScrBlt {
 
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;
 

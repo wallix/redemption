@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     now.tv_sec = 1000;
 
     Rect screen_rect(0, 0, 800, 600);
-    BStream stream(65536);
+    StaticOutStream<65536> stream;
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
 
     Inifile ini;
@@ -353,7 +353,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     now.tv_sec = 1000;
 
     Rect screen_rect(0, 0, 800, 600);
-    BStream stream(65536);
+    StaticOutStream<65536> stream;
     CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
     Inifile ini;
     ini.set<cfg::video::wrm_compression_algorithm>(0);
@@ -391,7 +391,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     now.tv_sec = 1000;
 
     Rect screen_rect(0, 0, 800, 600);
-    BStream stream(65536);
+    StaticOutStream<65536> stream;
 
     const char * filename = "./testcap.wrm";
     size_t len = strlen(filename);

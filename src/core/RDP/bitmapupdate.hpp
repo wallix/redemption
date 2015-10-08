@@ -219,7 +219,7 @@ struct RDPBitmapData {
     , cb_uncompressed_size(0) {
     }
 
-    void emit(Stream & stream) const {
+    void emit(OutStream & stream) const {
         unsigned expected;
 
         if (    (this->flags & BITMAP_COMPRESSION)
@@ -263,7 +263,7 @@ struct RDPBitmapData {
         }
     }
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         unsigned expected = 18; /* destLeft(2) + destTop(2) + destRight(2) +
                                    destBottom(2) + width(2) + height(2) +
                                    bitsPerPixel(2) + flags(2) + bitmapLength(2) */

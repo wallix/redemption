@@ -122,7 +122,7 @@ struct TSRequest {
     }
 
 
-    explicit TSRequest(Stream & stream)
+    explicit TSRequest(InStream & stream)
         : negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
@@ -140,7 +140,7 @@ struct TSRequest {
         return length;
     }
 
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         int length;
         int ts_request_length;
         int nego_tokens_length;
@@ -205,16 +205,14 @@ struct TSRequest {
                                                        this->pubKeyAuth.size());
             assert(length == 0);
         }
-
-        stream.mark_end();
     }
 
-    int recv(Stream & stream) {
+    int recv(InStream & stream) {
         int length;
         int status;
         // uint32_t version;
 
-        status = stream.size();
+        status = stream.get_capacity();
 
         if (status < 0) {
             LOG(LOG_ERR, "Credssp TSCredentials::recv() error: %d" , status);
@@ -313,7 +311,7 @@ struct TSPasswordCreds {
         memcpy(this->password, pass, this->password_length);
     }
 
-    // TSPasswordCreds(Stream & stream) {
+    // TSPasswordCreds(InStream & stream) {
     //     this->recv(stream);
     // }
 
@@ -329,7 +327,7 @@ struct TSPasswordCreds {
         return length;
     }
 
-    int emit(Stream & stream) {
+    int emit(OutStream & stream) {
         int size = 0;
         int innerSize = this->ber_sizeof();
 
@@ -348,13 +346,11 @@ struct TSPasswordCreds {
         // /* [2] password (OCTET STRING) */
         size += BER::write_sequence_octet_string(stream, 2, this->password,
                                                  this->password_length);
-
-        stream.mark_end();
         return size;
     }
 
 
-    void recv(Stream & stream) {
+    void recv(InStream & stream) {
         int length = 0;
         /* TSPasswordCreds (SEQUENCE) */
         BER::read_sequence_tag(stream, length);
@@ -420,7 +416,7 @@ struct TSCredentials {
         return size;
     }
 
-    int emit(Stream & ts_credentials) {
+    int emit(OutStream & ts_credentials) {
         // ts_credentials is the authInfo Stream field of TSRequest before it is sent
         // ts_credentials will not be encrypted and should be encrypted after calling emit
         int size = 0;
@@ -443,12 +439,11 @@ struct TSCredentials {
         size += BER::write_octet_string_tag(ts_credentials, passwordSize);
         size += this->passCreds.emit(ts_credentials);
 
-        ts_credentials.mark_end();
         return size;
     }
 
 
-    void recv(Stream & ts_credentials) {
+    void recv(InStream & ts_credentials) {
         // ts_credentials is decrypted and should be decrypted before calling recv
         int length;
         uint32_t integer_length;

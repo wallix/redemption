@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     deltaPoints.out_sint16_le(-160);
     deltaPoints.out_sint16_le(0);
 
-    StaticStream dp(array, deltaPoints.get_offset());
+    InStream dp(array, deltaPoints.get_offset());
 
     gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect);
 
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect);
 
-    BStream deltaRectangles(1024);
+    StaticOutStream<1024> deltaRectangles;
 
     deltaRectangles.out_sint16_le(100);
     deltaRectangles.out_sint16_le(100);
@@ -175,10 +175,9 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
         deltaRectangles.out_sint16_le(10);
     }
 
-    deltaRectangles.mark_end();
-    deltaRectangles.rewind();
+    InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
-    gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles), screen_rect);
+    gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles_in), screen_rect);
 
     char message[1024];
     if (!check_sig(gd, message,
@@ -201,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect);
 
-    BStream deltaRectangles(1024);
+    StaticOutStream<1024> deltaRectangles;
 
     deltaRectangles.out_sint16_le(100);
     deltaRectangles.out_sint16_le(100);
@@ -215,10 +214,9 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
         deltaRectangles.out_sint16_le(10);
     }
 
-    deltaRectangles.mark_end();
-    deltaRectangles.rewind();
+    InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
-    gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x000000, 20, deltaRectangles), screen_rect);
+    gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x000000, 20, deltaRectangles_in), screen_rect);
 
     char message[1024];
     if (!check_sig(gd, message,

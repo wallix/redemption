@@ -118,9 +118,9 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         this->out() << ";\n";
         this->tab();
         if (std::is_convertible<Pack, type_<Font>>::value) {
-            this->out()
-              << "    font(char const * filename) : value(filename) {}\n"
-              << "    type value;\n"
+            this->out() << "    font(char const * filename) : value(filename) {}\n";
+            this->tab();
+            this->out() << "    type value;\n"
             ;
         }
         else {

@@ -26,7 +26,8 @@
 #include <stdint.h>
 #include "log.hpp"
 
-class Stream;
+class InStream;
+class OutStream;
 
 // 2.2.1.13.1.1.1 Capability Set (TS_CAPS_SET)
 // ===========================================
@@ -253,21 +254,21 @@ struct Capability {
 
     virtual ~Capability() {}
 
-    virtual void emit(Stream & stream) {
+    virtual void emit(OutStream & stream) = 0;/* {
         LOG(LOG_ERR, "Capability::emit [%u, %u] Implemented by subclass",
             this->capabilityType, this->len);
-    }
+    }*/
 
-    virtual void recv(Stream & stream, uint16_t len) {
+    virtual void recv(InStream & stream, uint16_t len) = 0;/* {
         this->len = len;
         LOG(LOG_ERR, "Capability::recv [%u, %u] Implemented by subclass",
             this->capabilityType, this->len);
-    }
+    }*/
 
-    virtual void log(const char * msg) {
+    virtual void log(const char * msg) = 0;/* {
         LOG(LOG_ERR, "Capability::log [%u, %u, %s] Implemented by subclass",
             this->capabilityType, this->len, msg);
-    }
+    }*/
 };
 
 #endif

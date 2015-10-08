@@ -28,8 +28,6 @@
 
 //#include <openssl/ssl.h>
 
-#include <memory>
-
 class FakeFront : public FrontAPI {
 public:
     uint32_t                    verbose;
@@ -46,7 +44,7 @@ public:
 
     RDPDrawable gd;
 
-    virtual void flush() {
+    virtual void flush() override {
         if (this->verbose > 10) {
              LOG(LOG_INFO, "--------- FRONT ------------------------");
              LOG(LOG_INFO, "flush()");
@@ -54,7 +52,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -66,7 +64,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -76,7 +74,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
+    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -86,7 +84,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -96,7 +94,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -106,7 +104,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -116,7 +114,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -126,7 +124,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -139,7 +137,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) {
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -149,7 +147,7 @@ public:
         this->gd.draw(cmd, clip, bitmap);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -159,7 +157,7 @@ public:
         this->gd.draw(cmd, clip, bitmap);
     }
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip) {
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -172,7 +170,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -185,7 +183,7 @@ public:
         this->gd.draw(new_cmd24, clip, gly_cache);
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -197,7 +195,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -210,7 +208,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -222,7 +220,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -234,7 +232,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -247,7 +245,7 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    virtual void draw(const RDP::FrameMarker & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             order.log(LOG_INFO);
@@ -257,7 +255,7 @@ public:
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             order.log(LOG_INFO);
@@ -267,7 +265,7 @@ public:
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    virtual void draw(const RDP::RAIL::WindowIcon & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             order.log(LOG_INFO);
@@ -277,7 +275,7 @@ public:
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    virtual void draw(const RDP::RAIL::CachedIcon & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             order.log(LOG_INFO);
@@ -287,7 +285,7 @@ public:
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             order.log(LOG_INFO);
@@ -298,7 +296,7 @@ public:
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) {
+        size_t size, const Bitmap & bmp) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             bitmap_data.log(LOG_INFO, "FakeFront");
@@ -310,10 +308,10 @@ public:
 
     using FrontAPI::draw;
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
+    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data, size_t length
-                                , size_t chunk_size, int flags) {
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
+                                , size_t chunk_size, int flags) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "send_to_channel");
@@ -321,7 +319,7 @@ public:
         }
     }
 
-    virtual void send_global_palette() throw (Error) {
+    virtual void send_global_palette() override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "send_global_palette()");
@@ -329,7 +327,7 @@ public:
         }
     }
 
-    virtual void begin_update() {
+    virtual void begin_update() override {
         //if (this->verbose > 10) {
         //    LOG(LOG_INFO, "--------- FRONT ------------------------");
         //    LOG(LOG_INFO, "begin_update");
@@ -337,7 +335,7 @@ public:
         //}
     }
 
-    virtual void end_update() {
+    virtual void end_update() override {
         //if (this->verbose > 10) {
         //    LOG(LOG_INFO, "--------- FRONT ------------------------");
         //    LOG(LOG_INFO, "end_update");
@@ -345,7 +343,7 @@ public:
         //}
     }
 
-    virtual void set_mod_palette(const BGRPalette & palette) {
+    virtual void set_mod_palette(const BGRPalette & palette) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "set_mod_palette");
@@ -353,7 +351,7 @@ public:
         }
     }
 
-    virtual void server_set_pointer(const Pointer & cursor) {
+    virtual void server_set_pointer(const Pointer & cursor) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_set_pointer");
@@ -364,7 +362,7 @@ public:
     }
 
     virtual void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor
-                                 , uint32_t bgcolor, const Rect & clip) {
+                                 , uint32_t bgcolor, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_draw_text %s", text);
@@ -379,7 +377,7 @@ public:
         );
     }
 
-    virtual void text_metrics(Font const & font, const char* text, int& width, int& height) {
+    virtual void text_metrics(Font const & font, const char* text, int& width, int& height) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "text_metrics");
@@ -389,7 +387,7 @@ public:
         this->gd.text_metrics(font, text, width, height);
     }
 
-    virtual int server_resize(int width, int height, int bpp) {
+    virtual int server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
         if (this->verbose > 10) {

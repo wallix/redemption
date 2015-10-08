@@ -37,12 +37,13 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     RDPScrBlt scrblt_ref(Rect(0, 0, 10, 10), 0, 0, 0);
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
+
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(0, 0, 10, 10), 0, 0, 0);
 
         RDPOrderCommon newcommon(SCREENBLT, Rect(10, 10, 800, 600));
-        RDPScrBlt(Rect(100, 150, 50, 60), 0xFF, 300, 400).emit(stream, newcommon, state_common, state_scrblt);
+        RDPScrBlt(Rect(100, 150, 50, 60), 0xFF, 300, 400).emit(out_stream, newcommon, state_common, state_scrblt);
 
         uint8_t datas[16] = {CHANGE | STANDARD, SCREENBLT,
             0x7F,   // x, y, cx, cy, rop, srcx, srcy coordinates changed
@@ -54,19 +55,20 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             0x2C, 1,  // srcx = 300
             0x90, 1,  // srcy = 400
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 16, datas, "ScrBlt 1");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 16, datas, "ScrBlt 1");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
 
         RDPScrBlt cmd(Rect(0, 0, 10, 10), 0, 0, 0);
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPScrBlt>(common_cmd, cmd,
             RDPOrderCommon(SCREENBLT, Rect(0, 0, 800, 600)),
@@ -75,12 +77,13 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     }
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
+
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(0, 0, 10, 10), 0, 0, 0);
 
         RDPOrderCommon newcommon(SCREENBLT, Rect(10, 10, 800, 600));
-        RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(stream, newcommon, state_common, state_scrblt);
+        RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(out_stream, newcommon, state_common, state_scrblt);
 
         uint8_t datas[16] = {
             CHANGE | STANDARD,
@@ -94,19 +97,20 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             100, 0,  // srcx = 100
             150, 0,  // srcy = 150
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 16, datas, "ScrBlt 2");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 16, datas, "ScrBlt 2");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
 
         RDPScrBlt cmd(Rect(0, 0, 10, 10), 0, 0, 0);
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPScrBlt>(common_cmd, cmd,
             RDPOrderCommon(SCREENBLT, Rect(0, 0, 800, 600)),
@@ -115,12 +119,13 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     }
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
+
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(310, 390, 10, 10), 0xFF, 110, 140);
 
         RDPOrderCommon newcommon(SCREENBLT, Rect(10, 10, 800, 600));
-        RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(stream, newcommon, state_common, state_scrblt);
+        RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(out_stream, newcommon, state_common, state_scrblt);
 
         uint8_t datas[9] = {
             static_cast<uint8_t>(CHANGE | STANDARD | DELTA),
@@ -133,19 +138,20 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             static_cast<uint8_t>(-10),     // srcx = 110 - 10 = 100
             static_cast<uint8_t>(+10),    // srcy = 140 +10 = 150
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 9, datas, "ScrBlt 3");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 9, datas, "ScrBlt 3");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
 
         RDPScrBlt cmd(Rect(310, 390, 10, 10), 0xFF, 110, 140);
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPScrBlt>(common_cmd, cmd,
             RDPOrderCommon(SCREENBLT, Rect(0, 0, 800, 600)),
@@ -154,12 +160,13 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     }
 
     {
-        BStream stream(1000);
+        StaticOutStream<1000> out_stream;
+
         RDPOrderCommon state_common(SCREENBLT, Rect(311, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(310, 390, 10, 10), 0xFF, 110, 140);
 
         RDPOrderCommon newcommon(SCREENBLT, Rect(311, 0, 800, 600));
-        RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(stream, newcommon, state_common, state_scrblt);
+        RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(out_stream, newcommon, state_common, state_scrblt);
 
         uint8_t datas[8] = {
             static_cast<uint8_t>(STANDARD | BOUNDS | DELTA | LASTBOUNDS),
@@ -171,19 +178,20 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             static_cast<uint8_t>(-10),     // srcx = 110 - 10 = 100
             static_cast<uint8_t>(+10),    // srcy = 140 +10 = 150
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 8, datas, "ScrBlt 4");
+        check_datas(out_stream.get_offset(), out_stream.get_data(), 8, datas, "ScrBlt 4");
 
-        stream.mark_end(); stream.p = stream.get_data();
+        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+
 
         RDPOrderCommon common_cmd = state_common;
-        uint8_t control = stream.in_uint8();
+        uint8_t control = in_stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
-        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+        RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
 
         RDPScrBlt cmd(Rect(310, 390, 10, 10), 0xFF, 110, 140);
-        cmd.receive(stream, header);
+        cmd.receive(in_stream, header);
 
         check<RDPScrBlt>(common_cmd, cmd,
             RDPOrderCommon(SCREENBLT, Rect(311, 0, 800, 600)),

@@ -168,7 +168,7 @@ public:
         }
     }
 
-    void emit(Stream & stream) const
+    void emit(OutStream & stream) const
     {
         using namespace RDP;
 
@@ -188,7 +188,7 @@ public:
         stream.out_copy_bytes(this->data, this->size);
     }
 
-    void receive(Stream & stream, const RDPSecondaryOrderHeader &/* header*/)
+    void receive(InStream & stream, const RDPSecondaryOrderHeader &/* header*/)
     {
         using namespace RDP;
 
@@ -200,7 +200,7 @@ public:
         uint8_t size     = stream.in_uint8();
         if (this->size < size) {
             free(this->data);
-            this->data   = (uint8_t *)malloc(size);
+            this->data   = static_cast<uint8_t *>(malloc(size));
         }
         this->size       = size;
         memcpy(this->data, stream.in_uint8p(this->size), this->size);

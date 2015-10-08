@@ -22,6 +22,7 @@
 #define _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
 
 #include "cast.hpp"
+#include "error.hpp"
 #include "stream.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
@@ -132,7 +133,7 @@ class RAILPDUHeader_Recv {
     uint16_t orderLength_;
 
 public:
-    explicit RAILPDUHeader_Recv(Stream & stream) {
+    explicit RAILPDUHeader_Recv(InStream & stream) {
         const unsigned expected = 4;    // orderType(2) + orderLength(2)
 
         if (!stream.in_check_rem(expected)) {
@@ -151,11 +152,11 @@ public:
 };
 
 class RAILPDUHeader_Send {
-    Stream   & stream;
-    uint32_t   offset_of_orderLength;
+    OutStream & stream;
+    uint32_t    offset_of_orderLength;
 
 public:
-    explicit RAILPDUHeader_Send(Stream & stream)
+    explicit RAILPDUHeader_Send(OutStream & stream)
     : stream(stream), offset_of_orderLength(0) {}
 
     void emit_begin(uint16_t orderType) {
@@ -163,8 +164,6 @@ public:
 
         this->offset_of_orderLength = this->stream.get_offset();
         this->stream.out_clear_bytes(2);
-
-        this->stream.mark_end();
     }
 
     void emit_end() {
@@ -203,7 +202,7 @@ class HandshakePDU_Recv {
     uint32_t buildNumber_;
 
 public:
-    explicit HandshakePDU_Recv(Stream & stream) {
+    explicit HandshakePDU_Recv(InStream & stream) {
         const unsigned expected = 4;    // buildNumber(4)
 
         if (!stream.in_check_rem(expected)) {
@@ -220,10 +219,8 @@ public:
 
 class HandshakePDU_Send {
 public:
-    HandshakePDU_Send(Stream & stream, uint32_t buildNumber) {
+    HandshakePDU_Send(OutStream & stream, uint32_t buildNumber) {
         stream.out_uint32_le(buildNumber);
-
-        stream.mark_end();
     }
 };
 
@@ -271,7 +268,7 @@ class ClientInformationPDU_Recv {
     uint32_t Flags_;
 
 public:
-    explicit ClientInformationPDU_Recv(Stream & stream) {
+    explicit ClientInformationPDU_Recv(InStream & stream) {
         {
             const unsigned expected = 4;    // Flags(4)
 
@@ -291,10 +288,8 @@ public:
 
 class ClientInformationPDU_Send {
 public:
-    ClientInformationPDU_Send(Stream & stream, uint32_t Flags) {
+    ClientInformationPDU_Send(OutStream & stream, uint32_t Flags) {
         stream.out_uint32_le(Flags);
-
-        stream.mark_end();
     }
 };
 
@@ -419,7 +414,7 @@ class ClientExecutePDU_Recv {
     std::string arguments_;
 
 public:
-    explicit ClientExecutePDU_Recv(Stream & stream) {
+    explicit ClientExecutePDU_Recv(InStream & stream) {
         {
             const unsigned expected =
                 8;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -482,7 +477,7 @@ public:
 
 class ClientExecutePDU_Send {
 public:
-    ClientExecutePDU_Send(Stream & stream, uint16_t Flags,
+    ClientExecutePDU_Send(OutStream & stream, uint16_t Flags,
                           const char * exe_or_file, const char * working_dir,
                           const char * arguments) {
         stream.out_uint16_le(Flags);
@@ -524,8 +519,6 @@ public:
         put_non_null_terminate_utf16_string(
             arguments, maximum_length_of_Arguments_in_bytes,
             offset_of_Arguments);
-
-        stream.mark_end();
     }
 };
 
@@ -657,7 +650,7 @@ class ClientSystemParametersUpdatePDU_Recv {
     uint32_t SystemParam_;
 
 public:
-    explicit ClientSystemParametersUpdatePDU_Recv(Stream & stream) {
+    explicit ClientSystemParametersUpdatePDU_Recv(InStream & stream) {
         {
             const unsigned expected = 4;    // SystemParam(4)
 
@@ -677,10 +670,8 @@ public:
 
 class ClientSystemParametersUpdatePDU_Send {
 public:
-    ClientSystemParametersUpdatePDU_Send(Stream & stream, uint32_t SystemParam) {
+    ClientSystemParametersUpdatePDU_Send(OutStream & stream, uint32_t SystemParam) {
         stream.out_uint32_le(SystemParam);
-
-        stream.mark_end();
     }
 };
 
@@ -723,7 +714,7 @@ class HighContrastSystemInformationStructure_Recv {
     std::string ColorScheme_;
 
 public:
-    explicit HighContrastSystemInformationStructure_Recv(Stream & stream) {
+    explicit HighContrastSystemInformationStructure_Recv(InStream & stream) {
         {
             const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
 
@@ -777,7 +768,7 @@ public:
 
 class HighContrastSystemInformationStructure_Send {
 public:
-    HighContrastSystemInformationStructure_Send(Stream & stream, uint32_t Flags,
+    HighContrastSystemInformationStructure_Send(OutStream & stream, uint32_t Flags,
                                                 const char * color_scheme) {
         stream.out_uint32_le(Flags);
 
@@ -794,8 +785,6 @@ public:
         stream.out_uint16_le(size_of_unicode_data);
 
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
-
-        stream.mark_end();
     }
 };
 

@@ -149,14 +149,14 @@ namespace MCS
         "rt-user-rejected"
     };
 
-    int peekPerEncodedMCSType(const Stream & stream) {
+    int peekPerEncodedMCSType(const InStream & stream) {
         if (!stream.in_check_rem(1)){
             throw Error(ERR_MCS);
         }
         return *stream.get_data() >> 2;
     }
 
-    //int peekBerEncodedMCSType(const Stream & stream) {
+    //int peekBerEncodedMCSType(const InStream & stream) {
     //    if (!stream.in_check_rem(2)){
     //        throw Error(ERR_MCS);
     //    }
@@ -167,10 +167,9 @@ namespace MCS
 
     struct InBerStream
     {
+        InStream & stream;
 
-        Stream & stream;
-
-        explicit InBerStream(Stream & stream)
+        explicit InBerStream(InStream & stream)
         : stream(stream)
         {
         }
@@ -378,106 +377,9 @@ namespace MCS
             BER_TAG_MCS_DOMAIN_PARAMS = 0x30
         };
 
-        Stream & stream;
-
-        explicit OutBerStream(Stream & stream)
-        : stream(stream)
-        {
-        }
-
-        void out_ber_len(unsigned int v){
-            if (v < 0x80){
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-            else if (v < 0x100) {
-                this->stream.out_uint8(0x81);
-                this->stream.out_uint8(v);
-            }
-            else {
-                this->stream.out_uint8(0x82);
-                this->stream.out_uint16_be(v);
-            }
-        }
-
-        void out_ber_integer(unsigned int v){
-            this->stream.out_uint8(BER_TAG_INTEGER);
-            if (v < 0x80) {
-                this->stream.out_uint8(1);
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-            else if (v < 0xfff8) { // Actually ffff should also work, but it would break old code
-                this->stream.out_uint8(2);
-                this->stream.out_uint8((uint8_t)(v >> 8));
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-            else {
-                this->stream.out_uint8(3);
-                this->stream.out_uint8((uint8_t)(v >> 16));
-                this->stream.out_uint8((uint8_t)(v >> 8));
-                this->stream.out_uint8(static_cast<uint8_t>(v));
-            }
-        }
-
-        void set_out_ber_len_uint7(unsigned int v, size_t offset){
-            if (v >= 0x80) {
-                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-            }
-            this->stream.set_out_uint8((uint8_t)v, offset+0);
-        }
-
-        void out_ber_len_uint7(unsigned int v){
-            if (v >= 0x80) {
-                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-            }
-            this->stream.out_uint8(static_cast<uint8_t>(v));
-        }
-
-        void set_out_ber_len_uint16(unsigned int v, size_t offset){
-            this->stream.set_out_uint8(0x82, offset+0);
-            this->stream.set_out_uint16_be(v, offset+1);
-        }
-
-        void out_ber_len_uint16(unsigned int v){
-            this->stream.out_uint8(0x82);
-            this->stream.out_uint16_be(v);
-        }
-
-        void mark_end() {
-            this->stream.mark_end();
-        }
-
-        uint32_t get_offset() const {
-            return this->stream.get_offset();
-        }
-
-        void out_uint16_be(unsigned int v) {
-            return this->stream.out_uint16_be(v);
-        }
-
-        void out_uint8(unsigned char v) {
-            return this->stream.out_uint8(v);
-        }
-    };
-
-    struct OutBerStream_new_stream
-    {
-        // =========================================================================
-        // BER encoding rules support methods
-        // =========================================================================
-
-        enum {
-            BER_TAG_BOOLEAN      =    1,
-            BER_TAG_INTEGER      =    2,
-            BER_TAG_OCTET_STRING =    4,
-            BER_TAG_RESULT       =   10,
-            BER_TAG_MCS_DOMAIN_PARAMS = 0x30
-        };
-
         OutStream & stream;
 
-        explicit OutBerStream_new_stream(OutStream & stream)
+        explicit OutBerStream(OutStream & stream)
         : stream(stream)
         {
         }
@@ -553,85 +455,12 @@ namespace MCS
             return this->stream.out_uint8(v);
         }
     };
-
 
     struct CONNECT_INITIAL_Send
     {
         OutBerStream ber_stream;
 
-        CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
-        : ber_stream(stream)
-        {
-            if (encoding != BER_ENCODING) {
-                LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
-                throw Error(ERR_MCS);
-            }
-            this->ber_stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_INITIAL);
-            this->ber_stream.out_ber_len_uint16(0); // filled later, 3 bytes
-
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
-            this->ber_stream.out_ber_len(1); /* calling domain */
-            this->ber_stream.out_uint8(1);
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
-            this->ber_stream.out_ber_len(1); /* called domain */
-            this->ber_stream.out_uint8(1);
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_BOOLEAN);
-            this->ber_stream.out_ber_len(1);
-            this->ber_stream.out_uint8(0xff); /* upward flag */
-
-            // target params
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
-            this->ber_stream.out_ber_len(26);       // 26 bytes
-            this->ber_stream.out_ber_integer(34);     // 3 bytes : max_channels
-            this->ber_stream.out_ber_integer(2);      // 3 bytes : max_users
-            this->ber_stream.out_ber_integer(0);      // 3 bytes : max_tokens
-            this->ber_stream.out_ber_integer(1);      // 3 bytes :
-            this->ber_stream.out_ber_integer(0);      // 3 bytes :
-            this->ber_stream.out_ber_integer(1);      // 3 bytes :
-            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_pdu_size
-            this->ber_stream.out_ber_integer(2);      // 3 bytes :
-
-            // min params
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
-            this->ber_stream.out_ber_len(25);     // 25 bytes
-            this->ber_stream.out_ber_integer(1);     // 3 bytes : max_channels
-            this->ber_stream.out_ber_integer(1);     // 3 bytes : max_users
-            this->ber_stream.out_ber_integer(1);     // 3 bytes : max_tokens
-            this->ber_stream.out_ber_integer(1);     // 3 bytes :
-            this->ber_stream.out_ber_integer(0);     // 3 bytes :
-            this->ber_stream.out_ber_integer(1);     // 3 bytes :
-            this->ber_stream.out_ber_integer(0x420); // 4 bytes : max_pdu_size
-            this->ber_stream.out_ber_integer(2);     // 3 bytes :
-
-            // max params
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
-            this->ber_stream.out_ber_len(31);      // 31 bytes
-            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_channels
-            this->ber_stream.out_ber_integer(0xfc17); // 4 bytes : max_users
-            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_tokens
-            this->ber_stream.out_ber_integer(1);      // 3 bytes :
-            this->ber_stream.out_ber_integer(0);      // 3 bytes :
-            this->ber_stream.out_ber_integer(1);      // 3 bytes :
-            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_pdu_size
-            this->ber_stream.out_ber_integer(2);      // 3 bytes :
-
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
-            // We assume here that payload_length is encoded in 2 bytes
-            // (length > 0xFFFF will probably bug whereas ber should allow theses values)
-            this->ber_stream.out_ber_len_uint16(payload_length); // 3 bytes
-            // now we know full MCS Initial header length (without initial tag and len)
-            // fill 3 bytes of length at the begining of this function
-            this->ber_stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - 5, 2);
-            this->ber_stream.mark_end();
-        }
-    };
-
-    // TODO temporary name
-    struct CONNECT_INITIAL_Send_new_stream
-    {
-        OutBerStream_new_stream ber_stream;
-
-        CONNECT_INITIAL_Send_new_stream(OutStream & stream, size_t payload_length, int encoding)
+        CONNECT_INITIAL_Send(OutStream & stream, size_t payload_length, int encoding)
         : ber_stream(stream)
         {
             if (encoding != BER_ENCODING) {
@@ -885,13 +714,13 @@ namespace MCS
 
         bool upwardFlag;
 
-        struct DomainParameters targetParameters;
-        struct DomainParameters minimumParameters;
-        struct DomainParameters maximumParameters;
+        DomainParameters targetParameters;
+        DomainParameters minimumParameters;
+        DomainParameters maximumParameters;
 
-        SubStream payload;
+        InStream payload;
 
-        CONNECT_INITIAL_PDU_Recv(Stream & stream, int encoding)
+        CONNECT_INITIAL_PDU_Recv(InStream & stream, int encoding)
             : ber_stream(stream)
             , tag([this, encoding](){
                 TODO("simplify this there is no real use for ber_stream");
@@ -1002,12 +831,12 @@ namespace MCS
                         payload_size, this->ber_stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-                return SubStream(stream, stream.get_offset(), payload_size);
+                return InStream(stream.get_current(), payload_size);
             }())
         {
 // The payload is the USER_DATA block
             this->_header_size  = this->ber_stream.get_offset();
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 
@@ -1089,10 +918,8 @@ namespace MCS
 // serverNetworkData (variable): Variable-length Server Network Data structure
 //   (section 2.2.1.4.4).
 
-
     struct CONNECT_RESPONSE_PDU_Recv
     {
-
         InBerStream ber_stream;
 
         uint16_t tag;
@@ -1104,9 +931,9 @@ namespace MCS
         struct DomainParameters domainParameters;
 
         size_t _header_size;
-        SubStream payload;
+        InStream payload;
 
-        CONNECT_RESPONSE_PDU_Recv(Stream & stream, int encoding)
+        CONNECT_RESPONSE_PDU_Recv(InStream & stream, int encoding)
             : ber_stream(stream)
             , tag([&stream, encoding, this](){
                     if (encoding != BER_ENCODING){
@@ -1224,7 +1051,7 @@ namespace MCS
                         throw Error(ERR_MCS);
                     }
 
-                    return SubStream(stream, stream.get_offset(), payload_size);
+                    return InStream(stream.get_current(), payload_size);
             }())
         {
 
@@ -1232,7 +1059,7 @@ namespace MCS
                 LOG(LOG_ERR, "Check Result Error (0x%02X): %s", this->result, RT_RESULT[this->result]);
                 throw Error(ERR_MCS);
             }
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 
@@ -1240,67 +1067,7 @@ namespace MCS
     {
         OutBerStream ber_stream;
 
-        CONNECT_RESPONSE_Send(Stream & stream, size_t payload_length, int encoding)
-        : ber_stream(stream)
-        {
-            if (encoding != BER_ENCODING){
-                LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
-                throw Error(ERR_MCS);
-           }
-            // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
-            this->ber_stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_RESPONSE);
-            // BER: Type Length
-            if (payload_length > 88){
-                this->ber_stream.out_ber_len_uint16(0);
-            }
-            else {
-                this->ber_stream.out_ber_len_uint7(0);
-            }
-            uint16_t start_offset = this->ber_stream.get_offset();
-
-            // Connect-Response::result = rt-successful (0)
-            // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
-            // length of the value is given by the second byte (1 byte), and the
-            // actual value is 0 (rt-successful).
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_RESULT);
-            this->ber_stream.out_ber_len_uint7(1);
-            this->ber_stream.out_uint8(0);
-
-            // Connect-Response::calledConnectId = 0
-            this->ber_stream.out_ber_integer(0); // 3 bytes
-
-            // Connect-Response::domainParameters (26 bytes)
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
-            this->ber_stream.out_ber_len_uint7(26);
-            this->ber_stream.out_ber_integer(34);          // DomainParameters::maxChannelIds = 34
-            this->ber_stream.out_ber_integer(3);           // DomainParameters::maxUserIds = 3
-            this->ber_stream.out_ber_integer(0);           // DomainParameters::maximumTokenIds = 0
-            this->ber_stream.out_ber_integer(1);           // DomainParameters::numPriorities = 1
-            this->ber_stream.out_ber_integer(0);           // DomainParameters::minThroughput = 0
-            this->ber_stream.out_ber_integer(1);           // DomainParameters::maxHeight = 1
-            this->ber_stream.out_ber_integer(0xfff8);      // DomainParameters::maxMCSPDUsize = 65528
-            this->ber_stream.out_ber_integer(2);           // DomainParameters::protocolVersion = 2
-
-            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
-            this->ber_stream.out_ber_len(payload_length);
-
-            // now we know full MCS Initial header length (without initial tag and len)
-            if (payload_length > 88){
-                this->ber_stream.set_out_ber_len_uint16(payload_length + this->ber_stream.get_offset() - start_offset, 2);
-            }
-            else {
-                this->ber_stream.set_out_ber_len_uint7(payload_length + this->ber_stream.get_offset() - start_offset, 2);
-            }
-            this->ber_stream.mark_end();
-        }
-    };
-
-    // TODO temporary name
-    struct CONNECT_RESPONSE_Send_new_stream
-    {
-        OutBerStream_new_stream ber_stream;
-
-        CONNECT_RESPONSE_Send_new_stream(OutStream & stream, size_t payload_length, int encoding)
+        CONNECT_RESPONSE_Send(OutStream & stream, size_t payload_length, int encoding)
         : ber_stream(stream)
         {
             if (encoding != BER_ENCODING){
@@ -1361,7 +1128,7 @@ namespace MCS
 //    }
     struct PlumbDomainIndication_Send
     {
-        PlumbDomainIndication_Send(Stream & stream, int encoding)
+        PlumbDomainIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1370,7 +1137,7 @@ namespace MCS
 
     struct PlumbDomainIndication_Recv
     {
-        PlumbDomainIndication_Recv(Stream & stream, int encoding)
+        PlumbDomainIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1405,7 +1172,7 @@ namespace MCS
 
     struct ErectDomainRequest_Send
     {
-        ErectDomainRequest_Send(OutPerBStream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
+        ErectDomainRequest_Send(OutPerStream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
@@ -1414,7 +1181,6 @@ namespace MCS
             stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
             stream.out_per_integer(subheight); /* subHeight (INTEGER) */
             stream.out_per_integer(subinterval); /* subInterval (INTEGER) */
-            stream.mark_end();
         }
     };
 
@@ -1424,7 +1190,7 @@ namespace MCS
         uint32_t subHeight;
         uint32_t subInterval;
 
-        ErectDomainRequest_Recv(Stream & stream, int encoding)
+        ErectDomainRequest_Recv(InStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
@@ -1446,7 +1212,7 @@ namespace MCS
 
             {
                 if (!stream.in_check_rem(2)) {
-                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %u)", stream.size());
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %u)", stream.in_remain());
                     throw Error(ERR_MCS);
                 }
                 uint16_t len = stream.in_2BUE();
@@ -1466,7 +1232,7 @@ namespace MCS
             }
             {
                 if (!stream.in_check_rem(2)) {
-                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subInterval len : (need 2, available %u)", stream.size());
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subInterval len : (need 2, available %u)", stream.in_remain());
                     throw Error(ERR_MCS);
                 }
                 uint16_t len = stream.in_2BUE();
@@ -1527,7 +1293,7 @@ namespace MCS
 
     struct MergeChannelRequest_Send
     {
-        MergeChannelRequest_Send(Stream & stream, int encoding)
+        MergeChannelRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1536,7 +1302,7 @@ namespace MCS
 
     struct MergeChannelRequest_Recv
     {
-        MergeChannelRequest_Recv(Stream & stream, int encoding)
+        MergeChannelRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1551,7 +1317,7 @@ namespace MCS
 
     struct MergeChannelsConfirm_Send
     {
-        MergeChannelsConfirm_Send(Stream & stream, int encoding)
+        MergeChannelsConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1560,7 +1326,7 @@ namespace MCS
 
     struct MergeChannelsConfirm_Recv
     {
-        MergeChannelsConfirm_Recv(Stream & stream, int encoding)
+        MergeChannelsConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1576,7 +1342,7 @@ namespace MCS
 //    }
     struct PurgeChannelsIndication_Send
     {
-        PurgeChannelsIndication_Send(Stream & stream, int encoding)
+        PurgeChannelsIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1585,7 +1351,7 @@ namespace MCS
 
     struct PurgeChannelsIndication_Recv
     {
-        PurgeChannelsIndication_Recv(Stream & stream, int encoding)
+        PurgeChannelsIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1637,7 +1403,7 @@ namespace MCS
 
     struct MergeTokensRequest_Send
     {
-        MergeTokensRequest_Send(Stream & stream, int encoding)
+        MergeTokensRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1646,7 +1412,7 @@ namespace MCS
 
     struct MergeTokensRequest_Recv
     {
-        MergeTokensRequest_Recv(Stream & stream, int encoding)
+        MergeTokensRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1661,7 +1427,7 @@ namespace MCS
 
     struct MergeTokensConfirm_Send
     {
-        MergeTokensConfirm_Send(Stream & stream, int encoding)
+        MergeTokensConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1670,7 +1436,7 @@ namespace MCS
 
     struct MergeTokensConfirm_Recv
     {
-        MergeTokensConfirm_Recv(Stream & stream, int encoding)
+        MergeTokensConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1684,7 +1450,7 @@ namespace MCS
 
     struct PurgeTokensIndication_Send
     {
-        PurgeTokensIndication_Send(Stream & stream, int encoding)
+        PurgeTokensIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1693,7 +1459,7 @@ namespace MCS
 
     struct PurgeTokensIndication_Recv
     {
-        PurgeTokensIndication_Recv(Stream & stream, int encoding)
+        PurgeTokensIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1707,19 +1473,6 @@ namespace MCS
 
     struct DisconnectProviderUltimatum_Send
     {
-        DisconnectProviderUltimatum_Send(Stream & stream, uint8_t reason, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            uint16_t data = ( (MCS::MCSPDU_DisconnectProviderUltimatum << 10)
-                            | (reason << 7)
-                            );
-            stream.out_uint16_be(data);
-            stream.mark_end();
-        }
-
         DisconnectProviderUltimatum_Send(OutStream & stream, uint8_t reason, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -1737,7 +1490,8 @@ namespace MCS
     {
         uint8_t type;
         t_reasons reason;
-        DisconnectProviderUltimatum_Recv(Stream & stream, int encoding)
+
+        DisconnectProviderUltimatum_Recv(InStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
@@ -1770,7 +1524,7 @@ namespace MCS
 
     struct RejectMCSPDUUltimatum_Send
     {
-        RejectMCSPDUUltimatum_Send(Stream & stream, int encoding)
+        RejectMCSPDUUltimatum_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1779,7 +1533,7 @@ namespace MCS
 
     struct RejectMCSPDUUltimatum_Recv
     {
-        RejectMCSPDUUltimatum_Recv(Stream & stream, int encoding)
+        RejectMCSPDUUltimatum_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1826,21 +1580,21 @@ namespace MCS
 
     struct AttachUserRequest_Send
     {
-        AttachUserRequest_Send(Stream & stream, int encoding)
+        AttachUserRequest_Send(OutStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
             stream.out_uint8(MCS::MCSPDU_AttachUserRequest << 2);
-            stream.mark_end();
         }
     };
 
     struct AttachUserRequest_Recv
     {
         uint8_t type;
-        AttachUserRequest_Recv(Stream & stream, int encoding)
+
+        AttachUserRequest_Recv(InStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
@@ -1971,20 +1725,6 @@ namespace MCS
 
     struct AttachUserConfirm_Send
     {
-        AttachUserConfirm_Send(Stream & stream, uint8_t result, bool initiator_flag, uint16_t initiator, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8((MCS::MCSPDU_AttachUserConfirm << 2) | initiator_flag * 2);
-            stream.out_uint8(result);
-            if (initiator_flag){
-                stream.out_uint16_be(initiator);
-            }
-            stream.mark_end();
-        }
-
         AttachUserConfirm_Send(OutStream & stream, uint8_t result, bool initiator_flag, uint16_t initiator, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -2006,7 +1746,7 @@ namespace MCS
         bool initiator_flag;
         uint16_t initiator;
 
-        AttachUserConfirm_Recv(Stream & stream, int encoding)
+        AttachUserConfirm_Recv(InStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
@@ -2048,7 +1788,7 @@ namespace MCS
 
     struct DetachUserRequest_Send
     {
-        DetachUserRequest_Send(Stream & stream, int encoding)
+        DetachUserRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2057,7 +1797,7 @@ namespace MCS
 
     struct DetachUserRequest_Recv
     {
-        DetachUserRequest_Recv(Stream & stream, int encoding)
+        DetachUserRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2072,7 +1812,7 @@ namespace MCS
 
     struct DetachUserIndication_Send
     {
-        DetachUserIndication_Send(Stream & stream, int encoding)
+        DetachUserIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2081,7 +1821,7 @@ namespace MCS
 
     struct DetachUserIndication_Recv
     {
-        DetachUserIndication_Recv(Stream & stream, int encoding)
+        DetachUserIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2174,7 +1914,7 @@ namespace MCS
 
     struct ChannelJoinRequest_Send
     {
-        ChannelJoinRequest_Send(Stream & stream, uint16_t initiator, uint16_t channelId, int encoding)
+        ChannelJoinRequest_Send(OutStream & stream, uint16_t initiator, uint16_t channelId, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
@@ -2183,7 +1923,6 @@ namespace MCS
             stream.out_uint8(MCS::MCSPDU_ChannelJoinRequest << 2);
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
-            stream.mark_end();
         }
     };
 
@@ -2193,7 +1932,7 @@ namespace MCS
         uint16_t initiator;
         uint16_t channelId;
 
-        ChannelJoinRequest_Recv(Stream & stream, int encoding)
+        ChannelJoinRequest_Recv(InStream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
@@ -2294,28 +2033,6 @@ namespace MCS
 
     struct ChannelJoinConfirm_Send
     {
-        ChannelJoinConfirm_Send(Stream & stream
-                               , uint8_t result
-                               , uint16_t initiator
-                               , uint16_t requested
-                               , bool channelId_flag
-                               , uint16_t channelId
-                               , int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8((MCSPDU_ChannelJoinConfirm << 2) | 2 * channelId_flag);
-            stream.out_uint8(result); // Result = rt_successfull
-            stream.out_uint16_be(initiator);
-            stream.out_uint16_be(requested);
-            if (channelId_flag){
-                stream.out_uint16_be(channelId);
-            }
-            stream.mark_end();
-        }
-
         ChannelJoinConfirm_Send(OutStream & stream
                                , uint8_t result
                                , uint16_t initiator
@@ -2347,7 +2064,7 @@ namespace MCS
         bool channelId_flag;
         uint16_t channelId;
 
-        ChannelJoinConfirm_Recv(Stream & stream, int encoding)
+        ChannelJoinConfirm_Recv(InStream & stream, int encoding)
         : type(MCS::MCSPDU_ChannelJoinConfirm)
         , result(0)
         , initiator(0)
@@ -2398,7 +2115,7 @@ namespace MCS
 
     struct ChannelLeaveRequest_Send
     {
-        ChannelLeaveRequest_Send(Stream & stream, int encoding)
+        ChannelLeaveRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2407,7 +2124,7 @@ namespace MCS
 
     struct ChannelLeaveRequest_Recv
     {
-        ChannelLeaveRequest_Recv(Stream & stream, int encoding)
+        ChannelLeaveRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2421,7 +2138,7 @@ namespace MCS
 
     struct ChannelConveneRequest_Send
     {
-        ChannelConveneRequest_Send(Stream & stream, int encoding)
+        ChannelConveneRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2430,7 +2147,7 @@ namespace MCS
 
     struct ChannelConveneRequest_Recv
     {
-        ChannelConveneRequest_Recv(Stream & stream, int encoding)
+        ChannelConveneRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2446,7 +2163,7 @@ namespace MCS
 
     struct ChannelConveneConfirm_Send
     {
-        ChannelConveneConfirm_Send(Stream & stream, int encoding)
+        ChannelConveneConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2455,7 +2172,7 @@ namespace MCS
 
     struct ChannelConveneConfirm_Recv
     {
-        ChannelConveneConfirm_Recv(Stream & stream, int encoding)
+        ChannelConveneConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2470,7 +2187,7 @@ namespace MCS
 
     struct ChannelDisbandRequest_Send
     {
-        ChannelDisbandRequest_Send(Stream & stream, int encoding)
+        ChannelDisbandRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2479,7 +2196,7 @@ namespace MCS
 
     struct ChannelDisbandRequest_Recv
     {
-        ChannelDisbandRequest_Recv(Stream & stream, int encoding)
+        ChannelDisbandRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2493,7 +2210,7 @@ namespace MCS
 
     struct ChannelDisbandIndication_Send
     {
-        ChannelDisbandIndication_Send(Stream & stream, int encoding)
+        ChannelDisbandIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2502,7 +2219,7 @@ namespace MCS
 
     struct ChannelDisbandIndication_Recv
     {
-        ChannelDisbandIndication_Recv(Stream & stream, int encoding)
+        ChannelDisbandIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2518,7 +2235,7 @@ namespace MCS
 
     struct ChannelAdmitRequest_Send
     {
-        ChannelAdmitRequest_Send(Stream & stream, int encoding)
+        ChannelAdmitRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2527,7 +2244,7 @@ namespace MCS
 
     struct ChannelAdmitRequest_Recv
     {
-        ChannelAdmitRequest_Recv(Stream & stream, int encoding)
+        ChannelAdmitRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2544,7 +2261,7 @@ namespace MCS
 
     struct ChannelAdmitIndication_Send
     {
-        ChannelAdmitIndication_Send(Stream & stream, int encoding)
+        ChannelAdmitIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2553,7 +2270,7 @@ namespace MCS
 
     struct ChannelAdmitIndication_Recv
     {
-        ChannelAdmitIndication_Recv(Stream & stream, int encoding)
+        ChannelAdmitIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2570,7 +2287,7 @@ namespace MCS
 
     struct ChannelExpelRequest_Send
     {
-        ChannelExpelRequest_Send(Stream & stream, int encoding)
+        ChannelExpelRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2579,7 +2296,7 @@ namespace MCS
 
     struct ChannelExpelRequest_Recv
     {
-        ChannelExpelRequest_Recv(Stream & stream, int encoding)
+        ChannelExpelRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2594,7 +2311,7 @@ namespace MCS
 
     struct ChannelExpelIndication_Send
     {
-        ChannelExpelIndication_Send(Stream & stream, int encoding)
+        ChannelExpelIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2603,7 +2320,7 @@ namespace MCS
 
     struct ChannelExpelIndication_Recv
     {
-        ChannelExpelIndication_Recv(Stream & stream, int encoding)
+        ChannelExpelIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2621,20 +2338,6 @@ namespace MCS
 
     struct SendDataRequest_Send
     {
-        SendDataRequest_Send(OutPerBStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8(MCS::MCSPDU_SendDataRequest << 2);
-            stream.out_uint16_be(initiator);
-            stream.out_uint16_be(channelId);
-            stream.out_uint8((dataPriority << 6)|(segmentation << 4));
-            stream.out_per_length(payload_length);
-            stream.mark_end();
-        }
-
         SendDataRequest_Send(OutPerStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -2651,7 +2354,6 @@ namespace MCS
 
     struct SendDataRequest_Recv
     {
-
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;
@@ -2659,9 +2361,9 @@ namespace MCS
         uint8_t dataPriority;
         uint8_t segmentation;
 
-        SubStream payload;
+        InStream payload;
 
-        SendDataRequest_Recv(Stream & stream, int encoding)
+        SendDataRequest_Recv(InStream & stream, int encoding)
             : type([&stream, encoding](){
                 if (encoding != PER_ENCODING){
                     LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
@@ -2713,7 +2415,7 @@ namespace MCS
                         payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-                return SubStream(stream, stream.get_offset(), stream.in_remain());
+                return InStream(stream.get_current(), stream.in_remain());
             }())
         {
 //            stream.in_skip_bytes(this->payload.size());
@@ -2731,20 +2433,6 @@ namespace MCS
 
     struct SendDataIndication_Send
     {
-        SendDataIndication_Send(OutPerBStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
-        {
-            if (encoding != PER_ENCODING){
-                LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
-                throw Error(ERR_MCS);
-            }
-            stream.out_uint8(MCS::MCSPDU_SendDataIndication << 2);
-            stream.out_uint16_be(initiator);
-            stream.out_uint16_be(channelId);
-            stream.out_uint8((dataPriority << 6)|(segmentation << 4));
-            stream.out_per_length(payload_length);
-            stream.mark_end();
-        }
-
         SendDataIndication_Send(OutPerStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -2769,9 +2457,9 @@ namespace MCS
         uint8_t dataPriority;
         uint8_t segmentation;
 
-        SubStream payload;
+        InStream payload;
 
-        SendDataIndication_Recv(Stream & stream, int encoding)
+        SendDataIndication_Recv(InStream & stream, int encoding)
             : type([&stream, encoding](){
                 if (encoding != PER_ENCODING){
                     LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
@@ -2822,10 +2510,10 @@ namespace MCS
                         payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-                return SubStream(stream, stream.get_offset(), stream.in_remain());
+                return InStream(stream.get_current(), stream.in_remain());
             }())
         {
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 
@@ -2841,7 +2529,7 @@ namespace MCS
 
     struct UniformSendDataRequest_Send
     {
-        UniformSendDataRequest_Send(Stream & stream, int encoding)
+        UniformSendDataRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2850,7 +2538,7 @@ namespace MCS
 
     struct UniformSendDataRequest_Recv
     {
-        UniformSendDataRequest_Recv(Stream & stream, int encoding)
+        UniformSendDataRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2868,7 +2556,7 @@ namespace MCS
 
     struct UniformSendDataIndication_Send
     {
-        UniformSendDataIndication_Send(Stream & stream, int encoding)
+        UniformSendDataIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2877,7 +2565,7 @@ namespace MCS
 
     struct UniformSendDataIndication_Recv
     {
-        UniformSendDataIndication_Recv(Stream & stream, int encoding)
+        UniformSendDataIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2892,7 +2580,7 @@ namespace MCS
 
     struct TokenGrabRequest_Send
     {
-        TokenGrabRequest_Send(Stream & stream, int encoding)
+        TokenGrabRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2901,7 +2589,7 @@ namespace MCS
 
     struct TokenGrabRequest_Recv
     {
-        TokenGrabRequest_Recv(Stream & stream, int encoding)
+        TokenGrabRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2918,7 +2606,7 @@ namespace MCS
 
     struct TokenGrabConfirm_Send
     {
-        TokenGrabConfirm_Send(Stream & stream, int encoding)
+        TokenGrabConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2927,7 +2615,7 @@ namespace MCS
 
     struct TokenGrabConfirm_Recv
     {
-        TokenGrabConfirm_Recv(Stream & stream, int encoding)
+        TokenGrabConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2942,7 +2630,7 @@ namespace MCS
 
     struct TokenInhibitRequest_Send
     {
-        TokenInhibitRequest_Send(Stream & stream, int encoding)
+        TokenInhibitRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2951,7 +2639,7 @@ namespace MCS
 
     struct TokenInhibitRequest_Recv
     {
-        TokenInhibitRequest_Recv(Stream & stream, int encoding)
+        TokenInhibitRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2969,7 +2657,7 @@ namespace MCS
 
     struct TokenInhibitConfirm_Send
     {
-        TokenInhibitConfirm_Send(Stream & stream, int encoding)
+        TokenInhibitConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2978,7 +2666,7 @@ namespace MCS
 
     struct TokenInhibitConfirm_Recv
     {
-        TokenInhibitConfirm_Recv(Stream & stream, int encoding)
+        TokenInhibitConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2994,7 +2682,7 @@ namespace MCS
 
     struct TokenGiveRequest_Send
     {
-        TokenGiveRequest_Send(Stream & stream, int encoding)
+        TokenGiveRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3003,7 +2691,7 @@ namespace MCS
 
     struct TokenGiveRequest_Recv
     {
-        TokenGiveRequest_Recv(Stream & stream, int encoding)
+        TokenGiveRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3020,7 +2708,7 @@ namespace MCS
 
     struct TokenGiveIndication_Send
     {
-        TokenGiveIndication_Send(Stream & stream, int encoding)
+        TokenGiveIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3029,7 +2717,7 @@ namespace MCS
 
     struct TokenGiveIndication_Recv
     {
-        TokenGiveIndication_Recv(Stream & stream, int encoding)
+        TokenGiveIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3046,7 +2734,7 @@ namespace MCS
 
     struct TokenGiveResponse_Send
     {
-        TokenGiveResponse_Send(Stream & stream, int encoding)
+        TokenGiveResponse_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3055,7 +2743,7 @@ namespace MCS
 
     struct TokenGiveResponse_Recv
     {
-        TokenGiveResponse_Recv(Stream & stream, int encoding)
+        TokenGiveResponse_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3072,7 +2760,7 @@ namespace MCS
 
     struct TokenGiveConfirm_Send
     {
-        TokenGiveConfirm_Send(Stream & stream, int encoding)
+        TokenGiveConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3081,7 +2769,7 @@ namespace MCS
 
     struct TokenGiveConfirm_Recv
     {
-        TokenGiveConfirm_Recv(Stream & stream, int encoding)
+        TokenGiveConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3096,7 +2784,7 @@ namespace MCS
 
     struct TokenPleaseRequest_Send
     {
-        TokenPleaseRequest_Send(Stream & stream, int encoding)
+        TokenPleaseRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3105,7 +2793,7 @@ namespace MCS
 
     struct TokenPleaseRequest_Recv
     {
-        TokenPleaseRequest_Recv(Stream & stream, int encoding)
+        TokenPleaseRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3121,7 +2809,7 @@ namespace MCS
 
     struct TokenPleaseIndication_Send
     {
-        TokenPleaseIndication_Send(Stream & stream, int encoding)
+        TokenPleaseIndication_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3130,7 +2818,7 @@ namespace MCS
 
     struct TokenPleaseIndication_Recv
     {
-        TokenPleaseIndication_Recv(Stream & stream, int encoding)
+        TokenPleaseIndication_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3145,7 +2833,7 @@ namespace MCS
 
     struct TokenReleaseRequest_Send
     {
-        TokenReleaseRequest_Send(Stream & stream, int encoding)
+        TokenReleaseRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3154,7 +2842,7 @@ namespace MCS
 
     struct TokenReleaseRequest_Recv
     {
-        TokenReleaseRequest_Recv(Stream & stream, int encoding)
+        TokenReleaseRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3172,7 +2860,7 @@ namespace MCS
 
     struct TokenReleaseConfirm_Send
     {
-        TokenReleaseConfirm_Send(Stream & stream, int encoding)
+        TokenReleaseConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3181,7 +2869,7 @@ namespace MCS
 
     struct TokenReleaseConfirm_Recv
     {
-        TokenReleaseConfirm_Recv(Stream & stream, int encoding)
+        TokenReleaseConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3196,7 +2884,7 @@ namespace MCS
 
     struct TokenTestRequest_Send
     {
-        TokenTestRequest_Send(Stream & stream, int encoding)
+        TokenTestRequest_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3205,7 +2893,7 @@ namespace MCS
 
     struct TokenTestRequest_Recv
     {
-        TokenTestRequest_Recv(Stream & stream, int encoding)
+        TokenTestRequest_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3221,7 +2909,7 @@ namespace MCS
 
     struct TokenTestConfirm_Send
     {
-        TokenTestConfirm_Send(Stream & stream, int encoding)
+        TokenTestConfirm_Send(OutStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -3230,7 +2918,7 @@ namespace MCS
 
     struct TokenTestConfirm_Recv
     {
-        TokenTestConfirm_Recv(Stream & stream, int encoding)
+        TokenTestConfirm_Recv(InStream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);

@@ -45,12 +45,11 @@ public:
         const uint8_t * chunk_data, uint32_t chunk_data_length) override {
         LOG(LOG_INFO, "total_length=%u flags=0x%X chunk_data=<%p> chunk_data_length=%u",
             total_length, flags, chunk_data, chunk_data_length);
-        BStream stream(128);
+        StaticOutStream<8> stream;
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
-        stream.mark_end();
 
-        this->transport.send(stream);
+        this->transport.send(stream.get_data(), stream.get_offset());
         this->transport.send(chunk_data, chunk_data_length);
     }
 };
@@ -135,10 +134,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     fd_wrapper.release();
 
-    BStream stream(65536);
+    uint8_t buf[65536];
+    auto p = buf;
 
     try {
-        transport->recv(&stream.p, CHANNELS::CHANNEL_CHUNK_LENGTH + 1024);
+        transport->recv(&p, CHANNELS::CHANNEL_CHUNK_LENGTH + 1024);
     }
     catch (Error & e) {
         if(e.id != 1501) {
@@ -147,8 +147,6 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
             throw;
         }
     }
-
-    stream.mark_end();
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
@@ -159,8 +157,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-        stream.get_data(),
-        stream.size(),
+        buf,
+        p-buf,
         test_to_server_sender,
         verbose);
 

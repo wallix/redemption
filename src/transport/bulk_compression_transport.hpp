@@ -36,17 +36,15 @@ class BulkCompressionInTransport : public Transport {
     const uint8_t * uncompressed_data;
     uint32_t        uncompressed_data_size;
 
-    BStream compressed_buffer_stream;
-    BStream uncompressed_buffer_stream;
+    uint8_t compressed_buffer[65536];
+    uint8_t uncompressed_buffer[65536];
 
 public:
     BulkCompressionInTransport(Transport & st)
     : Transport()
     , source_transport(st)
     , uncompressed_data(nullptr)
-    , uncompressed_data_size(0)
-    , compressed_buffer_stream(65536)
-    , uncompressed_buffer_stream(65536) {}
+    , uncompressed_data_size(0) {}
 
 private:
     virtual void do_recv(char ** pbuffer, size_t len) {
@@ -68,37 +66,35 @@ private:
                 temp_length -= data_length;
             }
             else {
-                this->uncompressed_buffer_stream.reset();
-
+                auto end = this->uncompressed_buffer;
                 this->source_transport.recv(
-                      &this->uncompressed_buffer_stream.end
+                      &end
                     , 4                         // reset_compressor((1) + compressed_type(1) + data_size(2)
                     );
 
-                if (this->uncompressed_buffer_stream.in_uint8() == 1) {
+                InStream uncompressed_buffer_stream(this->uncompressed_buffer);
+
+                if (uncompressed_buffer_stream.in_uint8() == 1) {
                     this->mppc_dec.~rdp_mppc_61_dec();
 
                     new (&this->mppc_dec) rdp_mppc_61_dec;
                 }
 
-                uint8_t  compressed_type = this->uncompressed_buffer_stream.in_uint8();
-                uint16_t data_size       = this->uncompressed_buffer_stream.in_uint16_le();
+                uint8_t  compressed_type = uncompressed_buffer_stream.in_uint8();
+                uint16_t data_size       = uncompressed_buffer_stream.in_uint16_le();
                 //LOG(LOG_INFO, "do_recv: data_size=%u", data_size);
 
-                this->compressed_buffer_stream.reset();
-
-                this->source_transport.recv(&this->compressed_buffer_stream.end, data_size);
-
-                this->uncompressed_buffer_stream.reset();
+                end = this->compressed_buffer;
+                this->source_transport.recv(&end, data_size);
 
                 if (compressed_type & PACKET_COMPRESSED) {
-                    this->uncompressed_data = this->uncompressed_buffer_stream.get_data();
+                    this->uncompressed_data = this->uncompressed_buffer;
 
-                    this->mppc_dec.decompress(this->compressed_buffer_stream.get_data(), data_size,
+                    this->mppc_dec.decompress(compressed_buffer, data_size,
                         compressed_type, this->uncompressed_data, this->uncompressed_data_size);
                 }
                 else {
-                    this->uncompressed_data      = this->compressed_buffer_stream.get_data();
+                    this->uncompressed_data      = this->compressed_buffer;
                     this->uncompressed_data_size = data_size;
                 }
             }
@@ -136,7 +132,7 @@ private:
 
         const size_t MAX_DATA_LENGTH = 1024 * 60;
 
-        BStream buffer_stream(65536);
+        StaticOutStream<65536> buffer_stream;
 
         while (temp_length) {
             const size_t data_length = (temp_length > MAX_DATA_LENGTH) ? MAX_DATA_LENGTH : temp_length;
@@ -147,7 +143,7 @@ private:
             this->mppc_enc.compress(reinterpret_cast<const uint8_t *>(temp_buffer), data_length,
                 compressed_type, compressed_data_size, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
-            buffer_stream.reset();
+            buffer_stream.rewind();
 
             buffer_stream.out_uint8(this->reset_compressor ? 1 : 0);
             this->reset_compressor = false;
@@ -159,16 +155,12 @@ private:
 
                 this->mppc_enc.get_compressed_data(buffer_stream);
 
-                buffer_stream.mark_end();
-
-                this->target_transport.send(buffer_stream);
+                this->target_transport.send(buffer_stream.get_data(), buffer_stream.get_offset());
             }
             else {
                 buffer_stream.out_uint16_le(data_length);
 
-                buffer_stream.mark_end();
-
-                this->target_transport.send(buffer_stream);
+                this->target_transport.send(buffer_stream.get_data(), buffer_stream.get_offset());
 
                 this->target_transport.send(temp_buffer, data_length);
             }

@@ -110,16 +110,14 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     };
 
     LOG(LOG_INFO, "=================================\n");
-    BStream s;
-    s.init(sizeof(packet3));
+    StaticOutStream<sizeof(packet3)> s;
     s.out_copy_bytes(packet3, sizeof(packet3));
-    s.mark_end();
-    s.rewind();
 
     uint8_t sig[20];
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req3(s);
+    InStream in_s(s.get_data(), s.get_offset());
+    TSRequest ts_req3(in_s);
 
     BOOST_CHECK_EQUAL(ts_req3.version, 2);
 
@@ -127,12 +125,12 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     BOOST_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
     BOOST_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
 
-    BStream to_send3;
+    StaticOutStream<65536> to_send3;
 
-    BOOST_CHECK_EQUAL(to_send3.size(), 0);
+    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0);
     ts_req3.emit(to_send3);
 
-    BOOST_CHECK_EQUAL(to_send3.size(), 0x241 + 4);
+    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
     char message[1024];
     if (!check_sig(to_send3, message, (const char *)sig)){
@@ -144,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     NTLMAuthenticateMessage AuthMsg;
     // AuthMsg.recv(ts_req3.negoTokens);
 
-    StaticStream token(ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size());
+    InStream token(ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size());
     AuthMsg.recv(token);
 
     BOOST_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
@@ -164,7 +162,8 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
-    lmResponse.recv(AuthMsg.LmChallengeResponse.Buffer);
+    InStream in_stream(AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.in_sz);
+    lmResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
     // hexdump_c(lmResponse.Response, 16);
@@ -188,7 +187,8 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // NtChallengeResponse
     NTLMv2_Response ntResponse;
-    ntResponse.recv(AuthMsg.NtChallengeResponse.Buffer);
+    in_stream = InStream(AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.in_sz);
+    ntResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
     // hexdump_c(ntResponse.Response, 16);
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t domainname_match[] =
         "\x77\x00\x69\x00\x6e\x00\x37\x00";
     BOOST_CHECK_EQUAL(memcmp(domainname_match,
-                             AuthMsg.DomainName.Buffer.get_data(),
+                             AuthMsg.DomainName.buffer.ostream.get_data(),
                              AuthMsg.DomainName.len),
                       0);
 
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t username_match[] =
         "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00";
     BOOST_CHECK_EQUAL(memcmp(username_match,
-                             AuthMsg.UserName.Buffer.get_data(),
+                             AuthMsg.UserName.buffer.ostream.get_data(),
                              AuthMsg.UserName.len),
                       0);
 
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t workstation_match[] =
         "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00";
     BOOST_CHECK_EQUAL(memcmp(workstation_match,
-                             AuthMsg.Workstation.Buffer.get_data(),
+                             AuthMsg.Workstation.buffer.ostream.get_data(),
                              AuthMsg.Workstation.len),
                       0);
 
@@ -259,18 +259,17 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     uint8_t encryptedrandomsessionkey_match[] =
         "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba";
     BOOST_CHECK_EQUAL(memcmp(encryptedrandomsessionkey_match,
-                             AuthMsg.EncryptedRandomSessionKey.Buffer.get_data(),
+                             AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
                              AuthMsg.EncryptedRandomSessionKey.len),
                       0);
 
-    BStream tosend;
+    StaticOutStream<65635> tosend;
     AuthMsg.emit(tosend);
 
     NTLMAuthenticateMessage AuthMsgDuplicate;
 
-    tosend.mark_end();
-    tosend.rewind();
-    AuthMsgDuplicate.recv(tosend);
+    InStream in_tosend(tosend.get_data(), tosend.get_offset());
+    AuthMsgDuplicate.recv(in_tosend);
 
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
     // AuthMsgDuplicate.negoFlags.print();

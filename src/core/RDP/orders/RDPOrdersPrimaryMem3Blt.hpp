@@ -212,7 +212,7 @@ class RDPMem3Blt {
             ;
     }
 
-    void emit( Stream & stream
+    void emit( OutStream & stream
              , RDPOrderCommon & common
              , const RDPOrderCommon & oldcommon
              , const RDPMem3Blt & oldcmd) const {
@@ -313,7 +313,7 @@ class RDPMem3Blt {
         }
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         using namespace RDP;
 
         if (header.fields & 0x0001) {

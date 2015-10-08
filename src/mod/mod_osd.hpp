@@ -401,7 +401,7 @@ public:
         this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
-    void send_to_front_channel(const char*const mod_channel_name, uint8_t* data, size_t length,
+    void send_to_front_channel(const char*const mod_channel_name, uint8_t const * data, size_t length,
                                        size_t chunk_size, int flags) override {
         this->mod.send_to_front_channel(mod_channel_name, data, length, chunk_size, flags);
     }
@@ -414,7 +414,7 @@ public:
         this->mod.flush();
     }
 
-    void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags) override {
+    void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, size_t length, uint32_t flags) override {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 
@@ -442,14 +442,6 @@ public:
 
     void refresh_context(Inifile& ini) override {
         this->mod.refresh_context(ini);
-    }
-
-    void send_data_indication_ex(uint16_t channelId, HStream& stream) override {
-        this->mod.send_data_indication_ex(channelId, stream);
-    }
-
-    void send_fastpath_data(Stream& data) override {
-        this->mod.send_fastpath_data(data);
     }
 
     void set_mod_palette(const BGRPalette& palette) override {

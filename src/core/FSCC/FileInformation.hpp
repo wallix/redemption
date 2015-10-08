@@ -306,12 +306,12 @@ public:
     : FileAttributes(FileAttributes)
     , ReparseTag(ReparseTag) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileAttributes);
         stream.out_uint32_le(this->ReparseTag);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // FileAttributes(4) + ReparseTag(4)
 
@@ -455,7 +455,7 @@ public:
     , ChangeTime(ChangeTime)
     , FileAttributes_(FileAttributes) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint64_le(this->CreationTime);
         stream.out_uint64_le(this->LastAccessTime_);
         stream.out_uint64_le(this->LastWriteTime_);
@@ -466,7 +466,7 @@ public:
         // Reserved(4), MUST NOT be transmitted.
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 36;   // CreationTime(8) + LastAccessTime(8) +
                                             //     LastWriteTime(8) + ChangeTime(8) +
@@ -708,7 +708,7 @@ public:
     , FileAttributes(FileAttributes)
     , file_name(file_name) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -767,7 +767,7 @@ public:
         stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 93;   // NextEntryOffset(4) + FileIndex(4) +
                                             //     CreationTime(8) + LastAccessTime(8) +
@@ -1135,7 +1135,7 @@ public:
     , FileAttributes(FileAttributes)
     , file_name(file_name) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -1169,7 +1169,7 @@ public:
         stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 68;   // NextEntryOffset(4) + FileIndex(4) +
                                             //     CreationTime(8) + LastAccessTime(8) +
@@ -1352,7 +1352,7 @@ public:
     explicit FileNamesInformation(const char * file_name)
     : file_name(file_name) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -1374,7 +1374,7 @@ public:
         stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // NextEntryOffset(4) + FileIndex(4)
             if (!stream.in_check_rem(expected)) {
@@ -1578,7 +1578,7 @@ public:
     , DeletePending(DeletePending)
     , Directory(Directory) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->AllocationSize);
         stream.out_sint64_le(this->EndOfFile);
 
@@ -1590,7 +1590,7 @@ public:
         // Reserved(2), MUST NOT be transmitted.
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 22;   // AllocationSize(8) + EndOfFile(8) +
                                             //     NumberOfLinks(4) + DeletePending(1) +
@@ -1820,7 +1820,7 @@ public:
     , MaximumComponentNameLength(MaximumComponentNameLength)
     , file_system_name(file_system_name) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileSystemAttributes_);
         stream.out_sint32_le(this->MaximumComponentNameLength);
 
@@ -1837,7 +1837,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                             //     FileSystemNameLength(4)
@@ -2004,7 +2004,7 @@ public:
     , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
     , BytesPerSector(BytesPerSector) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->TotalAllocationUnits);
         stream.out_sint64_le(this->CallerAvailableAllocationUnits);
         stream.out_sint64_le(this->ActualAvailableAllocationUnits);
@@ -2012,7 +2012,7 @@ public:
         stream.out_uint32_le(this->BytesPerSector);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 32;   // TotalAllocationUnits(8) +
                                             //     CallerAvailableAllocationUnits(8)
@@ -2135,14 +2135,14 @@ public:
     , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
     , BytesPerSector(BytesPerSector) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->TotalAllocationUnits);
         stream.out_sint64_le(this->AvailableAllocationUnits);
         stream.out_uint32_le(this->SectorsPerAllocationUnit);
         stream.out_uint32_le(this->BytesPerSector);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 24;   // TotalAllocationUnits(8) +
                                             //     AvailableAllocationUnits(8) +
@@ -2274,7 +2274,7 @@ public:
     , SupportsObjects(SupportsObjects)
     , volume_label(volume_label) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint64_le(this->VolumeCreationTime);
         stream.out_uint32_le(this->VolumeSerialNumber);
 
@@ -2300,7 +2300,7 @@ public:
         stream.out_copy_bytes(unicode_data, size_of_unicode_data);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 17;   // VolumeCreationTime(8) + VolumeSerialNumber(4) +
                                             //     VolumeLabelLength(4) + SupportsObjects(1)
@@ -2534,12 +2534,12 @@ public:
     : DeviceType(DeviceType)
     , Characteristics(Characteristics) {}
 
-    inline void emit(Stream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceType);
         stream.out_uint32_le(this->Characteristics);
     }
 
-    inline void receive(Stream & stream) {
+    inline void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // DeviceType(4) + Characteristics(4)
             if (!stream.in_check_rem(expected)) {

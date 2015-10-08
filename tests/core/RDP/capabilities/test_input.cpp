@@ -60,10 +60,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityInputEmit)
         BOOST_CHECK_EQUAL(input_caps.imeFileName[i], test_input[i]);
     }
 
-    BStream stream(1024);
-    input_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    input_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     InputCaps input_caps2;
 

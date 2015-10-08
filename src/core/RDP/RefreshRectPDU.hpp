@@ -138,7 +138,7 @@ namespace RDP {
 //  The number of rectangles is given by the numberOfAreas field.
 
 struct RefreshRectPDU {
-    BStream buffer_stream;
+    StaticOutStream<65536> buffer_stream;
 
     ShareData sdata;
 
@@ -154,7 +154,6 @@ struct RefreshRectPDU {
                    uint16_t userId,
                    int encryptionLevel,
                    CryptContext & encrypt) :
-    buffer_stream(65536),
     sdata(buffer_stream),
     userId(userId),
     encryptionLevel(encryptionLevel),
@@ -187,41 +186,42 @@ struct RefreshRectPDU {
         this->buffer_stream.set_out_uint8(this->area_count,
                                           this->offset_area_count);
 
-        this->buffer_stream.mark_end();
-
         this->sdata.emit_end();
 
-        BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header,
-                          PDUTYPE_DATAPDU,
-                          this->userId + GCC::MCS_USERCHANNEL_BASE,
-                          this->buffer_stream.size());
+        write_packets(
+            trans,
+            [this](StreamSize<65536+256>, OutStream & sctrl_header) {
+                ShareControl_Send(sctrl_header,
+                                  PDUTYPE_DATAPDU,
+                                  this->userId + GCC::MCS_USERCHANNEL_BASE,
+                                  this->buffer_stream.get_offset());
 
-        HStream target_stream(1024, 65536);
-        target_stream.out_copy_bytes(sctrl_header);
-        target_stream.out_copy_bytes(this->buffer_stream);
-        target_stream.mark_end();
-
-        BStream x224_header(256);
-        OutPerBStream mcs_header(256);
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header,
-                          target_stream,
-                          0,
-                          this->encrypt,
-                          this->encryptionLevel);
-        MCS::SendDataRequest_Send mcs(mcs_header,
-                                      this->userId,
-                                      GCC::MCS_GLOBAL_CHANNEL,
-                                      1,
-                                      3,
-                                      sec_header.size() + target_stream.size(),
-                                      MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,
-                           mcs_header.size() + sec_header.size() + target_stream.size());
-
-        trans.send(x224_header, mcs_header, sec_header, target_stream);
+                sctrl_header.out_copy_bytes(this->buffer_stream.get_data(),
+                                            this->buffer_stream.get_offset());
+            },
+            [this](StreamSize<256>, OutStream & sec_header, uint8_t * pkt_data, std::size_t pkt_size) {
+                SEC::Sec_Send sec(sec_header,
+                                  pkt_data,
+                                  pkt_size,
+                                  0,
+                                  this->encrypt,
+                                  this->encryptionLevel);
+                (void)sec;
+            },
+            [this](StreamSize<256>, OutStream & mcs_header, std::size_t pkt_size) {
+                MCS::SendDataRequest_Send mcs(static_cast<OutPerStream&>(mcs_header),
+                                              this->userId,
+                                              GCC::MCS_GLOBAL_CHANNEL,
+                                              1,
+                                              3,
+                                              pkt_size,
+                                              MCS::PER_ENCODING);
+                (void)mcs;
+            },
+            [this](StreamSize<256>, OutStream &x224_header, std::size_t pkt_size) {
+                X224::DT_TPDU_Send(x224_header, pkt_size);
+            }
+        );
     }
 };  // struct RefreshRectPDU
 

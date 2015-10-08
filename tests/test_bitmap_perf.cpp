@@ -46,7 +46,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size());
+        auto sz = 2u*bigbmp.bmp_size();
+        auto uptr = std::make_unique<uint8_t[]>(sz);
+        OutStream out(uptr.get(), sz);
         BOOST_CHECK(true);
         {
             uint64_t usec = ustime();
@@ -56,10 +58,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
             uint64_t elapcyc = rdtsc() - cycles;
             printf("initial_size = %zu, compressed size: %zu\n"
                 "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), static_cast<size_t>(out.p - out.get_data()),
+                bigbmp.bmp_size(), out.get_offset(),
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
-        Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
@@ -68,7 +70,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
         int bpp = 24;
         Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.bmp");
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size());
+        auto sz = 2u*bigbmp.bmp_size();
+        auto uptr = std::make_unique<uint8_t[]>(sz);
+        OutStream out(uptr.get(), sz);
         {
             uint64_t usec = ustime();
             uint64_t cycles = rdtsc();
@@ -77,10 +81,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
             uint64_t elapcyc = rdtsc() - cycles;
             printf("initial_size = %zu, compressed size: %zu\n"
                 "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), static_cast<size_t>(out.p - out.get_data()),
+                bigbmp.bmp_size(), out.get_offset(),
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
-        Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
@@ -94,7 +98,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size());
+        auto sz = 2u*bigbmp.bmp_size();
+        auto uptr = std::make_unique<uint8_t[]>(sz);
+        OutStream out(uptr.get(), sz);
         BOOST_CHECK(true);
         {
             uint64_t usec = ustime();
@@ -104,10 +110,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
             uint64_t elapcyc = rdtsc() - cycles;
             printf("initial_size = %zu, compressed size: %zu\n"
                 "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), static_cast<size_t>(out.p - out.get_data()),
+                bigbmp.bmp_size(), out.get_offset(),
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
-        Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
@@ -116,7 +122,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
         int bpp = 24;
         Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.png");
         // make it large enough to hold any image
-        BStream out(2*bigbmp.bmp_size());
+        auto sz = 2u*bigbmp.bmp_size();
+        auto uptr = std::make_unique<uint8_t[]>(sz);
+        OutStream out(uptr.get(), sz);
         {
             uint64_t usec = ustime();
             uint64_t cycles = rdtsc();
@@ -125,10 +133,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
             uint64_t elapcyc = rdtsc() - cycles;
             printf("initial_size = %zu, compressed size: %zu\n"
                 "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), static_cast<size_t>(out.p - out.get_data()),
+                bigbmp.bmp_size(), out.get_offset(),
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
-        Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.p - out.get_data(), true);
+        Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }

@@ -48,15 +48,18 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport     out_t(payload, payload_length);
 
-    BStream in_s(65536);
-    BStream out_s(65536);
+    StaticInStream<65536> in_s;
+    StaticOutStream<65536> out_s;
 
-    in_t.recv(&in_s.end, payload_length);
+    {
+        auto end = const_cast<uint8_t*>(in_s.get_data());
+        in_t.recv(&end, payload_length);
+    }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
 
     BOOST_CHECK_EQUAL(8, in_cie.numEvents);
-    BOOST_CHECK_EQUAL(96, in_cie.payload.size());
+    BOOST_CHECK_EQUAL(96, in_cie.payload.get_capacity());
 
     SlowPath::ClientInputEventPDU_Send out_cie(out_s, in_cie.numEvents);
 
@@ -75,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
         SlowPath::InputEvent_Recv in_ie(in_cie.payload);
 
         BOOST_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
-        BOOST_CHECK_EQUAL(6,               in_ie.payload.size());
+        BOOST_CHECK_EQUAL(6,               in_ie.payload.get_capacity());
 
         SlowPath::InputEvent_Send out_ie(out_s, in_ie.eventTime, in_ie.messageType);
 
@@ -111,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
         }
     }
 
-    out_t.send(out_s.get_data(), out_s.size());
+    out_t.send(out_s.get_data(), out_s.get_offset());
 
     BOOST_CHECK_EQUAL(true, out_t.get_status());
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
@@ -128,15 +131,18 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
     GeneratorTransport in_t(payload, payload_length);
     CheckTransport out_t(payload, payload_length);
 
-    BStream in_s(65536);
-    BStream out_s(65536);
+    StaticInStream<65536> in_s;
+    StaticOutStream<65536> out_s;
 
-    in_t.recv(&in_s.end, payload_length);
+    {
+        auto * end = const_cast<uint8_t*>(in_s.get_data());
+        in_t.recv(&end, payload_length);
+    }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
 
     BOOST_CHECK_EQUAL(4, in_cie.numEvents);
-    BOOST_CHECK_EQUAL(48, in_cie.payload.size());
+    BOOST_CHECK_EQUAL(48, in_cie.payload.get_capacity());
 
     SlowPath::ClientInputEventPDU_Send out_cie(out_s, in_cie.numEvents);
 
@@ -151,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
         SlowPath::InputEvent_Recv in_ie(in_cie.payload);
 
         BOOST_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
-        BOOST_CHECK_EQUAL(6,               in_ie.payload.size());
+        BOOST_CHECK_EQUAL(6,               in_ie.payload.get_capacity());
 
         SlowPath::InputEvent_Send out_ie(out_s, in_ie.eventTime, in_ie.messageType);
 
@@ -187,7 +193,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
         }
     }
 
-    out_t.send(out_s.get_data(), out_s.size());
+    out_t.send(out_s.get_data(), out_s.get_offset());
 
     BOOST_CHECK_EQUAL(true, out_t.get_status());
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

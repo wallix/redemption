@@ -166,10 +166,7 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     {
     }
 
-
-    ~NTLMNegotiateMessage() override {}
-
-    void emit(Stream & stream) {
+    void emit(OutStream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
             currentOffset -= 8;
@@ -183,11 +180,10 @@ struct NTLMNegotiateMessage : public NTLMMessage {
         // PAYLOAD
         this->DomainName.write_payload(stream);
         this->Workstation.write_payload(stream);
-        stream.mark_end();
     }
 
-    void recv(Stream & stream) {
-        uint8_t * pBegin = stream.p;
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
         bool res;
         res = NTLMMessage::recv(stream);
         if (!res) {

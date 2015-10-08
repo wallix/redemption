@@ -57,7 +57,7 @@ public:
         return this->screen.rect;
     }
 
-    void send_to_front_channel(const char * const mod_channel_name, uint8_t * data, size_t length, size_t chunk_size,
+    void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size,
         int flags) override {
         const CHANNELS::ChannelDef * front_channel =
             this->front.get_channel_list().get_by_name(mod_channel_name);

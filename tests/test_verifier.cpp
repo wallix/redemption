@@ -48,7 +48,7 @@ int libc_read(int fd, char *buf, unsigned int count)
 
 BOOST_AUTO_TEST_CASE(TestVerifierReadLine)
 {
-   BStream opaque_stream(32)    ;
+   StaticOutStream<32> opaque_stream;
    int     opaque_data       = 1;
 
    int fd = open("./tests/fixtures/sample.txt", O_RDONLY);
@@ -156,13 +156,10 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     BOOST_CHECK_EQUAL(0, res);
 
-    StaticStream _4kb_hash(hash, HASH_LEN / 2);
-    StaticStream full_hash(hash + (HASH_LEN / 2), HASH_LEN / 2);
-
     BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
-                                                   _4kb_hash.get_data(), _4kb_hash.size(), 4096));
+                                                   hash, HASH_LEN / 2, 4096));
     BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
-                                                   full_hash.get_data(), full_hash.size(), 0));
+                                                   hash + (HASH_LEN / 2), HASH_LEN / 2, 0));
 
     unlink(test_file_name);
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */
@@ -176,9 +173,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo)
 
     int result;
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
@@ -197,9 +194,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo1)
 
     int result;
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
@@ -213,9 +210,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo2)
 {
     const char * line = "";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
@@ -226,9 +223,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo3)
 {
     const char * line = "\n";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
@@ -239,9 +236,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo4)
 {
     const char * line = " \n";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
@@ -255,9 +252,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo5)
                         "8da78365b5421e706a987af4cc3e18dbca1911a7de8341d825570c68c7772913 "
                         "d21918de7764c62cfef5f32326d76afc14558eedd21f4926484ad2dcfa804ba6\n";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
 
@@ -274,9 +271,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo6)
                         "8da78365b5421e706a987af4cc3e18dbca1911a7de8341d825570c68c777291 "
                         "d21918de7764c62cfef5f32326d76afc14558eedd21f4926484ad2dcfa804ba6\n";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
     BOOST_CHECK_EQUAL(-1, result);
@@ -289,9 +286,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo7)
                         "8da78365b5421e706a987af4cc3e18dbca1911a7de8341d825570c68c7772913 "
                         "d21918de7764c62cfef5f32326d76afc14558eedd21f4926484ad2dcfa804ba\n";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
     BOOST_CHECK_EQUAL(-1, result);
@@ -303,9 +300,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo8)
                         "8da78365b5421e706a987af4cc3e18dbca1911a7de8341d825570c68c7772913 "
                         "d21918de7764c62cfef5f32326d76afc14558eedd21f4926484ad2dcfa804ba6";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
     BOOST_CHECK_EQUAL(-1, result);
@@ -318,9 +315,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo9)
                         "8da78365b5421e706a987af4cc3e18dbca1911a7de8341d825570c68c7772913 "
                         "d21918de7764c62cfef5f32326d76afc14558eedd21f4926484ad2dcfa804ba6";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
     BOOST_CHECK_EQUAL(-1, result);
@@ -331,9 +328,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo10)
     const char * line = "/var/wab/recorded/rdp/replay-008795-000000.wrm "
                         "1367316138 1367316189\n";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
     BOOST_CHECK_EQUAL(-1, result);
@@ -345,9 +342,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierExtractFileInfo11)
                         "TestVerifierExtractFileInfo11"
                         "TestVerifierExtractFileInfo11\n";
 
-    BStream file_name(1024);
-    BStream _4kb_hash(HASH_LEN);
-    BStream full_hash(HASH_LEN);
+    StaticOutStream<1024> file_name;
+    StaticOutStream<HASH_LEN> _4kb_hash;
+    StaticOutStream<HASH_LEN> full_hash;
 
     int result = extract_file_info(line, file_name, _4kb_hash, full_hash);
     BOOST_CHECK_EQUAL(-1, result);

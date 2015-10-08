@@ -269,7 +269,7 @@ struct PersistentKeyListPDUData {
 
     PersistentKeyListPDUData() = default;
 
-    void receive(Stream & stream) {
+    void receive(InStream & stream) {
         unsigned expected = 24; /* numEntriesCache0(2) + numEntriesCache1(2) + numEntriesCache2(2) +
                                    numEntriesCache3(2) + numEntriesCache4(2) + totalEntriesCache0(2) +
                                    totalEntriesCache1(2) + totalEntriesCache2(2) + totalEntriesCache3(2) +
@@ -308,27 +308,6 @@ struct PersistentKeyListPDUData {
         for (unsigned int index = 0; index < count; index++) {
             this->entries[index].Key1 = stream.in_uint32_le();
             this->entries[index].Key2 = stream.in_uint32_le();
-        }
-    }
-
-    void emit(Stream & stream) {
-        stream.out_uint16_le(this->numEntriesCache[0]);
-        stream.out_uint16_le(this->numEntriesCache[1]);
-        stream.out_uint16_le(this->numEntriesCache[2]);
-        stream.out_uint16_le(this->numEntriesCache[3]);
-        stream.out_uint16_le(this->numEntriesCache[4]);
-        stream.out_uint16_le(this->totalEntriesCache[0]);
-        stream.out_uint16_le(this->totalEntriesCache[1]);
-        stream.out_uint16_le(this->totalEntriesCache[2]);
-        stream.out_uint16_le(this->totalEntriesCache[3]);
-        stream.out_uint16_le(this->totalEntriesCache[4]);
-        stream.out_uint8(this->bBitMask);
-
-        stream.out_clear_bytes(3);  // Pad2(1) + Pad3(2)
-
-        for (uint32_t i = 0, c = this->maximum_entries(); i < c; i++) {
-            stream.out_uint32_le(this->entries[i].Key1);
-            stream.out_uint32_le(this->entries[i].Key2);
         }
     }
 

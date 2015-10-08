@@ -43,10 +43,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
     BOOST_CHECK_EQUAL(pointer_caps.colorPointerCacheSize, static_cast<uint16_t>(1));
     BOOST_CHECK_EQUAL(pointer_caps.pointerCacheSize, static_cast<uint16_t>(2));
 
-    BStream stream(1024);
-    pointer_caps.emit(stream);
-    stream.mark_end();
-    stream.p = stream.get_data();
+    StaticOutStream<1024> out_stream;
+    pointer_caps.emit(out_stream);
+
+    InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     PointerCaps pointer_caps2;
 

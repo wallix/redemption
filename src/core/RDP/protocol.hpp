@@ -131,7 +131,7 @@ namespace RDP {
 struct OrdersUpdate_Recv {
     uint16_t number_orders;
 
-    OrdersUpdate_Recv(Stream & stream, bool fast_path) {
+    OrdersUpdate_Recv(InStream & stream, bool fast_path) {
         if (fast_path) {
             this->number_orders = stream.in_uint16_le();
         }
@@ -185,7 +185,7 @@ struct OrdersUpdate_Recv {
 struct DrawingOrder_RecvFactory {
     uint8_t control_flags;
 
-    explicit DrawingOrder_RecvFactory(Stream & stream) {
+    explicit DrawingOrder_RecvFactory(InStream & stream) {
         this->control_flags = stream.in_uint8();
     }
 };
@@ -244,7 +244,7 @@ struct DrawingOrder_RecvFactory {
 // blue (1 byte): An 8-bit, unsigned integer. The blue RGB color component.
 
 struct UpdatePaletteData_Recv {
-    UpdatePaletteData_Recv(Stream & stream, bool fast_path, BGRPalette & palette) {
+    UpdatePaletteData_Recv(InStream & stream, bool fast_path, BGRPalette & palette) {
         if (fast_path) {
             stream.in_skip_bytes(2);    // updateType(2)
         }
@@ -396,13 +396,13 @@ struct UpdatePaletteData_Recv {
 //  the numberCapabilities field.
 
 struct ConfirmActivePDU_Send {
-    Stream   & payload;
+    OutStream & payload;
     uint16_t   offset_lengthCombinedCapabilities;
     uint16_t   offset_numberCapabilities;
     uint16_t   numberCapabilities;
     uint16_t   offset_capabilitySets;
 
-    explicit ConfirmActivePDU_Send(Stream & stream)
+    explicit ConfirmActivePDU_Send(OutStream & stream)
         : payload(stream)
         , offset_lengthCombinedCapabilities(0)
         , offset_numberCapabilities(0)
@@ -456,7 +456,6 @@ struct ConfirmActivePDU_Send {
 
     void emit_capability_set(Capability & capability) {
         capability.emit(this->payload);
-        this->payload.mark_end();
         this->numberCapabilities++;
     }
 
@@ -476,8 +475,6 @@ struct ConfirmActivePDU_Send {
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. Number of
         //  capability sets included in the Confirm Active PDU.
         this->payload.set_out_uint16_le(this->numberCapabilities, this->offset_numberCapabilities);
-
-        this->payload.mark_end();
     }
 };  // struct ConfirmActivePDU_Send
 

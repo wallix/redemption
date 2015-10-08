@@ -77,13 +77,13 @@ public:
 
     explicit FrameMarker(uint32_t action) : action(action) {}
 
-    void emit(Stream & stream) const {
+    void emit(OutStream & stream) const {
         uint8_t controlFlags = SECONDARY | (AltsecDrawingOrderHeader::FrameMarker << 2);
         stream.out_uint8(controlFlags);
         stream.out_uint32_le(this->action);
     }
 
-    void receive(Stream & stream, const AltsecDrawingOrderHeader & header) {
+    void receive(InStream & stream, const AltsecDrawingOrderHeader & header) {
         this->action = stream.in_uint32_le();
     }
 

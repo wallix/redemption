@@ -657,9 +657,9 @@ enum {
     {
         uint32_t basicSecurityHeader;
         uint32_t length;
-        SubStream payload;
+        InStream payload;
 
-        explicit SecExchangePacket_Recv(Stream & stream)
+        explicit SecExchangePacket_Recv(InStream & stream)
             : basicSecurityHeader([&stream](){
                 const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
                 if (!stream.in_check_rem(expected)){
@@ -682,36 +682,35 @@ enum {
                 }
                 return length;
             }())
-            , payload(stream, stream.get_offset(), stream.in_remain() - 8)
+            , payload(stream.get_current(), stream.in_remain() - 8)
         {
-            if (this->payload.size() != 64){
-                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.size());
+            if (this->payload.get_capacity() != 64){
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.get_capacity());
                 throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
             }
             // Skip payload and 8 bytes trailing padding
-            stream.in_skip_bytes(this->payload.size() + 8);
+            stream.in_skip_bytes(this->payload.get_capacity() + 8);
         }
     };
 
     struct SecExchangePacket_Send
     {
-        SecExchangePacket_Send(Stream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){
+        SecExchangePacket_Send(OutStream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){
             stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
             stream.out_uint32_le(keylen_in_bytes + 8);
             stream.out_copy_bytes(client_encrypted_key, keylen_in_bytes);
             const uint8_t null[8] = {};
             stream.out_copy_bytes(null, 8);
-            stream.mark_end();
         }
     };
 
     struct SecInfoPacket_Recv
     {
         uint32_t basicSecurityHeader;
-        SubStream signature;
-        SubStream payload;
+        InStream signature;
+        InStream payload;
 
-        SecInfoPacket_Recv(Stream & stream, uint16_t available_len, CryptContext & crypt)
+        SecInfoPacket_Recv(InStream & stream, uint16_t available_len, CryptContext & crypt)
         : basicSecurityHeader([&stream](){
             const unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
             if (!stream.in_check_rem(expected)){
@@ -728,17 +727,17 @@ enum {
             }
             return basicSecurityHeader;
         }())
-        , signature(stream, stream.get_offset(), 8)
+        , signature(stream.get_current(), 8)
         , payload([&stream, this, &crypt](){
-            stream.in_skip_bytes(this->signature.size());
-            crypt.decrypt(stream.get_data() + stream.get_offset(), stream.in_remain());
-            return SubStream(stream, stream.get_offset(), stream.in_remain());
+            stream.in_skip_bytes(this->signature.get_capacity());
+            crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
+            return InStream(stream.get_current(), stream.in_remain());
         }())
         // Body of constructor
         {
             TODO("We should not decrypt inplace, it's a bad idea for optimisations");
             TODO("Signature should be checked");
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 
@@ -749,8 +748,9 @@ enum {
         uint32_t verbose;
         uint32_t flags;
 
-        SubStream payload;
-        SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
+        InStream payload;
+
+        SecSpecialPacket_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
             : verbose(0)
             , flags([&stream](){
                 const unsigned need = 4; /* flags(4) */
@@ -777,19 +777,19 @@ enum {
                     stream.in_skip_bytes(8); /* signature */
                     if (this->verbose >= 0x200){
                         LOG(LOG_INFO, "Receiving encrypted TPDU");
-                        hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                        hexdump_c(stream.get_current(), stream.in_remain());
                     }
-                    crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
+                    crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
                     if (this->verbose >= 0x80){
                         LOG(LOG_INFO, "Decrypted %u bytes", stream.in_remain());
-                        hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                        hexdump_c(stream.get_current(), stream.in_remain());
                     }
                 }
-                return SubStream(stream, stream.get_offset(), stream.in_remain());
+                return InStream(stream.get_current(), stream.in_remain());
             }())
         // Constructor
         {
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 
@@ -799,8 +799,8 @@ enum {
         public:
         uint32_t verbose;
         uint32_t flags;
-        SubStream payload;
-        Sec_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
+        InStream payload;
+        Sec_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
             : verbose(0)
             , flags([&stream, this, encryptionLevel, &crypt](){
                 uint32_t flags = 0;
@@ -826,40 +826,26 @@ enum {
                         stream.in_skip_bytes(8); /* signature */
                         if (this->verbose >= 0x200){
                             LOG(LOG_INFO, "Receiving encrypted TPDU");
-                            hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                            hexdump_c(stream.get_current(), stream.in_remain());
                         }
-                        crypt.decrypt(stream.get_data()+stream.get_offset(), stream.in_remain());
+                        crypt.decrypt(const_cast<uint8_t *>(stream.get_current()), stream.in_remain());
                         if (this->verbose >= 0x80){
-                            LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
-                            hexdump_c(reinterpret_cast<char*>(stream.get_data()+stream.get_offset()), stream.in_remain());
+                            LOG(LOG_INFO, "Decrypted %u bytes", stream.get_capacity());
+                            hexdump_c(stream.get_current(), stream.in_remain());
                         }
                     }
                 }
                 return flags;
             }())
-            , payload(stream, stream.get_offset(), stream.in_remain())
+            , payload(stream.get_current(), stream.in_remain())
         // Constructor Body
         {
-            stream.in_skip_bytes(this->payload.size());
+            stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
 
     struct Sec_Send
     {
-        Sec_Send(Stream & stream, Stream & data, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
-            flags |= encryptionLevel?SEC_ENCRYPT:0;
-            if (flags) {
-                stream.out_uint32_le(flags);
-            }
-            if (flags & SEC_ENCRYPT){
-                uint8_t signature[8] = {};
-                crypt.sign(data.get_data(), data.size(), signature);
-                stream.out_copy_bytes(signature, 8);
-                crypt.decrypt(data.get_data(), data.size());
-            }
-            stream.mark_end();
-        }
-
         Sec_Send(OutStream & stream, uint8_t * data, size_t len, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
             flags |= encryptionLevel?SEC_ENCRYPT:0;
             if (flags) {

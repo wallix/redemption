@@ -26,6 +26,7 @@
 
 #include "common.hpp"
 #include "stream.hpp"
+#include "error.hpp"
 
 // 2.2.7.1.4.2 Revision 2 (TS_BITMAPCACHE_CAPABILITYSET_REV2)
 // ==========================================================
@@ -144,7 +145,7 @@ struct BmpCache2Caps : public Capability {
     {
     }
 
-    void emit(Stream & stream)override {
+    void emit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->cacheFlags);
@@ -158,7 +159,7 @@ struct BmpCache2Caps : public Capability {
         stream.out_clear_bytes(12);
     }
 
-    void recv(Stream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)override {
         this->len = len;
         if (len != CAPLEN_BITMAPCACHE_REV2 || !stream.in_check_rem(len)) {
             LOG(LOG_ERR, "Broken CAPSTYPE_BITMAPCACHE_REV2, need=%u (%u) remains=%u",
