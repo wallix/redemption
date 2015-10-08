@@ -445,7 +445,6 @@ public:
         }
         else {
             BGRPalette palette1{BGRPalette::no_init()};
-            char type1[4];
 
             /* header for bmp file */
             struct bmp_header {
@@ -489,6 +488,8 @@ public:
                     // throw Error(ERR_BITMAP_LOAD_FAILED);
                     return ;
                 }
+
+                char type1[2];
 
                 /* read file type */
                 if (file.read(type1, 2) != 2) {

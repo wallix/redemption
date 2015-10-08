@@ -509,7 +509,6 @@ struct ShareData_Recv : private CheckShareData_Recv
     uint8_t streamid;
     uint16_t len;
     uint8_t pdutype2;
-    uint16_t uncompressedLen;
     uint8_t compressedType;
     uint16_t compressedLen;
     InStream payload;
