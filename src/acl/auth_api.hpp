@@ -39,15 +39,15 @@ public:
 
 
 class NullAuthentifier : public auth_api {
-    virtual void set_auth_channel_target(const char * target) override {}
+    void set_auth_channel_target(const char * target) override {}
     //virtual void set_auth_channel_result(const char * result) {}
 
-    virtual void set_auth_error_message(const char * error_message) override {}
+    void set_auth_error_message(const char * error_message) override {}
 
-    virtual void report(const char * reason, const char * message) override {}
+    void report(const char * reason, const char * message) override {}
 
-    virtual void log(const char * type, const char * data) const override {}
-    virtual void log2(const char * type, const char * data, const char * info)
+    void log(const char * type, const char * data) const override {}
+    void log2(const char * type, const char * data, const char * info)
         const override {}
 };
 

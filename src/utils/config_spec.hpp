@@ -625,7 +625,7 @@ template<class T>
 struct ref
 {
     T const & x;
-    operator T const & () const { return x; }
+    operator T const & () const { return this->x; }
 };
 
 #define MK_PACK(Ts)                           \

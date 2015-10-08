@@ -549,9 +549,7 @@ public:
             if (i) {
                 lg += snprintf( buffer + lg, sz - lg, " ");
             }
-            lg += snprintf( buffer + lg, sz - lg, "0x%.2x"
-                          , (unsigned char)this->data[i]
-                          );
+            lg += snprintf( buffer + lg, sz - lg, "0x%.2x", this->data[i]);
         }
         lg += snprintf(buffer + lg, sz - lg, "]");
         if (lg >= sz) {

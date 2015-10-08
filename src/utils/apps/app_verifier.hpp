@@ -113,7 +113,7 @@ static inline int extract_file_info( const char * space_separated_values
     for (i = 0, c = HASH_LEN / 2, psz = point_start + 1; i < c; i++, psz += 2) {
         sscanf(psz, "%02x", &code);
 
-        full_hash.out_uint8((uint8_t)code);
+        full_hash.out_uint8(static_cast<uint8_t>(code));
     }
 
     // first 4 kb hash
@@ -128,7 +128,7 @@ static inline int extract_file_info( const char * space_separated_values
     for (i = 0, c = HASH_LEN / 2, psz = point_start + 1; i < c; i++, psz += 2) {
         sscanf(psz, "%02x", &code);
 
-        _4kb_hash.out_uint8((uint8_t)code);
+        _4kb_hash.out_uint8(static_cast<uint8_t>(code));
     }
 
     // end timestamp
@@ -152,7 +152,7 @@ static inline int extract_file_info( const char * space_separated_values
     // filename
     point_end   = point_start;
     point_start = space_separated_values;
-    if ((point_end <= point_start) || (file_name.get_capacity() < (size_t)(point_end - point_start))) {
+    if ((point_end <= point_start) || (file_name.get_capacity() < static_cast<size_t>(point_end - point_start))) {
         return -1;
     }
 //LOG(LOG_INFO, "filename='%.*s'", (unsigned)(point_end - point_start), point_start);
@@ -184,7 +184,7 @@ int read_line(  FileDescriptor fd
     do {
         // Finds newline in buffer.
         for (psz = opaque_stream.get_data();
-             (psz != opaque_stream.get_current()) && ((psz - opaque_stream.get_data()) < (ssize_t)(internal_line_len - 1));
+             (psz != opaque_stream.get_current()) && ((psz - opaque_stream.get_data()) < static_cast<ssize_t>(internal_line_len - 1));
              psz++) {
             if (*psz == '\n') {
                 psz++;

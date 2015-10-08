@@ -310,7 +310,7 @@ namespace detail
                 ssize_t res = this->meta_buf_.write(filename, len);
                 if (res == len) {
                     char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4];
-                    len = sprintf(mes, " %u %u\n", (unsigned)this->start_sec_, (unsigned)this->stop_sec_+1);
+                    len = sprintf(mes, " %u %u\n", unsigned(this->start_sec_), unsigned(this->stop_sec_+1));
                     res = this->meta_buf_.write(mes, len);
                 }
                 if (res < len) {

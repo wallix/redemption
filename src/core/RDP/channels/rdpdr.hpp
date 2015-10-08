@@ -3141,7 +3141,7 @@ class RDPFileRenameInformation {
 
 public:
     inline void emit(OutStream & stream) const {
-        stream.out_uint8(this->replace_if_exists_ ? ((uint8_t)-1) : 0);
+        stream.out_uint8(this->replace_if_exists_ ? static_cast<uint8_t>(-1) : static_cast<uint8_t>(0));
         stream.out_uint8(this->RootDirectory_);
 
         const size_t maximum_length_of_FileName_in_bytes =

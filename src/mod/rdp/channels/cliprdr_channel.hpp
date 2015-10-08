@@ -86,8 +86,7 @@ public:
           file_descriptor_data.get(), RDPECLIP::FileDescriptor::size())
     , front(front) {}
 
-    inline virtual const char*
-        get_reporting_reason_exchanged_data_limit_reached() const override
+    const char* get_reporting_reason_exchanged_data_limit_reached() const override
     {
         return "CLIPBOARD_LIMIT";
     }
@@ -571,7 +570,7 @@ private:
     }
 
 public:
-    virtual void process_client_message(uint32_t total_length,
+    void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length) override
     {
@@ -1025,7 +1024,7 @@ public:
         return true;
     }
 
-    virtual void process_server_message(uint32_t total_length,
+    void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override

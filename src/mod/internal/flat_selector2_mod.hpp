@@ -111,7 +111,7 @@ public:
 
     void ask_page()
     {
-        this->vars.set_acl<cfg::context::selector_current_page>((uint32_t)this->current_page);
+        this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
         this->vars.set<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
         this->vars.set<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
         this->vars.set<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());

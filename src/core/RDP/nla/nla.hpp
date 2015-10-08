@@ -121,7 +121,7 @@ public:
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        const char * p = (const char *)pszTargetName;
+        const char * p = reinterpret_cast<const char *>(pszTargetName);
         size_t length = 0;
         if (p) {
             length = strlen(p);
@@ -285,8 +285,8 @@ public:
         }
 
         if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
-            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%d\n",
-                (int) this->pubKeyAuth.size());
+            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu\n",
+                this->pubKeyAuth.size());
             return SEC_E_INVALID_TOKEN;
         }
         length = this->pubKeyAuth.size();
@@ -591,7 +591,8 @@ public:
             status = this->table->InitializeSecurityContext(&this->credentials,
                                                             (have_context) ?
                                                             &this->context : nullptr,
-                                                            (char*)this->ServicePrincipalName.get_data(),
+                                                            reinterpret_cast<char*>(
+                                                                this->ServicePrincipalName.get_data()),
                                                             fContextReq,
                                                             this->hardcodedtests?1:0,
                                                             SECURITY_NATIVE_DREP,

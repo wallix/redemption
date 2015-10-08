@@ -753,15 +753,15 @@ struct InfoPacket {
         this->flags |= INFO_LOGONNOTIFY;
 
         this->cbDomain         = UTF8ToUTF8LCopy(this->Domain,
-            sizeof(this->Domain), (const uint8_t *)domain) * 2;
+            sizeof(this->Domain), reinterpret_cast<const uint8_t *>(domain)) * 2;
         this->cbUserName       = UTF8ToUTF8LCopy(this->UserName,
-            sizeof(this->UserName), (const uint8_t *)username) * 2;
+            sizeof(this->UserName), reinterpret_cast<const uint8_t *>(username)) * 2;
         this->cbPassword       = UTF8ToUTF8LCopy(this->Password,
-            sizeof(this->Password), (const uint8_t *)password) * 2;
+            sizeof(this->Password), reinterpret_cast<const uint8_t *>(password)) * 2;
         this->cbAlternateShell = UTF8ToUTF8LCopy(this->AlternateShell,
-            sizeof(this->AlternateShell), (const uint8_t *)program) * 2;
+            sizeof(this->AlternateShell), reinterpret_cast<const uint8_t *>(program)) * 2;
         this->cbWorkingDir     = UTF8ToUTF8LCopy(this->WorkingDir,
-            sizeof(this->WorkingDir), (const uint8_t *)directory) * 2;
+            sizeof(this->WorkingDir), reinterpret_cast<const uint8_t *>(directory)) * 2;
 
         if (performanceFlags) {
             this->extendedInfoPacket.performanceFlags = performanceFlags;
@@ -769,7 +769,8 @@ struct InfoPacket {
 
         if (clientAddr){
             this->extendedInfoPacket.cbClientAddress = (UTF8ToUTF8LCopy(this->extendedInfoPacket.clientAddress,
-                sizeof(this->extendedInfoPacket.clientAddress), (const uint8_t *)clientAddr) + 1) * 2;
+                sizeof(this->extendedInfoPacket.clientAddress),
+                reinterpret_cast<const uint8_t *>(clientAddr)) + 1) * 2;
         }
     }
 
@@ -786,16 +787,16 @@ struct InfoPacket {
         stream.out_uint16_le(this->cbAlternateShell);
         stream.out_uint16_le(this->cbWorkingDir);
 
-        stream.out_unistr((const char *)this->Domain);
-        stream.out_unistr((const char *)this->UserName);
+        stream.out_unistr(this->Domain);
+        stream.out_unistr(this->UserName);
         if (flags & INFO_AUTOLOGON){
-            stream.out_unistr((const char *)this->Password);
+            stream.out_unistr(this->Password);
         }
         else{
             stream.out_uint16_le(0);
         }
-        stream.out_unistr((const char *)this->AlternateShell);
-        stream.out_unistr((const char *)this->WorkingDir);
+        stream.out_unistr(this->AlternateShell);
+        stream.out_unistr(this->WorkingDir);
 
         if(!this->rdp5_support){
             LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
@@ -806,18 +807,19 @@ struct InfoPacket {
 
             stream.out_uint16_le(this->extendedInfoPacket.clientAddressFamily);
             stream.out_uint16_le(this->extendedInfoPacket.cbClientAddress);
-            stream.out_unistr((const char *) this->extendedInfoPacket.clientAddress);
+            stream.out_unistr(this->extendedInfoPacket.clientAddress);
 //            stream.out_uint16_le(2*sizeof("0.0.0.0"));
 //            stream.out_unistr("0.0.0.0");
 
             stream.out_uint16_le(this->extendedInfoPacket.cbClientDir);
-            stream.out_unistr((const char *) this->extendedInfoPacket.clientDir);
+            stream.out_unistr(this->extendedInfoPacket.clientDir);
 
             // Client Time Zone (172 bytes)
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
-            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.StandardName, 64);
+            stream.out_date_name(
+                reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.StandardName), 64);
 
-//            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.StandardDate, 16);
+//            stream.out_date_name(this->extendedInfoPacket.clientTimeZone.StandardDate, 16);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
@@ -829,9 +831,10 @@ struct InfoPacket {
 
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.StandardBias);
 
-            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.DaylightName, 64);
+            stream.out_date_name(
+                reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.DaylightName), 64);
 
-//            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.DaylightDate, 16);
+//            stream.out_date_name(this->extendedInfoPacket.clientTimeZone.DaylightDate, 16);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
@@ -849,7 +852,7 @@ struct InfoPacket {
 
             stream.out_uint16_le(0); // cbAutoReconnectLen is 0, as there is no AutoReconnectCookie Sent
 //            stream.out_uint16_le(2 * this->extendedInfoPacket.cbAutoReconnectLen);
-//            stream.out_unistr((const char *) this->extendedInfoPacket.autoReconnectCookie);
+//            stream.out_unistr(this->extendedInfoPacket.autoReconnectCookie);
 
             // These are sent by mctsc, but not by rdesktop
 //            stream.out_uint16_le(this->extendedInfoPacket.reserved1);
@@ -1008,7 +1011,7 @@ struct InfoPacket {
             this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
          }
          if (stream.get_current() != stream.get_data_end()){
-            LOG(LOG_ERR, "Trailing data in InfoPacket %d bytes", (signed)stream.in_remain());
+            LOG(LOG_ERR, "Trailing data in InfoPacket %zu bytes", stream.in_remain());
          }
     } // END FUNCT : recv()
 

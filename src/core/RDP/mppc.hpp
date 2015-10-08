@@ -538,7 +538,8 @@ public:
                 compressed_data_size * 100.0 / uncompressed_data_size);
             LOG(LOG_INFO, "total_uncompressed_data_size=%llu total_compressed_data_size=%llu total_rate=%.2Lf",
                 total_uncompressed_data_size, total_compressed_data_size,
-                (long double)total_compressed_data_size * 100.0 / (long double)total_uncompressed_data_size);
+                static_cast<long double>(total_compressed_data_size) * 100.0
+                / static_cast<long double>(total_uncompressed_data_size));
         }
     }
 

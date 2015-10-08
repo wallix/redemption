@@ -178,7 +178,7 @@ namespace detail {
                 ssize_t res = this->meta_buf().write(filename, len);
                 if (res == len) {
                     char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + HASH_LEN*2 + 2];
-                    len = sprintf(mes, " %u %u", (unsigned)this->start_sec_, (unsigned)this->stop_sec_+1);
+                    len = sprintf(mes, " %u %u", unsigned(this->start_sec_), unsigned(this->stop_sec_+1));
                     char * p = mes + len;
                     *p++ = ' ';                           //     1 octet
                     for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {

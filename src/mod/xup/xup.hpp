@@ -227,7 +227,8 @@ enum {
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
                          this->gd->draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
-                            RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")
+                            RDPBrush(r.x, r.y, 3, 0xaa,
+                            reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
                             ), r);
                     }
                     break;

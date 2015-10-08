@@ -24,6 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_MCS_HPP_
 #define _REDEMPTION_CORE_RDP_MCS_HPP_
 
+#include "error.hpp"
 #include "stream.hpp"
 #include "RDP/out_per_bstream.hpp"
 
@@ -299,7 +300,7 @@ namespace MCS
             {
                 l = this->stream.in_uint8();
                 if (l & 0x80) {
-                    const uint8_t nbbytes = (uint8_t)(l & 0x7F);
+                    const uint8_t nbbytes = static_cast<uint8_t>(l & 0x7F);
 
                     if (this->stream.in_check_rem(nbbytes)){
                         unsigned int len = 0;
@@ -406,13 +407,13 @@ namespace MCS
             }
             else if (v < 0xfff8) { // Actually ffff should also work, but it would break old code
                 this->stream.out_uint8(2);
-                this->stream.out_uint8((uint8_t)(v >> 8));
+                this->stream.out_uint8(static_cast<uint8_t>(v >> 8));
                 this->stream.out_uint8(static_cast<uint8_t>(v));
             }
             else {
                 this->stream.out_uint8(3);
-                this->stream.out_uint8((uint8_t)(v >> 16));
-                this->stream.out_uint8((uint8_t)(v >> 8));
+                this->stream.out_uint8(static_cast<uint8_t>(v >> 16));
+                this->stream.out_uint8(static_cast<uint8_t>(v >> 8));
                 this->stream.out_uint8(static_cast<uint8_t>(v));
             }
         }
@@ -422,7 +423,7 @@ namespace MCS
                 LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
                 throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
             }
-            this->stream.set_out_uint8((uint8_t)v, offset+0);
+            this->stream.set_out_uint8(static_cast<uint8_t>(v), offset+0);
         }
 
         void out_ber_len_uint7(unsigned int v){

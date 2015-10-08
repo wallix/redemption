@@ -53,9 +53,7 @@ inline void daemonize(const char * pid_file)
     int pid;
     int fd;
     char text[256];
-    size_t lg;
-
-    using namespace std;
+    std::size_t lg;
 
     close(0);
     close(1);
@@ -242,8 +240,6 @@ int app_proxy(
         desc.add({extra.option_long, extra.description});
     }
 
-    using namespace std;
-
     auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("kill")) {
@@ -258,7 +254,7 @@ int app_proxy(
     if (options.count("help")) {
         std::cout << copyright_notice << "\n\n";
         std::cout << "Usage: rdpproxy [options]\n\n";
-        std::cout << desc << endl;
+        std::cout << desc << std::endl;
         return 0;
     }
     if (options.count("version")) {

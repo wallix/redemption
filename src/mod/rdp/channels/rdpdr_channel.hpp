@@ -91,11 +91,11 @@ private:
                 device_announce_collection_type& device_announces)
             : device_announces(device_announces) {}
 
-            virtual void operator()(uint32_t total_length, uint32_t flags,
+            void operator()(uint32_t total_length, uint32_t flags,
                 const uint8_t* chunk_data, uint32_t chunk_data_length)
                     override {
                 REDASSERT((flags & CHANNELS::CHANNEL_FLAG_FIRST) ||
-                          (bool)this->device_announce_data);
+                          bool(this->device_announce_data));
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->device_announce_data =
@@ -193,7 +193,7 @@ private:
                      this->device_info_inventory.cbegin();
                  iter != this->device_info_inventory.cend(); ++iter) {
                 if (std::get<0>(*iter) == DeviceId) {
-                    return std::get<1>(*iter).get()->c_str();
+                    return std::get<1>(*iter)->c_str();
                 }
             }
 
@@ -210,7 +210,7 @@ private:
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device: "
                                 "Remove \"%s\"(DeviceId=%u) from known dervice list.",
-                            std::get<1>(*iter).get()->c_str(),
+                            std::get<1>(*iter)->c_str(),
                             DeviceId);
                     }
 
@@ -808,7 +808,7 @@ public:
           params.verbose)
     , front(front) {}
 
-    virtual ~FileSystemVirtualChannel()
+    ~FileSystemVirtualChannel() override
     {
 #ifndef NDEBUG
         bool make_boom_in_debug_mode = false;
@@ -833,8 +833,8 @@ public:
                     std::get<0>(*iter), std::get<1>(*iter),
                     std::get<2>(*iter), std::get<3>(*iter),
                     std::get<4>(*iter),
-                    ((bool)std::get<5>(*iter) ?
-                     std::get<5>(*iter).get()->c_str() :
+                    (std::get<5>(*iter) ?
+                     std::get<5>(*iter)->c_str() :
                      ""));
 
 #ifndef NDEBUG
@@ -857,15 +857,9 @@ public:
                         "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
                         "for_writing=%s",
                     std::get<0>(*iter), std::get<1>(*iter),
-                    ((bool)std::get<2>(*iter) ?
-                     std::get<2>(*iter).get()->c_str() :
-                     ""),
-                    ((bool)std::get<3>(*iter) ?
-                     "yes" :
-                     "no"),
-                    ((bool)std::get<4>(*iter) ?
-                     "yes" :
-                     "no"));
+                    (std::get<2>(*iter) ? std::get<2>(*iter)->c_str() : ""),
+                    (std::get<3>(*iter) ? "yes" : "no"),
+                    (std::get<4>(*iter) ? "yes" : "no"));
 
 #ifndef NDEBUG
                 make_boom_in_debug_mode = true;
@@ -876,8 +870,7 @@ public:
         REDASSERT(!make_boom_in_debug_mode);
     }
 
-    inline virtual const char*
-        get_reporting_reason_exchanged_data_limit_reached() const override
+    const char* get_reporting_reason_exchanged_data_limit_reached() const override
     {
         return "RDPDR_LIMIT";
     }
@@ -1196,8 +1189,8 @@ public:
         const uint32_t FileId        = std::get<1>(*iter);
         const uint32_t MajorFunction = std::get<3>(*iter);
         const uint32_t extra_data    = std::get<4>(*iter);
-        const char*    file_path     = ((bool)std::get<5>(*iter) ?
-                                        std::get<5>(*iter).get()->c_str() :
+        const char*    file_path     = (std::get<5>(*iter) ?
+                                        std::get<5>(*iter)->c_str() :
                                         "");
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
@@ -1238,14 +1231,14 @@ public:
                         std::unique_ptr<std::string> target_file_name =
                             std::make_unique<std::string>(device_name);
 
-                        (*target_file_name.get()) += file_path;
+                        *target_file_name += file_path;
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                             LOG(LOG_INFO,
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "Add \"%s\" to known file list. "
                                     "DeviceId=%u FileId=%u",
-                                target_file_name.get()->c_str(),
+                                target_file_name->c_str(),
                                 device_io_response.DeviceId(),
                                 device_create_response.FileId());
                         }
@@ -1294,7 +1287,7 @@ public:
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "Remove \"%s\" from known file list. "
                                     "DeviceId=%u FileId=%u",
-                                std::get<2>(*target_iter).get()->c_str(),
+                                std::get<2>(*target_iter)->c_str(),
                                 device_io_response.DeviceId(),
                                 FileId);
                         }
@@ -1368,12 +1361,12 @@ public:
                                             LOG(LOG_INFO,
                                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                                     "Reads \"%s\".",
-                                                std::get<2>(*target_iter).get()->c_str());
+                                                std::get<2>(*target_iter)->c_str());
                                         }
 
                                         if (this->param_dont_log_data_into_wrm) {
                                             std::string message("ReadRedirectedFileSystem=");
-                                            message += std::get<2>(*target_iter).get()->c_str();
+                                            message += std::get<2>(*target_iter)->c_str();
 
                                             bool contian_window_title = false;
                                             this->front.session_update(message.c_str(),
@@ -1434,12 +1427,12 @@ public:
                                             LOG(LOG_INFO,
                                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                                     "Writes \"%s\".",
-                                                std::get<2>(*target_iter).get()->c_str());
+                                                std::get<2>(*target_iter)->c_str());
                                         }
 
                                         if (this->param_dont_log_data_into_wrm) {
                                             std::string message("WriteRedirectedFileSystem=");
-                                            message += std::get<2>(*target_iter).get()->c_str();
+                                            message += std::get<2>(*target_iter)->c_str();
 
                                             bool contian_window_title = false;
                                             this->front.session_update(message.c_str(),
@@ -1495,7 +1488,7 @@ public:
         return true;
     }   // process_client_drive_io_response
 
-    virtual void process_client_message(uint32_t total_length,
+    void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
             override
     {
@@ -2097,7 +2090,7 @@ public:
         return send_message_to_client;
     }   // process_server_drive_io_request
 
-    virtual void process_server_message(uint32_t total_length,
+    void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
             override

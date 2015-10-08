@@ -736,11 +736,16 @@ public:
         this->p+=4;
     }
 
-    void out_unistr(const char* text)
+    void out_unistr(const uint8_t * text)
     {
-        const size_t len = UTF8toUTF16(reinterpret_cast<const uint8_t*>(text), this->p, this->tailroom());
+        const size_t len = UTF8toUTF16(text, this->p, this->tailroom());
         this->p += len;
         this->out_clear_bytes(2);
+    }
+
+    void out_unistr(const char* text)
+    {
+        out_unistr(reinterpret_cast<const uint8_t*>(text));
     }
 
     void out_date_name(const char* text, const size_t buflen)

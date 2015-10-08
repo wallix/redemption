@@ -1231,7 +1231,7 @@ namespace GCC
                 LOG(LOG_INFO, "cs_core::clientBuild   = %u",  this->clientBuild);
                 char hostname[16];
                 for (size_t i = 0; i < 16 ; i++) {
-                    hostname[i] = (uint8_t)this->clientName[i];
+                    hostname[i] = static_cast<char>(this->clientName[i]);
                 }
                 LOG(LOG_INFO, "cs_core::clientName    = %s",  hostname);
                 LOG(LOG_INFO, "cs_core::keyboardType  = [%04x] %s",  this->keyboardType,
@@ -1247,7 +1247,7 @@ namespace GCC
                 LOG(LOG_INFO, "cs_core::keyboardFunctionKey  = %u function keys",  this->keyboardFunctionKey);
                 char imename[32];
                 for (size_t i = 0; i < 32 ; i++){
-                    imename[i] = (uint8_t)this->imeFileName[i];
+                    imename[i] = static_cast<char>(this->imeFileName[i]);
                 }
                 LOG(LOG_INFO, "cs_core::imeFileName    = %s",  imename);
 

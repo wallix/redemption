@@ -137,7 +137,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                 length = strlen(p);
             }
             spn->init(length + 1);
-            spn->copy((const uint8_t *)pszPrincipal, length);
+            spn->copy(reinterpret_cast<const uint8_t *>(pszPrincipal), length);
             spn->get_data()[length] = 0;
         }
         Krb5Creds * credentials = new Krb5Creds;
@@ -193,8 +193,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         int size = (strlen(service_name) + 1 + strlen(server) + 1);
 
         output.value = malloc(size);
-        snprintf((char*)output.value, size, "%s@%s", service_name, server);
-        output.length = strlen((const char*)output.value) + 1;
+        snprintf(reinterpret_cast<char*>(output.value), size, "%s@%s", service_name, server);
+        output.length = strlen(reinterpret_cast<const char*>(output.value)) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", output.value);
         major_status = gss_import_name(&minor_status, &output, type, name);
         free(output.value);
@@ -319,7 +319,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
         else {
             output_buffer->Buffer.init(output_tok.length);
-            output_buffer->Buffer.copy((const uint8_t*)output_tok.value, output_tok.length);
+            output_buffer->Buffer.copy(reinterpret_cast<const uint8_t*>(output_tok.value), output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
@@ -486,7 +486,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
         PSecBuffer data_buffer = nullptr;
 	gss_buffer_desc inbuf, outbuf;
-        for (int index = 0; index < (int) pMessage->cBuffers; index++) {
+        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
                 data_buffer = &pMessage->pBuffers[index];
             }
@@ -509,7 +509,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);
-        data_buffer->Buffer.copy((const uint8_t *)outbuf.value, outbuf.length);
+        data_buffer->Buffer.copy(reinterpret_cast<const uint8_t *>(outbuf.value), outbuf.length);
 	gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
@@ -542,8 +542,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_NO_CONTEXT;
         }
         PSecBuffer data_buffer = nullptr;
-	gss_buffer_desc inbuf, outbuf;
-        for (int index = 0; index < (int) pMessage->cBuffers; index++) {
+        gss_buffer_desc inbuf, outbuf;
+        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
                 data_buffer = &pMessage->pBuffers[index];
             }
@@ -566,8 +566,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);
-        data_buffer->Buffer.copy((const uint8_t *)outbuf.value, outbuf.length);
-	gss_release_buffer(&minor_status, &outbuf);
+        data_buffer->Buffer.copy(reinterpret_cast<const uint8_t *>(outbuf.value), outbuf.length);
+        gss_release_buffer(&minor_status, &outbuf);
         return SEC_E_OK;
     }
 

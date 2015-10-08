@@ -71,12 +71,12 @@ public:
         ::gettimeofday(this, nullptr);
     }
 
-    TimeVal(uint64_t usec) {
+    explicit TimeVal(uint64_t usec) {
         this->tv_sec  = usec / 1000000L;
         this->tv_usec = usec % 1000000L;
     }
 
-    TimeVal(timeval const & tv) {
+    explicit TimeVal(timeval const & tv) {
         this->tv_sec  = tv.tv_sec;
         this->tv_usec = tv.tv_usec;
     }

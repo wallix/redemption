@@ -132,7 +132,7 @@ struct RdpNego
 
     void set_lb_info(uint8_t * lb_info, size_t lb_info_length) {
         if (lb_info_length > 0) {
-            this->lb_info = (char *)lb_info;
+            this->lb_info = reinterpret_cast<char *>(lb_info);
         }
     }
 
