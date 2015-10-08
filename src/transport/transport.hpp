@@ -106,7 +106,7 @@ public:
         this->last_quantum_sent = 0;
     }
 
-    virtual void enable_client_tls(bool ignore_certificate_change)
+    virtual void enable_client_tls(bool ignore_certificate_change, const char * certif_path)
     {
         // default enable_tls do nothing
     }

@@ -53,7 +53,7 @@ static void rdp_request(SocketTransport & sockettransport)
     sockettransport.tls = true;
     sockettransport.io = ssl;
 
-    sockettransport.enable_client_tls(false);
+    sockettransport.enable_client_tls(false, CERTIF_PATH);
 
     char * pbuf = buf;
     sockettransport.recv(&pbuf, 29);

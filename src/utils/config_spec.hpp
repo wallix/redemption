@@ -34,9 +34,10 @@ namespace config_spec {
 
 using namespace configs;
 
+// infos types
+//@{
 struct real_name { char const * name; };
 struct str_authid { char const * name; };
-struct def_authid { char const * name; };
 
 template<class T> struct type_ { };
 template<class T> struct user_type { };
@@ -52,6 +53,14 @@ template<class T>
 default_<T> set(T const & x)
 { return {x}; }
 
+struct macro { char const * name; char const * value; };
+#define MACRO(name) macro{#name, name}
+struct info { char const * value; };
+struct todo { char const * value; };
+struct desc { char const * value; };
+//@}
+
+// sesman mode
 enum class PropertyFieldFlags {
     none,
     read    = 1 << 0,
@@ -66,19 +75,25 @@ constexpr PropertyFieldFlags operator & (PropertyFieldFlags x, PropertyFieldFlag
     return static_cast<PropertyFieldFlags>(underlying_cast(x) & underlying_cast(y));
 }
 
-struct macro { char const * name; char const * value; };
-#define MACRO(name) macro{#name, name}
-struct info { char const * value; };
-struct todo { char const * value; };
-struct desc { char const * value; };
-
+// alias types
+//@{
 struct uint32_ { uint32_(uint32_t = 0) {} };
 struct uint64_ { uint64_(uint64_t = 0) {} };
+//@}
 
+/// ~"forward declaration" for redemption type
+//@{
 struct RedirectionInfo {};
 struct Theme {};
 struct Font {};
+//@}
 
+/// Specific object
+//@{
+struct StringList {};
+//@}
+
+// rules for rdpproxy.spec
 enum class Attribute : unsigned {
     none,
     hex = 1 << 1,
@@ -142,6 +157,7 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "host", str_authid{"ip_client"}, rw);
         W.member(type_<std::string>(), "target", str_authid{"ip_target"}, rw);
         W.member(type_<std::string>(), "target_device", r);
+        W.member(type_<std::string>(), "device_id", r);
         W.member(type_<std::string>(), "target_user", str_authid{"target_login"}, rw);
         W.member(type_<std::string>(), "target_application", r);
         W.member(type_<std::string>(), "target_application_account", r);
@@ -161,7 +177,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
         W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
-        W.member(A, type_<bool>(), "enable_file_encryption", def_authid{"opt_file_encryption"}, str_authid{"file_encryption"}, rw);
+        W.member(A, type_<bool>(), "enable_file_encryption", str_authid{"file_encryption"}, rw);
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
         W.member(P, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
@@ -172,23 +188,23 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<std::string>(), "alternate_shell", r);
         W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
-        W.member(H, type_<bool>(), "movie", def_authid{"opt_movie"}, str_authid{"is_rec"}, set(false), r);
-        W.member(A, type_<std::string>(), "movie_path", def_authid{"opt_movie_path"}, str_authid{"rec_path"}, r);
+        W.member(H, type_<bool>(), "movie", str_authid{"is_rec"}, set(false), r);
+        W.member(A, type_<std::string>(), "movie_path", str_authid{"rec_path"}, r);
         W.member(A, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
         W.sep();
         W.member(V, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
         W.member(A, type_<bool>(), "enable_osd", set(true));
         W.member(A, type_<bool>(), "enable_osd_display_remote_target", set(true));
         W.sep();
-        W.member(A, type_<bool>(), "enable_wab_agent", def_authid{"opt_wabagent"}, str_authid{"wab_agent"}, set(false), r);
-        W.member(A, type_<bool>(), "enable_wab_agent_loading_mask", def_authid{"enable_wab_agent_loading_mask"}, set(true), r);
-        W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", def_authid{"opt_wabagent_launch_timeout"}, set(20000), r);
-        W.member(A, type_<Range<unsigned, 0, 1>>(), "wab_agent_on_launch_failure", def_authid{"opt_wabagent_on_launch_failure"}, set(0), desc{
+        W.member(A, type_<bool>(), "enable_wab_agent", str_authid{"wab_agent"}, set(false), r);
+        W.member(A, type_<bool>(), "enable_wab_agent_loading_mask", set(true), r);
+        W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", set(20000), r);
+        W.member(A, type_<Range<unsigned, 0, 1>>(), "wab_agent_on_launch_failure", set(0), desc{
             "Specifies the action to be performed is the launch of agent fails.\n"
             "  0: disconnects session\n"
             "  1: remains connected"
         }, r);
-        W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", def_authid{"opt_wabagent_keepalive_timeout"}, set(5000), r);
+        W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", set(5000), r);
         W.sep();
         W.member(H, type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));
         W.sep();
@@ -275,18 +291,18 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<RedirectionInfo>(), "redir_info");
         W.sep();
-        W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, def_authid{"rdp_bogus_sc_net_size"}, str_authid{"rdp_bogus_sc_net_size"}, set(true), r);
+        W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, str_authid{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
-        W.member(A, type_<unsigned>(), "client_device_announce_timeout", def_authid{"opt_client_device_announce_timeout"}, set(1000), r);
+        W.member(A, type_<unsigned>(), "client_device_announce_timeout", set(1000), r);
         W.sep();
-        W.member(A, type_<StringList>(), "proxy_managed_drives", def_authid{"opt_proxy_managed_drives"}, r);
+        W.member(A, type_<StringList>(), "proxy_managed_drives", r);
     }
     W.stop_section();
 
     W.start_section("mod_vnc");
     {
-        W.member(V, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."}, def_authid{"vnc_clipboard_up"}, r);
-        W.member(V, type_<bool>(), "clipboard_down", desc{"Enable or disable the clipboard from server (server to client)."}, def_authid{"vnc_clipboard_down"}, r);
+        W.member(V, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."}, r);
+        W.member(V, type_<bool>(), "clipboard_down", desc{"Enable or disable the clipboard from server (server to client)."}, r);
         W.sep();
         W.member(A, type_<std::string>(), "encodings", desc{
             "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
@@ -302,9 +318,9 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<ClipboardEncodingType>(), "server_clipboard_encoding_type", desc{
             "VNC server clipboard data encoding type.\n"
             "  latin1 (default) or utf-8"
-        }, def_authid{"vnc_server_clipboard_encoding_type"}, str_authid{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1), r);
+        }, str_authid{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1), r);
         W.sep();
-        W.member(A, type_<SelectRange<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", def_authid{"vnc_bogus_clipboard_infinite_loop"}, str_authid{"vnc_bogus_clipboard_infinite_loop"}, set(0), r);
+        W.member(A, type_<SelectRange<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", str_authid{"vnc_bogus_clipboard_infinite_loop"}, set(0), r);
     }
     W.stop_section();
 
@@ -517,13 +533,6 @@ void config_spec_definition(Writer && W)
 }
 
 
-template<class T>
-struct ref
-{
-    T const & x;
-    operator T const & () const { return x; }
-};
-
 template<class Inherit>
 struct ConfigSpecWriterBase
 {
@@ -609,6 +618,14 @@ private:
     void do_stop_section() {}
     void do_sep() {}
     void do_tab() {}
+};
+
+
+template<class T>
+struct ref
+{
+    T const & x;
+    operator T const & () const { return x; }
 };
 
 #define MK_PACK(Ts)                           \

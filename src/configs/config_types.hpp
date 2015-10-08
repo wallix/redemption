@@ -233,11 +233,6 @@ struct CStrBuf<Range<T, Min, Max, Default>>
 {};
 
 
-// TODO move to config_spec
-struct StringList
-{};
-
-
 template<std::size_t N>
 char const * c_str(CStrBuf<StaticKeyString<N>>& s, StaticKeyString<N> const & key) {
     s.get()[N*2] = 0;

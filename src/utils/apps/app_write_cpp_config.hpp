@@ -82,7 +82,9 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
         if (bool(properties)) {
             this->tab();
             this->out() << "// AUTHID_";
-            auto str = this->get_def_authid(pack, varname);
+            std::string str = this->section_name;
+            str += '_';
+            str += varname;
             for (auto & c : str) {
                 c = char(std::toupper(c));
             }
@@ -192,13 +194,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     void write(info x) { this->inherit().write(desc{x.value}); }
     void write(desc x) { this->write_comment("//", x.value); }
 
-    std::string get_def_authid(ref<def_authid> r, std::string const & varname)
-    { return r.x.name; }
-
-    template<class T>
-    std::string const & get_def_authid(ref<type_<T>>, std::string const & varname)
-    { return varname; }
-
     const char * get_str_authid(ref<str_authid> r, std::string const & varname)
     { return r.x.name; }
 
@@ -294,13 +289,13 @@ template<class ConfigCppWriter>
 void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
     out_authid <<
       "enum authid_t {\n"
-      "    AUTHID_UNKNOWN = 0,\n"
     ;
     for (auto & body : writer.authids) {
         out_authid << "    AUTHID_" << body.first << ",\n";
     }
     out_authid <<
-      "    MAX_AUTHID\n"
+      "    MAX_AUTHID,\n"
+      "    AUTHID_UNKNOWN\n"
       "};\n"
       "constexpr char const * const authstr[] = {\n"
     ;

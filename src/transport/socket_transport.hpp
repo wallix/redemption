@@ -446,7 +446,7 @@ public:
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
 
-    void enable_client_tls(bool ignore_certificate_change) throw (Error) override {
+    void enable_client_tls(bool ignore_certificate_change, const char * certif_path) throw (Error) override {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS");
             return;
@@ -800,10 +800,12 @@ public:
         }
 
         // ensures the certificate directory exists
-        if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
-            LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
+        if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, 0) != 0) {
+            LOG(LOG_ERR, "Failed to create certificate directory: %s ", certif_path);
             if (this->error_message) {
-                *this->error_message = "Failed to create certificate directory: \"" CERTIF_PATH "/\"";
+                *this->error_message = "Failed to create certificate directory: \"";
+                *this->error_message += certif_path;
+                *this->error_message += "\"\n";
             }
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -811,7 +813,9 @@ public:
         char filename[1024];
 
         // generates the name of certificate file associated with RDP target
-        snprintf(filename, sizeof(filename) - 1, CERTIF_PATH "/X509-%s-%d.pem", this->ip_address, this->port);
+        snprintf(filename, sizeof(filename) - 1, "%s/X509-%s-%d.pem", 
+            certif_path, 
+            this->ip_address, this->port);
         filename[sizeof(filename) - 1] = '\0';
 
         FILE *fp = ::fopen(filename, "r");

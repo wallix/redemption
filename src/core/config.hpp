@@ -251,7 +251,7 @@ public:
     };
 
     FieldReference get_acl_field(authid_t authid) {
-        return {authid == AUTHID_UNKNOWN ? nullptr : &this->fields[authid-1], *this};
+        return {authid >= authid_t::MAX_AUTHID ? nullptr : &this->fields[static_cast<unsigned>(authid)], *this};
     }
 
     void notify_from_acl() {
@@ -274,7 +274,7 @@ public:
     void for_each_changed_field(Fn fn)
     {
         for (unsigned i : this->to_send_index) {
-            fn(FieldReference{&this->fields[i], *this}, static_cast<authid_t>(i+1));
+            fn(FieldReference{&this->fields[i], *this}, static_cast<authid_t>(i));
         }
     }
 
