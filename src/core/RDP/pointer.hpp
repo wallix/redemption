@@ -22,7 +22,9 @@
 #define _REDEMPTION_CORE_RDP_POINTER_HPP_
 
 #include "log.hpp"
+#include "bitfu.hpp"
 #include <cstring>
+#include <algorithm> // std:min
 
 struct Pointer {
     enum {

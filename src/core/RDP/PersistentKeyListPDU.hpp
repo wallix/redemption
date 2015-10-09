@@ -350,11 +350,12 @@ struct PersistentKeyListPDUData {
                 "numEntriesCache4=%u totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u"
                 " totalEntriesCache3=%u totalEntriesCache4=%u bBitMask=%u entries(",
             message,
-            this->numEntriesCache[0], this->numEntriesCache[1],
-            this->numEntriesCache[2], this->numEntriesCache[3],
-            this->numEntriesCache[4], this->totalEntriesCache[0],
-            this->totalEntriesCache[1], this->totalEntriesCache[2],
-            this->totalEntriesCache[3], this->totalEntriesCache[4], this->bBitMask);
+            unsigned(this->numEntriesCache[0]), unsigned(this->numEntriesCache[1]),
+            unsigned(this->numEntriesCache[2]), unsigned(this->numEntriesCache[3]),
+            unsigned(this->numEntriesCache[4]), unsigned(this->totalEntriesCache[0]),
+            unsigned(this->totalEntriesCache[1]), unsigned(this->totalEntriesCache[2]),
+            unsigned(this->totalEntriesCache[3]), unsigned(this->totalEntriesCache[4]),
+            unsigned(this->bBitMask));
         for (uint32_t i = 0, c = this->maximum_entries(); i < c; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
@@ -368,8 +369,9 @@ struct PersistentKeyListPDUData {
             uint8_t keys[8];
             memcpy(keys,     &this->entries[i].Key1, 4);
             memcpy(keys + 4, &this->entries[i].Key2, 4);
-            lg += snprintf(buffer + lg, sz - lg, "(%02X%02X%02X%02X%02X%02X%02X%02X)", keys[0], keys[1],
-                keys[2], keys[3], keys[4], keys[5], keys[6], keys[7]);
+            lg += snprintf(buffer + lg, sz - lg, "(%02X%02X%02X%02X%02X%02X%02X%02X)",
+                unsigned(keys[0]), unsigned(keys[1]), unsigned(keys[2]), unsigned(keys[3]),
+                unsigned(keys[4]), unsigned(keys[5]), unsigned(keys[6]), unsigned(keys[7]));
         }
         /*lg +=*/ snprintf(buffer + lg, sz - lg, "))");
         buffer[sizeof(buffer) - 1] = 0;

@@ -111,7 +111,7 @@ public:
 
     void ask_page()
     {
-        this->vars.set_acl<cfg::context::selector_current_page>((uint32_t)this->current_page);
+        this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
         this->vars.set<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
         this->vars.set<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
         this->vars.set<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
@@ -213,11 +213,11 @@ public:
         char buffer[16];
 
         this->current_page = vars.get<cfg::context::selector_current_page>();
-        snprintf(buffer, sizeof(buffer), "%u", this->current_page);
+        snprintf(buffer, sizeof(buffer), "%d", this->current_page);
         this->selector.current_page.set_text(buffer);
 
         this->number_page = vars.get<cfg::context::selector_number_of_pages>();
-        snprintf(buffer, sizeof(buffer), "%u", this->number_page);
+        snprintf(buffer, sizeof(buffer), "%d", this->number_page);
         this->selector.number_page.set_text(WidgetSelectorFlat2::temporary_number_of_page(buffer).buffer);
 
 

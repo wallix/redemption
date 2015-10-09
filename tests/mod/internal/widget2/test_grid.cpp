@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     for (uint16_t line_index = 0; line_index < line_number; line_index++) {
         for (uint16_t column_index = 0; column_index < column_number; column_index++) {
             char text[256];
-            snprintf(text, sizeof(text), "Label %ux%u", line_index, column_index);
+            snprintf(text, sizeof(text), "Label %ux%u", unsigned(line_index), unsigned(column_index));
             if ((line_index == 2) && (column_index == 3)) {
                 widgetTable[widget_count] = new WidgetFlatButton(drawable, 0, 0, wgrid, notifier,
                                                             text, auto_resize, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, font, 2, 2);

@@ -208,7 +208,7 @@ struct SeekableTransport
     {}
 
     void seek(int64_t offset, int whence) override {
-        if ((off64_t)-1 == this->buffer().seek(offset, whence)){
+        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }

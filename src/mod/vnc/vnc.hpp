@@ -833,7 +833,7 @@ public:
 
                             // key is simply password padded with nulls
                             strncpy(key, this->password, 8);
-                            rfbDesKey((unsigned char*)key, EN0); // 0, encrypt
+                            rfbDesKey(reinterpret_cast<unsigned char*>(key), EN0); // 0, encrypt
                             rfbDes(buf, buf);
                             rfbDes(buf + 8, buf + 8);
                         }
@@ -1723,7 +1723,7 @@ private:
                 uint32_t   ling_boundary;
 
                 while (number_of_subrectangles_remain > 0) {
-                    auto number_of_subrectangles_read = min<uint32_t>(4096, number_of_subrectangles_remain);
+                    auto number_of_subrectangles_read = std::min<uint32_t>(4096, number_of_subrectangles_remain);
 
                     InStream subrectangles(subrectangles_buf);
                     end = subrectangles_buf;
@@ -2753,10 +2753,10 @@ private:
         const uint16_t TILE_CY = 32;
 
         for (int y = 0; y < rect.cy ; y += TILE_CY) {
-            uint16_t cy = std::min(TILE_CY, (uint16_t)(rect.cy - y));
+            uint16_t cy = std::min(TILE_CY, uint16_t(rect.cy - y));
 
             for (int x = 0; x < rect.cx ; x += TILE_CX) {
-                uint16_t cx = std::min(TILE_CX, (uint16_t)(rect.cx - x));
+                uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
 
                 const Rect src_tile(x, y, cx, cy);
                 const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
@@ -2768,7 +2768,7 @@ private:
     }
 
 public:
-    void disconnect() {
+    void disconnect() override {
         if (this->acl) {
             this->acl->log("CNT event", "SESSION_ENDED");
         }

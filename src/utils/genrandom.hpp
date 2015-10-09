@@ -50,11 +50,9 @@ class LCGRandom : public Random
         {
         }
 
-    ~LCGRandom() override {}
-
     void random(void * dest, size_t size) override {
         for (size_t x = 0; x < size ; x++){
-            ((uint32_t*)dest)[x / sizeof(uint32_t)] = this->rand32();
+            reinterpret_cast<uint32_t*>(dest)[x / sizeof(uint32_t)] = this->rand32();
         }
     }
 

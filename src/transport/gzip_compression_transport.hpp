@@ -24,6 +24,7 @@
 #include <zlib.h>
 
 #include "transport.hpp"
+#include "stream.hpp"
 
 static const size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 

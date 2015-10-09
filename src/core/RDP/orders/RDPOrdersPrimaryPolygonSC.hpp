@@ -382,7 +382,8 @@ public:
         lg += snprintf(buffer + lg, sz - lg,
             "polygonsc(xStart=%d yStart=%d bRop2=0x%02X fillMode=%d BrushColor=%.6x "
                 "NumDeltaEntries=%d DeltaEntries=(",
-            this->xStart, this->yStart, this->bRop2, this->fillMode, this->BrushColor, this->NumDeltaEntries);
+            this->xStart, this->yStart, unsigned(this->bRop2),
+            this->fillMode, this->BrushColor, this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

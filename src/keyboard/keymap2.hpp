@@ -24,13 +24,9 @@
 #ifndef _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
 #define _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
 
-#include <stdio.h>
-#include <string.h>
-#include <string>
-
+#include "log.hpp"
+#include "stream.hpp"
 #include "keylayouts.hpp"
-
-using namespace std;
 
 static const Keylayout * keylayouts[] = { &keylayout_x00000405, &keylayout_x00000406, &keylayout_x00000407
                                         , &keylayout_x00000408, &keylayout_x00000409, &keylayout_x0000040a

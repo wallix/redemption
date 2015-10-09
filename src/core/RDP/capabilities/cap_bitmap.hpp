@@ -237,17 +237,17 @@ struct BitmapCaps : public Capability {
     void dump(FILE * f) {
         fprintf(f, "[Bitmap Capability Set]\n");
 
-        fprintf(f, "preferredBitsPerPixel=%u\n",    this->preferredBitsPerPixel);
-        fprintf(f, "receive1BitPerPixel=%u\n",      this->receive1BitPerPixel);
-        fprintf(f, "receive4BitsPerPixel=%u\n",     this->receive4BitsPerPixel);
-        fprintf(f, "receive8BitsPerPixel=%u\n",     this->receive8BitsPerPixel);
-        fprintf(f, "desktopWidth=%u\n",             this->desktopWidth);
-        fprintf(f, "desktopHeight=%u\n",            this->desktopHeight);
-        fprintf(f, "desktopResizeFlag=%u\n",        this->desktopResizeFlag);
-        fprintf(f, "bitmapCompressionFlag=%u\n",    this->bitmapCompressionFlag);
-        fprintf(f, "highColorFlags=%u\n",           this->highColorFlags);
-        fprintf(f, "drawingFlags=%u\n",             this->drawingFlags);
-        fprintf(f, "multipleRectangleSupport=%u\n\n", this->multipleRectangleSupport);
+        fprintf(f, "preferredBitsPerPixel=%u\n",    unsigned(this->preferredBitsPerPixel));
+        fprintf(f, "receive1BitPerPixel=%u\n",      unsigned(this->receive1BitPerPixel));
+        fprintf(f, "receive4BitsPerPixel=%u\n",     unsigned(this->receive4BitsPerPixel));
+        fprintf(f, "receive8BitsPerPixel=%u\n",     unsigned(this->receive8BitsPerPixel));
+        fprintf(f, "desktopWidth=%u\n",             unsigned(this->desktopWidth));
+        fprintf(f, "desktopHeight=%u\n",            unsigned(this->desktopHeight));
+        fprintf(f, "desktopResizeFlag=%u\n",        unsigned(this->desktopResizeFlag));
+        fprintf(f, "bitmapCompressionFlag=%u\n",    unsigned(this->bitmapCompressionFlag));
+        fprintf(f, "highColorFlags=%u\n",           unsigned(this->highColorFlags));
+        fprintf(f, "drawingFlags=%u\n",             unsigned(this->drawingFlags));
+        fprintf(f, "multipleRectangleSupport=%u\n\n", unsigned(this->multipleRectangleSupport));
     }
 };
 

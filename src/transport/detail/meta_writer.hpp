@@ -49,7 +49,7 @@ namespace detail
             int res =
             (   format == FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
              || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
-            ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, getpid())
+            ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
             : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
             if (res > int(sizeof(this->filename) - 6) || res < 0) {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
@@ -62,7 +62,7 @@ namespace detail
                             uint16_t width, uint16_t height, auth_api * authentifier)
     {
         char header1[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2 + 3];
-        const int len = sprintf(header1, "%u %u\n\n\n", width, height);
+        const int len = sprintf(header1, "%u %u\n\n\n", unsigned(width), unsigned(height));
         const ssize_t res = writer.write(header1, len);
         if (res < 0) {
             int err = errno;
@@ -310,7 +310,7 @@ namespace detail
                 ssize_t res = this->meta_buf_.write(filename, len);
                 if (res == len) {
                     char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4];
-                    len = sprintf(mes, " %u %u\n", (unsigned)this->start_sec_, (unsigned)this->stop_sec_+1);
+                    len = sprintf(mes, " %u %u\n", unsigned(this->start_sec_), unsigned(this->stop_sec_+1));
                     res = this->meta_buf_.write(mes, len);
                 }
                 if (res < len) {

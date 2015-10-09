@@ -218,7 +218,7 @@ public:
         }
 
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-        if (enddate != 0 && ((uint32_t)now > enddate)) {
+        if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = TR("session_out_time", language(this->ini));
             mm.invoke_close_box(message, signal, now);
@@ -382,20 +382,20 @@ public:
         this->acl_serial.send_acl_data();
     }
 
-    virtual void set_auth_channel_target(const char * target) override {
+    void set_auth_channel_target(const char * target) override {
         this->ini.set_acl<cfg::context::auth_channel_target>(target);
     }
 
-    //virtual void set_auth_channel_result(const char * result) override
+    //void set_auth_channel_result(const char * result) override
     //{
     //    this->ini.get<cfg::context::auth_channel_result>().set_from_cstr(result);
     //}
 
-    virtual void set_auth_error_message(const char * error_message) override {
+    void set_auth_error_message(const char * error_message) override {
         this->ini.set<cfg::context::auth_error_message>(error_message);
     }
 
-    virtual void report(const char * reason, const char * message) override {
+    void report(const char * reason, const char * message) override {
         this->ini.ask<cfg::context::keepalive>();
 
         char report[1024];
@@ -406,7 +406,7 @@ public:
         this->ask_acl();
     }
 
-    virtual void log(const char * type, const char * data) const override {
+    void log(const char * type, const char * data) const override {
         const char * session_type = "Neutral";
 
         if (!this->ini.get<cfg::context::module>().compare("RDP") ||
@@ -433,8 +433,7 @@ public:
            );
     }
 
-    virtual void log2(const char * type, const char * data, const char * info)
-            const override {
+    void log2(const char * type, const char * data, const char * info) const override {
         const char * session_type = "Neutral";
 
         if (!this->ini.get<cfg::context::module>().compare("RDP") ||
@@ -482,8 +481,6 @@ public:
         , last_total_sent(0)
     {
     }
-
-    ~PauseRecord() {}
 
     void check(time_t now, Front & front) {
         // Procedure which stops the recording on inactivity

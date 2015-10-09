@@ -29,7 +29,7 @@ void add_to_fd_set(wait_obj & w, SocketTransport * t, fd_set & rfds, unsigned & 
 {
     if (t && (t->sck > INVALID_SOCKET)) {
         FD_SET(t->sck, &rfds);
-        max = ((unsigned)t->sck > max) ? t->sck : max;
+        max = (static_cast<unsigned>(t->sck) > max) ? t->sck : max;
     }
     if ((!t || (t->sck <= INVALID_SOCKET) || w.object_and_time) && w.set_state) {
         struct timeval now;
@@ -69,7 +69,7 @@ void add_to_fd_set(wait_obj & w, int fd, fd_set & rfds, unsigned & max, timeval 
 {
     if (fd > -1) {
         FD_SET(fd, &rfds);
-        max = ((unsigned)fd > max) ? fd : max;
+        max = (static_cast<unsigned>(fd) > max) ? fd : max;
     }
     if (((fd <= -1) || w.object_and_time) && w.set_state) {
         struct timeval now;

@@ -42,9 +42,10 @@
 #define EPOCH_DIFF 11644473600LL
 
 #define FILE_TIME_SYSTEM_TO_RDP(_t) \
-    (((uint64_t)(_t) + EPOCH_DIFF) * 10000000LL)
+    ((static_cast<uint64_t>(_t) + EPOCH_DIFF) * 10000000LL)
 #define FILE_TIME_RDP_TO_SYSTEM(_t) \
-    (((_t) == 0LL || (_t) == (uint64_t)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - EPOCH_DIFF))
+    (((_t) == 0LL || (_t) == static_cast<uint64_t>(-1LL)) \
+    ? 0 : static_cast<time_t>((_t) / 10000000LL - EPOCH_DIFF))
 
 class ManagedFileSystemObject {
 protected:
@@ -477,8 +478,8 @@ public:
                 struct timeval times[2] = { { sb.st_atime, 0 }, { sb.st_mtime, 0 } };
 
                 auto file_time_rdp_to_system_timeval = [](uint64_t rdp_time, timeval & out_system_tiem) {
-                    if ((rdp_time != 0LL) && (rdp_time != ((uint64_t)-1LL))) {
-                        out_system_tiem.tv_sec  = (time_t)(rdp_time / 10000000LL - EPOCH_DIFF);
+                    if ((rdp_time != 0LL) && (rdp_time != static_cast<uint64_t>(-1LL))) {
+                        out_system_tiem.tv_sec  = static_cast<time_t>(rdp_time / 10000000LL - EPOCH_DIFF);
                         out_system_tiem.tv_usec = rdp_time % 10000000LL;
                     }
                 };
@@ -788,7 +789,7 @@ public:
     //    LOG(LOG_INFO, "ManagedDirectory::ManagedDirectory() : <%p>", this);
     //}
 
-    virtual ~ManagedDirectory() {
+    ~ManagedDirectory() override {
         //LOG(LOG_INFO, "ManagedDirectory::~ManagedDirectory(): <%p> fd=%d",
         //    this, (this->dir ? ::dirfd(this->dir) : -1));
 
@@ -801,9 +802,9 @@ public:
         }
     }
 
-    virtual bool IsDirectory() const override { return true; }
+    bool IsDirectory() const override { return true; }
 
-    virtual void ProcessServerCreateDriveRequest(
+    void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
             int drive_access_mode, const char * path, InStream & in_stream,
@@ -913,7 +914,7 @@ public:
         }
     }
 
-    virtual void ProcessServerCloseDriveRequest(
+    void ProcessServerCloseDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
@@ -950,13 +951,13 @@ public:
         REDASSERT(!this->dir);
     }
 
-    virtual void ProcessServerDriveReadRequest(
+    void ProcessServerDriveReadRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceReadRequest const & device_read_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose) override {
         REDASSERT(this->dir);
 
         StaticOutStream<65536> out_stream;

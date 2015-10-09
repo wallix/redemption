@@ -90,7 +90,7 @@ public:
     size_t str(char * buffer, size_t sz) const {
         size_t lg  = snprintf( buffer
                              , sz
-                             , "RDPFrameMarker(action=%s(%d))\n"
+                             , "RDPFrameMarker(action=%s(%u))\n"
                              , (  (this->action == FrameStart)
                                 ? "TS_FRAME_START"
                                 : (  (this->action == FrameEnd)

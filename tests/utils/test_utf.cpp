@@ -396,7 +396,10 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)
     BOOST_CHECK_EQUAL(target_length, nbbytes_utf16);
     for (size_t q = 0 ; q < target_length ; q++){
         if (expected_target[q] != target[q]){
-            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_target[q] ,target[q]);
+            printf("at %u: expected %u, got %u\n",
+                   static_cast<unsigned>(q),
+                   static_cast<unsigned>(expected_target[q]),
+                   static_cast<unsigned>(target[q]));
             BOOST_CHECK(false);
         }
     }
@@ -426,7 +429,10 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_control_character)
     BOOST_CHECK_EQUAL(target_length, nbbytes_utf16);
     for (size_t q = 0 ; q < target_length ; q++){
         if (expected_target[q] != target[q]){
-            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_target[q] ,target[q]);
+            printf("at %u: expected %u, got %u\n",
+                   static_cast<unsigned>(q),
+                   static_cast<unsigned>(expected_target[q]),
+                   static_cast<unsigned>(target[q]));
             BOOST_CHECK(false);
         }
     }
@@ -460,7 +466,10 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     BOOST_CHECK_EQUAL(target_lengthCr, nbbytes_utf16);
     for (size_t q = 0 ; q < target_lengthCr ; q++){
         if (expected_targetCr[q] != targetCr[q]){
-            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_targetCr[q] ,targetCr[q]);
+            printf("at %u: expected %u, got %u\n",
+                   static_cast<unsigned>(q),
+                   static_cast<unsigned>(expected_targetCr[q]),
+                   static_cast<unsigned>(targetCr[q]));
             BOOST_CHECK(false);
         }
     }
@@ -471,7 +480,10 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     BOOST_CHECK_EQUAL(target_lengthCrLf, nbbytes_utf16);
     for (size_t q = 0 ; q < target_lengthCrLf ; q++){
         if (expected_targetCrLf[q] != targetCrLf[q]){
-            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_targetCrLf[q] ,targetCrLf[q]);
+            printf("at %u: expected %u, got %u\n",
+                   static_cast<unsigned>(q),
+                   static_cast<unsigned>(expected_targetCrLf[q]),
+                   static_cast<unsigned>(targetCrLf[q]));
             BOOST_CHECK(false);
         }
     }

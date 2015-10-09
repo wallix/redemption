@@ -357,18 +357,19 @@ class RDPMem3Blt {
             sz-lg,
             "mem3blt(cache_id=%d rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d "
                 "back_color=%.6x fore_color=%.6x "
-                "brush.(org_x=%.2x, org_y=%.2x, style=%d hatch=%d extra=[%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x]) "
+                "brush.(org_x=%d, org_y=%d, style=%d hatch=%d extra=[%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x]) "
                 "cache_idx=%d)",
             this->cache_id,
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
-            this->rop,
+            unsigned(this->rop),
             this->srcx, this->srcy,
             this->back_color,
             this->fore_color,
             this->brush.org_x, this->brush.org_y, this->brush.style, this->brush.hatch,
-            this->brush.extra[0], this->brush.extra[1], this->brush.extra[2], this->brush.extra[3],
-            this->brush.extra[4], this->brush.extra[5], this->brush.extra[6],
-            this->cache_idx);
+            unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1]),
+            unsigned(this->brush.extra[2]), unsigned(this->brush.extra[3]),
+            unsigned(this->brush.extra[4]), unsigned(this->brush.extra[5]),
+            unsigned(this->brush.extra[6]), this->cache_idx);
         if (lg >= sz) {
             return sz;
         }

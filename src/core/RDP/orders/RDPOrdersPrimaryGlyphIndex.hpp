@@ -530,7 +530,7 @@ public:
                         "op=(%d,%d,%d,%d) "
                         "brush.(org_x=%d, org_y=%d, style=%d hatch=%d extra=[%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x]) "
                         "glyph_x=%d glyph_y=%d data_len=%d "
-                      , this->cache_id
+                      , unsigned(this->cache_id)
                       , this->fl_accel
                       , this->ui_charinc
                       , this->f_op_redundant
@@ -539,8 +539,10 @@ public:
                       , this->bk.x, this->bk.y, this->bk.cx, this->bk.cy
                       , this->op.x, this->op.y, this->op.cx, this->op.cy
                       , this->brush.org_x, this->brush.org_y, this->brush.style, this->brush.hatch
-                      , this->brush.extra[0], this->brush.extra[1], this->brush.extra[2], this->brush.extra[3]
-                      , this->brush.extra[4], this->brush.extra[5], this->brush.extra[6]
+                      , unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1])
+                      , unsigned(this->brush.extra[2]), unsigned(this->brush.extra[3])
+                      , unsigned(this->brush.extra[4]), unsigned(this->brush.extra[5])
+                      , unsigned(this->brush.extra[6])
                       , this->glyph_x, this->glyph_y
                       , this->data_len
                       );
@@ -549,9 +551,7 @@ public:
             if (i) {
                 lg += snprintf( buffer + lg, sz - lg, " ");
             }
-            lg += snprintf( buffer + lg, sz - lg, "0x%.2x"
-                          , (unsigned char)this->data[i]
-                          );
+            lg += snprintf( buffer + lg, sz - lg, "0x%.2x", unsigned(this->data[i]));
         }
         lg += snprintf(buffer + lg, sz - lg, "]");
         if (lg >= sz) {
