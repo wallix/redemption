@@ -24,7 +24,10 @@
 #include <stdint.h>
 #include <png.h>
 
+#include <cassert>
+
 #include "transport.hpp"
+#include "bitfu.hpp"
 
 namespace detail {
 
