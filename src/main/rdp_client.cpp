@@ -1,0 +1,550 @@
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ * Product name: redemption, a FLOSS RDP proxy
+ * Copyright (C) Wallix 2015
+ *
+ * free RDP client main program
+ *
+ */
+ 
+#include <iostream>
+#include <string>
+
+#define LOGPRINT
+#include "log.hpp"
+
+#include "front_api.hpp"
+//#include "RDP/x224.hpp"
+#include "client_info.hpp"
+#include "socket_transport.hpp"
+#include "socket_transport_utility.hpp"
+#include "RDP/RDPDrawable.hpp"
+#include "wait_obj.hpp"
+#include "mod_api.hpp"
+#include "redirection_info.hpp"
+#include "channel_list.hpp"
+#include "rdp/rdp_params.hpp"
+#include "genrandom.hpp"
+#include "rdp/rdp.hpp"
+#include "program_options/program_options.hpp"
+
+namespace po = program_options;
+//using namespace std;
+
+class ClientFront : public FrontAPI {
+ 
+    public:
+    uint32_t verbose;
+    ClientInfo &info;
+    uint8_t                     mod_bpp;
+    BGRPalette                  mod_palette;
+    RDPDrawable gd;
+    CHANNELS::ChannelDefArray   cl;
+    
+    
+    void flush() {
+        if (this->verbose > 10) {
+             LOG(LOG_INFO, "--------- ClientFront ------------------");
+             LOG(LOG_INFO, "flush()");
+             LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPOpaqueRect new_cmd24 = cmd;
+        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPatBlt new_cmd24 = cmd;
+        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, bitmap);
+    }
+
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, bitmap);
+    }
+
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPLineTo new_cmd24 = cmd;
+        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.pen.color  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPGlyphIndex new_cmd24 = cmd;
+        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip, gly_cache);
+    }
+
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPolygonSC new_cmd24 = cmd;
+        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPolygonCB new_cmd24 = cmd;
+        new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
+        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    void draw(const RDPPolyline & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPolyline new_cmd24 = cmd;
+        new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPEllipseSC new_cmd24 = cmd;
+        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPEllipseCB new_cmd24 = cmd;
+        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    virtual void draw(const RDP::FrameMarker & order) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+        size_t size, const Bitmap & bmp) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            bitmap_data.log(LOG_INFO, "ClientFront");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(bitmap_data, data, size, bmp);
+
+    }
+
+    virtual void send_global_palette() {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "send_global_palette()");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+    
+    virtual int server_resize(int width, int height, int bpp) {
+        this->mod_bpp = bpp;
+        this->info.bpp = bpp;
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+            LOG(LOG_INFO, "========================================\n");
+        }
+        return 1;
+    }
+    
+        virtual void server_set_pointer(const Pointer & cursor) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "server_set_pointer");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.server_set_pointer(cursor);
+    }
+    
+        virtual void begin_update() {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "begin_update");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    virtual void end_update() {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "end_update");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+    
+    
+     virtual void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor
+                                 , uint32_t bgcolor, const Rect & clip) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "server_draw_text %s", text);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.server_draw_text(
+            font, x, y, text,
+            color_decode_opaquerect(fgcolor, this->mod_bpp, this->mod_palette),
+            color_decode_opaquerect(bgcolor, this->mod_bpp, this->mod_palette),
+            clip
+        );
+    }
+
+    virtual void text_metrics(Font const & font, const char* text, int& width, int& height) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "text_metrics");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.text_metrics(font, text, width, height);
+    }   
+    
+    // reutiliser le FakeFront
+    // creer un main calqué sur celui de transparent.cpp et reussir a lancer un mod_rdp
+    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
+
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, const uint8_t * data, std::size_t length
+                                , std::size_t chunk_size, int flags) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "send_to_channel");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+    
+    int getVerbose() { return this->verbose; }
+    
+    ClientFront(ClientInfo & info, uint32_t verbose) 
+    : FrontAPI(false, false), verbose(verbose), info(info), mod_bpp(info.bpp), mod_palette(BGRPalette::no_init()), gd(info.width, info.height, 24) {
+        if (this->mod_bpp == 8) {
+            this->mod_palette = BGRPalette::classic_332();
+        }
+        
+        this->verbose = verbose;
+            
+        SSL_library_init();
+    }
+
+};
+
+void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
+
+int main(int argc, char** argv)
+{
+    const char * copyright_notice =
+        "\n"
+        "ReDemPtion Stand alone RDP Client.\n"
+        "Copyright (C) Wallix 2010-2015.\n"
+        "\n"
+        ;
+
+    RedirectionInfo redir_info;
+    int verbose = 0;
+    std::string target_device = "10.10.47.205";
+    int target_port = 3389;
+    int nbretry = 3;
+    int retry_delai_ms = 1000;
+
+    std::string username = "administrateur";
+    std::string password = "SecureLinux";
+    ClientInfo client_info;
+
+    client_info.width = 800;
+    client_info.height = 600;
+    client_info.bpp = 32;
+    
+    /* Program options */
+    po::options_description desc({
+        {'h', "help","produce help message"},
+        {'t', "target-device", &target_device, "target device"},
+        {'u', "username", &username, "username"},
+        {'p', "password", &password, "password"},
+		{"verbose", &verbose, "verbose"},
+    });
+
+    auto options = po::parse_command_line(argc, argv, desc);
+    
+    if (options.count("help") > 0) {
+        std::cout << copyright_notice;
+        std::cout << "Usage: rdptproxy [options]\n\n";
+        std::cout << desc << std::endl;
+        exit(0);
+    }
+
+
+    ClientFront front(client_info, verbose);
+    ModRDPParams mod_rdp_params( username.c_str()
+                               , password.c_str()
+                               , target_device.c_str()
+                               , "0.0.0.0"   // client ip is silenced
+                               , /*front.keymap.key_flags*/ 0
+                               , verbose);
+
+    if (verbose > 128) {
+    	mod_rdp_params.log();
+    }
+
+    /* SocketTransport mod_trans */
+    int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms, verbose);
+    SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, verbose, nullptr);
+
+
+    wait_obj front_event;
+ 
+    /* Random */
+    LCGRandom gen(0);
+     
+    /* mod_api */
+    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, mod_rdp_params);
+
+    run_mod(mod, front, front_event, &mod_trans, NULL);
+
+    return 0;
+}
+ 
+ 
+ 
+void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front) {
+    struct      timeval time_mark = { 0, 50000 };
+    bool        run_session       = true;
+          
+    while (run_session) {
+        try {
+            unsigned max = 0;
+            fd_set   rfds;
+            fd_set   wfds;
+
+            FD_ZERO(&rfds);
+            FD_ZERO(&wfds);
+            struct timeval timeout = time_mark;
+
+            add_to_fd_set(mod.get_event(), st_mod, rfds, max, timeout);
+
+            if (is_set(mod.get_event(), st_mod, rfds)) {
+                timeout.tv_sec  = 2;
+                timeout.tv_usec = 0;
+            }
+
+            int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
+            
+            LOG(LOG_INFO, "RDP CLIENT :: select num = %d\n", num);
+            
+            if (num < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+
+                LOG(LOG_INFO, "RDP CLIENT :: errno = %d\n", errno);
+                break;
+            }
+        
+            if (is_set(mod.get_event(), st_mod, rfds)) {
+                LOG(LOG_INFO, "RDP CLIENT :: draw_event");
+                mod.draw_event(time(nullptr));
+            }
+
+        } catch (Error & e) {
+            LOG(LOG_ERR, "RDP CLIENT :: Exception raised = %d!\n", e.id);
+            run_session = false;
+        };
+    }   // while (run_session)
+    return;
+}
+
+
+
+
+
+
+

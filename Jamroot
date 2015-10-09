@@ -275,7 +275,7 @@ explicit install instexe install-bin install-etc install-etc-themes install-shar
 
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-etc-themes install-share ;
-alias exe     : rdpproxy redrec reddec redver rdptproxy rdptanalyzer ;
+alias exe     : rdpproxy redrec reddec redver rdptproxy rdptanalyzer rdpclient ;
 
 #alias test_suite_widget2 : test_widget2_rect test_image test_label test_tooltip test_edit test_multiline test_password test_number_edit test_widget test_composite test_window_dialog test_window_login test_window_wab_close test_widget2_window test_wab_close test_selector test_screen ;
 
@@ -480,6 +480,26 @@ exe rdptanalyzer
         <variant>coverage:<library>gcov
         <variant>coverage:<build>no
     ;
+
+exe rdpclient
+    : src/main/rdp_client.cpp
+        program_options
+        bitmap
+        cryptofile
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        snappy
+        krb5
+        gssglue
+    :
+        <variant>coverage:<library>gcov
+        <variant>coverage:<build>no
+    ;
+    
 
 #
 # Functional tests (run by hand)
