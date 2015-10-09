@@ -179,7 +179,7 @@ constant CXXFLAGS-GCC-5 :
     <cxxflags>-Wbool-compare
     <cxxflags>-Wsuggest-final-types
     <cxxflags>-Wsuggest-final-methods
-    <cxxflags>-Wsuggest-attribute=pure
+#     <cxxflags>-Wsuggest-attribute=pure
     <cxxflags>-Wsuggest-attribute=const
     <variant>release:<cxxflags>-flto-odr-type-merging
     # <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by default)
