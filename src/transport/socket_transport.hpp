@@ -480,6 +480,11 @@ public:
         // and will indicate that it only understands TLSv1.
 
         SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
+
+        if (ctx == NULL) {
+            LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
+            ERR_print_errors_fp(stderr);
+        }
         this->allocated_ctx = ctx;
 
         /*
