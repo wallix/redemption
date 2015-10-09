@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
 
+#include <vector>
+
 #include "cast.hpp"
 #include "log.hpp"
 #include "error.hpp"
