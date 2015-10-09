@@ -571,7 +571,7 @@ private:
                 "capabilitySetType=%s(%d) lengthCapability=%u version=%s(0x%08X) generalFlags=0x%08X",
             CapabilitySetRecvFactory::get_capabilitySetType_name(this->capabilitySetType),
             this->capabilitySetType,
-            this->lengthCapability,
+            unsigned(this->lengthCapability),
             this->get_version_name(this->version),
             this->version,
             this->generalFlags_);

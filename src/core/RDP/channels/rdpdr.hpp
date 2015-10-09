@@ -198,9 +198,9 @@ private:
         size_t length = ::snprintf(buffer, size,
             "SharedHeader: Component=%s(0x%X) PacketId=%s(0x%X)",
             this->get_Component_name(this->component),
-            static_cast<uint16_t>(this->component),
+            unsigned(this->component),
             this->get_PacketId_name(this->packet_id),
-            static_cast<uint16_t>(this->packet_id));
+            unsigned(this->packet_id));
         return ((length < size) ? length : size - 1);
     }
 
@@ -1564,7 +1564,7 @@ private:
         size_t length = ::snprintf(buffer, size,
             "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
             this->FileId_, this->get_Information_name(this->Information),
-            this->Information);
+            unsigned(this->Information));
         return ((length < size) ? length : size - 1);
     }
 
@@ -1832,7 +1832,7 @@ private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerAnnounceRequest: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
-            this->VersionMajor, this->VersionMinor_, this->ClientId_);
+            unsigned(this->VersionMajor), unsigned(this->VersionMinor_), unsigned(this->ClientId_));
         return ((length < size) ? length : size - 1);
     }
 
@@ -1930,7 +1930,7 @@ private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ClientAnnounceReply: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
-            this->VersionMajor, this->VersionMinor, this->ClientId);
+            unsigned(this->VersionMajor), unsigned(this->VersionMinor), unsigned(this->ClientId));
         return ((length < size) ? length : size - 1);
     }
 
@@ -2386,8 +2386,8 @@ private:
                 "protocolMajorVersion=0x%X protocolMinorVersion=0x%X "
                 "ioCode1=0x%X ioCode2=0x%X extendedPDU=0x%X extraFlags1=0x%X "
                 "extraFlags2=0x%X SpecialTypeDeviceCap=%u",
-            this->osType, this->osVersion, this->protocolMajorVersion,
-            this->protocolMinorVersion, this->ioCode1, this->ioCode2,
+            this->osType, this->osVersion, unsigned(this->protocolMajorVersion),
+            unsigned(this->protocolMinorVersion), this->ioCode1, this->ioCode2,
             this->extendedPDU_, this->extraFlags1_, this->extraFlags2,
             this->SpecialTypeDeviceCap);
         return ((length < size) ? length : size - 1);
@@ -3221,7 +3221,7 @@ private:
         size_t length = ::snprintf(buffer, size,
             "RDP_FILE_RENAME_INFORMATION: ReplaceIfExists=%s RootDirectory=%u FileName=\"%s\"",
             (this->replace_if_exists_ ? "yes" : "no"),
-            this->RootDirectory_, this->file_name.c_str());
+            unsigned(this->RootDirectory_), this->file_name.c_str());
         return ((length < size) ? length : size - 1);
     }
 
@@ -3438,7 +3438,7 @@ private:
             "ServerDriveQueryDirectoryRequest: FsInformationClass=%s(0x%X) "
                 "InitialQuery=%u Path=\"%s\"",
             this->get_FsInformationClass_name(this->FsInformationClass_),
-            this->FsInformationClass_, this->InitialQuery_, this->path.c_str());
+            this->FsInformationClass_, unsigned(this->InitialQuery_), this->path.c_str());
         return ((length < size) ? length : size - 1);
     }
 

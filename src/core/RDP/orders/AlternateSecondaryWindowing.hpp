@@ -100,7 +100,8 @@ public:
         const size_t length =
             ::snprintf(buffer, size,
                        "(Left=%u Top=%u Right=%u Bottom=%u)",
-                       this->Left, this->Top, this->Right, this->Bottom);
+                       unsigned(this->Left), unsigned(this->Top),
+                       unsigned(this->Right), unsigned(this->Bottom));
         return ((length < size) ? length : size - 1);
     }
 };
@@ -309,8 +310,8 @@ public:
         const size_t result = ::snprintf(
             buffer + length, size - length,
             "(CacheEntry=%u CacheId=%u Bpp=%u Width=%u Height=%u",
-            this->CacheEntry, this->CacheId, this->Bpp,
-            this->Width, this->Height);
+            unsigned(this->CacheEntry), unsigned(this->CacheId), unsigned(this->Bpp),
+            unsigned(this->Width), unsigned(this->Height));
         length += (
                    (result < (size - length)) ?
                    result :
@@ -399,7 +400,7 @@ public:
         const size_t result = ::snprintf(
             buffer + length, size - length,
             "(CacheEntry=%u CacheId=%u)",
-            this->CacheEntry, this->CacheId);
+            unsigned(this->CacheEntry), unsigned(this->CacheId));
         length += (
                    (result < (size - length)) ?
                    result :
@@ -506,7 +507,7 @@ protected:
         const size_t length =
             ::snprintf(buffer, size,
                        "(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u)",
-                       this->OrderSize, this->FieldsPresentFlags_,
+                       unsigned(this->OrderSize), this->FieldsPresentFlags_,
                        this->WindowId);
         return ((length < size) ? length : size - 1);
     }
@@ -1352,7 +1353,7 @@ private:
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             result = ::snprintf(buffer + length, size - length, " ShowState=%u",
-                this->ShowState);
+                unsigned(this->ShowState));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
@@ -1363,7 +1364,7 @@ private:
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
-            result = ::snprintf(buffer + length, size - length, " ClientOffsetX=%u ClientOffsetY=%u",
+            result = ::snprintf(buffer + length, size - length, " ClientOffsetX=%d ClientOffsetY=%d",
                 this->ClientOffsetX, this->ClientOffsetY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
@@ -1376,7 +1377,7 @@ private:
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             result = ::snprintf(buffer + length, size - length, " RPContent=%u",
-                this->RPContent);
+                unsigned(this->RPContent));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 

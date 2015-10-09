@@ -234,7 +234,7 @@ class RDPScrBlt {
             sz-lg,
             "scrblt(rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d)\n",
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
-            this->rop, this->srcx, this->srcy);
+            unsigned(this->rop), this->srcx, this->srcy);
         if (lg >= sz){
             return sz;
         }

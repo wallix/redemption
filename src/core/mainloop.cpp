@@ -174,7 +174,7 @@ void redemption_new_session(char const * config_filename)
     { ConfigurationLoader cfg_loader(ini, config_filename); }
 
     init_signals();
-    snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
+    snprintf(text, 255, "redemption_%8.8x_main_term", unsigned(getpid()));
 
     getpeername(0, &u.s, (socklen_t *)&sock_len);
     strcpy(source_ip, inet_ntoa(u.s4.sin_addr));

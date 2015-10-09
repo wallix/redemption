@@ -179,11 +179,19 @@ constant CXXFLAGS-GCC-5 :
     <cxxflags>-Wbool-compare
     <cxxflags>-Wsuggest-final-types
     <cxxflags>-Wsuggest-final-methods
-#     <cxxflags>-Wsuggest-override
-#     <cxxflags>-fsized-deallocation
-#     <cxxflags>-Wsized-deallocation
-    <cxxflags>-flto-odr-type-merging
-    <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled
+    <cxxflags>-Wsuggest-attribute=pure
+    <cxxflags>-Wsuggest-attribute=const
+    <variant>release:<cxxflags>-flto-odr-type-merging
+    # <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by default)
+;
+
+
+constant CXXFLAGS-GCC-5.1 :
+    $(CXXFLAGS-GCC-5)
+    <cxxflags>-Wsuggest-override
+    <cxxflags>-fsized-deallocation
+    <cxxflags>-Wsized-deallocation
+    <cxxflags>-Warray-bounds=2
 ;
 
 
@@ -251,10 +259,10 @@ project redemption
     <toolset>gcc-4.9.3:$(CXXFLAGS-GCC-4.9)
     <toolset>gcc-5.0:$(CXXFLAGS-GCC-5)
     <toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5)
-    <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5)
-    <toolset>gcc-5.1:$(CXXFLAGS-GCC-5)
-    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5)
-    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5)
+    <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.1)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 

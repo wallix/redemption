@@ -174,7 +174,7 @@ class RDPLineTo {
                 "rop2=%d back_color=%.6x"
                 "pen.style=%d pen.width=%d pen.color=%.6x "
                 "\n",
-            this->back_mode,
+            unsigned(this->back_mode),
             this->startx, this->starty, this->endx, this->endy,
             this->rop2,
             this->back_color,

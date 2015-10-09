@@ -1161,20 +1161,20 @@ class RDPPatBlt {
                     "brush.org_x=%d brush.org_y=%d "
                     "brush.style=%d brush.hatch=%d brush.extra=[%.2x %.2x %.2x %.2x %.2x %.2x %.2x])\n",
                 this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
-                this->rop,
+                unsigned(this->rop),
                 this->back_color,
                 this->fore_color,
                 this->brush.org_x,
                 this->brush.org_y,
                 this->brush.style,
                 this->brush.hatch,
-                this->brush.extra[0],
-                this->brush.extra[1],
-                this->brush.extra[2],
-                this->brush.extra[3],
-                this->brush.extra[4],
-                this->brush.extra[5],
-                this->brush.extra[6]
+                unsigned(this->brush.extra[0]),
+                unsigned(this->brush.extra[1]),
+                unsigned(this->brush.extra[2]),
+                unsigned(this->brush.extra[3]),
+                unsigned(this->brush.extra[4]),
+                unsigned(this->brush.extra[5]),
+                unsigned(this->brush.extra[6])
                 );
         }
         else {
@@ -1186,7 +1186,7 @@ class RDPPatBlt {
                     "brush.org_x=%d brush.org_y=%d "
                     "brush.style=%d brush.hatch=%d)\n",
                 this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
-                this->rop,
+                unsigned(this->rop),
                 this->back_color,
                 this->fore_color,
                 this->brush.org_x,

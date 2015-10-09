@@ -223,7 +223,7 @@ class RDPMemBlt {
             "memblt(cache_id=%d rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d cache_idx=%d)",
             this->cache_id,
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
-            this->rop,
+            unsigned(this->rop),
             this->srcx, this->srcy,
             this->cache_idx);
         if (lg >= sz){

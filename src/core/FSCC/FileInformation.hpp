@@ -23,6 +23,8 @@
 
 #include "stream.hpp"
 
+#include <cinttypes>
+
 namespace fscc {
 
 // [MS-FSCC] - 2.1.8 Boolean
@@ -1620,8 +1622,8 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "FileBothDirectoryInformation: AllocationSize=%" PRId64
-                " EndOfFile=%" PRId64 " NumberOfLinks=%u "
-                "DeletePending=%u Directory=%u",
+                " EndOfFile=%" PRId64 " NumberOfLinks=%" PRIu32 " "
+                "DeletePending=%" PRId8 " Directory=%" PRId8,
             this->AllocationSize, this->EndOfFile, this->NumberOfLinks,
             this->DeletePending, this->Directory);
         return ((length < size) ? length : size - 1);
@@ -2377,7 +2379,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "FileFsVolumeInformation: VolumeCreationTime=%" PRIu64
-                " VolumeSerialNumber=0x%X SupportsObjects=%u VolumeLabel=\"%s\"",
+                " VolumeSerialNumber=0x%X SupportsObjects=%" PRId8 " VolumeLabel=\"%s\"",
             this->VolumeCreationTime, this->VolumeSerialNumber,
             this->SupportsObjects, this->volume_label.c_str());
         return ((length < size) ? length : size - 1);

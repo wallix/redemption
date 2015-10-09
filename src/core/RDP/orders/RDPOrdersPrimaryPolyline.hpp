@@ -391,7 +391,8 @@ public:
         lg += snprintf(buffer + lg, sz - lg,
             "Polyline(xStart=%d yStart=%d bRop2=0x%02X BrushCacheEntry=%d PenColor=%.6x "
                 "NumDeltaEntries=%d CodedDeltaList=(",
-            this->xStart, this->yStart, this->bRop2, this->BrushCacheEntry, this->PenColor, this->NumDeltaEntries);
+            this->xStart, this->yStart, unsigned(this->bRop2),
+            this->BrushCacheEntry, this->PenColor, this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

@@ -213,11 +213,11 @@ public:
         char buffer[16];
 
         this->current_page = vars.get<cfg::context::selector_current_page>();
-        snprintf(buffer, sizeof(buffer), "%u", this->current_page);
+        snprintf(buffer, sizeof(buffer), "%d", this->current_page);
         this->selector.current_page.set_text(buffer);
 
         this->number_page = vars.get<cfg::context::selector_number_of_pages>();
-        snprintf(buffer, sizeof(buffer), "%u", this->number_page);
+        snprintf(buffer, sizeof(buffer), "%d", this->number_page);
         this->selector.number_page.set_text(WidgetSelectorFlat2::temporary_number_of_page(buffer).buffer);
 
 

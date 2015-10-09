@@ -440,12 +440,14 @@ public:
                         "BrushExtra=[%.2x %.2x %.2x %.2x %.2x %.2x %.2x] "
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
-                      , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight, this->bRop
+                      , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight, unsigned(this->bRop)
                       , this->BackColor, this->ForeColor
-                      , this->BrushOrgX, this->BrushOrgY, this->BrushStyle, this->BrushHatch
-                      , this->BrushExtra[0], this->BrushExtra[1], this->BrushExtra[2], this->BrushExtra[3]
-                      , this->BrushExtra[4], this->BrushExtra[5], this->BrushExtra[6]
-                      , this->nDeltaEntries);
+                      , this->BrushOrgX, this->BrushOrgY
+                      , unsigned(this->BrushStyle), unsigned(this->BrushHatch)
+                      , unsigned(this->BrushExtra[0]), unsigned(this->BrushExtra[1])
+                      , unsigned(this->BrushExtra[2]), unsigned(this->BrushExtra[3])
+                      , unsigned(this->BrushExtra[4]), unsigned(this->BrushExtra[5])
+                      , unsigned(this->BrushExtra[6]), this->nDeltaEntries);
         for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

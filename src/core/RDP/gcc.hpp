@@ -1662,7 +1662,7 @@ namespace GCC
 
                 size_t lg = 0;
                 // --------------------- Base Fields ---------------------------------------
-                lg += snprintf(buffer + lg, sizeof(buffer) - lg, "%s GCC User Data CS_MONITOR (%u bytes) ", msg, this->length);
+                lg += snprintf(buffer + lg, sizeof(buffer) - lg, "%s GCC User Data CS_MONITOR (%u bytes) ", msg, unsigned(this->length));
                 lg += snprintf(buffer + lg, sizeof(buffer) - lg, "flags=0x%X monitorCount=%u (", this->flags, this->monitorCount);
 
                 for (uint32_t i = 0; i < this->monitorCount; i++) {

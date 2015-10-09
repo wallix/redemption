@@ -76,10 +76,10 @@ static inline char* crypto_cert_fingerprint(X509* xcert)
     int i = 0;
     for (i = 0; i < int(fp_len - 1); i++)
     {
-        sprintf(p, "%02x:", fp[i]);
+        sprintf(p, "%02x:", unsigned(fp[i]));
         p = &fp_buffer[(i + 1) * 3];
     }
-    sprintf(p, "%02x", fp[i]);
+    sprintf(p, "%02x", unsigned(fp[i]));
 
     return fp_buffer;
 }
@@ -813,9 +813,8 @@ public:
         char filename[1024];
 
         // generates the name of certificate file associated with RDP target
-        snprintf(filename, sizeof(filename) - 1, "%s/rdp,%s,%u,X509.pem",
-            certif_path,
-            this->ip_address, this->port);
+        snprintf(filename, sizeof(filename) - 1, "%s/rdp,%s,%d,X509.pem",
+            certif_path, this->ip_address, this->port);
         filename[sizeof(filename) - 1] = '\0';
 
         FILE *fp = ::fopen(filename, "r");
@@ -855,7 +854,7 @@ public:
 
             char tmpfilename[1024];
             // temp file for certificate binary check
-            snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/rdp,%s,%u,X509,XXXXXX", this->ip_address, this->port);
+            snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/rdp,%s,%d,X509,XXXXXX", this->ip_address, this->port);
             tmpfilename[sizeof(tmpfilename) - 1] = 0;
             int tmpfd = ::mkostemp(tmpfilename, O_RDWR|O_CREAT);
             FILE * tmpfp = ::fdopen(tmpfd, "w+");
