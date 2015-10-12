@@ -73,7 +73,7 @@ public:
 protected:
     inline bool has_valid_to_client_sender() const
     {
-        return (bool)this->to_client_sender;
+        return bool(this->to_client_sender);
     }
 
 public:

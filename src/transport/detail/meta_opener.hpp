@@ -129,7 +129,7 @@ namespace detail
         {
             BufMeta & buf;
 
-            ReaderBuf(BufMeta & buf)
+            explicit ReaderBuf(BufMeta & buf)
             : buf(buf)
             {}
 

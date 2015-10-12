@@ -29,7 +29,6 @@
 
 #include "log.hpp"
 #include "error.hpp"
-#include "stream.hpp"
 #include "auth_api.hpp"
 #include "noncopyable.hpp"
 

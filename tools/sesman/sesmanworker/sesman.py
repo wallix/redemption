@@ -1162,7 +1162,9 @@ class Sesman():
                         kv[u'target_device'] = self.target_context.showname()
                     else:
                         kv[u'target_host'] = physical_info.device_host
-                        kv[u'target_port'] = physical_info.service_port
+
+                    kv[u'target_port'] = physical_info.service_port
+                    kv[u'device_id'] = physical_info.device_id
 
                     if not self.passthrough_mode:
                         kv[u'target_login'] = physical_info.account_login

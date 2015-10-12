@@ -184,8 +184,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (!credentials) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            context->ntlm_SetContextWorkstation((uint8_t*)pszTargetName);
-            context->ntlm_SetContextServicePrincipalName((uint8_t*)pszTargetName);
+            context->ntlm_SetContextWorkstation(reinterpret_cast<uint8_t*>(pszTargetName));
+            context->ntlm_SetContextServicePrincipalName(reinterpret_cast<uint8_t*>(pszTargetName));
 
             context->identity.CopyAuthIdentity(credentials->identity);
 
@@ -384,10 +384,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
                                       PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
-        int index;
         int length;
         uint8_t* data;
-        uint32_t SeqNo;
+        uint32_t SeqNo(MessageSeqNo);
         uint8_t digest[16];
         uint8_t checksum[8];
         uint8_t* signature;
@@ -396,7 +395,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         PSecBuffer data_buffer = nullptr;
         PSecBuffer signature_buffer = nullptr;
 
-        SeqNo = MessageSeqNo;
         if (phContext) {
             context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
@@ -406,7 +404,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         if (context->verbose & 0x400) {
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
-        for (index = 0; index < (int) pMessage->cBuffers; index++) {
+        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
                 data_buffer = &pMessage->pBuffers[index];
             }
@@ -428,7 +426,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
-        hmac_md5.update((uint8_t*) &SeqNo, 4);
+        hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
         hmac_md5.update(data, length);
         hmac_md5.final(digest, sizeof(digest));
 
@@ -469,9 +467,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         signature = signature_buffer->Buffer.get_data();
 
         /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(signature, (void*) &version, 4);
+        memcpy(signature, &version, 4);
         memcpy(&signature[4], checksum, 8);
-        memcpy(&signature[12], (void*) &SeqNo, 4);
+        memcpy(&signature[12], &SeqNo, 4);
         context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
@@ -487,10 +485,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     // DECRYPT_MESSAGE DecryptMessage;
     SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) override {
-        int index = 0;
         int length = 0;
         uint8_t* data = nullptr;
-        uint32_t SeqNo = 0;
+        uint32_t SeqNo(MessageSeqNo);
         uint8_t digest[16] = {};
         uint8_t checksum[8] = {};
         uint32_t version = 1;
@@ -499,7 +496,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         PSecBuffer data_buffer = nullptr;
         PSecBuffer signature_buffer = nullptr;
 
-        SeqNo = (uint32_t) MessageSeqNo;
         if (phContext) {
             context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
         }
@@ -510,7 +506,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
-        for (index = 0; index < (int) pMessage->cBuffers; index++) {
+        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
                 data_buffer = &pMessage->pBuffers[index];
             }
@@ -541,7 +537,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(context->RecvSigningKey, 16);
-        hmac_md5.update((uint8_t*) &SeqNo, 4);
+        hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
         hmac_md5.final(digest, sizeof(digest));
 
@@ -570,9 +566,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         context->RecvRc4Seal.crypt(8, digest, checksum);
 
         /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(expected_signature, (void*) &version, 4);
+        memcpy(expected_signature, &version, 4);
         memcpy(&expected_signature[4], checksum, 8);
-        memcpy(&expected_signature[12], (void*) &SeqNo, 4);
+        memcpy(&expected_signature[12], &SeqNo, 4);
         context->RecvSeqNum++;
 
         if (memcmp(signature_buffer->Buffer.get_data(), expected_signature, 16) != 0) {

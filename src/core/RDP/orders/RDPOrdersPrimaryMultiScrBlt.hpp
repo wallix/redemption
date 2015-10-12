@@ -349,9 +349,8 @@ public:
                         "nXSrc=%d nXSrc=%d "
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
-                      , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight, this->bRop
-                      , this->nXSrc, this->nYSrc
-                      , this->nDeltaEntries);
+                      , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight
+                      , unsigned(this->bRop), this->nXSrc, this->nYSrc, this->nDeltaEntries);
         for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

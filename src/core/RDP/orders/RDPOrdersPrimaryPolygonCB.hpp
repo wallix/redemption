@@ -445,7 +445,7 @@ public:
                        "brush.org_x=%d brush.org_y=%d "
                        "brush.style=%d brush.hatch=%d "
                        "NumDeltaEntries=%d DeltaEntries=(",
-                       this->xStart, this->yStart, this->bRop2, this->fillMode,
+                       this->xStart, this->yStart, unsigned(this->bRop2), this->fillMode,
                        this->backColor, this->foreColor,
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch,

@@ -154,7 +154,7 @@ public:
             sz,
             "RDPColCache(%u,"
             "[0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, ...]\n",
-            this->cacheIndex,
+            unsigned(this->cacheIndex),
             this->palette[0], this->palette[1], this->palette[2],
             this->palette[3], this->palette[4], this->palette[5]);
         if (lg >= sz){

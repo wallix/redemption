@@ -225,16 +225,16 @@ public:
     size_t str(char * buffer, size_t sz) const {
         size_t lg = snprintf( buffer, sz
                             , "GlyphCache(cacheId=%u cGlyphs=%u cacheIndex=%u x=%d y=%d cx=%u cy=%u data=("
-                            , this->cacheId, this->cGlyphs, this->cacheIndex, this->x
-                            , this->y, this->cx, this->cy);
+                            , unsigned(this->cacheId), unsigned(this->cGlyphs), unsigned(this->cacheIndex)
+                            , this->x, this->y, unsigned(this->cx), unsigned(this->cy));
         uint16_t c = this->datasize();
         for (uint16_t i = 0; i < c; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
             }
-            lg += snprintf(buffer + lg, sz - lg, "%02x", this->aj[i]);
+            lg += snprintf(buffer + lg, sz - lg, "%02x", unsigned(this->aj[i]));
         }
-        lg += snprintf(buffer + lg, sz - lg, ")(%u))", c);
+        lg += snprintf(buffer + lg, sz - lg, ")(%u))", unsigned(c));
         if (lg >= sz) {
             return sz;
         }

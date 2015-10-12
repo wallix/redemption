@@ -74,12 +74,12 @@ static inline char* crypto_cert_fingerprint(X509* xcert)
     char * p = fp_buffer;
 
     int i = 0;
-    for (i = 0; i < (int) (fp_len - 1); i++)
+    for (i = 0; i < int(fp_len - 1); i++)
     {
-        sprintf(p, "%02x:", fp[i]);
+        sprintf(p, "%02x:", unsigned(fp[i]));
         p = &fp_buffer[(i + 1) * 3];
     }
-    sprintf(p, "%02x", fp[i]);
+    sprintf(p, "%02x", unsigned(fp[i]));
 
     return fp_buffer;
 }
@@ -480,6 +480,11 @@ public:
         // and will indicate that it only understands TLSv1.
 
         SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
+
+        if (ctx == NULL) {
+            LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
+            ERR_print_errors_fp(stderr);
+        }
         this->allocated_ctx = ctx;
 
         /*
@@ -813,9 +818,8 @@ public:
         char filename[1024];
 
         // generates the name of certificate file associated with RDP target
-        snprintf(filename, sizeof(filename) - 1, "%s/X509-%s-%d.pem", 
-            certif_path, 
-            this->ip_address, this->port);
+        snprintf(filename, sizeof(filename) - 1, "%s/rdp,%s,%d,X509.pem",
+            certif_path, this->ip_address, this->port);
         filename[sizeof(filename) - 1] = '\0';
 
         FILE *fp = ::fopen(filename, "r");
@@ -855,7 +859,7 @@ public:
 
             char tmpfilename[1024];
             // temp file for certificate binary check
-            snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/X509-%s-%dXXXXXX", this->ip_address, this->port);
+            snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/rdp,%s,%d,X509,XXXXXX", this->ip_address, this->port);
             tmpfilename[sizeof(tmpfilename) - 1] = 0;
             int tmpfd = ::mkostemp(tmpfilename, O_RDWR|O_CREAT);
             FILE * tmpfp = ::fdopen(tmpfd, "w+");
@@ -1187,7 +1191,7 @@ public:
                 this->name, this->sck, errno, strerror(errno));
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        if (res < (ssize_t)len) {
+        if (res < static_cast<ssize_t>(len)) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
 
@@ -1195,7 +1199,7 @@ public:
         this->last_quantum_sent += len;
     }
 
-    void seek(int64_t offset, int whence) throw (Error) override {
+    void seek(int64_t offset, int whence) override {
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
@@ -1300,7 +1304,7 @@ private:
                 case SSL_ERROR_ZERO_RETURN:
                     if (remaining_len - len){
                         LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u",
-                            (unsigned)len, (unsigned)(remaining_len - len));
+                            unsigned(len), unsigned(remaining_len - len));
                     }
                     return remaining_len - len;
                 default:
@@ -1326,7 +1330,7 @@ private:
 
     ssize_t privsend_tls(const char * data, size_t len)
     {
-        const char * const buffer = (const char * const)data;
+        const char * const buffer = data;
         size_t remaining_len = len;
         size_t offset = 0;
         while (remaining_len > 0){

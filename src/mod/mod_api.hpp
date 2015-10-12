@@ -140,7 +140,7 @@ public:
                 bk,                 // op
                 // brush
                 RDPBrush(0, 0, 3, 0xaa,
-                    (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
+                    reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55")),
                 x - offset_first_char, // glyph_x
                 y + total_height,   // glyph_y
                 data_begin - data,  // data_len in bytes

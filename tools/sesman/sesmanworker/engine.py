@@ -808,7 +808,8 @@ class Engine(object):
     def get_physical_target_info(self, physical_target):
         return PhysicalTarget(device_host=physical_target.resource.device.host,
                               account_login=self.get_account_login(physical_target),
-                              service_port=int(physical_target.resource.service.port))
+                              service_port=int(physical_target.resource.service.port),
+                              device_id=physical_target.resource.device.uid)
 
     def get_target_login_info(self, selected_target=None):
         target = selected_target or self.target_right
@@ -820,6 +821,7 @@ class Engine(object):
         else:
             target_name = target.resource.device.cn
             device_host = target.resource.device.host
+            
         account_login = self.get_account_login(target)
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
@@ -876,10 +878,11 @@ class ExtraInfo(object):
         self.is_critical = is_critical
 
 class PhysicalTarget(object):
-    def __init__(self, device_host, account_login, service_port):
+    def __init__(self, device_host, account_login, service_port, device_id):
         self.device_host = device_host
         self.account_login = account_login
         self.service_port = service_port
+        self.device_id = device_id
 
 class LoginInfo(object):
     def __init__(self, account_login, target_name, service_name,

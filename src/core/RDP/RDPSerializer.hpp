@@ -220,7 +220,8 @@ public:
     , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
     , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
     , glyphindex( 0, 0, 0, 0, 0, 0
-                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (const uint8_t *)"")
+                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+                , reinterpret_cast<const uint8_t *>(""))
     , polygonSC()
     , polygonCB()
     , polyline()
@@ -363,7 +364,6 @@ public:
 
     void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->reserve_order(29);
-        using namespace RDP;
         RDPOrderCommon newcommon(RDP::PATBLT, clip);
         cmd.emit(this->stream_orders, newcommon, this->common, this->patblt);
         this->common = newcommon;

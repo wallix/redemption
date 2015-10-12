@@ -144,7 +144,7 @@ class RDPDestBlt {
             sz-lg,
             "destblt(rect(%d,%d,%d,%d) rop=%x)\n",
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
-            this->rop);
+            unsigned(this->rop));
         if (lg >= sz){
             return sz;
         }

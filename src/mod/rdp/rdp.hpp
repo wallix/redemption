@@ -124,7 +124,7 @@ protected:
         , channel(channel)
         , verbose(verbose) {}
 
-        virtual void operator()(uint32_t total_length, uint32_t flags,
+        void operator()(uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override
         {
@@ -137,8 +137,7 @@ protected:
             }
 
             this->front.send_to_channel(this->channel,
-                const_cast<uint8_t*>(chunk_data), total_length,
-                chunk_data_length, flags);
+                chunk_data, total_length, chunk_data_length, flags);
         }
     };
 
@@ -169,7 +168,7 @@ protected:
         , show_protocol(show_protocol)
         , verbose(verbose) {}
 
-        virtual void operator()(uint32_t total_length, uint32_t flags,
+        void operator()(uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
@@ -223,7 +222,7 @@ public:
                     this->get_clipboard_virtual_channel_params());
         }
 
-        return *this->clipboard_virtual_channel.get();
+        return *this->clipboard_virtual_channel;
     }
 
     inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
@@ -245,7 +244,7 @@ public:
                     this->get_file_system_virtual_channel_params());
         }
 
-        return *this->file_system_virtual_channel.get();
+        return *this->file_system_virtual_channel;
     }
 
 protected:
@@ -270,7 +269,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
     uint8_t   lic_layer_license_key[16];
     uint8_t   lic_layer_license_sign_key[16];
-    uint8_t * lic_layer_license_data;
+    std::unique_ptr<uint8_t[]> lic_layer_license_data;
     size_t    lic_layer_license_size;
 
     rdp_orders orders;
@@ -440,11 +439,11 @@ class mod_rdp : public RDPChannelManagerMod {
         , asynchronous_task_event(asynchronous_task_event)
         , verbose(verbose) {}
 
-        virtual VirtualChannelDataSender& SynchronousSender() override {
+        VirtualChannelDataSender& SynchronousSender() override {
             return *(to_server_synchronous_sender.get());
         }
 
-        virtual void operator()(uint32_t total_length, uint32_t flags,
+        void operator()(uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override {
             std::unique_ptr<AsynchronousTask> asynchronous_task =
@@ -627,7 +626,6 @@ public:
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
-        this->lic_layer_license_data = nullptr;
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
@@ -638,9 +636,9 @@ public:
         int fd = open(path, O_RDONLY);
         if (fd != -1){
             if (fstat(fd, &st) != 0){
-                this->lic_layer_license_data = (uint8_t *)malloc(this->lic_layer_license_size);
+                this->lic_layer_license_data.reset(new uint8_t[this->lic_layer_license_size]);
                 if (this->lic_layer_license_data){
-                    size_t lic_size = read(fd, this->lic_layer_license_data, this->lic_layer_license_size);
+                    size_t lic_size = read(fd, this->lic_layer_license_data.get(), this->lic_layer_license_size);
                     if (lic_size != this->lic_layer_license_size){
                         LOG(LOG_ERR, "license file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
                     }
@@ -855,10 +853,6 @@ public:
                 this->end_session_message.c_str());
         }
 
-        if (this->lic_layer_license_data) {
-            free(this->lic_layer_license_data);
-        }
-
         if (this->verbose & 1) {
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %zu",
                 this->orders.recv_bmp_cache_count);
@@ -871,7 +865,7 @@ public:
     }
 
 protected:
-    inline virtual std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
+    std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
             const char* channel_name) const override
     {
         if (!this->authorization_channels.is_authorized(channel_name))
@@ -897,7 +891,7 @@ protected:
             std::move(to_client_sender));
     }
 
-    inline virtual std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
+    std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
             const char* channel_name) override
     {
         const CHANNELS::ChannelDef* channel =
@@ -938,7 +932,7 @@ protected:
             std::move(to_server_asynchronous_sender));
     }
 
-    inline virtual const ClipboardVirtualChannel::Params
+    const ClipboardVirtualChannel::Params
         get_clipboard_virtual_channel_params() const override
     {
         ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
@@ -965,7 +959,7 @@ protected:
         return clipboard_virtual_channel_params;
     }
 
-    inline virtual const FileSystemVirtualChannel::Params
+    const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const override
     {
         FileSystemVirtualChannel::Params file_system_virtual_channel_params;
@@ -1641,7 +1635,7 @@ public:
                                 }
 
                                 uint16_t hostlen = strlen(hostname);
-                                uint16_t maxhostlen = std::min((uint16_t)15, hostlen);
+                                uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
                                 for (size_t i = 0; i < maxhostlen ; i++){
                                     cs_core.clientName[i] = hostname[i];
                                 }
@@ -1957,9 +1951,9 @@ public:
                                                 LOG(LOG_ERR, "Failed to extract RSA exponent and modulus");
                                                 throw Error(ERR_SEC);
                                             }
-                                            int len_e = BN_bn2bin(server_public_key->e, (unsigned char*)exponent);
+                                            int len_e = BN_bn2bin(server_public_key->e, exponent);
                                             reverseit(exponent, len_e);
-                                            int len_n = BN_bn2bin(server_public_key->n, (unsigned char*)modulus);
+                                            int len_n = BN_bn2bin(server_public_key->n, modulus);
                                             reverseit(modulus, len_n);
                                             RSA_free(server_public_key);
                                         }
@@ -2371,7 +2365,7 @@ public:
                                             LIC::ClientLicenseInfo_Send(
                                                 lic_data, this->use_rdp5?3:2,
                                                 this->lic_layer_license_size,
-                                                this->lic_layer_license_data,
+                                                this->lic_layer_license_data.get(),
                                                 hwid, signature
                                             );
                                         }
@@ -2762,7 +2756,7 @@ public:
                                     next_packet += sctrl.totalLength;
 
                                     if (this->verbose & 128) {
-                                        LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.totalLength);
+                                        LOG(LOG_WARNING, "LOOPING on PDUs: %u", unsigned(sctrl.totalLength));
                                     }
 
                                     switch (sctrl.pduType) {
@@ -5625,12 +5619,12 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        if ((unsigned)cursor.x >= cursor.width){
+        if (static_cast<unsigned>(cursor.x) >= cursor.width){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %d)", cursor.x, cursor.width);
             cursor.x = 0;
         }
 
-        if ((unsigned)cursor.y >= cursor.height){
+        if (static_cast<unsigned>(cursor.y) >= cursor.height){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %d)", cursor.y, cursor.height);
             cursor.y = 0;
         }
@@ -5654,7 +5648,7 @@ public:
             LOG(LOG_ERR,
                 "mod_rdp::Bad length for color pointer mask_len=%u "
                     "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
-                (unsigned)mlen, (unsigned)dlen, cursor.width, cursor.height,
+                unsigned(mlen), unsigned(dlen), cursor.width, cursor.height,
                 data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }

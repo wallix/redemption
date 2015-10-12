@@ -1231,7 +1231,7 @@ namespace GCC
                 LOG(LOG_INFO, "cs_core::clientBuild   = %u",  this->clientBuild);
                 char hostname[16];
                 for (size_t i = 0; i < 16 ; i++) {
-                    hostname[i] = (uint8_t)this->clientName[i];
+                    hostname[i] = static_cast<char>(this->clientName[i]);
                 }
                 LOG(LOG_INFO, "cs_core::clientName    = %s",  hostname);
                 LOG(LOG_INFO, "cs_core::keyboardType  = [%04x] %s",  this->keyboardType,
@@ -1247,7 +1247,7 @@ namespace GCC
                 LOG(LOG_INFO, "cs_core::keyboardFunctionKey  = %u function keys",  this->keyboardFunctionKey);
                 char imename[32];
                 for (size_t i = 0; i < 32 ; i++){
-                    imename[i] = (uint8_t)this->imeFileName[i];
+                    imename[i] = static_cast<char>(this->imeFileName[i]);
                 }
                 LOG(LOG_INFO, "cs_core::imeFileName    = %s",  imename);
 
@@ -1662,7 +1662,7 @@ namespace GCC
 
                 size_t lg = 0;
                 // --------------------- Base Fields ---------------------------------------
-                lg += snprintf(buffer + lg, sizeof(buffer) - lg, "%s GCC User Data CS_MONITOR (%u bytes) ", msg, this->length);
+                lg += snprintf(buffer + lg, sizeof(buffer) - lg, "%s GCC User Data CS_MONITOR (%u bytes) ", msg, unsigned(this->length));
                 lg += snprintf(buffer + lg, sizeof(buffer) - lg, "flags=0x%X monitorCount=%u (", this->flags, this->monitorCount);
 
                 for (uint32_t i = 0; i < this->monitorCount; i++) {
@@ -2657,7 +2657,7 @@ namespace GCC
                             X509_free(this->x509.cert[i].cert);
                         }
                         auto p = stream.get_current();
-                        this->x509.cert[i].cert = d2i_X509(nullptr, const_cast<const uint8_t **>(&p), this->x509.cert[i].len);
+                        this->x509.cert[i].cert = d2i_X509(nullptr, &p, this->x509.cert[i].len);
                         stream.in_skip_bytes(p - stream.get_current());
                     }
                     stream.in_skip_bytes(16); /* Padding */

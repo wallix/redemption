@@ -220,7 +220,8 @@ public:
         , memblt(0, Rect(), 0, 0, 0, 0)
         , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
         , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (const uint8_t *)"")
+        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+                    , reinterpret_cast<const uint8_t *>(""))
         , polyline()
         , ellipseSC()
         , bmp_cache(nullptr)
@@ -404,12 +405,11 @@ public:
                 }
             }
             else if (class_ == (RDP::STANDARD | RDP::SECONDARY)) {
-                using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
                 uint8_t const *next_order = this->stream.get_current() + header.order_data_length();
                 switch (header.type) {
-                case TS_CACHE_BITMAP_COMPRESSED:
-                case TS_CACHE_BITMAP_UNCOMPRESSED:
+                case RDP::TS_CACHE_BITMAP_COMPRESSED:
+                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
                 {
                     this->statistics.CacheBitmap++;
                     RDPBmpCache cmd;
@@ -420,11 +420,11 @@ public:
                     this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp, cmd.key1, cmd.key2);
                 }
                 break;
-                case TS_CACHE_COLOR_TABLE:
+                case RDP::TS_CACHE_COLOR_TABLE:
                     this->statistics.CacheColorTable++;
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
                     break;
-                case TS_CACHE_GLYPH:
+                case RDP::TS_CACHE_GLYPH:
                 {
                     this->statistics.CacheGlyph++;
                     RDPGlyphCache cmd;
@@ -438,13 +438,13 @@ public:
                     );
                 }
                 break;
-                case TS_CACHE_BITMAP_COMPRESSED_REV2:
+                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
                   break;
-                case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
                   break;
-                case TS_CACHE_BITMAP_COMPRESSED_REV3:
+                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
                   break;
                 default:
@@ -1254,7 +1254,7 @@ private:
         while (!requested_to_stop && this->next_order()) {
             if (this->verbose > 8) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
-                   , (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
+                   , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
             }
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {

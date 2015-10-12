@@ -178,15 +178,15 @@ namespace detail {
                 ssize_t res = this->meta_buf().write(filename, len);
                 if (res == len) {
                     char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + HASH_LEN*2 + 2];
-                    len = sprintf(mes, " %u %u", (unsigned)this->start_sec_, (unsigned)this->stop_sec_+1);
+                    len = sprintf(mes, " %u %u", unsigned(this->start_sec_), unsigned(this->stop_sec_+1));
                     char * p = mes + len;
                     *p++ = ' ';                           //     1 octet
                     for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
-                        sprintf(p, "%02x", hash[i]); //    64 octets (hash1)
+                        sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash1)
                     }
                     *p++ = ' ';                           //     1 octet
                     for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
-                        sprintf(p, "%02x", hash[i]); //    64 octets (hash2)
+                        sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash2)
                     }
                     *p++ = '\n';
                     len = p-mes;

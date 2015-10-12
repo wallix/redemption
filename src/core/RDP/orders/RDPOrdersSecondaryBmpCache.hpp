@@ -1255,9 +1255,9 @@ class RDPBmpCache {
     size_t str(char * buffer, size_t sz) const
     {
         size_t lg = snprintf(buffer, sz,
-            "RDPBmpCache(id=%u idx=%u bpp=%u cx=%u cy=%u)",
-            this->id, this->idx,
-            this->bmp.bpp(), this->bmp.cx(), this->bmp.cy());
+            "RDPBmpCache(id=%d idx=%d bpp=%u cx=%u cy=%u)",
+            this->id, this->idx, unsigned(this->bmp.bpp()),
+            unsigned(this->bmp.cx()), unsigned(this->bmp.cy()));
         if (lg >= sz){
             return sz;
         }

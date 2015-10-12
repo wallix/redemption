@@ -1640,8 +1640,8 @@ public:
                                                 );
 
             if (sec.payload.in_remain()) {
-                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %u bytes trailing",
-                    (unsigned)sec.payload.in_remain());
+                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %zu bytes trailing",
+                    sec.payload.in_remain());
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
@@ -2452,7 +2452,7 @@ private:
         out__contian_window_title = false;
     }
 
-    virtual bool disable_input_event_and_graphics_update(bool disable) override {
+    bool disable_input_event_and_graphics_update(bool disable) override {
         bool need_full_screen_update =
             (this->input_event_and_graphics_update_disabled && !disable);
 
@@ -3211,7 +3211,7 @@ private:
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
         // Payload
-        stream.get_data_stream().out_copy_bytes((char*)g_fontmap, 172);
+        stream.get_data_stream().out_copy_bytes(g_fontmap, 172);
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
@@ -3386,7 +3386,7 @@ private:
                 if (this->verbose & 8) {
                     LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
                                   " messageType=%u controlId=%u",
-                                  (unsigned)messageType,
+                                  static_cast<unsigned>(messageType),
                                   static_cast<unsigned>(controlId));
                 }
                 this->send_synchronize();
@@ -3761,7 +3761,7 @@ private:
         }
     }
 
-    virtual void set_keyboard_indicators(uint16_t LedFlags)
+    void set_keyboard_indicators(uint16_t LedFlags) override
     {
         this->keymap.toggle_caps_lock(LedFlags & SlowPath::TS_SYNC_CAPS_LOCK);
         this->keymap.toggle_scroll_lock(LedFlags & SlowPath::TS_SYNC_SCROLL_LOCK);
@@ -4050,10 +4050,10 @@ private:
             const uint16_t TILE_CY = TILE_CX;
 
             for (int y = 0; y < dst_cy ; y += TILE_CY) {
-                int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
+                int cy = std::min(TILE_CY, uint16_t(dst_cy - y));
 
                 for (int x = 0; x < dst_cx ; x += TILE_CX) {
-                    int cx = std::min(TILE_CX, (uint16_t)(dst_cx - x));
+                    int cx = std::min(TILE_CX, uint16_t(dst_cx - x));
 
                     const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
                     const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);

@@ -295,16 +295,16 @@ struct GeneralCaps : public Capability {
             "generalCompressionLevel=%u\n"
             "refreshRectSupport=%u\n"
             "suppressOutputSupport=%u\n\n",
-            this->os_major,
-            this->os_minor,
-            this->protocolVersion,
-            this->compressionType,
-            this->extraflags,
-            this->updateCapability,
-            this->remoteUnshare,
-            this->compressionLevel,
-            this->refreshRectSupport,
-            this->suppressOutputSupport
+            unsigned(this->os_major),
+            unsigned(this->os_minor),
+            unsigned(this->protocolVersion),
+            unsigned(this->compressionType),
+            unsigned(this->extraflags),
+            unsigned(this->updateCapability),
+            unsigned(this->remoteUnshare),
+            unsigned(this->compressionLevel),
+            unsigned(this->refreshRectSupport),
+            unsigned(this->suppressOutputSupport)
         );
     }
 };

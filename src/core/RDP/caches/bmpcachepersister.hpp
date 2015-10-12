@@ -54,7 +54,8 @@ private:
         {
             explicit CString(const uint8_t (& sig)[8]) {
                 snprintf( this->s, sizeof(this->s), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                        , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
+                        , unsigned(sig[0]), unsigned(sig[1]), unsigned(sig[2]), unsigned(sig[3])
+                        , unsigned(sig[4]), unsigned(sig[5]), unsigned(sig[6]), unsigned(sig[7]));
             }
 
             const char * c_str() const

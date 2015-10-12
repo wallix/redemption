@@ -778,7 +778,7 @@ static void raise_error(std::string const & output_filename, int code, const cha
     }
 
     char outfile_pid[32];
-    snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+    snprintf(outfile_pid, sizeof(outfile_pid), "%06u", unsigned(getpid()));
 
     char outfile_path     [1024] = {};
     char outfile_basename [1024] = {};

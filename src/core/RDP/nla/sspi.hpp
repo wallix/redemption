@@ -184,7 +184,7 @@ struct SEC_WINNT_AUTH_IDENTITY
     }
     void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass) {
         if (user) {
-            const char * p = (char const *)user;
+            const char * p = reinterpret_cast<char const *>(user);
             size_t length = 0;
             if (p) {
                 length = strlen(p);
@@ -196,7 +196,7 @@ struct SEC_WINNT_AUTH_IDENTITY
             this->princname[length] = 0;
         }
         if (pass) {
-            const char * p = (char const*)pass;
+            const char * p = reinterpret_cast<char const *>(pass);
             size_t length = 0;
             if (p) {
                 length = strlen(p);
@@ -291,19 +291,19 @@ public:
     }
 
     void SecureHandleSetLowerPointer(void* pointer) {
-        this->pHandle->dwLower = (unsigned long) pointer;
+        this->pHandle->dwLower = reinterpret_cast<unsigned long>(pointer);
     }
 
     void SecureHandleSetUpperPointer(void* pointer) {
-       this->pHandle->dwUpper = (unsigned long) pointer;
+       this->pHandle->dwUpper = reinterpret_cast<unsigned long>(pointer);
     }
 
     void* SecureHandleGetLowerPointer() {
-        void * pointer = (void*) this->pHandle->dwLower;
+        void * pointer = reinterpret_cast<void*>(this->pHandle->dwLower);
         return pointer;
     }
     void* SecureHandleGetUpperPointer() {
-        void * pointer = (void*) this->pHandle->dwUpper;
+        void * pointer = reinterpret_cast<void*>(this->pHandle->dwUpper);
         return pointer;
     }
 

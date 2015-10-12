@@ -742,7 +742,7 @@ private:
     void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType, uint16_t & compressed_data_size,
         uint16_t max_compressed_data_size) override {
-        this->compress_50(uncompressed_data, (int)uncompressed_data_size,
+        this->compress_50(uncompressed_data, uncompressed_data_size,
             max_compressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
             compressedType       = this->flags;

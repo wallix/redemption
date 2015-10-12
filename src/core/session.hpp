@@ -320,7 +320,7 @@ public:
                                 mm.is_up_and_running()) {
                                 if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
                                     osd_state = [&](uint32_t enddata) -> unsigned {
-                                        if (!enddata || enddata <= (uint32_t)now) {
+                                        if (!enddata || enddata <= static_cast<uint32_t>(now)) {
                                             return OSD_STATE_INVALID;
                                         }
                                         unsigned i = (std::lower_bound(
@@ -455,24 +455,26 @@ private:
             ::fprintf(
                   this->perf_file
                 , "%lu;"
-                  "%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n"
-                , now
-                , resource_usage.ru_utime.tv_sec, resource_usage.ru_utime.tv_usec   /* user CPU time used               */
-                , resource_usage.ru_stime.tv_sec, resource_usage.ru_stime.tv_usec   /* system CPU time used             */
-                , resource_usage.ru_maxrss                                          /* maximum resident set size        */
-                , resource_usage.ru_ixrss                                           /* integral shared memory size      */
-                , resource_usage.ru_idrss                                           /* integral unshared data size      */
-                , resource_usage.ru_isrss                                           /* integral unshared stack size     */
-                , resource_usage.ru_minflt                                          /* page reclaims (soft page faults) */
-                , resource_usage.ru_majflt                                          /* page faults (hard page faults)   */
-                , resource_usage.ru_nswap                                           /* swaps                            */
-                , resource_usage.ru_inblock                                         /* block input operations           */
-                , resource_usage.ru_oublock                                         /* block output operations          */
-                , resource_usage.ru_msgsnd                                          /* IPC messages sent                */
-                , resource_usage.ru_msgrcv                                          /* IPC messages received            */
-                , resource_usage.ru_nsignals                                        /* signals received                 */
-                , resource_usage.ru_nvcsw                                           /* voluntary context switches       */
-                , resource_usage.ru_nivcsw                                          /* involuntary context switches     */
+                  "%lu;%lu;%lu;%lu;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld\n"
+                , static_cast<unsigned long>(now)
+                , static_cast<unsigned long>(resource_usage.ru_utime.tv_sec)  /* user CPU time used */
+                , static_cast<unsigned long>(resource_usage.ru_utime.tv_usec)
+                , static_cast<unsigned long>(resource_usage.ru_stime.tv_sec)  /* system CPU time used */
+                , static_cast<unsigned long>(resource_usage.ru_stime.tv_usec)
+                , resource_usage.ru_maxrss                                    /* maximum resident set size */
+                , resource_usage.ru_ixrss                                     /* integral shared memory size */
+                , resource_usage.ru_idrss                                     /* integral unshared data size */
+                , resource_usage.ru_isrss                                     /* integral unshared stack size */
+                , resource_usage.ru_minflt                                    /* page reclaims (soft page faults) */
+                , resource_usage.ru_majflt                                    /* page faults (hard page faults)   */
+                , resource_usage.ru_nswap                                     /* swaps */
+                , resource_usage.ru_inblock                                   /* block input operations */
+                , resource_usage.ru_oublock                                   /* block output operations */
+                , resource_usage.ru_msgsnd                                    /* IPC messages sent */
+                , resource_usage.ru_msgrcv                                    /* IPC messages received */
+                , resource_usage.ru_nsignals                                  /* signals received */
+                , resource_usage.ru_nvcsw                                     /* voluntary context switches */
+                , resource_usage.ru_nivcsw                                    /* involuntary context switches */
             );
             ::fflush(this->perf_file);
         }
