@@ -310,6 +310,8 @@ public:
         REDASSERT(!this->unlogged_data.get_offset());
 
         trans.send(this->data.get_data(), this->data.get_offset());
+
+        this->data.rewind();
     }
 
     void reset_data() {
