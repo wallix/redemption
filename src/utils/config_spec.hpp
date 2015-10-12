@@ -523,6 +523,9 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "module", set("login"), rw);
         W.member(type_<bool>(), "forcemodule", set(false), r);
         W.member(type_<std::string>(), "proxy_opt", r);
+        W.sep();
+        W.member(type_<std::string>(), "pattern_kill", r);
+        W.member(type_<std::string>(), "pattern_notify", r);
     }
     W.stop_section();
 

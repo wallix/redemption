@@ -81,6 +81,8 @@ enum authid_t {
     AUTHID_CONTEXT_MODULE,
     AUTHID_CONTEXT_FORCEMODULE,
     AUTHID_CONTEXT_PROXY_OPT,
+    AUTHID_CONTEXT_PATTERN_KILL,
+    AUTHID_CONTEXT_PATTERN_NOTIFY,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -167,5 +169,7 @@ constexpr char const * const authstr[] = {
     "module",
     "forcemodule",
     "proxy_opt",
+    "pattern_kill",
+    "pattern_notify",
 };
 

@@ -29,6 +29,7 @@
 
 #include "nativecapture.hpp"
 #include "staticcapture.hpp"
+#include "new_kbdcapture.hpp"
 
 #include "RDP/compress_and_draw_bitmap_update.hpp"
 
@@ -45,8 +46,10 @@ public:
     OutFilenameSequenceTransport * png_trans;
     StaticCapture                * psc;
 
+    NewKbdCapture * pkc;
+
 private:
-    Transport                    * wrm_trans;
+    Transport * wrm_trans;
 
 private:
     BmpCache      * pnc_bmp_cache;
@@ -78,6 +81,8 @@ private:
 
     const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
+    char kbd_prefix[256];
+
 public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
@@ -88,6 +93,7 @@ public:
     , enable_file_encryption(ini.get<cfg::globals::enable_file_encryption>())
     , png_trans(nullptr)
     , psc(nullptr)
+    , pkc(nullptr)
     , wrm_trans(nullptr)
     , pnc_bmp_cache(nullptr)
     , pnc_gly_cache(nullptr)
@@ -166,6 +172,28 @@ public:
                                          , NativeCapture::SendInput::YES);
         }
 
+        snprintf( this->kbd_prefix
+                , sizeof(this->kbd_prefix)
+                , "[RDP Session] type='KBD input' "
+                  "sesion_id='%s' "
+                  "user='%s' "
+                  "device='%s' "
+                  "service='%s' "
+                  "account='%s'"
+                , ini.get<cfg::context::session_id>().c_str()
+                , ini.get<cfg::globals::auth_user>().c_str()
+                , ini.get<cfg::globals::target_device>().c_str()
+                , ini.get<cfg::context::target_service>().c_str()
+                , ini.get<cfg::globals::target_user>().c_str()
+                );
+
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
+            this->pkc = new NewKbdCapture(now, authentifier, nullptr, nullptr,
+                    !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
+                    this->kbd_prefix
+                );
+        }
+
         if (this->capture_wrm) {
             this->gd = this->pnc;
         }
@@ -175,6 +203,8 @@ public:
     }
 
     ~Capture() override {
+        delete this->pkc;
+
         delete this->psc;
         delete this->png_trans;
 
@@ -184,13 +214,12 @@ public:
             this->pnc->recorder.send_timestamp_chunk(false);
             delete this->pnc;
         }
-        delete this->wrm_trans;
         delete this->pnc_bmp_cache;
         delete this->pnc_gly_cache;
         delete this->pnc_ptr_cache;
         delete this->drawable;
 
-        if (this->clear_png) {
+        if (this->clear_png && this->wrm_trans) {
             auto i = this->wrm_trans->get_seqno();
             while (i > 0) {
                 auto filename = this->wrm_filename_generator->get(--i);
@@ -199,6 +228,8 @@ public:
                 }
             }
         }
+
+        delete this->wrm_trans;
     }
 
     void request_full_cleaning()
@@ -257,6 +288,11 @@ public:
             this->pnc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
             this->capture_event.update(this->pnc->time_to_wait);
         }
+
+        if (this->pkc) {
+            this->pkc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
+            this->capture_event.update(this->pkc->time_to_wait);
+        }
     }
 
     void flush() override {
@@ -267,7 +303,11 @@ public:
 
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
         if (this->capture_wrm) {
-            return this->pnc->input(now, input_data_32, data_sz);
+            this->pnc->input(now, input_data_32, data_sz);
+        }
+
+        if (this->pkc) {
+            this->pkc->input(now, input_data_32, data_sz);
         }
 
         return true;

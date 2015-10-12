@@ -972,7 +972,11 @@ public:
 
     // Check movie start/stop/pause
     void record(auth_api * acl) override {
-        if (this->ini.get<cfg::globals::movie>()) {
+        if (this->ini.get<cfg::globals::movie>() ||
+            !bool(this->ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
+            !this->ini.get<cfg::context::pattern_kill>().empty() ||
+            !this->ini.get<cfg::context::pattern_notify>().empty()
+            ) {
             //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?
             if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
                 this->front.start_capture(this->front.client_info.width,

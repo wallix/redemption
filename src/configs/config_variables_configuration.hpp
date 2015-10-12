@@ -622,6 +622,25 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
+
+        // AUTHID_CONTEXT_PATTERN_KILL
+        struct pattern_kill {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 82; }
+            using type = std::string;
+            type value{};
+        };
+        // AUTHID_CONTEXT_PATTERN_NOTIFY
+        struct pattern_notify {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 83; }
+            using type = std::string;
+            type value{};
+        };
     };
 
     struct crypto {
@@ -1721,6 +1740,8 @@ struct context
 , cfg::context::module
 , cfg::context::forcemodule
 , cfg::context::proxy_opt
+, cfg::context::pattern_kill
+, cfg::context::pattern_notify
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -1973,5 +1994,7 @@ using VariablesAclPack = Pack<
 , cfg::context::module
 , cfg::context::forcemodule
 , cfg::context::proxy_opt
+, cfg::context::pattern_kill
+, cfg::context::pattern_notify
 >;
 }

@@ -628,7 +628,11 @@ public:
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
         // Recording is enabled.
-        if (!ini.get<cfg::globals::movie>()) {
+        if (!ini.get<cfg::globals::movie>() &&
+            bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) &&
+            ini.get<cfg::context::pattern_kill>().empty() &&
+            ini.get<cfg::context::pattern_notify>().empty()
+            ) {
             return;
         }
 
@@ -636,6 +640,13 @@ public:
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
 
             return;
+        }
+
+        if (!ini.get<cfg::globals::movie>()) {
+            ini.set<cfg::video::capture_flags>(
+                (!ini.get<cfg::context::pattern_kill>().empty() || !ini.get<cfg::context::pattern_notify>().empty()) ?
+                configs::CaptureFlags::ocr : configs::CaptureFlags::none);
+            ini.set<cfg::video::png_limit>(0);
         }
 
         LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
