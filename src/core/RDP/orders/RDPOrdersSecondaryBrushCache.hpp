@@ -230,7 +230,7 @@ public:
     {
         char buffer[1024];
         this->str(buffer, 1024);
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print() const

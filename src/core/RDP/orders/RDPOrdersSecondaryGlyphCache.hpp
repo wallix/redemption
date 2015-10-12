@@ -244,7 +244,7 @@ public:
     void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print() const {

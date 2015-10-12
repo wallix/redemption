@@ -276,7 +276,7 @@ private:
                     std::min(chunk.in_remain(), max_length_of_data_to_dump);
                 const std::string data_to_dump(::char_ptr_cast(chunk.get_current()),
                     length_of_data_to_dump);
-                LOG(LOG_INFO, data_to_dump.c_str());
+                LOG(LOG_INFO, "%s", data_to_dump.c_str());
             }
             else if (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
                 REDASSERT(!(chunk.in_remain() & 1));
@@ -296,7 +296,7 @@ private:
                     size_of_utf8_string);
                 const std::string data_to_dump(::char_ptr_cast(utf8_string),
                     length_of_utf8_string);
-                LOG(LOG_INFO, data_to_dump.c_str());
+                LOG(LOG_INFO, "%s", data_to_dump.c_str());
             }
 
             chunk.rewind(saved_chunk_p - chunk.get_data());
@@ -793,7 +793,7 @@ public:
                     std::min(chunk.in_remain(), max_length_of_data_to_dump);
                 const std::string data_to_dump(::char_ptr_cast(chunk.get_current()),
                     length_of_data_to_dump);
-                LOG(LOG_INFO, data_to_dump.c_str());
+                LOG(LOG_INFO, "%s", data_to_dump.c_str());
             }
             else if (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
                 REDASSERT(!(chunk.in_remain() & 1));
@@ -813,7 +813,7 @@ public:
                     size_of_utf8_string);
                 const std::string data_to_dump(::char_ptr_cast(utf8_string),
                     length_of_utf8_string);
-                LOG(LOG_INFO, data_to_dump.c_str());
+                LOG(LOG_INFO, "%s", data_to_dump.c_str());
             }
 
             chunk.rewind(saved_chunk_p - chunk.get_data());

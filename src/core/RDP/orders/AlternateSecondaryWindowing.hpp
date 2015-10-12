@@ -1445,7 +1445,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // NewOrExistingWindow
 
@@ -1552,7 +1552,7 @@ public:
         char buffer[2048];
         size_t length = this->str(buffer, sizeof(buffer));
         buffer[length] = '\0';
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // WindowIcon
 
@@ -1659,7 +1659,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // CachedIcon
 
@@ -1733,7 +1733,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // CachedIcon
 
