@@ -324,7 +324,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
         else if (!S_ISDIR(st.st_mode)) {
             errno = ENOTDIR;
             if (verbose >= 255) {
-                LOG(LOG_ERR, "expecting directory name, got filename, for %s");
+                LOG(LOG_ERR, "expecting directory name, got filename, for %s", directory);
             }
             status = -1;
         }
@@ -333,7 +333,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
 }
 
 
-static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255) 
+static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255)
 {
     char * pTemp;
     char * pSearch;
