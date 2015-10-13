@@ -52,6 +52,8 @@ private:
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
 
+    auth_api*  param_acl;
+
     std::unique_ptr<uint8_t[]> file_descriptor_data;
     OutStream                  file_descriptor_stream;
 
@@ -65,6 +67,8 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
+
+        auth_api* acl;
     };
 
     ClipboardVirtualChannel(
@@ -80,13 +84,15 @@ public:
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+    , param_acl(params.acl)
     , file_descriptor_data(
           std::make_unique<uint8_t[]>(RDPECLIP::FileDescriptor::size()))
     , file_descriptor_stream(
           file_descriptor_data.get(), RDPECLIP::FileDescriptor::size())
     , front(front) {}
 
-    const char* get_reporting_reason_exchanged_data_limit_reached() const override
+    const char* get_reporting_reason_exchanged_data_limit_reached() const
+        override
     {
         return "CLIPBOARD_LIMIT";
     }
@@ -358,6 +364,12 @@ private:
                 fd.receive(in_stream);
                 fd.log(LOG_INFO);
 
+                if (this->param_acl) {
+                    this->param_acl->log2("CNT event",
+                        "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
+                        fd.fileName());
+                }
+
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
                     message += fd.fileName();
@@ -375,6 +387,12 @@ private:
 
                 fd.receive(chunk);
                 fd.log(LOG_INFO);
+
+                if (this->param_acl) {
+                    this->param_acl->log2("CNT event",
+                        "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
+                        fd.fileName());
+                }
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
@@ -861,6 +879,12 @@ public:
                 fd.receive(in_stream);
                 fd.log(LOG_INFO);
 
+                if (this->param_acl) {
+                    this->param_acl->log2("CNT event",
+                        "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
+                        fd.fileName());
+                }
+
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");
                     message += fd.fileName();
@@ -878,6 +902,12 @@ public:
 
                 fd.receive(chunk);
                 fd.log(LOG_INFO);
+
+                if (this->param_acl) {
+                    this->param_acl->log2("CNT event",
+                        "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
+                        fd.fileName());
+                }
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");

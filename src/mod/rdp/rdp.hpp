@@ -956,6 +956,9 @@ protected:
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_clipboard_log_wrm;
 
+        clipboard_virtual_channel_params.acl                             =
+            this->acl;
+
         return clipboard_virtual_channel_params;
     }
 
@@ -996,6 +999,9 @@ protected:
             this->disable_file_system_log_syslog;
         file_system_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_file_system_log_wrm;
+
+        file_system_virtual_channel_params.acl                             =
+            this->acl;
 
         return file_system_virtual_channel_params;
     }
