@@ -28,6 +28,8 @@
 #include "front_api.hpp"
 #include "rdpdr_file_system_drive_manager.hpp"
 
+#include "strutils.hpp"
+
 class FileSystemVirtualChannel : public BaseVirtualChannel
 {
 public:
@@ -1359,23 +1361,33 @@ public:
                                 //    FileId, std::get<1>(*target_iter)
                                 //    );
 
-                                if ((device_io_response.DeviceId() == std::get<0>(*target_iter)) &&
+                                if ((device_io_response.DeviceId() ==
+                                     std::get<0>(*target_iter)) &&
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<3>(*target_iter)) {
-                                        if (!this->param_dont_log_data_into_syslog &&
-                                            this->param_acl) {
-                                            this->param_acl->log2("CNT event",
-                                                "DR_READ",
-                                                std::get<2>(*target_iter)->c_str());
-                                        }
+                                        if (!::ends_case_with(
+                                                std::get<2>(*target_iter)->c_str(),
+                                                "/desktop.ini")) {
+                                            if (!this->param_dont_log_data_into_syslog &&
+                                                this->param_acl) {
+                                                this->param_acl->log2(
+                                                    "CNT event",
+                                                    "DR_READ",
+                                                    std::get<2>(*target_iter)->c_str());
+                                            }
 
-                                        if (!this->param_dont_log_data_into_wrm) {
-                                            std::string message("ReadRedirectedFileSystem=");
-                                            message += std::get<2>(*target_iter)->c_str();
+                                            if (!this->param_dont_log_data_into_wrm) {
+                                                std::string message(
+                                                    "ReadRedirectedFileSystem=");
+                                                message +=
+                                                    std::get<2>(*target_iter)->c_str();
 
-                                            bool contian_window_title = false;
-                                            this->front.session_update(message.c_str(),
-                                                contian_window_title);
+                                                bool contian_window_title =
+                                                    false;
+                                                this->front.session_update(
+                                                    message.c_str(),
+                                                    contian_window_title);
+                                            }
                                         }
 
                                         std::get<3>(*target_iter) = true;

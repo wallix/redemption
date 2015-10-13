@@ -352,3 +352,41 @@ BOOST_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
         BOOST_CHECK(!memcmp(d, "\r\nto\r\nto\r\n", 10));
     }
 }
+
+BOOST_AUTO_TEST_CASE(TestEndsWith)
+{
+    BOOST_CHECK(!ends_with("", "ini"));
+    BOOST_CHECK(!ends_with("ni", "ini"));
+    BOOST_CHECK(!ends_case_with("init", "ini"));
+    BOOST_CHECK(!ends_with("rdpproxy.conf", "ini"));
+    BOOST_CHECK(!ends_with("Ini", "ini"));
+    BOOST_CHECK(!ends_with("RDPPROXY.INI", "ini"));
+
+    BOOST_CHECK(ends_with("ini", "ini"));
+    BOOST_CHECK(ends_with(".ini", "ini"));
+    BOOST_CHECK(ends_with("rdpproxy.ini", "ini"));
+
+    BOOST_CHECK(ends_with("RDPPROXY.INI", ""));
+    BOOST_CHECK(ends_with("", ""));
+}
+
+BOOST_AUTO_TEST_CASE(TestEndsCaseWith)
+{
+    BOOST_CHECK(!ends_case_with("", "ini"));
+    BOOST_CHECK(!ends_case_with("ni", "ini"));
+    BOOST_CHECK(!ends_case_with("NI", "ini"));
+    BOOST_CHECK(!ends_case_with("init", "ini"));
+    BOOST_CHECK(!ends_case_with("INIT", "ini"));
+    BOOST_CHECK(!ends_case_with("rdpproxy.conf", "ini"));
+    BOOST_CHECK(!ends_case_with("RDPPROXY.CONF", "ini"));
+
+    BOOST_CHECK(ends_case_with("ini", "ini"));
+    BOOST_CHECK(ends_case_with("Ini", "ini"));
+    BOOST_CHECK(ends_case_with(".ini", "ini"));
+    BOOST_CHECK(ends_case_with(".INI", "ini"));
+    BOOST_CHECK(ends_case_with("rdpproxy.ini", "ini"));
+    BOOST_CHECK(ends_case_with("RDPPROXY.INI", "ini"));
+
+    BOOST_CHECK(ends_case_with("RDPPROXY.INI", ""));
+    BOOST_CHECK(ends_case_with("", ""));
+}
