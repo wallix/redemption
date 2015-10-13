@@ -150,4 +150,20 @@ size_t linux_to_windows_newline_convert(char const * s, size_t s_length, char * 
     return (d_length + s_length);
 }
 
+inline static bool ends_with(const char * str, const char * suffix) {
+    size_t str_length = ::strlen(str);
+    size_t suffix_length = :: strlen(suffix);
+
+    return ((str_length >= suffix_length) &&
+        (strcmp(str + str_length - suffix_length, suffix) == 0));
+}
+
+inline static bool ends_case_with(const char * str, const char * suffix) {
+    size_t str_length = ::strlen(str);
+    size_t suffix_length = :: strlen(suffix);
+
+    return ((str_length >= suffix_length) &&
+        (strcasecmp(str + str_length - suffix_length, suffix) == 0));
+}
+
 #endif  // #ifndef _REDEMPTION_UTILS_STRUTILS_HPP_

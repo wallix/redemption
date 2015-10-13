@@ -689,7 +689,7 @@ protected:
                 IoStatus
             );
         if (verbose) {
-            LOG(LOG_INFO, message);
+            LOG(LOG_INFO, "%s", message);
             device_io_response.log(LOG_INFO);
         }
         device_io_response.emit(out_stream);

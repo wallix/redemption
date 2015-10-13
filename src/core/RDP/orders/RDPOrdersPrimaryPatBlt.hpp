@@ -1204,7 +1204,7 @@ class RDPPatBlt {
     void log(int level, const Rect & clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(RDP::PATBLT, clip));
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {

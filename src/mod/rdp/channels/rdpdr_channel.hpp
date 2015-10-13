@@ -28,6 +28,8 @@
 #include "front_api.hpp"
 #include "rdpdr_file_system_drive_manager.hpp"
 
+#include "strutils.hpp"
+
 class FileSystemVirtualChannel : public BaseVirtualChannel
 {
 public:
@@ -62,6 +64,8 @@ private:
 
     const bool        param_dont_log_data_into_syslog;
     const bool        param_dont_log_data_into_wrm;
+
+    auth_api*         param_acl;
 
     bool proxy_managed_drives_announced = false;
 
@@ -776,6 +780,8 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
+
+        auth_api* acl;
     };
 
     FileSystemVirtualChannel(
@@ -795,6 +801,7 @@ public:
     , param_random_number(params.random_number)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+    , param_acl(params.acl)
     , device_redirection_manager(
           to_client_sender_,
           to_server_sender_,
@@ -1354,23 +1361,33 @@ public:
                                 //    FileId, std::get<1>(*target_iter)
                                 //    );
 
-                                if ((device_io_response.DeviceId() == std::get<0>(*target_iter)) &&
+                                if ((device_io_response.DeviceId() ==
+                                     std::get<0>(*target_iter)) &&
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<3>(*target_iter)) {
-                                        if (this->param_dont_log_data_into_syslog) {
-                                            LOG(LOG_INFO,
-                                                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                                    "Reads \"%s\".",
-                                                std::get<2>(*target_iter)->c_str());
-                                        }
+                                        if (!::ends_case_with(
+                                                std::get<2>(*target_iter)->c_str(),
+                                                "/desktop.ini")) {
+                                            if (!this->param_dont_log_data_into_syslog &&
+                                                this->param_acl) {
+                                                this->param_acl->log2(
+                                                    "CNT event",
+                                                    "DR_READ",
+                                                    std::get<2>(*target_iter)->c_str());
+                                            }
 
-                                        if (this->param_dont_log_data_into_wrm) {
-                                            std::string message("ReadRedirectedFileSystem=");
-                                            message += std::get<2>(*target_iter)->c_str();
+                                            if (!this->param_dont_log_data_into_wrm) {
+                                                std::string message(
+                                                    "ReadRedirectedFileSystem=");
+                                                message +=
+                                                    std::get<2>(*target_iter)->c_str();
 
-                                            bool contian_window_title = false;
-                                            this->front.session_update(message.c_str(),
-                                                contian_window_title);
+                                                bool contian_window_title =
+                                                    false;
+                                                this->front.session_update(
+                                                    message.c_str(),
+                                                    contian_window_title);
+                                            }
                                         }
 
                                         std::get<3>(*target_iter) = true;
@@ -1423,14 +1440,14 @@ public:
                                 if ((device_io_response.DeviceId() == std::get<0>(*target_iter)) &&
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<4>(*target_iter)) {
-                                        if (this->param_dont_log_data_into_syslog) {
-                                            LOG(LOG_INFO,
-                                                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                                    "Writes \"%s\".",
+                                        if (!this->param_dont_log_data_into_syslog &&
+                                            this->param_acl) {
+                                            this->param_acl->log2("CNT event",
+                                                "DR_WRITE",
                                                 std::get<2>(*target_iter)->c_str());
                                         }
 
-                                        if (this->param_dont_log_data_into_wrm) {
+                                        if (!this->param_dont_log_data_into_wrm) {
                                             std::string message("WriteRedirectedFileSystem=");
                                             message += std::get<2>(*target_iter)->c_str();
 
@@ -2162,9 +2179,6 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
-                    (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
-
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "

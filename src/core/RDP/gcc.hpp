@@ -1677,7 +1677,7 @@ namespace GCC
                 snprintf(buffer + lg, sizeof(buffer) - lg, ")");
 
                 buffer[sizeof(buffer) - 1] = 0;
-                LOG(LOG_INFO, buffer);
+                LOG(LOG_INFO, "%s", buffer);
             }
         };
 

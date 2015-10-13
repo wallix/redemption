@@ -527,7 +527,7 @@ public:
             this->InitSecurityInterface(this->sec_interface);
 
             if (this->table == nullptr) {
-                LOG(LOG_ERR, "Could not Initiate %s Security Interface!", this->sec_interface);
+                LOG(LOG_ERR, "Could not Initiate %d Security Interface!", this->sec_interface);
                 return 0;
             }
             status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
