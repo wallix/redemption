@@ -4800,6 +4800,10 @@ public:
         {
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
+
+            if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
+                this->front.disable_input_event_and_graphics_update(true);
+            }
         }
         break;
         case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
