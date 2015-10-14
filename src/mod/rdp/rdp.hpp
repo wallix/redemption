@@ -6262,6 +6262,8 @@ public:
                 }
                 else if (!order.compare("NewProcess")) {
                 }
+                else if (!order.compare("CompletedProcess")) {
+                }
                 else if (!order.compare("ProcessName")) {
                 }
                 else if (!order.compare("WindowText")) {
