@@ -852,9 +852,10 @@ enum {
                 stream.out_uint32_le(flags);
             }
             if (flags & SEC_ENCRYPT){
-                uint8_t signature[8] = {};
+                size_t const sig_sz = 8;
+                auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*stream.get_current());
                 crypt.sign(data, len, signature);
-                stream.out_copy_bytes(signature, 8);
+                stream.out_skip_bytes(sig_sz);
                 crypt.decrypt(data, len);
             }
         }

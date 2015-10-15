@@ -180,7 +180,7 @@ constant CXXFLAGS-GCC-5 :
     <cxxflags>-Wsuggest-final-types
     <cxxflags>-Wsuggest-final-methods
 #     <cxxflags>-Wsuggest-attribute=pure
-    <cxxflags>-Wsuggest-attribute=const
+#     <cxxflags>-Wsuggest-attribute=const
     <variant>release:<cxxflags>-flto-odr-type-merging
     # <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by default)
 ;
@@ -856,3 +856,5 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : <vari
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z : ;
+
+unit-test test_meta_protocol : tests/test_meta_protocol.cpp libboost_unit_test : ;

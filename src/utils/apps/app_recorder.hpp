@@ -105,10 +105,10 @@ void init_signals(void)
 
 
 template<
-    class CaptureMaker, class AddProgramOtion, class ParseFormat
+    class CaptureMaker, class AddProgramOption, class ParseFormat
   , class InitCryptoIni, class HasExtraCapture, class... ExtraArguments>
 int app_recorder( int argc, char ** argv, const char * copyright_notice
-                , AddProgramOtion add_prog_option, ParseFormat parse_format
+                , AddProgramOption add_prog_option, ParseFormat parse_format
                 , InitCryptoIni init_crypto, HasExtraCapture has_extra_capture
                 , ExtraArguments&&... extra_argument)
 {
