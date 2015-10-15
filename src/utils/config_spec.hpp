@@ -493,7 +493,7 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "message", r);
         W.sep();
         W.member(type_<std::string>(), "accept_message", todo{"why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button"}, w);
-        W.member(type_<std::string>(), "display_message", w);
+        W.member(type_<std::string>(), "display_message", rw);
         W.sep();
         W.member(type_<std::string>(), "rejected", rw);
         W.sep();
@@ -526,6 +526,8 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "pattern_kill", r);
         W.member(type_<std::string>(), "pattern_notify", r);
+        W.sep();
+        W.member(type_<std::string>(), "opt_message", r);
     }
     W.stop_section();
 

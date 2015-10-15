@@ -45,6 +45,7 @@ public:
     WidgetEditValid  login_edit;
     WidgetImage img;
     WidgetLabel password_label;
+    WidgetLabel error_message_label;
     WidgetLabel version_label;
 
     WidgetFlatButton helpicon;
@@ -66,6 +67,7 @@ public:
               const char * login, const char * password,
               const char * label_text_login,
               const char * label_text_password,
+              const char * label_error_message,
               Font const & font, Translator tr = Translator(), Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
@@ -87,6 +89,9 @@ public:
         , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
                          theme.global.fgcolor, theme.global.bgcolor,
                          font)
+        , error_message_label(drawable, 0, 0, *this, nullptr, label_error_message, true, -15,
+                        theme.global.error_color, theme.global.bgcolor,
+                        font)
         , version_label(drawable, 0, 0, *this, nullptr, caption, true, -15,
                         theme.global.fgcolor, theme.global.bgcolor,
                         font)
@@ -118,6 +123,8 @@ public:
         }
         this->add_widget(&this->version_label);
 
+        this->add_widget(&this->error_message_label);
+
 
         // Center bloc positionning
         // Login and Password boxes
@@ -138,6 +145,10 @@ public:
         this->login_label.rect.y += (this->login_edit.cy() - this->login_label.cy()) / 2;
         this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
 
+
+        this->error_message_label.rect.x  = this->login_edit.rect.x;
+        this->error_message_label.rect.y  = this->login_edit.rect.y - 22;
+        this->error_message_label.rect.cx = this->login_edit.rect.cx;
 
         // Bottom bloc positioning
         // Logo and Version

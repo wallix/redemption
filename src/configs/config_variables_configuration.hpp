@@ -435,7 +435,7 @@ namespace cfg {
         // AUTHID_CONTEXT_DISPLAY_MESSAGE
         struct display_message {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::write;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 62; }
             using type = std::string;
@@ -638,6 +638,16 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 83; }
+            using type = std::string;
+            type value{};
+        };
+
+        // AUTHID_CONTEXT_OPT_MESSAGE
+        struct opt_message {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 84; }
             using type = std::string;
             type value{};
         };
@@ -1742,6 +1752,7 @@ struct context
 , cfg::context::proxy_opt
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
+, cfg::context::opt_message
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -1996,5 +2007,6 @@ using VariablesAclPack = Pack<
 , cfg::context::proxy_opt
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
+, cfg::context::opt_message
 >;
 }

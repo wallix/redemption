@@ -646,6 +646,7 @@ class Sesman():
                                            , u'selector_group_filter'   : self.shared.get(u'selector_group_filter')
                                            , u'selector_device_filter'  : self.shared.get(u'selector_device_filter')
                                            , u'selector_proto_filter'   : self.shared.get(u'selector_proto_filter')
+                                           , u'opt_message'             : u''
                                            , u'module'                  : u'selector'
                                            }
 
@@ -1000,9 +1001,16 @@ class Sesman():
                     self.target_group
                     )
 
+                if self.language != SESMANCONF.language:
+                    if not self.language:
+                        self.set_language_from_keylayout()
+                    SESMANCONF.language = self.language
+
                 data_to_send = { u'login': self.shared.get(u'login') if not current_wab_login.startswith('_OTP_') else MAGICASK
                                , u'password': MAGICASK
-                               , u'module' : u'login'}
+                               , u'module' : u'login'
+                               , u'language' : SESMANCONF.language
+                               , u'opt_message' : TR(u'authentication_failed') if self.shared.get(u'password') != MAGICASK else u'' }
                 self.send_data(data_to_send)
                 continue
 
