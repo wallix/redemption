@@ -58,7 +58,7 @@ namespace transfil {
             ? ::EVP_DecryptInit_ex(ctx, cipher, nullptr, key, iv)
             : ::EVP_EncryptInit_ex(ctx, cipher, nullptr, key, iv)) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize %scrypion context\n",
-                    is_decrypion ? "de":"en", ::getpid());
+                    ::getpid(), is_decrypion ? "de":"en");
                 return -1;
             }
 

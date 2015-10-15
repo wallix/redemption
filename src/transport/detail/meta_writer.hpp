@@ -202,8 +202,9 @@ namespace detail
             }
             if (chmod(this->current_filename_, this->filegen_.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->current_filename_, strerror(errno), errno
-                   , this->filegen_.groupid ? "u+r, g+r" : "u+r");
+                   , this->current_filename_
+                   , this->filegen_.groupid ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
             }
             this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
             return this->buf_.open(fd);
