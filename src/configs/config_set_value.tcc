@@ -227,23 +227,23 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "enable_osd_display_remote_target")) {
             ::configs::parse(static_cast<cfg::globals::enable_osd_display_remote_target&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "enable_wab_agent")) {
-            ::configs::parse(static_cast<cfg::globals::enable_wab_agent&>(this->variables).value, value);
+        else if (0 == strcmp(key, "enable_session_probe")) {
+            ::configs::parse(static_cast<cfg::globals::enable_session_probe&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "enable_wab_agent_loading_mask")) {
-            ::configs::parse(static_cast<cfg::globals::enable_wab_agent_loading_mask&>(this->variables).value, value);
+        else if (0 == strcmp(key, "enable_session_probe_loading_mask")) {
+            ::configs::parse(static_cast<cfg::globals::enable_session_probe_loading_mask&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "wab_agent_launch_timeout")) {
-            ::configs::parse(static_cast<cfg::globals::wab_agent_launch_timeout&>(this->variables).value, value);
+        else if (0 == strcmp(key, "session_probe_launch_timeout")) {
+            ::configs::parse(static_cast<cfg::globals::session_probe_launch_timeout&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "wab_agent_on_launch_failure")) {
-            ::configs::parse(static_cast<cfg::globals::wab_agent_on_launch_failure&>(this->variables).value, value);
+        else if (0 == strcmp(key, "session_probe_on_launch_failure")) {
+            ::configs::parse(static_cast<cfg::globals::session_probe_on_launch_failure&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "wab_agent_keepalive_timeout")) {
-            ::configs::parse(static_cast<cfg::globals::wab_agent_keepalive_timeout&>(this->variables).value, value);
+        else if (0 == strcmp(key, "session_probe_keepalive_timeout")) {
+            ::configs::parse(static_cast<cfg::globals::session_probe_keepalive_timeout&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "wab_agent_alternate_shell")) {
-            ::configs::parse(static_cast<cfg::globals::wab_agent_alternate_shell&>(this->variables).value, value);
+        else if (0 == strcmp(key, "session_probe_alternate_shell")) {
+            ::configs::parse(static_cast<cfg::globals::session_probe_alternate_shell&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "persistent_path")) {
             ::configs::parse(static_cast<cfg::globals::persistent_path&>(this->variables).value, value);

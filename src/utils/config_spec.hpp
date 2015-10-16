@@ -196,17 +196,17 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "enable_osd", set(true));
         W.member(A, type_<bool>(), "enable_osd_display_remote_target", set(true));
         W.sep();
-        W.member(V, type_<bool>(), "enable_wab_agent", str_authid{"wab_agent"}, set(false), r);
-        W.member(A, type_<bool>(), "enable_wab_agent_loading_mask", set(true), r);
-        W.member(A, type_<unsigned>(), "wab_agent_launch_timeout", set(20000), r);
-        W.member(A, type_<Range<unsigned, 0, 1>>(), "wab_agent_on_launch_failure", set(0), desc{
-            "Specifies the action to be performed is the launch of agent fails.\n"
+        W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
+        W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
+        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
+        W.member(A, type_<Range<unsigned, 0, 1>>(), "session_probe_on_launch_failure", set(0), desc{
+            "Specifies the action to be performed is the launch of session probe fails.\n"
             "  0: disconnects session\n"
             "  1: remains connected"
         }, r);
-        W.member(A, type_<unsigned>(), "wab_agent_keepalive_timeout", set(5000), r);
+        W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.sep();
-        W.member(H, type_<StaticString<512>>(), "wab_agent_alternate_shell", set(""));
+        W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set(""));
         W.sep();
         W.member(A, type_<StaticPath<1024>>(), "persistent_path", set(MACRO(PERSISTENT_PATH)));
         W.sep();

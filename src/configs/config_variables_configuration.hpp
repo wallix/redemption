@@ -1144,8 +1144,8 @@ namespace cfg {
             type value{1};
         };
 
-        // AUTHID_GLOBALS_ENABLE_WAB_AGENT
-        struct enable_wab_agent {
+        // AUTHID_GLOBALS_ENABLE_SESSION_PROBE
+        struct enable_session_probe {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1153,8 +1153,8 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // AUTHID_GLOBALS_ENABLE_WAB_AGENT_LOADING_MASK
-        struct enable_wab_agent_loading_mask {
+        // AUTHID_GLOBALS_ENABLE_SESSION_PROBE_LOADING_MASK
+        struct enable_session_probe_loading_mask {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1162,8 +1162,8 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
-        // AUTHID_GLOBALS_WAB_AGENT_LAUNCH_TIMEOUT
-        struct wab_agent_launch_timeout {
+        // AUTHID_GLOBALS_SESSION_PROBE_LAUNCH_TIMEOUT
+        struct session_probe_launch_timeout {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1171,11 +1171,11 @@ namespace cfg {
             using type = unsigned;
             type value{20000};
         };
-        // Specifies the action to be performed is the launch of agent fails.
+        // Specifies the action to be performed is the launch of session probe fails.
         //   0: disconnects session
         //   1: remains connected
-        // AUTHID_GLOBALS_WAB_AGENT_ON_LAUNCH_FAILURE
-        struct wab_agent_on_launch_failure {
+        // AUTHID_GLOBALS_SESSION_PROBE_ON_LAUNCH_FAILURE
+        struct session_probe_on_launch_failure {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1183,8 +1183,8 @@ namespace cfg {
             using type = ::configs::Range<unsigned, 0, 1, 0>;
             type value{0};
         };
-        // AUTHID_GLOBALS_WAB_AGENT_KEEPALIVE_TIMEOUT
-        struct wab_agent_keepalive_timeout {
+        // AUTHID_GLOBALS_SESSION_PROBE_KEEPALIVE_TIMEOUT
+        struct session_probe_keepalive_timeout {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1193,7 +1193,7 @@ namespace cfg {
             type value{5000};
         };
 
-        struct wab_agent_alternate_shell {
+        struct session_probe_alternate_shell {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
@@ -1824,12 +1824,12 @@ struct globals
 , cfg::globals::enable_close_box
 , cfg::globals::enable_osd
 , cfg::globals::enable_osd_display_remote_target
-, cfg::globals::enable_wab_agent
-, cfg::globals::enable_wab_agent_loading_mask
-, cfg::globals::wab_agent_launch_timeout
-, cfg::globals::wab_agent_on_launch_failure
-, cfg::globals::wab_agent_keepalive_timeout
-, cfg::globals::wab_agent_alternate_shell
+, cfg::globals::enable_session_probe
+, cfg::globals::enable_session_probe_loading_mask
+, cfg::globals::session_probe_launch_timeout
+, cfg::globals::session_probe_on_launch_failure
+, cfg::globals::session_probe_keepalive_timeout
+, cfg::globals::session_probe_alternate_shell
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
 { static constexpr bool is_section = true; };
@@ -1938,11 +1938,11 @@ using VariablesAclPack = Pack<
 , cfg::globals::shell_working_directory
 , cfg::globals::movie
 , cfg::globals::movie_path
-, cfg::globals::enable_wab_agent
-, cfg::globals::enable_wab_agent_loading_mask
-, cfg::globals::wab_agent_launch_timeout
-, cfg::globals::wab_agent_on_launch_failure
-, cfg::globals::wab_agent_keepalive_timeout
+, cfg::globals::enable_session_probe
+, cfg::globals::enable_session_probe_loading_mask
+, cfg::globals::session_probe_launch_timeout
+, cfg::globals::session_probe_on_launch_failure
+, cfg::globals::session_probe_keepalive_timeout
 , cfg::client::keyboard_layout
 , cfg::client::disable_tsk_switch_shortcuts
 , cfg::mod_rdp::bogus_sc_net_size

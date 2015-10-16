@@ -17,10 +17,10 @@ const char outdata[] =
 // ModRDPParams enable_bitmap_update=no |
 // ModRDPParams enable_new_pointer=no |
 // ModRDPParams enable_glyph_cache=no |
-// ModRDPParams enable_wab_agent=no |
-// ModRDPParams wab_agent_launch_timeout=0 |
-// ModRDPParams wab_agent_on_launch_failure=0 |
-// ModRDPParams wab_agent_keepalive_timeout=0 |
+// ModRDPParams enable_session_probe=no |
+// ModRDPParams session_probe_launch_timeout=0 |
+// ModRDPParams session_probe_on_launch_failure=0 |
+// ModRDPParams session_probe_keepalive_timeout=0 |
 // ModRDPParams dsiable_clipboard_log=0x0 |
 // ModRDPParams enable_transparent_mode=no |
 // ModRDPParams output_filename="" |
@@ -876,7 +876,7 @@ const char outdata[] =
 /* 0030 */ "\x81\xd9\x1e\xdd\xc4\x0c\x8e\x8d\xfb\x3f\xa2\x2d"                 //.........?.- |
 // Sent dumped on RDP Wab Target (4) 60 bytes |
 // mod_rdp::send_input_slowpath done |
-// enable_wab_agent=no wab_agent_launch_timeout=0 wab_agent_on_launch_failure=0 |
+// enable_session_probe=no session_probe_launch_timeout=0 session_probe_on_launch_failure=0 |
 // ========= CREATION OF MOD DONE ==================== |
 // ===================> count = 0 |
 // Socket RDP Wab Target (4) receiving 1 bytes |
@@ -2680,10 +2680,10 @@ const char indata[] =
 // ModRDPParams enable_bitmap_update=no |
 // ModRDPParams enable_new_pointer=no |
 // ModRDPParams enable_glyph_cache=no |
-// ModRDPParams enable_wab_agent=no |
-// ModRDPParams wab_agent_launch_timeout=0 |
-// ModRDPParams wab_agent_on_launch_failure=0 |
-// ModRDPParams wab_agent_keepalive_timeout=0 |
+// ModRDPParams enable_session_probe=no |
+// ModRDPParams session_probe_launch_timeout=0 |
+// ModRDPParams session_probe_on_launch_failure=0 |
+// ModRDPParams session_probe_keepalive_timeout=0 |
 // ModRDPParams dsiable_clipboard_log=0x0 |
 // ModRDPParams enable_transparent_mode=no |
 // ModRDPParams output_filename="" |
@@ -3539,7 +3539,7 @@ const char indata[] =
 // /* 0030 */ "\x81\xd9\x1e\xdd\xc4\x0c\x8e\x8d\xfb\x3f\xa2\x2d"                 //.........?.- |
 // Sent dumped on RDP Wab Target (4) 60 bytes |
 // mod_rdp::send_input_slowpath done |
-// enable_wab_agent=no wab_agent_launch_timeout=0 wab_agent_on_launch_failure=0 |
+// enable_session_probe=no session_probe_launch_timeout=0 session_probe_on_launch_failure=0 |
 // ========= CREATION OF MOD DONE ==================== |
 // ===================> count = 0 |
 // Socket RDP Wab Target (4) receiving 1 bytes |

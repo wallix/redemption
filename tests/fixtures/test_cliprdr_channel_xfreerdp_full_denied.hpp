@@ -55,10 +55,10 @@ const char outdata[] =
 // ModRDPParams enable_bitmap_update=yes |
 // ModRDPParams enable_new_pointer=yes |
 // ModRDPParams enable_glyph_cache=yes |
-// ModRDPParams enable_wab_agent=no |
-// ModRDPParams wab_agent_launch_timeout=20000 |
-// ModRDPParams wab_agent_on_launch_failure=0 |
-// ModRDPParams wab_agent_keepalive_timeout=0 |
+// ModRDPParams enable_session_probe=no |
+// ModRDPParams session_probe_launch_timeout=20000 |
+// ModRDPParams session_probe_on_launch_failure=0 |
+// ModRDPParams session_probe_keepalive_timeout=0 |
 // ModRDPParams dsiable_clipboard_log=0x0 |
 // ModRDPParams enable_transparent_mode=no |
 // ModRDPParams output_filename="" |
@@ -533,7 +533,7 @@ const char outdata[] =
 // WAITING_CTL_COOPERATE |
 // WAITING_GRANT_CONTROL_COOPERATE |
 // PDUTYPE2_FONTMAP |
-// enable_wab_agent=no wab_agent_launch_timeout=20000 wab_agent_on_launch_failure=0 |
+// enable_session_probe=no session_probe_launch_timeout=20000 session_probe_on_launch_failure=0 |
 // Ask acl |
 // sending reporting=CONNECTION_SUCCESSFUL:win2k12r2:Ok. |
 // sending keepalive=ASK |
@@ -719,10 +719,10 @@ const char indata[] =
 // ModRDPParams enable_bitmap_update=yes |
 // ModRDPParams enable_new_pointer=yes |
 // ModRDPParams enable_glyph_cache=yes |
-// ModRDPParams enable_wab_agent=no |
-// ModRDPParams wab_agent_launch_timeout=20000 |
-// ModRDPParams wab_agent_on_launch_failure=0 |
-// ModRDPParams wab_agent_keepalive_timeout=0 |
+// ModRDPParams enable_session_probe=no |
+// ModRDPParams session_probe_launch_timeout=20000 |
+// ModRDPParams session_probe_on_launch_failure=0 |
+// ModRDPParams session_probe_keepalive_timeout=0 |
 // ModRDPParams dsiable_clipboard_log=0x0 |
 // ModRDPParams enable_transparent_mode=no |
 // ModRDPParams output_filename="" |
@@ -1197,7 +1197,7 @@ const char indata[] =
 // WAITING_CTL_COOPERATE |
 // WAITING_GRANT_CONTROL_COOPERATE |
 // PDUTYPE2_FONTMAP |
-// enable_wab_agent=no wab_agent_launch_timeout=20000 wab_agent_on_launch_failure=0 |
+// enable_session_probe=no session_probe_launch_timeout=20000 session_probe_on_launch_failure=0 |
 // Ask acl |
 // sending reporting=CONNECTION_SUCCESSFUL:win2k12r2:Ok. |
 // sending keepalive=ASK |
