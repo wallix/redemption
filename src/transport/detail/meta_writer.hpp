@@ -280,7 +280,7 @@ namespace detail
         , start_sec_(params.sec)
         , stop_sec_(params.sec)
         {
-            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR) < 0) {
+            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP) < 0) {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
         }
