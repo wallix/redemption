@@ -1370,10 +1370,14 @@ public:
                                                 "/desktop.ini")) {
                                             if (!this->param_dont_log_data_into_syslog &&
                                                 this->param_acl) {
+                                                std::string info("info='");
+                                                info += std::get<2>(*target_iter)->c_str();
+                                                info += "'";
+
                                                 this->param_acl->log2(
                                                     "CNT event",
                                                     "DR_READ",
-                                                    std::get<2>(*target_iter)->c_str());
+                                                    info.c_str());
                                             }
 
                                             if (!this->param_dont_log_data_into_wrm) {
@@ -1442,9 +1446,13 @@ public:
                                     if (!std::get<4>(*target_iter)) {
                                         if (!this->param_dont_log_data_into_syslog &&
                                             this->param_acl) {
+                                            std::string info("info='");
+                                            info += std::get<2>(*target_iter)->c_str();
+                                            info += "'";
+
                                             this->param_acl->log2("CNT event",
                                                 "DR_WRITE",
-                                                std::get<2>(*target_iter)->c_str());
+                                                info.c_str());
                                         }
 
                                         if (!this->param_dont_log_data_into_wrm) {

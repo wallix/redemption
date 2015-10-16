@@ -403,7 +403,7 @@ struct CapabilitySetRecvFactory {
         this->capabilitySetType = stream.in_uint16_le();
     }   // CapabilitySetRecvFactory(InStream & stream)
 
-    inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
+    static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
         switch (capabilitySetType) {
             case CB_CAPSTYPE_GENERAL:  return "CB_CAPSTYPE_GENERAL";
         }
@@ -550,13 +550,13 @@ public:
 
     uint32_t generalFlags() const { return this->generalFlags_; }
 
-    inline static size_t size() {
+    static size_t size() {
         return 12;  // capabilitySetType(2) + lengthCapability(2) + version(4) +
                     //     generalFlags(4)
     }
 
 private:
-    inline static const char * get_version_name(uint32_t version) {
+    static const char * get_version_name(uint32_t version) {
         switch (version) {
             case CB_CAPS_VERSION_1: return "CB_CAPS_VERSION_1";
             case CB_CAPS_VERSION_2: return "CB_CAPS_VERSION_2";
@@ -565,7 +565,7 @@ private:
         return "<unknown>";
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "RDPECLIP::GeneralCapabilitySet: "
                 "capabilitySetType=%s(%d) lengthCapability=%u version=%s(0x%08X) generalFlags=0x%08X",
@@ -579,7 +579,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -904,7 +904,6 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
 
 struct FileContentsResponse : CliprdrHeader {
-
     explicit FileContentsResponse(bool response_ok = false)
     : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
     {}
@@ -1079,7 +1078,7 @@ class FileDescriptor {
     std::string file_name;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->flags);
 
         stream.out_clear_bytes(32); // reserved1(32)
@@ -1151,9 +1150,14 @@ public:
         stream.in_skip_bytes(520);  // fileName(520)
     }
 
-    inline const char * fileName() const { return this->file_name.c_str(); }
+    const char * fileName() const { return this->file_name.c_str(); }
 
-    inline static size_t size() {
+    uint64_t file_size() const {
+        return ((uint64_t)this->fileSizeLow) |
+            (((uint64_t)this->fileSizeHigh) << 32);
+    }
+
+    static size_t size() {
         return 592; // flags(4) + reserved1(32) + fileAttributes(4) +
                     //     reserved2(16) + lastWriteTime(8) +
                     //     fileSizeHigh(4) + fileSizeLow(4) +
@@ -1161,7 +1165,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "FileDescriptor: flags=0x%X fileAttributes=0x%X lastWriteTime=%" PRIu64 " "
                 "fileSizeHigh=0x%X fileSizeLow=0x%X "
@@ -1172,7 +1176,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;

@@ -4800,6 +4800,10 @@ public:
         {
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
+
+            if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
+                this->front.disable_input_event_and_graphics_update(true);
+            }
         }
         break;
         case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
@@ -6258,6 +6262,8 @@ public:
                 }
                 else if (!order.compare("NewProcess")) {
                 }
+                else if (!order.compare("CompletedProcess")) {
+                }
                 else if (!order.compare("ProcessName")) {
                 }
                 else if (!order.compare("WindowText")) {
@@ -6277,7 +6283,8 @@ public:
                     contian_window_title);
 
                 if (!contian_window_title && this->acl) {
-                    this->acl->log2("AGT event", order.c_str(), parameters.c_str());
+                    std::string info("info='" + parameters + "'");
+                    this->acl->log2("AGT event", order.c_str(), info.c_str());
                 }
             }
             else {

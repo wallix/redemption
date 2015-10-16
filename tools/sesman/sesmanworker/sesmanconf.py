@@ -114,6 +114,7 @@ class SesmanConfig(object):
             , u'in_subnet %s'           : u"dans le sous-réseau %s."
             , u'no_match_subnet %s %s'  : u"%s n'appartient pas au sous-réseau %s."
             , u'error %s'               : u'Erreur: %s'
+            , u'authentication_failed' : u"Echec d'authentification."
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -195,6 +196,7 @@ class SesmanConfig(object):
             , u'in_subnet %s'           : u"in %s subnet."
             , u'no_match_subnet %s %s'  : u"%s not in %s subnet."
             , u'error %s'               : u'Error: %s'
+            , u'authentication_failed' : u'Authentication failed.'
             }
         }
 

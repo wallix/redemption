@@ -40,7 +40,8 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_user,        vcfg::ask | vcfg::read>,
     vcfg::var<cfg::translation::language>,
     vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::theme>,
+    vcfg::var<cfg::context::opt_message, vcfg::read>
 >;
 
 
@@ -64,6 +65,7 @@ public:
                 0, nullptr, nullptr,
                 TR("login", language(vars)),
                 TR("password", language(vars)),
+                vars.get<cfg::context::opt_message>().c_str(),
                 this->font(), Translator(language(vars)), this->theme())
         , vars(vars)
     {

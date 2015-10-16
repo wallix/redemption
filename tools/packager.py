@@ -12,7 +12,7 @@ import re
 import platform
 
 def usage():
-  print("Usage: %s [-h|--help] --update-version version [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] | --build-package [--package-distribution name] [--force-target target] [--debug]" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--force-build] [--update-version version] [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] | --build-package [--package-distribution name] [--force-target target] [--debug]" % sys.argv[0])
 
 try:
   options, args = getopt.getopt(sys.argv[1:], "h",
@@ -446,7 +446,8 @@ try:
     else:
       # debian codename
       opts.config["%PKG_DISTRIBUTION%"] = distro_codename
-    opts.config["%TARGET_NAME%"] = target
+    if not "%TARGET_NAME%" in opts.config:
+      opts.config["%TARGET_NAME%"] = target
     copy_and_replace_dict_file("%s/changelog" % opts.packagetemp,
                                opts.config,
                                "debian/changelog")
