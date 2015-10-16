@@ -25,6 +25,8 @@
 #define BOOST_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
+
 // #include "stream.hpp"
 #include "RDP/x224.hpp"
 // #include "RDP/sec.hpp"
@@ -33,9 +35,9 @@
 #include "../src/meta_protocol/types.hpp"
 
 #include <type_traits>
-// #include <tuple>
+#include <tuple>
 
-#include "RapidTuple/include/rapidtuple/tuple.hpp"
+// #include "RapidTuple/include/rapidtuple/tuple.hpp"
 
 
 static void escape(void const * p) {
@@ -88,8 +90,6 @@ struct dt_tpdu_send_fn
 //     }
 // };
 
-template<class T> struct type_ { using type = T; };
-
 template<size_t N>
 struct size_ : std::integral_constant<size_t, N>
 {};
@@ -101,7 +101,7 @@ size_<n1+n2> operator+(size_<n1> const &, size_<n2> const &) {
 
 
 template<class T>
-size_<sizeof(T)> sizeof_(type_<T>) {
+size_<sizeof(types::type_base_t<T>)> sizeof_(T const &) {
     return {};
 }
 
@@ -182,7 +182,7 @@ struct stream_maker_layout
 
     template<class... Ts>
     auto operator()(Ts && ... args) const {
-        auto sz = fold(std::plus<>{}, sizeof_(type_<Ts>{})...);
+        auto sz = fold(std::plus<>{}, sizeof_(args)...);
         using sz_t = decltype(sz);
         return Array<sz_t::value>(args...);
     }
@@ -304,19 +304,43 @@ struct Array {
     size_t size() const { return this->size_; }
     uint8_t const * data() const { return this->data_; }
 
-    template<class... Packets>
-    Array(Packets & ... packets) {
+    template<size_t... Ints, class TupleSz, class... Packets>
+    Array(std::integer_sequence<size_t, Ints...>, TupleSz & t, Packets & ... packets) {
+        static_assert(sizeof...(Ints) == sizeof...(packets), "");
         OutStream out_stream(this->data_, N);
         (void)std::initializer_list<int>{(void(
-            write(out_stream, tuple_to_index_sequence(packets), packets)
+            write(proto::size_<Ints>(), t, out_stream, tuple_to_index_sequence(packets), packets)
         ), 1)...};
         this->size_ = out_stream.get_offset();
     }
 
 private:
-    template<size_t... Ints, class... Ts>
-    static void write(OutStream & out_stream, std::index_sequence<Ints...>, std::tuple<Ts...> & packet) {
-        stream_writer_layout{out_stream}(get<Ints>(packet)...);
+    template<size_t Int, class TupleSz, size_t... Ints, class Packet>
+    static void write(
+        proto::size_<Int>,
+        TupleSz & t,
+        OutStream & out_stream,
+        std::index_sequence<Ints...>,
+        Packet & packet
+    ) {
+        stream_writer_layout{out_stream}(eval_expr(proto::size_<Int>(), t, get<Ints>(packet))...);
+    }
+
+    template<size_t Int, class TupleSz, class T, class Tag>
+    static types::dyn_base<T, Tag>
+    eval_expr(proto::size_<Int>, TupleSz & t, types::expr_base<T, pkt_sz, Tag> &) {
+        return {T(get<Int+1>(t))};
+    }
+
+    template<size_t Int, class TupleSz, class T, class Tag>
+    static types::dyn_base<T, Tag>
+    eval_expr(proto::size_<Int>, TupleSz & t, types::expr_base<T, pkt_sz_with_header, Tag> &) {
+        return {T(get<Int>(t))};
+    }
+
+    template<size_t Int, class TupleSz, size_t... Ints, class T>
+    static T & eval_expr(proto::size_<Int>, TupleSz &, T & x) {
+        return x;
     }
 
     //uint8_t data_[(N + sizeof(void*) - 1u) & -sizeof(void*)];
@@ -324,45 +348,6 @@ private:
     uint8_t data_[sizeof(std::aligned_storage_t<N, sizeof(void*)>)];
     size_t size_;
 };
-
-// template<class Tuple, class TupleFn, size_t I>
-// struct suitable_layout<Tuple, TupleFn, I, I>
-// {
-//     Tuple & tuple;
-//     TupleFn const & fn;
-//
-//     template<class T>
-//     static std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>
-//     tuple_to_index_sequence(T const &) {
-//         return {};
-//     }
-//
-//     auto operator()() const {
-//         return derec(this->tuple);
-//     }
-//
-//     template<class TupleRec, class... Ts>
-//     auto derec(TupleRec && trec, Ts && ... args) const {
-//         return propagate(
-//             std::get<0>(trec),
-//             std::get<1>(trec),
-//             tuple_to_index_sequence(std::get<1>(tuple)),
-//             args...
-//         );
-//     }
-//
-//     template<class TupleRec, class T, size_t... Ints, class... Ts>
-//     auto propagate(TupleRec && trec, T && t, std::integer_sequence<size_t, Ints...>, Ts && ... args) const {
-//         return derec(trec, std::get<Ints>(t)..., args...);
-//     }
-//
-//     template<class... Ts>
-//     auto derec(std::tuple<>, Ts && ... args) const {
-//         auto sz = fold(std::plus<>{}, sizeof_(type_<std::decay_t<Ts>>{})...);
-//         using sz_t = decltype(sz);
-//         return Array<sz_t::value>{args...};
-//     }
-// };
 
 template<class List, class Reversed>
 struct reverse_index_impl;
@@ -415,11 +400,11 @@ struct suitable_layout<Tuple, TupleFn, I, I>
 
     template<class... Packets>
     auto derec(std::tuple<>, Packets && ... packets) const {
-        auto szs = std::make_tuple(this->packet_size(packets)...);
+        auto szs = std::make_tuple(this->packet_size(tuple_to_index_sequence(packets), packets)...);
         auto accu_szs = accumulate_size(reverse_index(tuple_to_index_sequence(szs)), szs);
         auto sz = tuple_fold(std::plus<>{}, accu_szs);
         using sz_t = decltype(sz);
-        return Array<sz_t::value>{packets...};
+        return Array<sz_t::value>{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
     }
 
     template<size_t Int, size_t... Ints, class TupleSz>
@@ -437,9 +422,9 @@ struct suitable_layout<Tuple, TupleFn, I, I>
         return std::make_tuple(sz...);
     }
 
-    template<class... Ts>
-    auto packet_size(std::tuple<Ts...> & packet) const {
-        return fold(std::plus<>{}, sizeof_(type_<std::decay_t<Ts>>{})...);
+    template<size_t... Ints, class Packet>
+    auto packet_size(std::index_sequence<Ints...>, Packet & packet) const {
+        return fold(std::plus<>{}, sizeof_(get<Ints>(packet))...);
     }
 };
 
@@ -454,7 +439,7 @@ struct terminal_
 template<class Fn, class W, class... Ws>
 auto send(Fn fn, W && writer, Ws && ... writers) {
     terminal_ terminal;
-    auto ws = rapidtuple::tie(fn, writers..., terminal);
+    auto ws = std::tie(fn, writers..., terminal);
     std::tuple<> t;
     return writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers)+2u>{t, ws});
 }
@@ -482,74 +467,85 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 
     {
         StaticOutStream<1024> out_stream;
-        X224::DT_TPDU_Send(out_stream, 16);
-        X224::DT_TPDU_Send(out_stream, 8);
+        X224::DT_TPDU_Send(out_stream, 7);
+        X224::DT_TPDU_Send(out_stream, 0);
 
         auto array = proto::send(
             [&](auto) {},
-            [](auto && layout) { return proto::dt_tpdu_send(layout, 16); },
-            [](auto && layout) { return proto::dt_tpdu_send(layout, 8); }
+            proto::dt_tpdu_send,
+            proto::dt_tpdu_send
+//             [](auto && layout) { return proto::dt_tpdu_send(layout, 16); },
+//             [](auto && layout) { return proto::dt_tpdu_send(layout, 8); }
         );
 
         BOOST_REQUIRE_EQUAL(array.size(), out_stream.get_offset());
+        hexdump(out_stream.get_data(), out_stream.get_offset());
+        hexdump(array.data(), array.size());
         BOOST_REQUIRE(!memcmp(array.data(), out_stream.get_data(), out_stream.get_offset()));
     }
 
-//     auto test1 = [](uint8_t * p) {
-//         auto array = proto::dt_tpdu_send(proto::stream_maker_layout{}, 8);
-//         auto sz = array.size();
-//         //std::cout << sz << std::endl;
-//         memcpy(p, array.data(), sz);
-//     };
-//     auto test2 = [](uint8_t * p) {
-//         StaticOutStream<1024> out_stream;
-//         //escape(out_stream.get_data());
-//         X224::DT_TPDU_Send(out_stream, 8);
-//         //clobber();
-//         memcpy(p, out_stream.get_data(), out_stream.get_offset());
-//     };
-//
-//     auto bench = [](auto test) {
-//         std::vector<long long> v;
-//
-//         for (auto i = 0; i < 60; ++i) {
-//             uint8_t data[999999];
-//             auto p = data;
-//             test(p);
-//             auto sz = 8;
-//
-//             using resolution_clock = std::chrono::high_resolution_clock;
-//
-//             auto t1 = resolution_clock::now();
-//
-//             while (static_cast<size_t>(p - data + sz) < sizeof(data)) {
-//                 escape(p);
-//                 test(p);
-//                 clobber();
-//                 p += sz;
-//             }
-//
-//             auto t2 = resolution_clock::now();
-//             v.push_back((t2-t1).count()/1000);
-//         }
-//         return v;
-//     };
-//
-//     auto v1 = bench(test1);
-//     auto v2 = bench(test2);
-//
-//     std::sort(v1.begin(), v1.end());
-//     std::sort(v2.begin(), v2.end());
-//
-//     //v1 = decltype(v1)(&v1[v1.size()/2-30], &v1[v1.size()/2+29]);
-//     //v2 = decltype(v2)(&v2[v2.size()/2-30], &v2[v2.size()/2+29]);
-//
-//     std::cerr << "test1\ttest2\n";
-//     auto it1 = v1.begin();
-//     for (auto t : v2) {
-//         std::cerr << *it1 << "\t" << t << "\n";
-//         ++it1;
-//     }
+    auto test1 = [](uint8_t * p) {
+        auto array = proto::send(
+            [&](auto) {},
+            proto::dt_tpdu_send,
+            proto::dt_tpdu_send
+        );
+        auto sz = array.size();
+        escape(array.data());
+        memcpy(p, array.data(), sz);
+        clobber();
+    };
+    auto test2 = [](uint8_t * p) {
+        StaticOutStream<14> out_stream;
+        X224::DT_TPDU_Send(out_stream, 7);
+        X224::DT_TPDU_Send(out_stream, 0);
+        escape(out_stream.get_data());
+        memcpy(p, out_stream.get_data(), out_stream.get_offset());
+        clobber();
+    };
+
+    auto bench = [](auto test) {
+        std::vector<long long> v;
+
+        for (auto i = 0; i < 10000; ++i) {
+            //uint8_t data[262144];
+            uint8_t data[999999];
+            auto p = data;
+            test(p);
+            auto sz = 8;
+
+            using resolution_clock = std::chrono::high_resolution_clock;
+
+            auto t1 = resolution_clock::now();
+
+            while (static_cast<size_t>(p - data + sz) < sizeof(data)) {
+                escape(p);
+                test(p);
+                clobber();
+                p += sz;
+            }
+
+            auto t2 = resolution_clock::now();
+            v.push_back((t2-t1).count()/1000);
+        }
+        return v;
+    };
+
+    auto v2 = bench(test2);
+    auto v1 = bench(test1);
+
+    std::sort(v1.begin(), v1.end());
+    std::sort(v2.begin(), v2.end());
+
+    v1 = decltype(v1)(&v1[v1.size()/2-30], &v1[v1.size()/2+29]);
+    v2 = decltype(v2)(&v2[v2.size()/2-30], &v2[v2.size()/2+29]);
+
+    std::cerr << "test1\ttest2\n";
+    auto it1 = v1.begin();
+    for (auto t : v2) {
+        std::cerr << *it1 << "\t" << t << "\n";
+        ++it1;
+    }
 }
 
 // namespace proto {

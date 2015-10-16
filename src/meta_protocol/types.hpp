@@ -30,75 +30,100 @@ namespace meta_protocol {
 
 namespace types {
 
-    template<class T> struct static_type { using type = T; };
+    template<class T> struct type_base;
+    template<class T> using type_base_t = typename type_base<T>::type;
+
+    struct le_tag {};
+    struct be_tag {};
 
     /**
      * Constants fixed width integer types
      * @{
      */
-    template<int8_t x> struct s8 {};
-    template<uint8_t x> struct u8 {};
+    template<class T, T x, class Tag> struct integral_base {};
+    template<class T, T x, class Tag> struct type_base<integral_base<T, x, Tag>> { using type = T; };
 
-    template<int16_t x> struct s16_be {};
-    template<int16_t x> struct s16_le {};
-    template<uint16_t x> struct u16_be {};
-    template<uint16_t x> struct u16_le {};
+#define MK(T, name, Tag) template<T x> using name = integral_base<T, x, Tag>
 
-    template<int32_t x> struct s32_be {};
-    template<int32_t x> struct s32_le {};
-    template<uint32_t x> struct u32_be {};
-    template<uint32_t x> struct u32_le {};
+    MK(int8_t, s8, void);
+    MK(uint8_t, u8, void);
 
-    template<int64_t x> struct s64_be {};
-    template<int64_t x> struct s64_le {};
-    template<uint64_t x> struct u64_be {};
-    template<uint64_t x> struct u64_le {};
+    MK(int16_t, s16_be, be_tag);
+    MK(int16_t, s16_le, le_tag);
+    MK(uint16_t, u16_be, be_tag);
+    MK(uint16_t, u16_le, le_tag);
+
+    MK(int32_t, s32_be, be_tag);
+    MK(int32_t, s32_le, le_tag);
+    MK(uint32_t, u32_be, be_tag);
+    MK(uint32_t, u32_le, le_tag);
+
+    MK(int64_t, s64_be, be_tag);
+    MK(int64_t, s64_le, le_tag);
+    MK(uint64_t, u64_be, be_tag);
+    MK(uint64_t, u64_le, le_tag);
+
+#undef MK
     /** @} */
 
     /**
      * Parametrable fixed width integer types
      * @{
      */
-    struct dyn_s8 { int8_t x; };
-    struct dyn_u8 { uint8_t x; };
+    template<class T, class Tag> struct dyn_base { T x; };
+    template<class T, class Tag> struct type_base<dyn_base<T, Tag>> { using type = T; };
 
-    struct dyn_s16_be { int16_t x; };
-    struct dyn_s16_le { int16_t x; };
-    struct dyn_u16_be { uint16_t x; };
-    struct dyn_u16_le { uint16_t x; };
+#define MK(T, name, Tag) using name = dyn_base<T, Tag>
 
-    struct dyn_s32_be { int32_t x; };
-    struct dyn_s32_le { int32_t x; };
-    struct dyn_u32_be { uint32_t x; };
-    struct dyn_u32_le { uint32_t x; };
+    MK(int8_t, dyn_s8, void);
+    MK(uint8_t, dyn_u8, void);
 
-    struct dyn_s64_be { int64_t x; };
-    struct dyn_s64_le { int64_t x; };
-    struct dyn_u64_be { uint64_t x; };
-    struct dyn_u64_le { uint64_t x; };
+    MK(int16_t, dyn_s16_be, be_tag);
+    MK(int16_t, dyn_s16_le, le_tag);
+    MK(uint16_t, dyn_u16_be, be_tag);
+    MK(uint16_t, dyn_u16_le, le_tag);
+
+    MK(int32_t, dyn_s32_be, be_tag);
+    MK(int32_t, dyn_s32_le, le_tag);
+    MK(uint32_t, dyn_u32_be, be_tag);
+    MK(uint32_t, dyn_u32_le, le_tag);
+
+    MK(int64_t, dyn_s64_be, be_tag);
+    MK(int64_t, dyn_s64_le, le_tag);
+    MK(uint64_t, dyn_u64_be, be_tag);
+    MK(uint64_t, dyn_u64_le, le_tag);
+
+#undef MK
     /** @} */
 
     /**
      * Expression with fixed width integer types
      * @{
      */
-    template<class Expr> struct expr_s8 { Expr expr; };
-    template<class Expr> struct expr_u8 { Expr expr; };
+    template<class T, class Expr, class Tag> struct expr_base { Expr expr; };
+    template<class T, class Expr, class Tag> struct type_base<expr_base<T, Expr, Tag>> { using type = T; };
 
-    template<class Expr> struct expr_s16_be { Expr expr; };
-    template<class Expr> struct expr_s16_le { Expr expr; };
-    template<class Expr> struct expr_u16_be { Expr expr; };
-    template<class Expr> struct expr_u16_le { Expr expr; };
+#define MK(T, name, Tag) template<class Expr> using name = expr_base<T, Expr, Tag>
 
-    template<class Expr> struct expr_s32_be { Expr expr; };
-    template<class Expr> struct expr_s32_le { Expr expr; };
-    template<class Expr> struct expr_u32_be { Expr expr; };
-    template<class Expr> struct expr_u32_le { Expr expr; };
+    MK(int8_t, expr_s8, void);
+    MK(uint8_t, expr_u8, void);
 
-    template<class Expr> struct expr_s64_be { Expr expr; };
-    template<class Expr> struct expr_s64_le { Expr expr; };
-    template<class Expr> struct expr_u64_be { Expr expr; };
-    template<class Expr> struct expr_u64_le { Expr expr; };
+    MK(int16_t, expr_s16_be, be_tag);
+    MK(int16_t, expr_s16_le, le_tag);
+    MK(uint16_t, expr_u16_be, be_tag);
+    MK(uint16_t, expr_u16_le, le_tag);
+
+    MK(int32_t, expr_s32_be, be_tag);
+    MK(int32_t, expr_s32_le, le_tag);
+    MK(uint32_t, expr_u32_be, be_tag);
+    MK(uint32_t, expr_u32_le, le_tag);
+
+    MK(int64_t, expr_s64_be, be_tag);
+    MK(int64_t, expr_s64_le, le_tag);
+    MK(uint64_t, expr_u64_be, be_tag);
+    MK(uint64_t, expr_u64_le, le_tag);
+
+#undef MK
     /** @} */
 }
 
