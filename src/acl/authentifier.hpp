@@ -449,7 +449,7 @@ public:
              "service='%s' "
              "account='%s' "
              "data='%s' "
-             "info='%s'"
+             "%s"
            , session_type
            , type
            , this->ini.get<cfg::context::session_id>().c_str()

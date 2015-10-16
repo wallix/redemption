@@ -6283,7 +6283,8 @@ public:
                     contian_window_title);
 
                 if (!contian_window_title && this->acl) {
-                    this->acl->log2("AGT event", order.c_str(), parameters.c_str());
+                    std::string info("info='" + parameters + "'");
+                    this->acl->log2("AGT event", order.c_str(), info.c_str());
                 }
             }
             else {

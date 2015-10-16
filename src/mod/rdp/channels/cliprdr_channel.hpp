@@ -362,17 +362,27 @@ private:
                     this->file_descriptor_stream.get_offset()
                 );
                 fd.receive(in_stream);
-                fd.log(LOG_INFO);
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    fd.log(LOG_INFO);
+                }
 
                 if (this->param_acl) {
+                    std::string info("name='");
+                    info += fd.fileName();
+                    info += "' size=";
+                    info += std::to_string(fd.file_size());
+
                     this->param_acl->log2("CNT event",
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-                        fd.fileName());
+                        info.c_str());
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
                     message += fd.fileName();
+                    message += "<";
+                    message += std::to_string(fd.file_size());
+                    message += ">";
 
                     bool contian_window_title = false;
                     this->front.session_update(message.c_str(),
@@ -386,17 +396,27 @@ private:
                 RDPECLIP::FileDescriptor fd;
 
                 fd.receive(chunk);
-                fd.log(LOG_INFO);
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    fd.log(LOG_INFO);
+                }
 
                 if (this->param_acl) {
+                    std::string info("name='");
+                    info += fd.fileName();
+                    info += "' size=";
+                    info += std::to_string(fd.file_size());
+
                     this->param_acl->log2("CNT event",
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-                        fd.fileName());
+                        info.c_str());
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
                     message += fd.fileName();
+                    message += "<";
+                    message += std::to_string(fd.file_size());
+                    message += ">";
 
                     bool contian_window_title = false;
                     this->front.session_update(message.c_str(),
@@ -877,17 +897,27 @@ public:
                     this->file_descriptor_stream.get_offset()
                 );
                 fd.receive(in_stream);
-                fd.log(LOG_INFO);
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    fd.log(LOG_INFO);
+                }
 
                 if (this->param_acl) {
+                    std::string info("name='");
+                    info += fd.fileName();
+                    info += "' size=";
+                    info += std::to_string(fd.file_size());
+
                     this->param_acl->log2("CNT event",
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
-                        fd.fileName());
+                        info.c_str());
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");
                     message += fd.fileName();
+                    message += "<";
+                    message += std::to_string(fd.file_size());
+                    message += ">";
 
                     bool contian_window_title = false;
                     this->front.session_update(message.c_str(),
@@ -901,17 +931,27 @@ public:
                 RDPECLIP::FileDescriptor fd;
 
                 fd.receive(chunk);
-                fd.log(LOG_INFO);
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    fd.log(LOG_INFO);
+                }
 
                 if (this->param_acl) {
+                    std::string info("name='");
+                    info += fd.fileName();
+                    info += "' size=";
+                    info += std::to_string(fd.file_size());
+
                     this->param_acl->log2("CNT event",
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
-                        fd.fileName());
+                        info.c_str());
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");
                     message += fd.fileName();
+                    message += "<";
+                    message += std::to_string(fd.file_size());
+                    message += ">";
 
                     bool contian_window_title = false;
                     this->front.session_update(message.c_str(),
