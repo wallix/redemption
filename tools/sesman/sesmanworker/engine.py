@@ -817,7 +817,7 @@ class Engine(object):
             return None
         if target.resource.application:
             target_name = target.resource.application.cn
-            device_host = None,
+            device_host = None
         else:
             target_name = target.resource.device.cn
             device_host = target.resource.device.host
@@ -825,7 +825,7 @@ class Engine(object):
         account_login = self.get_account_login(target)
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
-        conn_cmd = target.resource.service.authmechanism.data
+        conn_cmd = target.resource.service.connectionpolicy.data
         autologon = target.account.isAgentForwardable
         return LoginInfo(account_login=account_login,
                          target_name=target_name,
