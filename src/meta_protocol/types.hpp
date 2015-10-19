@@ -203,6 +203,81 @@ template<class Expr> detail_::enable_if_expr<Expr, types::expr_u64_le> u64_le(Ex
 /** @} */
 
 
+namespace types {
+
+    struct none {};
+
+    template<class Condition, class If, class Else>
+    struct if_
+    {
+        Condition cond;
+        If yes;
+        Else no;
+    };
+}
+
+namespace detail_ {
+    struct bool_function
+    {
+        bool_function(bool val)
+        : val_(val)
+        {}
+
+        bool operator()() const {
+            return val_;
+        }
+
+    private:
+        bool val_;
+    };
+    template<class T, bool = std::is_integral<T>::value> struct to_function { using type = T; };
+    template<class T> struct to_function<T, true> { using type = bool_function; };
+}
+
+namespace detail_ {
+    template<class T> struct is_condition_impl : std::false_type {};
+
+    template<class Cond, class If, class Else>
+    struct is_condition_impl<types::if_<Cond, If, Else>> : std::true_type {};
+}
+
+template<class T> using is_condition = typename detail_::is_condition_impl<
+    typename std::remove_reference<typename std::decay<T>::type>::type
+>::type;
+
+template<class Cond, class If>
+types::if_<typename detail_::to_function<Cond>::type, If, types::none>
+if_(Cond cond, If yes) {
+    return {cond, yes, {}};
+}
+
+template<class Cond, class If, class Else>
+types::if_<typename detail_::to_function<Cond>::type, If, Else>
+if_(Cond cond, If yes, Else no) {
+    return {cond, yes, no};
+}
+
+
+
+template<std::size_t N>
+struct size_ : std::integral_constant<std::size_t, N>
+{};
+
+template<std::size_t n1, std::size_t n2>
+size_<n1+n2> operator+(size_<n1> const &, size_<n2> const &) {
+    return {};
+}
+
+
+template<class T>
+size_<sizeof(types::type_base_t<T>)> sizeof_(T const &) {
+    return {};
+}
+
+size_<0> sizeof_(types::none) {
+    return {};
+}
+
 // template<int, class T> struct placeholder
 // {
 //     using type = T;
