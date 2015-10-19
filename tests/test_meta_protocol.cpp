@@ -52,6 +52,79 @@ namespace proto {
 
 using namespace meta_protocol;
 
+template<class T>
+static std::make_index_sequence<std::tuple_size<T>::value>
+tuple_to_index_sequence(T const &) {
+    return {};
+}
+
+template<class Fn, class... T>
+struct lazy_fn
+{
+    std::tuple<T...> t;
+    Fn fn;
+
+    template<class Layout>
+    void operator()(Layout && layout) const {
+        this->apply(layout, tuple_to_index_sequence(this->t));
+    }
+
+private:
+    template<class Layout, size_t... Ints>
+    void apply(Layout && layout, std::integer_sequence<size_t, Ints...>) const {
+        using std::get;
+        this->fn(layout, get<Ints>(this->t)...);
+    }
+};
+
+template<class Fn, class... T>
+lazy_fn<Fn, T...> lazy(Fn fn, T && ... args) {
+    return lazy_fn<Fn, T...>{std::tuple<T...>{args...}, fn};
+}
+
+template<class T, class U = void>
+struct enable_type {
+    using type = U;
+};
+
+namespace detail_ {
+    template<class T, class = void>
+    struct is_layout_impl : std::false_type
+    {};
+
+    template<class T>
+    struct is_layout_impl<T, typename enable_type<typename T::is_layout>::type> : T::is_layout
+    {};
+}
+
+template<class T>
+using is_layout = detail_::is_layout_impl<typename std::remove_reference<T>::type>;
+
+template<class FnClass>
+struct protocol_wrapper
+{
+    FnClass operator()() const {
+        return {};
+    }
+
+    template<class T, class... Ts>
+    typename std::enable_if<is_layout<T>::value>::type
+    operator()(T && arg, Ts && ... args) const {
+        FnClass()(arg, args...);
+    }
+
+    template<class T, class... Ts>
+    typename std::enable_if<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>::type
+    operator()(T && arg, Ts && ... args) const {
+        return {std::tuple<T, Ts...>{arg, args...}, FnClass{}};
+    }
+
+    static constexpr protocol_wrapper value{};
+};
+template<class FnClass>
+constexpr protocol_wrapper<FnClass> protocol_wrapper<FnClass>::value;
+
+
 struct pkt_data {};
 struct pkt_sz {};
 struct pkt_sz_with_header {};
@@ -79,7 +152,11 @@ struct dt_tpdu_send_fn
         , u8<X224::DT_TPDU>()
         , u8<X224::EOT_EOT>());
     }
-} dt_tpdu_send;
+};
+
+namespace {
+    constexpr auto && dt_tpdu_send = protocol_wrapper<dt_tpdu_send_fn>::value;
+}
 
 
 struct signature_send
@@ -106,7 +183,11 @@ struct sec_send_fn
             if_(flags & SEC::SEC_ENCRYPT, signature_send{data, data_sz, crypt})
         );
     }
-} sec_send;
+};
+
+namespace {
+    constexpr auto && sec_send = protocol_wrapper<sec_send_fn>::value;
+}
 
 template<class Fn, class Accu>
 Accu fold(Fn const &, Accu accu) {
@@ -165,6 +246,8 @@ struct suitable_layout
 {
     Tuple & tuple;
     TupleFn const & fn;
+
+    using is_layout = std::true_type;
 
     template<class... Ts>
     auto operator()(Ts && ... args) const {
@@ -246,12 +329,6 @@ struct suitable_layout
         return this->eval_branch(size_<I+1>(), size_<N>(), t, args..., a);
     }
 };
-
-template<class T>
-static std::make_index_sequence<std::tuple_size<T>::value>
-tuple_to_index_sequence(T const &) {
-    return {};
-}
 
 
 template<class Fn, class Tuple, size_t... Ints>
@@ -416,30 +493,6 @@ auto send(Fn fn, W && writer, Ws && ... writers) {
     return writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers)+2u>{t, ws});
 }
 
-template<class Fn, class... T>
-struct lazy_fn
-{
-    std::tuple<T...> t;
-    Fn fn;
-
-    template<class Layout>
-    void operator()(Layout && layout) const {
-        this->apply(layout, tuple_to_index_sequence(this->t));
-    }
-
-private:
-    template<class Layout, size_t... Ints>
-    void apply(Layout && layout, std::integer_sequence<size_t, Ints...>) const {
-        this->fn(layout, get<Ints>(this->t)...);
-    }
-};
-
-template<class Fn, class... T>
-lazy_fn<Fn, T...> lazy(Fn fn, T && ... t) {
-    return lazy_fn<Fn, T...>{std::tuple<T...>{t...}, fn};
-}
-
-
 }
 
 #include <chrono>
@@ -534,7 +587,7 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
             },
             proto::dt_tpdu_send,
-            proto::lazy(proto::sec_send, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
         );
     }
