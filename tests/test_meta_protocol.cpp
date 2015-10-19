@@ -48,12 +48,79 @@ static void clobber() {
    asm volatile("" : : : "memory");
 }
 
+#if __cplusplus <= 201103L
+namespace meta_ {
+    template<class T, T... Ints>
+    struct integer_sequence {};
+
+    template<std::size_t... Ints>
+    using index_sequence = integer_sequence<std::size_t, Ints...>;
+
+    namespace detail_ {
+        template<std::size_t... Indexes>
+        struct integer_sequence_ext
+        {
+            using next = integer_sequence_ext<Indexes..., sizeof...(Indexes)>;
+            using seq = integer_sequence<std::size_t, Indexes...>;
+        };
+
+        template<std::size_t Num>
+        struct make_integer_sequence_ext
+        { using type = typename make_integer_sequence_ext<Num-1>::type::next; };
+
+        template<>
+        struct make_integer_sequence_ext<0>
+        { using type = integer_sequence_ext<>; };
+
+        /// Builds an parameter_index<0, 1, 2, ..., Num-1>.
+        template<std::size_t Num>
+        struct build_parameter_index
+        { using type = typename make_integer_sequence_ext<Num>::type::seq; };
+
+        template<class T, class Seq>
+        struct type_sequence_converter;
+
+        template<class T, class U, U... Ints>
+        struct type_sequence_converter<T, integer_sequence<U, Ints...>>
+        { using type = integer_sequence<T, T(Ints)...>; };
+    }
+
+    template<class T, T N>
+    using make_integer_sequence = typename detail_::type_sequence_converter<
+        T, typename detail_::make_integer_sequence_ext<std::size_t(N)>::type::seq
+    >::type;
+
+    template<std::size_t N>
+    using make_index_sequence = make_integer_sequence<std::size_t, N>;
+
+    template<class... T>
+    using index_sequence_for = make_index_sequence<sizeof...(T)>;
+}
+namespace std {
+    using ::meta_::integer_sequence;
+    using ::meta_::index_sequence;
+    using ::meta_::make_index_sequence;
+    using ::meta_::make_integer_sequence;
+    using ::meta_::index_sequence_for;
+}
+#endif
+
 namespace proto {
 
 using namespace meta_protocol;
 
+using std::get;
+
+struct plus
+{
+    template<class T, class U>
+    auto operator()(T&& x, U&& y) const
+    -> decltype(std::forward<T>(x) + std::forward<U>(y))
+    { return std::forward<T>(x) + std::forward<U>(y); }
+};
+
 template<class T>
-static std::make_index_sequence<std::tuple_size<T>::value>
+std::make_index_sequence<std::tuple_size<T>::value>
 tuple_to_index_sequence(T const &) {
     return {};
 }
@@ -132,8 +199,8 @@ struct pkt_sz_with_header {};
 struct dt_tpdu_send_fn
 {
     template<class Layout>
-    auto operator()(Layout && layout, size_t payload_len) const {
-        return layout(
+    void operator()(Layout && layout, size_t payload_len) const {
+        layout(
           u8<0x03>()
         , u8<0x00>()
         , u16_be(payload_len + 7u)
@@ -143,8 +210,8 @@ struct dt_tpdu_send_fn
     }
 
     template<class Layout>
-    auto operator()(Layout && layout) const {
-        return layout(
+    void operator()(Layout && layout) const {
+        layout(
           u8<0x03>()
         , u8<0x00>()
         , u16_be(pkt_sz_with_header())
@@ -174,11 +241,11 @@ size_<8> sizeof_(signature_send const &) {
 struct sec_send_fn
 {
     template<class Layout>
-    auto operator()(Layout && layout,
+    void operator()(Layout && layout,
         uint8_t * data, size_t data_sz, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel
     ) const {
         flags |= encryptionLevel ? SEC::SEC_ENCRYPT : 0;
-        return layout(
+        layout(
             if_(flags, u32_le(flags)),
             if_(flags & SEC::SEC_ENCRYPT, signature_send{data, data_sz, crypt})
         );
@@ -189,15 +256,41 @@ namespace {
     constexpr auto && sec_send = protocol_wrapper<sec_send_fn>::value;
 }
 
+namespace detail_ {
+    template<class Fn, class Accu, class...>
+    struct fold_type
+    { using type = Accu; };
+
+    template<class Fn, class Accu, class T, class... Ts>
+    struct fold_type<Fn, Accu, T, Ts...>
+    : fold_type<Fn, decltype(std::declval<Fn>()(std::declval<Accu>(), std::declval<T&&>())), Ts...>
+    {};
+}
+
 template<class Fn, class Accu>
 Accu fold(Fn const &, Accu accu) {
     return accu;
 }
 
 template<class Fn, class Accu, class T, class... Ts>
-auto fold(Fn fn, Accu accu, T && arg, Ts && ... args) {
+typename detail_::fold_type<Fn, Accu, T&&, Ts&&...>::type
+fold(Fn fn, Accu accu, T && arg, Ts && ... args) {
     return fold(fn, fn(accu, arg), args...);
 }
+
+
+template<class Fn, class Tuple, size_t... Ints>
+auto tuple_fold(Fn fn, Tuple && t, std::index_sequence<Ints...>)
+-> decltype(fold(fn, get<Ints>(t)...)) {
+    return fold(fn, get<Ints>(t)...);
+}
+
+template<class Fn, class Tuple>
+auto tuple_fold(Fn fn, Tuple && t)
+-> decltype(tuple_fold(fn, t, tuple_to_index_sequence(t))) {
+    return tuple_fold(fn, t, tuple_to_index_sequence(t));
+}
+
 
 
 struct stream_writer_layout
@@ -250,9 +343,9 @@ struct suitable_layout
     using is_layout = std::true_type;
 
     template<class... Ts>
-    auto operator()(Ts && ... args) const {
+    void operator()(Ts && ... args) const {
         std::tuple<Ts&...> t(args...);
-        return this->filter_branch(
+        this->filter_branch(
             std::is_same<
                 pack<is_condition<Ts>...>,
                 pack<use<Ts, std::false_type>...>
@@ -261,22 +354,22 @@ struct suitable_layout
         );
     }
 
-    auto operator()() const {
+    void operator()() const {
         std::tuple<> t;
-        return this->filter_branch(std::true_type{}, t);
+        this->filter_branch(std::true_type{}, t);
     }
 
     /// \brief if no branch condition
     template<class TupleArgs>
-    auto filter_branch(std::true_type, TupleArgs & t) const {
+    void filter_branch(std::true_type, TupleArgs & t) const {
         auto tcat = std::tie(this->tuple, t);
-        return get<Level>(fn)(suitable_layout<decltype(tcat), TupleFn, Level+1, LevelEnd>{tcat, fn});
+        get<Level>(fn)(suitable_layout<decltype(tcat), TupleFn, Level+1, LevelEnd>{tcat, fn});
     }
 
     /// \brief if branch condition
     template<class TupleArgs>
-    auto filter_branch(std::false_type, TupleArgs & t) const {
-        return this->eval_branch(
+    void filter_branch(std::false_type, TupleArgs & t) const {
+        this->eval_branch(
             size_<0>(),
             size_<std::tuple_size<TupleArgs>::value>(),
             t
@@ -284,9 +377,9 @@ struct suitable_layout
     }
 
     template<size_t I, size_t N, class TupleArgs, class... Ts>
-    auto eval_branch(size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        return this->eval_if(
-            is_condition<std::decay_t<decltype(get<I>(t))>>{},
+    void eval_branch(size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
+        this->eval_if(
+            is_condition<typename std::decay<decltype(get<I>(t))>::type>{},
             size_<I>(),
             size_<N>(),
             get<I>(t),
@@ -296,9 +389,9 @@ struct suitable_layout
     }
 
     template<size_t N, class TupleArgs, class... Ts>
-    auto eval_branch(size_<N>, size_<N>, TupleArgs &, Ts & ... args) const {
+    void eval_branch(size_<N>, size_<N>, TupleArgs &, Ts & ... args) const {
         std::tuple<Ts&...> t(args...);
-        return this->filter_branch(std::true_type{}, t);
+        this->filter_branch(std::true_type{}, t);
     }
 
     template<size_t I, size_t N, class Cond, class Yes, class No, class TupleArgs, class... Ts>
@@ -325,21 +418,10 @@ struct suitable_layout
     }
 
     template<size_t I, size_t N, class T, class TupleArgs, class... Ts>
-    auto eval_if(std::false_type, size_<I>, size_<N>, T & a, TupleArgs & t, Ts & ... args) const {
-        return this->eval_branch(size_<I+1>(), size_<N>(), t, args..., a);
+    void eval_if(std::false_type, size_<I>, size_<N>, T & a, TupleArgs & t, Ts & ... args) const {
+        this->eval_branch(size_<I+1>(), size_<N>(), t, args..., a);
     }
 };
-
-
-template<class Fn, class Tuple, size_t... Ints>
-auto tuple_fold(Fn fn, Tuple && t, std::index_sequence<Ints...>) {
-    return fold(fn, get<Ints>(t)...);
-}
-
-template<class Fn, class Tuple>
-auto tuple_fold(Fn fn, Tuple && t) {
-    return tuple_fold(fn, t, tuple_to_index_sequence(t));
-}
 
 
 template<std::size_t N>
@@ -388,7 +470,7 @@ private:
 
     //uint8_t data_[(N + sizeof(void*) - 1u) & -sizeof(void*)];
     //uint8_t data_[sizeof(std::aligned_storage_t<N>)];
-    uint8_t data_[sizeof(std::aligned_storage_t<N, sizeof(void*)>)];
+    uint8_t data_[sizeof(typename std::aligned_storage<N, sizeof(void*)>::type)];
     size_t size_;
 };
 
@@ -412,6 +494,30 @@ struct reverse_index_impl<
 >
 { using type = std::integer_sequence<size_t, Ints...>; };
 
+namespace detail_ {
+    template<class Seq, class TupleSz, class... Ts>
+    struct accumulate_size_type
+    { using type = std::tuple<Ts...>; };
+
+    template<size_t Int, size_t... Ints, class TupleSz>
+    struct accumulate_size_type<std::index_sequence<Int, Ints...>, TupleSz>
+    : accumulate_size_type<
+        std::index_sequence<Ints...>,
+        TupleSz,
+        typename std::tuple_element<Int, TupleSz>::type
+    > {};
+
+    template<size_t Int, size_t... Ints, class TupleSz, class T, class... Ts>
+    struct accumulate_size_type<std::index_sequence<Int, Ints...>, TupleSz, T, Ts...>
+    : accumulate_size_type<
+        std::index_sequence<Ints...>,
+        TupleSz,
+        decltype(std::declval<T>() + std::declval<typename std::tuple_element<Int, TupleSz>::type>()),
+        T,
+        Ts...
+    > {};
+}
+
 template<class Tuple, class TupleFn, size_t I>
 struct suitable_layout<Tuple, TupleFn, I, I>
 {
@@ -427,14 +533,13 @@ struct suitable_layout<Tuple, TupleFn, I, I>
         return {};
     }
 
-
-    auto operator()() const {
-        return derec(this->tuple);
+    void operator()() const {
+        derec(this->tuple);
     }
 
     template<class TupleRec, class... Packets>
-    auto derec(TupleRec && trec, Packets && ... packets) const {
-        return this->derec(
+    void derec(TupleRec && trec, Packets && ... packets) const {
+        this->derec(
             std::get<0>(trec),
             std::get<1>(trec),
             packets...
@@ -442,33 +547,36 @@ struct suitable_layout<Tuple, TupleFn, I, I>
     }
 
     template<class... Packets>
-    auto derec(std::tuple<>, Packets && ... packets) const {
+    void derec(std::tuple<>, Packets && ... packets) const {
         auto szs = std::make_tuple(this->packet_size(tuple_to_index_sequence(packets), packets)...);
         auto accu_szs = accumulate_size(reverse_index(tuple_to_index_sequence(szs)), szs);
-        auto sz = tuple_fold(std::plus<>{}, accu_szs);
+        auto sz = tuple_fold(plus{}, accu_szs);
         using sz_t = decltype(sz);
         Array<sz_t::value> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
         get<0>(this->fn)(arr.data(), arr.size());
     }
 
     template<size_t Int, size_t... Ints, class TupleSz>
-    auto accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs) const {
+    typename detail_::accumulate_size_type<std::index_sequence<Int, Ints...>, TupleSz>::type
+    accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs) const {
         return accumulate_size(std::index_sequence<Ints...>{}, szs, get<Int>(szs));
     }
 
     template<size_t Int, size_t... Ints, class TupleSz, class T, class... Ts>
-    auto accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs, T sz, Ts ... sz_others) const {
+    typename detail_::accumulate_size_type<std::index_sequence<Int, Ints...>, TupleSz, T, Ts...>::type
+    accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs, T sz, Ts ... sz_others) const {
         return accumulate_size(std::index_sequence<Ints...>{}, szs, sz + get<Int>(szs), sz, sz_others...);
     }
 
     template<class TupleSz, class... Ts>
-    auto accumulate_size(std::index_sequence<>, TupleSz &, Ts ... sz) const {
-        return std::make_tuple(sz...);
+    std::tuple<Ts...> accumulate_size(std::index_sequence<>, TupleSz &, Ts ... sz) const {
+        return std::tuple<Ts...>(sz...);
     }
 
     template<size_t... Ints, class Packet>
-    auto packet_size(std::index_sequence<Ints...>, Packet & packet) const {
-        return fold(std::plus<>{}, sizeof_(get<Ints>(packet))...);
+    auto packet_size(std::index_sequence<Ints...>, Packet & packet) const
+    -> decltype(fold(plus{}, sizeof_(get<Ints>(packet))...)) {
+        return fold(plus{}, sizeof_(get<Ints>(packet))...);
     }
 
     template<class Packet>
@@ -480,17 +588,16 @@ struct suitable_layout<Tuple, TupleFn, I, I>
 struct terminal_
 {
     template<class Layout>
-    auto operator()(Layout && layout) const {
-        return layout();
+    void operator()(Layout && layout) const {
+        layout();
     }
 };
 
 template<class Fn, class W, class... Ws>
-auto send(Fn fn, W && writer, Ws && ... writers) {
-    terminal_ terminal;
-    auto ws = std::tie(fn, writers..., terminal);
+void send(Fn fn, W && writer, Ws && ... writers) {
+    std::tuple<Fn&, Ws&..., terminal_> ws(fn, writers..., terminal_());
     std::tuple<> t;
-    return writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers)+2u>{t, ws});
+    writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers) + 2u>{t, ws});
 }
 
 }
@@ -550,7 +657,7 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
             },
-            [&](auto && layout) { return proto::sec_send(layout, data, 10, 0, crypt, 0); }
+            proto::sec_send(data, 10, 0, crypt, 0)
         );
     }
 
