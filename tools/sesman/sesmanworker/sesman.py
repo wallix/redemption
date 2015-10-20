@@ -44,6 +44,7 @@ import engine
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
+from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE
 from engine import TargetContext
 from engine import parse_auth
 
@@ -354,7 +355,15 @@ class Sesman():
         return _status, _error
 
 
-    def complete_target_info(self, kv):
+    def complete_target_info(self, kv, allow_interactive_password = True):
+        """
+        This procedure show interactive screen to enter target host, target login
+        and target password if needed:
+        * Host is asked if host information is a subnet
+        * Login is asked if it is a interactive login
+        * password is asked if it is missing and it is allowed to ask for interactive password
+
+        """
         keylist = [ u'target_password', u'target_login', u'target_host' ]
         extkv = dict((x, kv.get(x)) for x in keylist if kv.get(x) is not None)
         tries = 3
@@ -362,12 +371,14 @@ class Sesman():
         while (tries > 0) and (_status is None) :
             tries -= 1
             interactive_data = {}
-            if not extkv[u'target_password']:
+            if (not extkv[u'target_password'] and
+                allow_interactive_password):
                 interactive_data[u'target_password'] = MAGICASK
             if (extkv.get(u'target_login') == GENERICLOGIN or
                 not extkv.get(u'target_login')):
-                interactive_data[u'target_password'] = MAGICASK
                 interactive_data[u'target_login'] = MAGICASK
+                if allow_interactive_password:
+                    interactive_data[u'target_password'] = MAGICASK
             target_subnet = None
             if '/' in extkv.get(u'target_host'): # target_host is a subnet
                 target_subnet = extkv.get(u'target_host')
@@ -1178,8 +1189,11 @@ class Sesman():
                     release_reason = u''
 
                     try:
+                        auth_policy_methods = self.engine.get_target_auth_methods(
+                            physical_target)
                         Logger().info("auth_mode_passthrough=%s" % self.passthrough_mode)
 
+                        target_password = ''
                         if self.passthrough_mode:
                             kv[u'target_login'] = self.passthrough_target_login
                             if self.shared.get(u'password') == MAGICASK:
@@ -1188,11 +1202,16 @@ class Sesman():
                                 target_password = self.shared.get(u'password')
                             #Logger().info("auth_mode_passthrough target_password=%s" % target_password)
                             kv[u'password'] = u'password'
-                        else:
+                        elif PASSWORD_VAULT in auth_policy_methods:
                             target_password = self.engine.get_target_password(physical_target)
 
+                        allow_interactive_password = (
+                            self.passthrough_mode or
+                            PASSWORD_INTERACTIVE in auth_policy_methods)
+
                         kv[u'target_password'] = target_password
-                        extra_kv, _status, _error = self.complete_target_info(kv)
+                        extra_kv, _status, _error = self.complete_target_info(
+                            kv, allow_interactive_password)
                         kv.update(extra_kv)
 
                         if self.target_context:

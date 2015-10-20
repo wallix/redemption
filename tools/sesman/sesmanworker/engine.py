@@ -20,6 +20,9 @@ try:
     from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
     from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEYS
     from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY
+    from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
+        PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
+        SUPPORTED_AUTHENTICATION_METHODS
     from wabx509 import AuthX509
 except Exception, e:
     import traceback
@@ -799,7 +802,20 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return None
-        return target.account.isAgentForwardable
+        return target.resource.service.connectionpolicy.data.get('agent_forwarding_multihop')
+
+    def get_target_auth_methods(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
+            return SUPPORTED_AUTHENTICATION_METHODS
+        authmethods = SUPPORTED_AUTHENTICATION_METHODS
+        try:
+            # Logger().info("connectionpolicy")
+            # Logger().info("%s" % target.resource.service.connectionpolicy)
+            authmethods = target.resource.service.connectionpolicy.methods
+        except:
+            authmethods = SUPPORTED_AUTHENTICATION_METHODS
+        return authmethods
 
     def get_physical_target_info(self, physical_target):
         return PhysicalTarget(device_host=physical_target.resource.device.host,
@@ -862,6 +878,11 @@ class DisplayInfo(object):
         self.service_login = "%s@%s:%s" % (self.target_login, self.target_name, self.service_name)
         self.subprotocols = [x.cn for x in subproto] if subproto else []
         self.host = host
+
+    def get_target_tuple(self):
+        target_group = self.group.split(';')[0]
+        return (self.target_login.encode('utf-8'), self.target_name.encode('utf-8'),
+                self.service_name.encode('utf-8'), target_group.encode('utf-8'))
 
 class ProtocolInfo(object):
     def __init__(self, protocol, subprotocols=[]):
