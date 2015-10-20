@@ -21,15 +21,6 @@ try:
     from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEYS
     from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY
     from wabx509 import AuthX509
-    WAB_BANNER_LOGO = """
-         __      __         __   __   __
-        /  \    /  \_____  |  | |  | |__|__  ___
-        \   \/\/   /\__  \ |  | |  | |  \  \/  /
-         \        /  / __ \|  |_|  |_|  |>    <
-          \__/\  /  (____  /____/____/__/__/\_ \\
-               \/        \/                   \/
-            %s
-        """
 except Exception, e:
     import traceback
     tracelog = traceback.format_exc(e)
@@ -39,8 +30,8 @@ except Exception, e:
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
     except Exception, e:
-        Logger().info("wengine>>>>>> %s" % tracelog)
-        Logger().info("fake>>>>>> %s" % traceback.format_exc(e))
+        # Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
+        Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
 import time
 import socket
@@ -233,8 +224,10 @@ class Engine(object):
                 self.wabuser = self.wabengine.who_am_i()
                 self.primary_password = None
                 return True
+        except AuthenticationChallenged, e:
+            self.challenge = e.challenge
         except AuthenticationFailed, e:
-            pass
+            self.challenge = None
         except LicenseLimitReached, e:
             self.challenge = None
         except Exception, e:
@@ -645,7 +638,7 @@ class Engine(object):
             return target_password
         except Exception, e:
             import traceback
-            Logger().info("Engine get_target_password failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().debug("Engine get_target_password failed: (((%s)))" % (traceback.format_exc(e)))
         return u''
 
     def release_target_password(self, target_device, reason, target_application = None):
@@ -658,7 +651,7 @@ class Engine(object):
             Logger().debug("Engine release_target_password done")
         except Exception, e:
             import traceback
-            Logger().info("Engine release_target_password failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().debug("Engine release_target_password failed: (((%s)))" % (traceback.format_exc(e)))
 
     def get_pidhandler(self, pid):
         if not self.pidhandler:
@@ -760,13 +753,15 @@ class Engine(object):
         return self.wabengine.read_session_parameters(self.session_id, key=key)
 
     def check_target(self, target, pid=None, request_ticket=None):
+        Logger().debug("** CALL Check_target ** pid=%s, ticket=%s" %
+                      (self.get_pidhandler(pid), request_ticket))
         status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
                                                     request_ticket)
-        # Logger().info("status : %s" % status)
-        # Logger().info("infos : %s" % infos)
+        Logger().debug("** END Check_target ** returns => status=%s, info=%s" % (status, infos))
+        # Logger().info("returns => status=%s, info=%s" % (status, infos))
         deconnection_time = infos.get("deconnection_time")
         if deconnection_time:
-            Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
+#            Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
             target.deconnection_time = deconnection_time
             # update deconnection_time in right
         return status, infos
@@ -791,7 +786,8 @@ class Engine(object):
             return None
         isRecorded = target.authorization.isRecorded
         isCritical = target.authorization.isCritical
-        return ExtraInfo(isRecorded, isCritical)
+        hasApproval = target.authorization.hasApproval
+        return ExtraInfo(isRecorded, isCritical, hasApproval)
 
     def get_deconnection_time(self, selected_target=None):
         target = selected_target or self.target_right
@@ -821,7 +817,7 @@ class Engine(object):
         else:
             target_name = target.resource.device.cn
             device_host = target.resource.device.host
-            
+
         account_login = self.get_account_login(target)
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
@@ -873,9 +869,10 @@ class ProtocolInfo(object):
         self.subprotocols = subprotocols
 
 class ExtraInfo(object):
-    def __init__(self, is_recorded, is_critical):
+    def __init__(self, is_recorded, is_critical, has_approval):
         self.is_recorded = is_recorded
         self.is_critical = is_critical
+        self.has_approval = has_approval
 
 class PhysicalTarget(object):
     def __init__(self, device_host, account_login, service_port, device_id):
