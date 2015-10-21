@@ -526,6 +526,8 @@ if ! [ os.environ NO_MAKE_CONFIG ]
     }
 }
 
+exe regex_util : src/ftests/regex.cpp ;
+
 
 #exe freetype_draw : ftests/freetype_draw.cpp freetype
 #    : <link>static <variant>coverage:<library>gcov

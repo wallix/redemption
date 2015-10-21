@@ -85,13 +85,13 @@ namespace meta_ {
         { using type = integer_sequence<T, T(Ints)...>; };
     }
 
+    template<std::size_t N>
+    using make_index_sequence = typename detail_::make_integer_sequence_ext<N>::type::seq;
+
     template<class T, T N>
     using make_integer_sequence = typename detail_::type_sequence_converter<
-        T, typename detail_::make_integer_sequence_ext<std::size_t(N)>::type::seq
+        T, make_index_sequence<std::size_t(N)>
     >::type;
-
-    template<std::size_t N>
-    using make_index_sequence = make_integer_sequence<std::size_t, N>;
 
     template<class... T>
     using index_sequence_for = make_index_sequence<sizeof...(T)>;
@@ -184,14 +184,13 @@ struct protocol_wrapper
         return {};
     }
 
-    template<class T, class... Ts>
-    typename std::enable_if<is_layout<T>::value>::type
-    operator()(T && arg, Ts && ... args) const {
-        FnClass()(arg, args...);
+    template<class T, class... Ts, class = std::enable_if_t<is_layout<T>::value>>
+    auto operator()(T && arg, Ts && ... args) const {
+        return FnClass()(arg, args...);
     }
 
     template<class T, class... Ts>
-    typename std::enable_if<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>::type
+    std::enable_if_t<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>
     operator()(T && arg, Ts && ... args) const {
         return {std::tuple<T, Ts...>{arg, args...}, FnClass{}};
     }
@@ -207,8 +206,8 @@ struct pkt_sz_with_header {};
 struct dt_tpdu_send_fn
 {
     template<class Layout>
-    void operator()(Layout && layout) const {
-        layout(
+    auto operator()(Layout && layout) const {
+        return layout(
           u8<0x03>() // version 3
         , u8<0x00>()
         , u16_be(pkt_sz_with_header())
@@ -245,11 +244,11 @@ size_<8> sizeof_(signature_send const &) {
 struct sec_send_fn
 {
     template<class Layout>
-    void operator()(Layout && layout,
+    auto operator()(Layout && layout,
         uint8_t * data, size_t data_sz, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel
     ) const {
         flags |= encryptionLevel ? SEC::SEC_ENCRYPT : 0;
-        layout(
+        return layout(
             if_(flags, u32_le(flags)),
             if_(flags & SEC::SEC_ENCRYPT, signature_send{data, data_sz, crypt})
         );
@@ -301,31 +300,24 @@ struct stream_writer
 {
     OutStream & out_stream;
 
-    template<class... Ts>
-    void operator()(Ts && ... args) const {
-        (void)std::initializer_list<int>{(void(
-            this->write(args)
-        ), 1)...};
-    }
-
     template<class T, T x, class Tag>
-    void write(types::integral<T, x, Tag>) const {
-        this->write(types::dyn<T, Tag>{x});
+    void operator()(types::integral<T, x, Tag>) const {
+        (*this)(types::dyn<T, Tag>{x});
     }
 
-    void write(types::dyn_u8 x) const {
+    void operator()(types::dyn_u8 x) const {
         this->out_stream.out_uint8(x.x);
     }
 
-    void write(types::dyn_u16_be x) const {
+    void operator()(types::dyn_u16_be x) const {
         this->out_stream.out_uint16_be(x.x);
     }
 
-    void write(types::dyn_u32_le x) const {
+    void operator()(types::dyn_u32_le x) const {
         this->out_stream.out_uint32_le(x.x);
     }
 
-    void write(signature_send const & x) const {
+    void operator()(signature_send const & x) const {
         x.write(this->out_stream.get_current());
         this->out_stream.out_skip_bytes(sizeof_(x));
     }
@@ -637,11 +629,114 @@ struct terminal_
     }
 };
 
-template<class Fn, class W, class... Ws>
-void send(Fn fn, W && writer, Ws && ... writers) {
-    std::tuple<Fn&, Ws&..., terminal_> ws(fn, writers..., terminal_());
-    std::tuple<> t;
-    writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers) + 2u>{t, ws});
+
+template<class Yes, class No>
+auto static_if(std::true_type x, Yes && yes, No const &) {
+    return yes(x);
+}
+
+template<class Yes, class No>
+auto static_if(std::false_type x, Yes const &, No && no) {
+    return no(x);
+}
+
+
+template<size_t... Ints, class Fn>
+void for_each(std::integer_sequence<size_t, Ints...>, Fn fn) {
+    (void)std::initializer_list<int>{(void(fn(size_<Ints>())), 1)...};
+}
+
+
+template<class Fn, size_t... Ints, class... Args>
+void for_each_argument_with_index(std::integer_sequence<size_t, Ints...>, Fn fn, Args && ... args) {
+    (void)std::initializer_list<int>{(void(fn(std::integral_constant<size_t, Ints>(), args)), 1)...};
+}
+
+template<class Fn, class... Args>
+void for_each_argument_with_index(Fn fn, Args && ... args) {
+    for_each_argument_with_index(std::make_index_sequence<sizeof...(args)>(), fn, args...);
+}
+
+
+template<class Tuple, class Fn, size_t... Ints>
+auto apply(std::index_sequence<Ints...>, Tuple && t, Fn fn) {
+    return fn(get<Ints>(t)...);
+}
+
+template<class Tuple, class Fn>
+auto apply(Tuple && t, Fn fn) {
+    return apply(tuple_to_index_sequence(t), std::forward<Tuple>(t), fn);
+}
+
+
+template<size_t Int, class TupleSz, class T, class Tag>
+types::dyn<T, Tag> eval_expr(std::integral_constant<size_t, Int>, TupleSz & t, types::expr<T, pkt_sz, Tag> &) {
+    return {T(get<Int+1>(t))};
+}
+
+template<size_t Int, class TupleSz, class T, class Tag>
+types::dyn<T, Tag> eval_expr(std::integral_constant<size_t, Int>, TupleSz & t, types::expr<T, pkt_sz_with_header, Tag> &) {
+    return {T(get<Int>(t))};
+}
+
+template<size_t Int, class TupleSz, class T>
+T & eval_expr(std::integral_constant<size_t, Int>, TupleSz &, T & x) {
+    return x;
+}
+
+template<size_t... Ints>
+static typename reverse_index_impl<
+    std::integer_sequence<size_t, Ints...>,
+    std::integer_sequence<size_t>
+>::type
+reverse_index(std::integer_sequence<size_t, Ints...>) {
+    return {};
+}
+
+template<class TupleSz, class... Ts>
+std::tuple<Ts...> accumulate_size(std::index_sequence<>, TupleSz &, Ts ... sz) {
+    return std::tuple<Ts...>(sz...);
+}
+
+template<size_t Int, size_t... Ints, class TupleSz>
+auto accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs) {
+    return accumulate_size(std::index_sequence<Ints...>{}, szs, get<Int>(szs));
+}
+
+template<size_t Int, size_t... Ints, class TupleSz, class T, class... Ts>
+auto accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs, T sz, Ts ... sz_others) {
+    return accumulate_size(std::index_sequence<Ints...>{}, szs, sz + get<Int>(szs), sz, sz_others...);
+}
+
+
+template<class Fn, class... PacketFn>
+void eval(Fn fn, PacketFn && ... packet_fns)
+{
+    auto mk_tuple = [](auto && ... x) { return std::make_tuple(x...); };
+    [&fn, mk_tuple](auto && ... packets) {
+        auto szs = mk_tuple(apply(packets, [](auto const & ... x) {
+            return fold(plus{}, sizeof_(x)...);
+        })...);
+        auto accu_szs = accumulate_size(reverse_index(tuple_to_index_sequence(szs)), szs);
+        auto sz = get<0>(accu_szs);
+        using sz_t = decltype(sz);
+
+        uint8_t data[sizeof(typename std::aligned_storage<sz_t::value, sizeof(void*)>::type)];
+        OutStream out_stream(data, sz_t::value);
+        stream_writer writer{out_stream};
+
+        for_each_argument_with_index([&](auto i, auto & packet) {
+            apply(packet, [&](auto & ... x) {
+                (void)std::initializer_list<int>{(void(
+                    writer(eval_expr(i, accu_szs, x))
+                ), 1)...};
+            });
+        }, packets...);
+
+        size_t size = out_stream.get_offset();
+
+        fn(data, size);
+    }(packet_fns([](auto && ... x) { return std::make_tuple(x...); })...);
 }
 
 }
@@ -662,138 +757,142 @@ struct recursive_if_test {
 
 BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 {
-    {
-        StaticOutStream<1024> out_stream;
-        X224::DT_TPDU_Send(out_stream, 7);
-        X224::DT_TPDU_Send(out_stream, 0);
-
-        proto::send(
-            [&](uint8_t * data, size_t size) {
-                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-                //hexdump(out_stream.get_data(), out_stream.get_offset());
-                //hexdump(array.data(), array.size());
-                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-            },
-            proto::dt_tpdu_send,
-            proto::dt_tpdu_send
-        );
-    }
-
-    {
-        proto::send(
-            [&](uint8_t * data, size_t size) {
-                BOOST_REQUIRE_EQUAL(size, 1);
-                BOOST_REQUIRE_EQUAL(*data, 1);
-            },
-            recursive_if_test()
-        );
-    }
-
-    {
-        uint8_t data[10];
-        CryptContext crypt;
-
-        uint8_t buf[256];
-        OutStream out_stream(buf + 126, 126);
-        StaticOutStream<128> hstream;
-        SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-        X224::DT_TPDU_Send(hstream, out_stream.get_offset());
-        BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
-        BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
-        auto p = out_stream.get_data() - hstream.get_offset();
-        BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
-        memcpy(p, hstream.get_data(), hstream.get_offset());
-        out_stream = OutStream(p, out_stream.get_current() - p);
-        out_stream.out_skip_bytes(out_stream.get_capacity());
-
-        proto::send(
-            [&](uint8_t * data, size_t size) {
-                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-            },
-            proto::dt_tpdu_send,
-            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
-        );
-    }
-
-    {
-        using namespace meta_protocol;
-
-        using T1 = decltype(if_(0, u8<0>()));
-        using T2 = decltype(u8<0>());
-
-        static_assert(is_condition<T1>::value, "");
-        static_assert(!is_condition<T2>::value, "");
-
-        static_assert(std::is_same<
-            proto::pack<is_condition<T2>, is_condition<T2>>,
-            proto::pack<proto::use<T2, std::false_type>, proto::use<T2, std::false_type>>
-        >::value, "");
-
-        static_assert(!std::is_same<
-            proto::pack<is_condition<T1>, is_condition<T2>>,
-            proto::pack<proto::use<T1, std::false_type>, proto::use<T2, std::false_type>>
-        >::value, "");
-    }
-
-    {
-        StaticOutStream<1024> out_stream;
-        uint8_t data[10];
-        CryptContext crypt;
-        SEC::Sec_Send(out_stream, data, 10, 0, crypt, 0);
-
-        proto::send(
-            [&](uint8_t * data, size_t size) {
-                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-            },
-            proto::sec_send(data, 10, 0, crypt, 0)
-        );
-    }
-
-    {
-        StaticOutStream<1024> out_stream;
-        uint8_t data[10];
-        CryptContext crypt;
-        SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-
-        proto::send(
-            [&](uint8_t * data, size_t size) {
-                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-            },
-            proto::lazy(proto::sec_send, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
-        );
-    }
-
-    {
-        StaticOutStream<526> data_stream;
-        StaticOutStream<1024> out_stream;
-        uint8_t data[10];
-        CryptContext crypt;
-        SEC::Sec_Send(data_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-        X224::DT_TPDU_Send(out_stream, data_stream.get_offset());
-        out_stream.out_copy_bytes(data_stream.get_data(), data_stream.get_offset());
-
-        proto::send(
-            [&](uint8_t * data, size_t size) {
-                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-                hexdump(out_stream.get_data(), out_stream.get_offset());
-                hexdump(data, size);
-                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-            },
-            proto::dt_tpdu_send,
-            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
-        );
-    }
+    proto::eval(
+        [&](uint8_t * data, size_t size) {},
+        proto::dt_tpdu_send()
+    );
+//     {
+//         StaticOutStream<1024> out_stream;
+//         X224::DT_TPDU_Send(out_stream, 7);
+//         X224::DT_TPDU_Send(out_stream, 0);
+//
+//         proto::eval(
+//             [&](uint8_t * data, size_t size) {
+//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+//                 //hexdump(out_stream.get_data(), out_stream.get_offset());
+//                 //hexdump(array.data(), array.size());
+//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+//             },
+//             proto::dt_tpdu_send,
+//             proto::dt_tpdu_send
+//         );
+//     }
+//
+//     {
+//         proto::eval(
+//             [&](uint8_t * data, size_t size) {
+//                 BOOST_REQUIRE_EQUAL(size, 1);
+//                 BOOST_REQUIRE_EQUAL(*data, 1);
+//             },
+//             recursive_if_test()
+//         );
+//     }
+//
+//     {
+//         uint8_t data[10];
+//         CryptContext crypt;
+//
+//         uint8_t buf[256];
+//         OutStream out_stream(buf + 126, 126);
+//         StaticOutStream<128> hstream;
+//         SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+//         X224::DT_TPDU_Send(hstream, out_stream.get_offset());
+//         BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
+//         BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
+//         auto p = out_stream.get_data() - hstream.get_offset();
+//         BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
+//         memcpy(p, hstream.get_data(), hstream.get_offset());
+//         out_stream = OutStream(p, out_stream.get_current() - p);
+//         out_stream.out_skip_bytes(out_stream.get_capacity());
+//
+//         proto::eval(
+//             [&](uint8_t * data, size_t size) {
+//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+//             },
+//             proto::dt_tpdu_send,
+//             proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+//         );
+//     }
+//
+//     {
+//         using namespace meta_protocol;
+//
+//         using T1 = decltype(if_(0, u8<0>()));
+//         using T2 = decltype(u8<0>());
+//
+//         static_assert(is_condition<T1>::value, "");
+//         static_assert(!is_condition<T2>::value, "");
+//
+//         static_assert(std::is_same<
+//             proto::pack<is_condition<T2>, is_condition<T2>>,
+//             proto::pack<proto::use<T2, std::false_type>, proto::use<T2, std::false_type>>
+//         >::value, "");
+//
+//         static_assert(!std::is_same<
+//             proto::pack<is_condition<T1>, is_condition<T2>>,
+//             proto::pack<proto::use<T1, std::false_type>, proto::use<T2, std::false_type>>
+//         >::value, "");
+//     }
+//
+//     {
+//         StaticOutStream<1024> out_stream;
+//         uint8_t data[10];
+//         CryptContext crypt;
+//         SEC::Sec_Send(out_stream, data, 10, 0, crypt, 0);
+//
+//         proto::eval(
+//             [&](uint8_t * data, size_t size) {
+//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+//             },
+//             proto::sec_send(data, 10, 0, crypt, 0)
+//         );
+//     }
+//
+//     {
+//         StaticOutStream<1024> out_stream;
+//         uint8_t data[10];
+//         CryptContext crypt;
+//         SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+//
+//         proto::eval(
+//             [&](uint8_t * data, size_t size) {
+//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+//             },
+//             proto::lazy(proto::sec_send, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+//         );
+//     }
+//
+//     {
+//         StaticOutStream<526> data_stream;
+//         StaticOutStream<1024> out_stream;
+//         uint8_t data[10];
+//         CryptContext crypt;
+//         SEC::Sec_Send(data_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+//         X224::DT_TPDU_Send(out_stream, data_stream.get_offset());
+//         out_stream.out_copy_bytes(data_stream.get_data(), data_stream.get_offset());
+//
+//         proto::eval(
+//             [&](uint8_t * data, size_t size) {
+//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+//                 hexdump(out_stream.get_data(), out_stream.get_offset());
+//                 hexdump(data, size);
+//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+//             },
+//             proto::dt_tpdu_send,
+//             proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+//         );
+//     }
 
 //     auto test1 = [](uint8_t * p) {
 //         uint8_t data[10];
 //         CryptContext crypt;
-//         proto::send(
+//         proto::eval(
 //             [&](uint8_t * data, size_t sz) {
 // //                 escape(data);
 //                 memcpy(p, data, sz);
