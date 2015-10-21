@@ -258,6 +258,16 @@ namespace {
     constexpr auto && sec_send = protocol_fn<sec_send_fn>::value;
 }
 
+namespace detail_ {
+    template<class Fn, class Accu, class...>
+    struct fold_type
+    { using type = Accu; };
+
+    template<class Fn, class Accu, class T, class... Ts>
+    struct fold_type<Fn, Accu, T, Ts...>
+    : fold_type<Fn, decltype(std::declval<Fn>()(std::declval<Accu>(), std::declval<T&&>())), Ts...>
+    {};
+}
 
 template<class Fn, class Accu>
 Accu fold(Fn const &, Accu accu) {
@@ -265,7 +275,8 @@ Accu fold(Fn const &, Accu accu) {
 }
 
 template<class Fn, class Accu, class T, class... Ts>
-auto fold(Fn fn, Accu accu, T && arg, Ts && ... args) {
+typename detail_::fold_type<Fn, Accu, T&&, Ts&&...>::type
+fold(Fn fn, Accu accu, T && arg, Ts && ... args) {
     return fold(fn, fn(accu, arg), args...);
 }
 
@@ -517,17 +528,41 @@ private:
     size_t size_;
 };
 
+template<class List, class Reversed>
+struct reverse_index_impl;
 
-template<class Tuple, class Fn, size_t... Ints>
-auto apply(std::index_sequence<Ints...>, Tuple && t, Fn fn) {
-    return fn(get<Ints>(t)...);
+template<size_t OldInt, size_t... OldInts, size_t... NewInts>
+struct reverse_index_impl<
+    std::integer_sequence<size_t, OldInt, OldInts...>,
+    std::integer_sequence<size_t, NewInts...>
+> : reverse_index_impl<
+    std::integer_sequence<size_t, OldInts...>,
+    std::integer_sequence<size_t, OldInt, NewInts...>
+>
+{};
+
+template<size_t... Ints>
+struct reverse_index_impl<
+    std::integer_sequence<size_t>,
+    std::integer_sequence<size_t, Ints...>
+>
+{ using type = std::integer_sequence<size_t, Ints...>; };
+
+namespace detail_ {
+    template<size_t Int, class TupleSz, class T, class... Ts>
+    struct accumulate_size_type
+    : accumulate_size_type<
+        Int-1,
+        TupleSz,
+        decltype(std::declval<T>() + std::declval<typename std::tuple_element<Int-1, TupleSz>::type>()),
+        T,
+        Ts...
+    > {};
+
+    template<class TupleSz, class T, class... Ts>
+    struct accumulate_size_type<0, TupleSz, T, Ts...>
+    { using type = std::tuple<T, Ts...>; };
 }
-
-template<class Tuple, class Fn>
-auto apply(Tuple && t, Fn fn) {
-    return apply(tuple_to_index_sequence(t), std::forward<Tuple>(t), fn);
-}
-
 
 template<class Tuple, class TupleFn, size_t I>
 struct suitable_layout<Tuple, TupleFn, I, I>
@@ -539,6 +574,15 @@ struct suitable_layout<Tuple, TupleFn, I, I>
     // >
     Tuple & tuple;
     TupleFn const & fn;
+
+    template<size_t... Ints>
+    static typename reverse_index_impl<
+        std::integer_sequence<size_t, Ints...>,
+        std::integer_sequence<size_t>
+    >::type
+    reverse_index(std::integer_sequence<size_t, Ints...>) {
+        return {};
+    }
 
     void operator()() const {
         derec(this->tuple);
@@ -553,16 +597,10 @@ struct suitable_layout<Tuple, TupleFn, I, I>
         );
     }
 
-    void derec(std::tuple<>) const {
-        // nothing
-    }
-
     template<class... Packets>
     void derec(std::tuple<>, Packets && ... packets) const {
         // tuple(sizeof_(packets)...)
-        auto szs = std::make_tuple(apply(packets, [](auto & ... x) {
-            return fold(plus{}, size_<0>(), sizeof_(x)...);
-        })...);
+        auto szs = std::make_tuple(this->packet_size(tuple_to_index_sequence(packets), packets)...);
         constexpr size_t sz_count = sizeof...(packets);
         // tuple(sz3+sz2+sz1, sz2+sz1, sz1)
         auto accu_szs = accumulate_size(size_<sz_count-1>(), szs, get<sz_count-1>(szs));
@@ -586,13 +624,25 @@ struct suitable_layout<Tuple, TupleFn, I, I>
     }
 
     template<size_t Int, class TupleSz, class T, class... Ts>
-    auto accumulate_size(size_<Int>, TupleSz & szs, T sz, Ts ... sz_others) const {
+    typename detail_::accumulate_size_type<Int, TupleSz, T, Ts...>::type
+    accumulate_size(size_<Int>, TupleSz & szs, T sz, Ts ... sz_others) const {
         return accumulate_size(size_<Int-1>{}, szs, sz + get<Int-1>(szs), sz, sz_others...);
     }
 
     template<class TupleSz, class T, class... Ts>
     std::tuple<T, Ts...> accumulate_size(size_<0>, TupleSz &, T sz, Ts ... szs) const {
         return std::tuple<T, Ts...>(sz, szs...);
+    }
+
+    template<size_t... Ints, class Packet>
+    auto packet_size(std::index_sequence<Ints...>, Packet & packet) const
+    -> decltype(fold(plus{}, sizeof_(get<Ints>(packet))...)) {
+        return fold(plus{}, sizeof_(get<Ints>(packet))...);
+    }
+
+    template<class Packet>
+    size_<0> packet_size(std::index_sequence<>, Packet & packet) const {
+        return {};
     }
 };
 
