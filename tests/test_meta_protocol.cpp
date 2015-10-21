@@ -1,24 +1,22 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2013
-   Author(s): Raphael Zhou
-
-   Unit test of Verifier module
-*/
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *   Product name: redemption, a FLOSS RDP proxy
+ *   Copyright (C) Wallix 2010-2015
+ *   Author(s): Jonathan Poelen
+ */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -184,13 +182,14 @@ struct protocol_wrapper
         return {};
     }
 
-    template<class T, class... Ts, class = std::enable_if_t<is_layout<T>::value>>
-    auto operator()(T && arg, Ts && ... args) const {
-        return FnClass()(arg, args...);
+    template<class T, class... Ts>
+    typename std::enable_if<is_layout<T>::value>::type
+    operator()(T && arg, Ts && ... args) const {
+        FnClass()(arg, args...);
     }
 
     template<class T, class... Ts>
-    std::enable_if_t<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>
+    typename std::enable_if<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>::type
     operator()(T && arg, Ts && ... args) const {
         return {std::tuple<T, Ts...>{arg, args...}, FnClass{}};
     }
@@ -206,8 +205,8 @@ struct pkt_sz_with_header {};
 struct dt_tpdu_send_fn
 {
     template<class Layout>
-    auto operator()(Layout && layout) const {
-        return layout(
+    void operator()(Layout && layout) const {
+        layout(
           u8<0x03>() // version 3
         , u8<0x00>()
         , u16_be(pkt_sz_with_header())
@@ -244,11 +243,11 @@ size_<8> sizeof_(signature_send const &) {
 struct sec_send_fn
 {
     template<class Layout>
-    auto operator()(Layout && layout,
+    void operator()(Layout && layout,
         uint8_t * data, size_t data_sz, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel
     ) const {
         flags |= encryptionLevel ? SEC::SEC_ENCRYPT : 0;
-        return layout(
+        layout(
             if_(flags, u32_le(flags)),
             if_(flags & SEC::SEC_ENCRYPT, signature_send{data, data_sz, crypt})
         );
@@ -300,24 +299,31 @@ struct stream_writer
 {
     OutStream & out_stream;
 
-    template<class T, T x, class Tag>
-    void operator()(types::integral<T, x, Tag>) const {
-        (*this)(types::dyn<T, Tag>{x});
+    template<class... Ts>
+    void operator()(Ts && ... args) const {
+        (void)std::initializer_list<int>{(void(
+            this->write(args)
+        ), 1)...};
     }
 
-    void operator()(types::dyn_u8 x) const {
+    template<class T, T x, class Tag>
+    void write(types::integral<T, x, Tag>) const {
+        this->write(types::dyn<T, Tag>{x});
+    }
+
+    void write(types::dyn_u8 x) const {
         this->out_stream.out_uint8(x.x);
     }
 
-    void operator()(types::dyn_u16_be x) const {
+    void write(types::dyn_u16_be x) const {
         this->out_stream.out_uint16_be(x.x);
     }
 
-    void operator()(types::dyn_u32_le x) const {
+    void write(types::dyn_u32_le x) const {
         this->out_stream.out_uint32_le(x.x);
     }
 
-    void operator()(signature_send const & x) const {
+    void write(signature_send const & x) const {
         x.write(this->out_stream.get_current());
         this->out_stream.out_skip_bytes(sizeof_(x));
     }
@@ -331,18 +337,38 @@ template<class...> struct pack {};
 
 using std::get;
 
-template<class Tuple, class TupleFn, size_t Level, size_t LevelEnd>
+constexpr int test(...) { return 1; }
+
+template<class T>
+struct check_protocol_type
+{
+    using value_type = typename std::decay<T>::type;
+    static_assert(types::is_protocol_type<value_type>::value, "isn't a protocol type");
+};
+
+template<class Tuple, class TupleFn, size_t IFn, size_t EndFn>
 struct suitable_layout
 {
+    // Tuple_0 = tuple<>
+    // Tuple_n = tuple<
+    //  Tuple_(n - 1)
+    //  tuple<elements...>
+    // >
     Tuple & tuple;
     TupleFn const & fn;
 
     using is_layout = std::true_type;
 
+    using no_branch_condition = std::true_type;
+    using has_branch_condition = std::false_type;
+
+
     template<class... Ts>
     void operator()(Ts && ... args) const {
+        static_assert(test(check_protocol_type<Ts>()...), "");
         std::tuple<Ts&...> t(args...);
         this->filter_branch(
+            // if no condition
             std::is_same<
                 pack<is_condition<Ts>...>,
                 pack<use<Ts, std::false_type>...>
@@ -353,20 +379,20 @@ struct suitable_layout
 
     void operator()() const {
         std::tuple<> t;
-        this->filter_branch(std::true_type{}, t);
+        this->filter_branch(no_branch_condition{}, t);
     }
 
     /// \brief if no branch condition
     template<class TupleArgs>
-    void filter_branch(std::true_type, TupleArgs & t) const {
+    void filter_branch(no_branch_condition, TupleArgs & t) const {
         auto tcat = std::tie(this->tuple, t);
-        get<Level>(fn)(suitable_layout<decltype(tcat), TupleFn, Level+1, LevelEnd>{tcat, fn});
+        get<IFn>(fn)(suitable_layout<decltype(tcat), TupleFn, IFn+1, EndFn>{tcat, fn});
     }
 
     /// \brief if branch condition
     template<class TupleArgs>
-    void filter_branch(std::false_type, TupleArgs & t) const {
-        this->eval_branch(
+    void filter_branch(has_branch_condition, TupleArgs & t) const {
+        this->eval_branchs(
             size_<0>(),
             size_<std::tuple_size<TupleArgs>::value>(),
             t
@@ -374,8 +400,8 @@ struct suitable_layout
     }
 
     template<size_t I, size_t N, class TupleArgs, class... Ts>
-    void eval_branch(size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_if(
+    void eval_branchs(size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
+        this->eval_condition(
             size_<I>(),
             size_<N>(),
             get<I>(t),
@@ -385,13 +411,13 @@ struct suitable_layout
     }
 
     template<size_t N, class TupleArgs, class... Ts>
-    void eval_branch(size_<N>, size_<N>, TupleArgs &, Ts & ... args) const {
+    void eval_branchs(size_<N>, size_<N>, TupleArgs &, Ts & ... args) const {
         std::tuple<Ts&...> t(args...);
-        this->filter_branch(std::true_type{}, t);
+        this->filter_branch(no_branch_condition{}, t);
     }
 
     template<size_t I, size_t N, class Cond, class Yes, class No, class TupleArgs, class... Ts>
-    void eval_if(size_<I>, size_<N>, types::if_<Cond, Yes, No> & if_, TupleArgs & t, Ts & ... args) const {
+    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, No> & if_, TupleArgs & t, Ts & ... args) const {
         if (if_.cond()) {
             this->unpack(if_.yes, size_<I>(), size_<N>(), t, args...);
         }
@@ -401,18 +427,18 @@ struct suitable_layout
     }
 
     template<size_t I, size_t N, class Cond, class Yes, class TupleArgs, class... Ts>
-    void eval_if(size_<I>, size_<N>, types::if_<Cond, Yes, types::none> & if_, TupleArgs & t, Ts & ... args) const {
+    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, types::none> & if_, TupleArgs & t, Ts & ... args) const {
         if (if_.cond()) {
             this->unpack(if_.yes, size_<I>(), size_<N>(), t, args...);
         }
         else {
-            this->eval_branch(size_<I+1>(), size_<N>(), t, args...);
+            this->eval_branchs(size_<I+1>(), size_<N>(), t, args...);
         }
     }
 
     template<size_t I, size_t N, class T, class TupleArgs, class... Ts>
-    void eval_if(size_<I>, size_<N>, T & a, TupleArgs & t, Ts & ... args) const {
-        this->eval_branch(size_<I+1>(), size_<N>(), t, args..., a);
+    void eval_condition(size_<I>, size_<N>, T & a, TupleArgs & t, Ts & ... args) const {
+        this->eval_branchs(size_<I+1>(), size_<N>(), t, args..., a);
     }
 
     template<size_t N, size_t... I>
@@ -423,7 +449,7 @@ struct suitable_layout
     // recursive if
     template<class Cond, class Yes, class No, size_t I, size_t N, class TupleArgs, class... Ts>
     void unpack(types::if_<Cond, Yes, No> & if_, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_if(size_<I>(), size_<N>(), if_, t, args...);
+        this->eval_condition(size_<I>(), size_<N>(), if_, t, args...);
     }
 
     // extends TupleArgs: tuple(get<0..I>(), get<0..tuple_size(arg)>(arg), get<I+1..tuple_size(t)>(t))
@@ -439,7 +465,7 @@ struct suitable_layout
 
     template<class T, size_t I, size_t N, class TupleArgs, class... Ts>
     void unpack(T & arg, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_branch(size_<I+1>(), size_<N>(), t, args..., arg);
+        this->eval_branchs(size_<I+1>(), size_<N>(), t, args..., arg);
     }
 
     template<
@@ -455,13 +481,14 @@ struct suitable_layout
         I, N, Pack & pack, I, N, TupleArgs & t, Ts & ... args
     ) const {
         auto newt = std::tie(get<IBefore>(t)..., get<IPack>(pack)..., get<IAfter>(t)...);
-        this->eval_branch(I(), N(), newt, args...);
+        this->eval_branchs(I(), N(), newt, args...);
     }
 };
 
 
 template<std::size_t N>
-struct Array {
+struct Array
+{
     size_t size() const { return this->size_; }
     uint8_t * data() { return this->data_; }
 
@@ -557,6 +584,11 @@ namespace detail_ {
 template<class Tuple, class TupleFn, size_t I>
 struct suitable_layout<Tuple, TupleFn, I, I>
 {
+    // Tuple_0 = tuple<>
+    // Tuple_n = tuple<
+    //  Tuple_(n - 1)
+    //  tuple<elements...>
+    // >
     Tuple & tuple;
     TupleFn const & fn;
 
@@ -586,9 +618,22 @@ struct suitable_layout<Tuple, TupleFn, I, I>
     void derec(std::tuple<>, Packets && ... packets) const {
         auto szs = std::make_tuple(this->packet_size(tuple_to_index_sequence(packets), packets)...);
         auto accu_szs = accumulate_size(reverse_index(tuple_to_index_sequence(szs)), szs);
-        auto sz = tuple_fold(plus{}, accu_szs);
-        using sz_t = decltype(sz);
-        Array<sz_t::value> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
+        this->eval(get<0>(accu_szs), szs, accu_szs, packets...);
+    }
+
+    template<size_t Sz, class Szs, class AccuSzs, class... Packets>
+    void eval(size_<Sz>, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) const {
+        Array<Sz> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
+        assert(Sz == arr.size());
+        get<0>(this->fn)(arr.data(), arr.size());
+    }
+
+    template<class Szs, class AccuSzs, class... Packets>
+    void eval(size_t sz, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) const {
+        constexpr size_t max_rdp_buf_size = 65536;
+        assert(sz <= max_rdp_buf_size);
+        Array<max_rdp_buf_size> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
+        assert(sz == arr.size());
         get<0>(this->fn)(arr.data(), arr.size());
     }
 
@@ -629,114 +674,11 @@ struct terminal_
     }
 };
 
-
-template<class Yes, class No>
-auto static_if(std::true_type x, Yes && yes, No const &) {
-    return yes(x);
-}
-
-template<class Yes, class No>
-auto static_if(std::false_type x, Yes const &, No && no) {
-    return no(x);
-}
-
-
-template<size_t... Ints, class Fn>
-void for_each(std::integer_sequence<size_t, Ints...>, Fn fn) {
-    (void)std::initializer_list<int>{(void(fn(size_<Ints>())), 1)...};
-}
-
-
-template<class Fn, size_t... Ints, class... Args>
-void for_each_argument_with_index(std::integer_sequence<size_t, Ints...>, Fn fn, Args && ... args) {
-    (void)std::initializer_list<int>{(void(fn(std::integral_constant<size_t, Ints>(), args)), 1)...};
-}
-
-template<class Fn, class... Args>
-void for_each_argument_with_index(Fn fn, Args && ... args) {
-    for_each_argument_with_index(std::make_index_sequence<sizeof...(args)>(), fn, args...);
-}
-
-
-template<class Tuple, class Fn, size_t... Ints>
-auto apply(std::index_sequence<Ints...>, Tuple && t, Fn fn) {
-    return fn(get<Ints>(t)...);
-}
-
-template<class Tuple, class Fn>
-auto apply(Tuple && t, Fn fn) {
-    return apply(tuple_to_index_sequence(t), std::forward<Tuple>(t), fn);
-}
-
-
-template<size_t Int, class TupleSz, class T, class Tag>
-types::dyn<T, Tag> eval_expr(std::integral_constant<size_t, Int>, TupleSz & t, types::expr<T, pkt_sz, Tag> &) {
-    return {T(get<Int+1>(t))};
-}
-
-template<size_t Int, class TupleSz, class T, class Tag>
-types::dyn<T, Tag> eval_expr(std::integral_constant<size_t, Int>, TupleSz & t, types::expr<T, pkt_sz_with_header, Tag> &) {
-    return {T(get<Int>(t))};
-}
-
-template<size_t Int, class TupleSz, class T>
-T & eval_expr(std::integral_constant<size_t, Int>, TupleSz &, T & x) {
-    return x;
-}
-
-template<size_t... Ints>
-static typename reverse_index_impl<
-    std::integer_sequence<size_t, Ints...>,
-    std::integer_sequence<size_t>
->::type
-reverse_index(std::integer_sequence<size_t, Ints...>) {
-    return {};
-}
-
-template<class TupleSz, class... Ts>
-std::tuple<Ts...> accumulate_size(std::index_sequence<>, TupleSz &, Ts ... sz) {
-    return std::tuple<Ts...>(sz...);
-}
-
-template<size_t Int, size_t... Ints, class TupleSz>
-auto accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs) {
-    return accumulate_size(std::index_sequence<Ints...>{}, szs, get<Int>(szs));
-}
-
-template<size_t Int, size_t... Ints, class TupleSz, class T, class... Ts>
-auto accumulate_size(std::index_sequence<Int, Ints...>, TupleSz & szs, T sz, Ts ... sz_others) {
-    return accumulate_size(std::index_sequence<Ints...>{}, szs, sz + get<Int>(szs), sz, sz_others...);
-}
-
-
-template<class Fn, class... PacketFn>
-void eval(Fn fn, PacketFn && ... packet_fns)
-{
-    auto mk_tuple = [](auto && ... x) { return std::make_tuple(x...); };
-    [&fn, mk_tuple](auto && ... packets) {
-        auto szs = mk_tuple(apply(packets, [](auto const & ... x) {
-            return fold(plus{}, sizeof_(x)...);
-        })...);
-        auto accu_szs = accumulate_size(reverse_index(tuple_to_index_sequence(szs)), szs);
-        auto sz = get<0>(accu_szs);
-        using sz_t = decltype(sz);
-
-        uint8_t data[sizeof(typename std::aligned_storage<sz_t::value, sizeof(void*)>::type)];
-        OutStream out_stream(data, sz_t::value);
-        stream_writer writer{out_stream};
-
-        for_each_argument_with_index([&](auto i, auto & packet) {
-            apply(packet, [&](auto & ... x) {
-                (void)std::initializer_list<int>{(void(
-                    writer(eval_expr(i, accu_szs, x))
-                ), 1)...};
-            });
-        }, packets...);
-
-        size_t size = out_stream.get_offset();
-
-        fn(data, size);
-    }(packet_fns([](auto && ... x) { return std::make_tuple(x...); })...);
+template<class Fn, class W, class... Ws>
+void eval(Fn fn, W && writer, Ws && ... writers) {
+    std::tuple<Fn&, Ws&..., terminal_> ws(fn, writers..., terminal_());
+    std::tuple<> t;
+    writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers) + 2u>{t, ws});
 }
 
 }
@@ -757,137 +699,133 @@ struct recursive_if_test {
 
 BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 {
-    proto::eval(
-        [&](uint8_t * data, size_t size) {},
-        proto::dt_tpdu_send()
-    );
-//     {
-//         StaticOutStream<1024> out_stream;
-//         X224::DT_TPDU_Send(out_stream, 7);
-//         X224::DT_TPDU_Send(out_stream, 0);
-//
-//         proto::eval(
-//             [&](uint8_t * data, size_t size) {
-//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-//                 //hexdump(out_stream.get_data(), out_stream.get_offset());
-//                 //hexdump(array.data(), array.size());
-//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-//             },
-//             proto::dt_tpdu_send,
-//             proto::dt_tpdu_send
-//         );
-//     }
-//
-//     {
-//         proto::eval(
-//             [&](uint8_t * data, size_t size) {
-//                 BOOST_REQUIRE_EQUAL(size, 1);
-//                 BOOST_REQUIRE_EQUAL(*data, 1);
-//             },
-//             recursive_if_test()
-//         );
-//     }
-//
-//     {
-//         uint8_t data[10];
-//         CryptContext crypt;
-//
-//         uint8_t buf[256];
-//         OutStream out_stream(buf + 126, 126);
-//         StaticOutStream<128> hstream;
-//         SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-//         X224::DT_TPDU_Send(hstream, out_stream.get_offset());
-//         BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
-//         BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
-//         auto p = out_stream.get_data() - hstream.get_offset();
-//         BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
-//         memcpy(p, hstream.get_data(), hstream.get_offset());
-//         out_stream = OutStream(p, out_stream.get_current() - p);
-//         out_stream.out_skip_bytes(out_stream.get_capacity());
-//
-//         proto::eval(
-//             [&](uint8_t * data, size_t size) {
-//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-//             },
-//             proto::dt_tpdu_send,
-//             proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
-//         );
-//     }
-//
-//     {
-//         using namespace meta_protocol;
-//
-//         using T1 = decltype(if_(0, u8<0>()));
-//         using T2 = decltype(u8<0>());
-//
-//         static_assert(is_condition<T1>::value, "");
-//         static_assert(!is_condition<T2>::value, "");
-//
-//         static_assert(std::is_same<
-//             proto::pack<is_condition<T2>, is_condition<T2>>,
-//             proto::pack<proto::use<T2, std::false_type>, proto::use<T2, std::false_type>>
-//         >::value, "");
-//
-//         static_assert(!std::is_same<
-//             proto::pack<is_condition<T1>, is_condition<T2>>,
-//             proto::pack<proto::use<T1, std::false_type>, proto::use<T2, std::false_type>>
-//         >::value, "");
-//     }
-//
-//     {
-//         StaticOutStream<1024> out_stream;
-//         uint8_t data[10];
-//         CryptContext crypt;
-//         SEC::Sec_Send(out_stream, data, 10, 0, crypt, 0);
-//
-//         proto::eval(
-//             [&](uint8_t * data, size_t size) {
-//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-//             },
-//             proto::sec_send(data, 10, 0, crypt, 0)
-//         );
-//     }
-//
-//     {
-//         StaticOutStream<1024> out_stream;
-//         uint8_t data[10];
-//         CryptContext crypt;
-//         SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-//
-//         proto::eval(
-//             [&](uint8_t * data, size_t size) {
-//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-//             },
-//             proto::lazy(proto::sec_send, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
-//         );
-//     }
-//
-//     {
-//         StaticOutStream<526> data_stream;
-//         StaticOutStream<1024> out_stream;
-//         uint8_t data[10];
-//         CryptContext crypt;
-//         SEC::Sec_Send(data_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-//         X224::DT_TPDU_Send(out_stream, data_stream.get_offset());
-//         out_stream.out_copy_bytes(data_stream.get_data(), data_stream.get_offset());
-//
-//         proto::eval(
-//             [&](uint8_t * data, size_t size) {
-//                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
-//                 hexdump(out_stream.get_data(), out_stream.get_offset());
-//                 hexdump(data, size);
-//                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
-//             },
-//             proto::dt_tpdu_send,
-//             proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
-//         );
-//     }
+    {
+        StaticOutStream<1024> out_stream;
+        X224::DT_TPDU_Send(out_stream, 7);
+        X224::DT_TPDU_Send(out_stream, 0);
+
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+                //hexdump(out_stream.get_data(), out_stream.get_offset());
+                //hexdump(array.data(), array.size());
+                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+            },
+            proto::dt_tpdu_send,
+            proto::dt_tpdu_send
+        );
+    }
+
+    {
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, 1);
+                BOOST_REQUIRE_EQUAL(*data, 1);
+            },
+            recursive_if_test()
+        );
+    }
+
+    {
+        uint8_t data[10];
+        CryptContext crypt;
+
+        uint8_t buf[256];
+        OutStream out_stream(buf + 126, 126);
+        StaticOutStream<128> hstream;
+        SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+        X224::DT_TPDU_Send(hstream, out_stream.get_offset());
+        BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
+        BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
+        auto p = out_stream.get_data() - hstream.get_offset();
+        BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
+        memcpy(p, hstream.get_data(), hstream.get_offset());
+        out_stream = OutStream(p, out_stream.get_current() - p);
+        out_stream.out_skip_bytes(out_stream.get_capacity());
+
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+            },
+            proto::dt_tpdu_send,
+            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+        );
+    }
+
+    {
+        using namespace meta_protocol;
+
+        using T1 = decltype(if_(0, u8<0>()));
+        using T2 = decltype(u8<0>());
+
+        static_assert(is_condition<T1>::value, "");
+        static_assert(!is_condition<T2>::value, "");
+
+        static_assert(std::is_same<
+            proto::pack<is_condition<T2>, is_condition<T2>>,
+            proto::pack<proto::use<T2, std::false_type>, proto::use<T2, std::false_type>>
+        >::value, "");
+
+        static_assert(!std::is_same<
+            proto::pack<is_condition<T1>, is_condition<T2>>,
+            proto::pack<proto::use<T1, std::false_type>, proto::use<T2, std::false_type>>
+        >::value, "");
+    }
+
+    {
+        StaticOutStream<1024> out_stream;
+        uint8_t data[10];
+        CryptContext crypt;
+        SEC::Sec_Send(out_stream, data, 10, 0, crypt, 0);
+
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+            },
+            proto::sec_send(data, 10, 0, crypt, 0)
+        );
+    }
+
+    {
+        StaticOutStream<1024> out_stream;
+        uint8_t data[10];
+        CryptContext crypt;
+        SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+            },
+            proto::lazy(proto::sec_send, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+        );
+    }
+
+    {
+        StaticOutStream<526> data_stream;
+        StaticOutStream<1024> out_stream;
+        uint8_t data[10];
+        CryptContext crypt;
+        SEC::Sec_Send(data_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+        X224::DT_TPDU_Send(out_stream, data_stream.get_offset());
+        out_stream.out_copy_bytes(data_stream.get_data(), data_stream.get_offset());
+
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
+                hexdump(out_stream.get_data(), out_stream.get_offset());
+                hexdump(data, size);
+                BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+            },
+            proto::dt_tpdu_send,
+            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+        );
+    }
 
 //     auto test1 = [](uint8_t * p) {
 //         uint8_t data[10];

@@ -33,6 +33,8 @@ namespace types {
     template<class T> struct type_base;
     template<class T> using type_base_t = typename type_base<T>::type;
 
+    template<class T> struct is_protocol_type : std::false_type {};
+
     struct le_tag {};
     struct be_tag {};
 
@@ -42,6 +44,7 @@ namespace types {
      */
     template<class T, T x, class Tag> struct integral {};
     template<class T, T x, class Tag> struct type_base<integral<T, x, Tag>> { using type = T; };
+    template<class T, T x, class Tag> struct is_protocol_type<integral<T, x, Tag>> : std::true_type {};
 
     template<int8_t x> using s8 = integral<int8_t, x, void>;
     template<uint8_t x> using u8 = integral<uint8_t, x, void>;
@@ -68,6 +71,7 @@ namespace types {
      */
     template<class T, class Tag> struct dyn { T x; };
     template<class T, class Tag> struct type_base<dyn<T, Tag>> { using type = T; };
+    template<class T, class Tag> struct is_protocol_type<dyn<T, Tag>> : std::true_type {};
 
     using dyn_s8 = dyn<int8_t, void>;
     using dyn_u8 = dyn<uint8_t, void>;
@@ -94,6 +98,7 @@ namespace types {
      */
     template<class T, class Expr, class Tag> struct expr { Expr expr; };
     template<class T, class Expr, class Tag> struct type_base<expr<T, Expr, Tag>> { using type = T; };
+    template<class T, class Expr, class Tag> struct is_protocol_type<expr<T, Expr, Tag>> : std::true_type {};
 
     template<class Expr> using expr_s8 = expr<int8_t, Expr, void>;
     template<class Expr> using expr_u8 = expr<uint8_t, Expr, void>;
@@ -202,6 +207,8 @@ namespace types {
         If yes;
         Else no;
     };
+
+    template<class Cond, class If, class Else> struct is_protocol_type<if_<Cond, If, Else>> : std::true_type {};
 }
 
 namespace detail_ {
