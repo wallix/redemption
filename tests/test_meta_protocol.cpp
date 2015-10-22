@@ -321,150 +321,6 @@ struct check_protocol_type
     static_assert(types::is_protocol_type<value_type>::value, "isn't a protocol type");
 };
 
-template<class Tuple, class TupleFn, size_t IFn, size_t EndFn>
-struct suitable_layout
-{
-    // Tuple_0 = tuple<>
-    // Tuple_n = tuple<
-    //  Tuple_(n - 1)
-    //  tuple<elements...>
-    // >
-    Tuple & tuple;
-    TupleFn const & fn;
-
-    using is_layout = std::true_type;
-
-    using no_branch_condition = std::true_type;
-    using has_branch_condition = std::false_type;
-
-
-    template<class... Ts>
-    void operator()(Ts && ... args) const {
-        static_assert(test(check_protocol_type<Ts>()...), "");
-        std::tuple<Ts&...> t(args...);
-        this->filter_branch(
-            // if no condition
-            std::is_same<
-                pack<is_condition<Ts>...>,
-                pack<use<Ts, std::false_type>...>
-            >(),
-            t
-        );
-    }
-
-    void operator()() const {
-        get<IFn>(fn)(suitable_layout<Tuple&, TupleFn, IFn+1, EndFn>{this->tuple, fn});
-    }
-
-    /// \brief if not branch condition and not datas
-    template<class TupleArgs>
-    void filter_branch(no_branch_condition, std::tuple<> &) const {
-        get<IFn>(fn)(suitable_layout<Tuple&, TupleFn, IFn+1, EndFn>{this->tuple, fn});
-    }
-
-    /// \brief if not branch condition
-    template<class TupleArgs>
-    void filter_branch(no_branch_condition, TupleArgs & t) const {
-        auto tcat = std::tie(this->tuple, t);
-        get<IFn>(fn)(suitable_layout<decltype(tcat), TupleFn, IFn+1, EndFn>{tcat, fn});
-    }
-
-    /// \brief if branch condition
-    template<class TupleArgs>
-    void filter_branch(has_branch_condition, TupleArgs & t) const {
-        this->eval_branchs(
-            size_<0>(),
-            size_<std::tuple_size<TupleArgs>::value>(),
-            t
-        );
-    }
-
-    template<size_t I, size_t N, class TupleArgs, class... Ts>
-    void eval_branchs(size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_condition(
-            size_<I>(),
-            size_<N>(),
-            get<I>(t),
-            t,
-            args...
-        );
-    }
-
-    template<size_t N, class TupleArgs, class... Ts>
-    void eval_branchs(size_<N>, size_<N>, TupleArgs &, Ts & ... args) const {
-        std::tuple<Ts&...> t(args...);
-        this->filter_branch(no_branch_condition{}, t);
-    }
-
-    template<size_t I, size_t N, class Cond, class Yes, class No, class TupleArgs, class... Ts>
-    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, No> & if_, TupleArgs & t, Ts & ... args) const {
-        if (if_.cond()) {
-            this->unpack(if_.yes, size_<I>(), size_<N>(), t, args...);
-        }
-        else {
-            this->unpack(if_.no, size_<I>(), size_<N>(), t, args...);
-        }
-    }
-
-    template<size_t I, size_t N, class Cond, class Yes, class TupleArgs, class... Ts>
-    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, types::none> & if_, TupleArgs & t, Ts & ... args) const {
-        if (if_.cond()) {
-            this->unpack(if_.yes, size_<I>(), size_<N>(), t, args...);
-        }
-        else {
-            this->eval_branchs(size_<I+1>(), size_<N>(), t, args...);
-        }
-    }
-
-    template<size_t I, size_t N, class T, class TupleArgs, class... Ts>
-    void eval_condition(size_<I>, size_<N>, T & a, TupleArgs & t, Ts & ... args) const {
-        this->eval_branchs(size_<I+1>(), size_<N>(), t, args..., a);
-    }
-
-    template<size_t N, size_t... I>
-    static std::integer_sequence<size_t, (I + N)...> plus_index(std::integer_sequence<size_t, I...>) {
-        return {};
-    }
-
-    // recursive if
-    template<class Cond, class Yes, class No, size_t I, size_t N, class TupleArgs, class... Ts>
-    void unpack(types::if_<Cond, Yes, No> & if_, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_condition(size_<I>(), size_<N>(), if_, t, args...);
-    }
-
-    // extends TupleArgs: tuple(get<0..I>(), get<0..tuple_size(arg)>(arg), get<I+1..tuple_size(t)>(t))
-    template<class... T, size_t I, size_t N, class TupleArgs, class... Ts>
-    void unpack(std::tuple<T...> & arg, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->unpack_cat(
-            std::make_index_sequence<I>(),
-            std::make_index_sequence<sizeof...(T)>(),
-            plus_index<I+1u>(std::make_index_sequence<N-I-1u>()),
-            arg, size_<I>(), size_<N + sizeof...(T) - 1>(), t, args...
-        );
-    }
-
-    template<class T, size_t I, size_t N, class TupleArgs, class... Ts>
-    void unpack(T & arg, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_branchs(size_<I+1>(), size_<N>(), t, args..., arg);
-    }
-
-    template<
-        size_t... IBefore,
-        size_t... IPack,
-        size_t... IAfter,
-        class Pack, class I, class N, class TupleArgs, class... Ts
-    >
-    void unpack_cat(
-        std::integer_sequence<size_t, IBefore...>,
-        std::integer_sequence<size_t, IPack...>,
-        std::integer_sequence<size_t, IAfter...>,
-        I, N, Pack & pack, I, N, TupleArgs & t, Ts & ... args
-    ) const {
-        auto newt = std::tie(get<IBefore>(t)..., get<IPack>(pack)..., get<IAfter>(t)...);
-        this->eval_branchs(I(), N(), newt, args...);
-    }
-};
-
 
 template<std::size_t N>
 struct Array
@@ -529,87 +385,176 @@ auto apply(Tuple && t, Fn fn) {
 }
 
 
-template<class Tuple, class TupleFn, size_t I>
-struct suitable_layout<Tuple, TupleFn, I, I>
-{
-    // Tuple_0 = tuple<>
-    // Tuple_n = tuple<
-    //  Tuple_(n - 1)
-    //  tuple<elements...>
-    // >
-    Tuple & tuple;
-    TupleFn const & fn;
+template<class Fn, size_t Sz, class Szs, class AccuSzs, class... Packets>
+void eval_terminal(Fn && fn, size_<Sz>, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) {
+    Array<Sz> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
+    assert(Sz == arr.size());
+    fn(arr.data(), arr.size());
+}
 
-    void operator()() const {
-        derec(this->tuple);
+template<class Fn, class Szs, class AccuSzs, class... Packets>
+void eval_terminal(Fn && fn, size_t sz, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) {
+    constexpr size_t max_rdp_buf_size = 65536;
+    assert(sz <= max_rdp_buf_size);
+    Array<max_rdp_buf_size> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
+    assert(sz == arr.size());
+    fn(arr.data(), arr.size());
+}
+
+template<size_t Int, class TupleSz, class T, class... Ts>
+auto accumulate_size(size_<Int>, TupleSz & szs, T sz, Ts ... sz_others) {
+    return accumulate_size(size_<Int-1>{}, szs, sz + get<Int-1>(szs), sz, sz_others...);
+}
+
+template<class TupleSz, class T, class... Ts>
+std::tuple<T, Ts...> accumulate_size(size_<0>, TupleSz &, T sz, Ts ... szs) {
+    return std::tuple<T, Ts...>(sz, szs...);
+}
+
+template<class Fn, size_t N, class PacketFns, class EvaluatedPackets>
+void eval_packets(Fn && fn, size_<N>, size_<N>, PacketFns && , EvaluatedPackets && evaluated_packets) {
+    apply(evaluated_packets, [&fn](auto && ... packet) {
+        auto szs = std::make_tuple(apply(packet, [](auto & ... x) {
+            return fold(plus{}, size_<0>(), sizeof_(x)...);
+        })...);
+        constexpr size_t sz_count = sizeof...(packet);
+        // tuple(sz3+sz2+sz1, sz2+sz1, sz1)
+        auto accu_szs = accumulate_size(size_<sz_count-1>(), szs, get<sz_count-1>(szs));
+        eval_terminal(fn, get<0>(accu_szs), szs, accu_szs, packet...);
+    });
+}
+
+template<class Fn, size_t N, class PacketFns>
+void eval_packets(Fn && fn, size_<N>, size_<N>, PacketFns && , std::tuple<>) {
+}
+
+template<class Fn, size_t I, size_t N, class PacketFns, class EvaluatedPackets>
+void eval_packets(Fn && fn, size_<I>, size_<N>, PacketFns && packet_fns, EvaluatedPackets && evaluated_packets);
+
+
+template<size_t... Ints, class... Elements, class... Ts>
+std::tuple<Elements..., std::tuple<Ts&...>>
+extends_tuple_reference(std::integer_sequence<size_t, Ints...>, std::tuple<Elements...> & t, Ts & ... elems) {
+    return std::tuple<Elements..., std::tuple<Ts&...>>(get<Ints>(t)..., std::tuple<Ts&...>(elems...));
+}
+
+template<class Fn, size_t IPacket, size_t NPacket, class PacketFns, class EvaluatedPackets>
+struct branch_evaluator
+{
+    Fn & fn;
+    PacketFns & packet_fns;
+    EvaluatedPackets & evaluated_packets;
+
+    template<size_t I, size_t N, class Packet, class... Ts>
+    void eval_branchs(size_<I>, size_<N>, Packet && packet, Ts & ... elems) const {
+        this->eval_condition(size_<I>(), size_<N>(), get<I>(packet), packet, elems...);
     }
 
-    template<class TupleRec, class... Packets>
-    void derec(TupleRec && trec, Packets && ... packets) const {
-        this->derec(
-            std::get<0>(trec),
-            std::get<1>(trec),
-            packets...
+    template<size_t N, class Packet, class... Ts>
+    void eval_branchs(size_<N>, size_<N>, Packet && packet, Ts & ... elems) const {
+        eval_packets(
+            fn, size_<IPacket+1>(), size_<NPacket>(), packet_fns,
+            extends_tuple_reference(tuple_to_index_sequence(evaluated_packets), evaluated_packets, elems...)
         );
     }
 
-    void derec(std::tuple<>) const {
-        // nothing
+    template<size_t N, class Packet>
+    void eval_branchs(size_<N>, size_<N>, Packet && packet) const {
+        eval_packets(
+            fn, size_<IPacket+1>(), size_<NPacket>(), packet_fns, evaluated_packets
+        );
     }
 
-    template<class... Packets>
-    void derec(std::tuple<>, Packets && ... packets) const {
-        // tuple(sizeof_(packets)...)
-        auto szs = std::make_tuple(apply(packets, [](auto & ... x) {
-            return fold(plus{}, size_<0>(), sizeof_(x)...);
-        })...);
-        constexpr size_t sz_count = sizeof...(packets);
-        // tuple(sz3+sz2+sz1, sz2+sz1, sz1)
-        auto accu_szs = accumulate_size(size_<sz_count-1>(), szs, get<sz_count-1>(szs));
-        this->eval(get<0>(accu_szs), szs, accu_szs, packets...);
+
+    // if_ else
+    template<size_t I, size_t N, class Cond, class Yes, class No, class Packet, class... Ts>
+    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, No> & if_, Packet & packet, Ts & ... args) const {
+        if (if_.cond()) {
+            this->unpack(if_.yes, size_<I>(), size_<N>(), packet, args...);
+        }
+        else {
+            this->unpack(if_.no, size_<I>(), size_<N>(), packet, args...);
+        }
     }
 
-    template<size_t Sz, class Szs, class AccuSzs, class... Packets>
-    void eval(size_<Sz>, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) const {
-        Array<Sz> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
-        assert(Sz == arr.size());
-        get<0>(this->fn)(arr.data(), arr.size());
+    // if_
+    template<size_t I, size_t N, class Cond, class Yes, class Packet, class... Ts>
+    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, types::none> & if_, Packet & packet, Ts & ... args) const {
+        if (if_.cond()) {
+            this->unpack(if_.yes, size_<I>(), size_<N>(), packet, args...);
+        }
+        else {
+            this->eval_branchs(size_<I+1>(), size_<N>(), packet, args...);
+        }
     }
 
-    template<class Szs, class AccuSzs, class... Packets>
-    void eval(size_t sz, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) const {
-        constexpr size_t max_rdp_buf_size = 65536;
-        assert(sz <= max_rdp_buf_size);
-        Array<max_rdp_buf_size> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
-        assert(sz == arr.size());
-        get<0>(this->fn)(arr.data(), arr.size());
+    template<size_t I, size_t N, class T, class Packet, class... Ts>
+    void eval_condition(size_<I>, size_<N>, T & a, Packet & packet, Ts & ... args) const {
+        this->eval_branchs(size_<I+1>(), size_<N>(), packet, args..., a);
     }
 
-    template<size_t Int, class TupleSz, class T, class... Ts>
-    auto accumulate_size(size_<Int>, TupleSz & szs, T sz, Ts ... sz_others) const {
-        return accumulate_size(size_<Int-1>{}, szs, sz + get<Int-1>(szs), sz, sz_others...);
+
+    // recursive if
+    template<class Cond, class Yes, class No, size_t I, size_t N, class Packet, class... Ts>
+    void unpack(types::if_<Cond, Yes, No> & if_, size_<I>, size_<N>, Packet & packet, Ts & ... args) const {
+        this->eval_condition(size_<I>(), size_<N>(), if_, packet, args...);
     }
 
-    template<class TupleSz, class T, class... Ts>
-    std::tuple<T, Ts...> accumulate_size(size_<0>, TupleSz &, T sz, Ts ... szs) const {
-        return std::tuple<T, Ts...>(sz, szs...);
+    // extends Packet: tuple(get<0..I>(), get<0..tuple_size(arg)>(arg), get<I+1..tuple_size(packet)>(packet))
+    template<class... T, size_t I, size_t N, class Packet, class... Ts>
+    void unpack(std::tuple<T...> & arg, size_<I>, size_<N>, Packet & packet, Ts & ... args) const {
+        this->unpack_cat(
+            std::make_index_sequence<I>(),
+            std::make_index_sequence<sizeof...(T)>(),
+            plus_index<I+1u>(std::make_index_sequence<N-I-1u>()),
+            arg, size_<I>(), size_<N + sizeof...(T) - 1>(), packet, args...
+        );
+    }
+
+    template<class T, size_t I, size_t N, class Packet, class... Ts>
+    void unpack(T & arg, size_<I>, size_<N>, Packet & packet, Ts & ... args) const {
+        this->eval_branchs(size_<I+1>(), size_<N>(), packet, args..., arg);
+    }
+
+
+    template<size_t N, size_t... I>
+    static std::integer_sequence<size_t, (I + N)...>
+    plus_index(std::integer_sequence<size_t, I...>) {
+        return {};
+    }
+
+    template<
+        size_t... IBefore,
+        size_t... IPack,
+        size_t... IAfter,
+        class Pack, class I, class N, class Packet, class... Ts
+    >
+    void unpack_cat(
+        std::integer_sequence<size_t, IBefore...>,
+        std::integer_sequence<size_t, IPack...>,
+        std::integer_sequence<size_t, IAfter...>,
+        Pack & pack, I, N, Packet & packet, Ts & ... args
+    ) const {
+        auto newt = std::tie(get<IBefore>(packet)..., get<IPack>(pack)..., get<IAfter>(packet)...);
+        this->eval_branchs(I(), N(), newt, args...);
     }
 };
 
-struct terminal_
-{
-    template<class Layout>
-    void operator()(Layout && layout) const {
-        layout();
-    }
-};
-
-template<class Fn, class W, class... Ws>
-void eval(Fn fn, W && writer, Ws && ... writers) {
-    std::tuple<Fn&, Ws&..., terminal_> ws(fn, writers..., terminal_());
-    std::tuple<> t;
-    writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers) + 2u>{t, ws});
+template<class Fn, size_t I, size_t N, class PacketFns, class EvaluatedPackets>
+void eval_packets(Fn && fn, size_<I>, size_<N>, PacketFns && packet_fns, EvaluatedPackets && evaluated_packets) {
+    get<I>(packet_fns)([&](auto && ... elems) {
+        static_assert(test(check_protocol_type<decltype(elems)>()...), "");
+        branch_evaluator<Fn, I, N, PacketFns, EvaluatedPackets>{fn, packet_fns, evaluated_packets}
+        .eval_branchs(size_<0>(), size_<sizeof...(elems)>(), std::tie(elems...));
+    });
 }
+
+template<class Fn, class... PacketFns>
+void eval(Fn && fn, PacketFns && ... packet_fns) {
+    eval_packets(fn, size_<0>(), size_<sizeof...(packet_fns)>(), std::tie(packet_fns...), std::tuple<>());
+}
+
+template<class Fn> void eval(Fn && fn) = delete;
 
 }
 
@@ -757,79 +702,78 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         );
     }
 
-//     auto test1 = [](uint8_t * p) {
-//         uint8_t data[10];
-//         CryptContext crypt;
-//         proto::eval(
-//             [&](uint8_t * data, size_t sz) {
-// //                 escape(data);
-//                 memcpy(p, data, sz);
-// //                 clobber();
-//             },
-//             proto::dt_tpdu_send,
-//             proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
-//         );
-//     };
-//     auto test2 = [](uint8_t * p) {
-//         uint8_t data[10];
-//         CryptContext crypt;
-//         uint8_t buf[256];
-//         OutStream out_stream(buf + 126, 126);
-//         StaticOutStream<128> hstream;
-//         SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-//         X224::DT_TPDU_Send(hstream, out_stream.get_offset());
-//         auto bufp = out_stream.get_data() - hstream.get_offset();
-//         memcpy(bufp, hstream.get_data(), hstream.get_offset());
-//         out_stream = OutStream(bufp, out_stream.get_current() - bufp);
-//         out_stream.out_skip_bytes(out_stream.get_capacity());
-// //         escape(out_stream.get_data());
-// //         escape(hstream.get_data());
-//         memcpy(p, out_stream.get_data(), out_stream.get_offset());
-// //         clobber();
-// //         clobber();
-//     };
-//
-//     auto bench = [](auto test) {
-//         std::vector<long long> v;
-//
-//         for (auto i = 0; i < 1000; ++i) {
-//             //uint8_t data[262144];
-//             uint8_t data[1048576];
-//             auto p = data;
-//             test(p);
-//             auto sz = 11;
-//
-//             using resolution_clock = std::chrono::steady_clock; // std::chrono::high_resolution_clock;
-//
-//             auto t1 = resolution_clock::now();
-//
-//             while (static_cast<size_t>(p - data + sz) < sizeof(data)) {
-//                 escape(p);
-//                 test(p);
+    uint8_t data[10]{};
+    CryptContext crypt;
+
+    auto test1 = [&](uint8_t * p) {
+        proto::eval(
+            [&](uint8_t * data, size_t sz) {
+//                 escape(data);
+                memcpy(p, data, sz);
 //                 clobber();
-//                 p += sz;
-//             }
-//
-//             auto t2 = resolution_clock::now();
-//             v.push_back((t2-t1).count()/1000);
-//         }
-//         return v;
-//     };
-//
-//     auto v1 = bench(test1);
-//     auto v2 = bench(test2);
-//
-//     std::sort(v1.begin(), v1.end());
-//     std::sort(v2.begin(), v2.end());
-//
-//     v1 = decltype(v1)(&v1[v1.size()/2-30], &v1[v1.size()/2+29]);
-//     v2 = decltype(v2)(&v2[v2.size()/2-30], &v2[v2.size()/2+29]);
-//
-//     std::cerr << "test1\ttest2\n";
-//     auto it1 = v1.begin();
-//     for (auto t : v2) {
-//         std::cerr << *it1 << "\t" << t << "\n";
-//         ++it1;
-//     }
+            },
+            proto::dt_tpdu_send,
+            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
+            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+        );
+    };
+    auto test2 = [&](uint8_t * p) {
+        uint8_t buf[256];
+        OutStream out_stream(buf + 126, 126);
+        StaticOutStream<128> hstream;
+        SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+        X224::DT_TPDU_Send(hstream, out_stream.get_offset());
+        auto bufp = out_stream.get_data() - hstream.get_offset();
+        memcpy(bufp, hstream.get_data(), hstream.get_offset());
+        out_stream = OutStream(bufp, out_stream.get_current() - bufp);
+        out_stream.out_skip_bytes(out_stream.get_capacity());
+//         escape(out_stream.get_data());
+//         escape(hstream.get_data());
+        memcpy(p, out_stream.get_data(), out_stream.get_offset());
+//         clobber();
+//         clobber();
+    };
+
+    auto bench = [](auto test) {
+        std::vector<long long> v;
+
+        for (auto i = 0; i < 1000; ++i) {
+            //uint8_t data[262144];
+            uint8_t data[1048576];
+            auto p = data;
+            test(p);
+            auto sz = 11;
+
+            using resolution_clock = std::chrono::steady_clock; // std::chrono::high_resolution_clock;
+
+            auto t1 = resolution_clock::now();
+
+            while (static_cast<size_t>(p - data + sz) < sizeof(data)) {
+                escape(p);
+                test(p);
+                clobber();
+                p += sz;
+            }
+
+            auto t2 = resolution_clock::now();
+            v.push_back((t2-t1).count()/1000);
+        }
+        return v;
+    };
+
+    auto v1 = bench(test1);
+    auto v2 = bench(test2);
+
+    std::sort(v1.begin(), v1.end());
+    std::sort(v2.begin(), v2.end());
+
+    v1 = decltype(v1)(&v1[v1.size()/2-30], &v1[v1.size()/2+29]);
+    v2 = decltype(v2)(&v2[v2.size()/2-30], &v2[v2.size()/2+29]);
+
+    std::cerr << "test1\ttest2\n";
+    auto it1 = v1.begin();
+    for (auto t : v2) {
+        std::cerr << *it1 << "\t" << t << "\n";
+        ++it1;
+    }
 }
