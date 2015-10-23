@@ -31,6 +31,7 @@
 // #include "RDP/mcs.hpp"
 
 #include "../src/meta_protocol/types.hpp"
+#include "../src/meta_protocol/protocol_fn.hpp"
 
 #include <type_traits>
 #include <tuple>
@@ -46,155 +47,33 @@ static void clobber() {
    asm volatile("" : : : "memory");
 }
 
-#if __cplusplus <= 201103L
-namespace meta_ {
-    template<class T, T... Ints>
-    struct integer_sequence {};
-
-    template<std::size_t... Ints>
-    using index_sequence = integer_sequence<std::size_t, Ints...>;
-
-    namespace detail_ {
-        template<std::size_t... Indexes>
-        struct integer_sequence_ext
-        {
-            using next = integer_sequence_ext<Indexes..., sizeof...(Indexes)>;
-            using seq = integer_sequence<std::size_t, Indexes...>;
-        };
-
-        template<std::size_t Num>
-        struct make_integer_sequence_ext
-        { using type = typename make_integer_sequence_ext<Num-1>::type::next; };
-
-        template<>
-        struct make_integer_sequence_ext<0>
-        { using type = integer_sequence_ext<>; };
-
-        /// Builds an parameter_index<0, 1, 2, ..., Num-1>.
-        template<std::size_t Num>
-        struct build_parameter_index
-        { using type = typename make_integer_sequence_ext<Num>::type::seq; };
-
-        template<class T, class Seq>
-        struct type_sequence_converter;
-
-        template<class T, class U, U... Ints>
-        struct type_sequence_converter<T, integer_sequence<U, Ints...>>
-        { using type = integer_sequence<T, T(Ints)...>; };
-    }
-
-    template<std::size_t N>
-    using make_index_sequence = typename detail_::make_integer_sequence_ext<N>::type::seq;
-
-    template<class T, T N>
-    using make_integer_sequence = typename detail_::type_sequence_converter<
-        T, make_index_sequence<std::size_t(N)>
-    >::type;
-
-    template<class... T>
-    using index_sequence_for = make_index_sequence<sizeof...(T)>;
-}
-namespace std {
-    using ::meta_::integer_sequence;
-    using ::meta_::index_sequence;
-    using ::meta_::make_index_sequence;
-    using ::meta_::make_integer_sequence;
-    using ::meta_::index_sequence_for;
-}
-#endif
-
-namespace meta {
-    template<class T>
-    struct static_const {
-        static constexpr T value {};
-    };
-
-    template<class T>
-    constexpr T static_const<T>::value;
-}
-
 namespace proto {
 
 using namespace meta_protocol;
+using meta_protocol::sizeof_;
 
 using std::get;
 
 using plus = std::plus<>;
 
-template<class T>
-std::make_index_sequence<std::tuple_size<T>::value>
-tuple_to_index_sequence(T const &) {
-    return {};
-}
-
-template<class Fn, class... T>
-struct lazy_fn
-{
-    std::tuple<T...> t;
-    Fn fn;
-
-    template<class Layout>
-    void operator()(Layout && layout) const {
-        this->apply(layout, tuple_to_index_sequence(this->t));
-    }
-
-private:
-    template<class Layout, size_t... Ints>
-    void apply(Layout && layout, std::integer_sequence<size_t, Ints...>) const {
-        using std::get;
-        this->fn(layout, get<Ints>(this->t)...);
-    }
-};
-
-template<class Fn, class... T>
-lazy_fn<Fn, T...> lazy(Fn fn, T && ... args) {
-    return lazy_fn<Fn, T...>{std::tuple<T...>{args...}, fn};
-}
-
-template<class T, class U = void>
-struct enable_type {
-    using type = U;
-};
-
-namespace detail_ {
-    template<class T, class = void>
-    struct is_layout_impl : std::false_type
-    {};
-
-    template<class T>
-    struct is_layout_impl<T, typename enable_type<typename T::is_layout>::type> : T::is_layout
-    {};
-}
-
-template<class T>
-using is_layout = detail_::is_layout_impl<typename std::remove_reference<T>::type>;
-
-template<class FnClass>
-struct protocol_wrapper
-{
-    FnClass operator()() const {
-        return {};
-    }
-
-    template<class T, class... Ts>
-    typename std::enable_if<is_layout<T>::value>::type
-    operator()(T && arg, Ts && ... args) const {
-        FnClass()(arg, args...);
-    }
-
-    template<class T, class... Ts>
-    typename std::enable_if<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>::type
-    operator()(T && arg, Ts && ... args) const {
-        return {std::tuple<T, Ts...>{arg, args...}, FnClass{}};
-    }
-};
-
-template<class FnClass>
-using protocol_fn = meta::static_const<protocol_wrapper<FnClass>>;
-
-struct pkt_data {};
 struct pkt_sz {};
 struct pkt_sz_with_header {};
+
+template<class T>
+struct pkt_data
+{
+    T x;
+};
+
+template<class T>
+pkt_data<T> make_pkt_data(T && x)
+{ return pkt_data<T>{std::forward<T>(x)}; }
+
+template<class T>
+auto sizeof_(pkt_data<T> const & pkt) {
+    return sizeof_(pkt.x);
+}
+
 
 struct dt_tpdu_send_fn
 {
@@ -208,6 +87,17 @@ struct dt_tpdu_send_fn
         , u8<X224::DT_TPDU>()
         , u8<X224::EOT_EOT>());
     }
+
+    template<class Layout>
+    void operator()(Layout && layout, uint16_t payload_len) const {
+        layout(
+          u8<0x03>() // version 3
+        , u8<0x00>()
+        , u16_be(payload_len + 7)
+        , u8<7-5>() // LI
+        , u8<X224::DT_TPDU>()
+        , u8<X224::EOT_EOT>());
+    }
 };
 
 namespace {
@@ -217,21 +107,20 @@ namespace {
 
 struct signature_send
 {
-    uint8_t * data;
-    size_t len;
     CryptContext & crypt;
-
-    void write(uint8_t * p) const {
-        size_t const sig_sz = 8;
-        auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*p);
-        this->crypt.sign(this->data, this->len, signature);
-        this->crypt.decrypt(this->data, this->len);
-    }
 };
 
-using meta_protocol::sizeof_;
-size_<8> sizeof_(signature_send const &) {
+inline size_<8> sizeof_(signature_send const &) {
     return {};
+}
+
+inline void write(signature_send const & sig, OutStream & out_stream, uint8_t * data, std::size_t len) {
+    constexpr auto sig_sz = decltype(sizeof_(sig))();
+    auto * array = out_stream.get_current();
+    auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(array);
+    sig.crypt.sign(data, len, signature);
+    sig.crypt.decrypt(data, len);
+    out_stream.out_skip_bytes(sig_sz);
 }
 
 struct sec_send_fn
@@ -243,7 +132,7 @@ struct sec_send_fn
         flags |= encryptionLevel ? SEC::SEC_ENCRYPT : 0;
         layout(
             if_(flags, u32_le(flags)),
-            if_(flags & SEC::SEC_ENCRYPT, signature_send{data, data_sz, crypt})
+            if_(flags & SEC::SEC_ENCRYPT, pkt_data<signature_send>{{crypt}})
         );
     }
 };
@@ -268,43 +157,49 @@ struct stream_writer
 {
     OutStream & out_stream;
 
-    template<class... Ts>
-    void operator()(Ts && ... args) const {
-        (void)std::initializer_list<int>{(void(
-            this->write(args)
-        ), 1)...};
-    }
 
     template<class T, T x, class Tag>
-    void write(types::integral<T, x, Tag>) const {
-        this->write(types::dyn<T, Tag>{x});
+    void operator()(types::integral<T, x, Tag>) const {
+        (*this)(types::dyn<T, Tag>{x});
     }
 
-    void write(types::dyn_u8 x) const {
+    void operator()(types::dyn_u8 x) const {
         this->out_stream.out_uint8(x.x);
     }
 
-    void write(types::dyn_u16_be x) const {
+    void operator()(types::dyn_u16_be x) const {
         this->out_stream.out_uint16_be(x.x);
     }
 
-    void write(types::dyn_u32_le x) const {
+    void operator()(types::dyn_u32_le x) const {
         this->out_stream.out_uint32_le(x.x);
     }
 
-    void write(signature_send const & x) const {
-        x.write(this->out_stream.get_current());
-        this->out_stream.out_skip_bytes(sizeof_(x));
+    template<class Fn>
+    void operator()(Fn && fn, uint8_t * pkt, uint8_t len) const {
+        using ::proto::write;
+        write(fn, this->out_stream, pkt, len);
     }
 };
 
+struct stream_writer_layout
+{
+    OutStream & out_stream;
+
+    using is_layout = std::true_type;
+
+    template<class... Ts>
+    void operator()(Ts && ... args) const {
+        (void)std::initializer_list<int>{(void(
+            stream_writer{out_stream}(args)
+        ), 1)...};
+    }
+};
 
 
 template<class, class U = void> using use = U;
 
 template<class...> struct pack {};
-
-using std::get;
 
 constexpr int test(...) { return 1; }
 
@@ -316,87 +211,141 @@ struct check_protocol_type
 };
 
 
-template<std::size_t N>
-struct Array
+template<class... Ts>
+size_<sizeof...(Ts)> tuple_size(std::tuple<Ts...> const &) {
+    return {};
+}
+
+
+template<std::size_t BufLen, class Szs, class AccuSzs, class TuplePackets>
+struct write_evaluator
 {
-    size_t size() const { return this->size_; }
-    uint8_t * data() { return this->data_; }
-
-    template<size_t... Ints, class TupleSz, class TuplePackets>
-    Array(std::integer_sequence<size_t, Ints...>, TupleSz & tsz, TuplePackets & packets) {
-        OutStream out_stream(this->data_, N);
-        (void)std::initializer_list<int>{(void(
-            write(
-                proto::size_<Ints>(),
-                tsz,
-                out_stream,
-                tuple_to_index_sequence(packets),
-                std::get<Ints>(packets)
-            )
-        ), 1)...};
-        this->size_ = out_stream.get_offset();
-    }
-
-private:
-    template<size_t Int, class TupleSz, size_t... Ints, class Packet>
-    static void write(
-        proto::size_<Int>,
-        TupleSz & t,
-        OutStream & out_stream,
-        std::index_sequence<Ints...>,
-        Packet & packet
-    ) {
-        stream_writer{out_stream}(eval_expr(proto::size_<Int>(), t, get<Ints>(packet))...);
-    }
-
-    template<size_t Int, class TupleSz, class T, class Tag>
-    static types::dyn<T, Tag>
-    eval_expr(proto::size_<Int>, TupleSz & tsz, types::expr<T, pkt_sz, Tag> &) {
-        return {T(get<Int+1>(tsz))};
-    }
-
-    template<size_t Int, class TupleSz, class T, class Tag>
-    static types::dyn<T, Tag>
-    eval_expr(proto::size_<Int>, TupleSz & tsz, types::expr<T, pkt_sz_with_header, Tag> &) {
-        return {T(get<Int>(tsz))};
-    }
-
-    template<size_t Int, class TupleSz, size_t... Ints, class T>
-    static T & eval_expr(proto::size_<Int>, TupleSz &, T & x) {
-        return x;
-    }
+    Szs & szs;
+    AccuSzs & accu_szs;
+    TuplePackets & packets;
 
     //uint8_t data_[(N + sizeof(void*) - 1u) & -sizeof(void*)];
     //uint8_t data_[sizeof(std::aligned_storage_t<N>)];
-    uint8_t data_[sizeof(typename std::aligned_storage<N, sizeof(void*)>::type)];
-    size_t size_;
+    uint8_t data[sizeof(typename std::aligned_storage<BufLen, sizeof(void*)>::type)];
+    size_t size;
+
+    write_evaluator(Szs & szs, AccuSzs & accu_szs, TuplePackets & packets)
+    : szs(szs)
+    , accu_szs(accu_szs)
+    , packets(packets)
+    {
+        OutStream out_stream(this->data, BufLen);
+        this->write_packets(size_<0>(), out_stream);
+        this->size = out_stream.get_offset();
+    }
+
+private:
+    template<size_t I>
+    void write_packets(size_<I>, OutStream & out_stream) {
+        auto p = out_stream.get_current();
+        this->write_packet(
+            size_<I>(),
+            p,
+            out_stream,
+            size_<0>(),
+            tuple_size(get<I>(this->packets)),
+            get<I>(this->packets)
+        );
+    }
+
+    using size_N = size_<std::tuple_size<std::decay_t<TuplePackets>>::value>;
+    void write_packets(size_N, OutStream &) {
+    }
+
+
+    template<size_t IPacket, size_t I, size_t N, class Packet>
+    void write_packet(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<I>, size_<N>, Packet & packet
+    ) {
+        this->eval_expr(size_<IPacket>(), p, out_stream, size_<I>(), size_<N>(), packet, get<I>(packet));
+    }
+
+    template<size_t IPacket, size_t N, class Packet>
+    void write_packet(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<N>, size_<N>, Packet & packet
+    ) {
+        this->write_packets(size_<IPacket+1>(), out_stream);
+    }
+
+
+    size_<0> get_data_len(size_N) {
+        return {};
+    }
+
+    template<size_t I>
+    size_t get_data_len(size_<I>) {
+        return get<I>(this->accu_szs);
+    }
+
+
+    template<size_t IPacket, size_t I, size_t N, class Packet, class T, class Tag>
+    void eval_expr(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<I>, size_<N>, Packet & packet,
+        types::expr<T, pkt_sz, Tag> &
+    ) {
+        stream_writer{out_stream}(types::dyn<T, Tag>{T(
+            get_data_len(size_<IPacket+1>())
+        )});
+        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+    }
+
+    template<size_t IPacket, size_t I, size_t N, class Packet, class T, class Tag>
+    void eval_expr(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<I>, size_<N>, Packet & packet,
+        types::expr<T, pkt_sz_with_header, Tag> &
+    ) {
+        stream_writer{out_stream}(types::dyn<T, Tag>{{T(get<I>(this->accu_szs))}});
+        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+    }
+
+    template<size_t IPacket, size_t I, size_t N, class Packet, class T>
+    void eval_expr(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<I>, size_<N>, Packet & packet,
+        pkt_data<T> & pkt
+    ) {
+        auto sz = sizeof_(pkt.x);
+        auto tmp = out_stream.get_current();
+        out_stream.out_skip_bytes(sz);
+        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+        OutStream substream(tmp, sz);
+        stream_writer{substream}(pkt.x, p, get_data_len(size_<IPacket+1>()));
+    }
+
+    template<size_t IPacket, size_t I, size_t N, class Packet, class T>
+    void eval_expr(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<I>, size_<N>, Packet & packet,
+        T & x
+    ) {
+        stream_writer{out_stream}(x);
+        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+    }
 };
-
-
-template<class Tuple, class Fn, size_t... Ints>
-auto apply(std::index_sequence<Ints...>, Tuple && t, Fn fn) {
-    return fn(get<Ints>(t)...);
-}
-
-template<class Tuple, class Fn>
-auto apply(Tuple && t, Fn fn) {
-    return apply(tuple_to_index_sequence(t), std::forward<Tuple>(t), fn);
-}
 
 
 template<class Fn, size_t Sz, class Szs, class AccuSzs, class TuplePackets>
 void eval_terminal(Fn && fn, size_<Sz>, Szs & szs, AccuSzs & accu_szs, TuplePackets && packets) {
-    Array<Sz> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets};
-    assert(Sz == arr.size());
-    fn(arr.data(), arr.size());
+    write_evaluator<Sz, Szs, AccuSzs, TuplePackets> arr{szs, accu_szs, packets};
+    assert(Sz == arr.size);
+    fn(arr.data, arr.size);
 }
 
 template<class Fn, class Szs, class AccuSzs, class TuplePackets>
 void eval_terminal(Fn && fn, size_t sz, Szs & szs, AccuSzs & accu_szs, TuplePackets && packets) {
     constexpr size_t max_rdp_buf_size = 65536;
     assert(sz <= max_rdp_buf_size);
-    Array<max_rdp_buf_size> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets};
-    fn(arr.data(), arr.size());
+    write_evaluator<max_rdp_buf_size, Szs, AccuSzs, TuplePackets> arr{szs, accu_szs, packets};
+    fn(arr.data, arr.size);
 }
 
 template<class TupleSz, class T, class... Ts>
@@ -573,6 +522,23 @@ struct recursive_if_test {
 
 BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 {
+    {
+        StaticOutStream<128> out_stream1;
+        X224::DT_TPDU_Send(out_stream1, 7);
+
+        StaticOutStream<7> out_stream2;
+        proto::dt_tpdu_send(proto::stream_writer_layout{out_stream2}, 7);
+
+        BOOST_REQUIRE_EQUAL(out_stream1.get_offset(), out_stream2.get_offset());
+        BOOST_REQUIRE(!memcmp(out_stream1.get_data(), out_stream2.get_data(), out_stream1.get_offset()));
+
+        StaticOutStream<7> out_stream3;
+        proto::dt_tpdu_send(7)(proto::stream_writer_layout{out_stream3});
+
+        BOOST_REQUIRE_EQUAL(out_stream1.get_offset(), out_stream3.get_offset());
+        BOOST_REQUIRE(!memcmp(out_stream1.get_data(), out_stream3.get_data(), out_stream1.get_offset()));
+    }
+
     {
         StaticOutStream<1024> out_stream;
         X224::DT_TPDU_Send(out_stream, 7);
