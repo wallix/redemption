@@ -332,149 +332,6 @@ struct check_protocol_type
     static_assert(types::is_protocol_type<value_type>::value, "isn't a protocol type");
 };
 
-template<class Tuple, class TupleFn, size_t IFn, size_t EndFn>
-struct suitable_layout
-{
-    // Tuple_0 = tuple<>
-    // Tuple_n = tuple<
-    //  Tuple_(n - 1)
-    //  tuple<elements...>
-    // >
-    Tuple & tuple;
-    TupleFn const & fn;
-
-    using is_layout = std::true_type;
-
-    using no_branch_condition = std::true_type;
-    using has_branch_condition = std::false_type;
-
-
-    template<class... Ts>
-    void operator()(Ts && ... args) const {
-        static_assert(test(check_protocol_type<Ts>()...), "");
-        std::tuple<Ts&...> t(args...);
-        this->filter_branch(
-            // if no condition
-            std::is_same<
-                pack<is_condition<Ts>...>,
-                pack<use<Ts, std::false_type>...>
-            >(),
-            t
-        );
-    }
-
-    void operator()() const {
-        get<IFn>(fn)(suitable_layout<Tuple&, TupleFn, IFn+1, EndFn>{this->tuple, fn});
-    }
-
-    /// \brief if not branch condition and not datas
-    template<class TupleArgs>
-    void filter_branch(no_branch_condition, std::tuple<> &) const {
-        get<IFn>(fn)(suitable_layout<Tuple&, TupleFn, IFn+1, EndFn>{this->tuple, fn});
-    }
-
-    /// \brief if not branch condition
-    template<class TupleArgs>
-    void filter_branch(no_branch_condition, TupleArgs & t) const {
-        auto tcat = std::tie(this->tuple, t);
-        get<IFn>(fn)(suitable_layout<decltype(tcat), TupleFn, IFn+1, EndFn>{tcat, fn});
-    }
-
-    /// \brief if branch condition
-    template<class TupleArgs>
-    void filter_branch(has_branch_condition, TupleArgs & t) const {
-        this->eval_branchs(
-            size_<0>(),
-            size_<std::tuple_size<TupleArgs>::value>(),
-            t
-        );
-    }
-
-    template<size_t I, size_t N, class TupleArgs, class... Ts>
-    void eval_branchs(size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_condition(
-            size_<I>(),
-            size_<N>(),
-            get<I>(t),
-            t,
-            args...
-        );
-    }
-
-    template<size_t N, class TupleArgs, class... Ts>
-    void eval_branchs(size_<N>, size_<N>, TupleArgs &, Ts & ... args) const {
-        std::tuple<Ts&...> t(args...);
-        this->filter_branch(no_branch_condition{}, t);
-    }
-
-    template<size_t I, size_t N, class Cond, class Yes, class No, class TupleArgs, class... Ts>
-    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, No> & if_, TupleArgs & t, Ts & ... args) const {
-        if (if_.cond()) {
-            this->unpack(if_.yes, size_<I>(), size_<N>(), t, args...);
-        }
-        else {
-            this->unpack(if_.no, size_<I>(), size_<N>(), t, args...);
-        }
-    }
-
-    template<size_t I, size_t N, class Cond, class Yes, class TupleArgs, class... Ts>
-    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, types::none> & if_, TupleArgs & t, Ts & ... args) const {
-        if (if_.cond()) {
-            this->unpack(if_.yes, size_<I>(), size_<N>(), t, args...);
-        }
-        else {
-            this->eval_branchs(size_<I+1>(), size_<N>(), t, args...);
-        }
-    }
-
-    template<size_t I, size_t N, class T, class TupleArgs, class... Ts>
-    void eval_condition(size_<I>, size_<N>, T & a, TupleArgs & t, Ts & ... args) const {
-        this->eval_branchs(size_<I+1>(), size_<N>(), t, args..., a);
-    }
-
-    template<size_t N, size_t... I>
-    static std::integer_sequence<size_t, (I + N)...> plus_index(std::integer_sequence<size_t, I...>) {
-        return {};
-    }
-
-    // recursive if
-    template<class Cond, class Yes, class No, size_t I, size_t N, class TupleArgs, class... Ts>
-    void unpack(types::if_<Cond, Yes, No> & if_, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_condition(size_<I>(), size_<N>(), if_, t, args...);
-    }
-
-    // extends TupleArgs: tuple(get<0..I>(), get<0..tuple_size(arg)>(arg), get<I+1..tuple_size(t)>(t))
-    template<class... T, size_t I, size_t N, class TupleArgs, class... Ts>
-    void unpack(std::tuple<T...> & arg, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->unpack_cat(
-            std::make_index_sequence<I>(),
-            std::make_index_sequence<sizeof...(T)>(),
-            plus_index<I+1u>(std::make_index_sequence<N-I-1u>()),
-            arg, size_<I>(), size_<N + sizeof...(T) - 1>(), t, args...
-        );
-    }
-
-    template<class T, size_t I, size_t N, class TupleArgs, class... Ts>
-    void unpack(T & arg, size_<I>, size_<N>, TupleArgs & t, Ts & ... args) const {
-        this->eval_branchs(size_<I+1>(), size_<N>(), t, args..., arg);
-    }
-
-    template<
-        size_t... IBefore,
-        size_t... IPack,
-        size_t... IAfter,
-        class Pack, class I, class N, class TupleArgs, class... Ts
-    >
-    void unpack_cat(
-        std::integer_sequence<size_t, IBefore...>,
-        std::integer_sequence<size_t, IPack...>,
-        std::integer_sequence<size_t, IAfter...>,
-        I, N, Pack & pack, I, N, TupleArgs & t, Ts & ... args
-    ) const {
-        auto newt = std::tie(get<IBefore>(t)..., get<IPack>(pack)..., get<IAfter>(t)...);
-        this->eval_branchs(I(), N(), newt, args...);
-    }
-};
 
 
 template<std::size_t N>
@@ -483,12 +340,17 @@ struct Array
     size_t size() const { return this->size_; }
     uint8_t * data() { return this->data_; }
 
-    template<size_t... Ints, class TupleSz, class... Packets>
-    Array(std::integer_sequence<size_t, Ints...>, TupleSz & t, Packets & ... packets) {
-        static_assert(sizeof...(Ints) == sizeof...(packets), "");
+    template<size_t... Ints, class TupleSz, class TuplePacket>
+    Array(std::integer_sequence<size_t, Ints...>, TupleSz & tsz, TuplePacket & packets) {
         OutStream out_stream(this->data_, N);
         (void)std::initializer_list<int>{(void(
-            write(proto::size_<Ints>(), t, out_stream, tuple_to_index_sequence(packets), packets)
+            write(
+                proto::size_<Ints>(),
+                tsz,
+                out_stream,
+                tuple_to_index_sequence(packets),
+                std::get<Ints>(packets)
+            )
         ), 1)...};
         this->size_ = out_stream.get_offset();
     }
@@ -507,14 +369,14 @@ private:
 
     template<size_t Int, class TupleSz, class T, class Tag>
     static types::dyn<T, Tag>
-    eval_expr(proto::size_<Int>, TupleSz & t, types::expr<T, pkt_sz, Tag> &) {
-        return {T(get<Int+1>(t))};
+    eval_expr(proto::size_<Int>, TupleSz & tsz, types::expr<T, pkt_sz, Tag> &) {
+        return {T(get<Int+1>(tsz))};
     }
 
     template<size_t Int, class TupleSz, class T, class Tag>
     static types::dyn<T, Tag>
-    eval_expr(proto::size_<Int>, TupleSz & t, types::expr<T, pkt_sz_with_header, Tag> &) {
-        return {T(get<Int>(t))};
+    eval_expr(proto::size_<Int>, TupleSz & tsz, types::expr<T, pkt_sz_with_header, Tag> &) {
+        return {T(get<Int>(tsz))};
     }
 
     template<size_t Int, class TupleSz, size_t... Ints, class T>
@@ -528,25 +390,20 @@ private:
     size_t size_;
 };
 
-template<class List, class Reversed>
-struct reverse_index_impl;
+template<class Fn, size_t Sz, class Szs, class AccuSzs, class TuplePacket>
+void eval_terminal(Fn && fn, size_<Sz>, Szs & szs, AccuSzs & accu_szs, TuplePacket && packets) {
+    Array<Sz> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets};
+    assert(Sz == arr.size());
+    fn(arr.data(), arr.size());
+}
 
-template<size_t OldInt, size_t... OldInts, size_t... NewInts>
-struct reverse_index_impl<
-    std::integer_sequence<size_t, OldInt, OldInts...>,
-    std::integer_sequence<size_t, NewInts...>
-> : reverse_index_impl<
-    std::integer_sequence<size_t, OldInts...>,
-    std::integer_sequence<size_t, OldInt, NewInts...>
->
-{};
-
-template<size_t... Ints>
-struct reverse_index_impl<
-    std::integer_sequence<size_t>,
-    std::integer_sequence<size_t, Ints...>
->
-{ using type = std::integer_sequence<size_t, Ints...>; };
+template<class Fn, class Szs, class AccuSzs, class TuplePacket>
+void eval_terminal(Fn && fn, size_t sz, Szs & szs, AccuSzs & accu_szs, TuplePacket && packets) {
+    constexpr size_t max_rdp_buf_size = 65536;
+    assert(sz <= max_rdp_buf_size);
+    Array<max_rdp_buf_size> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets};
+    fn(arr.data(), arr.size());
+}
 
 namespace detail_ {
     template<size_t Int, class TupleSz, class T, class... Ts>
@@ -564,78 +421,34 @@ namespace detail_ {
     { using type = std::tuple<T, Ts...>; };
 }
 
-template<class Tuple, class TupleFn, size_t I>
-struct suitable_layout<Tuple, TupleFn, I, I>
+template<class TupleSz, class T, class... Ts>
+std::tuple<T, Ts...> accumulate_size(size_<0>, TupleSz &, T sz, Ts ... szs) {
+    return std::tuple<T, Ts...>(sz, szs...);
+}
+
+template<size_t Int, class TupleSz, class T, class... Ts>
+typename detail_::accumulate_size_type<Int, TupleSz, T, Ts...>::type
+accumulate_size(size_<Int>, TupleSz & szs, T sz, Ts ... sz_others) {
+    return accumulate_size(size_<Int-1>{}, szs, sz + get<Int-1>(szs), sz, sz_others...);
+}
+
+struct terminal_evaluator
 {
-    // Tuple_0 = tuple<>
-    // Tuple_n = tuple<
-    //  Tuple_(n - 1)
-    //  tuple<elements...>
-    // >
-    Tuple & tuple;
-    TupleFn const & fn;
-
-    template<size_t... Ints>
-    static typename reverse_index_impl<
-        std::integer_sequence<size_t, Ints...>,
-        std::integer_sequence<size_t>
-    >::type
-    reverse_index(std::integer_sequence<size_t, Ints...>) {
-        return {};
-    }
-
-    void operator()() const {
-        derec(this->tuple);
-    }
-
-    template<class TupleRec, class... Packets>
-    void derec(TupleRec && trec, Packets && ... packets) const {
-        this->derec(
-            std::get<0>(trec),
-            std::get<1>(trec),
-            packets...
-        );
-    }
-
-    template<class... Packets>
-    void derec(std::tuple<>, Packets && ... packets) const {
+    template<class Fn, size_t... Ints, class TuplePacket>
+    void operator()(Fn && fn, std::integer_sequence<size_t, Ints...>, TuplePacket && packets) const {
         // tuple(sizeof_(packets)...)
-        auto szs = std::make_tuple(this->packet_size(tuple_to_index_sequence(packets), packets)...);
-        constexpr size_t sz_count = sizeof...(packets);
+        auto szs = std::make_tuple(this->packet_size(
+            tuple_to_index_sequence(std::get<Ints>(packets)), std::get<Ints>(packets)
+        )...);
+        constexpr size_t sz_count = sizeof...(Ints);
         // tuple(sz3+sz2+sz1, sz2+sz1, sz1)
         auto accu_szs = accumulate_size(size_<sz_count-1>(), szs, get<sz_count-1>(szs));
-        this->eval(get<0>(accu_szs), szs, accu_szs, packets...);
-    }
-
-    template<size_t Sz, class Szs, class AccuSzs, class... Packets>
-    void eval(size_<Sz>, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) const {
-        Array<Sz> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
-        assert(Sz == arr.size());
-        get<0>(this->fn)(arr.data(), arr.size());
-    }
-
-    template<class Szs, class AccuSzs, class... Packets>
-    void eval(size_t sz, Szs & szs, AccuSzs & accu_szs, Packets && ... packets) const {
-        constexpr size_t max_rdp_buf_size = 65536;
-        assert(sz <= max_rdp_buf_size);
-        Array<max_rdp_buf_size> arr{tuple_to_index_sequence(accu_szs), accu_szs, packets...};
-        assert(sz == arr.size());
-        get<0>(this->fn)(arr.data(), arr.size());
-    }
-
-    template<size_t Int, class TupleSz, class T, class... Ts>
-    typename detail_::accumulate_size_type<Int, TupleSz, T, Ts...>::type
-    accumulate_size(size_<Int>, TupleSz & szs, T sz, Ts ... sz_others) const {
-        return accumulate_size(size_<Int-1>{}, szs, sz + get<Int-1>(szs), sz, sz_others...);
-    }
-
-    template<class TupleSz, class T, class... Ts>
-    std::tuple<T, Ts...> accumulate_size(size_<0>, TupleSz &, T sz, Ts ... szs) const {
-        return std::tuple<T, Ts...>(sz, szs...);
+        static_assert(sizeof...(Ints) == std::tuple_size<decltype(accu_szs)>::value, "");
+        eval_terminal(fn, get<0>(accu_szs), szs, accu_szs, packets);
     }
 
     template<size_t... Ints, class Packet>
-    auto packet_size(std::index_sequence<Ints...>, Packet & packet) const
+    auto packet_size(std::integer_sequence<size_t, Ints...>, Packet & packet) const
     -> decltype(fold(plus{}, sizeof_(get<Ints>(packet))...)) {
         return fold(plus{}, sizeof_(get<Ints>(packet))...);
     }
@@ -646,20 +459,153 @@ struct suitable_layout<Tuple, TupleFn, I, I>
     }
 };
 
-struct terminal_
+template<class Fn, size_t N, class PacketFns, class EvaluatedPackets>
+void eval_packets(Fn && fn, size_<N>, size_<N>, PacketFns && , EvaluatedPackets && evaluated_packets) {
+    terminal_evaluator()(fn, tuple_to_index_sequence(evaluated_packets), evaluated_packets);
+}
+
+template<class Fn, size_t N, class PacketFns>
+void eval_packets(Fn && fn, size_<N>, size_<N>, PacketFns && , std::tuple<>) {
+}
+
+template<class Fn, size_t I, size_t N, class PacketFns, class EvaluatedPackets>
+void eval_packets(Fn && fn, size_<I>, size_<N>, PacketFns && packet_fns, EvaluatedPackets && evaluated_packets);
+
+
+template<size_t... Ints, class... Elements, class... Ts>
+std::tuple<Elements..., std::tuple<Ts&...>>
+extends_tuple_reference(std::integer_sequence<size_t, Ints...>, std::tuple<Elements...> & t, Ts & ... elems) {
+    return std::tuple<Elements..., std::tuple<Ts&...>>(get<Ints>(t)..., std::tuple<Ts&...>(elems...));
+}
+
+template<class Fn, size_t IPacket, size_t NPacket, class PacketFns, class EvaluatedPackets>
+struct branch_evaluator
 {
-    template<class Layout>
-    void operator()(Layout && layout) const {
-        layout();
+    Fn & fn;
+    PacketFns & packet_fns;
+    EvaluatedPackets & evaluated_packets;
+
+    template<size_t I, size_t N, class Packet, class... Ts>
+    void eval_branchs(size_<I>, size_<N>, Packet && packet, Ts & ... elems) const {
+        this->eval_condition(size_<I>(), size_<N>(), get<I>(packet), packet, elems...);
+    }
+
+    template<size_t N, class Packet, class... Ts>
+    void eval_branchs(size_<N>, size_<N>, Packet && packet, Ts & ... elems) const {
+        eval_packets(
+            fn, size_<IPacket+1>(), size_<NPacket>(), packet_fns,
+            extends_tuple_reference(tuple_to_index_sequence(evaluated_packets), evaluated_packets, elems...)
+        );
+    }
+
+    template<size_t N, class Packet>
+    void eval_branchs(size_<N>, size_<N>, Packet && packet) const {
+        eval_packets(
+            fn, size_<IPacket+1>(), size_<NPacket>(), packet_fns, evaluated_packets
+        );
+    }
+
+
+    // if_ else
+    template<size_t I, size_t N, class Cond, class Yes, class No, class Packet, class... Ts>
+    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, No> & if_, Packet & packet, Ts & ... args) const {
+        if (if_.cond()) {
+            this->unpack(if_.yes, size_<I>(), size_<N>(), packet, args...);
+        }
+        else {
+            this->unpack(if_.no, size_<I>(), size_<N>(), packet, args...);
+        }
+    }
+
+    // if_
+    template<size_t I, size_t N, class Cond, class Yes, class Packet, class... Ts>
+    void eval_condition(size_<I>, size_<N>, types::if_<Cond, Yes, types::none> & if_, Packet & packet, Ts & ... args) const {
+        if (if_.cond()) {
+            this->unpack(if_.yes, size_<I>(), size_<N>(), packet, args...);
+        }
+        else {
+            this->eval_branchs(size_<I+1>(), size_<N>(), packet, args...);
+        }
+    }
+
+    template<size_t I, size_t N, class T, class Packet, class... Ts>
+    void eval_condition(size_<I>, size_<N>, T & a, Packet & packet, Ts & ... args) const {
+        this->eval_branchs(size_<I+1>(), size_<N>(), packet, args..., a);
+    }
+
+
+    // recursive if
+    template<class Cond, class Yes, class No, size_t I, size_t N, class Packet, class... Ts>
+    void unpack(types::if_<Cond, Yes, No> & if_, size_<I>, size_<N>, Packet & packet, Ts & ... args) const {
+        this->eval_condition(size_<I>(), size_<N>(), if_, packet, args...);
+    }
+
+    // extends Packet: tuple(get<0..I>(), get<0..tuple_size(arg)>(arg), get<I+1..tuple_size(packet)>(packet))
+    template<class... T, size_t I, size_t N, class Packet, class... Ts>
+    void unpack(std::tuple<T...> & arg, size_<I>, size_<N>, Packet & packet, Ts & ... args) const {
+        this->unpack_cat(
+            std::make_index_sequence<I>(),
+            std::make_index_sequence<sizeof...(T)>(),
+            plus_index<I+1u>(std::make_index_sequence<N-I-1u>()),
+            arg, size_<I>(), size_<N + sizeof...(T) - 1>(), packet, args...
+        );
+    }
+
+    template<class T, size_t I, size_t N, class Packet, class... Ts>
+    void unpack(T & arg, size_<I>, size_<N>, Packet & packet, Ts & ... args) const {
+        this->eval_branchs(size_<I+1>(), size_<N>(), packet, args..., arg);
+    }
+
+
+    template<size_t N, size_t... I>
+    static std::integer_sequence<size_t, (I + N)...>
+    plus_index(std::integer_sequence<size_t, I...>) {
+        return {};
+    }
+
+    template<
+        size_t... IBefore,
+        size_t... IPack,
+        size_t... IAfter,
+        class Pack, class I, class N, class Packet, class... Ts
+    >
+    void unpack_cat(
+        std::integer_sequence<size_t, IBefore...>,
+        std::integer_sequence<size_t, IPack...>,
+        std::integer_sequence<size_t, IAfter...>,
+        Pack & pack, I, N, Packet & packet, Ts & ... args
+    ) const {
+        auto newt = std::tie(get<IBefore>(packet)..., get<IPack>(pack)..., get<IAfter>(packet)...);
+        this->eval_branchs(I(), N(), newt, args...);
     }
 };
 
-template<class Fn, class W, class... Ws>
-void eval(Fn fn, W && writer, Ws && ... writers) {
-    std::tuple<Fn&, Ws&..., terminal_> ws(fn, writers..., terminal_());
-    std::tuple<> t;
-    writer(suitable_layout<decltype(t), decltype(ws), 1, sizeof...(writers) + 2u>{t, ws});
+template<class Fn, size_t I, size_t N, class PacketFns, class EvaluatedPackets>
+struct packet_evaluator
+{
+    branch_evaluator<Fn, I, N, PacketFns, EvaluatedPackets> branch_evaluator_;
+
+    template<class... Elements>
+    void operator()(Elements && ... elems) {
+        static_assert(test(check_protocol_type<decltype(elems)>()...), "");
+        this->branch_evaluator_.eval_branchs(size_<0>(), size_<sizeof...(elems)>(), std::tie(elems...));
+    }
+};
+
+template<class Fn, size_t I, size_t N, class PacketFns, class EvaluatedPackets>
+void eval_packets(Fn && fn, size_<I>, size_<N>, PacketFns && packet_fns, EvaluatedPackets && evaluated_packets) {
+    get<I>(packet_fns)(
+        packet_evaluator<Fn, I, N, PacketFns, EvaluatedPackets>
+        {{fn, packet_fns, evaluated_packets}}
+    );
 }
+
+template<class Fn, class... PacketFns>
+void eval(Fn && fn, PacketFns && ... packet_fns) {
+    eval_packets(fn, size_<0>(), size_<sizeof...(packet_fns)>(), std::tie(packet_fns...), std::tuple<>());
+}
+
+template<class Fn> void eval(Fn && fn) = delete;
 
 }
 

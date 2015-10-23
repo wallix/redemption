@@ -119,7 +119,12 @@ using namespace meta_protocol;
 
 using std::get;
 
-using plus = std::plus<>;
+struct plus
+{
+    template<class T, class U>
+    auto operator()(T&& x, U&& y) const
+    { return std::forward<T>(x) + std::forward<U>(y); }
+};
 
 template<class T>
 std::make_index_sequence<std::tuple_size<T>::value>
@@ -701,9 +706,9 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         );
     }
 
-//     uint8_t data[10]{};
-//     CryptContext crypt;
-//
+    uint8_t data[10]{};
+    CryptContext crypt;
+
 //     auto test1 = [&](uint8_t * p) {
 //         proto::eval(
 //             [&](uint8_t * data, size_t sz) {
