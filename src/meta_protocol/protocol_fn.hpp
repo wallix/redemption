@@ -43,7 +43,7 @@ namespace meta_protocol
 
     private:
         template<class Layout, size_t... Ints>
-        void apply(Layout && layout, std::integer_sequence<size_t, Ints>) const {
+        void apply(Layout && layout, std::integer_sequence<size_t, Ints...>) const {
             using std::get;
             this->fn(layout, get<Ints>(this->t)...);
         }

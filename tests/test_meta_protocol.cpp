@@ -65,9 +65,30 @@ struct pkt_data
     T x;
 };
 
+}
+
+namespace meta_protocol { namespace types {
+    template<class T> struct is_protocol_type<proto::pkt_data<T>> : is_protocol_type<T> {};
+} }
+
+namespace proto {
+
+template<class T>
+struct check_protocol_type
+{
+    using value_type = typename std::decay<T>::type;
+    static_assert(types::is_protocol_type<value_type>::value, "isn't a protocol type");
+};
+
+constexpr int test(...) { return 1; }
+
 template<class T>
 pkt_data<T> make_pkt_data(T && x)
-{ return pkt_data<T>{std::forward<T>(x)}; }
+{
+    static_assert(test(check_protocol_type<T>()), "");
+    static_assert(!is_condition<T>::value, "make_pkt_data(if_(...)) -> if_(make_pkt_data(...))");
+    return pkt_data<T>{std::forward<T>(x)};
+}
 
 template<class T>
 auto sizeof_(pkt_data<T> const & pkt) {
@@ -177,8 +198,19 @@ struct stream_writer
 
     template<class Fn>
     void operator()(Fn && fn, uint8_t * pkt, uint8_t len) const {
-        using ::proto::write;
+        this->dispatch_pkt_expr(1, fn, pkt, len);
+    }
+
+    template<class Fn>
+    auto dispatch_pkt_expr(int, Fn && fn, uint8_t * pkt, uint8_t len) const
+    -> decltype(void(write(fn, std::declval<OutStream&>(), pkt, len)))
+    {
         write(fn, this->out_stream, pkt, len);
+    }
+
+    template<class Fn>
+    void dispatch_pkt_expr(unsigned, Fn && fn, uint8_t * pkt, uint8_t len) const {
+        (*this)(fn(pkt, len));
     }
 };
 
@@ -200,15 +232,6 @@ struct stream_writer_layout
 template<class, class U = void> using use = U;
 
 template<class...> struct pack {};
-
-constexpr int test(...) { return 1; }
-
-template<class T>
-struct check_protocol_type
-{
-    using value_type = typename std::decay<T>::type;
-    static_assert(types::is_protocol_type<value_type>::value, "isn't a protocol type");
-};
 
 
 template<class... Ts>
@@ -303,7 +326,17 @@ private:
         size_<I>, size_<N>, Packet & packet,
         types::expr<T, pkt_sz_with_header, Tag> &
     ) {
-        stream_writer{out_stream}(types::dyn<T, Tag>{{T(get<I>(this->accu_szs))}});
+        stream_writer{out_stream}(types::dyn<T, Tag>{T(get<I>(this->accu_szs))});
+        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+    }
+
+    template<size_t IPacket, size_t I, size_t N, class Packet, class T, class Expr, class Tag>
+    void eval_expr(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<I>, size_<N>, Packet & packet,
+        types::expr<T, Expr, Tag> & x
+    ) {
+        stream_writer{out_stream}(types::dyn<T, Tag>{T(x.expr())});
         this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
     }
 
@@ -318,7 +351,19 @@ private:
         out_stream.out_skip_bytes(sz);
         this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
         OutStream substream(tmp, sz);
-        stream_writer{substream}(pkt.x, p, get_data_len(size_<IPacket+1>()));
+        p += get<IPacket>(this->szs);
+        assert(size_t(out_stream.get_data_end() - p) == get_data_len(size_<IPacket+1>()));
+        this->write_packet_with_data(substream, p, pkt.x, get_data_len(size_<IPacket+1>()));
+    }
+
+    template<class T, class Expr, class Tag, class Size>
+    void write_packet_with_data(OutStream & out_stream, uint8_t * p, types::expr<T, Expr, Tag> & x, Size sz) {
+        stream_writer{out_stream}(types::dyn<T, Tag>{T(x.expr(p, sz))});
+    }
+
+    template<class T, class Size>
+    void write_packet_with_data(OutStream & out_stream, uint8_t * p, T & x, Size sz) {
+        stream_writer{out_stream}(x, p, sz);
     }
 
     template<size_t IPacket, size_t I, size_t N, class Packet, class T>
@@ -520,8 +565,44 @@ struct recursive_if_test {
     }
 };
 
+struct data_modified
+{
+    template<class Layout>
+    void operator()(Layout && layout) const {
+        layout(proto::make_pkt_data(meta_protocol::u8([](uint8_t * data, std::size_t sz) {
+            BOOST_REQUIRE_EQUAL(sz, 1);
+            ++data[0];
+            return 0xff;
+        })));
+    }
+};
+
+struct simple_byte
+{
+    template<class Layout>
+    void operator()(Layout && layout) const {
+        layout(meta_protocol::u8<1>());
+    }
+};
+
 BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 {
+    {
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, 3);
+                //hexdump(out_stream.get_data(), out_stream.get_offset());
+                //hexdump(array.data(), array.size());
+                BOOST_REQUIRE_EQUAL(  1, data[0]);
+                BOOST_REQUIRE_EQUAL(255, data[1]);
+                BOOST_REQUIRE_EQUAL(  2, data[2]);
+            },
+            simple_byte(),
+            data_modified(),
+            simple_byte()
+        );
+    }
+
     {
         StaticOutStream<128> out_stream1;
         X224::DT_TPDU_Send(out_stream1, 7);

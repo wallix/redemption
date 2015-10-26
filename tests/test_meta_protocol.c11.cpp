@@ -32,7 +32,7 @@
 
 #include "../src/meta_protocol/types.hpp"
 #include "../src/meta_protocol/meta/integer_sequence.hpp"
-#include "../src/meta_protocol/meta/static_const.hpp"
+#include "../src/meta_protocol/protocol_fn.hpp"
 
 #include <type_traits>
 #include <tuple>
@@ -62,76 +62,6 @@ struct plus
     { return std::forward<T>(x) + std::forward<U>(y); }
 };
 
-template<class T>
-std::make_index_sequence<std::tuple_size<T>::value>
-tuple_to_index_sequence(T const &) {
-    return {};
-}
-
-template<class Fn, class... T>
-struct lazy_fn
-{
-    std::tuple<T...> t;
-    Fn fn;
-
-    template<class Layout>
-    void operator()(Layout && layout) const {
-        this->apply(layout, tuple_to_index_sequence(this->t));
-    }
-
-private:
-    template<class Layout, size_t... Ints>
-    void apply(Layout && layout, std::integer_sequence<size_t, Ints...>) const {
-        this->fn(layout, get<Ints>(this->t)...);
-    }
-};
-
-template<class Fn, class... T>
-lazy_fn<Fn, T...> lazy(Fn fn, T && ... args) {
-    return lazy_fn<Fn, T...>{std::tuple<T...>{args...}, fn};
-}
-
-template<class T, class U = void>
-struct enable_type {
-    using type = U;
-};
-
-namespace detail_ {
-    template<class T, class = void>
-    struct is_layout_impl : std::false_type
-    {};
-
-    template<class T>
-    struct is_layout_impl<T, typename enable_type<typename T::is_layout>::type> : T::is_layout
-    {};
-}
-
-template<class T>
-using is_layout = detail_::is_layout_impl<typename std::remove_reference<T>::type>;
-
-template<class FnClass>
-struct protocol_wrapper
-{
-    FnClass operator()() const {
-        return {};
-    }
-
-    template<class T, class... Ts>
-    typename std::enable_if<is_layout<T>::value>::type
-    operator()(T && arg, Ts && ... args) const {
-        FnClass()(arg, args...);
-    }
-
-    template<class T, class... Ts>
-    typename std::enable_if<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>::type
-    operator()(T && arg, Ts && ... args) const {
-        return {std::tuple<T, Ts...>{arg, args...}, FnClass{}};
-    }
-};
-
-template<class FnClass>
-using protocol_fn = meta::static_const<protocol_wrapper<FnClass>>;
-
 struct pkt_sz {};
 struct pkt_sz_with_header {};
 
@@ -141,9 +71,30 @@ struct pkt_data
     T x;
 };
 
+}
+
+namespace meta_protocol { namespace types {
+    template<class T> struct is_protocol_type<proto::pkt_data<T>> : is_protocol_type<T> {};
+} }
+
+namespace proto {
+
+template<class T>
+struct check_protocol_type
+{
+    using value_type = typename std::decay<T>::type;
+    static_assert(types::is_protocol_type<value_type>::value, "isn't a protocol type");
+};
+
+constexpr int test(...) { return 1; }
+
 template<class T>
 pkt_data<T> make_pkt_data(T && x)
-{ return pkt_data<T>{std::forward<T>(x)}; }
+{
+    static_assert(test(check_protocol_type<T>()), "");
+    static_assert(!is_condition<T>::value, "make_pkt_data(if_(...)) -> if_(make_pkt_data(...))");
+    return pkt_data<T>{std::forward<T>(x)};
+}
 
 template<class T>
 auto sizeof_(pkt_data<T> const & pkt)
@@ -171,23 +122,23 @@ namespace {
 }
 
 
+
 struct signature_send
 {
-    uint8_t * data;
-    size_t len;
     CryptContext & crypt;
-
-    void write(uint8_t * p) const {
-        size_t const sig_sz = 8;
-        auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*p);
-        this->crypt.sign(this->data, this->len, signature);
-        this->crypt.decrypt(this->data, this->len);
-    }
 };
 
-using meta_protocol::sizeof_;
-size_<8> sizeof_(signature_send const &) {
+inline size_<8> sizeof_(signature_send const &) {
     return {};
+}
+
+inline void write(signature_send const & sig, OutStream & out_stream, uint8_t * data, std::size_t len) {
+    constexpr auto sig_sz = decltype(sizeof_(sig))();
+    auto * array = out_stream.get_current();
+    auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(array);
+    sig.crypt.sign(data, len, signature);
+    sig.crypt.decrypt(data, len);
+    out_stream.out_skip_bytes(sig_sz);
 }
 
 struct sec_send_fn
@@ -199,7 +150,7 @@ struct sec_send_fn
         flags |= encryptionLevel ? SEC::SEC_ENCRYPT : 0;
         layout(
             if_(flags, u32_le(flags)),
-            if_(flags & SEC::SEC_ENCRYPT, signature_send{data, data_sz, crypt})
+            if_(flags & SEC::SEC_ENCRYPT, pkt_data<signature_send>{{crypt}})
         );
     }
 };
@@ -235,35 +186,39 @@ struct stream_writer
 {
     OutStream & out_stream;
 
-    using is_layout = std::true_type;
-
-    template<class... Ts>
-    void operator()(Ts && ... args) const {
-        (void)std::initializer_list<int>{(void(
-            this->write(args)
-        ), 1)...};
-    }
 
     template<class T, T x, class Tag>
-    void write(types::integral<T, x, Tag>) const {
-        this->write(types::dyn<T, Tag>{x});
+    void operator()(types::integral<T, x, Tag>) const {
+        (*this)(types::dyn<T, Tag>{x});
     }
 
-    void write(types::dyn_u8 x) const {
+    void operator()(types::dyn_u8 x) const {
         this->out_stream.out_uint8(x.x);
     }
 
-    void write(types::dyn_u16_be x) const {
+    void operator()(types::dyn_u16_be x) const {
         this->out_stream.out_uint16_be(x.x);
     }
 
-    void write(types::dyn_u32_le x) const {
+    void operator()(types::dyn_u32_le x) const {
         this->out_stream.out_uint32_le(x.x);
     }
 
-    void write(signature_send const & x) const {
-        x.write(this->out_stream.get_current());
-        this->out_stream.out_skip_bytes(sizeof_(x));
+    template<class Fn>
+    void operator()(Fn && fn, uint8_t * pkt, uint8_t len) const {
+        this->dispatch_pkt_expr(1, fn, pkt, len);
+    }
+
+    template<class Fn>
+    auto dispatch_pkt_expr(int, Fn && fn, uint8_t * pkt, uint8_t len) const
+    -> decltype(void(write(fn, std::declval<OutStream&>(), pkt, len)))
+    {
+        write(fn, this->out_stream, pkt, len);
+    }
+
+    template<class Fn>
+    void dispatch_pkt_expr(unsigned, Fn && fn, uint8_t * pkt, uint8_t len) const {
+        (*this)(fn(pkt, len));
     }
 };
 
@@ -272,18 +227,6 @@ struct stream_writer
 template<class, class U = void> using use = U;
 
 template<class...> struct pack {};
-
-using std::get;
-
-constexpr int test(...) { return 1; }
-
-template<class T>
-struct check_protocol_type
-{
-    using value_type = typename std::decay<T>::type;
-    static_assert(types::is_protocol_type<value_type>::value, "isn't a protocol type");
-};
-
 
 template<class... Ts>
 size_<sizeof...(Ts)> tuple_size(std::tuple<Ts...> const &) {
@@ -328,6 +271,7 @@ private:
     }
 
     using size_N = size_<std::tuple_size<typename std::decay<TuplePackets>::type>::value>;
+    static_assert(size_N::value == std::tuple_size<AccuSzs>::value, "");
     void write_packets(size_N, OutStream &) {
     }
 
@@ -354,8 +298,7 @@ private:
     }
 
     template<size_t I>
-    auto get_data_len(size_<I>)
-    -> decltype(get<I>(this->accu_szs)) {
+    size_t get_data_len(size_<I>) {
         return get<I>(this->accu_szs);
     }
 
@@ -378,7 +321,17 @@ private:
         size_<I>, size_<N>, Packet & packet,
         types::expr<T, pkt_sz_with_header, Tag> &
     ) {
-        stream_writer{out_stream}(types::dyn<T, Tag>{{T(get<I>(this->accu_szs))}});
+        stream_writer{out_stream}(types::dyn<T, Tag>{T(get<I>(this->accu_szs))});
+        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+    }
+
+    template<size_t IPacket, size_t I, size_t N, class Packet, class T, class Expr, class Tag>
+    void eval_expr(
+        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<I>, size_<N>, Packet & packet,
+        types::expr<T, Expr, Tag> & x
+    ) {
+        stream_writer{out_stream}(types::dyn<T, Tag>{T(x.expr())});
         this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
     }
 
@@ -393,7 +346,19 @@ private:
         out_stream.out_skip_bytes(sz);
         this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
         OutStream substream(tmp, sz);
-        stream_writer{substream}(pkt.x, p, get_data_len(size_<IPacket+1>()));
+        p += get<IPacket>(this->szs);
+        assert(size_t(out_stream.get_data_end() - p) == get_data_len(size_<IPacket+1>()));
+        this->write_packet_with_data(substream, p, pkt.x, get_data_len(size_<IPacket+1>()));
+    }
+
+    template<class T, class Expr, class Tag, class Size>
+    void write_packet_with_data(OutStream & out_stream, uint8_t * p, types::expr<T, Expr, Tag> & x, Size sz) {
+        stream_writer{out_stream}(types::dyn<T, Tag>{T(x.expr(p, sz))});
+    }
+
+    template<class T, class Size>
+    void write_packet_with_data(OutStream & out_stream, uint8_t * p, T & x, Size sz) {
+        stream_writer{out_stream}(x, p, sz);
     }
 
     template<size_t IPacket, size_t I, size_t N, class Packet, class T>
@@ -640,8 +605,44 @@ struct recursive_if_test {
     }
 };
 
+struct data_modified
+{
+    template<class Layout>
+    void operator()(Layout && layout) const {
+        layout(proto::make_pkt_data(meta_protocol::u8([](uint8_t * data, std::size_t sz) {
+            BOOST_REQUIRE_EQUAL(sz, 1);
+            ++data[0];
+            return 0xff;
+        })));
+    }
+};
+
+struct simple_byte
+{
+    template<class Layout>
+    void operator()(Layout && layout) const {
+        layout(meta_protocol::u8<1>());
+    }
+};
+
 BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 {
+    {
+        proto::eval(
+            [&](uint8_t * data, size_t size) {
+                BOOST_REQUIRE_EQUAL(size, 3);
+                //hexdump(out_stream.get_data(), out_stream.get_offset());
+                //hexdump(array.data(), array.size());
+                BOOST_REQUIRE_EQUAL(  1, data[0]);
+                BOOST_REQUIRE_EQUAL(255, data[1]);
+                BOOST_REQUIRE_EQUAL(  2, data[2]);
+            },
+            simple_byte(),
+            data_modified(),
+            simple_byte()
+        );
+    }
+
     {
         StaticOutStream<1024> out_stream;
         X224::DT_TPDU_Send(out_stream, 7);

@@ -33,6 +33,7 @@ namespace meta_protocol
         return {};
     }
 
+#if __cplusplus > 201103L
     template<class Tuple, class Fn, size_t... Ints>
     auto apply(std::index_sequence<Ints...>, Tuple && t, Fn fn) {
         using std::get;
@@ -44,6 +45,7 @@ namespace meta_protocol
         using std::get;
         return apply(tuple_to_index_sequence(t), std::forward<Tuple>(t), fn);
     }
+#endif
 }
 
 #endif
