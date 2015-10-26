@@ -82,7 +82,7 @@ public:
 
                 if (ini.get<cfg::globals::session_probe_alternate_shell>().empty()) {
                     ini.set<cfg::globals::session_probe_alternate_shell>(
-                        this->parametersHldr.get_agent_alternate_shell()
+                        this->parametersHldr.get_probe_alternate_shell()
                     );
                 }
 

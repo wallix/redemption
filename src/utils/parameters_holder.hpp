@@ -46,7 +46,7 @@ struct parameters_holder {
         return key;
     }
 
-    virtual const char * get_agent_alternate_shell() const {
+    virtual const char * get_probe_alternate_shell() const {
         return "cmd /k ";
     }
 };
