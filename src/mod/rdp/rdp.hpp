@@ -6284,7 +6284,7 @@ public:
 
                 if (!contian_window_title && this->acl) {
                     std::string info("info='" + parameters + "'");
-                    this->acl->log2("AGT event", order.c_str(), info.c_str());
+                    this->acl->log2("PROBE event", order.c_str(), info.c_str());
                 }
             }
             else {
