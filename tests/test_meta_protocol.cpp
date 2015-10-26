@@ -32,6 +32,7 @@
 
 #include "../src/meta_protocol/types.hpp"
 #include "../src/meta_protocol/protocol_fn.hpp"
+#include "../src/meta_protocol/stream_writer.hpp"
 
 #include <type_traits>
 #include <tuple>
@@ -95,47 +96,52 @@ auto sizeof_(pkt_data<T> const & pkt) {
     return sizeof_(pkt.x);
 }
 
+#define RDP_PROTOCOL_STRUCT(name)                               \
+    struct name##_fn;                                           \
+    namespace {                                                 \
+        constexpr auto && name = protocol_fn<name##_fn>::value; \
+    }                                                           \
+                                                                \
+    struct name##_fn
 
-struct dt_tpdu_send_fn
+// struct dt_tpdu_send_fn
+RDP_PROTOCOL_STRUCT(dt_tpdu_send)
 {
     template<class Layout>
     void operator()(Layout && layout) const {
         layout(
-          u8<0x03>() // version 3
-        , u8<0x00>()
-        , u16_be(pkt_sz_with_header())
-        , u8<7-5>() // LI
-        , u8<X224::DT_TPDU>()
-        , u8<X224::EOT_EOT>());
+          out_u8<0x03>() // version 3
+        , out_u8<0x00>()
+        , out_u16_be(pkt_sz_with_header())
+        , out_u8<7-5>() // LI
+        , out_u8<X224::DT_TPDU>()
+        , out_u8<X224::EOT_EOT>());
     }
 
     template<class Layout>
     void operator()(Layout && layout, uint16_t payload_len) const {
         layout(
-          u8<0x03>() // version 3
-        , u8<0x00>()
-        , u16_be(payload_len + 7)
-        , u8<7-5>() // LI
-        , u8<X224::DT_TPDU>()
-        , u8<X224::EOT_EOT>());
+          out_u8<0x03>() // version 3
+        , out_u8<0x00>()
+        , out_u16_be(payload_len + 7)
+        , out_u8<7-5>() // LI
+        , out_u8<X224::DT_TPDU>()
+        , out_u8<X224::EOT_EOT>());
     }
 };
 
-namespace {
-    constexpr auto && dt_tpdu_send = protocol_fn<dt_tpdu_send_fn>::value;
-}
 
 
-struct signature_send
+struct out_signature_send
 {
     CryptContext & crypt;
 };
 
-inline size_<8> sizeof_(signature_send const &) {
+inline size_<8> sizeof_(out_signature_send const &) {
     return {};
 }
 
-inline void write(signature_send const & sig, OutStream & out_stream, uint8_t * data, std::size_t len) {
+inline void write(out_signature_send const & sig, OutStream & out_stream, uint8_t * data, std::size_t len) {
     constexpr auto sig_sz = decltype(sizeof_(sig))();
     auto * array = out_stream.get_current();
     auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(array);
@@ -144,23 +150,17 @@ inline void write(signature_send const & sig, OutStream & out_stream, uint8_t * 
     out_stream.out_skip_bytes(sig_sz);
 }
 
-struct sec_send_fn
+RDP_PROTOCOL_STRUCT(sec_send)
 {
     template<class Layout>
-    void operator()(Layout && layout,
-        uint8_t * data, size_t data_sz, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel
-    ) const {
+    void operator()(Layout && layout, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel) const {
         flags |= encryptionLevel ? SEC::SEC_ENCRYPT : 0;
         layout(
-            if_(flags, u32_le(flags)),
-            if_(flags & SEC::SEC_ENCRYPT, pkt_data<signature_send>{{crypt}})
+            if_(flags, out_u32_le(flags)),
+            if_(flags & SEC::SEC_ENCRYPT, pkt_data<out_signature_send>{{crypt}})
         );
     }
 };
-
-namespace {
-    constexpr auto && sec_send = protocol_fn<sec_send_fn>::value;
-}
 
 
 template<class Fn, class Accu>
@@ -172,61 +172,6 @@ template<class Fn, class Accu, class T, class... Ts>
 auto fold(Fn fn, Accu accu, T && arg, Ts && ... args) {
     return fold(fn, fn(accu, arg), args...);
 }
-
-
-struct stream_writer
-{
-    OutStream & out_stream;
-
-
-    template<class T, T x, class Tag>
-    void operator()(types::integral<T, x, Tag>) const {
-        (*this)(types::dyn<T, Tag>{x});
-    }
-
-    void operator()(types::dyn_u8 x) const {
-        this->out_stream.out_uint8(x.x);
-    }
-
-    void operator()(types::dyn_u16_be x) const {
-        this->out_stream.out_uint16_be(x.x);
-    }
-
-    void operator()(types::dyn_u32_le x) const {
-        this->out_stream.out_uint32_le(x.x);
-    }
-
-    template<class Fn>
-    void operator()(Fn && fn, uint8_t * pkt, uint8_t len) const {
-        this->dispatch_pkt_expr(1, fn, pkt, len);
-    }
-
-    template<class Fn>
-    auto dispatch_pkt_expr(int, Fn && fn, uint8_t * pkt, uint8_t len) const
-    -> decltype(void(write(fn, std::declval<OutStream&>(), pkt, len)))
-    {
-        write(fn, this->out_stream, pkt, len);
-    }
-
-    template<class Fn>
-    void dispatch_pkt_expr(unsigned, Fn && fn, uint8_t * pkt, uint8_t len) const {
-        (*this)(fn(pkt, len));
-    }
-};
-
-struct stream_writer_layout
-{
-    OutStream & out_stream;
-
-    using is_layout = std::true_type;
-
-    template<class... Ts>
-    void operator()(Ts && ... args) const {
-        (void)std::initializer_list<int>{(void(
-            stream_writer{out_stream}(args)
-        ), 1)...};
-    }
-};
 
 
 template<class, class U = void> using use = U;
@@ -312,9 +257,9 @@ private:
     void eval_expr(
         size_<IPacket>, uint8_t * p, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
-        types::expr<T, pkt_sz, Tag> &
+        types::out_expr<T, pkt_sz, Tag> &
     ) {
-        stream_writer{out_stream}(types::dyn<T, Tag>{T(
+        stream_writer{out_stream}(types::out_dyn<T, Tag>{T(
             get_data_len(size_<IPacket+1>())
         )});
         this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
@@ -324,9 +269,9 @@ private:
     void eval_expr(
         size_<IPacket>, uint8_t * p, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
-        types::expr<T, pkt_sz_with_header, Tag> &
+        types::out_expr<T, pkt_sz_with_header, Tag> &
     ) {
-        stream_writer{out_stream}(types::dyn<T, Tag>{T(get<I>(this->accu_szs))});
+        stream_writer{out_stream}(types::out_dyn<T, Tag>{T(get<IPacket>(this->accu_szs))});
         this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
     }
 
@@ -334,9 +279,9 @@ private:
     void eval_expr(
         size_<IPacket>, uint8_t * p, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
-        types::expr<T, Expr, Tag> & x
+        types::out_expr<T, Expr, Tag> & x
     ) {
-        stream_writer{out_stream}(types::dyn<T, Tag>{T(x.expr())});
+        stream_writer{out_stream}(types::out_dyn<T, Tag>{T(x.expr())});
         this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
     }
 
@@ -357,8 +302,8 @@ private:
     }
 
     template<class T, class Expr, class Tag, class Size>
-    void write_packet_with_data(OutStream & out_stream, uint8_t * p, types::expr<T, Expr, Tag> & x, Size sz) {
-        stream_writer{out_stream}(types::dyn<T, Tag>{T(x.expr(p, sz))});
+    void write_packet_with_data(OutStream & out_stream, uint8_t * p, types::out_expr<T, Expr, Tag> & x, Size sz) {
+        stream_writer{out_stream}(types::out_dyn<T, Tag>{T(x.expr(p, sz))});
     }
 
     template<class T, class Size>
@@ -419,6 +364,7 @@ void eval_packets(Fn && fn, size_<N>, size_<N>, PacketFns && , EvaluatedPackets 
 
 template<class Fn, size_t N, class PacketFns>
 void eval_packets(Fn && fn, size_<N>, size_<N>, PacketFns && , std::tuple<>) {
+    fn(nullptr, 0u);
 }
 
 template<class Fn, size_t I, size_t N, class PacketFns, class EvaluatedPackets>
@@ -561,7 +507,7 @@ struct recursive_if_test {
     void operator()(Layout && layout) {
         bool yes = 1;
         using namespace proto;
-        layout(if_(yes, if_(yes, if_(yes, u8(1)))));
+        layout(if_(yes, if_(yes, if_(yes, out_u8(1)))));
     }
 };
 
@@ -569,7 +515,7 @@ struct data_modified
 {
     template<class Layout>
     void operator()(Layout && layout) const {
-        layout(proto::make_pkt_data(meta_protocol::u8([](uint8_t * data, std::size_t sz) {
+        layout(proto::make_pkt_data(meta_protocol::out_u8([](uint8_t * data, std::size_t sz) {
             BOOST_REQUIRE_EQUAL(sz, 1);
             ++data[0];
             return 0xff;
@@ -581,13 +527,28 @@ struct simple_byte
 {
     template<class Layout>
     void operator()(Layout && layout) const {
-        layout(meta_protocol::u8<1>());
+        layout(meta_protocol::out_u8<1>());
+    }
+};
+
+struct stream_writer_layout
+{
+    OutStream & out_stream;
+
+    using is_layout = std::true_type;
+
+    template<class... Ts>
+    void operator()(Ts && ... args) const {
+        (void)std::initializer_list<int>{(void(
+            proto::stream_writer{out_stream}(args)
+        ), 1)...};
     }
 };
 
 BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 {
     {
+        bool is_run = false;
         proto::eval(
             [&](uint8_t * data, size_t size) {
                 BOOST_REQUIRE_EQUAL(size, 3);
@@ -596,11 +557,13 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
                 BOOST_REQUIRE_EQUAL(  1, data[0]);
                 BOOST_REQUIRE_EQUAL(255, data[1]);
                 BOOST_REQUIRE_EQUAL(  2, data[2]);
+                is_run = true;
             },
             simple_byte(),
             data_modified(),
             simple_byte()
         );
+        BOOST_REQUIRE(is_run);
     }
 
     {
@@ -608,13 +571,13 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         X224::DT_TPDU_Send(out_stream1, 7);
 
         StaticOutStream<7> out_stream2;
-        proto::dt_tpdu_send(proto::stream_writer_layout{out_stream2}, 7);
+        proto::dt_tpdu_send(stream_writer_layout{out_stream2}, 7);
 
         BOOST_REQUIRE_EQUAL(out_stream1.get_offset(), out_stream2.get_offset());
         BOOST_REQUIRE(!memcmp(out_stream1.get_data(), out_stream2.get_data(), out_stream1.get_offset()));
 
         StaticOutStream<7> out_stream3;
-        proto::dt_tpdu_send(7)(proto::stream_writer_layout{out_stream3});
+        proto::dt_tpdu_send.bind(7)(stream_writer_layout{out_stream3});
 
         BOOST_REQUIRE_EQUAL(out_stream1.get_offset(), out_stream3.get_offset());
         BOOST_REQUIRE(!memcmp(out_stream1.get_data(), out_stream3.get_data(), out_stream1.get_offset()));
@@ -625,26 +588,32 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         X224::DT_TPDU_Send(out_stream, 7);
         X224::DT_TPDU_Send(out_stream, 0);
 
+        bool is_run = false;
         proto::eval(
             [&](uint8_t * data, size_t size) {
                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
                 //hexdump(out_stream.get_data(), out_stream.get_offset());
                 //hexdump(array.data(), array.size());
                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+                is_run = true;
             },
             proto::dt_tpdu_send,
             proto::dt_tpdu_send
         );
+        BOOST_REQUIRE(is_run);
     }
 
     {
+        bool is_run = false;
         proto::eval(
             [&](uint8_t * data, size_t size) {
                 BOOST_REQUIRE_EQUAL(size, 1);
                 BOOST_REQUIRE_EQUAL(*data, 1);
+                is_run = true;
             },
             recursive_if_test()
         );
+        BOOST_REQUIRE(is_run);
     }
 
     {
@@ -664,22 +633,25 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         out_stream = OutStream(p, out_stream.get_current() - p);
         out_stream.out_skip_bytes(out_stream.get_capacity());
 
+        bool is_run = false;
         proto::eval(
             [&](uint8_t * data, size_t size) {
                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+                is_run = true;
             },
             proto::dt_tpdu_send,
-            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+            proto::sec_send.bind(~SEC::SEC_ENCRYPT, crypt, 0)
+            //[&](auto && layout) { return proto::sec_send.bind(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
         );
+        BOOST_REQUIRE(is_run);
     }
 
     {
         using namespace meta_protocol;
 
-        using T1 = decltype(if_(0, u8<0>()));
-        using T2 = decltype(u8<0>());
+        using T1 = decltype(if_(0, out_u8<0>()));
+        using T2 = decltype(out_u8<0>());
 
         static_assert(is_condition<T1>::value, "");
         static_assert(!is_condition<T2>::value, "");
@@ -701,13 +673,16 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         CryptContext crypt;
         SEC::Sec_Send(out_stream, data, 10, 0, crypt, 0);
 
+        bool is_run = false;
         proto::eval(
             [&](uint8_t * data, size_t size) {
                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+                is_run = true;
             },
-            proto::sec_send(data, 10, 0, crypt, 0)
+            proto::sec_send.bind(0, crypt, 0)
         );
+        BOOST_REQUIRE(is_run);
     }
 
     {
@@ -716,14 +691,17 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         CryptContext crypt;
         SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
 
+        bool is_run = false;
         proto::eval(
             [&](uint8_t * data, size_t size) {
                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+                is_run = true;
             },
-            proto::lazy(proto::sec_send, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+            proto::lazy(proto::sec_send_fn(), ~SEC::SEC_ENCRYPT, crypt, 0)
+            //[&](auto && layout) { return proto::sec_send.bind(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
         );
+        BOOST_REQUIRE(is_run);
     }
 
     {
@@ -735,17 +713,20 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
         X224::DT_TPDU_Send(out_stream, data_stream.get_offset());
         out_stream.out_copy_bytes(data_stream.get_data(), data_stream.get_offset());
 
+        bool is_run = false;
         proto::eval(
             [&](uint8_t * data, size_t size) {
                 BOOST_REQUIRE_EQUAL(size, out_stream.get_offset());
                 hexdump(out_stream.get_data(), out_stream.get_offset());
                 hexdump(data, size);
                 BOOST_REQUIRE(!memcmp(data, out_stream.get_data(), out_stream.get_offset()));
+                is_run = true;
             },
             proto::dt_tpdu_send,
-            proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+            proto::sec_send.bind(~SEC::SEC_ENCRYPT, crypt, 0)
+            //[&](auto && layout) { return proto::sec_send.bind(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
         );
+        BOOST_REQUIRE(is_run);
     }
 
 //     uint8_t data[10]{};
@@ -759,8 +740,8 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 // //                 clobber();
 //             },
 //             proto::dt_tpdu_send,
-//             proto::sec_send(data, 10, ~SEC::SEC_ENCRYPT, crypt, 0)
-//             //[&](auto && layout) { return proto::sec_send(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+//             proto::sec_send.bind(~SEC::SEC_ENCRYPT, crypt, 0)
+//             //[&](auto && layout) { return proto::sec_send.bind(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
 //         );
 //     };
 //     auto test2 = [&](uint8_t * p) {

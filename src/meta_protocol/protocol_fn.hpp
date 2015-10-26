@@ -62,24 +62,6 @@ namespace meta_protocol
         return lazy_fn<Fn, T...>{std::tuple<T...>{std::forward<T>(args)...}, fn};
     }
 
-    namespace detail_
-    {
-        template<class T, class U = void>
-        struct enable_type
-        { using type = U; };
-
-        template<class T, class = void>
-        struct is_layout_impl : std::false_type
-        {};
-
-        template<class T>
-        struct is_layout_impl<T, typename enable_type<typename T::is_layout>::type> : T::is_layout
-        {};
-    }
-
-    template<class T>
-    using is_layout = detail_::is_layout_impl<typename std::remove_reference<T>::type>;
-
     template<class FnClass>
     struct protocol_wrapper
     {
@@ -87,16 +69,14 @@ namespace meta_protocol
             return {};
         }
 
-        template<class T, class... Ts>
-        typename std::enable_if<is_layout<T>::value>::type
-        operator()(T && arg, Ts && ... args) const {
-            FnClass()(arg, args...);
+        template<class... Ts>
+        void operator()(Ts && ... args) const {
+            return FnClass()(args...);
         }
 
-        template<class T, class... Ts>
-        typename std::enable_if<!is_layout<T>::value, lazy_fn<FnClass, T, Ts...>>::type
-        operator()(T && arg, Ts && ... args) const {
-            return {std::tuple<T, Ts...>{arg, args...}, FnClass{}};
+        template<class... Ts>
+        lazy_fn<FnClass, Ts...> bind(Ts && ... args) const {
+            return {std::tuple<Ts...>{args...}, FnClass{}};
         }
     };
 

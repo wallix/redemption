@@ -859,4 +859,4 @@ unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_u
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z : ;
 
-unit-test test_meta_protocol : tests/test_meta_protocol.c11.cpp crypto libboost_unit_test : ;
+unit-test test_meta_protocol : tests/test_meta_protocol.cpp crypto libboost_unit_test : ;
