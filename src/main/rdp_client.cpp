@@ -19,7 +19,7 @@
  * free RDP client main program
  *
  */
- 
+
 #include <iostream>
 #include <string>
 
@@ -32,6 +32,7 @@
 #include "socket_transport.hpp"
 #include "socket_transport_utility.hpp"
 #include "RDP/RDPDrawable.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "wait_obj.hpp"
 #include "mod_api.hpp"
 #include "redirection_info.hpp"
@@ -45,7 +46,7 @@ namespace po = program_options;
 //using namespace std;
 
 class ClientFront : public FrontAPI {
- 
+
     public:
     uint32_t verbose;
     ClientInfo &info;
@@ -53,17 +54,17 @@ class ClientFront : public FrontAPI {
     BGRPalette                  mod_palette;
     RDPDrawable gd;
     CHANNELS::ChannelDefArray   cl;
-    
-    
+
+
     void flush() {
         if (this->verbose > 10) {
-             LOG(LOG_INFO, "--------- ClientFront ------------------");
-             LOG(LOG_INFO, "flush()");
-             LOG(LOG_INFO, "========================================\n");
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            LOG(LOG_INFO, "flush()");
+            LOG(LOG_INFO, "========================================\n");
         }
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -75,7 +76,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -85,7 +86,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -95,7 +96,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -105,7 +106,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -115,7 +116,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -125,7 +126,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -135,7 +136,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
+    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -148,7 +149,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) {
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -158,7 +159,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip, bitmap);
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -168,7 +169,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(cmd, clip, bitmap);
     }
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip) {
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -181,7 +182,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -194,7 +195,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip, gly_cache);
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -206,7 +207,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -219,7 +220,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) {
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -231,7 +232,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -243,7 +244,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -256,7 +257,23 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDP::FrameMarker & order) {
+    void draw(const RDPColCache   & cmd) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    void draw(const RDPBrushCache & cmd) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    void draw(const RDP::FrameMarker & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -266,7 +283,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -276,7 +293,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -286,7 +303,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -296,7 +313,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -306,8 +323,8 @@ class ClientFront : public FrontAPI {
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) {
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+        size_t size, const Bitmap & bmp) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             bitmap_data.log(LOG_INFO, "ClientFront");
@@ -318,15 +335,15 @@ class ClientFront : public FrontAPI {
 
     }
 
-    virtual void send_global_palette() {
+    void send_global_palette() override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "send_global_palette()");
             LOG(LOG_INFO, "========================================\n");
         }
     }
-    
-    virtual int server_resize(int width, int height, int bpp) {
+
+    int server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
         if (this->verbose > 10) {
@@ -336,8 +353,8 @@ class ClientFront : public FrontAPI {
         }
         return 1;
     }
-    
-        virtual void server_set_pointer(const Pointer & cursor) {
+
+    void server_set_pointer(const Pointer & cursor) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "server_set_pointer");
@@ -346,8 +363,8 @@ class ClientFront : public FrontAPI {
 
         this->gd.server_set_pointer(cursor);
     }
-    
-        virtual void begin_update() {
+
+    void begin_update() override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "begin_update");
@@ -355,17 +372,17 @@ class ClientFront : public FrontAPI {
         }
     }
 
-    virtual void end_update() {
+    void end_update() override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "end_update");
             LOG(LOG_INFO, "========================================\n");
         }
     }
-    
-    
-     virtual void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor
-                                 , uint32_t bgcolor, const Rect & clip) {
+
+
+    void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor
+                         , uint32_t bgcolor, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "server_draw_text %s", text);
@@ -380,7 +397,7 @@ class ClientFront : public FrontAPI {
         );
     }
 
-    virtual void text_metrics(Font const & font, const char* text, int& width, int& height) {
+    void text_metrics(Font const & font, const char* text, int& width, int& height) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "text_metrics");
@@ -388,31 +405,31 @@ class ClientFront : public FrontAPI {
         }
 
         this->gd.text_metrics(font, text, width, height);
-    }   
-    
+    }
+
     // reutiliser le FakeFront
     // creer un main calqué sur celui de transparent.cpp et reussir a lancer un mod_rdp
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, const uint8_t * data, std::size_t length
-                                , std::size_t chunk_size, int flags) {
+    void send_to_channel( const CHANNELS::ChannelDef & channel, const uint8_t * data, std::size_t length
+                        , std::size_t chunk_size, int flags) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "send_to_channel");
             LOG(LOG_INFO, "========================================\n");
         }
     }
-    
+
     int getVerbose() { return this->verbose; }
-    
-    ClientFront(ClientInfo & info, uint32_t verbose) 
+
+    ClientFront(ClientInfo & info, uint32_t verbose)
     : FrontAPI(false, false), verbose(verbose), info(info), mod_bpp(info.bpp), mod_palette(BGRPalette::no_init()), gd(info.width, info.height, 24) {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
-        
+
         this->verbose = verbose;
-            
+
         SSL_library_init();
     }
 
@@ -443,7 +460,7 @@ int main(int argc, char** argv)
     client_info.width = 800;
     client_info.height = 600;
     client_info.bpp = 32;
-    
+
     /* Program options */
     po::options_description desc({
         {'h', "help","produce help message"},
@@ -454,7 +471,7 @@ int main(int argc, char** argv)
     });
 
     auto options = po::parse_command_line(argc, argv, desc);
-    
+
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
         std::cout << "Usage: rdptproxy [options]\n\n";
@@ -481,24 +498,24 @@ int main(int argc, char** argv)
 
 
     wait_obj front_event;
- 
+
     /* Random */
     LCGRandom gen(0);
-     
+
     /* mod_api */
     mod_rdp mod( mod_trans, front, client_info, redir_info, gen, mod_rdp_params);
 
-    run_mod(mod, front, front_event, &mod_trans, NULL);
+    run_mod(mod, front, front_event, &mod_trans, nullptr);
 
     return 0;
 }
- 
- 
- 
+
+
+
 void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
-          
+
     while (run_session) {
         try {
             unsigned max = 0;
@@ -517,9 +534,9 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
             }
 
             int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
-            
+
             LOG(LOG_INFO, "RDP CLIENT :: select num = %d\n", num);
-            
+
             if (num < 0) {
                 if (errno == EINTR) {
                     continue;
@@ -528,7 +545,7 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
                 LOG(LOG_INFO, "RDP CLIENT :: errno = %d\n", errno);
                 break;
             }
-        
+
             if (is_set(mod.get_event(), st_mod, rfds)) {
                 LOG(LOG_INFO, "RDP CLIENT :: draw_event");
                 mod.draw_event(time(nullptr));
@@ -541,10 +558,3 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
     }   // while (run_session)
     return;
 }
-
-
-
-
-
-
-
