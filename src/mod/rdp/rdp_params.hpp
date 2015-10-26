@@ -45,18 +45,18 @@ struct ModRDPParams {
     bool enable_bitmap_update;
     bool enable_new_pointer;
     bool enable_glyph_cache;
-    bool enable_wab_agent;
-    bool enable_wab_agent_loading_mask;
+    bool enable_session_probe;
+    bool enable_session_probe_loading_mask;
 
     bool disable_clipboard_log_syslog;
     bool disable_clipboard_log_wrm;
     bool disable_file_system_log_syslog;
     bool disable_file_system_log_wrm;
 
-    unsigned     wab_agent_launch_timeout;
-    unsigned     wab_agent_on_launch_failure;
-    unsigned     wab_agent_keepalive_timeout;
-    const char * wab_agent_alternate_shell;
+    unsigned     session_probe_launch_timeout;
+    unsigned     session_probe_on_launch_failure;
+    unsigned     session_probe_keepalive_timeout;
+    const char * session_probe_alternate_shell;
 
     bool         enable_transparent_mode;
     const char * output_filename;
@@ -129,8 +129,8 @@ struct ModRDPParams {
         , enable_bitmap_update(false)
         , enable_new_pointer(true)
         , enable_glyph_cache(false)
-        , enable_wab_agent(false)
-        , enable_wab_agent_loading_mask(true)
+        , enable_session_probe(false)
+        , enable_session_probe_loading_mask(true)
 
         , disable_clipboard_log_syslog(false)
         , disable_clipboard_log_wrm(false)
@@ -138,10 +138,10 @@ struct ModRDPParams {
         , disable_file_system_log_syslog(false)
         , disable_file_system_log_wrm(false)
 
-        , wab_agent_launch_timeout(0)
-        , wab_agent_on_launch_failure(0)
-        , wab_agent_keepalive_timeout(0)
-        , wab_agent_alternate_shell("")
+        , session_probe_launch_timeout(0)
+        , session_probe_on_launch_failure(0)
+        , session_probe_keepalive_timeout(0)
+        , session_probe_alternate_shell("")
 
         , enable_transparent_mode(false)
         , output_filename("")
@@ -191,7 +191,7 @@ struct ModRDPParams {
         , verbose(verbose)
         , cache_verbose(0)
     {}
-    
+
     ~ModRDPParams()
     {
         TODO("Making it a unique_ptr would avoid need for delete");
@@ -227,16 +227,16 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams enable_glyph_cache=%s",                  (this->enable_glyph_cache ? "yes" : "no"));
         LOG(LOG_INFO,
-            "ModRDPParams enable_wab_agent=%s",                    (this->enable_wab_agent ? "yes" : "no"));
+            "ModRDPParams enable_session_probe=%s",                (this->enable_session_probe ? "yes" : "no"));
         LOG(LOG_INFO,
-            "ModRDPParams enable_wab_agent_loading_mask=%s",       (this->enable_wab_agent_loading_mask ? "yes" : "no"));
+            "ModRDPParams enable_session_probe_loading_mask=%s",   (this->enable_session_probe_loading_mask ? "yes" : "no"));
 
         LOG(LOG_INFO,
-            "ModRDPParams wab_agent_launch_timeout=%u",            this->wab_agent_launch_timeout);
+            "ModRDPParams session_probe_launch_timeout=%u",        this->session_probe_launch_timeout);
         LOG(LOG_INFO,
-            "ModRDPParams wab_agent_on_launch_failure=%u",         this->wab_agent_on_launch_failure);
+            "ModRDPParams session_probe_on_launch_failure=%u",     this->session_probe_on_launch_failure);
         LOG(LOG_INFO,
-            "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
+            "ModRDPParams session_probe_keepalive_timeout=%u",     this->session_probe_keepalive_timeout);
 
         LOG(LOG_INFO,
             "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");

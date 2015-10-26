@@ -1557,7 +1557,7 @@ class FileSystemDriveManager {
         managed_file_system_object_collection_type;
     managed_file_system_object_collection_type managed_file_system_objects;
 
-    uint32_t wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
+    uint32_t session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
 public:
     void AnnounceDrive(bool device_capability_version_02_supported,
@@ -1654,7 +1654,7 @@ public:
             relative_directory_path++;
         }
 
-        if (!::strcasecmp(relative_directory_path, "wabagt") ||
+        if (!::strcasecmp(relative_directory_path, "sespro") ||
             !::strcasecmp(relative_directory_path, "wablnch")) {
                 LOG(LOG_WARNING,
                     "FileSystemDriveManager::EnableDrive: "
@@ -1685,18 +1685,18 @@ public:
                 ) != INVALID_MANAGED_DRIVE_ID);
     }
 
-    bool EnableWABAgentDrive(uint32_t verbose) {
-        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
-            this->wab_agent_drive_id = this->EnableDrive(
-                    "WABAGT",
-                    "wabagt",
+    bool EnableSessionProbeDrive(uint32_t verbose) {
+        if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            this->session_probe_drive_id = this->EnableDrive(
+                    "SESPRO",
+                    "sespro",
                     true,       // read-only
                     verbose,
                     false       // ignore existence check
                 );
         }
 
-        return (this->wab_agent_drive_id != INVALID_MANAGED_DRIVE_ID);
+        return (this->session_probe_drive_id != INVALID_MANAGED_DRIVE_ID);
     }
 
 public:
@@ -2066,19 +2066,19 @@ public:
         }
     }
 
-    void DisableWABAgentDrive(VirtualChannelDataSender & to_server_sender, uint32_t verbose = 0) {
-        if (this->wab_agent_drive_id == INVALID_MANAGED_DRIVE_ID) {
+    void DisableSessionProbeDrive(VirtualChannelDataSender & to_server_sender, uint32_t verbose = 0) {
+        if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
             return;
         }
 
-        const uint32_t old_wab_agent_drive_id = this->wab_agent_drive_id;
+        const uint32_t old_session_probe_drive_id = this->session_probe_drive_id;
 
-        this->wab_agent_drive_id = INVALID_MANAGED_DRIVE_ID;
+        this->session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
         //managed_drive_collection_type::iterator iter;
         //for (iter = this->managed_drives.begin();
         //     iter != this->managed_drives.end(); ++iter) {
-        //    if (old_wab_agent_drive_id == std::get<0>(*iter)) {
+        //    if (old_session_probe_drive_id == std::get<0>(*iter)) {
         //        this->managed_drives.erase(iter);
         //
         //        break;
@@ -2091,12 +2091,12 @@ public:
                                        rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
         sh_s.emit(out_stream);
 
-        out_stream.out_uint32_le(1);                        // DeviceCount(4)
-        out_stream.out_uint32_le(old_wab_agent_drive_id);   // DeviceIds(variable)
+        out_stream.out_uint32_le(1);                            // DeviceCount(4)
+        out_stream.out_uint32_le(old_session_probe_drive_id);   // DeviceIds(variable)
 
         if (verbose) {
             LOG(LOG_INFO,
-                "FileSystemDriveManager::DisableWABAgentDrive");
+                "FileSystemDriveManager::DisableSessionProbeDrive");
         }
 
         to_server_sender(

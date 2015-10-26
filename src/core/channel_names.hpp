@@ -29,7 +29,7 @@ namespace CHANNELS {
         DEF_NAME(rdpsnd);
         DEF_NAME(drdynvc);
         DEF_NAME(rail);
-        DEF_NAME(wabagt);
+        DEF_NAME(sespro);
     };
 #undef DEF_NAME
 }

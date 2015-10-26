@@ -71,7 +71,7 @@ class FrontAPI : public DrawApi {
     virtual void set_keyboard_indicators(uint16_t LedFlags) {}
 
     ////////////////////////////////
-    // Agent.
+    // Session Probe.
 
     virtual void set_keylayout(int LCID) {}
     virtual void focus_changed(bool on_password_textbox) {}

@@ -338,8 +338,8 @@ class mod_rdp : public RDPChannelManagerMod {
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
-    const bool enable_wab_agent;
-    const bool enable_wab_agent_loading_mask;
+    const bool enable_session_probe;
+    const bool enable_session_probe_loading_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -352,10 +352,10 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool disable_file_system_log_wrm;
     const int  rdp_compression;
 
-    const unsigned    wab_agent_launch_timeout;
-    const unsigned    wab_agent_on_launch_failure;
-    const unsigned    wab_agent_keepalive_timeout;
-          std::string wab_agent_alternate_shell;
+    const unsigned    session_probe_launch_timeout;
+    const unsigned    session_probe_on_launch_failure;
+    const unsigned    session_probe_keepalive_timeout;
+          std::string session_probe_alternate_shell;
 
     size_t recv_bmp_update;
 
@@ -406,9 +406,9 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-    wait_obj    wab_agent_event;
-    bool        wab_agent_is_ready            = false;
-    bool        wab_agent_keep_alive_received = true;
+    wait_obj    session_probe_event;
+    bool        session_probe_is_ready            = false;
+    bool        session_probe_keep_alive_received = true;
 
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
@@ -527,8 +527,8 @@ public:
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
-        , enable_wab_agent(mod_rdp_params.enable_wab_agent)
-        , enable_wab_agent_loading_mask(mod_rdp_params.enable_wab_agent_loading_mask)
+        , enable_session_probe(mod_rdp_params.enable_session_probe)
+        , enable_session_probe_loading_mask(mod_rdp_params.enable_session_probe_loading_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -540,10 +540,10 @@ public:
         , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
-        , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
-        , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
-        , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
-        , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
+        , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
+        , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
+        , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+        , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -602,8 +602,8 @@ public:
             mod_rdp_params.log();
         }
 
-        if (this->enable_wab_agent) {
-            this->file_system_drive_manager.EnableWABAgentDrive(this->verbose);
+        if (this->enable_session_probe) {
+            this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
         }
 
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
@@ -734,7 +734,7 @@ public:
             }
         }
 
-        if (this->enable_wab_agent) {
+        if (this->enable_session_probe) {
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
@@ -746,16 +746,16 @@ public:
             const size_t pid_tag_len = ::strlen(pid_tag);
 
             size_t pos = 0;
-            while ((pos = this->wab_agent_alternate_shell.find(pid_tag, pos)) != std::string::npos) {
-                this->wab_agent_alternate_shell.replace(pos, pid_tag_len, pid_str);
+            while ((pos = this->session_probe_alternate_shell.find(pid_tag, pos)) != std::string::npos) {
+                this->session_probe_alternate_shell.replace(pos, pid_tag_len, pid_str);
                 pos += pid_str_len;
             }
 
-            strncpy(this->program, this->wab_agent_alternate_shell.c_str(), sizeof(this->program) - 1);
+            strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
 
-            const char * wab_agent_working_dir = "%TMP%";
-            strncpy(this->directory, wab_agent_working_dir, sizeof(this->directory) - 1);
+            const char * session_probe_working_dir = "%TMP%";
+            strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
             this->directory[sizeof(this->directory) - 1] = 0;
         }
         else {
@@ -817,18 +817,18 @@ public:
 
         if (this->verbose & 1) {
             LOG(LOG_INFO,
-                "enable_wab_agent=%s wab_agent_launch_timeout=%u wab_agent_on_launch_failure=%u",
-                (this->enable_wab_agent ? "yes" : "no"), this->wab_agent_launch_timeout,
-                this->wab_agent_on_launch_failure);
+                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure=%u",
+                (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
+                this->session_probe_on_launch_failure);
         }
-        if (this->enable_wab_agent) {
-            this->wab_agent_event.object_and_time = true;
+        if (this->enable_session_probe) {
+            this->session_probe_event.object_and_time = true;
 
-            if (this->wab_agent_launch_timeout > 0) {
+            if (this->session_probe_launch_timeout > 0) {
                 if (this->verbose & 1) {
-                    LOG(LOG_INFO, "Enable agent launch timer");
+                    LOG(LOG_INFO, "Enable Session Probe launch timer");
                 }
-                this->wab_agent_event.set(this->wab_agent_launch_timeout * 1000);
+                this->session_probe_event.set(this->session_probe_launch_timeout * 1000);
             }
         }
 
@@ -841,7 +841,7 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
+        if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
             this->front.disable_input_event_and_graphics_update(false);
         }
 
@@ -1589,7 +1589,7 @@ private:
 public:
     void draw_event(time_t now) override {
         if (!this->event.waked_up_by_time &&
-            (!this->enable_wab_agent || !this->wab_agent_event.set_state || !this->wab_agent_event.waked_up_by_time)) {
+            (!this->enable_session_probe || !this->session_probe_event.set_state || !this->session_probe_event.waked_up_by_time)) {
             try{
                 char * hostname = this->hostname;
 
@@ -1791,13 +1791,13 @@ public:
                                         cs_net.channelCount++;
                                     }
 
-                                    if (this->enable_wab_agent) {
-                                        const char * wab_agent_channel_name = "wabagt\0\0";
-                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, wab_agent_channel_name, 8);
+                                    if (this->enable_session_probe) {
+                                        const char * session_probe_channel_name = "sespro\0\0";
+                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, session_probe_channel_name, 8);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
                                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                                         CHANNELS::ChannelDef def;
-                                        memcpy(def.name, wab_agent_channel_name, 8);
+                                        memcpy(def.name, session_probe_channel_name, 8);
                                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                                         if (this->verbose & 16){
                                             def.log(cs_net.channelCount);
@@ -2717,8 +2717,8 @@ public:
                                     && !strcmp(mod_channel.name, this->auth_channel)) {
                                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
-                            else if (!strcmp(mod_channel.name, "wabagt")) {
-                                this->process_wab_agent_event(mod_channel, sec.payload, length, flags, chunk_size);
+                            else if (!strcmp(mod_channel.name, "sespro")) {
+                                this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
                             // Clipboard is a Clipboard PDU
                             else if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
@@ -3120,7 +3120,7 @@ public:
 
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
+                if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3144,7 +3144,7 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
+                if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3161,21 +3161,21 @@ public:
             }
         }
 
-        if (this->wab_agent_event.set_state && this->wab_agent_event.waked_up_by_time) {
-            REDASSERT(this->enable_wab_agent);
+        if (this->session_probe_event.set_state && this->session_probe_event.waked_up_by_time) {
+            REDASSERT(this->enable_session_probe);
 
-            this->wab_agent_event.reset();
-            this->wab_agent_event.waked_up_by_time = false;
+            this->session_probe_event.reset();
+            this->session_probe_event.waked_up_by_time = false;
 
-            if (this->wab_agent_launch_timeout && !this->wab_agent_is_ready) {
-                LOG((this->wab_agent_on_launch_failure ? LOG_WARNING : LOG_ERR), "Agent is not ready yet!");
+            if (this->session_probe_launch_timeout && !this->session_probe_is_ready) {
+                LOG((this->session_probe_on_launch_failure ? LOG_WARNING : LOG_ERR), "Session Probe is not ready yet!");
 
                 const bool need_full_screen_update =
-                    (this->enable_wab_agent_loading_mask ?
+                    (this->enable_session_probe_loading_mask ?
                      this->front.disable_input_event_and_graphics_update(false) :
                      false);
 
-                if (this->wab_agent_on_launch_failure) {
+                if (this->session_probe_on_launch_failure) {
                     if (need_full_screen_update) {
                         LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
                             this->front_width, this->front_height);
@@ -3187,18 +3187,18 @@ public:
                 }
             }
 
-            if (this->wab_agent_is_ready && this->wab_agent_keepalive_timeout) {
-                if (!this->wab_agent_keep_alive_received && this->enable_wab_agent_loading_mask) {
+            if (this->session_probe_is_ready && this->session_probe_keepalive_timeout) {
+                if (!this->session_probe_keep_alive_received && this->enable_session_probe_loading_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
 
-                    LOG(LOG_ERR, "No keep alive received from Agent!");
+                    LOG(LOG_ERR, "No keep alive received from Session Probe!");
                     throw Error(ERR_AGENT_KEEPALIVE);
                 }
                 else {
                     if (this->verbose & 0x10000) {
-                        LOG(LOG_INFO, "Agent keep alive requested");
+                        LOG(LOG_INFO, "Session Probe keep alive requested");
                     }
-                    this->wab_agent_keep_alive_received = false;
+                    this->session_probe_keep_alive_received = false;
 
                     StaticOutStream<1024> out_s;
 
@@ -3217,19 +3217,19 @@ public:
 
                     InStream in_s(out_s.get_data(), out_s.get_offset());
                     this->send_to_mod_channel(
-                        "wabagt", in_s, in_s.get_capacity(),
+                        "sespro", in_s, in_s.get_capacity(),
                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                     );
 
-                    this->wab_agent_event.set(this->wab_agent_keepalive_timeout * 1000);
+                    this->session_probe_event.set(this->session_probe_keepalive_timeout * 1000);
                 }
             }
         }
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
-        if (this->wab_agent_event.set_state) {
-            return &this->wab_agent_event;
+        if (this->session_probe_event.set_state) {
+            return &this->session_probe_event;
         }
 
         return nullptr;
@@ -4769,7 +4769,7 @@ public:
             this->event.reset();
         }
 
-        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
+        if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
             this->front.disable_input_event_and_graphics_update(true);
         }
     }
@@ -4801,7 +4801,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
-            if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
+            if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
                 this->front.disable_input_event_and_graphics_update(true);
             }
         }
@@ -5911,7 +5911,7 @@ public:
                     infoPacket.flags |= ((this->rdp_compression - 1) << 9);
                 }
 
-                if (this->enable_wab_agent) {
+                if (this->enable_session_probe) {
                     infoPacket.flags &= ~INFO_MAXIMIZESHELL;
                 }
 
@@ -5925,7 +5925,7 @@ public:
         );
 
         if (this->verbose & 1) {
-            infoPacket.log("Send data request", this->password_printing_mode, !this->enable_wab_agent);
+            infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
         }
 
         if (this->open_session_timeout) {
@@ -6134,27 +6134,27 @@ public:
         }
     }
 
-    void process_wab_agent_event(const CHANNELS::ChannelDef & wab_agent_channel,
+    void process_session_probe_event(const CHANNELS::ChannelDef & session_probe_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         REDASSERT(stream.in_remain() == chunk_size);
 
         uint16_t message_length = stream.in_uint16_le();
         REDASSERT(message_length == stream.in_remain());
         (void)message_length; // disable -Wunused-variable if REDASSERT is disable
-        std::string wab_agent_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+        std::string session_probe_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
-        while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
+        while (session_probe_channel_message.back() == '\0') session_probe_channel_message.pop_back();
 
-        if (!wab_agent_channel_message.compare("Request=Get startup application")) {
+        if (!session_probe_channel_message.compare("Request=Get startup application")) {
             if (this->verbose & 1) {
-                LOG(LOG_INFO, "Agent channel data=\"%s\"", wab_agent_channel_message.c_str());
+                LOG(LOG_INFO, "Session Probe channel data=\"%s\"", session_probe_channel_message.c_str());
             }
 
             if (this->verbose & 1) {
-                LOG(LOG_INFO, "Agent is ready.");
+                LOG(LOG_INFO, "Session Probe is ready.");
             }
 
-            if (this->enable_wab_agent_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
+            if (this->enable_session_probe_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
                         this->front_width, this->front_height);
@@ -6162,12 +6162,12 @@ public:
                 this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
             }
 
-            this->wab_agent_is_ready = true;
+            this->session_probe_is_ready = true;
 
             FileSystemVirtualChannel& file_system_virtual_channel =
                 this->get_file_system_virtual_channel();
 
-            this->file_system_drive_manager.DisableWABAgentDrive(
+            this->file_system_drive_manager.DisableSessionProbeDrive(
                 file_system_virtual_channel.to_server_sender,
                 this->verbose);
 
@@ -6200,15 +6200,15 @@ public:
                     message_length_offset);
 
                 this->send_to_channel(
-                    wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
+                    session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                 );
             }
 
 
-            this->wab_agent_event.reset();
+            this->session_probe_event.reset();
 
-            if (this->wab_agent_keepalive_timeout > 0) {
+            if (this->session_probe_keepalive_timeout > 0) {
                 {
                     StaticOutStream<1024> out_s;
 
@@ -6226,22 +6226,22 @@ public:
                         message_length_offset);
 
                     this->send_to_channel(
-                        wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
+                        session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
                     );
                 }
 
-                this->wab_agent_event.set(this->wab_agent_keepalive_timeout * 1000);
+                this->session_probe_event.set(this->session_probe_keepalive_timeout * 1000);
             }
         }
-        else if (!wab_agent_channel_message.compare("KeepAlive=OK")) {
+        else if (!session_probe_channel_message.compare("KeepAlive=OK")) {
             if (this->verbose & 0x10000) {
-                LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
+                LOG(LOG_INFO, "Recevied Keep-Alive from Session Probe.");
             }
-            this->wab_agent_keep_alive_received = true;
+            this->session_probe_keep_alive_received = true;
         }
         else {
-            const char * message   = wab_agent_channel_message.c_str();
+            const char * message   = session_probe_channel_message.c_str();
             const char * separator = ::strchr(message, '=');
 
             if (separator) {
@@ -6250,7 +6250,7 @@ public:
 
                 if (this->verbose & 1) {
                     LOG(LOG_INFO,
-                        "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
+                        "mod_rdp::process_session_probe_event: order=\"%s\" parameters=\"%s\"",
                         order.c_str(), parameters.c_str());
                 }
 
@@ -6275,11 +6275,11 @@ public:
                 else if (!order.compare("Edit.Changed")) {
                 }
                 else {
-                    LOG(LOG_WARNING, "mod_rdp::process_wab_agent_event: Unexpected order.");
+                    LOG(LOG_WARNING, "mod_rdp::process_session_probe_event: Unexpected order.");
                 }
 
                 bool contian_window_title = false;
-                this->front.session_update(wab_agent_channel_message.c_str(),
+                this->front.session_update(session_probe_channel_message.c_str(),
                     contian_window_title);
 
                 if (!contian_window_title && this->acl) {
@@ -6289,7 +6289,7 @@ public:
             }
             else {
                 LOG(LOG_WARNING,
-                    "mod_rdp::process_wab_agent_event: Invalid message format. Agent channel data=\"%s\"",
+                    "mod_rdp::process_session_probe_event: Invalid message format. Session Probe channel data=\"%s\"",
                     message);
             }
         }
