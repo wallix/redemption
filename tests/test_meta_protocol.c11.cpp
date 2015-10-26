@@ -220,10 +220,8 @@ struct write_evaluator
 private:
     template<size_t I>
     void write_packets(size_<I>, OutStream & out_stream) {
-        auto p = out_stream.get_current();
         this->write_packet(
             size_<I>(),
-            p,
             out_stream,
             size_<0>(),
             tuple_size(get<I>(this->packets)),
@@ -239,15 +237,15 @@ private:
 
     template<size_t IPacket, size_t I, size_t N, class Packet>
     void write_packet(
-        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<IPacket>, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet
     ) {
-        this->eval_expr(size_<IPacket>(), p, out_stream, size_<I>(), size_<N>(), packet, get<I>(packet));
+        this->eval_expr(size_<IPacket>(), out_stream, size_<I>(), size_<N>(), packet, get<I>(packet));
     }
 
     template<size_t IPacket, size_t N, class Packet>
     void write_packet(
-        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<IPacket>, OutStream & out_stream,
         size_<N>, size_<N>, Packet & packet
     ) {
         this->write_packets(size_<IPacket+1>(), out_stream);
@@ -267,53 +265,54 @@ private:
     // out_expr<T, pkt_sz, Tag> to types::out_dyn<T, Tag>
     template<size_t IPacket, size_t I, size_t N, class Packet, class T, class Tag>
     void eval_expr(
-        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<IPacket>, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
         types::out_expr<T, pkt_sz, Tag> &
     ) {
         stream_writer{out_stream}(types::out_dyn<T, Tag>{T(
             get_data_len(size_<IPacket+1>())
         )});
-        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+        this->write_packet(size_<IPacket>(), out_stream, size_<I+1>(), size_<N>(), packet);
     }
 
     // out_expr<T, pkt_sz_with_header, Tag> to types::out_dyn<T, Tag>
     template<size_t IPacket, size_t I, size_t N, class Packet, class T, class Tag>
     void eval_expr(
-        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<IPacket>, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
         types::out_expr<T, pkt_sz_with_header, Tag> &
     ) {
         stream_writer{out_stream}(types::out_dyn<T, Tag>{T(get<IPacket>(this->accu_szs))});
-        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+        this->write_packet(size_<IPacket>(), out_stream, size_<I+1>(), size_<N>(), packet);
     }
 
     // out_expr<T, Expr, Tag> to types::out_dyn<T, Tag>
     template<size_t IPacket, size_t I, size_t N, class Packet, class T, class Expr, class Tag>
     void eval_expr(
-        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<IPacket>, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
         types::out_expr<T, Expr, Tag> & x
     ) {
         stream_writer{out_stream}(types::out_dyn<T, Tag>{T(x.expr())});
-        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+        this->write_packet(size_<IPacket>(), out_stream, size_<I+1>(), size_<N>(), packet);
     }
 
     // pkt_data<T>
     template<size_t IPacket, size_t I, size_t N, class Packet, class T>
     void eval_expr(
-        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<IPacket>, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
         pkt_data<T> & pkt
     ) {
         auto sz = sizeof_(pkt.x);
         auto tmp = out_stream.get_current();
         out_stream.out_skip_bytes(sz);
-        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+        this->write_packet(size_<IPacket>(), out_stream, size_<I+1>(), size_<N>(), packet);
         OutStream substream(tmp, sz);
-        p += get<IPacket>(this->szs);
-        assert(size_t(out_stream.get_data_end() - p) == get_data_len(size_<IPacket+1>()));
-        this->write_packet_with_data(substream, p, pkt.x, get_data_len(size_<IPacket+1>()));
+        auto n1 = get_data_len(size_<IPacket+1>());
+        auto p = this->data + (BufLen - n1);
+        assert(size_t(out_stream.get_data_end() - p) == n1);
+        this->write_packet_with_data(substream, p, pkt.x, n1);
     }
 
     template<class T, class Expr, class Tag, class Size>
@@ -331,12 +330,12 @@ private:
 
     template<size_t IPacket, size_t I, size_t N, class Packet, class T>
     void eval_expr(
-        size_<IPacket>, uint8_t * p, OutStream & out_stream,
+        size_<IPacket>, OutStream & out_stream,
         size_<I>, size_<N>, Packet & packet,
         T & x
     ) {
         stream_writer{out_stream}(x);
-        this->write_packet(size_<IPacket>(), p, out_stream, size_<I+1>(), size_<N>(), packet);
+        this->write_packet(size_<IPacket>(), out_stream, size_<I+1>(), size_<N>(), packet);
     }
 };
 
@@ -674,7 +673,7 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
             },
             proto::dt_tpdu_send(),
             proto::sec_send.bind(~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send.bind((layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
+            //[&](auto && layout) { return proto::sec_send.bind(layout, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0); }
         );
         BOOST_REQUIRE(is_run);
     }
@@ -731,7 +730,7 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
                 is_run = true;
             },
             proto::lazy(proto::sec_send_fn(), ~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send.bind((layout, ~SEC::SEC_ENCRYPT, crypt, 0); }
+            //[&](auto && layout) { return proto::sec_send.bind(layout, ~SEC::SEC_ENCRYPT, crypt, 0); }
         );
         BOOST_REQUIRE(is_run);
     }
@@ -756,13 +755,12 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
             },
             proto::dt_tpdu_send(),
             proto::sec_send.bind(~SEC::SEC_ENCRYPT, crypt, 0)
-            //[&](auto && layout) { return proto::sec_send.bind((layout, ~SEC::SEC_ENCRYPT, crypt, 0); }
+            //[&](auto && layout) { return proto::sec_send.bind(layout, ~SEC::SEC_ENCRYPT, crypt, 0); }
         );
         BOOST_REQUIRE(is_run);
     }
 
 //     auto test1 = [](uint8_t * p) {
-//         uint8_t data[10];
 //         CryptContext crypt;
 //         proto::eval(
 //             [&](uint8_t * data, size_t sz) {
@@ -771,8 +769,8 @@ BOOST_AUTO_TEST_CASE(TestMetaProtocol)
 // //                 clobber();
 //             },
 //             proto::dt_tpdu_send,
-//             proto::sec_send.bind((~SEC::SEC_ENCRYPT, crypt, 0)
-//             //[&](auto && layout) { return proto::sec_send.bind((layout, ~SEC::SEC_ENCRYPT, crypt, 0); }
+//             proto::sec_send.bind(~SEC::SEC_ENCRYPT, crypt, 0)
+//             //[&](auto && layout) { return proto::sec_send.bind(layout, ~SEC::SEC_ENCRYPT, crypt, 0); }
 //         );
 //     };
 //     auto test2 = [](uint8_t * p) {
