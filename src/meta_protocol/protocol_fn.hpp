@@ -62,6 +62,12 @@ namespace meta_protocol
         return lazy_fn<Fn, T...>{std::tuple<T...>{std::forward<T>(args)...}, fn};
     }
 
+    struct layout {
+        template<class ... Ts>
+        void operator()(Ts && ...) const {
+        }
+    };
+
     template<class FnClass>
     struct protocol_wrapper
     {
@@ -74,8 +80,11 @@ namespace meta_protocol
             return FnClass()(args...);
         }
 
+        template<class T> struct is_callable : std::true_type {};
+
         template<class... Ts>
         lazy_fn<FnClass, Ts...> bind(Ts && ... args) const {
+            static_assert(is_callable<decltype(FnClass()(layout{}, args...))>(), "No match found");
             return {std::tuple<Ts...>{args...}, FnClass{}};
         }
     };
