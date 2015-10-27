@@ -96,6 +96,8 @@ private:
             this->status = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
+
+        this->last_quantum_sent += len;
     }
 };
 

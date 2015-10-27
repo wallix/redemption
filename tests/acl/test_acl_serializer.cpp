@@ -29,7 +29,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "acl_serializer.hpp"
 #include "test_transport.hpp"
@@ -100,7 +100,6 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     } catch (const Error & e){
         BOOST_CHECK_EQUAL((uint32_t)ERR_ACL_MESSAGE_TOO_BIG, (uint32_t)e.id);
     }
-
 }
 
 inline void execute_test_initem(OutStream & stream, AclSerializer & acl, const authid_t authid, const char * value)
@@ -181,4 +180,38 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
     AclSerializer::ArrayItemsView view{stream.get_data(), stream.get_data() + stream.get_offset()};
     acl.in_items(view);
     BOOST_CHECK(ini.is_asked<cfg::context::password>());
+}
+
+
+BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
+{
+    Inifile ini;
+    ini.clear_send_index();
+
+    const size_t sz_string = 1024*66;
+    constexpr char display_message[] = "display_message";
+    const size_t sz_key = sizeof(display_message)-1;
+    const size_t sz_header = 4;
+    const size_t sz_total = sz_string + sz_header + sz_key + 3;
+    std::string str(sz_total, 'a');
+    OutStream(&str[0], 4).out_uint32_be(sz_total - sz_header);
+    memcpy(&str[sz_header], display_message, sz_key);
+    str[sz_header + sz_key] = '\n';
+    str[sz_header + sz_key + 1] = '!';
+    str[sz_total-1] = '\n';
+
+    BOOST_REQUIRE_EQUAL(sz_total, str.size());
+
+    CheckTransport trans(&str[0], sz_total);
+
+    AclSerializer acl(ini, trans, 0);
+
+    ini.set_acl<cfg::context::display_message>(std::string(sz_string, 'a'));
+
+    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::display_message>().size(), sz_string);
+    BOOST_REQUIRE(ini.changed_field_size());
+
+    acl.send_acl_data();
+
+    BOOST_CHECK_EQUAL(trans.get_total_sent(), sz_total);
 }
