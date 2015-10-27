@@ -82,8 +82,9 @@ struct AuthorizationChannels
         };
 
         normalize_channel("cliprdr", (this->cliprdr_restriction_[0] || this->cliprdr_restriction_[1]));
-        normalize_channel("rdpdr", (contains_true(this->rdpdr_restriction_) || contains_true(this->rdpsnd_restriction_)));
-        normalize_channel("rdpsnd", contains_true(this->rdpsnd_restriction_));
+        bool is_allowed = (contains_true(this->rdpdr_restriction_) || contains_true(this->rdpsnd_restriction_));
+        normalize_channel("rdpdr", is_allowed);
+        normalize_channel("rdpsnd", is_allowed);
     }
 
     bool is_authorized(const char * s) const noexcept {
