@@ -838,14 +838,12 @@ class Engine(object):
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
         conn_cmd = target.resource.service.connectionpolicy.data
-        autologon = target.account.isAgentForwardable
         return LoginInfo(account_login=account_login,
                          target_name=target_name,
                          service_name=service_name,
                          device_host=device_host,
                          service_port=service_port,
-                         conn_cmd=conn_cmd,
-                         autologon=autologon)
+                         conn_cmd=conn_cmd)
 
     def get_account_login(self, right):
         account_login = right.account.login
@@ -904,11 +902,10 @@ class PhysicalTarget(object):
 
 class LoginInfo(object):
     def __init__(self, account_login, target_name, service_name,
-                 device_host, service_port, conn_cmd, autologon):
+                 device_host, service_port, conn_cmd):
         self.account_login = account_login
         self.target_name = target_name
         self.service_name = service_name
         self.device_host = device_host
         self.service_port = service_port
         self.conn_cmd = conn_cmd
-        self.autologon = autologon

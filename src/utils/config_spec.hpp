@@ -176,7 +176,6 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
-        W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
         W.member(A, type_<bool>(), "enable_file_encryption", str_authid{"file_encryption"}, rw);
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
@@ -185,9 +184,6 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StaticString<1024>>(), "png_path", set(MACRO(PNG_PATH)));
         W.member(A, type_<StaticString<1024>>(), "wrm_path", set(MACRO(WRM_PATH)));
         W.sep();
-        W.member(H, type_<std::string>(), "alternate_shell", r);
-        W.member(H, type_<std::string>(), "shell_working_directory", r);
-        W.sep();
         W.member(H, type_<bool>(), "movie", str_authid{"is_rec"}, set(false), r);
         W.member(A, type_<std::string>(), "movie_path", str_authid{"rec_path"}, r);
         W.member(A, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
@@ -195,18 +191,6 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
         W.member(A, type_<bool>(), "enable_osd", set(true));
         W.member(A, type_<bool>(), "enable_osd_display_remote_target", set(true));
-        W.sep();
-        W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
-        W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
-        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
-        W.member(A, type_<Range<unsigned, 0, 1>>(), "session_probe_on_launch_failure", set(0), desc{
-            "Specifies the action to be performed is the launch of session probe fails.\n"
-            "  0: disconnects session\n"
-            "  1: remains connected"
-        }, r);
-        W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
-        W.sep();
-        W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set(""));
         W.sep();
         W.member(A, type_<StaticPath<1024>>(), "persistent_path", set(MACRO(PERSISTENT_PATH)));
         W.sep();
@@ -296,6 +280,22 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<unsigned>(), "client_device_announce_timeout", set(1000), r);
         W.sep();
         W.member(A, type_<StringList>(), "proxy_managed_drives", r);
+        W.sep();
+        W.member(V, type_<StaticNilString<8>>(), "auth_channel", set(null_fill()), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
+        W.sep();
+        W.member(H, type_<std::string>(), "alternate_shell", r);
+        W.member(H, type_<std::string>(), "shell_working_directory", r);
+        W.sep();
+        W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
+        W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
+        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
+        W.member(A, type_<Range<unsigned, 0, 1>>(), "session_probe_on_launch_failure", set(0), desc{
+            "Specifies the action to be performed is the launch of session probe fails.\n"
+            "  0: disconnects session\n"
+            "  1: remains connected"
+        }, r);
+        W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
+        W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set(""));
     }
     W.stop_section();
 

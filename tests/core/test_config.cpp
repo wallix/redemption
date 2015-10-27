@@ -50,7 +50,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -62,11 +61,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -101,9 +95,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(PNG_PATH,                         ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL(WRM_PATH,                         ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -175,6 +166,17 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
@@ -282,7 +284,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -294,11 +295,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -330,9 +326,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(PNG_PATH,                         ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL(WRM_PATH,                         ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -404,6 +397,17 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -512,7 +516,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -524,11 +527,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -563,9 +561,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL(PNG_PATH,                         ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL(WRM_PATH,                         ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -638,6 +633,17 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -671,17 +677,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "certificate_password=redemption\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
-                          "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
-                          "shell_working_directory=C:\\WINDOWS\\\n"
                           "enable_bitmap_update=true\n"
                           "persistent_path=/var/tmp/wab/persistent/rdp\n"
                           "enable_close_box=false\n"
                           "enable_osd=false\n"
                           "enable_osd_display_remote_target=false\n"
-                          "enable_session_probe=true\n"
-                          "enable_session_probe_loading_mask=false\n"
-                          "session_probe_launch_timeout=0\n"
-                          "session_probe_keepalive_timeout=0\n"
                           "\n"
                           "[client]\n"
                           "ignore_logon_password=yes\n"
@@ -715,6 +715,12 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "fast_path=no\n"
                           "client_device_announce_timeout=1000\n"
                           "proxy_managed_drives=\n"
+                          "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
+                          "shell_working_directory=C:\\WINDOWS\\\n"
+                          "enable_session_probe=true\n"
+                          "enable_session_probe_loading_mask=false\n"
+                          "session_probe_launch_timeout=0\n"
+                          "session_probe_keepalive_timeout=0\n"
                           "\n"
                           "[mod_vnc]\n"
                           "clipboard_up=yes\n"
@@ -753,7 +759,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
@@ -764,11 +769,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -800,9 +800,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp",      ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL("/var/wab/recorded/rdp",          ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("C:\\WINDOWS\\NOTEPAD.EXE",       ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_close_box>());
@@ -875,6 +872,17 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("C:\\WINDOWS\\NOTEPAD.EXE",       ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::clipboard_up>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -906,12 +914,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "certificate_password=\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
-                          "alternate_shell=\n"
                           "shell_working_directory=\n"
                           "enable_bitmap_update=no\n"
-                          "enable_session_probe=false\n"
-                          "session_probe_launch_timeout=3000\n"
-                          "session_probe_keepalive_timeout=6000\n"
                           "[client]\n"
                           "performance_flags_default=7\n"
                           "performance_flags_force_present=1\n"
@@ -939,6 +943,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "bogus_sc_net_size=no\n"
                           "client_device_announce_timeout=1500\n"
                           "proxy_managed_drives=*docs\n"
+                          "alternate_shell=\n"
+                          "enable_session_probe=false\n"
+                          "session_probe_launch_timeout=3000\n"
+                          "session_probe_keepalive_timeout=6000\n"
                           "[mod_replay]\n"
                           "on_end_of_data=1\n"
                           "[video]\n"
@@ -970,7 +978,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -982,11 +989,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1018,9 +1020,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp",      ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL("/var/wab/recorded/rdp",          ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -1091,6 +1090,17 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1500,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("*docs",                          ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::utf8, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1120,10 +1130,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "enable_ip_transparent=true\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
-                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
                           "shell_working_directory=\n"
-                          "enable_session_probe=\n"
-                          "session_probe_on_launch_failure=1\n"
                           "[client]\n"
                           "tls_support=yes\n"
                           "performance_flags_default=07\n"
@@ -1138,6 +1145,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "rdp_compression=0\n"
                           "bogus_sc_net_size=yes\n"
                           "proxy_managed_drives=*\n"
+                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
+                          "enable_session_probe=\n"
+                          "session_probe_on_launch_failure=1\n"
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
                           "[video]\n"
@@ -1159,7 +1169,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -1171,11 +1180,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1210,10 +1214,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp",      ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL("/var/wab/recorded/rdp",          ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE",
-                      ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -1275,6 +1275,18 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE",
+                      ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1304,10 +1316,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "enable_ip_transparent=true\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
-                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
-                          "shell_working_directory=\n"
-                          "session_probe_launch_timeout=6000\n"
-                          "session_probe_keepalive_timeout=3000\n"
                           "[client]\t\n"
                           "tls_support=yes\n"
                           "bogus_user_id=yes\n"
@@ -1323,6 +1331,10 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "rdp_compression=0\n"
                           "bogus_sc_net_size=no\n"
                           "client_device_announce_timeout=1500\n"
+                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
+                          "shell_working_directory=\n"
+                          "session_probe_launch_timeout=6000\n"
+                          "session_probe_keepalive_timeout=3000\n"
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
                           "[mod_vnc]\n"
@@ -1337,7 +1349,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     Inifile             ini;
 
-    ini.set<cfg::globals::shell_working_directory>("C:\\");
+    ini.set<cfg::mod_rdp::shell_working_directory>("C:\\");
 
     ConfigurationLoader cfg_loader(ini, oss);
     char                temp_path[1024];
@@ -1350,7 +1362,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -1362,11 +1373,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1401,10 +1407,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp",      ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL("/var/wab/recorded/rdp",          ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE",
-                      ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -1466,6 +1468,18 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(1500,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE",
+                      ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1493,14 +1507,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "listen_address=0.0.0.0\n"
                           "certificate_password=redemption\n"
                           "enable_ip_transparent=False\n"
-                          "shell_working_directory=%HOMEDRIVE%%HOMEPATH%\n"
-                          "enable_session_probe=true\n"
                           "[client]\n"
                           "bitmap_compression=TRuE\n"
                           "\n"
                           "[mod_rdp]\n"
                           "persistent_disk_bitmap_cache=true\n"
                           "cache_waiting_list=no\n"
+                          "shell_working_directory=%HOMEDRIVE%%HOMEPATH%\n"
+                          "enable_session_probe=true\n"
                           "\n"
                           );
 
@@ -1516,7 +1530,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -1528,11 +1541,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1567,9 +1575,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(PNG_PATH,                         ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL(WRM_PATH,                         ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -1631,6 +1636,17 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1654,9 +1670,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "certificate_password=\n"
                            "enable_ip_transparent=yes\n"
                            "glyph_cache=yes\n"
-                          "session_probe_launch_timeout=4000\n"
-                          "session_probe_on_launch_failure=1\n"
-                          "session_probe_keepalive_timeout=7000\n"
                            "[client]\n"
                            "bitmap_compression=no\n"
                            "persist_bitmap_cache_on_disk=yes\n"
@@ -1664,6 +1677,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "[mod_rdp]\n"
                            "persist_bitmap_cache_on_disk=yes\n"
                            "proxy_managed_drives=docs,apps\n"
+                           "session_probe_launch_timeout=4000\n"
+                           "session_probe_on_launch_failure=1\n"
+                           "session_probe_keepalive_timeout=7000\n"
                            "[mod_vnc]\n"
                            "bogus_clipboard_infinite_loop=0\n"
                            "[debug]\n"
@@ -1681,7 +1697,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
@@ -1693,11 +1708,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1732,9 +1742,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(PNG_PATH,                         ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL(WRM_PATH,                         ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -1796,6 +1803,17 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("docs,apps",                      ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1833,7 +1851,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -1845,11 +1862,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -1884,9 +1896,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(PNG_PATH,                         ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL(WRM_PATH,                         ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -1948,6 +1957,17 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -1984,7 +2004,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::globals::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
@@ -1996,11 +2015,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
                                                         ini.get<cfg::globals::persistent_path>().c_str());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_session_probe_loading_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::globals::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::globals::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::globals::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
@@ -2035,9 +2049,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(PNG_PATH,                         ini.get<cfg::globals::png_path>().c_str());
     BOOST_CHECK_EQUAL(WRM_PATH,                         ini.get<cfg::globals::wrm_path>().c_str());
-
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::alternate_shell>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
@@ -2098,6 +2109,17 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
+    BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
