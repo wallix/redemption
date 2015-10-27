@@ -353,7 +353,7 @@ public:
         // if an answer has been received, send it to
         // rdp serveur via mod (should be rdp module)
         TODO("Check if this->mod is RDP MODULE");
-        if (mm.connected && this->ini.get<cfg::globals::auth_channel>()[0]) {
+        if (mm.connected && this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
                 // If set, transmit to auth_channel channel

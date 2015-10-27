@@ -25,7 +25,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
-            static constexpr unsigned index() { return 20; }
+            static constexpr unsigned index() { return 13; }
             using type = unsigned;
             type value{0};
         };
@@ -100,7 +100,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 21; }
+            static constexpr unsigned index() { return 14; }
             using type = bool;
             type value{0};
         };
@@ -1019,14 +1019,6 @@ namespace cfg {
             type value{600};
         };
 
-        // Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
-        struct auth_channel {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::none;
-            }
-            using type = ::configs::StaticNilString<8>;
-            type value{::configs::null_fill()};
-        };
         // AUTHID_GLOBALS_ENABLE_FILE_ENCRYPTION
         struct enable_file_encryption {
             static constexpr ::configs::VariableProperties properties() {
@@ -1075,31 +1067,12 @@ namespace cfg {
             type value{WRM_PATH};
         };
 
-        // AUTHID_GLOBALS_ALTERNATE_SHELL
-        struct alternate_shell {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 11; }
-            using type = std::string;
-            type value{};
-        };
-        // AUTHID_GLOBALS_SHELL_WORKING_DIRECTORY
-        struct shell_working_directory {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 12; }
-            using type = std::string;
-            type value{};
-        };
-
         // AUTHID_GLOBALS_MOVIE
         struct movie {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 13; }
+            static constexpr unsigned index() { return 11; }
             using type = bool;
             type value{0};
         };
@@ -1108,7 +1081,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 14; }
+            static constexpr unsigned index() { return 12; }
             using type = std::string;
             type value{};
         };
@@ -1142,63 +1115,6 @@ namespace cfg {
             }
             using type = bool;
             type value{1};
-        };
-
-        // AUTHID_GLOBALS_ENABLE_SESSION_PROBE
-        struct enable_session_probe {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 15; }
-            using type = bool;
-            type value{0};
-        };
-        // AUTHID_GLOBALS_ENABLE_SESSION_PROBE_LOADING_MASK
-        struct enable_session_probe_loading_mask {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 16; }
-            using type = bool;
-            type value{1};
-        };
-        // AUTHID_GLOBALS_SESSION_PROBE_LAUNCH_TIMEOUT
-        struct session_probe_launch_timeout {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 17; }
-            using type = unsigned;
-            type value{20000};
-        };
-        // Specifies the action to be performed is the launch of session probe fails.
-        //   0: disconnects session
-        //   1: remains connected
-        // AUTHID_GLOBALS_SESSION_PROBE_ON_LAUNCH_FAILURE
-        struct session_probe_on_launch_failure {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 18; }
-            using type = ::configs::Range<unsigned, 0, 1, 0>;
-            type value{0};
-        };
-        // AUTHID_GLOBALS_SESSION_PROBE_KEEPALIVE_TIMEOUT
-        struct session_probe_keepalive_timeout {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 19; }
-            using type = unsigned;
-            type value{5000};
-        };
-
-        struct session_probe_alternate_shell {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::none;
-            }
-            using type = ::configs::StaticString<512>;
-            type value{""};
         };
 
         struct persistent_path {
@@ -1375,7 +1291,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 22; }
+            static constexpr unsigned index() { return 15; }
             using type = bool;
             type value{1};
         };
@@ -1385,7 +1301,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 23; }
+            static constexpr unsigned index() { return 16; }
             using type = unsigned;
             type value{1000};
         };
@@ -1395,9 +1311,93 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 24; }
+            static constexpr unsigned index() { return 17; }
             using type = std::string;
             type value{};
+        };
+
+        // Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
+        struct auth_channel {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = ::configs::StaticNilString<8>;
+            type value{::configs::null_fill()};
+        };
+
+        // AUTHID_MOD_RDP_ALTERNATE_SHELL
+        struct alternate_shell {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 18; }
+            using type = std::string;
+            type value{};
+        };
+        // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
+        struct shell_working_directory {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 19; }
+            using type = std::string;
+            type value{};
+        };
+
+        // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE
+        struct enable_session_probe {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 20; }
+            using type = bool;
+            type value{0};
+        };
+        // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LOADING_MASK
+        struct enable_session_probe_loading_mask {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 21; }
+            using type = bool;
+            type value{1};
+        };
+        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
+        struct session_probe_launch_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 22; }
+            using type = unsigned;
+            type value{20000};
+        };
+        // Specifies the action to be performed is the launch of session probe fails.
+        //   0: disconnects session
+        //   1: remains connected
+        // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
+        struct session_probe_on_launch_failure {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 23; }
+            using type = ::configs::Range<unsigned, 0, 1, 0>;
+            type value{0};
+        };
+        // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
+        struct session_probe_keepalive_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 24; }
+            using type = unsigned;
+            type value{5000};
+        };
+        struct session_probe_alternate_shell {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = ::configs::StaticString<512>;
+            type value{""};
         };
     };
 
@@ -1809,27 +1809,18 @@ struct globals
 , cfg::globals::session_timeout
 , cfg::globals::keepalive_grace_delay
 , cfg::globals::close_timeout
-, cfg::globals::auth_channel
 , cfg::globals::enable_file_encryption
 , cfg::globals::listen_address
 , cfg::globals::enable_ip_transparent
 , cfg::globals::certificate_password
 , cfg::globals::png_path
 , cfg::globals::wrm_path
-, cfg::globals::alternate_shell
-, cfg::globals::shell_working_directory
 , cfg::globals::movie
 , cfg::globals::movie_path
 , cfg::globals::enable_bitmap_update
 , cfg::globals::enable_close_box
 , cfg::globals::enable_osd
 , cfg::globals::enable_osd_display_remote_target
-, cfg::globals::enable_session_probe
-, cfg::globals::enable_session_probe_loading_mask
-, cfg::globals::session_probe_launch_timeout
-, cfg::globals::session_probe_on_launch_failure
-, cfg::globals::session_probe_keepalive_timeout
-, cfg::globals::session_probe_alternate_shell
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
 { static constexpr bool is_section = true; };
@@ -1857,6 +1848,15 @@ struct mod_rdp
 , cfg::mod_rdp::bogus_sc_net_size
 , cfg::mod_rdp::client_device_announce_timeout
 , cfg::mod_rdp::proxy_managed_drives
+, cfg::mod_rdp::auth_channel
+, cfg::mod_rdp::alternate_shell
+, cfg::mod_rdp::shell_working_directory
+, cfg::mod_rdp::enable_session_probe
+, cfg::mod_rdp::enable_session_probe_loading_mask
+, cfg::mod_rdp::session_probe_launch_timeout
+, cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_alternate_shell
 { static constexpr bool is_section = true; };
 
 struct mod_replay
@@ -1934,20 +1934,20 @@ using VariablesAclPack = Pack<
 , cfg::globals::target_application_account
 , cfg::globals::target_application_password
 , cfg::globals::enable_file_encryption
-, cfg::globals::alternate_shell
-, cfg::globals::shell_working_directory
 , cfg::globals::movie
 , cfg::globals::movie_path
-, cfg::globals::enable_session_probe
-, cfg::globals::enable_session_probe_loading_mask
-, cfg::globals::session_probe_launch_timeout
-, cfg::globals::session_probe_on_launch_failure
-, cfg::globals::session_probe_keepalive_timeout
 , cfg::client::keyboard_layout
 , cfg::client::disable_tsk_switch_shortcuts
 , cfg::mod_rdp::bogus_sc_net_size
 , cfg::mod_rdp::client_device_announce_timeout
 , cfg::mod_rdp::proxy_managed_drives
+, cfg::mod_rdp::alternate_shell
+, cfg::mod_rdp::shell_working_directory
+, cfg::mod_rdp::enable_session_probe
+, cfg::mod_rdp::enable_session_probe_loading_mask
+, cfg::mod_rdp::session_probe_launch_timeout
+, cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
