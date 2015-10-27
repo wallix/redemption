@@ -97,7 +97,9 @@ public:
                 if (auto field = this->ini.get_acl_field(authid_from_string(keyword))) {
                     if ((0 == strncasecmp(value, "ask", 3))) {
                         field.ask();
-                        LOG(LOG_INFO, "receiving ASK '%s'", keyword);
+                        if (this->verbose & 0x02) {
+                            LOG(LOG_INFO, "receiving ASK '%s'", keyword);
+                        }
                     }
                     else {
                         // BASE64 TRY
@@ -117,10 +119,12 @@ public:
                             ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != nullptr))) {
                             display_val = ::get_printable_password(val, this->ini.get<cfg::debug::password>());
                         }
-                        LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
+                        if (this->verbose & 0x02) {
+                            LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
+                        }
                     }
                 }
-                else {
+                else if (this->verbose & 0x02) {
                     LOG(LOG_WARNING, "AclSerializer::in_item(stream): unknown strauthid=\"%s\"", keyword);
                 }
 
@@ -128,7 +132,7 @@ public:
                 return;
             }
         }
-        LOG(LOG_WARNING, "Unexpected exit while parsing ACL message");
+        LOG(LOG_ERR, "Unexpected exit while parsing ACL message");
         hexdump(start, view.p-start);
         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
@@ -145,7 +149,7 @@ public:
         size_t size = Parse(buf).in_uint32_be();
 
         if (size > 1024 * 1024) {
-            LOG(LOG_WARNING, "Error: ACL message too big (got %u max 1M)", size);
+            LOG(LOG_ERR, "Error: ACL message too big (got %u max 1M)", size);
             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
         }
 
@@ -188,10 +192,6 @@ private:
         std::forward_list<Buffer>::iterator before_it = buffer_list.before_begin();
         Buffer buf;
         Buffer * current_buff = &buf;
-
-        Buffers() {
-            this->buf.sz = 4u;
-        }
 
         size_t size() const {
             size_t total_length = this->buf.sz;
@@ -241,6 +241,7 @@ public:
         }
         if (this->ini.changed_field_size()) {
             Buffers buffers;
+            buffers.buf.sz += 4;
 
             auto const password_printing_mode = this->ini.get<cfg::debug::password>();
 
@@ -250,7 +251,9 @@ public:
                 buffers.push('\n');
                 if (bfield.is_asked()) {
                     buffers.push("ASK\n");
-                    LOG(LOG_INFO, "sending %s=ASK", key);
+                    if (this->verbose & 0x02) {
+                        LOG(LOG_INFO, "sending %s=ASK", key);
+                    }
                 }
                 else {
                     char const * val = bfield.c_str();
@@ -262,7 +265,9 @@ public:
                      || (strncasecmp("target_password", key, 15) == 0)) {
                         display_val = get_printable_password(val, password_printing_mode);
                     }
-                    LOG(LOG_INFO, "sending %s=%s", key, display_val);
+                    if (this->verbose & 0x02) {
+                        LOG(LOG_INFO, "sending %s=%s", key, display_val);
+                    }
                 }
             });
 
