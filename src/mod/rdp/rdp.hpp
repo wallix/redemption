@@ -3183,7 +3183,7 @@ public:
                     }
                 }
                 else {
-                    throw Error(ERR_AGENT_LAUNCH);
+                    throw Error(ERR_SESSION_PROBE_LAUNCH);
                 }
             }
 
@@ -3192,7 +3192,7 @@ public:
                     this->front.disable_input_event_and_graphics_update(false);
 
                     LOG(LOG_ERR, "No keep alive received from Session Probe!");
-                    throw Error(ERR_AGENT_KEEPALIVE);
+                    throw Error(ERR_SESSION_PROBE_KEEPALIVE);
                 }
                 else {
                     if (this->verbose & 0x10000) {
