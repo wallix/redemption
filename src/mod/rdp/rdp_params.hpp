@@ -67,7 +67,10 @@ struct ModRDPParams {
 
     auth_api * acl;
 
+
+    bool         ignore_auth_channel;
     const char * auth_channel;
+
     const char * alternate_shell;
     const char * shell_working_directory;
     const char * target_application_account;
@@ -152,7 +155,9 @@ struct ModRDPParams {
 
         , acl(nullptr)
 
+        , ignore_auth_channel(false)
         , auth_channel("")
+
         , alternate_shell("")
         , shell_working_directory("")
         , target_application_account("")
@@ -264,7 +269,10 @@ struct ModRDPParams {
             "ModRDPParams acl=<%p>",                               this->acl);
 
         LOG(LOG_INFO,
+            "ModRDPParams ignore_auth_channel=%s",                 (this->ignore_auth_channel ? "yes" : "no"));
+        LOG(LOG_INFO,
             "ModRDPParams auth_channel=\"%s\"",                    (this->auth_channel ? this->auth_channel : "<null>"));
+
         LOG(LOG_INFO,
             "ModRDPParams alternate_shell=\"%s\"",                 (this->alternate_shell ? this->alternate_shell : "<null>"));
         LOG(LOG_INFO,

@@ -323,6 +323,8 @@ class mod_rdp : public RDPChannelManagerMod {
     const uint32_t verbose;
     const uint32_t cache_verbose;
 
+    const bool enable_auth_channel;
+
     char auth_channel[8];
     int  auth_channel_flags;
     int  auth_channel_chanid;
@@ -516,6 +518,7 @@ public:
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
+        , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         //, auth_channel_state(0) // 0 means unused
@@ -620,7 +623,8 @@ public:
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel,
-                (!strncmp(mod_rdp_params.auth_channel, "*", 2) ? "wablnch"
+                ((!(*mod_rdp_params.auth_channel) ||
+                  !strncmp(mod_rdp_params.auth_channel, "*", 2)) ? "wablnch"
                                                                : mod_rdp_params.auth_channel),
                 sizeof(this->auth_channel) - 1);
 
@@ -1705,7 +1709,7 @@ public:
 
                                 const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                                 size_t num_channels = channel_list.size();
-                                if ((num_channels > 0) || this->auth_channel[0] ||
+                                if ((num_channels > 0) || this->enable_auth_channel ||
                                     this->file_system_drive_manager.HasManagedDrive()) {
                                     /* Here we need to put channel information in order
                                     to redirect channel data
@@ -1717,11 +1721,15 @@ public:
                                     for (size_t index = 0; index < num_channels; index++) {
                                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                         if (this->authorization_channels.is_authorized(channel_item.name) ||
-                                            (!strcmp(channel_item.name, channel_names::rdpdr) &&
+                                            ((!strcmp(channel_item.name, channel_names::rdpdr) ||
+                                              !strcmp(channel_item.name, channel_names::rdpsnd)) &&
                                             this->file_system_drive_manager.HasManagedDrive())
                                         ) {
                                             if (!strcmp(channel_item.name, channel_names::rdpdr)) {
                                                 has_rdpdr_channel = true;
+                                            }
+                                            else if (!strcmp(channel_item.name, channel_names::rdpsnd)) {
+                                                has_rdpsnd_channel = true;
                                             }
                                             memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
                                         }
@@ -1777,7 +1785,8 @@ public:
                                     }
 
                                     // Inject a new channel for auth_channel virtual channel (wablauncher)
-                                    if (this->auth_channel[0]) {
+                                    if (this->enable_auth_channel) {
+                                        REDASSERT(this->auth_channel[0]);
                                         memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
                                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
@@ -2713,7 +2722,7 @@ public:
                             size_t chunk_size = sec.payload.in_remain();
 
                             // If channel name is our virtual channel, then don't send data to front
-                                 if (  this->auth_channel[0] /*&& this->acl */
+                                 if (  this->enable_auth_channel
                                     && !strcmp(mod_channel.name, this->auth_channel)) {
                                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
