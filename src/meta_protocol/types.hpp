@@ -279,6 +279,8 @@ template<class T> using is_condition = typename detail_::is_condition_impl<
 /**
  * @{
  * \brief make a conditional type
+ *
+ * \param Cond  bool or function
  */
 template<class Cond, class If>
 types::if_<typename detail_::to_function<Cond>::type, If, types::none>
@@ -349,8 +351,9 @@ inline types::out_bytes out_bytes(unsigned char const * data, std::size_t sz) {
     return {data, sz};
 }
 
+/// \brief alias for out_bytes(s, strlen(s))
 template<std::size_t N>
-types::out_bytes str(char const * s) {
+types::out_bytes out_string(char const * s) {
     return {reinterpret_cast<uint8_t const *>(s), strlen(s)};
 }
 
