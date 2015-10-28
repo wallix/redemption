@@ -390,3 +390,52 @@ BOOST_AUTO_TEST_CASE(TestEndsCaseWith)
     BOOST_CHECK(ends_case_with("RDPPROXY.INI", ""));
     BOOST_CHECK(ends_case_with("", ""));
 }
+
+BOOST_AUTO_TEST_CASE(TestSOHSeparatedStringsToMultiSZ)
+{
+    char dest[16];
+
+    SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "");
+    BOOST_CHECK(!memcmp(dest, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+
+    SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234");
+    BOOST_CHECK(!memcmp(dest, "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+
+    SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "12345678901234567890");
+    BOOST_CHECK(!memcmp(dest, "12345678901234\x00\x00", sizeof(dest)));
+
+    SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234\x01OPQR");
+    BOOST_CHECK(!memcmp(dest, "1234\x00OPQR\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+
+    SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "12345678\x01OPQRSTUV");
+    BOOST_CHECK(!memcmp(dest, "12345678\x00OPQRS\x00\x00", sizeof(dest)));
+
+    SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234\x01\x01");
+    BOOST_CHECK(!memcmp(dest, "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+
+    SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234\x01\x01OPQR");
+    BOOST_CHECK(!memcmp(dest, "1234\x00\x00OPQR\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+}
+
+BOOST_AUTO_TEST_CASE(TestMultiSZCopy)
+{
+    char dest[16];
+
+    MultiSZCopy(dest, sizeof(dest), "\x00");
+    BOOST_CHECK(!memcmp(dest, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+
+    MultiSZCopy(dest, sizeof(dest), "1234\x00");
+    BOOST_CHECK(!memcmp(dest, "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+
+    MultiSZCopy(dest, sizeof(dest), "12345678901234567890\x00");
+    BOOST_CHECK(!memcmp(dest, "12345678901234\x00\x00", sizeof(dest)));
+
+    MultiSZCopy(dest, sizeof(dest), "1234\x00OPQR\x00");
+    BOOST_CHECK(!memcmp(dest, "1234\x00OPQR\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+
+    MultiSZCopy(dest, sizeof(dest), "12345678\x00OPQRSTUV\x00");
+    BOOST_CHECK(!memcmp(dest, "12345678\x00OPQRS\x00\x00", sizeof(dest)));
+
+    MultiSZCopy(dest, sizeof(dest), "12345678\x00\x00OPQRSTUV\x00");
+    BOOST_CHECK(!memcmp(dest, "12345678\x00\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
+}

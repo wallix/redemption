@@ -279,7 +279,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
     char hostname[16];
     char username[128];
-    char password[256];
+    char password[2048];
     char domain[256];
     char program[512];
     char directory[512];
@@ -717,8 +717,11 @@ public:
             this->domain, this->username, this->hostname);
 
 
-        strncpy(this->password, mod_rdp_params.target_password, sizeof(this->password) - 1);
-        this->password[sizeof(this->password) - 1] = 0;
+        // Password is a multi-sz!
+        // A multi-sz contains a sequence of null-terminated strings,
+        //  terminated by an empty string (\0) so that the last two
+        //  characters are both null terminators.
+        SOHSeparatedStringsToMultiSZ(this->password, sizeof(this->password), mod_rdp_params.target_password);
 
         snprintf(this->client_name, sizeof(this->client_name), "%s", mod_rdp_params.client_name);
 

@@ -23,8 +23,11 @@
 
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
+
 #include "RDP/nla/nla.hpp"
 #include "RDP/x224.hpp"
+
+#include "strutils.hpp"
 
 struct RdpNego
 {
@@ -74,9 +77,11 @@ struct RdpNego
 
     uint8_t hostname[16];
     uint8_t user[128];
-    uint8_t password[256];
+    uint8_t password[2048];
     uint8_t domain[256];
     const char * target_host;
+
+    uint8_t * current_password;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
     bool test;
@@ -95,6 +100,7 @@ struct RdpNego
     , requested_protocol(PROTOCOL_RDP)
     , trans(socket_trans)
     , target_host(target_host)
+    , current_password(nullptr)
     , test(false)
     , verbose(verbose)
     , lb_info(nullptr)
@@ -125,7 +131,11 @@ struct RdpNego
         if (this->nla) {
             snprintf(reinterpret_cast<char*>(this->user), sizeof(this->user), "%s", user);
             snprintf(reinterpret_cast<char*>(this->domain), sizeof(this->domain), "%s", domain);
-            snprintf(reinterpret_cast<char*>(this->password), sizeof(this->password), "%s", pass);
+
+            // Password is a multi-sz!
+            MultiSZCopy(reinterpret_cast<char*>(this->password), sizeof(this->password), pass);
+            this->current_password = this->password;
+
             snprintf(reinterpret_cast<char*>(this->hostname), sizeof(this->hostname), "%s", hostname);
         }
     }
@@ -306,7 +316,8 @@ struct RdpNego
                 this->trans.enable_client_tls(ignore_certificate_change, certif_path);
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(this->trans, this->user,
-                                   this->domain, this->password,
+//                                   this->domain, this->password,
+                                   this->domain, this->current_password,
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
                                    this->verbose);
@@ -339,17 +350,24 @@ struct RdpNego
                     return;
                 }
             }
-            LOG(LOG_INFO, "Can't activate NLA");
-            this->nla = false;
             this->trans.disconnect();
             if (!this->trans.connect()){
-                LOG(LOG_ERR, "Failed to fallback to SSL only");
+                LOG(LOG_ERR, "Failed to disconnect transport");
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
-            LOG(LOG_INFO, "falling back to SSL only");
-            this->send_negotiation_request();
-            this->state = NEGO_STATE_TLS;
-            this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
+            this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
+            if (*this->current_password) {
+                LOG(LOG_INFO, "try next password");
+                this->send_negotiation_request();
+            }
+            else {
+                LOG(LOG_INFO, "Can't activate NLA");
+                this->nla = false;
+                LOG(LOG_INFO, "falling back to SSL only");
+                this->send_negotiation_request();
+                this->state = NEGO_STATE_TLS;
+                this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
+            }
         }
         else if (this->tls) {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP

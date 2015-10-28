@@ -24,7 +24,9 @@
 #define BOOST_TEST_MODULE TestNego
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+//#define LOGNULL
+#define LOGPRINT
+
 #include "log.hpp"
 #include "RDP/nego.hpp"
 #include "test_transport.hpp"
@@ -102,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
     logtrans.set_public_key((const uint8_t*)"1245789652325415", 16);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";
-    char pass[] = "Pénélope";
+    char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
     RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false);
     nego.test = true;
@@ -129,3 +131,18 @@ BOOST_AUTO_TEST_CASE(TestNego)
 //     ClientInfo client_info(0, true);
 //     nego.recv_resquest(nullptr, client_info, true, true);
 // }
+
+
+BOOST_AUTO_TEST_CASE(TestSetIdentity) {
+    LogTransport null_transport;
+
+    RdpNego nego(true, null_transport, "test", true, "127.0.0.1", false);
+
+    char pass[] = "Password\x00Pass\x00";
+
+    nego.set_identity("Administrateur", "QA", pass, "Server");
+
+    BOOST_CHECK_EQUAL(0, ::memcmp(pass, nego.password, sizeof(pass)));
+
+    hexdump(pass, sizeof(pass));
+}

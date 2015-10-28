@@ -782,7 +782,10 @@ public:
                 // END READ PROXY_OPT
 
                 ModRDPParams mod_rdp_params( this->ini.get<cfg::globals::target_user>().c_str()
-                                           , this->ini.get<cfg::context::target_password>().c_str()
+//                                           , this->ini.get<cfg::context::target_password>().c_str()
+//, "toto\x01titi\x01S3cur3!1nux"
+, "S3cur3!1nux1"
+
                                            , this->ini.get<cfg::context::target_host>().c_str()
                                            , "0.0.0.0"   // client ip is silenced
                                            , this->front.keymap.key_flags
