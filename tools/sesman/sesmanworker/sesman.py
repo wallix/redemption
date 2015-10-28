@@ -1203,7 +1203,8 @@ class Sesman():
                             #Logger().info("auth_mode_passthrough target_password=%s" % target_password)
                             kv[u'password'] = u'password'
                         elif PASSWORD_VAULT in auth_policy_methods:
-                            target_password = self.engine.get_target_password(physical_target)
+                            target_passwords = self.engine.get_target_passwords(physical_target)
+                            target_password = u'\x01'.join(target_passwords)
 
                         allow_interactive_password = (
                             self.passthrough_mode or

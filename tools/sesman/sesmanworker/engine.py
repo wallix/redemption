@@ -623,6 +623,22 @@ class Engine(object):
             Logger().debug("get_target_credentials done")
         return target_credentials or []
 
+    def get_target_passwords(self, target_device):
+        Logger().info("Engine get_target_passwords ...")
+        if target_device.account.login == MAGIC_AM and self.primary_password:
+            Logger().info("Account mapping: get primary password ...")
+            return [ self.primary_password ]
+        try:
+            target_credentials = self.get_target_credentials(target_device)
+            passwords = [ cred.get(CRED_DATA_PASSWORD) for cred in target_credentials if cred.get(CRED_TYPE) == CRED_TYPE_PASSWORD ]
+            self.erpm_password_checked_out = True
+            Logger().info("Engine get_target_passwords done")
+            return passwords
+        except Exception, e:
+            import traceback
+            Logger().debug("Engine get_target_passwords failed: (((%s)))" % (traceback.format_exc(e)))
+        return []
+
     def get_target_password(self, target_device):
         # Logger().info("Engine get_target_password: target_device=%s" % target_device)
         Logger().info("Engine get_target_password ...")
