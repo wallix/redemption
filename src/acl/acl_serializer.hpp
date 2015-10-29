@@ -28,6 +28,7 @@
 
 #include <forward_list>
 
+#include "exchange.hpp"
 #include "stream.hpp"
 #include "config.hpp"
 #include "authid.hpp"
@@ -63,110 +64,208 @@ public:
         }
     }
 
-    struct ArrayItemsView {
-        uint8_t * p;
-        uint8_t * end;
+private:
+    class Reader
+    {
+        static constexpr size_t buf_len = 65535;
+        char buf[buf_len];
+        char key_name_buf[64];
+        bool has_next_buffer = true;
+        std::string data_multipacket;
+        char * p;
+        char * e;
+
+        Transport & trans;
+        uint32_t verbose;
+
+    public:
+        Reader(Transport & trans, uint32_t verbose)
+        : trans(trans)
+        , verbose(verbose)
+        {
+            this->safe_read_packet();
+        }
+
+        char const * key(bool always_internal_copy) {
+            auto m = std::find(this->p, this->e, '\n');
+            if (m == e) {
+                size_t key_buf_len = this->e - this->p;
+                if (key_buf_len) {
+                    if (key_buf_len > sizeof(this->key_name_buf)) {
+                        LOG(LOG_ERR, "Error: ACL key length too big (got %u max 64o)", key_buf_len);
+                        throw Error(ERR_ACL_MESSAGE_TOO_BIG);
+                    }
+                    memcpy(this->key_name_buf, this->p, key_buf_len);
+                }
+                else if (!this->has_next_buffer) {
+                    if (key_buf_len) {
+                        throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
+                    }
+                    return nullptr;
+                }
+                this->safe_read_packet();
+                m = std::find(this->p, this->e, '\n');
+                if (key_buf_len) {
+                    if (size_t(m - this->p) > sizeof(this->key_name_buf)) {
+                        LOG(LOG_ERR, "Error: ACL key length too big (got %u max 64o)", m - this->p);
+                        throw Error(ERR_ACL_MESSAGE_TOO_BIG);
+                    }
+                    *m = 0;
+                    ++m;
+                    memcpy(this->key_name_buf, this->p, m - this->p);
+                    this->p = m;
+                    return reinterpret_cast<char const *>(this->key_name_buf);
+                }
+            }
+            if (always_internal_copy) {
+                *m = 0;
+                ++m;
+                memcpy(this->key_name_buf, this->p, m - this->p);
+                this->p = m;
+                return this->key_name_buf;
+            }
+            *m = 0;
+            return exchange(this->p, m+1);
+        }
+
+        bool is_set_value() {
+            if (this->p == this->e) {
+                this->read_packet();
+            }
+            return *this->p == '!';
+        }
+
+        bool consume_ask() {
+            char c = this->getc();
+            if (!('a' == c || 'A' == c)) {
+                return false;
+            }
+            c = this->getc();
+            if (!('s' == c || 'S' == c)) {
+                return false;
+            }
+            c = this->getc();
+            if (!('k' == c || 'K' == c)) {
+                return false;
+            }
+            return this->getc() == '\n';
+        }
+
+        char const * get_val() {
+            if (this->p == this->e) {
+                this->read_packet();
+            }
+            else if (*this->p == '!') {
+                ++this->p;
+            }
+            auto m = std::find(this->p, this->e, '\n');
+            if (m != e) {
+                *m = 0;
+                return exchange(this->p, m+1);
+            }
+            data_multipacket.clear();
+            do {
+                data_multipacket.insert(data_multipacket.end(), this->p, this->e);
+                if (data_multipacket.size() > 1024*1024) {
+                    LOG(LOG_ERR, "Error: ACL data too big (got %u max 1M)", data_multipacket.size());
+                    throw Error(ERR_ACL_MESSAGE_TOO_BIG);
+                }
+                this->read_packet();
+                m = std::find(this->p, this->e, '\n');
+            } while (m == e);
+            data_multipacket.insert(data_multipacket.end(), this->p, m);
+            this->p = m + 1;
+            return data_multipacket.c_str();
+        }
+
+        void hexdump() const {
+            ::hexdump(this->buf, this->e - this->buf);
+        }
+
+    private:
+        char getc() {
+            if (this->p == this->e) {
+                this->read_packet();
+            }
+            char c = *this->p;
+            ++this->p;
+            return c;
+        }
+
+        void read_packet() {
+            if (!this->has_next_buffer) {
+                throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
+            }
+            this->safe_read_packet();
+        }
+
+        void safe_read_packet() {
+            uint16_t buf_sz = 0;
+            do {
+                auto end = this->buf;
+                this->trans.recv(&end, HEADER_SIZE);
+
+                InStream in_stream(this->buf, 4);
+                this->has_next_buffer = in_stream.in_uint16_be();
+                buf_sz = in_stream.in_uint16_be();
+                LOG(LOG_INFO, "%.*s", buf_sz, this->buf);
+            } while (buf_sz == 0 && this->has_next_buffer);
+
+            this->p = this->buf;
+            this->e = this->buf;
+            this->trans.recv(&e, buf_sz);
+
+            if (this->verbose & 0x40){
+                if (this->has_next_buffer){
+                    LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
+                }
+                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %d", this->e - this->p);
+            }
+        }
     };
 
-    void in_items(ArrayItemsView & view)
+public:
+    void in_items()
     {
-        if (this->verbose & 0x40){
-            LOG(LOG_INFO, "auth::in_items");
-        }
-        for (; view.p < view.end ; this->in_item(view)){
-            ;
-        }
-    }
+        Reader reader(this->auth_trans, this->verbose);
 
-    void in_item(ArrayItemsView & view)
-    {
-        const char * keyword = reinterpret_cast<const char*>(view.p);
-        const uint8_t * start = view.p;
-        for ( ; view.p < view.end; ++view.p){
-            if (*view.p == '\n') {
-                *view.p = 0;
-                ++view.p;
-                break;
-            }
-        }
-        const char * value = reinterpret_cast<const char*>(view.p);
-        for ( ; view.p < view.end; ++view.p){
-            if (*view.p == '\n') {
-                *view.p = 0;
-
-                if (auto field = this->ini.get_acl_field(authid_from_string(keyword))) {
-                    if ((0 == strncasecmp(value, "ask", 3))) {
-                        field.ask();
-                        if (this->verbose & 0x02) {
-                            LOG(LOG_INFO, "receiving ASK '%s'", keyword);
-                        }
-                    }
-                    else {
-                        // BASE64 TRY
-                        // unsigned char output[32000];
-                        // if (value[0] == '!') value++;
-                        // size_t value_len = strlen((const char*)value);
-                        // size_t out_len = this->ini.b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
-                        // output[out_len] = 0;
-                        // this->ini.set_from_acl((char *)keyword,
-                        //                         (char *)output);
-                        field.set(value + (value[0] == '!' ? 1 : 0));
+        while (auto key = reader.key(this->verbose & 0x02)) {
+            auto authid = authid_from_string(key);
+            if (auto field = this->ini.get_acl_field(authid)) {
+                if (reader.is_set_value()) {
+                    field.set(reader.get_val());
+                    if (this->verbose & 0x02) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
-                        if ((strncasecmp("password", keyword, 9 ) == 0) ||
-                            (strncasecmp("target_application_password", keyword, 27) == 0) ||
-                            (strncasecmp("target_password", keyword, 16) == 0) ||
-                            ((strncasecmp("auth_channel_answer", keyword, 19) == 0) && (strcasestr(val, "password") != nullptr))) {
+                        if (cfg::context::password::index() == authid ||
+                            cfg::context::target_password::index() == authid ||
+                            cfg::globals::target_application_password::index() == authid ||
+                            (cfg::context::auth_channel_answer::index() == authid &&
+                             strcasestr(val, "password") != nullptr)
+                        ) {
                             display_val = ::get_printable_password(val, this->ini.get<cfg::debug::password>());
                         }
-                        if (this->verbose & 0x02) {
-                            LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
-                        }
+                        LOG(LOG_INFO, "receiving '%s'='%s'", key, display_val);
                     }
                 }
-                else if (this->verbose & 0x02) {
-                    LOG(LOG_WARNING, "AclSerializer::in_item(stream): unknown strauthid=\"%s\"", keyword);
+                else if (reader.consume_ask()) {
+                    field.ask();
+                    if (this->verbose & 0x02) {
+                        LOG(LOG_INFO, "receiving ASK '%s'", key);
+                    }
                 }
-
-                view.p = view.p+1;
-                return;
+                else {
+                    reader.hexdump();
+                    throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
+                }
             }
         }
-        LOG(LOG_ERR, "Unexpected exit while parsing ACL message");
-        hexdump(start, view.p-start);
-        throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
 
     void incoming()
     {
-        constexpr std::size_t buf_capacity = HEADER_SIZE < 65536 ? 65536 : HEADER_SIZE;
-        uint8_t static_buf[buf_capacity];
-        std::unique_ptr<uint8_t[]> dyn_buf;
-        uint8_t * buf = static_buf;
-        auto end = buf;
-        this->auth_trans.recv(&end, HEADER_SIZE);
-
-        size_t size = Parse(buf).in_uint32_be();
-
-        if (size > 1024 * 1024) {
-            LOG(LOG_ERR, "Error: ACL message too big (got %u max 1M)", size);
-            throw Error(ERR_ACL_MESSAGE_TOO_BIG);
-        }
-
-        if (size > buf_capacity) {
-            dyn_buf.reset(new uint8_t[buf_capacity]);
-            buf = dyn_buf.get();
-        }
-
-        end = buf;
-        this->auth_trans.recv(&end, size);
-
-        if (this->verbose & 0x40){
-            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
-        }
         bool flag = this->ini.get<cfg::context::session_id>().empty();
-        ArrayItemsView view{buf, buf+size};
-        this->in_items(view);
+        this->in_items();
         if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
             int child_pid = getpid();
             char old_session_file[256];
@@ -182,55 +281,66 @@ public:
     }
 
 private:
-    struct Buffers {
-        static constexpr size_t buf_len = 65535;
-        struct Buffer {
-            std::array<char, buf_len> data;
-            size_t sz = 0;
+    class Buffers
+    {
+        static constexpr uint16_t buf_len = 65535;
+
+        struct Buffer
+        {
+            char data[buf_len];
+            uint16_t flags = 0;
+            uint16_t sz = HEADER_SIZE; // packet size
         };
-        std::forward_list<Buffer> buffer_list;
-        std::forward_list<Buffer>::iterator before_it = buffer_list.before_begin();
+
         Buffer buf;
-        Buffer * current_buff = &buf;
+        Transport & trans;
+        uint32_t verbose;
 
-        size_t size() const {
-            size_t total_length = this->buf.sz;
-            for (auto & x : buffer_list) {
-                total_length += x.sz;
-            }
-            return total_length;
-        }
-
-        template<class Fn>
-        void for_each(Fn fn) const {
-            fn(this->buf.data.data(), this->buf.sz);
-            for (auto & buf : this->buffer_list) {
-                fn(buf.data.data(), buf.sz);
-            }
-        }
+    public:
+        Buffers(Transport & trans, uint32_t verbose)
+        : trans(trans)
+        , verbose(verbose)
+        {}
 
         void push(char c) {
-            if (this->current_buff->sz == buf_len) {
-                this->extent_buffer();
+            if (this->buf.sz == buf_len) {
+                this->new_buffer();
             }
-            this->current_buff->data[this->current_buff->sz++] = c;
+            this->buf.data[this->buf.sz++] = c;
         }
 
         void push(char const * s) {
             while (*s) {
-                while (this->current_buff->sz != buf_len && *s) {
-                    this->current_buff->data[this->current_buff->sz++] = *s;
+                while (this->buf.sz != buf_len && *s) {
+                    this->buf.data[this->buf.sz++] = *s;
                     ++s;
                 }
                 if (*s) {
-                    this->extent_buffer();
+                    this->new_buffer();
                 }
             }
         }
 
-        void extent_buffer() {
-            this->before_it = this->buffer_list.emplace_after(this->before_it);
-            this->current_buff = &*this->before_it;
+        void send_buffer() {
+            if (this->verbose & 0x40){
+                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d", this->buf.sz - HEADER_SIZE);
+            }
+            OutStream stream(this->buf.data, HEADER_SIZE);
+            stream.out_uint16_be(this->buf.flags);
+            stream.out_uint16_be(this->buf.sz - HEADER_SIZE);
+            this->trans.send(this->buf.data, this->buf.sz);
+            this->buf.flags = 0u;
+            this->buf.sz = HEADER_SIZE;
+        }
+
+    private:
+        enum { MULTIBUF = 1 };
+        void new_buffer() {
+            if (this->verbose & 0x40){
+                LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (send)");
+            }
+            this->buf.flags |= MULTIBUF;
+            this->send_buffer();
         }
     };
 
@@ -240,49 +350,38 @@ public:
             LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u", this->ini.changed_field_size());
         }
         if (this->ini.changed_field_size()) {
-            Buffers buffers;
-            buffers.buf.sz += 4;
-
             auto const password_printing_mode = this->ini.get<cfg::debug::password>();
 
-            this->ini.for_each_changed_field([&](Inifile::FieldReference bfield, authid_t authid){
-                char const * key = string_from_authid(authid);
-                buffers.push(key);
-                buffers.push('\n');
-                if (bfield.is_asked()) {
-                    buffers.push("ASK\n");
-                    if (this->verbose & 0x02) {
-                        LOG(LOG_INFO, "sending %s=ASK", key);
-                    }
-                }
-                else {
-                    char const * val = bfield.c_str();
-                    buffers.push('!');
-                    buffers.push(val);
-                    buffers.push('\n');
-                    const char * display_val = val;
-                    if ((strncasecmp("password", key, 8) == 0)
-                     || (strncasecmp("target_password", key, 15) == 0)) {
-                        display_val = get_printable_password(val, password_printing_mode);
-                    }
-                    if (this->verbose & 0x02) {
-                        LOG(LOG_INFO, "sending %s=%s", key, display_val);
-                    }
-                }
-            });
-
-            size_t const total_length = buffers.size();
-            if (this->verbose & 0x40){
-                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
-            }
-
-            OutStream(buffers.buf.data.data(), HEADER_SIZE)
-              .out_uint32_be(total_length - HEADER_SIZE); /* size in header */
-
             try {
-                buffers.for_each([&](char const * p, size_t len) {
-                    this->auth_trans.send(p, len);
+                Buffers buffers(this->auth_trans, this->verbose);
+
+                this->ini.for_each_changed_field([&](Inifile::FieldReference bfield, authid_t authid){
+                    char const * key = string_from_authid(authid);
+                    buffers.push(key);
+                    buffers.push('\n');
+                    if (bfield.is_asked()) {
+                        buffers.push("ASK\n");
+                        if (this->verbose & 0x02) {
+                            LOG(LOG_INFO, "sending %s=ASK", key);
+                        }
+                    }
+                    else {
+                        char const * val = bfield.c_str();
+                        buffers.push('!');
+                        buffers.push(val);
+                        buffers.push('\n');
+                        const char * display_val = val;
+                        if ((strncasecmp("password", key, 8) == 0)
+                         || (strncasecmp("target_password", key, 15) == 0)) {
+                            display_val = get_printable_password(val, password_printing_mode);
+                        }
+                        if (this->verbose & 0x02) {
+                            LOG(LOG_INFO, "sending %s=%s", key, display_val);
+                        }
+                    }
                 });
+
+                buffers.send_buffer();
             }
             catch (Error const &) {
                 this->ini.set_acl<cfg::context::authenticated>(false);

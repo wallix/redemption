@@ -197,7 +197,7 @@ class Sesman():
         for key, value in data.iteritems():
             self.shared[key] = value
             if value != MAGICASK:
-                _pair =  u"%s\n%s\n" % (key, (u"!%s" % value))
+                _pair = u"%s\n!%s\n" % (key, value)
             else:
                 _pair = u"%s\nASK\n" % key
             _list.append(_pair)
@@ -210,8 +210,22 @@ class Sesman():
         _r_data = _r_data.encode('utf-8')
         _len = len(_r_data)
 
-        self.proxy_conx.sendall(pack(">L", _len))
-        self.proxy_conx.sendall(_r_data)
+        _chunk_size = 1024 * 64 - 1
+        _chunks = _len / _chunk_size
+
+        if _chunks == 0:
+            self.proxy_conx.sendall(pack(">L", _len))
+            self.proxy_conx.sendall(_r_data)
+        else:
+            if _chunks * _chunk_size == len:
+                --_chunks 
+            for i in range(0, _chunks):
+                self.proxy_conx.sendall(pack(">H", 1))
+                self.proxy_conx.sendall(pack(">H", _chunk_size))
+                self.proxy_conx.sendall(_r_data[i*_chunk_size:(i+1)*_chunk_size])
+            _remaining = _len - (_chunks * _chunk_size)
+            self.proxy_conx.sendall(pack(">L", _remaining))
+            self.proxy_conx.sendall(_r_data[_len-_remaining:_len])
 
     def receive_data(self):
         u""" NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
@@ -221,8 +235,12 @@ class Sesman():
         try:
             # Fetch Data from Redemption
             try:
-                _packet_size, = unpack(">L", self.proxy_conx.recv(4))
-                _data = self.proxy_conx.recv(_packet_size)
+                while True:
+                    _is_multi_packet, = unpack(">H", self.proxy_conx.recv(2))
+                    _packet_size, = unpack(">H", self.proxy_conx.recv(2))
+                    _data += self.proxy_conx.recv(_packet_size)
+                    if not _is_multi_packet:
+                        break
             except Exception, e:
                 if DEBUG:
                     import traceback

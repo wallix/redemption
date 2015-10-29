@@ -88,98 +88,64 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     // CASE EXCEPTION
     // try exception
-    stream.rewind();
-    stream.out_uint32_be(0xFFFFFFFF);
-    stream.out_string(string_from_authid(AUTHID_GLOBALS_AUTH_USER)); stream.out_string("\nASK\n");
-    stream.out_string(string_from_authid(AUTHID_CONTEXT_PASSWORD)); stream.out_string("\nASK\n");
+    size_t const k64 = 64 * 1024 - 1;
+    size_t const sz = 1024 * 1024 * 2;
+    std::unique_ptr<char[]> u(new char[sz]);
+    OutStream big_stream(u.get(), sz);
+    big_stream.out_uint16_be(1);
+    big_stream.out_uint16_be(0xFFFF);
+    big_stream.out_string(string_from_authid(static_cast<authid_t>(cfg::globals::auth_user::index())));
+    big_stream.out_string("\n!");
+    memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
+    big_stream.out_skip_bytes(k64 - big_stream.get_offset());
 
-    GeneratorTransport transexcpt(reinterpret_cast<char *>(stream.get_current()) ,stream.get_offset());
+    BOOST_CHECK_EQUAL(big_stream.get_offset(), k64);
+
+    while(big_stream.tailroom() > k64 + 1) {
+        big_stream.out_uint16_be(1);
+        big_stream.out_uint16_be(0xFFFF);
+        memset(big_stream.get_current(), 'a', k64 - 4u);
+        big_stream.out_skip_bytes(k64 - 4u);
+    }
+    big_stream.out_uint16_be(0);
+    big_stream.out_uint16_be(0x2);
+    big_stream.out_string("a\n");
+
+    GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
     AclSerializer aclexcpt(ini, transexcpt, 0);
     try {
         aclexcpt.incoming();
+        BOOST_CHECK(false);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint32_t)ERR_ACL_MESSAGE_TOO_BIG, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL(uint32_t(ERR_ACL_MESSAGE_TOO_BIG), uint32_t(e.id));
     }
 }
 
-inline void execute_test_initem(OutStream & stream, AclSerializer & acl, const authid_t authid, const char * value)
-{
-    // create stream with key , ask
-    stream.out_string(string_from_authid(authid));
-    stream.out_string(value);
-
-    AclSerializer::ArrayItemsView view{stream.get_data(), stream.get_data() + stream.get_offset()};
-
-    // execute in_item
-    acl.in_item(view);
-}
-
-template<class Cfg, class U>
-inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t authid, U const & defaut)
-{
-    StaticOutStream<2048> stream;
-
-    // Set defaut value to strauthid key
-    ini.set_acl<Cfg>(defaut);
-    BOOST_CHECK(!ini.is_asked<Cfg>());
-
-    execute_test_initem(stream, acl, authid, "\nASK\n");
-    // check key value is known
-    BOOST_CHECK(ini.is_asked<Cfg>());
-}
-
-template<class Cfg>
-inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid_t authid, char const * value)
-{
-    StaticOutStream<2048> stream;
-    // set strauthid key to be asked
-    ini.ask<Cfg>();
-    BOOST_CHECK(ini.is_asked<Cfg>());
-
-    execute_test_initem(stream, acl, authid, value);
-
-    // check key value is known
-    BOOST_CHECK(!ini.is_asked<Cfg>());
-}
-
-BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
+BOOST_AUTO_TEST_CASE(TestAclSerializerIncoming)
 {
     Inifile ini;
-    StaticOutStream<1> stream;
-    LogTransport trans;
+    ini.clear_send_index();
+
+    std::string s("----");
+    s += string_from_authid(static_cast<authid_t>(cfg::context::password::index()));
+    s += "\nASK\n";
+    s += string_from_authid(static_cast<authid_t>(cfg::globals::auth_user::index()));
+    s += "\n!didier\n";
+    OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
+
+    GeneratorTransport trans(s.data(), s.size());
     AclSerializer acl(ini, trans, 0);
 
-    // SOME NORMAL CASE
-    test_initem_ask<cfg::context::password>(ini,acl, AUTHID_CONTEXT_PASSWORD, "SecureLinux");
-    test_initem_ask<cfg::context::selector_current_page>(ini,acl, AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE, 0);
-    test_initem_receive<cfg::context::selector_current_page>(ini,acl, AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE, "\n2\n");
-    test_initem_receive<cfg::context::password>(ini,acl, AUTHID_CONTEXT_PASSWORD, "\n!SecureLinux\n");
+    BOOST_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
+    BOOST_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
 
-    // CASE EXCEPTION
-    // try exception
-    // stream.init(strlen(STRAUTHID_AUTH_USER "didier"));
-    try{
-        test_initem_receive<cfg::globals::auth_user>(ini, acl, AUTHID_GLOBALS_AUTH_USER, "didier");
-        BOOST_CHECK(!"No exception throw");
-    } catch (const Error & e) {
-         BOOST_CHECK_EQUAL((uint32_t)ERR_ACL_UNEXPECTED_IN_ITEM_OUT, (uint32_t)e.id);
-    }
-}
+    ini.ask<cfg::context::opt_bpp>();
+    ini.set_acl<cfg::context::reporting>("didier");
 
-BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
-{
-    Inifile ini;
-    StaticOutStream<1024> stream;
-    LogTransport trans;
-    AclSerializer acl(ini, trans, 0);
+    acl.incoming();
 
-    ini.set_acl<cfg::context::password>("VerySecurePassword");
-    BOOST_CHECK(!ini.is_asked<cfg::context::password>());
-    auto s = string_from_authid(AUTHID_CONTEXT_PASSWORD);
-    stream.out_copy_bytes(s, strlen(s)); stream.out_copy_bytes("\nASK\n", 5);
-    AclSerializer::ArrayItemsView view{stream.get_data(), stream.get_data() + stream.get_offset()};
-    acl.in_items(view);
-    BOOST_CHECK(ini.is_asked<cfg::context::password>());
+    BOOST_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
+    BOOST_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
 
 
@@ -188,30 +154,76 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     Inifile ini;
     ini.clear_send_index();
 
-    const size_t sz_string = 1024*66;
-    constexpr char display_message[] = "display_message";
-    const size_t sz_key = sizeof(display_message)-1;
-    const size_t sz_header = 4;
-    const size_t sz_total = sz_string + sz_header + sz_key + 3;
-    std::string str(sz_total, 'a');
-    OutStream(&str[0], 4).out_uint32_be(sz_total - sz_header);
-    memcpy(&str[sz_header], display_message, sz_key);
-    str[sz_header + sz_key] = '\n';
-    str[sz_header + sz_key + 1] = '!';
-    str[sz_total-1] = '\n';
+    size_t const k64 = 64 * 1024 - 1;
+    size_t const sz_string = 1024*66;
+    auto const key = string_from_authid(static_cast<authid_t>(cfg::context::display_message::index()));
+    auto const total_sz = sz_string + 8u + strlen(key) + 3;
+    std::unique_ptr<char[]> u(new char[total_sz]);
+    OutStream big_stream(u.get(), total_sz);
+    big_stream.out_uint16_be(1);
+    big_stream.out_uint16_be(0xffff - 4);
+    big_stream.out_string(key);
+    big_stream.out_string("\n!");
+    memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
+    auto subsz = k64 - big_stream.get_offset();
+    big_stream.out_skip_bytes(subsz);
+    big_stream.out_uint16_be(0);
+    big_stream.out_uint16_be(sz_string - subsz + 1);
+    memset(big_stream.get_current(), 'a', sz_string - subsz);
+    big_stream.out_skip_bytes(sz_string - subsz);
+    big_stream.out_string("\n");
 
-    BOOST_REQUIRE_EQUAL(sz_total, str.size());
+    BOOST_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
-    CheckTransport trans(&str[0], sz_total);
+    CheckTransport trans(u.get(), big_stream.get_offset());
 
     AclSerializer acl(ini, trans, 0);
 
     ini.set_acl<cfg::context::display_message>(std::string(sz_string, 'a'));
 
     BOOST_REQUIRE_EQUAL(ini.get<cfg::context::display_message>().size(), sz_string);
-    BOOST_REQUIRE(ini.changed_field_size());
+    BOOST_REQUIRE_EQUAL(ini.changed_field_size(), 1);
 
     acl.send_acl_data();
 
-    BOOST_CHECK_EQUAL(trans.get_total_sent(), sz_total);
+    BOOST_CHECK_EQUAL(trans.get_total_sent(), big_stream.get_offset());
+}
+
+
+BOOST_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
+{
+    Inifile ini;
+    ini.clear_send_index();
+
+    size_t const k64 = 64 * 1024 - 1;
+    size_t const sz_string = 1024*66;
+    auto const key = string_from_authid(static_cast<authid_t>(cfg::context::display_message::index()));
+    auto const total_sz = sz_string + 8u + strlen(key) + 3;
+    std::unique_ptr<char[]> u(new char[total_sz]);
+    OutStream big_stream(u.get(), total_sz);
+    big_stream.out_uint16_be(1);
+    big_stream.out_uint16_be(0xffff - 4);
+    big_stream.out_string(key);
+    big_stream.out_string("\n!");
+    memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
+    auto subsz = k64 - big_stream.get_offset();
+    big_stream.out_skip_bytes(subsz);
+    big_stream.out_uint16_be(0);
+    big_stream.out_uint16_be(sz_string - subsz + 1);
+    memset(big_stream.get_current(), 'a', sz_string - subsz);
+    big_stream.out_skip_bytes(sz_string - subsz);
+    big_stream.out_string("\n");
+
+    BOOST_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
+
+    GeneratorTransport trans(u.get(), big_stream.get_offset());
+
+    AclSerializer acl(ini, trans, 0);
+
+    std::string result(sz_string, 'a');
+    BOOST_REQUIRE_NE(ini.get<cfg::context::display_message>(), result);
+
+    acl.incoming();
+
+    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::display_message>(), result);
 }
