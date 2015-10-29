@@ -31,8 +31,8 @@
 struct NewKbdCapture : public RDPCaptureDevice
 {
 private:
-    StaticOutStream<4096> unlogged_data;
-    StaticOutStream<4096> data;
+    StaticOutStream<49152> unlogged_data;
+    StaticOutStream<24576> data;
 
     timeval last_snapshot;
 
@@ -293,8 +293,10 @@ public:
                    , (unsigned)this->unlogged_data.get_offset(), this->unlogged_data.get_data());
             }
 
-            this->data.out_copy_bytes(this->unlogged_data.get_data(),
-                this->unlogged_data.get_offset());
+            if (this->data.has_room(this->unlogged_data.get_offset())) {
+                this->data.out_copy_bytes(this->unlogged_data.get_data(),
+                    this->unlogged_data.get_offset());
+            }
 
             this->unlogged_data.rewind();
         }
