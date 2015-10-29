@@ -166,4 +166,41 @@ inline static bool ends_case_with(const char * str, const char * suffix) {
         (strcasecmp(str + str_length - suffix_length, suffix) == 0));
 }
 
+// A multi-sz contains a sequence of null-terminated strings,
+//  terminated by an empty string (\0) so that the last two
+//  characters are both null terminators.
+inline static void SOHSeparatedStringsToMultiSZ(char * dest, size_t dest_size, const char * src) {
+    REDASSERT(dest_size > 1);
+
+    memset(dest, 0, dest_size);
+    snprintf(dest, dest_size - 1, "%s", src);
+    for (char * p = dest; *p; p++) {
+        if ('\x01' == *p) {
+            *p = '\0';
+        }
+    }
+}
+
+// A multi-sz contains a sequence of null-terminated strings,
+//  terminated by an empty string (\0) so that the last two
+//  characters are both null terminators.
+inline static void MultiSZCopy(char * dest, size_t dest_size, const char * src) {
+    REDASSERT(dest_size > 1);
+
+    memset(dest, 0, dest_size);
+    size_t total_len = 0;
+    for (const char * p = src; *p; ) {
+        size_t sz_len = strlen(p);
+        if (!sz_len) {
+            break;
+        }
+        sz_len++;
+        total_len += sz_len;
+        p += sz_len;
+    }
+    total_len++;
+    memcpy(dest, src, std::min(total_len, dest_size - 2));
+}
+
+
 #endif  // #ifndef _REDEMPTION_UTILS_STRUTILS_HPP_

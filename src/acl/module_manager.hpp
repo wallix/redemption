@@ -816,6 +816,7 @@ public:
                 mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
                 mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::wrm);
                 mod_rdp_params.acl                                 = acl;
+                mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
                 mod_rdp_params.shell_working_directory             = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();

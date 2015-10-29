@@ -292,6 +292,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "proxy_managed_drives")) {
             ::configs::parse(static_cast<cfg::mod_rdp::proxy_managed_drives&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "ignore_auth_channel")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::ignore_auth_channel&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "auth_channel")) {
             ::configs::parse(static_cast<cfg::mod_rdp::auth_channel&>(this->variables).value, value);
         }

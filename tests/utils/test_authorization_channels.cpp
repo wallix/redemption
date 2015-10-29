@@ -305,10 +305,31 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     BOOST_CHECK_EQUAL(authorization.is_authorized("cliprdr"), true);
     BOOST_CHECK_EQUAL(authorization.is_authorized("drdynvc"), true);
     BOOST_CHECK_EQUAL(authorization.is_authorized("rdpdr"), true);
-    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), false);
+    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), true);
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
     BOOST_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+
+
+    allow = "*";
+    deny = "";
+    update_authorized_channels(allow, deny, "");
+    AuthorizationChannels authorization1(allow, deny);
+    BOOST_CHECK_EQUAL(authorization1.cliprdr_down_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization1.cliprdr_up_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization1.cliprdr_file_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    BOOST_CHECK_EQUAL(authorization1.is_authorized("cliprdr"), false);
+    BOOST_CHECK_EQUAL(authorization1.is_authorized("drdynvc"), true);
+    BOOST_CHECK_EQUAL(authorization1.is_authorized("rdpdr"), false);
+    BOOST_CHECK_EQUAL(authorization1.is_authorized("rdpsnd"), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpdr_drive_read_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpdr_drive_write_is_authorized(), false);
+    BOOST_CHECK_EQUAL(authorization1.rdpsnd_audio_output_is_authorized(), false);
 }
 
 BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels2)
@@ -335,7 +356,7 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels2)
     BOOST_CHECK_EQUAL(authorization.is_authorized("cliprdr"), true);
     BOOST_CHECK_EQUAL(authorization.is_authorized("drdynvc"), true);
     BOOST_CHECK_EQUAL(authorization.is_authorized("rdpdr"), true);
-    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), false);
+    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), true);
 
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), false);
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), false);
@@ -399,7 +420,7 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels4)
     BOOST_CHECK_EQUAL(authorization.is_authorized("cliprdr"), false);
     BOOST_CHECK_EQUAL(authorization.is_authorized("drdynvc"), true);
     BOOST_CHECK_EQUAL(authorization.is_authorized("rdpdr"), true);
-    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), false);
+    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), true);
 
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
@@ -431,7 +452,7 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels5)
     BOOST_CHECK_EQUAL(authorization.is_authorized("cliprdr"), false);
     BOOST_CHECK_EQUAL(authorization.is_authorized("drdynvc"), false);
     BOOST_CHECK_EQUAL(authorization.is_authorized("rdpdr"), true);
-    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), false);
+    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), true);
 
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
@@ -463,7 +484,7 @@ BOOST_AUTO_TEST_CASE(TestUpdateAuthorizedChannels6)
     BOOST_CHECK_EQUAL(authorization.is_authorized("cliprdr"), false);
     BOOST_CHECK_EQUAL(authorization.is_authorized("drdynvc"), false);
     BOOST_CHECK_EQUAL(authorization.is_authorized("rdpdr"), true);
-    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), false);
+    BOOST_CHECK_EQUAL(authorization.is_authorized("rdpsnd"), true);
 
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
     BOOST_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
