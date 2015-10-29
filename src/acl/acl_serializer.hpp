@@ -208,7 +208,6 @@ private:
                 InStream in_stream(this->buf, 4);
                 this->has_next_buffer = in_stream.in_uint16_be();
                 buf_sz = in_stream.in_uint16_be();
-                LOG(LOG_INFO, "%.*s", buf_sz, this->buf);
             } while (buf_sz == 0 && this->has_next_buffer);
 
             this->p = this->buf;

@@ -102,15 +102,15 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 //    exit(0);
 
     char indata[] =
-        "\x00\x00\x00\x87"
-        "login\ntoto\n"
-        "password\ntotopass\n"
-        "target_device\nwin\n"
-        "target_login\nuser\n"
-        "target_password\nwhoknows\n"
-        "proto_dest\nRDP\n"
-        "module\nRDP\n"
-        "authenticated\nTrue\n"
+        "\x00\x00\x00\x8F"
+        "login\n!toto\n"
+        "password\n!totopass\n"
+        "target_device\n!win\n"
+        "target_login\n!user\n"
+        "target_password\n!whoknows\n"
+        "proto_dest\n!RDP\n"
+        "module\n!RDP\n"
+        "authenticated\n!True\n"
 
     ;
 
@@ -201,15 +201,15 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 //    exit(0);
 
     char indata[] =
-        "\x00\x00\x00\x87"
-        "login\ntoto\n"
-        "password\ntotopass\n"
-        "target_device\nwin\n"
-        "target_login\nuser\n"
-        "target_password\nwhoknows\n"
-        "proto_dest\nRDP\n"
-        "module\nRDP\n"
-        "authenticated\nTrue\n"
+        "\x00\x00\x00\x8F"
+        "login\n!toto\n"
+        "password\n!totopass\n"
+        "target_device\n!win\n"
+        "target_login\n!user\n"
+        "target_password\n!whoknows\n"
+        "proto_dest\n!RDP\n"
+        "module\n!RDP\n"
+        "authenticated\n!True\n"
 
         // Time 10045
         "\x00\x00\x00\x10"
@@ -366,14 +366,14 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 //    exit(0);
 
     char indata[] =
-        "\x00\x00\x00\x7c"
-        "login\ntoto\n"
-        "password\ntotopass\n"
-        "target_device\nwin\n"
-        "target_login\nuser\n"
-        "target_password\nwhoknows\n"
-        "proto_dest\nRDP\n"
-        "authenticated\nTrue\n"
+        "\x00\x00\x00\x83"
+        "login\n!toto\n"
+        "password\n!totopass\n"
+        "target_device\n!win\n"
+        "target_login\n!user\n"
+        "target_password\n!whoknows\n"
+        "proto_dest\n!RDP\n"
+        "authenticated\n!True\n"
 
         "\x00\x00\x00\x10"
         "keepalive\n!True\n"
