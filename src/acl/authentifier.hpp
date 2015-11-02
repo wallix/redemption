@@ -406,6 +406,7 @@ public:
         this->ask_acl();
     }
 
+/*
     void log(const char * type, const char * data) const override {
         const char * session_type = "Neutral";
 
@@ -459,6 +460,34 @@ public:
            , this->ini.get<cfg::globals::target_user>().c_str()
            , data
            , info
+           );
+    }
+*/
+
+    void log3(const char * type, const char * extra = nullptr) const override {
+        const char * session_type = "Neutral";
+
+        if (!this->ini.get<cfg::context::module>().compare("RDP") ||
+            !this->ini.get<cfg::context::module>().compare("VNC"))
+            session_type = this->ini.get<cfg::context::module>().c_str();
+
+        LOG( LOG_INFO
+           , "[%s Session] "
+             "type='%s' "
+             "sesion_id='%s' "
+             "user='%s' "
+             "device='%s' "
+             "service='%s' "
+             "account='%s'"
+             "%s"
+           , session_type
+           , type
+           , this->ini.get<cfg::context::session_id>().c_str()
+           , this->ini.get<cfg::globals::auth_user>().c_str()
+           , this->ini.get<cfg::globals::target_device>().c_str()
+           , this->ini.get<cfg::context::target_service>().c_str()
+           , this->ini.get<cfg::globals::target_user>().c_str()
+           , (extra ? extra : "")
            );
     }
 };
