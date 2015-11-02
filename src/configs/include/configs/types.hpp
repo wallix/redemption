@@ -25,9 +25,9 @@
 #include "fileutils.hpp"
 #include "underlying_cast.hpp"
 
-#include "config_capture_flags.hpp"
-#include "config_keyboard_log_flags.hpp"
-#include "config_c_str_buf.hpp"
+#include "configs/variant/capture_flags.hpp"
+#include "configs/variant/keyboard_log_flags.hpp"
+#include "configs/c_str_buf.hpp"
 
 #include <iosfwd>
 #include <type_traits>

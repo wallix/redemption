@@ -18,24 +18,27 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_CORE_CONFIGS_CAPTURE_FLAGS_HPP
-#define REDEMPTION_SRC_CORE_CONFIGS_CAPTURE_FLAGS_HPP
+#ifndef REDEMPTION_SRC_CORE_CONFIGS_KEYBOARD_LOG_FLAGS_HPP
+#define REDEMPTION_SRC_CORE_CONFIGS_KEYBOARD_LOG_FLAGS_HPP
 
-#include "mk_enum_def.hpp"
+#include "configs/mk_enum_def.hpp"
+
+#include <cstdlib>
+#include <cerrno>
+
 
 namespace configs {
 
-enum class CaptureFlags : unsigned {
+enum class KeyboardLogFlags : unsigned {
     none,
-    png = 1 << 0,
+    syslog = 1 << 0,
     wrm = 1 << 1,
-    FULL = ((1 << 2) - 1),
-    ocr = 1 << 2
+    FULL = ((1 << 2) - 1)
 };
-MK_PARSER_ENUM_FLAGS(::configs::CaptureFlags)
+MK_PARSER_ENUM_FLAGS(::configs::KeyboardLogFlags)
 
 }
 
-#include "mk_enum_undef.hpp"
+#include "configs/mk_enum_undef.hpp"
 
 #endif

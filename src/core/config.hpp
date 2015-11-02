@@ -40,8 +40,8 @@
 
 #include "get_printable_password.hpp"
 
-#include "config_parse.hpp"
-#include "config_c_str_buf.hpp"
+#include "configs/parse.hpp"
+#include "configs/c_str_buf.hpp"
 
 namespace configs {
     template<class... Ts>
@@ -98,9 +98,9 @@ namespace configs {
     }
 }
 
-#include "config_variables_configuration.hpp"
+#include "configs/autogen/variables_configuration.hpp"
 
-#include "config_parse.hpp"
+#include "configs/parse.hpp"
 
 class Inifile : public ConfigurationHolder
 {
@@ -317,7 +317,7 @@ private:
     }
 };
 
-#include "config_set_value.tcc"
-#include "config_check_record_config.tcc"
+#include "configs/autogen/set_value.tcc"
+#include "configs/variant/check_record_config.tcc"
 
 #endif

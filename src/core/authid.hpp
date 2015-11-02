@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_SRC_CORE_AUTHID_HPP
 #define REDEMPTION_SRC_CORE_AUTHID_HPP
 
-#include "config_authid.hpp"
+#include "configs/autogen/authid.hpp"
 
 #include <cstring>
 

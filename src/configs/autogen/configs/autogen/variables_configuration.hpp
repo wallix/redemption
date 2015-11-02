@@ -1,6 +1,6 @@
 #include "font.hpp"
-#include "config_types.hpp"
-#include "config_includes.hpp"
+#include "configs/types.hpp"
+#include "configs/variant/includes.hpp"
 
 namespace cfg {
     struct theme {

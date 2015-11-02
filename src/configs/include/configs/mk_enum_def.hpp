@@ -24,7 +24,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "underlying_cast.hpp"
-#include "config_c_str_buf.hpp"
+#include "configs/c_str_buf.hpp"
 
 #define MK_ENUM_IO(E)                                    \
     template<class Ch, class Tr>                         \

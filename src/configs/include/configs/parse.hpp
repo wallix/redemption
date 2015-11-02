@@ -26,11 +26,11 @@
 #include <string>
 
 #include "theme.hpp"
-#include "config_types.hpp"
 #include "parser.hpp"
 #include "defines.hpp"
 #include "fileutils.hpp"
-#include "config_c_str_buf.hpp"
+#include "configs/types.hpp"
+#include "configs/c_str_buf.hpp"
 
 #include <cstdio>
 

@@ -309,8 +309,8 @@ template<class ConfigCppWriter>
 void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter & writer) {
     out_varconf <<
         "#include \"font.hpp\"\n"
-        "#include \"config_types.hpp\"\n"
-        "#include \"config_includes.hpp\"\n\n"
+        "#include \"configs/types.hpp\"\n"
+        "#include \"configs/variant/includes.hpp\"\n\n"
         "namespace cfg {\n"
     ;
     for (auto & body : writer.sections_member) {
