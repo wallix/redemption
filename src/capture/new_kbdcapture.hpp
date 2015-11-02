@@ -157,6 +157,11 @@ public:
                 else { loop = false; }
                 break;
 
+            case 0x0000001B:  // enter
+                if (this->unlogged_data.has_room(9)) { this->unlogged_data.out_string("/<escape>"); }
+                else { loop = false; }
+                break;
+
             case 0x0000002F:
                 if (this->unlogged_data.has_room(2)) { this->unlogged_data.out_string("//"); }
                 else { loop = false; }

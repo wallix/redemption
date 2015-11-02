@@ -2695,7 +2695,7 @@ public:
 
                                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-                                this->acl->log("CNT event", "SESSION_DISCONNECTED");
+                                this->acl->log3("SESSION_DISCONNECTED_BY_TARGET");
                             }
                             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
@@ -2827,7 +2827,7 @@ public:
                                             this->connection_finalization_state = UP_AND_RUNNING;
 
                                             if (this->acl && !this->deactivation_reactivation_in_progress) {
-                                                this->acl->log("CNT event", "SESSION_ESTABLISHED_SUCCESSFULLY");
+                                                this->acl->log3("SESSION_ESTABLISHED_SUCCESSFULLY");
                                             }
 
                                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -6082,7 +6082,7 @@ public:
             this->send_disconnect_ultimatum();
         }
         if (this->acl) {
-            this->acl->log("CNT event", "SESSION_ENDED");
+            this->acl->log3("SESSION_ENDED_BY_PROXY");
         }
     }
 
@@ -6256,50 +6256,111 @@ public:
             const char * message   = session_probe_channel_message.c_str();
             const char * separator = ::strchr(message, '=');
 
+            bool message_format_invalid = false;
+
             if (separator) {
                 std::string order(message, separator - message);
                 std::string parameters(separator + 1);
 
-                if (this->verbose & 1) {
-                    LOG(LOG_INFO,
-                        "mod_rdp::process_session_probe_event: order=\"%s\" parameters=\"%s\"",
-                        order.c_str(), parameters.c_str());
-                }
+                if (!order.compare("PasswordTextBox.SetFocus")) {
+                    std::string info(" status='" + parameters + "'");
+                    this->acl->log3(order.c_str(), info.c_str());
 
-                if (!order.compare("FocusOnPasswordTextBox")) {
                     this->front.focus_changed(!parameters.compare("yes"));
                 }
                 else if (!order.compare("InputLanguage")) {
-                    this->front.set_keylayout(::strtol(parameters.c_str(), nullptr, 16));
+                    const char * subitems          = parameters.c_str();
+                    const char * subitem_separator = ::strchr(subitems, '\x01');
+
+                    if (subitem_separator) {
+                        std::string code(subitems, subitem_separator - subitems);
+                        std::string display_name(subitem_separator + 1);
+
+                        std::string info(" code='" + code + "' name='" + display_name + "'");
+                        this->acl->log3(order.c_str(), info.c_str());
+
+                        this->front.set_keylayout(::strtol(code.c_str(), nullptr, 16));
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
                 }
-                else if (!order.compare("NewProcess")) {
+                else if (!order.compare("NewProcess") ||
+                         !order.compare("CompletedProcess")) {
+                    std::string info(" command_line='" + parameters + "'");
+                    this->acl->log3(order.c_str(), info.c_str());
                 }
-                else if (!order.compare("CompletedProcess")) {
-                }
-                else if (!order.compare("ProcessName")) {
-                }
-                else if (!order.compare("WindowText")) {
-                }
-                else if (!order.compare("WindowText")) {
+                else if (!order.compare("ForegroundWindowChanged")) {
+                    const char * subitems          = parameters.c_str();
+                    const char * subitem_separator = ::strchr(subitems, '\x01');
+
+                    if (subitem_separator) {
+                        std::string text(subitems, subitem_separator - subitems);
+                        std::string remaining(subitem_separator + 1);
+
+                        subitems          = remaining.c_str();
+                        subitem_separator = ::strchr(subitems, '\x01');
+
+                        if (subitem_separator) {
+                            std::string window_class(subitems, subitem_separator - subitems);
+                            std::string command_line(subitem_separator + 1);
+
+                            std::string info(" text='" + text + "' class='" + window_class + "' command_line='" + command_line + "'");
+                            this->acl->log3(order.c_str(), info.c_str());
+                        }
+                        else {
+                            message_format_invalid = true;
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
                 }
                 else if (!order.compare("Button.Clicked")) {
+                    const char * subitems          = parameters.c_str();
+                    const char * subitem_separator = ::strchr(subitems, '\x01');
+
+                    if (subitem_separator) {
+                        std::string window(subitems, subitem_separator - subitems);
+                        std::string button(subitem_separator + 1);
+
+                        std::string info(" window='" + window + "' button='" + button + "'");
+                        this->acl->log3(order.c_str(), info.c_str());
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
                 }
                 else if (!order.compare("Edit.Changed")) {
+                    const char * subitems          = parameters.c_str();
+                    const char * subitem_separator = ::strchr(subitems, '\x01');
+
+                    if (subitem_separator) {
+                        std::string window(subitems, subitem_separator - subitems);
+                        std::string edit(subitem_separator + 1);
+
+                        std::string info(" window='" + window + "' edit='" + edit + "'");
+                        this->acl->log3(order.c_str(), info.c_str());
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
                 }
                 else {
-                    LOG(LOG_WARNING, "mod_rdp::process_session_probe_event: Unexpected order.");
+                    LOG(LOG_WARNING,
+                        "mod_rdp::process_session_probe_event: Unexpected order. Session Probe channel data=\"%s\"",
+                        message);
                 }
 
                 bool contian_window_title = false;
                 this->front.session_update(session_probe_channel_message.c_str(),
                     contian_window_title);
-
-                if (!contian_window_title && this->acl) {
-                    std::string info("info='" + parameters + "'");
-                    this->acl->log2("PROBE event", order.c_str(), info.c_str());
-                }
             }
             else {
+                message_format_invalid = true;
+            }
+
+            if (message_format_invalid) {
                 LOG(LOG_WARNING,
                     "mod_rdp::process_session_probe_event: Invalid message format. Session Probe channel data=\"%s\"",
                     message);

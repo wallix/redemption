@@ -642,7 +642,7 @@ public:
                 this->front.server_set_pointer(cursor);
 
                 if (this->acl) {
-                    this->acl->log("CNT event", "SESSION_ESTABLISHED_SUCCESSFULLY");
+                    this->acl->log3("SESSION_ESTABLISHED_SUCCESSFULLY");
                 }
 
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
@@ -2770,7 +2770,7 @@ private:
 public:
     void disconnect() override {
         if (this->acl) {
-            this->acl->log("CNT event", "SESSION_ENDED");
+            this->acl->log3("SESSION_ENDED");
         }
     }
 };

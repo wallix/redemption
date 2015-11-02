@@ -367,12 +367,13 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info("name='");
+                    std::string info(" file_name='");
                     info += fd.fileName();
-                    info += "' size=";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
+                    info += "'";
 
-                    this->param_acl->log2("CNT event",
+                    this->param_acl->log3(
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
                         info.c_str());
                 }
@@ -401,12 +402,13 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info("name='");
+                    std::string info(" file_name='");
                     info += fd.fileName();
-                    info += "' size=";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
+                    info += "'";
 
-                    this->param_acl->log2("CNT event",
+                    this->param_acl->log3(
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
                         info.c_str());
                 }
@@ -902,12 +904,13 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info("name='");
+                    std::string info(" file_name='");
                     info += fd.fileName();
-                    info += "' size=";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
+                    info += "'";
 
-                    this->param_acl->log2("CNT event",
+                    this->param_acl->log3(
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                         info.c_str());
                 }
@@ -936,12 +939,13 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info("name='");
+                    std::string info(" file_name='");
                     info += fd.fileName();
-                    info += "' size=";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
+                    info += "'";
 
-                    this->param_acl->log2("CNT event",
+                    this->param_acl->log3(
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                         info.c_str());
                 }
