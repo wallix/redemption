@@ -608,20 +608,20 @@ class Engine(object):
             Logger().info("Engine get_app_params failed: (((%s)))" % (traceback.format_exc(e)))
         return None
 
-    def get_target_credentials(self, target_device):
-        target_credentials = []
-        if self.target_right == target_device:
-            if self.target_credentials is None:
-                Logger().debug("get_target_credentials")
-                self.target_credentials = self.wabengine.get_target_credentials(target_device)
-                Logger().debug("get_target_credentials done")
-                # Logger().info("GET_TARGET_CREDENTIALS = '%s'" % self.target_credentials)
-            target_credentials = self.target_credentials
-        else:
-            Logger().debug("get_target_credentials")
-            target_credentials = self.wabengine.get_target_credentials(target_device)
-            Logger().debug("get_target_credentials done")
-        return target_credentials or []
+    # def get_target_credentials(self, target_device):
+    #     target_credentials = []
+    #     if self.target_right == target_device:
+    #         if self.target_credentials is None:
+    #             Logger().debug("get_target_credentials")
+    #             self.target_credentials = self.wabengine.get_target_credentials(target_device)
+    #             Logger().debug("get_target_credentials done")
+    #             # Logger().info("GET_TARGET_CREDENTIALS = '%s'" % self.target_credentials)
+    #         target_credentials = self.target_credentials
+    #     else:
+    #         Logger().debug("get_target_credentials")
+    #         target_credentials = self.wabengine.get_target_credentials(target_device)
+    #         Logger().debug("get_target_credentials done")
+    #     return target_credentials or []
 
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
@@ -629,8 +629,9 @@ class Engine(object):
             Logger().info("Account mapping: get primary password ...")
             return [ self.primary_password ]
         try:
-            target_credentials = self.get_target_credentials(target_device)
-            passwords = [ cred.get(CRED_DATA_PASSWORD) for cred in target_credentials if cred.get(CRED_TYPE) == CRED_TYPE_PASSWORD ]
+            target_credentials = self.wabengine.get_target_credentials(
+                target_device, credential_type=CRED_TYPE_PASSWORD)
+            passwords = [ cred.data.get(CRED_DATA_PASSWORD) for cred in target_credentials ]
             self.erpm_password_checked_out = True
             Logger().info("Engine get_target_passwords done")
             return passwords
@@ -640,25 +641,8 @@ class Engine(object):
         return []
 
     def get_target_password(self, target_device):
-        # Logger().info("Engine get_target_password: target_device=%s" % target_device)
-        Logger().info("Engine get_target_password ...")
-        if target_device.account.login == MAGIC_AM and self.primary_password:
-            Logger().info("Account mapping: get primary password ...")
-            return self.primary_password
-        try:
-            target_credentials = self.get_target_credentials(target_device)
-            passwords = [ cred.get(CRED_DATA_PASSWORD) for cred in target_credentials if cred.get(CRED_TYPE) == CRED_TYPE_PASSWORD ]
-            target_password = passwords[0] if passwords else ""
-            # target_password = self.wabengine.get_target_password(target_device)
-            self.erpm_password_checked_out = True
-            if not target_password:
-                target_password = u''
-            Logger().info("Engine get_target_password done")
-            return target_password
-        except Exception, e:
-            import traceback
-            Logger().debug("Engine get_target_password failed: (((%s)))" % (traceback.format_exc(e)))
-        return u''
+        passwords = self.get_target_passwords(target_device)
+        return passwords[0] if passwords else u""
 
     def release_target_password(self, target_device, reason, target_application = None):
         Logger().debug("Engine release_target_password: reason=\"%s\"" % reason)
