@@ -38,7 +38,15 @@ matrix:
     - os: osx
       compiler: clang
       env: TOOLSET=clang
-      
+
+before_install:
+  - "echo -e 'using gcc : : g++ ;
+using gcc : 4.9 : g++-4.9 ;
+using gcc : 5.0 : g++-5.0 ;
+
+using clang : : clang++ : <cxxflags>-Qunused-arguments ;
+' > ~/user-config.jam"
+
 script:
   - bjam linkflags=-c --toolset=$TOOLSET -q exe
 
