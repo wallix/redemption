@@ -13,32 +13,32 @@ matrix:
       before_script:
         - "echo -e 'using gcc : 4.9 : g++-4.9 ;' > ~/user-config.jam"
 
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
-      env: TOOLSET=gcc-5.0
-      before_script:
-        - "echo -e 'using gcc : 5.0 : '$(which g++-5)' ;' > ~/user-config.jam"
+    #- os: linux
+      #compiler: gcc
+      #addons:
+        #apt:
+          #sources: ['ubuntu-toolchain-r-test']
+          #packages: ['g++-5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=gcc-5.0
+      #before_script:
+        #- "echo -e 'using gcc : 5.0 : '$(which g++-5)' ;' > ~/user-config.jam"
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
-          packages: ['clang-3.5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
-      env: TOOLSET=clang-3.5 NO_MAKE_CONFIG=1
-      before_script:
-        - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
+    #- os: linux
+      #compiler: clang
+      #addons:
+        #apt:
+          #sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+          #packages: ['clang-3.5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=clang-3.5 NO_MAKE_CONFIG=1
+      #before_script:
+        #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
     - os: linux
       compiler: clang
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-          packages: ['clang-3.6', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+          packages: ['clang-3.6', 'libc++1', 'libc++-dev', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=clang-3.6 NO_MAKE_CONFIG=1
       before_script:
         - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
