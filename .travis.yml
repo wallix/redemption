@@ -1,6 +1,10 @@
 sudo: false
 language: cpp
 
+addons:
+  apt:
+    packages: ['libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+
 matrix:
   include:
     - os: linux
@@ -39,12 +43,8 @@ matrix:
       compiler: clang
       env: TOOLSET=clang
       
-install:
-  - sudo apt-get install -qq libssl-dev libpng12-dev libboost-dev libsnappy-dev
-
 script:
   - bjam bjam linkflags=-c --toolset=$TOOLSET -q exe
-
 
 
 #branches:
