@@ -10,6 +10,8 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.9', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=gcc-4.9
+      before_script:
+        - "echo -e 'using gcc : 4.9 : g++-4.9 ;' > ~/user-config.jam"
 
     - os: linux
       compiler: gcc
@@ -18,6 +20,8 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=gcc-5.0
+      before_script:
+        - "echo -e 'using gcc : 5.0 : g++-5.0 ;' > ~/user-config.jam"
 
     - os: linux
       compiler: clang
@@ -26,6 +30,8 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
           packages: ['clang-3.5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=clang-3.5
+      before_script:
+        - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
     - os: linux
       compiler: clang
@@ -34,18 +40,17 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
           packages: ['clang-3.6', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=clang-3.6
+      before_script:
+        - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
     - os: osx
       compiler: clang
+      addons:
+        apt:
+          packages: ['libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=clang
-
-before_install:
-  - "echo -e 'using gcc : : g++ ;
-using gcc : 4.9 : g++-4.9 ;
-using gcc : 5.0 : g++-5.0 ;
-
-using clang : : clang++ : <cxxflags>-Qunused-arguments ;
-' > ~/user-config.jam"
+      before_script:
+        - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
 script:
   - bjam linkflags=-c --toolset=$TOOLSET -q exe
