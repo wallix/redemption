@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 language: cpp
 
 matrix:
@@ -21,7 +21,8 @@ matrix:
           packages: ['g++-5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=gcc-5.0
       before_script:
-        - "echo -e 'using gcc : 5.0 : g++-5.0 ;' > ~/user-config.jam"
+        - "echo -e 'using gcc : : g++-5.0 ;' > ~/user-config.jam"
+        - "echo -e 'using gcc : 5.0 : /usr/lib/gcc-snapshot/bin/g++ ;' >> ~/user-config.jam"
 
     - os: linux
       compiler: clang
@@ -32,6 +33,7 @@ matrix:
       env: TOOLSET=clang-3.5
       before_script:
         - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
+        - sudo patch /usr/share/boost-build/tools/clang-linux.jam tools/bjam-patch/clang-linux.jam.diff
 
     - os: linux
       compiler: clang
@@ -42,15 +44,16 @@ matrix:
       env: TOOLSET=clang-3.6
       before_script:
         - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
-
-    - os: osx
-      compiler: clang
-      addons:
-        apt:
-          packages: ['libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
-      env: TOOLSET=clang
-      before_script:
-        - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
+        - sudo patch /usr/share/boost-build/tools/clang-linux.jam tools/bjam-patch/clang-linux.jam.diff
+        
+    #- os: osx
+      #compiler: clang
+      #addons:
+        #apt:
+          #packages: ['libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=clang
+      #before_script:
+        #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
 script:
   - bjam linkflags=-c --toolset=$TOOLSET -q exe
