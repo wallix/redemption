@@ -290,18 +290,6 @@ struct DrawableTraitColor24
         return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
     }
 
-
-    struct toColor1
-    {
-        color_t operator()(uint8_t * p) const
-        {
-            if (*p) {
-                return {uint8_t(0xff), uint8_t(0xff), uint8_t(0xff)};
-            }
-            return {uint8_t(0), uint8_t(0), uint8_t(0)};
-        }
-    };
-
     struct toColor8
     {
         const BGRPalette & palette;
