@@ -21,8 +21,7 @@ matrix:
           packages: ['g++-5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
       env: TOOLSET=gcc-5.0
       before_script:
-        - which g++-5 || which g++-5.O
-        - "echo -e 'using gcc : 5.0 : '$(which g++-5)' ;' > ~/user-config.jam"
+        - "echo -e 'using gcc : 5.0 : usr/bin/g++-5 ;' > ~/user-config.jam"
 
     - os: linux
       compiler: clang

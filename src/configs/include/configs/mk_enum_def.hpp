@@ -98,7 +98,7 @@
     }                                                          \
     inline int copy_val(Enum e, char * buff, std::size_t n)  { \
         char const * cstr;                                     \
-        auto l{__VA_ARGS__};                                   \
+        auto l = {__VA_ARGS__};                                \
         if (underlying_cast(e) >= underlying_cast(Enum::NB)) { \
             cstr = *l.begin();                                 \
         }                                                      \
@@ -106,7 +106,7 @@
         return snprintf(buff, n, "%s", cstr);                  \
     }                                                          \
     inline char const * c_str(CStrBuf<Enum>& , Enum e) {       \
-        auto l{__VA_ARGS__};                                   \
+        auto l = {__VA_ARGS__};                                \
         if (underlying_cast(e) >= underlying_cast(Enum::NB)) { \
             return *l.begin();                                 \
         }                                                      \
