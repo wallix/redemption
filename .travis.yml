@@ -33,15 +33,15 @@ matrix:
       #before_script:
         #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-          packages: ['clang-3.6', 'libc++1', 'libc++-dev', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
-      env: TOOLSET=clang-3.6 NO_MAKE_CONFIG=1 CXXFLAGS=cxxflags=-stdlib=libc++
-      before_script:
-        - "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
+    #- os: linux
+      #compiler: clang
+      #addons:
+        #apt:
+          #sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+          #packages: ['clang-3.6', 'libc++1', 'libc++-dev', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=clang-3.6 NO_MAKE_CONFIG=1 CXXFLAGS=cxxflags=-stdlib=libc++
+      #before_script:
+        #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
                 
     #- os: osx
       #compiler: clang
