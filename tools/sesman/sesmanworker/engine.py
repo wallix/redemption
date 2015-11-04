@@ -41,6 +41,13 @@ import socket
 
 MAGIC_AM = u"__WAB_AM__"
 
+def tounicode(item):
+    if not item:
+        return u""
+    if type(item) is str:
+        return item.decode('utf8')
+    return item
+
 def _binary_ip(network, bits):
     # TODO need Ipv6 support
     # This is a bit too resilient, add check for obviously bad values
@@ -118,7 +125,7 @@ class Engine(object):
         self.session_record = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
-        self.erpm_password_checked_out = False
+        self.checkout_target_creds = set()
 
         self.proxy_rights = None
         self.rights = None
@@ -501,7 +508,8 @@ class Engine(object):
         self.displaytargets = []
         for right in self.rights:
             if right.resource and right.account:
-                target_login = self.get_account_login(right)
+                # target_login = self.get_account_login(right)
+                target_login = right.account.name
                 target_groups = [x.cn for x in right.group_targets]
                 if right.resource.application:
                     target_name = right.resource.application.cn
@@ -608,7 +616,7 @@ class Engine(object):
             Logger().info("Engine get_app_params failed: (((%s)))" % (traceback.format_exc(e)))
         return None
 
-    # def get_target_credentials(self, target_device):
+    # def get_target_credentials(self, target_device, credential_type=None):
     #     target_credentials = []
     #     if self.target_right == target_device:
     #         if self.target_credentials is None:
@@ -632,7 +640,8 @@ class Engine(object):
             target_credentials = self.wabengine.get_target_credentials(
                 target_device, credential_type=CRED_TYPE_PASSWORD)
             passwords = [ cred.data.get(CRED_DATA_PASSWORD) for cred in target_credentials ]
-            self.erpm_password_checked_out = True
+            if passwords:
+                self.checkout_target_creds.add(target_device)
             Logger().info("Engine get_target_passwords done")
             return passwords
         except Exception, e:
@@ -644,17 +653,46 @@ class Engine(object):
         passwords = self.get_target_passwords(target_device)
         return passwords[0] if passwords else u""
 
-    def release_target_password(self, target_device, reason, target_application = None):
-        Logger().debug("Engine release_target_password: reason=\"%s\"" % reason)
-        if target_device == target_application:
-            target_application = None
-        self.erpm_password_checked_out = False
+    def get_target_privkey(self, target_device):
+        Logger().info("Engine get_target_privkey ...")
         try:
-            self.wabengine.release_target_password(target_device, reason, target_application)
-            Logger().debug("Engine release_target_password done")
+            target_credentials = self.wabengine.get_target_credentials(
+                target_device, credential_type=CRED_TYPE_SSH_KEYS)
+            privkeys = [ (cred.data.get(CRED_DATA_PRIVATE_KEY), cred.data.get("passphrase", None)) for cred in target_credentials ]
+            if privkeys:
+                self.checkout_target_creds.add(target_device)
+            Logger().info("Engine get_target_privkey done")
+            return privkeys
         except Exception, e:
             import traceback
-            Logger().debug("Engine release_target_password failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().debug("Engine get_target_privkey failed: (((%s)))" % (traceback.format_exc(e)))
+        return []
+
+    def release_target_credentials(self, target_device):
+        res = False
+        if target_device in self.checkout_target_creds:
+            try:
+                Logger().debug("Engine release_target_credentials")
+                res = self.wabengine.release_target_credentials(target_device)
+                self.checkout_target_creds.discard(target_device)
+                Logger().debug("Engine release_target_credentials done")
+            except Exception, e:
+                import traceback
+                Logger().debug("Engine release_target_credentials failed: (((%s)))" % (traceback.format_exc(e)))
+        return res
+
+    def release_all_target_credentials(self):
+        # Logger().debug("Engine release_all_target_credentials %s" % list(self.checkout_target_creds))
+        Logger().debug("Engine release_all_target_credentials")
+        for target_device in self.checkout_target_creds:
+            try:
+                res = self.wabengine.release_target_credentials(target_device)
+                Logger().debug("Engine release_target_credentials res = %s" % res)
+            except Exception, e:
+                import traceback
+                Logger().debug("Engine release_target_credentials failed: (((%s)))" % (traceback.format_exc(e)))
+        Logger().debug("Engine release_all_target_credentials done")
+        self.checkout_target_creds.clear()
 
     def get_pidhandler(self, pid):
         if not self.pidhandler:
@@ -681,7 +719,7 @@ class Engine(object):
         :return: None
         """
         hosttarget = u"%s@%s:%s" % (
-            self.get_account_login(physical_target),
+            physical_target.account.name,
             physical_target.resource.device.cn,
             physical_target.resource.service.cn)
         try:
@@ -835,10 +873,12 @@ class Engine(object):
             device_host = target.resource.device.host
 
         account_login = self.get_account_login(target)
+        account_name = target.account.name
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
         conn_cmd = target.resource.service.connectionpolicy.data
         return LoginInfo(account_login=account_login,
+                         account_name=account_name,
                          target_name=target_name,
                          service_name=service_name,
                          device_host=device_host,
@@ -901,9 +941,10 @@ class PhysicalTarget(object):
         self.device_id = device_id
 
 class LoginInfo(object):
-    def __init__(self, account_login, target_name, service_name,
+    def __init__(self, account_login, account_name, target_name, service_name,
                  device_host, service_port, conn_cmd):
         self.account_login = account_login
+        self.account_name = account_name
         self.target_name = target_name
         self.service_name = service_name
         self.device_host = device_host
