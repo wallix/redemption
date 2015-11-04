@@ -54,7 +54,8 @@ matrix:
 
 script:
   - sudo cp tools/bjam-patch/clang-linux.jam /usr/share/boost-build/tools/clang-linux.jam
-  - bjam --toolset=$TOOLSET $CXXFLAGS -q exe
+  - bjam --toolset=$TOOLSET $CXXFLAGS generate_configs
+  - bjam linkflags=-c --toolset=$TOOLSET $CXXFLAGS -q exe
 
 
 #branches:
