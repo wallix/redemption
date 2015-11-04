@@ -1096,7 +1096,6 @@ class Sesman():
             kv[u'proto_dest'] = proto_info.protocol
             if proto_info.protocol == u'RDP':
                 kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
-            kv[u'target_port'] = target_login_info.service_port
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
             if _status:
