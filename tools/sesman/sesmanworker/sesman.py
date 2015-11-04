@@ -1400,11 +1400,10 @@ class Sesman():
                             release_reason = u"RDP/VNC connection terminated by client"
                             break;
                     finally:
-                        if not (physical_target is None):
-                            self.engine.release_target_password(physical_target, release_reason, selected_target)
+                        self.engine.release_target_credentials(physical_target)
 
+            self.engine.release_all_target_credentials()
             Logger().info(u"Stop session ...")
-
             # Notify WabEngine to stop connection if it has been launched successfully
             self.engine.stop_session(title=u"End session")
 
