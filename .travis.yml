@@ -1,28 +1,61 @@
+sudo: true
 language: cpp
 
-compiler:
-  - gcc
-#  - clang
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-4.9', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      env: TOOLSET=gcc-4.9
+      before_script:
+        - "echo -e 'using gcc : 4.9 : g++-4.9 ;' > ~/user-config.jam"
 
-before_install:
-  - if [ "$CC" = 'gcc' ] ; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y ; fi
-  - if [ "$CC" = 'gcc' ] ; then sudo apt-get update -qq ; fi
-  - "echo -e 'using gcc : : /usr/bin/g++-4.9 ;
+    #- os: linux
+      #compiler: gcc
+      #addons:
+        #apt:
+          #sources: ['ubuntu-toolchain-r-test']
+          #packages: ['g++-5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=gcc-5.0
+      #before_script:
+        #- "echo -e 'using gcc : 5.0 : '$(which g++-5)' ;' > ~/user-config.jam"
 
-using gcc : 4.9 : /usr/bin/g++-4.9 ;' > ~/user-config.jam"
+    #- os: linux
+      #compiler: clang
+      #addons:
+        #apt:
+          #sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+          #packages: ['clang-3.5', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=clang-3.5 NO_MAKE_CONFIG=1
+      #before_script:
+        #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
-install:
-  - sudo apt-get install -qq libssl-dev libpng12-dev libboost-dev libsnappy-dev
-#  - if [ "$CC" = 'gcc' ] ; then sudo apt-get install -qq g++-4.9 g++-4.8 ; fi
-  - if [ "$CC" = 'gcc' ] ; then sudo apt-get install -qq g++-4.9 ; fi
+    #- os: linux
+      #compiler: clang
+      #addons:
+        #apt:
+          #sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+          #packages: ['clang-3.6', 'libc++1', 'libc++-dev', 'libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=clang-3.6 NO_MAKE_CONFIG=1 CXXFLAGS=cxxflags=-stdlib=libc++
+      #before_script:
+        #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
+                
+    #- os: osx
+      #compiler: clang
+      #addons:
+        #apt:
+          #packages: ['libssl-dev', 'libpng12-dev', 'libboost-dev', 'libsnappy-dev']
+      #env: TOOLSET=clang
+      #before_script:
+        #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
 script:
-#  - if [ "$CC" = 'gcc' ] ; then bjam linkflags=-c --toolset=gcc-4.8 -q exe ; fi
-  - if [ "$CC" = 'gcc' ] ; then bjam linkflags=-c --toolset=gcc-4.9 -q exe ; fi
-  - if [ "$CC" = 'clang' ] ; then bjam linkflags=-c --toolset=clang -q exe ; fi
+  - sudo cp tools/bjam-patch/clang-linux.jam /usr/share/boost-build/tools/clang-linux.jam
+  - bjam linkflags=-c --toolset=$TOOLSET $CXXFLAGS -q exe
 
-os:
-  - linux
 
 #branches:
 #  only:
@@ -34,5 +67,7 @@ notifications:
       - jpoelen@wallix.com
       - rzhou@wallix.com
       - cgrosjean@wallix.com
+      #- jinthavong@wallix.com
+      #- mtan@wallix.com
     on_success: never
     on_failure: always

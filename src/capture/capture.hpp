@@ -35,7 +35,7 @@
 
 #include "wait_obj.hpp"
 
-class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
+class Capture final : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     const bool capture_wrm;
     const bool capture_drawable;

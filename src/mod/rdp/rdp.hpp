@@ -6266,7 +6266,13 @@ public:
                     std::string info(" status='" + parameters + "'");
                     this->acl->log3(order.c_str(), info.c_str());
 
-                    this->front.focus_changed(!parameters.compare("yes"));
+                    this->front.set_focus_on_password_textbox(!parameters.compare("yes"));
+                }
+                else if (!order.compare("ConsentUI.IsVisible")) {
+                    std::string info(" status='" + parameters + "'");
+                    this->acl->log3(order.c_str(), info.c_str());
+
+                    this->front.set_consent_ui_visible(!parameters.compare("yes"));
                 }
                 else if (!order.compare("InputLanguage")) {
                     const char * subitems          = parameters.c_str();

@@ -414,6 +414,7 @@ private:
     size_t max_bitmap_size = 1024 * 64;
 
     bool focus_on_password_textbox = false;
+    bool consent_ui_is_visible     = false;
 
     bool input_event_and_graphics_update_disabled = false;
 
@@ -2434,8 +2435,12 @@ private:
         this->keymap.init_layout(LCID);
     }
 
-    void focus_changed(bool on_password_textbox) override {
-        this->focus_on_password_textbox = on_password_textbox;
+    void set_focus_on_password_textbox(bool set) override {
+        this->focus_on_password_textbox = set;
+    }
+
+    void set_consent_ui_visible(bool set) override {
+        this->consent_ui_is_visible = set;
     }
 
     void session_update(const char * message, bool & out__contian_window_title) override {
@@ -4589,7 +4594,7 @@ private:
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
             && decoded_data.get_offset()) {
-            if (this->focus_on_password_textbox) {
+            if (this->focus_on_password_textbox || this->consent_ui_is_visible) {
                 unsigned char_count = decoded_data.get_offset() / sizeof(uint32_t);
                 decoded_data.rewind();
                 for (; char_count > 0; char_count--) {
