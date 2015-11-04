@@ -74,7 +74,8 @@ class FrontAPI : public DrawApi {
     // Session Probe.
 
     virtual void set_keylayout(int LCID) {}
-    virtual void focus_changed(bool on_password_textbox) {}
+    virtual void set_focus_on_password_textbox(bool set) {}
+    virtual void set_consent_ui_visible(bool set) {}
     virtual void session_update(const char * message,
             bool & out__contian_window_title) {
         out__contian_window_title = false;
