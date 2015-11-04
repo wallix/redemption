@@ -508,7 +508,8 @@ class Engine(object):
         self.displaytargets = []
         for right in self.rights:
             if right.resource and right.account:
-                target_login = self.get_account_login(right)
+                # target_login = self.get_account_login(right)
+                target_login = right.account.name
                 target_groups = [x.cn for x in right.group_targets]
                 if right.resource.application:
                     target_name = right.resource.application.cn
@@ -718,7 +719,7 @@ class Engine(object):
         :return: None
         """
         hosttarget = u"%s@%s:%s" % (
-            self.get_account_login(physical_target),
+            physical_target.account.name,
             physical_target.resource.device.cn,
             physical_target.resource.service.cn)
         try:
@@ -872,10 +873,12 @@ class Engine(object):
             device_host = target.resource.device.host
 
         account_login = self.get_account_login(target)
+        account_name = target.account.name
         service_port = target.resource.service.port
         service_name = target.resource.service.cn
         conn_cmd = target.resource.service.connectionpolicy.data
         return LoginInfo(account_login=account_login,
+                         account_name=account_name,
                          target_name=target_name,
                          service_name=service_name,
                          device_host=device_host,
@@ -938,9 +941,10 @@ class PhysicalTarget(object):
         self.device_id = device_id
 
 class LoginInfo(object):
-    def __init__(self, account_login, target_name, service_name,
+    def __init__(self, account_login, account_name, target_name, service_name,
                  device_host, service_port, conn_cmd):
         self.account_login = account_login
+        self.account_name = account_name
         self.target_name = target_name
         self.service_name = service_name
         self.device_host = device_host
