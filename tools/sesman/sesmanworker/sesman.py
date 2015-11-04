@@ -217,8 +217,8 @@ class Sesman():
             self.proxy_conx.sendall(pack(">L", _len))
             self.proxy_conx.sendall(_r_data)
         else:
-            if _chunks * _chunk_size == len:
-                --_chunks 
+            if _chunks * _chunk_size == _len:
+                _chunks -= 1
             for i in range(0, _chunks):
                 self.proxy_conx.sendall(pack(">H", 1))
                 self.proxy_conx.sendall(pack(">H", _chunk_size))
