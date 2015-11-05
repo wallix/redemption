@@ -217,8 +217,8 @@ class Sesman():
             self.proxy_conx.sendall(pack(">L", _len))
             self.proxy_conx.sendall(_r_data)
         else:
-            if _chunks * _chunk_size == len:
-                --_chunks 
+            if _chunks * _chunk_size == _len:
+                _chunks -= 1
             for i in range(0, _chunks):
                 self.proxy_conx.sendall(pack(">H", 1))
                 self.proxy_conx.sendall(pack(">H", _chunk_size))
@@ -1096,7 +1096,6 @@ class Sesman():
             kv[u'proto_dest'] = proto_info.protocol
             if proto_info.protocol == u'RDP':
                 kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
-            kv[u'target_port'] = target_login_info.service_port
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
             if _status:
@@ -1400,11 +1399,10 @@ class Sesman():
                             release_reason = u"RDP/VNC connection terminated by client"
                             break;
                     finally:
-                        if not (physical_target is None):
-                            self.engine.release_target_password(physical_target, release_reason, selected_target)
+                        self.engine.release_target_credentials(physical_target)
 
+            self.engine.release_all_target_credentials()
             Logger().info(u"Stop session ...")
-
             # Notify WabEngine to stop connection if it has been launched successfully
             self.engine.stop_session(title=u"End session")
 
