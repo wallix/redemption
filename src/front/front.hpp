@@ -66,6 +66,7 @@
 #include "confdescriptor.hpp"
 #include "in_file_transport.hpp"
 #include "out_file_transport.hpp"
+#include "pattutils.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
@@ -631,9 +632,11 @@ public:
         // Recording is enabled.
         if (!ini.get<cfg::globals::movie>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) &&
-            ini.get<cfg::context::pattern_kill>().empty() &&
-            ini.get<cfg::context::pattern_notify>().empty()
-            ) {
+//            ini.get<cfg::context::pattern_kill>().empty() &&
+//            ini.get<cfg::context::pattern_notify>().empty()
+            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
+            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+           ) {
             return;
         }
 
@@ -645,7 +648,9 @@ public:
 
         if (!ini.get<cfg::globals::movie>()) {
             ini.set<cfg::video::capture_flags>(
-                (!ini.get<cfg::context::pattern_kill>().empty() || !ini.get<cfg::context::pattern_notify>().empty()) ?
+//                (!ini.get<cfg::context::pattern_kill>().empty() || !ini.get<cfg::context::pattern_notify>().empty()) ?
+                (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
+                 ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())) ?
                 configs::CaptureFlags::ocr : configs::CaptureFlags::none);
             ini.set<cfg::video::png_limit>(0);
         }
