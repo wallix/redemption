@@ -24,7 +24,7 @@
 #include "error.hpp"
 #include "log.hpp"
 
-char * in_place_windows_to_linux_newline_convert(char * s) {
+inline static char * in_place_windows_to_linux_newline_convert(char * s) {
     char * src, * dest;
 
     REDASSERT(s);
@@ -101,7 +101,8 @@ char * in_place_windows_to_linux_newline_convert(char * s) {
 //    return s;
 //}
 
-size_t linux_to_windows_newline_convert(char const * s, size_t s_length, char * d, size_t max_d_length) {
+inline static size_t linux_to_windows_newline_convert(char const * s,
+        size_t s_length, char * d, size_t max_d_length) {
     size_t d_length = 0;
 
     while (char const * p = reinterpret_cast<char const *>(memchr(s, '\n', s_length))) {
