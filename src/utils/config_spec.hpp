@@ -300,43 +300,44 @@ void config_spec_definition(Writer && W)
 
         //@{
         // ConnectionPolicy
-        W.member(type_<bool>(), "server_cert_store", desc{"Keep a copy of the public key of the server"}, set(true), r);
+        W.member(type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true), r);
         W.member(type_<ServerCertCheck>(), "server_cert_check", desc{
-            "Behavior when checking the server key.\n"
-            "  0: fails if the certificate does not match, fails if it is missing.\n"
-            "  1: fails if the certificate does not match, but managed and creates it if it's a new target (not file).\n"
-            "  2 succeeds if the file exists (even if the certificate does not match), will fail if this is a new target.\n"
-            "  3: succeeds if the certificate does not match or that it is a new target.\n"
-        }, r);
+            "Behavior of certificates check.\n"
+            "  0: fails if certificates doesn't match or miss.\n"
+            "  1: fails if certificate doesn't match, succeed if no known certificate.\n"
+            "  2: succeed if certificates exists (not checked), fails if missing.\n"
+            "  3: always succeed.\n"
+            "System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection."
+        }, set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know), r);
 
         std::string const server_notification_desc(
-            "Mask:\n"
-            "  0: No notification.\n"
-            "  1: Notify the administrator.\n"
-            "  2: Notify the user.\n"
-            "  4: No syslog."
+            "  0: Nobody notified\n"
+            "  1: Syslog notification\n"
+            "  2: User notified (through proxy interface)\n"
+            "  4: admin notified (wab notification)\n"
+            "Values can be added (notify everyone: 1+2+4=7)"
         );
 
         W.member(type_<ServerNotification>(), "server_access_allowed_notification", desc{(
-            "notifies if the connection to the server is allowed.\n"
+            "Notify if check allow connexion to server.\n"
             +server_notification_desc
-        ).c_str()}, r);
+        ).c_str()}, set(ServerNotification::syslog), r);
         W.member(type_<ServerNotification>(), "server_cert_create_notification", desc{(
-            "notifies creating a new certificate file.\n"
+            "Notify that new certificate file was created.\n"
             +server_notification_desc
-        ).c_str()}, r);
+        ).c_str()}, set(ServerNotification::syslog), r);
         W.member(type_<ServerNotification>(), "server_cert_success_notification", desc{(
-            "notifies that the certificate file has been successfully verified.\n"
+            "Notify that server certificate file was successfully checked.\n"
             +server_notification_desc
-        ).c_str()}, r);
+        ).c_str()}, set(ServerNotification::syslog), r);
         W.member(type_<ServerNotification>(), "server_cert_failure_notification", desc{(
-            "notifies if a key check failed.\n"
+            "Notify that server certificate file checking failed.\n"
             +server_notification_desc
-        ).c_str()}, r);
+        ).c_str()}, set(ServerNotification::syslog), r);
         W.member(type_<ServerNotification>(), "server_cert_error_notification", desc{(
-            "notifies if a certificate verification caused an internal error.\n"
+            "Notify that server certificate check raised some internal error.\n"
             +server_notification_desc
-        ).c_str()}, r);
+        ).c_str()}, set(ServerNotification::syslog), r);
         //@}
     }
     W.stop_section();

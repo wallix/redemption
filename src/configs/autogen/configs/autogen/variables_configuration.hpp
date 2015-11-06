@@ -1408,7 +1408,7 @@ namespace cfg {
             using type = ::configs::StaticString<512>;
             type value{""};
         };
-        // Keep a copy of the public key of the server
+        // Keep known server certificates on WAB
         // AUTHID_MOD_RDP_SERVER_CERT_STORE
         struct server_cert_store {
             static constexpr ::configs::VariableProperties properties() {
@@ -1418,12 +1418,12 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
-        // Behavior when checking the server key.
-        //   0: fails if the certificate does not match, fails if it is missing.
-        //   1: fails if the certificate does not match, but managed and creates it if it's a new target (not file).
-        //   2 succeeds if the file exists (even if the certificate does not match), will fail if this is a new target.
-        //   3: succeeds if the certificate does not match or that it is a new target.
-
+        // Behavior of certificates check.
+        //   0: fails if certificates doesn't match or miss.
+        //   1: fails if certificate doesn't match, succeed if no known certificate.
+        //   2: succeed if certificates exists (not checked), fails if missing.
+        //   3: always succeed.
+        // System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
         // AUTHID_MOD_RDP_SERVER_CERT_CHECK
         struct server_cert_check {
             static constexpr ::configs::VariableProperties properties() {
@@ -1431,14 +1431,14 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 27; }
             using type = ::configs::ServerCertCheck;
-            type value{};
+            type value{static_cast< ::configs::ServerCertCheck>(1)};
         };
-        // notifies if the connection to the server is allowed.
-        // Mask:
-        //   0: No notification.
-        //   1: Notify the administrator.
-        //   2: Notify the user.
-        //   4: No syslog.
+        // Notify if check allow connexion to server.
+        //   0: Nobody notified
+        //   1: Syslog notification
+        //   2: User notified (through proxy interface)
+        //   4: admin notified (wab notification)
+        // Values can be added (notify everyone: 1+2+4=7)
         // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_NOTIFICATION
         struct server_access_allowed_notification {
             static constexpr ::configs::VariableProperties properties() {
@@ -1446,14 +1446,14 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 28; }
             using type = ::configs::ServerNotification;
-            type value{};
+            type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // notifies creating a new certificate file.
-        // Mask:
-        //   0: No notification.
-        //   1: Notify the administrator.
-        //   2: Notify the user.
-        //   4: No syslog.
+        // Notify that new certificate file was created.
+        //   0: Nobody notified
+        //   1: Syslog notification
+        //   2: User notified (through proxy interface)
+        //   4: admin notified (wab notification)
+        // Values can be added (notify everyone: 1+2+4=7)
         // AUTHID_MOD_RDP_SERVER_CERT_CREATE_NOTIFICATION
         struct server_cert_create_notification {
             static constexpr ::configs::VariableProperties properties() {
@@ -1461,14 +1461,14 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 29; }
             using type = ::configs::ServerNotification;
-            type value{};
+            type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // notifies that the certificate file has been successfully verified.
-        // Mask:
-        //   0: No notification.
-        //   1: Notify the administrator.
-        //   2: Notify the user.
-        //   4: No syslog.
+        // Notify that server certificate file was successfully checked.
+        //   0: Nobody notified
+        //   1: Syslog notification
+        //   2: User notified (through proxy interface)
+        //   4: admin notified (wab notification)
+        // Values can be added (notify everyone: 1+2+4=7)
         // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_NOTIFICATION
         struct server_cert_success_notification {
             static constexpr ::configs::VariableProperties properties() {
@@ -1476,14 +1476,14 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 30; }
             using type = ::configs::ServerNotification;
-            type value{};
+            type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // notifies if a key check failed.
-        // Mask:
-        //   0: No notification.
-        //   1: Notify the administrator.
-        //   2: Notify the user.
-        //   4: No syslog.
+        // Notify that server certificate file checking failed.
+        //   0: Nobody notified
+        //   1: Syslog notification
+        //   2: User notified (through proxy interface)
+        //   4: admin notified (wab notification)
+        // Values can be added (notify everyone: 1+2+4=7)
         // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_NOTIFICATION
         struct server_cert_failure_notification {
             static constexpr ::configs::VariableProperties properties() {
@@ -1491,14 +1491,14 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 31; }
             using type = ::configs::ServerNotification;
-            type value{};
+            type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // notifies if a certificate verification caused an internal error.
-        // Mask:
-        //   0: No notification.
-        //   1: Notify the administrator.
-        //   2: Notify the user.
-        //   4: No syslog.
+        // Notify that server certificate check raised some internal error.
+        //   0: Nobody notified
+        //   1: Syslog notification
+        //   2: User notified (through proxy interface)
+        //   4: admin notified (wab notification)
+        // Values can be added (notify everyone: 1+2+4=7)
         // AUTHID_MOD_RDP_SERVER_CERT_ERROR_NOTIFICATION
         struct server_cert_error_notification {
             static constexpr ::configs::VariableProperties properties() {
@@ -1506,7 +1506,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 32; }
             using type = ::configs::ServerNotification;
-            type value{};
+            type value{static_cast< ::configs::ServerNotification>(1)};
         };
     };
 
