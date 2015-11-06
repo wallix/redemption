@@ -172,22 +172,22 @@ public:
                                          , NativeCapture::SendInput::YES);
         }
 
-        snprintf( this->kbd_prefix
-                , sizeof(this->kbd_prefix)
-                , "[RDP Session] type='KBD input' "
-                  "sesion_id='%s' "
-                  "user='%s' "
-                  "device='%s' "
-                  "service='%s' "
-                  "account='%s'"
-                , ini.get<cfg::context::session_id>().c_str()
-                , ini.get<cfg::globals::auth_user>().c_str()
-                , ini.get<cfg::globals::target_device>().c_str()
-                , ini.get<cfg::context::target_service>().c_str()
-                , ini.get<cfg::globals::target_user>().c_str()
-                );
-
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
+            snprintf( this->kbd_prefix
+                    , sizeof(this->kbd_prefix)
+                    , "[RDP Session] type='KBD input' "
+                      "sesion_id='%s' "
+                      "user='%s' "
+                      "device='%s' "
+                      "service='%s' "
+                      "account='%s'"
+                    , ini.get<cfg::context::session_id>().c_str()
+                    , ini.get<cfg::globals::auth_user>().c_str()
+                    , ini.get<cfg::globals::target_device>().c_str()
+                    , ini.get<cfg::context::target_service>().c_str()
+                    , ini.get<cfg::globals::target_user>().c_str()
+                    );
+
             this->pkc = new NewKbdCapture(now, authentifier, nullptr, nullptr,
                     !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
                     this->kbd_prefix

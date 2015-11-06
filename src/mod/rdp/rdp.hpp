@@ -6157,6 +6157,8 @@ public:
 
         while (session_probe_channel_message.back() == '\0') session_probe_channel_message.pop_back();
 
+        const char request_outbound_connection_killing_rule[] = "Request=Get outbound connection killing rule\x01";
+
         if (!session_probe_channel_message.compare("Request=Get startup application")) {
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "Session Probe channel data=\"%s\"", session_probe_channel_message.c_str());
@@ -6202,7 +6204,7 @@ public:
                     if (!this->real_working_dir.empty()) {
                         out_s.out_copy_bytes(this->real_working_dir.data(), this->real_working_dir.size());
                     }
-                    out_s.out_uint8('|');
+                    out_s.out_uint8('\x01');
                     out_s.out_copy_bytes(this->real_alternate_shell.data(), this->real_alternate_shell.size());
                 }
                 out_s.out_clear_bytes(1);   // Null character
@@ -6244,6 +6246,56 @@ public:
                 }
 
                 this->session_probe_event.set(this->session_probe_keepalive_timeout * 1000);
+            }
+        }
+        else if (!session_probe_channel_message.compare(
+                     0,
+                     sizeof(request_outbound_connection_killing_rule) - 1,
+                     request_outbound_connection_killing_rule)) {
+            const char * remaining_data =
+                (session_probe_channel_message.c_str() +
+                 sizeof(request_outbound_connection_killing_rule) - 1);
+
+            const unsigned int rule_index = ::strtoul(remaining_data, nullptr, 10);
+LOG(LOG_INFO, "Get outbound connection killing rule. Index=%u", rule_index);
+
+            // OutboundConnectionKillingRule=RuleIndex\x01ErrorCode[\x01HostAddrOrSubnet\x01Port]
+            // Error code: 0 on success. -1 if an error occurred.
+
+            if (!rule_index)
+            {
+                StaticOutStream<32768> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_clear_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "OutboundConnectionKillingRule=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) / sizeof(cstr[0]) - 1);
+                }
+
+                {
+                    const int error_code = 0;
+                    char cstr[128];
+                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d" "\x01", rule_index, error_code);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                {
+                    const char cstr[] = "10.10.47.0/24" "\x01" "3389";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) / sizeof(cstr[0]) - 1);
+                }
+
+                out_s.out_clear_bytes(1);   // Null character
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset - sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_to_channel(
+                    session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+                );
             }
         }
         else if (!session_probe_channel_message.compare("KeepAlive=OK")) {
