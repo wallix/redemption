@@ -297,6 +297,47 @@ void config_spec_definition(Writer && W)
         }, r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set(""));
+
+        //@{
+        // ConnectionPolicy
+        W.member(type_<bool>(), "server_cert_store", desc{"Keep a copy of the public key of the server"}, set(true), r);
+        W.member(type_<ServerCertCheck>(), "server_cert_check", desc{
+            "Behavior when checking the server key.\n"
+            "  0: fails if the certificate does not match, fails if it is missing.\n"
+            "  1: fails if the certificate does not match, but managed and creates it if it's a new target (not file).\n"
+            "  2 succeeds if the file exists (even if the certificate does not match), will fail if this is a new target.\n"
+            "  3: succeeds if the certificate does not match or that it is a new target.\n"
+        }, r);
+
+        std::string const server_notification_desc(
+            "Mask:\n"
+            "  0: No notification.\n"
+            "  1: Notify the administrator.\n"
+            "  2: Notify the user.\n"
+            "  4: No syslog."
+        );
+
+        W.member(type_<ServerNotification>(), "server_access_allowed_notification", desc{(
+            "notifies if the connection to the server is allowed.\n"
+            +server_notification_desc
+        ).c_str()}, r);
+        W.member(type_<ServerNotification>(), "server_cert_create_notification", desc{(
+            "notifies creating a new certificate file.\n"
+            +server_notification_desc
+        ).c_str()}, r);
+        W.member(type_<ServerNotification>(), "server_cert_success_notification", desc{(
+            "notifies that the certificate file has been successfully verified.\n"
+            +server_notification_desc
+        ).c_str()}, r);
+        W.member(type_<ServerNotification>(), "server_cert_failure_notification", desc{(
+            "notifies if a key check failed.\n"
+            +server_notification_desc
+        ).c_str()}, r);
+        W.member(type_<ServerNotification>(), "server_cert_error_notification", desc{(
+            "notifies if a certificate verification caused an internal error.\n"
+            +server_notification_desc
+        ).c_str()}, r);
+        //@}
     }
     W.stop_section();
 

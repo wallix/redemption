@@ -359,6 +359,26 @@ inline char const * c_str(CStrBuf<ColorDepth>&, ColorDepth x) {
 }
 
 
+enum class ServerNotification {
+    none        = 0,
+    admin       = 1 << 0,
+    user        = 1 << 1,
+    no_syslog   = 1 << 2,
+    FULL      = ((1 << 3) - 1)
+};
+MK_PARSER_ENUM_FLAGS(::configs::ServerNotification)
+
+
+enum class ServerCertCheck : unsigned {
+    abort_if_failure,
+    abort_if_different_but_ok_if_new_target,
+    good_if_file_exists_but_abort_if_new_target,
+    good_if_failure,
+    NB
+};
+MK_ENUM_FIELD(::configs::ServerCertCheck, "0", "1", "2", "3");
+
+
 #include "mk_enum_undef.hpp"
 
 }

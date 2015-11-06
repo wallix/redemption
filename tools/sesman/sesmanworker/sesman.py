@@ -1164,6 +1164,15 @@ class Sesman():
                         physical_target = None
                         break
 
+                    if proto_info.protocol == u'RDP':
+                        kv[u'server_cert_store'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_store')
+                        kv[u'server_cert_check'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_check')
+                        kv[u'server_access_allowed_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_access_allowed_notification')
+                        kv[u'server_cert_create_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_create_notification')
+                        kv[u'server_cert_success_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_success_notification')
+                        kv[u'server_cert_failure_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_failure_notification')
+                        kv[u'server_cert_error_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_error_notification')
+
                     kv[u'disable_tsk_switch_shortcuts'] = u'no'
                     application = self.engine.get_application(selected_target)
                     if application:
