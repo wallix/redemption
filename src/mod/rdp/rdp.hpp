@@ -85,6 +85,7 @@
 #include "channel_names.hpp"
 #include "finally.hpp"
 #include "timeout.hpp"
+#include "outbound_connection_monitor_rules.hpp"
 
 #include "channels/cliprdr_channel.hpp"
 #include "channels/rdpdr_channel.hpp"
@@ -417,6 +418,8 @@ class mod_rdp : public RDPChannelManagerMod {
 
     Translation::language_t lang;
 
+    OutboundConnectionMonitorRules outbound_connection_monitor_rules;
+
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
@@ -586,6 +589,7 @@ public:
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , lang(mod_rdp_params.lang)
+        , outbound_connection_monitor_rules("", mod_rdp_params.pattern_kill)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -6157,7 +6161,7 @@ public:
 
         while (session_probe_channel_message.back() == '\0') session_probe_channel_message.pop_back();
 
-        const char request_outbound_connection_killing_rule[] = "Request=Get outbound connection killing rule\x01";
+        const char request_outbound_connection_monitoring_rule[] = "Request=Get outbound connection monitoring rule\x01";
 
         if (!session_probe_channel_message.compare("Request=Get startup application")) {
             if (this->verbose & 1) {
@@ -6250,17 +6254,17 @@ public:
         }
         else if (!session_probe_channel_message.compare(
                      0,
-                     sizeof(request_outbound_connection_killing_rule) - 1,
-                     request_outbound_connection_killing_rule)) {
+                     sizeof(request_outbound_connection_monitoring_rule) - 1,
+                     request_outbound_connection_monitoring_rule)) {
             const char * remaining_data =
                 (session_probe_channel_message.c_str() +
-                 sizeof(request_outbound_connection_killing_rule) - 1);
+                 sizeof(request_outbound_connection_monitoring_rule) - 1);
 
             const unsigned int rule_index = ::strtoul(remaining_data, nullptr, 10);
-LOG(LOG_INFO, "Get outbound connection killing rule. Index=%u", rule_index);
 
-            // OutboundConnectionKillingRule=RuleIndex\x01ErrorCode[\x01HostAddrOrSubnet\x01Port]
-            // Error code: 0 on success. -1 if an error occurred.
+            // OutboundConnectionMonitoringRule=RuleIndex\x01ErrorCode[\x01RuleType\x01HostAddrOrSubnet\x01Port]
+            // RuleType  : 0 - notify, 1 - kill.
+            // ErrorCode : 0 on success. -1 if an error occurred.
 
             if (!rule_index)
             {
@@ -6270,20 +6274,29 @@ LOG(LOG_INFO, "Get outbound connection killing rule. Index=%u", rule_index);
                 out_s.out_clear_bytes(sizeof(uint16_t));
 
                 {
-                    const char cstr[] = "OutboundConnectionKillingRule=";
+                    const char cstr[] = "OutboundConnectionMonitoringRule=";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) / sizeof(cstr[0]) - 1);
                 }
 
+                unsigned int type = 0;
+                std::string  host_address_or_subnet;
+                unsigned int port = 0;
+
+                bool result = this->outbound_connection_monitor_rules.get(
+                    rule_index, type, host_address_or_subnet, port);
+
                 {
-                    const int error_code = 0;
+                    const int error_code = (result ? 0 : -1);
                     char cstr[128];
                     snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d" "\x01", rule_index, error_code);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
+                if (result)
                 {
-                    const char cstr[] = "10.10.47.0/24" "\x01" "3389";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr) / sizeof(cstr[0]) - 1);
+                    char cstr[1024];
+                    snprintf(cstr, sizeof(cstr), "%u\x01%s\x01%u", type, host_address_or_subnet.c_str(), port);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 out_s.out_clear_bytes(1);   // Null character

@@ -67,6 +67,7 @@ struct ModRDPParams {
 
     auth_api * acl;
 
+    const char * pattern_kill;
 
     bool         ignore_auth_channel;
     const char * auth_channel;
@@ -154,6 +155,8 @@ struct ModRDPParams {
         , key_flags(key_flags)
 
         , acl(nullptr)
+
+        , pattern_kill(nullptr)
 
         , ignore_auth_channel(false)
         , auth_channel("")
@@ -267,6 +270,9 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams acl=<%p>",                               this->acl);
+
+        LOG(LOG_INFO,
+            "ModRDPParams pattern_kill=\"%s\"",                    (this->pattern_kill ? this->pattern_kill : "<null>"));
 
         LOG(LOG_INFO,
             "ModRDPParams ignore_auth_channel=%s",                 (this->ignore_auth_channel ? "yes" : "no"));
