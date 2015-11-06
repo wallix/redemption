@@ -1419,7 +1419,7 @@ namespace cfg {
             type value{1};
         };
         // Behavior when checking the server key.
-        //   0: fails if the certificate does not match the one stored, fails if it is missing.
+        //   0: fails if the certificate does not match, fails if it is missing.
         //   1: fails if the certificate does not match, but managed and creates it if it's a new target (not file).
         //   2 succeeds if the file exists (even if the certificate does not match), will fail if this is a new target.
         //   3: succeeds if the certificate does not match or that it is a new target.

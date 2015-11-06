@@ -371,12 +371,12 @@ MK_PARSER_ENUM_FLAGS(::configs::ServerNotification)
 
 enum class ServerCertCheck : unsigned {
     abort_if_failure,
-    abort_if_different_but_ok_if_new_target,
+    abort_if_not_match_but_ok_if_new_target,
     good_if_file_exists_but_abort_if_new_target,
     good_if_failure,
     NB
 };
-MK_ENUM_FIELD(::configs::ServerCertCheck, "0", "1", "2", "3");
+MK_ENUM_FIELD(::configs::ServerCertCheck, "0", "1", "2", "3")
 
 
 #include "mk_enum_undef.hpp"
