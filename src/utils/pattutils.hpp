@@ -60,6 +60,10 @@ inline static unsigned int get_pattern_type(const char * pattern) {
         return KBD_PATTERN;
     }
 
+    if (strcasestr(pattern, "$ocm:") == pattern) {
+        return OCM_RULE;
+    }
+
     if ((*pattern != '$') ||
         (strcasestr(pattern, "$ocr:") == pattern)) {
         return OCR_PATTERN;
