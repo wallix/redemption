@@ -1164,17 +1164,31 @@ class Sesman():
                         physical_target = None
                         break
 
+                    application = self.engine.get_application(selected_target)
+
                     if proto_info.protocol == u'RDP':
-                        kv[u'server_cert_store'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_store')
-                        kv[u'server_cert_check'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_check')
-                        kv[u'server_access_allowed_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_access_allowed_notification')
-                        kv[u'server_cert_create_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_create_notification')
-                        kv[u'server_cert_success_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_success_notification')
-                        kv[u'server_cert_failure_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_failure_notification')
-                        kv[u'server_cert_error_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_error_notification')
+                        connectionpolicy_kv = {}
+
+                        connectionpolicy_kv[u'server_cert_store'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_store')
+                        connectionpolicy_kv[u'server_cert_check'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_check')
+                        connectionpolicy_kv[u'server_access_allowed_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_access_allowed_notification')
+                        connectionpolicy_kv[u'server_cert_create_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_create_notification')
+                        connectionpolicy_kv[u'server_cert_success_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_success_notification')
+                        connectionpolicy_kv[u'server_cert_failure_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_failure_notification')
+                        connectionpolicy_kv[u'server_cert_error_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_error_notification')
+
+                        if application:
+                            connectionpolicy_kv[u'ignore_auth_channel'] = physical_target.resource.service.connectionpolicy.data.get('ignore_auth_channel')
+
+                        connectionpolicy_kv[u'enable_session_probe'] = physical_target.resource.service.connectionpolicy.data.get('enable_session_probe')
+                        connectionpolicy_kv[u'enable_session_probe_loading_mask'] = physical_target.resource.service.connectionpolicy.data.get('enable_session_probe_loading_mask')
+                        connectionpolicy_kv[u'session_probe_on_launch_failure'] = physical_target.resource.service.connectionpolicy.data.get('session_probe_on_launch_failure')
+                        connectionpolicy_kv[u'session_probe_launch_timeout'] = physical_target.resource.service.connectionpolicy.data.get('session_probe_launch_timeout')
+                        connectionpolicy_kv[u'session_probe_keepalive_timeout'] = physical_target.resource.service.connectionpolicy.data.get('session_probe_keepalive_timeout')
+
+                        kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
 
                     kv[u'disable_tsk_switch_shortcuts'] = u'no'
-                    application = self.engine.get_application(selected_target)
                     if application:
                         app_params = self.engine.get_app_params(selected_target, physical_target)
                         if not app_params:
