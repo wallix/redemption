@@ -179,7 +179,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "enable_file_encryption", str_authid{"file_encryption"}, rw);
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
-        W.member(P, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
+        W.member(A | P, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
         W.sep();
         W.member(A, type_<StaticString<1024>>(), "png_path", set(MACRO(PNG_PATH)));
         W.member(A, type_<StaticString<1024>>(), "wrm_path", set(MACRO(WRM_PATH)));
