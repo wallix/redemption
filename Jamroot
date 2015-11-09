@@ -377,13 +377,16 @@ if ! [ os.environ NO_MAKE_CONFIG ]
     alias generate_configs : src/configs/autogen/configs/autogen/variables_configuration.hpp ;
 
     constant CONFIG_DEPENDENCY : <implicit-dependency>generate_configs ;
+
+    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV_NO_BUILD) ;
+    constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
 }
 else
 {
-    constant CONFIG_DEPENDENCY : ;
+    constant EXE_DEPENDENCIES : $(GCOV_NO_BUILD) ;
+    constant TEST_DEPENDENCIES : $(GCOV) ;
 }
 
-constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV_NO_BUILD) ;
 
 #
 # Redemption
@@ -580,7 +583,6 @@ explicit make_cpp_config ;
 
 import testing ;
 
-constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
 
 ## Test facility functions or classes
 ## @{
@@ -899,4 +901,4 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z : ;
+unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z :  $(TEST_DEPENDENCIES) ;
