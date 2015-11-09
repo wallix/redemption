@@ -852,6 +852,19 @@ class Engine(object):
             authmethods = SUPPORTED_AUTHENTICATION_METHODS
         return authmethods
 
+    def get_target_conn_options(self, selected_target=None):
+        target = selected_target or self.target_right
+        if not target:
+            return {}
+        conn_opts = {}
+        try:
+            # Logger().info("connectionpolicy")
+            # Logger().info("%s" % target.resource.service.connectionpolicy)
+            conn_opts = target.resource.service.connectionpolicy.data
+        except:
+            Logger().info("Error: Connection policy has no data field" )
+        return conn_opts
+
     def get_physical_target_info(self, physical_target):
         return PhysicalTarget(device_host=physical_target.resource.device.host,
                               account_login=self.get_account_login(physical_target),
