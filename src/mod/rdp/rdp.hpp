@@ -6266,50 +6266,47 @@ public:
             // RuleType  : 0 - notify, 1 - kill.
             // ErrorCode : 0 on success. -1 if an error occurred.
 
-            if (!rule_index)
+            StaticOutStream<32768> out_s;
+
+            const size_t message_length_offset = out_s.get_offset();
+            out_s.out_clear_bytes(sizeof(uint16_t));
+
             {
-                StaticOutStream<32768> out_s;
-
-                const size_t message_length_offset = out_s.get_offset();
-                out_s.out_clear_bytes(sizeof(uint16_t));
-
-                {
-                    const char cstr[] = "OutboundConnectionMonitoringRule=";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr) / sizeof(cstr[0]) - 1);
-                }
-
-                unsigned int type = 0;
-                std::string  host_address_or_subnet;
-                unsigned int port = 0;
-
-                bool result = this->outbound_connection_monitor_rules.get(
-                    rule_index, type, host_address_or_subnet, port);
-
-                {
-                    const int error_code = (result ? 0 : -1);
-                    char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d" "\x01", rule_index, error_code);
-                    out_s.out_copy_bytes(cstr, strlen(cstr));
-                }
-
-                if (result)
-                {
-                    char cstr[1024];
-                    snprintf(cstr, sizeof(cstr), "%u\x01%s\x01%u", type, host_address_or_subnet.c_str(), port);
-                    out_s.out_copy_bytes(cstr, strlen(cstr));
-                }
-
-                out_s.out_clear_bytes(1);   // Null character
-
-                out_s.set_out_uint16_le(
-                    out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                    message_length_offset);
-
-                this->send_to_channel(
-                    session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
-                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                );
+                const char cstr[] = "OutboundConnectionMonitoringRule=";
+                out_s.out_copy_bytes(cstr, sizeof(cstr) / sizeof(cstr[0]) - 1);
             }
+
+            unsigned int type = 0;
+            std::string  host_address_or_subnet;
+            unsigned int port = 0;
+
+            bool result = this->outbound_connection_monitor_rules.get(
+                rule_index, type, host_address_or_subnet, port);
+
+            {
+                const int error_code = (result ? 0 : -1);
+                char cstr[128];
+                snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d" "\x01", rule_index, error_code);
+                out_s.out_copy_bytes(cstr, strlen(cstr));
+            }
+
+            if (result)
+            {
+                char cstr[1024];
+                snprintf(cstr, sizeof(cstr), "%u\x01%s\x01%u", type, host_address_or_subnet.c_str(), port);
+                out_s.out_copy_bytes(cstr, strlen(cstr));
+            }
+
+            out_s.out_clear_bytes(1);   // Null character
+
+            out_s.set_out_uint16_le(
+                out_s.get_offset() - message_length_offset - sizeof(uint16_t),
+                message_length_offset);
+
+            this->send_to_channel(
+                session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+            );
         }
         else if (!session_probe_channel_message.compare("KeepAlive=OK")) {
             if (this->verbose & 0x10000) {
