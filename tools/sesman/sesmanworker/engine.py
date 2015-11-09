@@ -842,14 +842,15 @@ class Engine(object):
     def get_target_auth_methods(self, selected_target=None):
         target = selected_target or self.target_right
         if not target:
-            return SUPPORTED_AUTHENTICATION_METHODS
-        authmethods = SUPPORTED_AUTHENTICATION_METHODS
+            return []
+        authmethods = []
         try:
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
             authmethods = target.resource.service.connectionpolicy.methods
         except:
-            authmethods = SUPPORTED_AUTHENTICATION_METHODS
+            Logger().error("Error: Connection policy has no methods field")
+            authmethods = []
         return authmethods
 
     def get_target_conn_options(self, selected_target=None):
@@ -862,7 +863,7 @@ class Engine(object):
             # Logger().info("%s" % target.resource.service.connectionpolicy)
             conn_opts = target.resource.service.connectionpolicy.data
         except:
-            Logger().info("Error: Connection policy has no data field" )
+            Logger().error("Error: Connection policy has no data field")
         return conn_opts
 
     def get_physical_target_info(self, physical_target):
