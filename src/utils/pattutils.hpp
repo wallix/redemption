@@ -37,10 +37,9 @@ bool contains_pattern(F f, unsigned int expected_result,
             continue;
         }
 
-        const char * separator = strchr(pattern, '\x01');
-
         actual_result |= f(pattern);
 
+        const char * separator = strchr(pattern, '\x01');
         if (!separator) {
             break;
         }
@@ -51,13 +50,18 @@ bool contains_pattern(F f, unsigned int expected_result,
     return (actual_result & expected_result);
 }
 
-#define OCR_PATTERN 1
-#define KBD_PATTERN 2
+#define KBD_PATTERN 1
+#define OCM_RULE    2
+#define OCR_PATTERN 4
 
 inline static unsigned int get_pattern_type(const char * pattern) {
     //LOG(LOG_INFO, "pattern=\"%s\" pattern_length=%u", pattern, pattern_length);
     if (strcasestr(pattern, "$kbd:") == pattern) {
         return KBD_PATTERN;
+    }
+
+    if (strcasestr(pattern, "$ocm:") == pattern) {
+        return OCM_RULE;
     }
 
     if ((*pattern != '$') ||
@@ -85,6 +89,14 @@ inline static bool contains_kbd_or_ocr_pattern(const char * soh_separated_patter
     return contains_pattern(
             get_pattern_type,
             KBD_PATTERN | OCR_PATTERN,
+            soh_separated_patterns
+        );
+}
+
+inline static bool contains_ocm_rule(const char * soh_separated_patterns) {
+    return contains_pattern(
+            get_pattern_type,
+            OCM_RULE,
             soh_separated_patterns
         );
 }
