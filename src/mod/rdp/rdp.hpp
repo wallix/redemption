@@ -6375,7 +6375,7 @@ public:
                         char message[4096];
                         snprintf(message, sizeof(message),
                             TR("process_interrupted_security_policies", this->lang),
-                            parameters.c_str());
+                            application_name.c_str());
 
                         std::string string_message = message;
                         this->display_osd_message(string_message);
