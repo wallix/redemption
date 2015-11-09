@@ -376,6 +376,11 @@ class ModuleManager : public MMIni
                 }
             }
         }
+
+    protected:
+        void display_osd_message(std::string & message) override {
+            this->mm.osd_message(message, false);
+        }
     };
 
 public:

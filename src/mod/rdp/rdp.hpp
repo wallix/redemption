@@ -6361,6 +6361,29 @@ public:
                     std::string info(" command_line='" + parameters + "'");
                     this->acl->log3(order.c_str(), info.c_str());
                 }
+                else if (!order.compare("OutboundConnectionBlocked")) {
+                    const char * subitems          = parameters.c_str();
+                    const char * subitem_separator = ::strchr(subitems, '\x01');
+
+                    if (subitem_separator) {
+                        std::string rule(subitems, subitem_separator - subitems);
+                        std::string application_name(subitem_separator + 1);
+
+                        std::string info(" rule='" + rule + "' application_name='" + application_name + "'");
+                        this->acl->log3(order.c_str(), info.c_str());
+
+                        char message[4096];
+                        snprintf(message, sizeof(message),
+                            TR("process_interrupted_security_policies", this->lang),
+                            parameters.c_str());
+
+                        std::string string_message = message;
+                        this->display_osd_message(string_message);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
                 else if (!order.compare("ForegroundWindowChanged")) {
                     const char * subitems          = parameters.c_str();
                     const char * subitem_separator = ::strchr(subitems, '\x01');
