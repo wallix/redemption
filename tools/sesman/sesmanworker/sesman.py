@@ -1165,26 +1165,26 @@ class Sesman():
                         break
 
                     application = self.engine.get_application(selected_target)
-
+                    conn_opts = self.engine.get_target_conn_options(physical_target)
                     if proto_info.protocol == u'RDP':
                         connectionpolicy_kv = {}
 
-                        connectionpolicy_kv[u'server_cert_store'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_store')
-                        connectionpolicy_kv[u'server_cert_check'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_check')
-                        connectionpolicy_kv[u'server_access_allowed_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_access_allowed_notification')
-                        connectionpolicy_kv[u'server_cert_create_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_create_notification')
-                        connectionpolicy_kv[u'server_cert_success_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_success_notification')
-                        connectionpolicy_kv[u'server_cert_failure_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_failure_notification')
-                        connectionpolicy_kv[u'server_cert_error_notification'] = physical_target.resource.service.connectionpolicy.data.get('server_cert_error_notification')
+                        connectionpolicy_kv[u'server_cert_store'] = conn_opts.get('server_cert_store')
+                        connectionpolicy_kv[u'server_cert_check'] = conn_opts.get('server_cert_check')
+                        connectionpolicy_kv[u'server_access_allowed_notification'] = conn_opts.get('server_access_allowed_notification')
+                        connectionpolicy_kv[u'server_cert_create_notification'] = conn_opts.get('server_cert_create_notification')
+                        connectionpolicy_kv[u'server_cert_success_notification'] = conn_opts.get('server_cert_success_notification')
+                        connectionpolicy_kv[u'server_cert_failure_notification'] = conn_opts.get('server_cert_failure_notification')
+                        connectionpolicy_kv[u'server_cert_error_notification'] = conn_opts.get('server_cert_error_notification')
 
                         if application:
-                            connectionpolicy_kv[u'ignore_auth_channel'] = physical_target.resource.service.connectionpolicy.data.get('ignore_auth_channel')
+                            connectionpolicy_kv[u'ignore_auth_channel'] = conn_opts.get('ignore_auth_channel')
 
-                        connectionpolicy_kv[u'enable_session_probe'] = physical_target.resource.service.connectionpolicy.data.get('enable_session_probe')
-                        connectionpolicy_kv[u'enable_session_probe_loading_mask'] = physical_target.resource.service.connectionpolicy.data.get('enable_session_probe_loading_mask')
-                        connectionpolicy_kv[u'session_probe_on_launch_failure'] = physical_target.resource.service.connectionpolicy.data.get('session_probe_on_launch_failure')
-                        connectionpolicy_kv[u'session_probe_launch_timeout'] = physical_target.resource.service.connectionpolicy.data.get('session_probe_launch_timeout')
-                        connectionpolicy_kv[u'session_probe_keepalive_timeout'] = physical_target.resource.service.connectionpolicy.data.get('session_probe_keepalive_timeout')
+                        connectionpolicy_kv[u'enable_session_probe'] = conn_opts.get('enable_session_probe')
+                        connectionpolicy_kv[u'enable_session_probe_loading_mask'] = conn_opts.get('enable_session_probe_loading_mask')
+                        connectionpolicy_kv[u'session_probe_on_launch_failure'] = conn_opts.get('session_probe_on_launch_failure')
+                        connectionpolicy_kv[u'session_probe_launch_timeout'] = conn_opts.get('session_probe_launch_timeout')
+                        connectionpolicy_kv[u'session_probe_keepalive_timeout'] = conn_opts.get('session_probe_keepalive_timeout')
 
                         kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
 
