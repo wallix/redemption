@@ -651,6 +651,16 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
+
+        // AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES
+        struct outbound_connection_blocking_rules {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 93; }
+            using type = std::string;
+            type value{};
+        };
     };
 
     struct crypto {
@@ -1862,6 +1872,7 @@ struct context
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
 , cfg::context::opt_message
+, cfg::context::outbound_connection_blocking_rules
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -2133,5 +2144,6 @@ using VariablesAclPack = Pack<
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
 , cfg::context::opt_message
+, cfg::context::outbound_connection_blocking_rules
 >;
 }

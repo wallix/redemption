@@ -92,6 +92,7 @@ enum authid_t {
     AUTHID_CONTEXT_PATTERN_KILL,
     AUTHID_CONTEXT_PATTERN_NOTIFY,
     AUTHID_CONTEXT_OPT_MESSAGE,
+    AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -189,5 +190,6 @@ constexpr char const * const authstr[] = {
     "pattern_kill",
     "pattern_notify",
     "opt_message",
+    "outbound_connection_blocking_rules",
 };
 

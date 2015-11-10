@@ -571,6 +571,8 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "pattern_notify", r);
         W.sep();
         W.member(type_<std::string>(), "opt_message", r);
+        W.sep();
+        W.member(type_<std::string>(), "outbound_connection_blocking_rules", r);
     }
     W.stop_section();
 

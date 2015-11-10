@@ -589,7 +589,7 @@ public:
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , lang(mod_rdp_params.lang)
-        , outbound_connection_monitor_rules("", mod_rdp_params.pattern_kill)
+        , outbound_connection_monitor_rules("", mod_rdp_params.outbound_connection_blocking_rules)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {

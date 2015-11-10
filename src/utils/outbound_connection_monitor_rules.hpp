@@ -36,41 +36,35 @@ private:
     outbound_connection_monitor_rule_collection rules;
 
 public:
-    OutboundConnectionMonitorRules(const char * soh_separated_notify_rules,
-            const char * soh_separated_kill_rules) {
-        char prefix[] = "$ocm:";
-
-        if (soh_separated_kill_rules) {
-            const char * rule = soh_separated_kill_rules;
+    OutboundConnectionMonitorRules(const char * comma_separated_notify_rules,
+            const char * comme_separated_block_rules) {
+        if (comme_separated_block_rules) {
+            const char * rule = comme_separated_block_rules;
 
             while (*rule) {
-                if ((*rule == '\x01') || (*rule == '\t') || (*rule == ' ')) {
+                if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
                     rule++;
                     continue;
                 }
 
-                const char * rule_separator = strchr(rule, '\x01');
+                const char * rule_separator = strchr(rule, ',');
 
-                if (strcasestr(rule, prefix) == rule) {
-                    rule += (sizeof(prefix) - 1);
+                std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
 
-                    std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
+                const char * rule_c_str = rule_string.c_str();
 
-                    const char * rule_c_str = rule_string.c_str();
+                const char * info_separator = strchr(rule_c_str, ':');
 
-                    const char * info_separator = strchr(rule_c_str, ':');
+                if (info_separator)
+                {
+                    std::unique_ptr<std::string> host_address_or_subnet =
+                        std::make_unique<std::string>(rule_c_str, info_separator - rule_c_str);
 
-                    if (info_separator)
-                    {
-                        std::unique_ptr<std::string> host_address_or_subnet =
-                            std::make_unique<std::string>(rule_c_str, info_separator - rule_c_str);
-
-                        this->rules.push_back(
-                                std::make_tuple(
-                                        1, std::move(host_address_or_subnet), ::atoi(info_separator + 1)
-                                    )
-                            );
-                    }
+                    this->rules.push_back(
+                            std::make_tuple(
+                                    1, std::move(host_address_or_subnet), ::atoi(info_separator + 1)
+                                )
+                        );
                 }
 
                 if (!rule_separator) {
