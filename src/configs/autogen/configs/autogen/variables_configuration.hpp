@@ -1331,7 +1331,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::StaticNilString<8>;
-            type value{::configs::null_fill()};
+            type value{"*"};
         };
 
         // AUTHID_MOD_RDP_ALTERNATE_SHELL
