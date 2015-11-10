@@ -1181,9 +1181,6 @@ class Sesman():
                             connectionpolicy_kv[u'server_cert_failure_notification'] = rdp_section.get('server_cert_failure_notification')
                             connectionpolicy_kv[u'server_cert_error_notification'] = rdp_section.get('server_cert_error_notification')
 
-                            if application:
-                                connectionpolicy_kv[u'ignore_auth_channel'] = rdp_section.get('ignore_auth_channel')
-
                             connectionpolicy_kv[u'enable_session_probe'] = rdp_section.get('enable_session_probe')
                             connectionpolicy_kv[u'enable_session_probe_loading_mask'] = rdp_section.get('enable_session_probe_loading_mask')
                             connectionpolicy_kv[u'session_probe_on_launch_failure'] = rdp_section.get('session_probe_on_launch_failure')
