@@ -86,8 +86,15 @@ public:
                     );
                 }
 
-                ini.get_ref<cfg::crypto::key0>().setmem(this->parametersHldr.get_crypto_key_0());
-                ini.get_ref<cfg::crypto::key1>().setmem(this->parametersHldr.get_crypto_key_1());
+                char local_host[] = "127.0.0.1";
+                bool get_crypto_key_enable_log = strncmp(source_ip, local_host, sizeof(local_host));
+
+                ini.get_ref<cfg::crypto::key0>().setmem(
+                        this->parametersHldr.get_crypto_key_0(get_crypto_key_enable_log)
+                    );
+                ini.get_ref<cfg::crypto::key1>().setmem(
+                        this->parametersHldr.get_crypto_key_1(get_crypto_key_enable_log)
+                    );
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

@@ -24,7 +24,7 @@
 struct parameters_holder {
     virtual ~parameters_holder() = default;
 
-    virtual const char * get_crypto_key_0() {
+    virtual const char * get_crypto_key_0(bool enable_log) {
         static const char key[] = {
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
@@ -35,7 +35,7 @@ struct parameters_holder {
         return key;
     }
 
-    virtual const char * get_crypto_key_1() {
+    virtual const char * get_crypto_key_1(bool enable_log) {
         static const char key[] = {
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
