@@ -379,7 +379,7 @@ public:
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
-        if (!this->ini.is_asked<cfg::globals::host>() && this->ini.get<cfg::globals::host>() == "127.0.0.1") {
+        if (!this->ini.is_asked<cfg::globals::host>() && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
         this->front->stop_capture();
