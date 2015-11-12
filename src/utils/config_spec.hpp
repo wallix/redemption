@@ -132,8 +132,7 @@ void config_spec_definition(Writer && W)
     // for coloration...
     struct {
         void member();
-        void start_section();
-        void stop_section();
+        void section();
         void sep();
     } W;
 #endif
@@ -149,7 +148,7 @@ void config_spec_definition(Writer && W)
     PropertyFieldFlags const r = PropertyFieldFlags::read;
     PropertyFieldFlags const rw = w | r;
 
-    W.start_section("globals");
+    W.section("globals", [&]
     {
         W.member(type_<bool>(), "capture_chunk", r);
         W.sep();
@@ -195,10 +194,9 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StaticPath<1024>>(), "persistent_path", set(MACRO(PERSISTENT_PATH)));
         W.sep();
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
-    }
-    W.stop_section();
+    });
 
-    W.start_section("client");
+    W.section("client", [&]
     {
         W.member(type_<unsigned>(), "keyboard_layout", set(0), w);
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
@@ -231,10 +229,9 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
         W.sep();
         W.member(A, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
-    }
-    W.stop_section();
+    });
 
-    W.start_section("mod_rdp");
+    W.section("mod_rdp", [&]
     {
         W.member(A, type_<rdp_compression_t>{}, "rdp_compression", rdp_compression_desc, set(4));
         W.sep();
@@ -339,10 +336,9 @@ void config_spec_definition(Writer && W)
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
         //@}
-    }
-    W.stop_section();
+    });
 
-    W.start_section("mod_vnc");
+    W.section("mod_vnc", [&]
     {
         W.member(V, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."}, r);
         W.member(V, type_<bool>(), "clipboard_down", desc{"Enable or disable the clipboard from server (server to client)."}, r);
@@ -364,16 +360,14 @@ void config_spec_definition(Writer && W)
         }, str_authid{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1), r);
         W.sep();
         W.member(A, type_<SelectRange<unsigned, 0, 2>>(), "bogus_clipboard_infinite_loop", str_authid{"vnc_bogus_clipboard_infinite_loop"}, set(0), r);
-    }
-    W.stop_section();
+    });
 
-    W.start_section("mod_replay");
+    W.section("mod_replay", [&]
     {
         W.member(H, type_<bool>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
-    }
-    W.stop_section();
+    });
 
-    W.start_section("video");
+    W.section("video", [&]
     {
         W.member(A, type_<unsigned>(), "capture_groupid", set(33));
         W.sep();
@@ -428,10 +422,9 @@ void config_spec_definition(Writer && W)
             "  1: GZip\n"
             "  2: Snappy"
         }, set(1));
-    }
-    W.stop_section();
+    });
 
-    W.start_section("crypto");
+    W.section("crypto", [&]
     {
         W.member(H, type_<StaticKeyString<32>>(), "key0", set(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -445,10 +438,9 @@ void config_spec_definition(Writer && W)
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
         ));
-    }
-    W.stop_section();
+    });
 
-    W.start_section("debug");
+    W.section("debug", [&]
     {
         W.member(A, type_<uint32_>(), "x224", set(0));
         W.member(A, type_<uint32_>(), "mcs", set(0));
@@ -475,25 +467,21 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<uint32_>(), "pass_dialog_box", set(0));
         W.sep();
         W.member(A, type_<Range<unsigned, 0, 2>>(), user_type<bool>(), "config", set(2));
-    }
-    W.stop_section();
+    });
 
-    W.start_section("translation");
+    W.section("translation", [&]
     {
         W.member(A, type_<Language>{}, "language", set(Language::en), r);
 
         W.member(A, type_<std::string>(), "password_en", set(""), r);
         W.member(A, type_<std::string>(), "password_fr", set(""), r);
-    }
-    W.stop_section();
+    });
 
-    W.start_section("internal_mod");
-    {
+    W.section("internal_mod", [&]{
         W.member(A, type_<std::string>(), "load_theme", real_name{"theme"}, set(""));
-    }
-    W.stop_section();
+    });
 
-    W.start_section("context");
+    W.section("context", [&]
     {
         W.member(type_<StaticString<1024>>(), "movie");
         W.sep();
@@ -573,13 +561,13 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "opt_message", r);
         W.sep();
         W.member(type_<std::string>(), "outbound_connection_blocking_rules", r);
-    }
-    W.stop_section();
+    });
 
-    W.start_section("");
-    W.member(type_<Theme>(), "theme");
-    W.member(type_<Font>(), "font");
-    W.stop_section();
+    W.section("", [&]
+    {
+        W.member(type_<Theme>(), "theme");
+        W.member(type_<Font>(), "font");
+    });
 }
 
 
@@ -597,16 +585,17 @@ struct ConfigSpecWriterBase
         return *this->out_;
     }
 
-    void start_section(std::string name) {
+    template<class Fn>
+    void section(std::string name, Fn fn) {
         this->out_ = &this->out_member_;
         this->section_name = std::move(name);
         if (!this->section_name.empty()) {
             ++this->depth;
         }
         this->inherit().do_start_section();
-    }
 
-    void stop_section() {
+        fn();
+
         this->out_ = &this->out_member_;
         if (!this->section_name.empty()) {
             --this->depth;
