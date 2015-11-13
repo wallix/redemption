@@ -44,7 +44,6 @@ private:
     utils::MatchFinder::NamedRegexArray regexes_filter_notify;
 
     bool enable_keyboard_log_syslog;
-    char const * const log_prefix;
 
     class Utf8KbdData {
         uint8_t kbd_data[128] = { 0, 0 };
@@ -108,13 +107,11 @@ public:
                  , char const * const filters_kill
                  , char const * const filters_notify
                  , bool enable_keyboard_log_syslog
-                 , char const * const log_prefix
                  , int verbose = 0)
     : last_snapshot(now)
     , wait_until_next_snapshot(false)
     , authentifier(authentifier)
-    , enable_keyboard_log_syslog(enable_keyboard_log_syslog)
-    , log_prefix(log_prefix) {
+    , enable_keyboard_log_syslog(enable_keyboard_log_syslog) {
         if (filters_kill) {
             utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                 filters_kill, this->regexes_filter_kill, verbose);

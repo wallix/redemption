@@ -81,8 +81,6 @@ private:
 
     const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
-    char kbd_prefix[256];
-
 public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
@@ -173,24 +171,8 @@ public:
         }
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
-            snprintf( this->kbd_prefix
-                    , sizeof(this->kbd_prefix)
-                    , "[RDP Session] type='KBD input' "
-                      "sesion_id='%s' "
-                      "user='%s' "
-                      "device='%s' "
-                      "service='%s' "
-                      "account='%s'"
-                    , ini.get<cfg::context::session_id>().c_str()
-                    , ini.get<cfg::globals::auth_user>().c_str()
-                    , ini.get<cfg::globals::target_device>().c_str()
-                    , ini.get<cfg::context::target_service>().c_str()
-                    , ini.get<cfg::globals::target_user>().c_str()
-                    );
-
             this->pkc = new NewKbdCapture(now, authentifier, nullptr, nullptr,
-                    !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
-                    this->kbd_prefix
+                    !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
                 );
         }
 

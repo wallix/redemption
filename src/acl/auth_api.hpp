@@ -32,7 +32,6 @@ public:
 
     virtual void report(const char * reason, const char * message) = 0;
 
-    virtual void log3(const char * type, const char * extra = nullptr) const = 0;
     virtual void log4(bool duplicate_with_pid, const char * type,
         const char * extra = nullptr) const = 0;
 };
@@ -46,8 +45,6 @@ class NullAuthentifier : public auth_api {
 
     void report(const char * reason, const char * message) override {}
 
-    void log3(const char * type, const char * extra = nullptr) const
-        override {}
     void log4(bool duplicate_with_pid, const char * type,
         const char * extra = nullptr) const override {};
 };

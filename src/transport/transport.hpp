@@ -32,6 +32,8 @@
 #include "auth_api.hpp"
 #include "noncopyable.hpp"
 
+#include "configs/types.hpp"
+
 using std::size_t;
 
 class Transport : noncopyable
