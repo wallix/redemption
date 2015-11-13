@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0001043B_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0001043B_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0001043B_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0001043B_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0001043b {    // Sami (Northern) (Norway) // Sami Extended Norway
 
 const static int LCID = 0x0001043b;
+
+const static char * const locale_name = "se-NO.ext_norway";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -347,6 +349,7 @@ const static uint8_t nbDeadkeys = 6;
 } // END NAMESPACE - x0001043b
 
 static const Keylayout keylayout_x0001043b( x0001043b::LCID
+                                          , x0001043b::locale_name
                                           , x0001043b::noMod
                                           , x0001043b::shift
                                           , x0001043b::altGr

@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000444_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000444_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000444_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000444_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00000444 {    // Tatar (Russia) // Tatar
 
 const static int LCID = 0x00000444;
+
+const static char * const locale_name = "tt-RU";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00000444
 
 static const Keylayout keylayout_x00000444( x00000444::LCID
+                                          , x00000444::locale_name
                                           , x00000444::noMod
                                           , x00000444::shift
                                           , x00000444::altGr

@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000046E_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000046E_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000046E_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000046E_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000046e {    // Luxembourgish (Luxembourg) // Luxembourgish
 
 const static int LCID = 0x0000046e;
+
+const static char * const locale_name = "lb-LU";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x0000046e
 
 static const Keylayout keylayout_x0000046e( x0000046e::LCID
+                                          , x0000046e::locale_name
                                           , x0000046e::noMod
                                           , x0000046e::shift
                                           , x0000046e::altGr

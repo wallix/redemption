@@ -29,6 +29,7 @@
 #include "translation.hpp"
 #include "copy_paste.hpp"
 #include "config_access.hpp"
+#include "apply_for_delim.hpp"
 
 
 using FlatLoginModVariables = vcfg::variables<
@@ -41,12 +42,103 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::translation::language>,
     vcfg::var<cfg::font>,
     vcfg::var<cfg::theme>,
-    vcfg::var<cfg::context::opt_message, vcfg::read>
+    vcfg::var<cfg::context::opt_message, vcfg::read>,
+    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>
 >;
 
 
 class FlatLoginMod : public InternalMod, public NotifyApi
 {
+    class ButtonLanguage : public WidgetFlatButton
+    {
+        static constexpr size_t locale_name_len = 5;
+        struct Loc {
+            char const * locale_name;
+            int LCID;
+        };
+        std::vector<Loc> locales;
+        unsigned selected_language = 0;
+        FrontAPI & front;
+        Widget2 & parent;
+
+    public:
+        ButtonLanguage(
+            std::string const & enable_locales,
+            Widget2 & parent,
+            DrawApi & drawable,
+            FrontAPI & front,
+            Font const & font,
+            Theme const & theme
+        )
+        : WidgetFlatButton(drawable, 0, 0, *this, this, nullptr, true, -1,
+                           theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font, 7, 7)
+        , front(front)
+        , parent(parent)
+        {
+            using std::begin;
+            using std::end;
+
+            auto LCID = front.get_keylayout();
+
+            {
+                auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
+                    return k->LCID == LCID;
+                });
+                if (it == end(keylayouts)) {
+                    LCID = keylayout_x00000409.LCID;
+                    this->locales.push_back({keylayout_x00000409.locale_name, keylayout_x00000409.LCID});
+                }
+                else {
+                    this->locales.push_back({(*it)->locale_name, (*it)->LCID});
+                }
+            }
+
+            apply_for_delim(enable_locales.c_str(), ',', [&](char const * & cstr) {
+                char const * cend = cstr;
+                while (*cend && *cend != ' ' && *cend != '\t' && *cend != ',') {
+                    ++cend;
+                }
+
+                auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
+                    return strncmp(k->locale_name, cstr, cend-cstr) == 0;
+                });
+                if (it != end(keylayouts)) {
+                    if ((*it)->LCID != LCID) {
+                        this->locales.push_back({(*it)->locale_name, (*it)->LCID});
+                    }
+                }
+                else {
+                    LOG(LOG_WARNING, "Layout \"%.*s\" not found.", cend - cstr, cstr);
+                }
+
+                cstr = cend;
+            });
+
+            this->label.set_text(this->locales[0].locale_name);
+            this->set_button_cx(this->label.rect.cx);
+            this->set_button_cy(this->label.rect.cy);
+        }
+
+        void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
+            if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {
+                auto rect = this->rect;
+
+                this->selected_language = (this->selected_language + 1) % this->locales.size();
+                this->label.set_text(this->locales[this->selected_language].locale_name);
+
+                this->set_button_cx(this->label.rect.cx);
+                this->set_button_cy(this->label.rect.cy);
+                rect.cx = std::max(rect.cx, this->rect.cx);
+                rect.cy = std::max(rect.cy, this->rect.cy);
+                this->parent.draw(rect);
+
+                front.set_keylayout(this->locales[this->selected_language].LCID);
+            }
+        }
+    };
+
+    ButtonLanguage button_language;
+
     FlatLogin login;
 
     CopyPaste copy_paste;
@@ -60,13 +152,14 @@ public:
         FrontAPI & front, uint16_t width, uint16_t height
     )
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        , button_language(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->login, *this, front, this->font(), this->theme())
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 username[0] != 0,
                 0, nullptr, nullptr,
                 TR("login", language(vars)),
                 TR("password", language(vars)),
                 vars.get<cfg::context::opt_message>().c_str(),
-                [&front](int LCDI) { front.set_keylayout(LCDI); },
+                &this->button_language,
                 this->font(), Translator(language(vars)), this->theme())
         , vars(vars)
     {

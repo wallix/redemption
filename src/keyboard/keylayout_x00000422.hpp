@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000422_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000422_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000422_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000422_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00000422 {    // Ukrainian (Ukraine) // Ukrainian
 
 const static int LCID = 0x00000422;
+
+const static char * const locale_name = "uk-UA";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00000422
 
 static const Keylayout keylayout_x00000422( x00000422::LCID
+                                          , x00000422::locale_name
                                           , x00000422::noMod
                                           , x00000422::shift
                                           , x00000422::altGr

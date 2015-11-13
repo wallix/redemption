@@ -2,6 +2,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
     if (0) {}
     else if (0 == strcmp(context, "client")) {
         if (0) {}
+        else if (0 == strcmp(key, "keyboard_layout_proposals")) {
+            ::configs::parse(static_cast<cfg::client::keyboard_layout_proposals&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "ignore_logon_password")) {
             ::configs::parse(static_cast<cfg::client::ignore_logon_password&>(this->variables).value, value);
         }

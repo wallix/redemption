@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000040A_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000040A_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000040A_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000040A_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000040a {    // Spanish (Spain) // Spanish
 
 const static int LCID = 0x0000040a;
+
+const static char * const locale_name = "es-ES";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x0000040a
 
 static const Keylayout keylayout_x0000040a( x0000040a::LCID
+                                          , x0000040a::locale_name
                                           , x0000040a::noMod
                                           , x0000040a::shift
                                           , x0000040a::altGr

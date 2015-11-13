@@ -48,10 +48,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int id = 0;
-    std::function<void(int)> notifier_language;
+    WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         false, id, "rec", "rec", "Login", "Password", "", notifier_language, font);
+                         false, id, "rec", "rec", "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.rect);
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xd7\xee\xfc\x34\x1d\xda\x31\xe9\xd7\x1c\x2d\x3b\x9a\xdd\x3a\xd2\x50\xb1\xe3\x55"
+        "\xe5\xd4\x61\xfb\x43\x29\x85\xd2\xf8\x93\x2b\xd7\x41\xc1\x58\xd9\x2f\x3d\xe8\x9c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 {
     TestDraw drawable(800, 600);
-    std::function<void(int)> notifier_language;
+    WidgetFlatButton * extra_button = nullptr;
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", notifier_language, font);
+                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xc3\xef\x12\xd7\x91\x67\x95\xb1\x51\x17\xd3\xc8\xff\x34\x0b\x8b\x8e\x0b\x3c\x3b"
+        "\xc7\x65\xc0\x7e\x7a\x71\x3c\x88\xc2\xcf\xa8\x6c\x4f\x52\x9e\x44\x2c\xb6\xbc\x5e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
             this->event = event;
         }
     } notifier;
-    std::function<void(int)> notifier_language;
+    WidgetFlatButton * extra_button = nullptr;
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     WidgetScreen parent(drawable, 800, 600, font);
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", notifier_language, font);
+                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
 
@@ -142,8 +142,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-            "\x6b\x5b\xc4\xb8\x08\x8d\xa6\x0b\x96\x8f\x59\x54\x64\x4d\x89\x8d\xeb\x6a\x47\x5c"
-   //     "\xa3\xa6\x18\xbd\x9b\x21\xa0\xf1\xea\xfe\x00\x0d\x15\xa1\x71\xae\x0c\x04\xc7\x55"
+        "\xa3\xa6\x18\xbd\x9b\x21\xa0\xf1\xea\xfe\x00\x0d\x15\xa1\x71\xae\x0c\x04\xc7\x55"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -166,10 +165,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
-    std::function<void(int)> notifier_language;
+    WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", notifier_language, font);
+                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -181,7 +180,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x6d\x36\x8b\x6e\xd7\x5c\x83\xc2\x61\x82\xfe\xac\xe8\x73\xeb\xc7\x19\x76\x33\x60"
+        "\xfc\x64\xc9\xb0\xee\x24\x2e\x22\xce\xe6\x90\x45\xc8\xbc\x5b\x86\xbc\x56\x49\x86"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -192,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xa8\x54\x3e\xcc\x6d\x3b\x92\x6b\xfa\x47\xe2\x7c\x81\x02\x19\x9a\x22\xc9\x1a\x37"
+        "\x83\x5d\x86\x4b\xb8\x85\x30\x12\xa8\xa2\x9c\x07\xd9\x11\xab\xf9\xf8\x27\x60\xc3"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -207,10 +206,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
-    std::function<void(int)> notifier_language;
+    WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", notifier_language, font);
+                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -222,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x72\xf7\x63\xf8\x23\xd7\x95\xfe\xf7\x1f\xc6\xb1\xdd\x85\x1a\x06\x7d\x8b\xd5\xb9"
+        "\xcb\xe2\xaa\x03\x38\xea\x41\xe7\xbd\x18\xb7\x8d\xbc\xad\x15\x71\x9b\x50\x75\x12"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -237,10 +236,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
-    std::function<void(int)> notifier_language;
+    WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", notifier_language, font);
+                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -278,10 +277,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
             this->event = event;
         }
     } notifier;
-    std::function<void(int)> notifier_language;
+    WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", notifier_language, font);
+                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);

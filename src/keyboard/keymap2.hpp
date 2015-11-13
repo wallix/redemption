@@ -928,6 +928,15 @@ struct Keymap2
 
     } // END METHOD - init_layout
 
+    unsigned layout_id() const {
+        for (auto & k : keylayouts) {
+            if (this->keylayout_WORK == k) {
+                return &k - keylayouts;
+            }
+        }
+        return 0;
+    }
+
 
 }; // END STRUCT - Keymap2
 

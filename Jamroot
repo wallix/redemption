@@ -249,6 +249,7 @@ project redemption
 
     <conditional>@defines
 
+    <variant>debug:<define>REDASSERT_AS_ASSERT
     <variant>debug:<cxxflags>-g
 
     <cxxflags>-std=c++11

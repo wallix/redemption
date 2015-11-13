@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000201A_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000201A_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000201A_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000201A_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000201a {    // Bosnian (Cyrillic) (Bosnia and Herzegovina) // Bosniaque (cyrillique)
 
 const static int LCID = 0x0000201a;
+
+const static char * const locale_name = "bs-Cy";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -216,6 +218,7 @@ const static uint8_t nbDeadkeys = 1;
 } // END NAMESPACE - x0000201a
 
 static const Keylayout keylayout_x0000201a( x0000201a::LCID
+                                          , x0000201a::locale_name
                                           , x0000201a::noMod
                                           , x0000201a::shift
                                           , x0000201a::altGr

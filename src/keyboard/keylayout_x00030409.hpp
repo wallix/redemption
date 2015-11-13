@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00030409_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00030409_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00030409_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00030409_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00030409 {    // English (United States) // United States-Dvorak for left hand
 
 const static int LCID = 0x00030409;
+
+const static char * const locale_name = "en-US.dvorak_left";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x005B, 0x005D, 0x002F,    'p',    'f',    'm',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00030409
 
 static const Keylayout keylayout_x00030409( x00030409::LCID
+                                          , x00030409::locale_name
                                           , x00030409::noMod
                                           , x00030409::shift
                                           , x00030409::altGr
