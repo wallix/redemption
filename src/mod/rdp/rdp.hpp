@@ -6370,9 +6370,16 @@ public:
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                         char message[4096];
+#ifdef __GNUG__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# endif
                         snprintf(message, sizeof(message),
                             TR("process_interrupted_security_policies", this->lang),
                             application_name.c_str());
+#ifdef __GNUG__
+    #pragma GCC diagnostic pop
+# endif
 
                         std::string string_message = message;
                         this->display_osd_message(string_message);
