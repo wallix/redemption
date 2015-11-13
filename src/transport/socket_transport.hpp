@@ -446,7 +446,16 @@ public:
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
 
-    void enable_client_tls(bool ignore_certificate_change, const char * certif_path) throw (Error) override {
+    void enable_client_tls(
+                bool ignore_certificate_change,
+                configs::ServerCertCheck server_cert_check,
+                configs::ServerNotification server_access_allowed_notification,
+                configs::ServerNotification server_cert_create_notification,
+                configs::ServerNotification server_cert_success_notification,
+                configs::ServerNotification server_cert_failure_notification,
+                configs::ServerNotification server_cert_error_notification,
+                const char * certif_path
+            ) throw (Error) override {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS");
             return;

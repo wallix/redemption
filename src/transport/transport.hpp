@@ -105,7 +105,16 @@ public:
         this->last_quantum_sent = 0;
     }
 
-    virtual void enable_client_tls(bool ignore_certificate_change, const char * certif_path)
+    virtual void enable_client_tls(
+            bool ignore_certificate_change,
+            configs::ServerCertCheck server_cert_check,
+            configs::ServerNotification server_access_allowed_notification,
+            configs::ServerNotification server_cert_create_notification,
+            configs::ServerNotification server_cert_success_notification,
+            configs::ServerNotification server_cert_failure_notification,
+            configs::ServerNotification server_cert_error_notification,
+            const char * certif_path
+        )
     {
         // default enable_tls do nothing
     }

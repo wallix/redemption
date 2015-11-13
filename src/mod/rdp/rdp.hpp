@@ -377,6 +377,14 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string end_session_message;
 
     const unsigned certificate_change_action;
+
+    const configs::ServerCertCheck server_cert_check;
+    const configs::ServerNotification server_access_allowed_notification;
+    const configs::ServerNotification server_cert_create_notification;
+    const configs::ServerNotification server_cert_success_notification;
+    const configs::ServerNotification server_cert_failure_notification;
+    const configs::ServerNotification server_cert_error_notification;
+
     const char * certif_path;
 
     bool enable_polygonsc;
@@ -557,6 +565,12 @@ public:
         , open_session_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
         , certificate_change_action(mod_rdp_params.certificate_change_action)
+        , server_cert_check(mod_rdp_params.server_cert_check)
+        , server_access_allowed_notification(mod_rdp_params.server_access_allowed_notification)
+        , server_cert_create_notification(mod_rdp_params.server_cert_create_notification)
+        , server_cert_success_notification(mod_rdp_params.server_cert_success_notification)
+        , server_cert_failure_notification(mod_rdp_params.server_cert_failure_notification)
+        , server_cert_error_notification(mod_rdp_params.server_cert_error_notification)
         , certif_path([](const char * device_id){
             size_t lg_certif_path = strlen(CERTIF_PATH);
             size_t lg_dev_id = strlen(device_id);
@@ -1611,7 +1625,16 @@ public:
                     }
                     switch (this->nego.state){
                     default:
-                        this->nego.server_event(this->certificate_change_action == 1, this->certif_path);
+                        this->nego.server_event(
+                                this->certificate_change_action == 1,
+                                server_cert_check,
+                                server_access_allowed_notification,
+                                server_cert_create_notification,
+                                server_cert_success_notification,
+                                server_cert_failure_notification,
+                                server_cert_error_notification,
+                                this->certif_path
+                            );
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         // Basic Settings Exchange
