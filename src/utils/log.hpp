@@ -70,10 +70,13 @@ typedef struct _code {
 
 #ifdef LOGPRINT
 #define LOG LOGPRINT__REDEMPTION__INTERNAL
+#define LOG_SESSION LOGPRINT__REDEMPTION__SESSION__INTERNAL
 #elif defined(LOGNULL)
 #define LOG LOGNULL__REDEMPTION__INTERNAL
+#define LOG_SESSION LOGNULL__REDEMPTION__SESSION__INTERNAL
 #else
 #define LOG LOGSYSLOG__REDEMPTION__INTERNAL
+#define LOG_SESSION LOGSYSLOG__REDEMPTION__SESSION__INTERNAL
 #endif
 
 // LOG_EMERG      system is unusable
@@ -114,6 +117,70 @@ static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *for
     syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
 }
 
+static inline void LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(
+    bool duplicate_with_pid,
+
+    const char * session_type,
+    const char * type,
+    const char * session_id,
+    const char * user,
+    const char * device,
+    const char * service,
+    const char * account,
+
+    int priority,
+    const char *format,
+    ...)
+{
+    const CODE prioritynames[] =
+    {
+        { "EMERG"/*, LOG_EMERG*/ },
+        { "ALERT"/*, LOG_ALERT*/ },
+        { "CRIT"/*, LOG_CRIT*/ },
+        { "ERR"/*, LOG_ERR*/ },
+        { "WARNING"/*, LOG_WARNING*/ },
+        { "NOTICE"/*, LOG_NOTICE*/ },
+        { "INFO"/*, LOG_INFO*/ },
+        { "DEBUG"/*, LOG_DEBUG*/ },
+        { nullptr/*, -1*/ }
+    };
+    char message[8192];
+    va_list vl;
+    va_start (vl, format);
+#ifdef __clang__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# endif
+    vsnprintf(message, 8191, format, vl);
+#ifdef __clang__
+    #pragma GCC diagnostic pop
+# endif
+    va_end(vl);
+    if (duplicate_with_pid) {
+        syslog(priority, "%s (%d/%d) -- type='%s'%s%s", prioritynames[priority].c_name, getpid(), getpid(), type,
+            ((*format) ? " " : ""),
+            message);
+    }
+    syslog(priority,
+           "[%s Session] "
+               "type='%s' "
+               "session_id='%s' "
+               "user='%s' "
+               "device='%s' "
+               "service='%s' "
+               "account='%s'%s"
+               "%s",
+           session_type,
+           type,
+           session_id,
+           user,
+           device,
+           service,
+           account,
+            ((*format) ? " " : ""),
+           message);
+}
+
 static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
     const CODE prioritynames[] =
@@ -143,8 +210,88 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
     printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
 }
 
+static inline void LOGPRINT__REDEMPTION__SESSION__INTERNAL(
+    bool duplicate_with_pid,
+
+    const char * session_type,
+    const char * type,
+    const char * session_id,
+    const char * user,
+    const char * device,
+    const char * service,
+    const char * account,
+
+    int priority,
+    const char *format,
+    ...)
+{
+    (void)session_type;
+    (void)type;
+    (void)session_id;
+    (void)user;
+    (void)device;
+    (void)service;
+    (void)account;
+
+    (void)duplicate_with_pid;
+
+    const CODE prioritynames[] =
+    {
+        { "EMERG"/*, LOG_EMERG*/ },
+        { "ALERT"/*, LOG_ALERT*/ },
+        { "CRIT"/*, LOG_CRIT*/ },
+        { "ERR"/*, LOG_ERR*/ },
+        { "WARNING"/*, LOG_WARNING*/ },
+        { "NOTICE"/*, LOG_NOTICE*/ },
+        { "INFO"/*, LOG_INFO*/ },
+        { "DEBUG"/*, LOG_DEBUG*/ },
+        { nullptr/*, -1*/ }
+    };
+    char message[8192];
+    va_list vl;
+    va_start (vl, format);
+#ifdef __clang__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# endif
+    vsnprintf(message, 8191, format, vl);
+#ifdef __clang__
+    #pragma GCC diagnostic pop
+# endif
+    va_end(vl);
+    printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
+}
+
 static inline void LOGNULL__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
+    (void)priority;
+    (void)format;
+}
+
+static inline void LOGNULL__REDEMPTION__SESSION__INTERNAL(
+    bool duplicate_with_pid,
+
+    const char * session_type,
+    const char * type,
+    const char * session_id,
+    const char * user,
+    const char * device,
+    const char * service,
+    const char * account,
+
+    int priority,
+    const char *format,
+    ...)
+{
+    (void)session_type;
+    (void)type;
+    (void)session_id;
+    (void)user;
+    (void)device;
+    (void)service;
+    (void)account;
+
+    (void)duplicate_with_pid;
     (void)priority;
     (void)format;
 }

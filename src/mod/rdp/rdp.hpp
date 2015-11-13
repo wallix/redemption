@@ -2699,7 +2699,7 @@ public:
 
                                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-                                this->acl->log3("SESSION_DISCONNECTED_BY_TARGET");
+                                this->acl->log4(false, "SESSION_DISCONNECTED_BY_TARGET");
                             }
                             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
@@ -2831,7 +2831,7 @@ public:
                                             this->connection_finalization_state = UP_AND_RUNNING;
 
                                             if (this->acl && !this->deactivation_reactivation_in_progress) {
-                                                this->acl->log3("SESSION_ESTABLISHED_SUCCESSFULLY");
+                                                this->acl->log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
                                             }
 
                                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -6086,7 +6086,7 @@ public:
             this->send_disconnect_ultimatum();
         }
         if (this->acl) {
-            this->acl->log3("SESSION_ENDED_BY_PROXY");
+            this->acl->log4(false, "SESSION_ENDED_BY_PROXY");
         }
     }
 
@@ -6325,14 +6325,14 @@ public:
                 std::string parameters(separator + 1);
 
                 if (!order.compare("PasswordTextBox.SetFocus")) {
-                    std::string info(" status='" + parameters + "'");
-                    this->acl->log3(order.c_str(), info.c_str());
+                    std::string info("status='" + parameters + "'");
+                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_focus_on_password_textbox(!parameters.compare("yes"));
                 }
                 else if (!order.compare("ConsentUI.IsVisible")) {
-                    std::string info(" status='" + parameters + "'");
-                    this->acl->log3(order.c_str(), info.c_str());
+                    std::string info("status='" + parameters + "'");
+                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_consent_ui_visible(!parameters.compare("yes"));
                 }
@@ -6344,8 +6344,8 @@ public:
                         std::string code(subitems, subitem_separator - subitems);
                         std::string display_name(subitem_separator + 1);
 
-                        std::string info(" code='" + code + "' name='" + display_name + "'");
-                        this->acl->log3(order.c_str(), info.c_str());
+                        std::string info("code='" + code + "' name='" + display_name + "'");
+                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                         this->front.set_keylayout(::strtol(code.c_str(), nullptr, 16));
                     }
@@ -6355,8 +6355,8 @@ public:
                 }
                 else if (!order.compare("NewProcess") ||
                          !order.compare("CompletedProcess")) {
-                    std::string info(" command_line='" + parameters + "'");
-                    this->acl->log3(order.c_str(), info.c_str());
+                    std::string info("command_line='" + parameters + "'");
+                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                 }
                 else if (!order.compare("OutboundConnectionBlocked")) {
                     const char * subitems          = parameters.c_str();
@@ -6366,8 +6366,8 @@ public:
                         std::string rule(subitems, subitem_separator - subitems);
                         std::string application_name(subitem_separator + 1);
 
-                        std::string info(" rule='" + rule + "' application_name='" + application_name + "'");
-                        this->acl->log3(order.c_str(), info.c_str());
+                        std::string info("rule='" + rule + "' application_name='" + application_name + "'");
+                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                         char message[4096];
                         snprintf(message, sizeof(message),
@@ -6396,8 +6396,8 @@ public:
                             std::string window_class(subitems, subitem_separator - subitems);
                             std::string command_line(subitem_separator + 1);
 
-                            std::string info(" text='" + text + "' class='" + window_class + "' command_line='" + command_line + "'");
-                            this->acl->log3(order.c_str(), info.c_str());
+                            std::string info("text='" + text + "' class='" + window_class + "' command_line='" + command_line + "'");
+                            this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                         }
                         else {
                             message_format_invalid = true;
@@ -6415,8 +6415,8 @@ public:
                         std::string window(subitems, subitem_separator - subitems);
                         std::string button(subitem_separator + 1);
 
-                        std::string info(" window='" + window + "' button='" + button + "'");
-                        this->acl->log3(order.c_str(), info.c_str());
+                        std::string info("window='" + window + "' button='" + button + "'");
+                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                     }
                     else {
                         message_format_invalid = true;
@@ -6430,8 +6430,8 @@ public:
                         std::string window(subitems, subitem_separator - subitems);
                         std::string edit(subitem_separator + 1);
 
-                        std::string info(" window='" + window + "' edit='" + edit + "'");
-                        this->acl->log3(order.c_str(), info.c_str());
+                        std::string info("window='" + window + "' edit='" + edit + "'");
+                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                     }
                     else {
                         message_format_invalid = true;

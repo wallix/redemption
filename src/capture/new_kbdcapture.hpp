@@ -293,9 +293,13 @@ public:
 
     void flush() {
         if (this->unlogged_data.get_offset()) {
-            if (this->enable_keyboard_log_syslog) {
-                LOG( LOG_INFO, "%s data='%.*s'", this->log_prefix
-                   , (unsigned)this->unlogged_data.get_offset(), this->unlogged_data.get_data());
+            {
+                char extra[65536];
+                snprintf(extra, sizeof(extra), "data='%.*s'",
+                    (unsigned)this->unlogged_data.get_offset(),
+                    this->unlogged_data.get_data());
+                this->authentifier->log4(this->enable_keyboard_log_syslog,
+                    "KBD input", extra);
             }
 
             if (this->data.has_room(this->unlogged_data.get_offset())) {

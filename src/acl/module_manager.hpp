@@ -760,7 +760,7 @@ public:
                 static const char * name = "RDP Target";
 
                 if (acl) {
-                    acl->log3("CREATE_CONNECTION");
+                    acl->log4(false, "CREATE_CONNECTION");
                 }
 
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
@@ -770,7 +770,7 @@ public:
 
                 if (client_sck == -1) {
                     if (acl) {
-                        acl->log3("CONNECTION_FAILED");
+                        acl->log4(false, "CONNECTION_FAILED");
                     }
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
@@ -860,7 +860,7 @@ public:
                 UdevRandom gen;
 
                 if (acl) {
-                    acl->log3("CREATE_SESSION");
+                    acl->log4(false, "CREATE_SESSION");
                 }
 
                 try {
@@ -880,7 +880,7 @@ public:
                 }
                 catch (...) {
                     if (acl) {
-                        acl->log3("SESSION_CREATION_FAILED");
+                        acl->log4(false, "SESSION_CREATION_FAILED");
                     }
 
                     throw;
@@ -902,7 +902,7 @@ public:
                 static const char * name = "VNC Target";
 
                 if (acl) {
-                    acl->log3("CREATE_CONNECTION");
+                    acl->log4(false, "CREATE_CONNECTION");
                 }
 
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
@@ -912,7 +912,7 @@ public:
 
                 if (client_sck == -1) {
                     if (acl) {
-                        acl->log3("CONNECTION_FAILED");
+                        acl->log4(false, "CONNECTION_FAILED");
                     }
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
@@ -922,7 +922,7 @@ public:
                 this->ini.set<cfg::context::auth_error_message>("failed authentification on remote VNC host");
 
                 if (acl) {
-                    acl->log3("CREATE_SESSION");
+                    acl->log4(false, "CREATE_SESSION");
                 }
 
                 try {
@@ -959,7 +959,7 @@ public:
                 }
                 catch (...) {
                     if (acl) {
-                        acl->log3("SESSION_CREATION_FAILED");
+                        acl->log4(false, "SESSION_CREATION_FAILED");
                     }
 
                     throw;

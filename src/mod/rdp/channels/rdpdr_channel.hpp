@@ -1368,13 +1368,13 @@ public:
                                         if (!::ends_case_with(
                                                 std::get<2>(*target_iter)->c_str(),
                                                 "/desktop.ini")) {
-                                            if (!this->param_dont_log_data_into_syslog &&
-                                                this->param_acl) {
-                                                std::string info(" file_name='");
+                                            if (this->param_acl) {
+                                                std::string info("file_name='");
                                                 info += std::get<2>(*target_iter)->c_str();
                                                 info += "'";
 
-                                                this->param_acl->log3(
+                                                this->param_acl->log4(
+                                                    !this->param_dont_log_data_into_syslog,
                                                     "DR_READ",
                                                     info.c_str());
                                             }
@@ -1443,13 +1443,14 @@ public:
                                 if ((device_io_response.DeviceId() == std::get<0>(*target_iter)) &&
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<4>(*target_iter)) {
-                                        if (!this->param_dont_log_data_into_syslog &&
-                                            this->param_acl) {
-                                            std::string info(" file_name='");
+                                        if (this->param_acl) {
+                                            std::string info("file_name='");
                                             info += std::get<2>(*target_iter)->c_str();
                                             info += "'";
 
-                                            this->param_acl->log3("DR_WRITE",
+                                            this->param_acl->log4(
+                                                !this->param_dont_log_data_into_syslog,
+                                                "DR_WRITE",
                                                 info.c_str());
                                         }
 

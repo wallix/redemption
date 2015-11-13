@@ -242,10 +242,6 @@ private:
     bool process_client_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        if (this->param_dont_log_data_into_syslog) {
-            return true;
-        }
-
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             const auto saved_chunk_p = chunk.get_current();
 
@@ -367,13 +363,14 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info(" file_name='");
+                    std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log3(
+                    this->param_acl->log4(
+                        !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
                         info.c_str());
                 }
@@ -402,13 +399,14 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info(" file_name='");
+                    std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log3(
+                    this->param_acl->log4(
+                        !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
                         info.c_str());
                 }
@@ -807,10 +805,6 @@ public:
     bool process_server_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        if (this->param_dont_log_data_into_syslog) {
-            return true;
-        }
-
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             const auto saved_chunk_p = chunk.get_current();
 
@@ -904,13 +898,14 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info(" file_name='");
+                    std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log3(
+                    this->param_acl->log4(
+                        !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                         info.c_str());
                 }
@@ -939,13 +934,14 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info(" file_name='");
+                    std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log3(
+                    this->param_acl->log4(
+                        this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                         info.c_str());
                 }
