@@ -66,6 +66,7 @@ public:
                 TR("login", language(vars)),
                 TR("password", language(vars)),
                 vars.get<cfg::context::opt_message>().c_str(),
+                [&front](int LCDI) { front.set_keylayout(LCDI); },
                 this->font(), Translator(language(vars)), this->theme())
         , vars(vars)
     {

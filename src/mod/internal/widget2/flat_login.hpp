@@ -34,7 +34,10 @@
 #include "theme.hpp"
 #include "defines.hpp"
 
+#include <array>
+
 // #include "scroll.hpp"
+#define NUMBER_LCDI_LANGUAGE 4
 
 class FlatLogin : public WidgetParent
 {
@@ -53,6 +56,13 @@ public:
     CompositeArray composite_array;
 
 private:
+    WidgetFlatButton button_selector_language;
+    static constexpr std::array<char const *, NUMBER_LCDI_LANGUAGE> texts_language {{"fr", "en", "ru", "de"}};
+    static constexpr std::array<int, NUMBER_LCDI_LANGUAGE> LCDI_language {{0x40c, 0x809, 0x419, 0x407}};
+    int selected_language = -1;
+
+    std::function<void(int)> notifier_language;
+
     Translator tr;
 
     // WidgetFrame frame;
@@ -68,6 +78,7 @@ public:
               const char * label_text_login,
               const char * label_text_password,
               const char * label_error_message,
+              std::function<void(int)> notifier_language,
               Font const & font, Translator tr = Translator(), Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
@@ -98,6 +109,8 @@ public:
         , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
                    theme.global.fgcolor, theme.global.bgcolor,
                    theme.global.focus_color, font, 6, 2)
+        , button_selector_language(drawable, 0, 0, *this, this, nullptr, true, -20,
+                                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font, 7, 7)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
         //          parent, notifier, -17)
@@ -105,6 +118,7 @@ public:
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
+        , notifier_language(std::move(notifier_language))
         , tr(tr)
     {
         this->impl = &composite_array;
@@ -125,6 +139,7 @@ public:
 
         this->add_widget(&this->error_message_label);
 
+        this->add_widget(&this->button_selector_language);
 
         // Center bloc positionning
         // Login and Password boxes
@@ -166,6 +181,12 @@ public:
         this->helpicon.set_button_x(width - 60);
         this->helpicon.set_button_y(height - 60);
 
+        this->button_selector_language.set_button_x(60);
+        this->button_selector_language.set_button_y(height - 60);
+        this->button_selector_language.label.set_text(tr("kbd_default"));
+        this->button_selector_language.set_button_cx(this->button_selector_language.label.rect.cx);
+        this->button_selector_language.set_button_cy(this->button_selector_language.label.rect.cy);
+
         // this->add_widget(&this->frame);
         // this->add_widget(&this->vbar);
         // this->add_widget(&this->hbar);
@@ -185,6 +206,20 @@ public:
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
+        if (widget == &this->button_selector_language
+          && (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1)) {
+            auto rect = this->button_selector_language.rect;
+            this->selected_language = (this->selected_language +1) % texts_language.size();
+            this->button_selector_language.label.set_text(texts_language[this->selected_language]);
+            this->button_selector_language.set_button_cx(this->button_selector_language.label.rect.cx);
+            this->button_selector_language.set_button_cy(this->button_selector_language.label.rect.cy);
+            rect.cx = std::max(rect.cx, this->button_selector_language.rect.cx);
+            rect.cy = std::max(rect.cy, this->button_selector_language.rect.cy);
+            this->draw(rect);
+
+            this->notifier_language(LCDI_language[this->selected_language]);
+        }
+
         if ((widget == &this->login_edit
              || widget == &this->password_edit)
              && event == NOTIFY_SUBMIT) {
@@ -222,5 +257,8 @@ public:
         WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
     }
 };
+
+constexpr std::array<char const *, NUMBER_LCDI_LANGUAGE> FlatLogin::texts_language;
+constexpr std::array<int, NUMBER_LCDI_LANGUAGE> FlatLogin::LCDI_language;
 
 #endif

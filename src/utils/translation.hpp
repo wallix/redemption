@@ -61,7 +61,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 55> trans_t;
+    typedef std::array<value_type, 56> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -173,8 +173,9 @@ private:
              "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."}},
         {"process_interrupted_security_policies",
             {"The process '%s' was interrupted in accordance with security policies.",
-             "Le processus '%s' a été interrompu conformément aux politiques de sécurité."}}
-        }}
+             "Le processus '%s' a été interrompu conformément aux politiques de sécurité."}},
+        {"kbd_default", /*{"Default keyboard.", "Clavier par défaut."}*/{"Def.", "Déf."} },
+    }}
     {
         std::sort(this->trans.begin(), this->trans.end());
     }
