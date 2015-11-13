@@ -290,7 +290,7 @@ public:
 
     void flush() {
         if (this->unlogged_data.get_offset()) {
-            {
+            if (this->authentifier) {
                 char extra[65536];
                 snprintf(extra, sizeof(extra), "data='%.*s'",
                     (unsigned)this->unlogged_data.get_offset(),
