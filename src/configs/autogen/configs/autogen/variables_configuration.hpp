@@ -1185,16 +1185,6 @@ namespace cfg {
             type value{0};
         };
 
-        // 0: Cancel connection and reports error.
-        // 1: Replace existing certificate and continue connection.
-        struct certificate_change_action {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::none;
-            }
-            using type = ::configs::Range<unsigned, 0, 1, 0>;
-            type value{1};
-        };
-
         // Enables support of additional drawing orders:
         //   15: MultiDstBlt
         //   16: MultiPatBlt
@@ -1953,7 +1943,6 @@ struct mod_rdp
 : cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
 , cfg::mod_rdp::open_session_timeout
-, cfg::mod_rdp::certificate_change_action
 , cfg::mod_rdp::extra_orders
 , cfg::mod_rdp::enable_nla
 , cfg::mod_rdp::enable_kerberos

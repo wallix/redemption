@@ -83,7 +83,6 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
-    ini.set<cfg::mod_rdp::certificate_change_action>(0);
     ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::video::png_interval>(3000);
     ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);

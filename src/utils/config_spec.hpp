@@ -239,11 +239,6 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<uint32_>(), "open_session_timeout", set(0));
         W.sep();
-        W.member(A, type_<SelectRange<unsigned, 0, 1>>(), "certificate_change_action", desc{
-            "0: Cancel connection and reports error.\n"
-            "1: Replace existing certificate and continue connection."
-        }, set(1));
-        W.sep();
         W.member(A, type_<std::string>(), "extra_orders", desc{
             "Enables support of additional drawing orders:\n"
             "  15: MultiDstBlt\n"
