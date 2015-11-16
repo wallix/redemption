@@ -6437,13 +6437,13 @@ public:
                 std::string parameters(separator + 1);
 
                 if (!order.compare("PasswordTextBox.SetFocus")) {
-                    std::string info("status='" + parameters + "'");
+                    std::string info("status=\"" + parameters + "\"");
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_focus_on_password_textbox(!parameters.compare("yes"));
                 }
                 else if (!order.compare("ConsentUI.IsVisible")) {
-                    std::string info("status='" + parameters + "'");
+                    std::string info("status=\"" + parameters + "\"");
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_consent_ui_visible(!parameters.compare("yes"));
@@ -6456,7 +6456,7 @@ public:
                         std::string code(subitems, subitem_separator - subitems);
                         std::string display_name(subitem_separator + 1);
 
-                        std::string info("code='" + code + "' name='" + display_name + "'");
+                        std::string info("code=\"" + code + "\" name=\"" + display_name + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                         this->front.set_keylayout(::strtol(code.c_str(), nullptr, 16));
@@ -6467,7 +6467,7 @@ public:
                 }
                 else if (!order.compare("NewProcess") ||
                          !order.compare("CompletedProcess")) {
-                    std::string info("command_line='" + parameters + "'");
+                    std::string info("command_line=\"" + parameters + "\"");
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                 }
                 else if (!order.compare("OutboundConnectionBlocked")) {
@@ -6478,7 +6478,7 @@ public:
                         std::string rule(subitems, subitem_separator - subitems);
                         std::string application_name(subitem_separator + 1);
 
-                        std::string info("rule='" + rule + "' application_name='" + application_name + "'");
+                        std::string info("rule=\"" + rule + "\" application_name=\"" + application_name + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                         char message[4096];
@@ -6515,7 +6515,7 @@ public:
                             std::string window_class(subitems, subitem_separator - subitems);
                             std::string command_line(subitem_separator + 1);
 
-                            std::string info("text='" + text + "' class='" + window_class + "' command_line='" + command_line + "'");
+                            std::string info("text=\"" + text + "\" class=\"" + window_class + "\" command_line=\"" + command_line + "\"");
                             this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                         }
                         else {
@@ -6534,7 +6534,7 @@ public:
                         std::string window(subitems, subitem_separator - subitems);
                         std::string button(subitem_separator + 1);
 
-                        std::string info("window='" + window + "' button='" + button + "'");
+                        std::string info("window=\"" + window + "\" button=\"" + button + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                     }
                     else {
@@ -6549,7 +6549,7 @@ public:
                         std::string window(subitems, subitem_separator - subitems);
                         std::string edit(subitem_separator + 1);
 
-                        std::string info("window='" + window + "' edit='" + edit + "'");
+                        std::string info("window=\"" + window + "\" edit=\"" + edit + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                     }
                     else {
