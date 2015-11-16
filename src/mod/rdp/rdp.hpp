@@ -6284,6 +6284,8 @@ public:
                 LOG(LOG_INFO, "Session Probe is ready.");
             }
 
+            this->front.session_probe_started();
+
             if (this->enable_session_probe_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",

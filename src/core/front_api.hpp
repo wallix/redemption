@@ -73,6 +73,7 @@ class FrontAPI : public DrawApi {
     ////////////////////////////////
     // Session Probe.
 
+    virtual void session_probe_started() {}
     virtual void set_keylayout(int LCID) {}
     /// \return  -1 is error
     virtual int get_keylayout() const { return -1; }

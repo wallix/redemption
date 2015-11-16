@@ -419,6 +419,8 @@ private:
 
     bool input_event_and_graphics_update_disabled = false;
 
+    bool session_probe_started_ = false;
+
 public:
     Front ( Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -2434,6 +2436,10 @@ private:
     #pragma GCC diagnostic pop
 # endif
         return true;
+    }
+
+    void session_probe_started() override {
+        this->session_probe_started_ = true;
     }
 
     void set_keylayout(int LCID) override {
@@ -4603,7 +4609,7 @@ private:
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
             && decoded_data.get_offset()) {
-            if (this->focus_on_password_textbox || this->consent_ui_is_visible) {
+            if (this->focus_on_password_textbox || this->consent_ui_is_visible || !this->session_probe_started_) {
                 unsigned char_count = decoded_data.get_offset() / sizeof(uint32_t);
                 decoded_data.rewind();
                 for (; char_count > 0; char_count--) {
