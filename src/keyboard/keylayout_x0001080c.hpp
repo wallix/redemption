@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0001080C_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0001080C_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0001080C_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0001080C_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0001080c {    // French (Belgium) // Belgian (Comma)
 
 const static int LCID = 0x0001080c;
+
+const static char * const locale_name = "fr-BE";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0026, 0x00E9, 0x0022, 0x0027, 0x0028, 0x00A7,
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x0001080c
 
 static const Keylayout keylayout_x0001080c( x0001080c::LCID
+                                          , x0001080c::locale_name
                                           , x0001080c::noMod
                                           , x0001080c::shift
                                           , x0001080c::altGr

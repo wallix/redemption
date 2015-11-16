@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00010427_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00010427_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00010427_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00010427_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00010427 {    // Lithuanian (Lithuania) // Lithuanian
 
 const static int LCID = 0x00010427;
+
+const static char * const locale_name = "lt-LT";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0105, 0x010D, 0x0119, 0x0117, 0x012F, 0x0161,
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00010427
 
 static const Keylayout keylayout_x00010427( x00010427::LCID
+                                          , x00010427::locale_name
                                           , x00010427::noMod
                                           , x00010427::shift
                                           , x00010427::altGr

@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000043F_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000043F_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000043F_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000043F_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000043f {    // Kazakh (Kazakhstan) // Kazakh
 
 const static int LCID = 0x0000043f;
+
+const static char * const locale_name = "kk-KZ";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0022, 0x04D9, 0x0456, 0x04A3, 0x0493, 0x002C,
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x0000043f
 
 static const Keylayout keylayout_x0000043f( x0000043f::LCID
+                                          , x0000043f::locale_name
                                           , x0000043f::noMod
                                           , x0000043f::shift
                                           , x0000043f::altGr

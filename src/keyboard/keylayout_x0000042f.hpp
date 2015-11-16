@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000042F_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000042F_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000042F_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000042F_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000042f {    // Macedonian (Former Yugoslav Republic of Macedonia) // FYRO Macedonian
 
 const static int LCID = 0x0000042f;
+
+const static char * const locale_name = "mk-MK";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x0000042f
 
 static const Keylayout keylayout_x0000042f( x0000042f::LCID
+                                          , x0000042f::locale_name
                                           , x0000042f::noMod
                                           , x0000042f::shift
                                           , x0000042f::altGr

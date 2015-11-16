@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000041F_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000041F_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000041F_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000041F_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000041f {    // Turkish (Turkey) // Turkish Q
 
 const static int LCID = 0x0000041f;
+
+const static char * const locale_name = "tr-TR.q";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -278,6 +280,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x0000041f
 
 static const Keylayout keylayout_x0000041f( x0000041f::LCID
+                                          , x0000041f::locale_name
                                           , x0000041f::noMod
                                           , x0000041f::shift
                                           , x0000041f::altGr

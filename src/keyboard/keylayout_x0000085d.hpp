@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000085D_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000085D_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000085D_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000085D_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000085d {    // Inuktitut (Latin) (Canada) // Inuktitut Latin
 
 const static int LCID = 0x0000085d;
+
+const static char * const locale_name = "iu-La";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x0000085d
 
 static const Keylayout keylayout_x0000085d( x0000085d::LCID
+                                          , x0000085d::locale_name
                                           , x0000085d::noMod
                                           , x0000085d::shift
                                           , x0000085d::altGr

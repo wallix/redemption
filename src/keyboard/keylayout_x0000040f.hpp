@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000040F_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000040F_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000040F_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000040F_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000040f {    // Icelandic (Iceland) // Icelandic
 
 const static int LCID = 0x0000040f;
+
+const static char * const locale_name = "is-IS";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -269,6 +271,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x0000040f
 
 static const Keylayout keylayout_x0000040f( x0000040f::LCID
+                                          , x0000040f::locale_name
                                           , x0000040f::noMod
                                           , x0000040f::shift
                                           , x0000040f::altGr

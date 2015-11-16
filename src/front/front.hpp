@@ -2440,6 +2440,10 @@ private:
         this->keymap.init_layout(LCID);
     }
 
+    int get_keylayout() const override {
+        return this->keymap.layout_id();
+    }
+
     void set_focus_on_password_textbox(bool set) override {
         this->focus_on_password_textbox = set;
     }

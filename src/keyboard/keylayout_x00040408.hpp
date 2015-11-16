@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00040408_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00040408_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00040408_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00040408_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00040408 {    // Greek (Greece) // Greek (319) Latin
 
 const static int LCID = 0x00040408;
+
+const static char * const locale_name = "el-GR.319_latin";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x00040408
 
 static const Keylayout keylayout_x00040408( x00040408::LCID
+                                          , x00040408::locale_name
                                           , x00040408::noMod
                                           , x00040408::shift
                                           , x00040408::altGr

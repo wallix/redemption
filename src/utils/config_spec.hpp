@@ -23,6 +23,8 @@
 
 #include "configs/types.hpp"
 
+#include "keymap2.hpp"
+
 #include <type_traits>
 #include <sstream>
 #include <vector>
@@ -199,6 +201,15 @@ void config_spec_definition(Writer && W)
     W.section("client", [&]
     {
         W.member(type_<unsigned>(), "keyboard_layout", set(0), w);
+        std::string keyboard_layout_proposals_desc;
+        for (auto k :  keylayouts) {
+            keyboard_layout_proposals_desc += k->locale_name;
+            keyboard_layout_proposals_desc += ", ";
+        }
+        if (!keyboard_layout_proposals_desc.empty()) {
+            keyboard_layout_proposals_desc.resize(keyboard_layout_proposals_desc.size() - 2);
+        }
+        W.member(A, type_<StringList>(), "keyboard_layout_proposals", desc{keyboard_layout_proposals_desc.c_str()}, set("en-US, fr-FR, de-DE, ru-RU"));
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
         W.member(A | X, type_<uint32_>(), "performance_flags_default", set(0));

@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000813_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000813_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000813_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000813_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00000813 {    // Dutch (Belgium) // Belgian (Period)
 
 const static int LCID = 0x00000813;
+
+const static char * const locale_name = "nl-BE";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0026, 0x00E9, 0x0022, 0x0027, 0x0028, 0x00A7,
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x00000813
 
 static const Keylayout keylayout_x00000813( x00000813::LCID
+                                          , x00000813::locale_name
                                           , x00000813::noMod
                                           , x00000813::shift
                                           , x00000813::altGr

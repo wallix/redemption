@@ -420,9 +420,9 @@ def writeLicense(f):
 
 
 #===============================================================================
-def writeHeader(f):
+def writeHeader(f, locale_prefix):
 #===============================================================================
-    line = u"\n#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X{locid}_HPP_)\n".format(locid = localeId.upper())
+    line = u"\n#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X{locid}_HPP_\n".format(locid = localeId.upper())
     f.write(line.encode(u'utf-8'))
     line = u"#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X{locid}_HPP_\n".format(locid = localeId.upper())
     f.write(line.encode(u'utf-8'))
@@ -434,6 +434,8 @@ def writeHeader(f):
                                                                   )
     f.write(line.encode(u'utf-8'))
     line = u"\nconst static int LCID = 0x{locid};\n".format(locid = localeId)
+    f.write(line.encode(u'utf-8'))
+    line = u"\nconst static char * const locale_name = \"{locname}{prx}\";\n".format(locname = locale, prx = locale_prefix)
     f.write(line.encode(u'utf-8'))
 
 # END FUNCTION - writeHeader
@@ -689,6 +691,12 @@ def prepareCtrl(f):
 #===============================================================================
 def writeDeadkeys(f, deadkeys):
 #===============================================================================
+    if len(deadkeys) == 0:
+        line = u"\nconst Keylayout::dkey_t * const deadkeys = nullptr;\n"
+        line += u"\nconst static uint8_t nbDeadkeys = 0;\n"
+        f.write(line.encode(u'utf-8'))
+        return
+
     line = u"\nconst Keylayout::dkey_t deadkeys[] = {acco}\n".format(acco = acco1)
     f.write(line.encode(u'utf-8'))
 
@@ -754,6 +762,8 @@ def writeInstance(f):
 #===============================================================================
     line = u"\nstatic const Keylayout keylayout_x{locid}( x{locid}::LCID\n".format(locid = localeId)
     f.write(line.encode(u'utf-8'))
+    line = u"                                          , x{locid}::locale_name\n".format(locid = localeId)
+    f.write(line.encode(u'utf-8'))
     line = u"                                          , x{locid}::noMod\n".format(locid = localeId)
     f.write(line.encode(u'utf-8'))
     line = u"                                          , x{locid}::shift\n".format(locid = localeId)
@@ -796,91 +806,91 @@ def writeInstance(f):
 #=============================================================
 # Browse source keyboard layout files
 #=============================================================
-for keymap in [ u'./locale/belgian_french.klc'
-              , u'./locale/belgian_comma.klc'
-              , u'./locale/belgian_period.klc'
-              , u'./locale/bosnian.klc'
-              , u'./locale/bulgarian.klc'
-              , u'./locale/bulgarian_latin.klc'
-              , u'./locale/canadian_french.klc'
-              , u'./locale/canadian_french_legacy.klc'
-              , u'./locale/canadian_multilingual.klc'
-              , u'./locale/croatian.klc'
-              , u'./locale/czech.klc'
-              , u'./locale/czech_programmers.klc'
-              , u'./locale/czech_qwerty.klc'
-              , u'./locale/danish.klc'
-              , u'./locale/dutch.klc'
-              , u'./locale/estonian.klc'
-              , u'./locale/faeroese.klc'
-              , u'./locale/finnish.klc'
-              , u'./locale/finnish_sami.klc'
-              , u'./locale/french.klc'
-              , u'./locale/fyro_macedonian.klc'
-              , u'./locale/gaelic.klc'
-              , u'./locale/german_ibm.klc'
-              , u'./locale/german.klc'
-              , u'./locale/greek.klc'
-              , u'./locale/greek_220.klc'
-              , u'./locale/greek_220_latin.klc'
-              , u'./locale/greek_319.klc'
-              , u'./locale/greek_319_latin.klc'
-              , u'./locale/greek_latin.klc'
-              , u'./locale/greek_polytonic.klc'
-              , u'./locale/hungarian_101.klc'
-              , u'./locale/icelandic.klc'
-              , u'./locale/inuktitut_latin.klc'
-              , u'./locale/irish.klc'
-              , u'./locale/kazakh.klc'
-              , u'./locale/kyrgyz_cyrillic.klc'
-              , u'./locale/latin_american.klc'
-              , u'./locale/latvian.klc'
-              , u'./locale/latvian_qwerty.klc'
-              , u'./locale/lithuanian.klc'
-              , u'./locale/lithuanian_ibm.klc'
-              , u'./locale/italian_142.klc'
-              , u'./locale/italian.klc'
-              , u'./locale/luxembourgish.klc'
-              , u'./locale/maltese_47_key.klc'
-              , u'./locale/maltese_48_key.klc'
-              , u'./locale/maori.klc'
-              , u'./locale/mongolian_cyrillic.klc'
-              , u'./locale/norwegian.klc'
-              , u'./locale/norwegian_sami.klc'
-              , u'./locale/polish_214.klc'
-              , u'./locale/polish_programmers.klc'
-              , u'./locale/portuguese.klc'
-              , u'./locale/portuguese_brazilian_abnt.klc'
-              , u'./locale/portuguese_brazilian_abnt2.klc'
-              , u'./locale/romanian.klc'
-              , u'./locale/russian_typewriter.klc'
-              , u'./locale/russian.klc'
-              , u'./locale/sami_ext_finland_sweden.klc'
-              , u'./locale/sami_ext_norway.klc'
-              , u'./locale/serbian_cyrillic.klc'
-              , u'./locale/serbian_latin.klc'
-              , u'./locale/slovak.klc'
-              , u'./locale/slovak_qwerty.klc'
-              , u'./locale/slovenian.klc'
-              , u'./locale/spanish.klc'
-              , u'./locale/spanish_variation.klc'
-              , u'./locale/swedish_sami.klc'
-              , u'./locale/swedish.klc'
-              , u'./locale/swiss_french.klc'
-              , u'./locale/swiss_german.klc'
-              , u'./locale/tatar.klc'
-              , u'./locale/turkish_f.klc'
-              , u'./locale/turkish_q.klc'
-              , u'./locale/uk_extended.klc'
-              , u'./locale/uk.klc'
-              , u'./locale/ukrainian.klc'
-              , u'./locale/us_international.klc'
-              , u'./locale/us.klc'
-              , u'./locale/us_dvorak.klc'
-              , u'./locale/us_dvorak_left.klc'
-              , u'./locale/us_dvorak_right.klc'
-              , u'./locale/uzbek_cyrillic.klc'
-              ]:
+for keymap,locale_prefix in [ (u'./locale/belgian_french.klc', ".fr")
+                            , (u'./locale/belgian_comma.klc', "")
+                            , (u'./locale/belgian_period.klc', "")
+                            , (u'./locale/bosnian.klc', "")
+                            , (u'./locale/bulgarian.klc', "")
+                            , (u'./locale/bulgarian_latin.klc', ".latin")
+                            , (u'./locale/canadian_french.klc', ".fr")
+                            , (u'./locale/canadian_french_legacy.klc', "")
+                            , (u'./locale/canadian_multilingual.klc', ".multilingual")
+                            , (u'./locale/croatian.klc', "")
+                            , (u'./locale/czech.klc', "")
+                            , (u'./locale/czech_programmers.klc', ".programmers")
+                            , (u'./locale/czech_qwerty.klc', ".qwerty")
+                            , (u'./locale/danish.klc', "")
+                            , (u'./locale/dutch.klc', "")
+                            , (u'./locale/estonian.klc', "")
+                            , (u'./locale/faeroese.klc', "")
+                            , (u'./locale/finnish.klc', ".finnish")
+                            , (u'./locale/finnish_sami.klc', "")
+                            , (u'./locale/french.klc', "")
+                            , (u'./locale/fyro_macedonian.klc', "")
+                            , (u'./locale/gaelic.klc', "")
+                            , (u'./locale/german_ibm.klc', ".ibm")
+                            , (u'./locale/german.klc', "")
+                            , (u'./locale/greek.klc', "")
+                            , (u'./locale/greek_220.klc', ".220")
+                            , (u'./locale/greek_220_latin.klc', ".220_latin")
+                            , (u'./locale/greek_319.klc', ".319")
+                            , (u'./locale/greek_319_latin.klc', ".319_latin")
+                            , (u'./locale/greek_latin.klc', ".latin")
+                            , (u'./locale/greek_polytonic.klc', ".polytonic")
+                            , (u'./locale/hungarian_101.klc', "")
+                            , (u'./locale/icelandic.klc', "")
+                            , (u'./locale/inuktitut_latin.klc', "")
+                            , (u'./locale/irish.klc', ".irish")
+                            , (u'./locale/kazakh.klc', "")
+                            , (u'./locale/kyrgyz_cyrillic.klc', "")
+                            , (u'./locale/latin_american.klc', "")
+                            , (u'./locale/latvian.klc', "")
+                            , (u'./locale/latvian_qwerty.klc', ".qwerty")
+                            , (u'./locale/lithuanian.klc', "")
+                            , (u'./locale/lithuanian_ibm.klc', ".ibm")
+                            , (u'./locale/italian_142.klc', ".142")
+                            , (u'./locale/italian.klc', "")
+                            , (u'./locale/luxembourgish.klc', "")
+                            , (u'./locale/maltese_47_key.klc', ".47")
+                            , (u'./locale/maltese_48_key.klc', ".48")
+                            , (u'./locale/maori.klc', "")
+                            , (u'./locale/mongolian_cyrillic.klc', "")
+                            , (u'./locale/norwegian.klc', "")
+                            , (u'./locale/norwegian_sami.klc', "")
+                            , (u'./locale/polish_214.klc', "")
+                            , (u'./locale/polish_programmers.klc', ".programmers")
+                            , (u'./locale/portuguese.klc', "")
+                            , (u'./locale/portuguese_brazilian_abnt.klc', ".abnt")
+                            , (u'./locale/portuguese_brazilian_abnt2.klc', ".abnt2")
+                            , (u'./locale/romanian.klc', "")
+                            , (u'./locale/russian_typewriter.klc', ".typewriter")
+                            , (u'./locale/russian.klc', "")
+                            , (u'./locale/sami_ext_finland_sweden.klc', ".ext_finland_sweden")
+                            , (u'./locale/sami_ext_norway.klc', ".ext_norway")
+                            , (u'./locale/serbian_cyrillic.klc', "")
+                            , (u'./locale/serbian_latin.klc', "")
+                            , (u'./locale/slovak.klc', "")
+                            , (u'./locale/slovak_qwerty.klc', ".qwerty")
+                            , (u'./locale/slovenian.klc', "")
+                            , (u'./locale/spanish.klc', "")
+                            , (u'./locale/spanish_variation.klc', ".variation")
+                            , (u'./locale/swedish_sami.klc', "")
+                            , (u'./locale/swedish.klc', "")
+                            , (u'./locale/swiss_french.klc', "")
+                            , (u'./locale/swiss_german.klc', "")
+                            , (u'./locale/tatar.klc', "")
+                            , (u'./locale/turkish_f.klc', ".f")
+                            , (u'./locale/turkish_q.klc', ".q")
+                            , (u'./locale/uk_extended.klc', "")
+                            , (u'./locale/uk.klc', "")
+                            , (u'./locale/ukrainian.klc', "")
+                            , (u'./locale/us_international.klc', ".international")
+                            , (u'./locale/us.klc', "")
+                            , (u'./locale/us_dvorak.klc', ".dvorak")
+                            , (u'./locale/us_dvorak_left.klc', ".dvorak_left")
+                            , (u'./locale/us_dvorak_right.klc', ".dvorak_right")
+                            , (u'./locale/uzbek_cyrillic.klc', "")
+                            ]:
 
     #==============================================================
     # LOCALE CONTAINER variables
@@ -1135,7 +1145,7 @@ for keymap in [ u'./locale/belgian_french.klc'
     filename = u"./keylayout_x{locid}.hpp".format(locid = localeId)
     f = open(filename, u'w')
     writeLicense(f)
-    writeHeader(f)
+    writeHeader(f, locale_prefix)
 
     razMaps()
 

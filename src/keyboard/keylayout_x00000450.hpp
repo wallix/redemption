@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000450_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000450_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000450_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000450_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00000450 {    // Mongolian (Cyrillic, Mongolia) // Mongolian Cyrillic
 
 const static int LCID = 0x00000450;
+
+const static char * const locale_name = "mn-MN";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x2116, 0x002D, 0x0022, 0x20AE, 0x003A, 0x002E,
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00000450
 
 static const Keylayout keylayout_x00000450( x00000450::LCID
+                                          , x00000450::locale_name
                                           , x00000450::noMod
                                           , x00000450::shift
                                           , x00000450::altGr

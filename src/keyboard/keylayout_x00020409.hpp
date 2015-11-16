@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00020409_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00020409_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00020409_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00020409_HPP_
 
 #include "keylayout.hpp"
 
 namespace x00020409 {    // English (United States) // United States-International
 
 const static int LCID = 0x00020409;
+
+const static char * const locale_name = "en-US.international";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -275,6 +277,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x00020409
 
 static const Keylayout keylayout_x00020409( x00020409::LCID
+                                          , x00020409::locale_name
                                           , x00020409::noMod
                                           , x00020409::shift
                                           , x00020409::altGr

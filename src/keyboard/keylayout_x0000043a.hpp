@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000043A_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000043A_HPP_
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000043A_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000043A_HPP_
 
 #include "keylayout.hpp"
 
 namespace x0000043a {    // Maltese (Malta) // Maltese 47-key
 
 const static int LCID = 0x0000043a;
+
+const static char * const locale_name = "mt-MT.47";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x0000043a
 
 static const Keylayout keylayout_x0000043a( x0000043a::LCID
+                                          , x0000043a::locale_name
                                           , x0000043a::noMod
                                           , x0000043a::shift
                                           , x0000043a::altGr
