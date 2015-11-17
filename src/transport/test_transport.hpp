@@ -87,7 +87,7 @@ private:
         this->current += available_len;
 
         if (available_len != len){
-            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
+            LOG(LOG_INFO, "Check transport out of reference data available=%zu len=%zu", available_len, len);
             LOG(LOG_INFO, "=============== Common Part =======");
             hexdump_c(data, available_len);
             LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
@@ -151,9 +151,9 @@ class LogTransport
 : public Transport
 {
     void do_send(const char * const buffer, size_t len) {
-        LOG(LOG_INFO, "Sending on target (-1) %u bytes", len);
+        LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
         hexdump_c(buffer, len);
-        LOG(LOG_INFO, "Sent dumped on target (-1) %u bytes", len);
+        LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
     }
 };
 

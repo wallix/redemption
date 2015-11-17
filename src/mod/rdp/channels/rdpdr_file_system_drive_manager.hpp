@@ -823,7 +823,7 @@ public:
             LOG(LOG_INFO,
                 "ManagedDirectory::ProcessServerCreateDriveRequest: "
                     "<%p> full_path=\"%s\" drive_access_mode=%s(%d)",
-                this, this->full_path.c_str(), get_open_flag_name(drive_access_mode),
+                static_cast<void*>(this), this->full_path.c_str(), get_open_flag_name(drive_access_mode),
                 drive_access_mode);
         }
 
@@ -860,7 +860,10 @@ public:
         if (verbose) {
             LOG(LOG_INFO,
                 "ManagedDirectory::ProcessServerCreateDriveRequest: <%p> dir=<%p> FileId=%d errno=%d",
-                this, this->dir, (this->dir ? ::dirfd(this->dir) : -1), (this->dir ? 0 : last_error));
+                static_cast<void*>(this),
+                static_cast<void*>(this->dir),
+                (this->dir ? ::dirfd(this->dir) : -1),
+                (this->dir ? 0 : last_error));
         }
 
         const uint32_t IoStatus = [] (const DIR * const dir, int last_error) -> uint32_t {
@@ -1035,7 +1038,7 @@ public:
                 LOG(LOG_INFO,
                     "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
                         "<%p> full_path=\"%s\"",
-                    this, file_full_path.c_str());
+                    static_cast<void*>(this), file_full_path.c_str());
             }
 
             struct stat64 sb;
@@ -1196,7 +1199,7 @@ public:
             LOG(LOG_INFO,
                 "ManagedFile::ProcessServerCreateDriveRequest: "
                     "<%p> full_path=\"%s\" drive_access_mode=%s(%d)",
-                this, this->full_path.c_str(),
+                static_cast<void*>(this), this->full_path.c_str(),
                 get_open_flag_name(drive_access_mode), drive_access_mode);
         }
 
@@ -1273,7 +1276,7 @@ public:
         if (verbose) {
             LOG(LOG_INFO,
                 "ManagedFile::ProcessServerCreateDriveRequest: <%p> FileId=%d errno=%d",
-                this, this->fd, ((this->fd == -1) ? last_error : 0));
+                static_cast<void*>(this), this->fd, ((this->fd == -1) ? last_error : 0));
         }
 
         const uint32_t IoStatus = [] (int fd, int last_error) -> uint32_t {
@@ -1471,7 +1474,7 @@ public:
 
         LOG(LOG_INFO,
             "ManagedFile::ProcessServerDriveWriteRequest(): "
-                "CurrentOffset=%" PRIu64 " InRemain=%" PRIu64 " RemainingNumberOfBytesToWrite=%" PRIu64,
+                "CurrentOffset=%" PRIu32 " InRemain=%zu RemainingNumberOfBytesToWrite=%" PRIu32,
             current_offset, in_stream.in_remain(), remaining_number_of_bytes_to_write);
 
         off64_t seek_result = ::lseek64(this->fd, current_offset, SEEK_SET);

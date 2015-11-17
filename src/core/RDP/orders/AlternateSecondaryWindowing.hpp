@@ -82,7 +82,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Rectangle: expected=%u remains=%u",
+                    "Truncated Rectangle: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -231,7 +231,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (0): expected=%u remains=%u",
+                    "Truncated IconInfo (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -250,7 +250,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (1): expected=%u remains=%u",
+                    "Truncated IconInfo (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -265,7 +265,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (2): expected=%u remains=%u",
+                    "Truncated IconInfo (2): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -281,7 +281,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (3): expected=%u remains=%u",
+                    "Truncated IconInfo (3): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -382,7 +382,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated CachedIconInfo: expected=%u remains=%u",
+                    "Truncated CachedIconInfo: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -490,7 +490,7 @@ protected:
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated Window Information Common Header: "
-                        "expected=%u remains=%u",
+                        "expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -1004,7 +1004,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (0): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (0): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1019,7 +1019,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (1): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1035,7 +1035,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (2): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (2): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1050,7 +1050,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (3): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (3): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1060,7 +1060,7 @@ public:
 
             if (!stream.in_check_rem(CbString)) {
                 LOG(LOG_ERR,
-                    "Truncated NewOrExistingWindow (4): expected=%u remains=%u",
+                    "Truncated NewOrExistingWindow (4): expected=%u remains=%zu",
                     CbString, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -1072,7 +1072,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (5): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (5): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1096,7 +1096,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (6): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (6): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1112,7 +1112,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (7): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (7): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1128,7 +1128,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (8): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (8): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1143,7 +1143,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (9): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (9): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1158,7 +1158,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (10): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (10): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1174,7 +1174,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (11): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (11): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1190,7 +1190,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (12): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (12): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1206,7 +1206,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1228,7 +1228,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (15): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (15): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1244,7 +1244,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }

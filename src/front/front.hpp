@@ -935,7 +935,7 @@ public:
                                 , int flags) override {
         if (this->verbose & 16) {
             LOG( LOG_INFO
-               , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%u, chunk_size=%u, flags=%x)"
+               , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)"
                , channel.name, channel.chanid, chunk, length, chunk_size, flags);
         }
 
@@ -1053,7 +1053,7 @@ public:
                 X224::CR_TPDU_Recv x224(stream, this->ini.get<cfg::client::bogus_neg_request>());
                 if (x224._header_size != stream.get_capacity()) {
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-                                 " %d bytes remains", stream.get_capacity() - x224._header_size);
+                                 " %zu bytes remains", stream.get_capacity() - x224._header_size);
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
@@ -1483,11 +1483,12 @@ public:
             for (size_t i = 0 ; i < this->channel_list.size(); ++i) {
                 this->channel_join_request_transmission([this,i](MCS::ChannelJoinRequest_Recv & mcs) {
                     if (this->verbose & 16) {
-                        LOG(LOG_INFO, "cjrq[%u] = %u -> cjcf", i, mcs.channelId);
+                        LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16 " -> cjcf", i, mcs.channelId);
                     }
 
                     if (mcs.initiator != this->userid) {
-                        LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                        LOG(LOG_ERR, "MCS error bad userid, expecting %" PRIu16 " got %" PRIu16,
+                            this->userid, mcs.initiator);
                         throw Error(ERR_MCS_BAD_USERID);
                     }
 
@@ -1930,7 +1931,7 @@ public:
                     {
                         expected = 6; /* shareId(4) + originatorId(2) */
                         if (!sctrl.payload.in_check_rem(expected)) {
-                            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
+                            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
                                 expected, sctrl.payload.in_remain());
                             throw Error(ERR_MCS_PDU_TRUNCATED);
                         }
@@ -1941,7 +1942,7 @@ public:
                         (void)originatorId;
                     }
                     if (!sctrl.payload.check_end()) {
-                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u",
+                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%zu",
                             sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
                     }
@@ -2032,7 +2033,7 @@ public:
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++) {
                     if (!cfpie.payload.in_check_rem(1)) {
-                        LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%u",
+                        LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%zu",
                             cfpie.payload.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -2111,7 +2112,7 @@ public:
                 }
 
                 if (cfpie.payload.in_remain() != 0) {
-                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u",
+                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%zu",
                         cfpie.payload.in_remain());
                 }
                 break;
@@ -2177,7 +2178,7 @@ public:
 
                     expected = 8; /* length(4) + flags(4) */
                     if (!sec.payload.in_check_rem(expected)) {
-                        LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
+                        LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%zu",
                             expected, sec.payload.in_remain());
                         throw Error(ERR_MCS);
                     }
@@ -2221,7 +2222,7 @@ public:
                                 expected = 6;   /* shareId(4) + originatorId(2) */
                                 if (!sctrl.payload.in_check_rem(expected)) {
                                     LOG(LOG_ERR,
-                                        "Truncated Confirm active PDU data, need=%u remains=%u",
+                                        "Truncated Confirm active PDU data, need=%u remains=%zu",
                                         expected, sctrl.payload.in_remain());
                                     throw Error(ERR_RDP_DATA_TRUNCATED);
                                 }
@@ -2260,7 +2261,7 @@ public:
                             if (!sctrl.payload.check_end())
                             {
                                 LOG(LOG_ERR,
-                                    "Trailing data after DATAPDU: remains=%u",
+                                    "Trailing data after DATAPDU: remains=%zu",
                                     sctrl.payload.in_remain());
                                 throw Error(ERR_MCS_PDU_TRAILINGDATA);
                             }
@@ -2288,7 +2289,7 @@ public:
                 if (!sec.payload.check_end())
                 {
                     LOG(LOG_ERR,
-                        "Trailing data after SEC: remains=%u",
+                        "Trailing data after SEC: remains=%zu",
                         sec.payload.in_remain());
                     throw Error(ERR_SEC_TRAILINGDATA);
                 }
@@ -2699,7 +2700,7 @@ private:
 
         unsigned expected = 4; /* lengthSourceDescriptor(2) + lengthCombinedCapabilities(2) */
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2708,7 +2709,7 @@ private:
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
 
         if (!stream.in_check_rem(lengthSourceDescriptor)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%zu",
                 lengthSourceDescriptor, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2726,7 +2727,7 @@ private:
 
         expected = 4; /* numberCapabilities(2) + pad(2) */
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2739,13 +2740,15 @@ private:
                 LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
             }
             if (stream.get_current() + 4 > theoricCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d",
+                LOG(LOG_ERR, "Incomplete capabilities received (bad length):"
+                    " expected length=%" PRIu16 " need=%" PRIdPTR " available=%zu",
                     lengthCombinedCapabilities,
                     stream.get_current()-start,
                     stream.in_remain());
             }
             if (stream.get_current() + 4 > actualCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d",
+                LOG(LOG_ERR, "Incomplete capabilities received (need more data):"
+                    " expected length=%" PRIu16 " need=%" PRIdPTR " available=%zu",
                     lengthCombinedCapabilities,
                     stream.get_current()-start,
                     stream.in_remain());
@@ -3255,16 +3258,16 @@ private:
         }
         ShareData_Recv sdata_in(stream, nullptr);
         if (this->verbose & 8) {
-            LOG(LOG_INFO, "sdata_in.pdutype2=%u"
-                          " sdata_in.len=%u"
-                          " sdata_in.compressedLen=%u"
-                          " remains=%u"
-                          " payload_len=%u",
-                unsigned(sdata_in.pdutype2),
-                unsigned(sdata_in.len),
-                unsigned(sdata_in.compressedLen),
-                unsigned(stream.in_remain()),
-                unsigned(sdata_in.payload.get_capacity())
+            LOG(LOG_INFO, "sdata_in.pdutype2=%" PRIu8
+                          " sdata_in.len=%" PRIu16
+                          " sdata_in.compressedLen=%" PRIu16
+                          " remains=%zu"
+                          " payload_len=%zu",
+                sdata_in.pdutype2,
+                sdata_in.len,
+                sdata_in.compressedLen,
+                stream.in_remain(),
+                sdata_in.payload.get_capacity()
             );
         }
 
@@ -3283,7 +3286,7 @@ private:
             {
                 expected = 8;   /* action(2) + grantId(2) + controlId(4) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Control PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Control PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3390,7 +3393,7 @@ private:
             {
                 expected = 4;   /* messageType(2) + targetUser(4) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Synchronize PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Synchronize PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3432,7 +3435,7 @@ private:
             {
                 expected = 4;   /* numberOfAreas(1) + pad3Octects(3) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3442,7 +3445,7 @@ private:
 
                 expected = numberOfAreas * 8;   /* numberOfAreas * (left(2) + top(2) + right(2) + bottom(2)) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3562,7 +3565,7 @@ private:
 
             expected = 8;   /* numberFonts(2) + totalNumFonts(2) + listFlags(2) + entrySize(2) */
             if (!sdata_in.payload.in_check_rem(expected)) {
-                LOG(LOG_ERR, "Truncated Font list PDU data, need=%u remains=%u",
+                LOG(LOG_ERR, "Truncated Font list PDU data, need=%u remains=%zu",
                     expected, sdata_in.payload.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }

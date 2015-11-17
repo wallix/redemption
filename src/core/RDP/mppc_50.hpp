@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_MPPC_50_HPP_
 #define _REDEMPTION_CORE_RDP_MPPC_50_HPP_
 
+#include <cinttypes>
+
 #define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
 #include <stdint.h>
 #include "mppc.hpp"
@@ -50,16 +52,16 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
         LOG(LOG_INFO, "Type=RDP 5.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf,               16);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
     void dump() override {
         LOG(LOG_INFO, "Type=RDP 5.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf,               RDP_50_HIST_BUF_LEN);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
     /**

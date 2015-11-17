@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
 #define _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
 
+#include <cinttypes>
+
 #include "log.hpp"
 #include "stream.hpp"
 #include "keylayouts.hpp"
@@ -327,7 +329,7 @@ struct Keymap2
                 // if event is a Make
                 if (this->keys_down[extendedKeyCode]){
                     if (this->verbose){
-                        LOG(LOG_INFO, "Event is Make for key: Ox%#02x", extendedKeyCode);
+                        LOG(LOG_INFO, "Event is Make for key: Ox%#02x", static_cast<unsigned>(extendedKeyCode));
                     }
 
                     //this->last_char_key = extendedKeyCode;
@@ -340,7 +342,7 @@ struct Keymap2
                       || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
                        ){
                         if (this->verbose){
-                            LOG(LOG_INFO, "Key from keypad: 0x%02x", extendedKeyCode);
+                            LOG(LOG_INFO, "Key from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
                         }
 
                         // if numlock is activated AND shift is up, keys are printable characters
@@ -421,7 +423,7 @@ struct Keymap2
                     else {
 
                         if (this->verbose){
-                            LOG(LOG_INFO, "Key not from keypad: 0x%02x", extendedKeyCode);
+                            LOG(LOG_INFO, "Key not from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
                         }
 
                         // Set the layout block to be used, depending on active modifier keys and capslock status
@@ -467,7 +469,7 @@ struct Keymap2
                         uint32_t uchar = (*layout)[sym];
 
                         if (this->verbose){
-                            LOG(LOG_INFO, "uchar=0x%02x", uchar);
+                            LOG(LOG_INFO, "uchar=0x%02" PRIx32, uchar);
                         }
                         //----------------------------------------------
                         // uchar is in Printable unicode character range
@@ -528,7 +530,7 @@ struct Keymap2
                         //--------------------------------------------------
                         else {
                             if (this->verbose) {
-                                LOG(LOG_INFO, "pushing event extendedKeyCode = >0x%02x<", extendedKeyCode);
+                                LOG(LOG_INFO, "pushing event extendedKeyCode = >0x%02x<", static_cast<unsigned>(extendedKeyCode));
                             }
 
                             // Test if the extendedKeyCode is a deadkey in the current keyboard layout
@@ -923,7 +925,7 @@ struct Keymap2
             }
         }
         if (!found){
-            LOG(LOG_INFO, "Unknown keyboard layout #0x%02x. Reverting to default (English - United States)", LCID);
+            LOG(LOG_INFO, "Unknown keyboard layout #0x%02x. Reverting to default (English - United States)", static_cast<unsigned>(LCID));
         }
 
     } // END METHOD - init_layout

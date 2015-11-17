@@ -251,12 +251,12 @@ struct NtlmVersion {
     }
 
     void print() {
-	LOG(LOG_INFO, "VERSION = {");
-	LOG(LOG_INFO, "\tProductMajorVersion: %d", this->ProductMajorVersion);
-	LOG(LOG_INFO, "\tProductMinorVersion: %d", this->ProductMinorVersion);
-	LOG(LOG_INFO, "\tProductBuild: %d", this->ProductBuild);
-	LOG(LOG_INFO, "\tNTLMRevisionCurrent: 0x%02X", this->NtlmRevisionCurrent);
-	LOG(LOG_INFO, "}\n");
+        LOG(LOG_INFO, "VERSION = {");
+        LOG(LOG_INFO, "\tProductMajorVersion: %d", this->ProductMajorVersion);
+        LOG(LOG_INFO, "\tProductMinorVersion: %d", this->ProductMinorVersion);
+        LOG(LOG_INFO, "\tProductBuild: %d", this->ProductBuild);
+        LOG(LOG_INFO, "\tNTLMRevisionCurrent: 0x%02X", this->NtlmRevisionCurrent);
+        LOG(LOG_INFO, "}\n");
     }
 };
 

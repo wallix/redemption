@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <forward_list>
+#include <cinttypes>
 
 #include "exchange.hpp"
 #include "stream.hpp"
@@ -92,7 +92,7 @@ private:
                 size_t key_buf_len = this->e - this->p;
                 if (key_buf_len) {
                     if (key_buf_len > sizeof(this->key_name_buf)) {
-                        LOG(LOG_ERR, "Error: ACL key length too big (got %u max 64o)", key_buf_len);
+                        LOG(LOG_ERR, "Error: ACL key length too big (got %zu max 64o)", key_buf_len);
                         throw Error(ERR_ACL_MESSAGE_TOO_BIG);
                     }
                     memcpy(this->key_name_buf, this->p, key_buf_len);
@@ -107,7 +107,7 @@ private:
                 m = std::find(this->p, this->e, '\n');
                 if (key_buf_len) {
                     if (size_t(m - this->p) > sizeof(this->key_name_buf)) {
-                        LOG(LOG_ERR, "Error: ACL key length too big (got %u max 64o)", m - this->p);
+                        LOG(LOG_ERR, "Error: ACL key length too big (got %" PRIdPTR " max 64o)", m - this->p);
                         throw Error(ERR_ACL_MESSAGE_TOO_BIG);
                     }
                     *m = 0;
@@ -167,7 +167,7 @@ private:
             do {
                 data_multipacket.insert(data_multipacket.end(), this->p, this->e);
                 if (data_multipacket.size() > 1024*1024) {
-                    LOG(LOG_ERR, "Error: ACL data too big (got %u max 1M)", data_multipacket.size());
+                    LOG(LOG_ERR, "Error: ACL data too big (got %zu max 1M)", data_multipacket.size());
                     throw Error(ERR_ACL_MESSAGE_TOO_BIG);
                 }
                 this->read_packet();
@@ -218,7 +218,7 @@ private:
                 if (this->has_next_buffer){
                     LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
                 }
-                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %d", this->e - this->p);
+                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %" PRIdPTR, this->e - this->p);
             }
         }
     };
@@ -346,7 +346,7 @@ private:
 public:
     void send_acl_data() {
         if (this->verbose & 0x01){
-            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u", this->ini.changed_field_size());
+            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %zu", this->ini.changed_field_size());
         }
         if (this->ini.changed_field_size()) {
             auto const password_printing_mode = this->ini.get<cfg::debug::password>();

@@ -34,6 +34,8 @@
 #include "RDP/out_per_bstream.hpp"
 #include "ssl_calls.hpp"
 
+#include <cinttypes>
+
 enum DATA_BLOCK_TYPE {
     //  The data block that follows contains Client Core Data (section 2.2.1.3.2).
     CS_CORE = 0xC001,
@@ -244,7 +246,7 @@ namespace GCC
         explicit Create_Request_Recv(InStream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.get_capacity());
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %zu)", stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
 
@@ -271,7 +273,7 @@ namespace GCC
                 }
 
                 if (length != stream.in_remain()){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.in_remain());
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %" PRIu16 " %zu", length, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
                 return InStream(stream.get_current(), stream.in_remain());
@@ -474,14 +476,14 @@ namespace GCC
         explicit Create_Response_Recv(InStream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
-                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.get_capacity());
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %zu)", stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
                 TODO("We should actually read and decode data here. Merely skipping the block is evil")
                 stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
                 size_t length = stream.in_2BUE();
                 if (length != stream.in_remain()){
-                    LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %zu %zu",
                         length, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -546,10 +548,10 @@ namespace GCC
             }())
             , length(stream.in_uint16_le())
             , payload([&stream, this](){
-                LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
+                LOG(LOG_INFO, "GCC::UserData tag=%.4x length=%u", tag, length);
                 if (!stream.in_check_rem(length - 4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
-                                     " tag=%u length=%u available_length=%u",
+                                     " tag=%" PRIu16 " length=%" PRIu16 " available_length=%zu",
                                      tag, length, stream.get_capacity() - 4);
                     throw Error(ERR_GCC);
                 }
@@ -1600,7 +1602,7 @@ namespace GCC
 
             void recv(InStream & stream) {
                 if (!stream.in_check_rem(4)) {
-                    LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%u",
+                    LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%zu",
                         stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -1609,7 +1611,7 @@ namespace GCC
                 this->length       = stream.in_uint16_le();
 
                 if (!stream.in_check_rem(4)) {
-                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=4 remains=%u",
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=4 remains=%zu",
                         stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -1637,7 +1639,7 @@ namespace GCC
 
                 expected = this->monitorCount * 20;    // monitorCount * monitorDefArray(20)
                 if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=%u remains=%u",
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -1841,9 +1843,9 @@ namespace GCC
 
                 for (size_t i = 0; i < this->channelCount ; i++){
                     uint32_t options = channelDefArray[i].options;
-                    LOG(LOG_INFO, "cs_net::channel '%*s' [%u]%s%s%s%s%s%s%s%s"
+                    LOG(LOG_INFO, "cs_net::channel '%*s' [%zu]%s%s%s%s%s%s%s%s"
                         , 8
-                        , channelDefArray[i].name, GCC::MCS_GLOBAL_CHANNEL + i + 1
+                        , channelDefArray[i].name, GCC::MCS_GLOBAL_CHANNEL + i + 1u
                         , (options & CHANNEL_OPTION_INITIALIZED)?" INITIALIZED":""
                         , (options & CHANNEL_OPTION_PRI_HIGH)?" PRI_HIGH":""
                         , (options & CHANNEL_OPTION_PRI_MED)?" PRI_MED":""
@@ -1941,7 +1943,7 @@ namespace GCC
                 this->length = stream.in_uint16_le();
 
                 if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
-                    LOG(LOG_ERR, "SCNet::recv bad header length=%d size=%d", this->length, stream.get_capacity());
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%" PRIu16 " size=%zu", this->length, stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
 
@@ -1977,7 +1979,7 @@ namespace GCC
                 LOG(LOG_INFO, "sc_net::channelCount   = %u", this->channelCount);
 
                 for (size_t i = 0; i < this->channelCount ; i++){
-                    LOG(LOG_INFO, "sc_net::channel[%u]::id = %u"
+                    LOG(LOG_INFO, "sc_net::channel[%zu]::id = %" PRIu16
                         , GCC::MCS_GLOBAL_CHANNEL + i + 1
                         , this->channelDefArray[i].id
                         );
@@ -2561,7 +2563,7 @@ namespace GCC
                 }
 
                 if (!stream.in_check_rem(this->serverCertLen)) {
-                    LOG(LOG_ERR, "SCSecutity recv: serverCertLen %d, not enough data available (%u)",
+                    LOG(LOG_ERR, "SCSecutity recv: serverCertLen %" PRIu32 ", not enough data available (%zu)",
                          this->serverCertLen, stream.in_remain());
                     throw Error(ERR_GCC);
                 }

@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_BMPCACHE2_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_BMPCACHE2_HPP_
 
+#include <cinttypes>
+
 #include "common.hpp"
 #include "stream.hpp"
 #include "error.hpp"
@@ -162,7 +164,7 @@ struct BmpCache2Caps : public Capability {
     void recv(InStream & stream, uint16_t len)override {
         this->len = len;
         if (len != CAPLEN_BITMAPCACHE_REV2 || !stream.in_check_rem(len)) {
-            LOG(LOG_ERR, "Broken CAPSTYPE_BITMAPCACHE_REV2, need=%u (%u) remains=%u",
+            LOG(LOG_ERR, "Broken CAPSTYPE_BITMAPCACHE_REV2, need=%u (%" PRIu16 ") remains=%zu",
                     CAPLEN_BITMAPCACHE_REV2, len, stream.in_remain());
                     throw Error(ERR_MCS_PDU_TRUNCATED);
         }

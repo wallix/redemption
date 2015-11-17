@@ -226,7 +226,7 @@ namespace FastPath {
                     ;
                 if (!stream.in_check_rem(expected)) {
                     LOG( LOG_ERR
-                       , "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u"
+                       , "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%zu"
                        , expected, stream.in_remain());
                     throw Error(ERR_RDP_FASTPATH);
                 }
@@ -440,7 +440,7 @@ namespace FastPath {
             }
 
             if (!stream.in_check_rem(1)) {
-                LOG(LOG_ERR, "FastPath::KeyboardEvent_Recv: data truncated, expected=1 remains=%u",
+                LOG(LOG_ERR, "FastPath::KeyboardEvent_Recv: data truncated, expected=1 remains=%zu",
                     stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }
@@ -506,7 +506,7 @@ namespace FastPath {
                                     SlowPath::KBDFLAGS_DOWN;
 
             if (!stream.in_check_rem(2)) {
-                LOG(LOG_ERR, "FastPath::UnicodeKeyboardEvent_Recv: data truncated, expected=2 remains=%u",
+                LOG(LOG_ERR, "FastPath::UnicodeKeyboardEvent_Recv: data truncated, expected=2 remains=%zu",
                     stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }
@@ -564,7 +564,7 @@ namespace FastPath {
             const unsigned expected =
                   6; // pointerFlags(2) + xPos(2) + yPos(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "FastPath::MouseEvent: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "FastPath::MouseEvent: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }
@@ -822,7 +822,7 @@ namespace FastPath {
             if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
                 const unsigned expected = 8; // dataSignature
                 if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
+                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU: data truncated, expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDP_FASTPATH);
                 }
@@ -1106,7 +1106,7 @@ namespace FastPath {
         : updateHeader([&stream](){
             unsigned expected = 1; // updateHeader(1)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }
@@ -1121,7 +1121,7 @@ namespace FastPath {
                   ((this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) ? 1 : 0)  // ?compressionFlags?(1)
                 + 2;                                                                // + size(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }
@@ -1131,7 +1131,7 @@ namespace FastPath {
         , size(stream.in_uint16_le())
         , payload([&stream, &dec](uint16_t size, uint8_t compression, uint8_t compressionFlags){
             if ((size != 0) && !stream.in_check_rem(size)) {
-                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%zu",
                     size, stream.in_remain());
                 throw Error(ERR_RDP_FASTPATH);
             }

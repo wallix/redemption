@@ -150,7 +150,7 @@ struct SharedHeader {
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated SharedHeader: expected=%u remains=%u",
+                    "Truncated SharedHeader: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -469,7 +469,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceAnnounceHeader (0): expected=%u remains=%u",
+                    "Truncated DeviceAnnounceHeader (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -488,7 +488,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceAnnounceHeader (1): expected=%u remains=%u",
+                    "Truncated DeviceAnnounceHeader (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -682,7 +682,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceIORequest: expected=%u remains=%u",
+                    "Truncated DeviceIORequest: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -877,7 +877,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceCreateRequest (0): expected=%u remains=%u",
+                    "Truncated DeviceCreateRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -898,7 +898,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated DeviceCreateRequest (1): expected=%u remains=%u",
+                        "Truncated DeviceCreateRequest (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }
@@ -1009,7 +1009,7 @@ class DeviceCloseRequest {
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceCloseRequest: expected=%u remains=%u",
+                    "Truncated DeviceCloseRequest: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1101,7 +1101,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceReadRequest: expected=%u remains=%u",
+                    "Truncated DeviceReadRequest: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1287,7 +1287,7 @@ public:
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated DeviceControlRequest (0): "
-                        "expected=%u remains=%u",
+                        "expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1306,7 +1306,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceControlRequest (1): expected=%u remains=%u",
+                    "Truncated DeviceControlRequest (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1400,7 +1400,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceIOResponse: expected=%u remains=%u",
+                    "Truncated DeviceIOResponse: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1537,7 +1537,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceCreateResponse: expected=%u remains=%u",
+                    "Truncated DeviceCreateResponse: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1733,7 +1733,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDeviceAnnounceResponse: expected=%u remains=%u",
+                    "Truncated ServerDeviceAnnounceResponse: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1813,7 +1813,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerAnnounceRequest: expected=%u remains=%u",
+                    "Truncated ServerAnnounceRequest: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1914,7 +1914,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ClientAnnounceReply: expected=%u remains=%u",
+                    "Truncated ClientAnnounceReply: expected=%u remains=%zu",
                     expected, stream.in_remain());
 
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
@@ -2046,7 +2046,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ClientNameRequest (0): expected=%u remains=%u",
+                    "Truncated ClientNameRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2063,7 +2063,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated ClientNameRequest (1): expected=%u remains=%u",
+                        "Truncated ClientNameRequest (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }
@@ -2340,7 +2340,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated GeneralCapabilitySet: expected=%u remains=%u",
+                    "Truncated GeneralCapabilitySet: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2628,7 +2628,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryInformationRequest (0): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryInformationRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2646,7 +2646,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryInformationRequest (1): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryInformationRequest (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2862,7 +2862,7 @@ public:
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated ServerDriveQueryVolumeInformationRequest (0): "
-                        "expected=%u remains=%u",
+                        "expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2880,7 +2880,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryVolumeInformationRequest (1): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryVolumeInformationRequest (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -3052,7 +3052,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveSetInformationRequest (0): expected=%u remains=%u",
+                    "Truncated ServerDriveSetInformationRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -3169,7 +3169,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated RDP_FILE_RENAME_INFORMATION (0): expected=%u remains=%u",
+                    "Truncated RDP_FILE_RENAME_INFORMATION (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -3186,7 +3186,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated RDP_FILE_RENAME_INFORMATION (1): expected=%u remains=%u",
+                        "Truncated RDP_FILE_RENAME_INFORMATION (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }
@@ -3371,7 +3371,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryDirectoryRequest (0): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryDirectoryRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -3391,7 +3391,7 @@ public:
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
                         "Truncated ServerDriveQueryDirectoryRequest (1): "
-                            "expected=%u remains=%u",
+                            "expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }

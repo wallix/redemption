@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -398,7 +398,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -633,7 +633,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -872,7 +872,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("C:\\WINDOWS\\NOTEPAD.EXE",       ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -1090,7 +1090,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1500,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("*docs",                          ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -1275,7 +1275,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE",
                       ini.get<cfg::mod_rdp::alternate_shell>());
@@ -1468,7 +1468,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(1500,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE",
                       ini.get<cfg::mod_rdp::alternate_shell>());
@@ -1636,7 +1636,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -1803,7 +1803,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("docs,apps",                      ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -1957,7 +1957,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
@@ -2110,7 +2110,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::mod_rdp::auth_channel>(), "*\0\0\0\0\0\0\0", 8));
+    BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());

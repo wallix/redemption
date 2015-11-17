@@ -256,18 +256,18 @@ public:
         size_t used_size = this->stream_orders.get_offset();
         if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
-               , "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u"
-               , this
+               , "<Serializer %p> RDPSerializer::reserve_order[%zu](%zu) used=%zu free=%zu"
+               , static_cast<void*>(this)
                , this->order_count
                , asked_size, used_size
-               , max_packet_size - used_size - 106
+               , max_packet_size - used_size - 106u
                );
         }
         if (asked_size + 106 > max_packet_size) {
             LOG( LOG_ERR
-               , "(asked size (%u) + 106 = %d) > order batch capacity (%u)"
+               , "(asked size (%zu) + 106 = %zu) > order batch capacity (%zu)"
                , asked_size
-               , asked_size + 106
+               , asked_size + 106u
                , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
@@ -423,10 +423,8 @@ public:
 
         if (this->verbose & 512) {
             LOG(LOG_INFO,
-                is_RDPMemBlt()
-                ? "RDPSerializer: draw MemBlt, cache_id=%u cache_index=%u in_wait_list=%s"
-                : "RDPSerializer: draw Mem3Blt, cache_id=%u cache_index=%u in_wait_list=%s",
-                cache_id, cache_idx, (in_wait_list ? "true" : "false"));
+                "RDPSerializer: draw %s, cache_id=%u cache_index=%u in_wait_list=%s",
+                is_RDPMemBlt() ? "MemBlt" : "Mem3Blt", cache_id, cache_idx, (in_wait_list ? "true" : "false"));
         }
 
         if ((res >> 24) == BmpCache::ADDED_TO_CACHE) {
@@ -681,18 +679,18 @@ public:
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
-               , "<Serializer %p> RDPSerializer::reserve_bitmap[%u](%u) used=%u free=%u"
-               , this
+               , "<Serializer %p> RDPSerializer::reserve_bitmap[%zu](%zu) used=%zu free=%zu"
+               , static_cast<void*>(this)
                , this->bitmap_count
                , asked_size
                , used_size
-               , max_packet_size - used_size - 106
+               , max_packet_size - used_size - 106u
                );
         }
         if (asked_size + 106 > max_packet_size) {
             LOG( LOG_ERR
-               , "asked size (%u) > image batch capacity (%u)"
-               , asked_size + 106
+               , "asked size (%zu) > image batch capacity (%zu)"
+               , asked_size + 106u
                , max_packet_size
                );
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);

@@ -251,7 +251,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     { this->out() << #T "<" << N << ">"; }
 
     WRITE_STATIC_STRING(::configs::StaticString)
-    WRITE_STATIC_STRING(::configs::StaticNilString)
     WRITE_STATIC_STRING(::configs::StaticKeyString)
     WRITE_STATIC_STRING(::configs::StaticPath)
 #undef WRITE_STATIC_STRING

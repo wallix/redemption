@@ -308,7 +308,7 @@ public:
     : data_bitmap(DataBitmap::construct(bpp, cx, cy))
     {
         if (cx <= 0 || cy <= 0){
-            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%u bpp=%u", cx, cy, size, bpp);
+            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%zu bpp=%u", cx, cy, size, bpp);
         }
 
         if (bpp == 8){
@@ -508,7 +508,7 @@ public:
                 /* read file size */
                 TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.");
                 if (file.read(stream_data, 4) < 4){
-                    LOG(LOG_ERR, "Widget_load: error read file size\n");
+                    LOG(LOG_ERR, "Widget_load: error read file size");
                     throw Error(ERR_BITMAP_LOAD_FAILED);
                 }
                 stream = InStream(stream_data, 4);
@@ -520,14 +520,14 @@ public:
                 // skip some bytes to set file pointer to bmp header
                 lseek(fd_, 14, SEEK_SET);
                 if (file.read(stream_data, 40) < 40){
-                    LOG(LOG_ERR, "Widget_load: error read file size (2)\n");
+                    LOG(LOG_ERR, "Widget_load: error read file size (2)");
                     throw Error(ERR_BITMAP_LOAD_FAILED);
                 }
                 stream = InStream(stream_data, 40);
                 TODO(" we should read header size and use it to read header instead of using magic constant 40");
                     header.size = stream.in_uint32_le();
                 if (header.size != 40){
-                    LOG(LOG_INFO, "Wrong header size: expected 40, got %d", header.size);
+                    LOG(LOG_INFO, "Wrong header size: expected 40, got %zu", header.size);
                     assert(header.size == 40);
                 }
 
@@ -1348,7 +1348,7 @@ private:
         //    (no_alpha_plane ? "yes" : "no"));
 
         if (color_loss_level || chroma_subsampling) {
-            LOG(LOG_INFO, "Unsupported compression options", color_loss_level & (chroma_subsampling << 3));
+            LOG(LOG_INFO, "Unsupported compression options %d", color_loss_level & (chroma_subsampling << 3));
             return;
         }
 

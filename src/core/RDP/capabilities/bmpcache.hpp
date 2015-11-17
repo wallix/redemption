@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BMPCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BMPCACHE_HPP_
 
+#include <cinttypes>
+
 #include "common.hpp"
 #include "stream.hpp"
 #include "error.hpp"
@@ -130,7 +132,7 @@ struct BmpCacheCaps : public Capability {
          */
         const unsigned expected = 36;
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated BmpCacheCaps, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated BmpCacheCaps, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -150,19 +152,19 @@ struct BmpCacheCaps : public Capability {
       }
 
     void log(const char * msg)override {
-        LOG(LOG_INFO, "%s BitmapCache caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCache caps::pad1 %u", this->pad1);
-        LOG(LOG_INFO, "BitmapCache caps::pad2 %u", this->pad2);
-        LOG(LOG_INFO, "BitmapCache caps::pad3 %u", this->pad3);
-        LOG(LOG_INFO, "BitmapCache caps::pad4 %u", this->pad4);
-        LOG(LOG_INFO, "BitmapCache caps::pad5 %u", this->pad5);
-        LOG(LOG_INFO, "BitmapCache caps::pad6 %u", this->pad6);
-        LOG(LOG_INFO, "BitmapCache caps::cache0Entries %u", this->cache0Entries);
-        LOG(LOG_INFO, "BitmapCache caps::cache0MaximumCellSize %u", this->cache0MaximumCellSize);
-        LOG(LOG_INFO, "BitmapCache caps::cache1Entries %u", this->cache1Entries);
-        LOG(LOG_INFO, "BitmapCache caps::cache1MaximumCellSize %u", this->cache1MaximumCellSize);
-        LOG(LOG_INFO, "BitmapCache caps::cache2Entries %u", this->cache2Entries);
-        LOG(LOG_INFO, "BitmapCache caps::cache2MaximumCellSize %u", this->cache2MaximumCellSize);
+        LOG(LOG_INFO, "%s BitmapCache caps (%" PRIu16 " bytes)", msg, this->len);
+        LOG(LOG_INFO, "BitmapCache caps::pad1 %" PRIu32, this->pad1);
+        LOG(LOG_INFO, "BitmapCache caps::pad2 %" PRIu32, this->pad2);
+        LOG(LOG_INFO, "BitmapCache caps::pad3 %" PRIu32, this->pad3);
+        LOG(LOG_INFO, "BitmapCache caps::pad4 %" PRIu32, this->pad4);
+        LOG(LOG_INFO, "BitmapCache caps::pad5 %" PRIu32, this->pad5);
+        LOG(LOG_INFO, "BitmapCache caps::pad6 %" PRIu32, this->pad6);
+        LOG(LOG_INFO, "BitmapCache caps::cache0Entries %" PRIu16, this->cache0Entries);
+        LOG(LOG_INFO, "BitmapCache caps::cache0MaximumCellSize %" PRIu16, this->cache0MaximumCellSize);
+        LOG(LOG_INFO, "BitmapCache caps::cache1Entries %" PRIu16, this->cache1Entries);
+        LOG(LOG_INFO, "BitmapCache caps::cache1MaximumCellSize %" PRIu16, this->cache1MaximumCellSize);
+        LOG(LOG_INFO, "BitmapCache caps::cache2Entries %" PRIu16, this->cache2Entries);
+        LOG(LOG_INFO, "BitmapCache caps::cache2MaximumCellSize %" PRIu16, this->cache2MaximumCellSize);
     }
 };
 

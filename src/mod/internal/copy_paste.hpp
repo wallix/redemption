@@ -199,7 +199,7 @@ public:
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
-                               , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+                               , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%" PRIu32 " remains=%zu"
                                , format_data_response_pdu.dataLen(), stream.in_remain());
                             throw Error(ERR_RDP_PROTOCOL);
                         }

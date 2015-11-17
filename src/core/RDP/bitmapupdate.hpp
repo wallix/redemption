@@ -238,9 +238,8 @@ struct RDPBitmapData {
 
         if (!stream.has_room(expected)) {
             LOG( LOG_ERR
-               , "BitmapData::emit - stream too small, need=%u, remains=%u"
-               , expected
-               , static_cast<unsigned>(stream.tailroom()));
+               , "BitmapData::emit - stream too small, need=%u, remains=%zu"
+               , expected, stream.tailroom());
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 
@@ -269,7 +268,7 @@ struct RDPBitmapData {
                                    bitsPerPixel(2) + flags(2) + bitmapLength(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_ERR
-               , "BitmapData::receive TS_BITMAP_DATA - Truncated data, need=%u, remains=%u"
+               , "BitmapData::receive TS_BITMAP_DATA - Truncated data, need=%u, remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -296,7 +295,7 @@ struct RDPBitmapData {
                              cbScanWidth(2) + cbUncompressedSize(2) */
             if (!stream.in_check_rem(expected)) {
                 LOG( LOG_ERR
-                   , "BitmapData::receive TS_CD_HEADER - Truncated data, need=18, remains=%u"
+                   , "BitmapData::receive TS_CD_HEADER - Truncated data, need=18, remains=%zu"
                    , stream.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }

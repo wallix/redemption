@@ -159,7 +159,7 @@ public:
                     sprintf(session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
                     int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
                     if (fd == -1) {
-                        LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%d\n", errno, strerror(errno));
+                        LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%s\n", errno, strerror(errno));
                         _exit(1);
                     }
                     char text[256];

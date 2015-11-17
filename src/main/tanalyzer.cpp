@@ -163,7 +163,7 @@ public:
     }
     void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , size_t length, size_t chunk_size, int flags) override {
-        LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%u chunk_size=%u flags=0x%X",
+        LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%zu chunk_size=%zu flags=0x%X",
             channel.name, channel.chanid, length, chunk_size, flags);
     }
 
@@ -176,7 +176,7 @@ public:
     };
 
     void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
-        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, data_size);
+        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%zu", channelId, data_size);
 
         InStream stream(data, data_size);
         ShareControl_Recv sctrl(stream);
@@ -276,7 +276,7 @@ public:
     }
 
     void send_fastpath_data(InStream & data) override {
-        LOG(LOG_INFO, "send_fastpath_data: data_size=%u", data.get_capacity());
+        LOG(LOG_INFO, "send_fastpath_data: data_size=%zu", data.get_capacity());
 
         while (data.in_remain()) {
             FastPath::Update_Recv fp_upd_r(data, &this->mppc_dec);

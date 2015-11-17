@@ -90,7 +90,7 @@ namespace SlowPath {
                     + numEvents * 12 // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
                     ;
                 if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
+                    LOG(LOG_ERR, "SlowPath::ClientInputEventPDU: data truncated, expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDP_SLOWPATH);
                 }
@@ -183,7 +183,7 @@ namespace SlowPath {
         : eventTime([&stream](){
             // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
             if (!stream.in_check_rem(12)) {
-                LOG(LOG_ERR, "SlowPath::InputEvent: data truncated, expected=12 remains=%u", stream.in_remain());
+                LOG(LOG_ERR, "SlowPath::InputEvent: data truncated, expected=12 remains=%zu", stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }
             return stream.in_uint32_le();
@@ -270,7 +270,7 @@ namespace SlowPath {
             const unsigned expected =
                 6; // keyboardFlags(2) + keyCode(2) + pad2Octets(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::KeyboardEvent: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "SlowPath::KeyboardEvent: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }
@@ -334,7 +334,7 @@ namespace SlowPath {
             const unsigned expected =
                 6; // keyboardFlags(2) + unicodeCode(2) + pad2Octets(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::UnicodeKeyboardEvent: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "SlowPath::UnicodeKeyboardEvent: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }
@@ -468,7 +468,7 @@ namespace SlowPath {
             const unsigned expected =
                 6; // pointerFlags(2) + xPos(2) + yPos(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::MouseEvent: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "SlowPath::MouseEvent: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }
@@ -550,7 +550,7 @@ namespace SlowPath {
             const unsigned expected =
                 6; // pointerFlags(2) + xPos(2) + yPos(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::ExtendedMouseEvent: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "SlowPath::ExtendedMouseEvent: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }
@@ -626,7 +626,7 @@ namespace SlowPath {
             const unsigned expected =
                 6; // pad2Octets(2) + toggleFlags(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::SynchronizeEvent: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "SlowPath::SynchronizeEvent: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }
@@ -673,7 +673,7 @@ namespace SlowPath {
             const unsigned expected =
                 6; // pad4Octets(4) + pad2Octets(2)
             if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "SlowPath::UnusedEvent: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "SlowPath::UnusedEvent: data truncated, expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDP_SLOWPATH);
             }

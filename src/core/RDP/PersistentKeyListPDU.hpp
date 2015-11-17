@@ -276,7 +276,7 @@ struct PersistentKeyListPDUData {
                                    totalEntriesCache4(2) + bBitMask(1) + Pad2(1) + Pad3(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_ERR
-               , "PersistentKeyListPDUData::receive  - Truncated data, need=%u, remains=%u"
+               , "PersistentKeyListPDUData::receive  - Truncated data, need=%u, remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -300,7 +300,7 @@ struct PersistentKeyListPDUData {
         expected = count * 8; /* count * (Key1(4) + Key2(4)) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_ERR
-               , "PersistentKeyListPDUData::receive  - Truncated entries, need=%u, remains=%u"
+               , "PersistentKeyListPDUData::receive  - Truncated entries, need=%u, remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }

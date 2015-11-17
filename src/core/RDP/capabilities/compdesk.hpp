@@ -72,7 +72,7 @@ struct CompDeskCaps : public Capability {
         this->len = len;
 
         if (!stream.in_check_rem(2)){
-            LOG(LOG_ERR, "Truncated CompDeskCaps, need=2 remains=%u",
+            LOG(LOG_ERR, "Truncated CompDeskCaps, need=2 remains=%zu",
                 stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }

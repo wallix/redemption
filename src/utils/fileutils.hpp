@@ -239,7 +239,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
         }
 */
         if (file_len + path_len + 1 > sizeof(buffer)) {
-            LOG(LOG_WARNING, "Path len %u > %u", file_len + path_len + 1, sizeof(buffer));
+            LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
             return;
         }
         strncpy(buffer, path, file_len + path_len + 1);
@@ -285,17 +285,17 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             struct stat st;
             if (stat(buffer, &st) < 0){
                 if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to read file %s [%u: %s]", buffer, errno, strerror(errno));
+                    LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
                 }
                 continue;
             }
             if (unlink(buffer) < 0){
-                LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", buffer, errno, strerror(errno));
+                LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]", buffer, errno, strerror(errno));
             }
         }
     }
     else {
-        LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
+        LOG(LOG_WARNING, "Failed to open directory %s [%d: %s]", path, errno, strerror(errno));
     }
 }
 
@@ -309,13 +309,13 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
                 if (verbose >= 255) {
-                    LOG(LOG_ERR, "failed to create directory %s : %s [%u]", directory, strerror(errno), errno);
+                    LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
                 }
             }
             if (groupid){
                 if (chown(directory, static_cast<uid_t>(-1), groupid) < 0){
                     if (verbose >= 255) {
-                        LOG(LOG_ERR, "can't set directory %s group to %u : %s [%u]", directory, groupid, strerror(errno), errno);
+                        LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
                     }
                 }
             }

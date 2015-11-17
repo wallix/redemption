@@ -137,7 +137,7 @@ namespace CHANNELS {
         }
 
         void log(char * name) const {
-            LOG(LOG_INFO, "%s channels %u channels defined", name, this->channelCount);
+            LOG(LOG_INFO, "%s channels %zu channels defined", name, this->channelCount);
             for (unsigned index = 0 ; index < this->channelCount ; index++) {
                 this->items[index].log(index);
             }

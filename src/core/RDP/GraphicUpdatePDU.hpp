@@ -28,6 +28,8 @@
 #ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
 #define _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
 
+#include <cinttypes>
+
 #include "log.hpp"
 #include "RDPSerializer.hpp"
 #include "gcc.hpp"
@@ -501,7 +503,7 @@ protected:
     void flush_orders() override {
         if (this->order_count > 0){
             if (this->ini.get<cfg::debug::primary_orders>() > 3) {
-                LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d"
+                LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%zu"
                    , this->order_count);
             }
 
@@ -520,7 +522,7 @@ protected:
         if (this->bitmap_count > 0) {
             if (this->ini.get<cfg::debug::primary_orders>() > 3) {
                 LOG( LOG_INFO
-                   , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%d offset=%u"
+                   , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
                    , this->bitmap_count, this->offset_bitmap_count);
             }
             this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);

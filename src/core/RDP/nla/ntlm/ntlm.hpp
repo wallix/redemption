@@ -573,10 +573,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         if (memcmp(signature_buffer->Buffer.get_data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
-            LOG(LOG_ERR, "signature verification failed, something nasty is going on!\n");
-            LOG(LOG_ERR, "Expected Signature:\n");
+            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+            LOG(LOG_ERR, "Expected Signature:");
             hexdump_c(expected_signature, 16);
-            LOG(LOG_ERR, "Actual Signature:\n");
+            LOG(LOG_ERR, "Actual Signature:");
             hexdump_c(signature_buffer->Buffer.get_data(), 16);
 
             return SEC_E_MESSAGE_ALTERED;

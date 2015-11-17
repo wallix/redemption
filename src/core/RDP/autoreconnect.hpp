@@ -21,7 +21,11 @@
 #ifndef _REDEMPTION_CORE_RDP_AUTO_RECONNECT_HPP_
 #define _REDEMPTION_CORE_RDP_AUTO_RECONNECT_HPP_
 
+#include <cinttypes>
+
 #include "stream.hpp"
+#include "log.hpp"
+#include "error.hpp"
 
 namespace RDP {
 
@@ -91,7 +95,7 @@ struct ServerAutoReconnectPacket_Recv {
 
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%u",
+                "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -102,7 +106,7 @@ struct ServerAutoReconnectPacket_Recv {
 
         stream.in_copy_bytes(this->ArcRandomBits, sizeof(this->ArcRandomBits));
 
-        LOG(LOG_INFO, "LogonId=%d", this->LogonId);
+        LOG(LOG_INFO, "LogonId=%" PRIu32, this->LogonId);
         hexdump(this->ArcRandomBits, sizeof(this->ArcRandomBits));
     }
 };  // ServerAutoReconnectPacket_Recv

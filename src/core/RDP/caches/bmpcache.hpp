@@ -25,6 +25,8 @@
 #include <memory>
 #include <algorithm>
 
+#include <cinttypes>
+
 #include "bitmap.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
@@ -423,9 +425,9 @@ public:
 
         if (this->verbose) {
             LOG( LOG_INFO
-                , "BmpCache: %s bpp=%u number_of_cache=%u use_waiting_list=%s "
-                    "cache_0(%u, %u, %s) cache_1(%u, %u, %s) cache_2(%u, %u, %s) "
-                    "cache_3(%u, %u, %s) cache_4(%u, %u, %s)"
+                , "BmpCache: %s bpp=%" PRIu8 " number_of_cache=%" PRIu8 " use_waiting_list=%s "
+                    "cache_0(%zu, %" PRIu16 ", %s) cache_1(%zu, %" PRIu16 ", %s) cache_2(%zu, %" PRIu16 ", %s) "
+                    "cache_3(%zu, %" PRIu16 ", %s) cache_4(%zu, %" PRIu16 ", %s)"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
                 , this->caches[0].size(), this->caches[0].bmp_size(), (caches[0].persistent() ? "yes" : "no")
@@ -588,7 +590,8 @@ private:
 public:
     void log() const {
         LOG( LOG_INFO
-            , "BmpCache: %s (0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
+            , "BmpCache: %s (0=>%" PRIu16 ", %zu%s) (1=>%" PRIu16 ", %zu%s)"
+              " (2=>%" PRIu16 ", %zu%s) (3=>%" PRIu16 ", %zu%s) (4=>%" PRIu16 ", %zu%s)"
             , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
             , get_cache_usage(0), this->caches[0].size(), (this->caches[0].persistent() ? ", persistent" : "")
             , get_cache_usage(1), this->caches[1].size(), (this->caches[1].persistent() ? ", persistent" : "")
@@ -628,14 +631,14 @@ public:
 
         if (id_real == this->number_of_cache) {
             LOG( LOG_ERR
-                , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
+                , "BmpCache: %s bitmap size(%zu) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , bmp.bmp_size()
-                , (this->caches[0].size() ? this->caches[0].bmp_size() : 0)
-                , (this->caches[1].size() ? this->caches[1].bmp_size() : 0)
-                , (this->caches[2].size() ? this->caches[2].bmp_size() : 0)
-                , (this->caches[3].size() ? this->caches[3].bmp_size() : 0)
-                , (this->caches[4].size() ? this->caches[4].bmp_size() : 0)
+                , (this->caches[0].size() ? this->caches[0].bmp_size() : 0u)
+                , (this->caches[1].size() ? this->caches[1].bmp_size() : 0u)
+                , (this->caches[2].size() ? this->caches[2].bmp_size() : 0u)
+                , (this->caches[3].size() ? this->caches[3].bmp_size() : 0u)
+                , (this->caches[4].size() ? this->caches[4].bmp_size() : 0u)
                 );
             REDASSERT(0);
             throw Error(ERR_BITMAP_CACHE_TOO_BIG);

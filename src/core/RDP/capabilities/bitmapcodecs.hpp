@@ -495,7 +495,7 @@ struct BitmapCodecCaps : public Capability {
 
     void log(const char * msg) override {
         LOG(LOG_INFO, "%s BitmapCodec caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %u", this->supportedBitmapCodecs);
+        LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %p", static_cast<void*>(this->supportedBitmapCodecs));
     }
 };
 

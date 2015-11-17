@@ -150,7 +150,7 @@ private:
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_clipboard_capabilities_pdu: "
-                        "Truncated CLIPRDR_CAPS, need=%u remains=%u",
+                        "Truncated CLIPRDR_CAPS, need=%u remains=%zu",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -226,7 +226,7 @@ private:
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%u",
+                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%zu",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -252,7 +252,7 @@ private:
                     LOG(LOG_ERR,
                         "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
                             "Truncated CB_FORMAT_DATA_RESPONSE, "
-                            "need=%u remains=%u",
+                            "need=%u remains=%zu",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -322,7 +322,7 @@ private:
                         LOG(LOG_ERR,
                             "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
                                 "Truncated Packed File List, "
-                                "need=%u remains=%u",
+                                "need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -478,7 +478,7 @@ private:
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_format_list_pdu: "
                         "Truncated CLIPRDR_FORMAT_LIST, "
-                        "need=%u remains=%u",
+                        "need=%u remains=%zu",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -506,7 +506,7 @@ private:
                         LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_client_format_list_pdu: "
                                 "Truncated (SHORT) CLIPRDR_FORMAT_LIST, "
-                                "need=%u remains=%u",
+                                "need=%u remains=%zu",
                             expected, chunk.in_remain());
                         break;
                     }
@@ -565,7 +565,7 @@ private:
                         LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_client_format_list_pdu: "
                                 "Truncated (LONG) CLIPRDR_FORMAT_LIST, "
-                                "need=%u remains=%u",
+                                "need=%u remains=%zu",
                             expected, chunk.in_remain());
                         break;
                     }
@@ -632,7 +632,7 @@ public:
             if (!chunk.in_check_rem(2 /* msgType(2) */)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_message: "
-                        "Truncated msgType, need=2 remains=%u",
+                        "Truncated msgType, need=2 remains=%zu",
                     chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -1119,7 +1119,7 @@ public:
             if (!chunk.in_check_rem(2 /* msgType(2) */)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_server_message: "
-                        "Truncated msgType, need=2 remains=%u",
+                        "Truncated msgType, need=2 remains=%zu",
                     chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }

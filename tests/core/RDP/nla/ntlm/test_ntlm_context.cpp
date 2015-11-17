@@ -235,23 +235,23 @@ BOOST_AUTO_TEST_CASE(TestSetters)
 
 BOOST_AUTO_TEST_CASE(TestOutputs)
 {
-    LOG(LOG_INFO, "SebBuffer size : %u", sizeof(SecBuffer));
-    LOG(LOG_INFO, "Array size : %u", sizeof(Array));
-    LOG(LOG_INFO, "size_t size : %u", sizeof(size_t));
-    LOG(LOG_INFO, "unsigned long size : %u", sizeof(unsigned long));
-    LOG(LOG_INFO, "unsigned int size : %u", sizeof(unsigned int));
-    LOG(LOG_INFO, "int size : %u", sizeof(int));
-    LOG(LOG_INFO, "uint8_t size : %u", sizeof(uint8_t));
-    LOG(LOG_INFO, "uint8_t* size : %u", sizeof(uint8_t*));
+    LOG(LOG_INFO, "SebBuffer size : %zu", sizeof(SecBuffer));
+    LOG(LOG_INFO, "Array size : %zu", sizeof(Array));
+    LOG(LOG_INFO, "size_t size : %zu", sizeof(size_t));
+    LOG(LOG_INFO, "unsigned long size : %zu", sizeof(unsigned long));
+    LOG(LOG_INFO, "unsigned int size : %zu", sizeof(unsigned int));
+    LOG(LOG_INFO, "int size : %zu", sizeof(int));
+    LOG(LOG_INFO, "uint8_t size : %zu", sizeof(uint8_t));
+    LOG(LOG_INFO, "uint8_t* size : %zu", sizeof(uint8_t*));
     uint8_t autobuffer[AUTOSIZE];
-    LOG(LOG_INFO, "autobuffer size : %u", sizeof(autobuffer));
+    LOG(LOG_INFO, "autobuffer size : %zu", sizeof(autobuffer));
 
 
     uint8_t head[2];
     head[0] = 1;
     head[1] = 0xFF;
     size_t length = (head[0] << 8) | head[1];
-    LOG(LOG_INFO, "size length : %x", length);
+    LOG(LOG_INFO, "size length : %zx", length);
 
 //     const char ccd_r[] = {
 // // Client Core Data

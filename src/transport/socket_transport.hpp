@@ -33,6 +33,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <cinttypes>
+
 #include <memory>
 #include <string>
 
@@ -154,7 +156,7 @@ public:
 
         if (verbose) {
             LOG( LOG_INFO
-               , "%s (%d): total_received=%llu, total_sent=%llu"
+               , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
                , this->name, this->sck, this->get_total_received(), this->get_total_sent());
         }
     }
@@ -889,7 +891,7 @@ public:
             for (;;){
                 size_t nb1 = fread(buffer1, sizeof(buffer1[0]), sizeof(buffer1)/sizeof(buffer1[0]), fp);
                 size_t nb2 = fread(buffer2, sizeof(buffer2[0]), sizeof(buffer2)/sizeof(buffer1[1]), tmpfp);
-                LOG(LOG_INFO, "nb1=%u nb2=%u\n", nb1, nb2);
+                LOG(LOG_INFO, "nb1=%zu nb2=%zu\n", nb1, nb2);
                 if ((nb1 != nb2) || (0 != memcmp(buffer1, buffer2, nb1 * sizeof(buffer1[0])))) {
                     binary_check_failed = true;
                     break;
@@ -1160,7 +1162,7 @@ public:
 
     void do_recv(char ** pbuffer, size_t len) override {
         if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, len);
+            LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
         char * start = *pbuffer;
 
@@ -1175,9 +1177,9 @@ public:
         }
 
         if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Recv done on %s (%u) %u bytes", this->name, this->sck, len);
+            LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, len);
             hexdump_c(start, len);
-            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, len);
+            LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
         }
 
         TODO("move that to base class : accounting_recv(len)");
@@ -1188,9 +1190,9 @@ public:
         if (len == 0) { return; }
 
         if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Sending on %s (%u) %u bytes", this->name, this->sck, len);
+            LOG(LOG_INFO, "Sending on %s (%d) %zu bytes", this->name, this->sck, len);
             hexdump_c(buffer, len);
-            LOG(LOG_INFO, "Sent dumped on %s (%u) %u bytes", this->name, this->sck, len);
+            LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
         }
 
         ssize_t res = this->tls ? this->privsend_tls(buffer, len) : this->privsend(buffer, len);

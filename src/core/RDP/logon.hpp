@@ -869,7 +869,7 @@ struct InfoPacket {
 
         if (!stream.in_check_rem(expected))
         {
-            LOG(LOG_ERR, "Truncated client InfoPacket: expected=%u remains=%u",
+            LOG(LOG_ERR, "Truncated client InfoPacket: expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
         }
@@ -893,7 +893,7 @@ struct InfoPacket {
 
         if (!stream.in_check_rem(expected))
         {
-            LOG(LOG_ERR, "Truncated client InfoPacket (data): expected=%u remains=%u",
+            LOG(LOG_ERR, "Truncated client InfoPacket (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
         }
@@ -922,7 +922,7 @@ struct InfoPacket {
 
             if (!stream.in_check_rem(expected))
             {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress: expected=%u remains=%u",
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
             }
@@ -933,7 +933,7 @@ struct InfoPacket {
 
             if (!stream.in_check_rem(this->extendedInfoPacket.cbClientAddress))
             {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress (data): expected=%u remains=%u",
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress (data): expected=%u remains=%zu",
                     this->extendedInfoPacket.cbClientAddress, stream.in_remain());
                 throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
             }
@@ -947,7 +947,7 @@ struct InfoPacket {
 
             if (!stream.in_check_rem(expected))
             {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir: expected=%u remains=%u",
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
             }
@@ -956,7 +956,7 @@ struct InfoPacket {
 
             if (!stream.in_check_rem(this->extendedInfoPacket.cbClientDir))
             {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir (data): expected=%u remains=%u",
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir (data): expected=%u remains=%zu",
                     this->extendedInfoPacket.cbClientAddress, stream.in_remain());
                 throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
             }
@@ -1051,7 +1051,7 @@ struct InfoPacket {
             LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
         }
         else {
-            LOG(LOG_INFO, "InfoPacket::AlternateShell (%u bytes)",
+            LOG(LOG_INFO, "InfoPacket::AlternateShell (%zu bytes)",
                 ::strlen(::char_ptr_cast(this->AlternateShell)));
         }
         LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);

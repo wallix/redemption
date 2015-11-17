@@ -577,7 +577,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
 
             const size_t hash_data_length = filename_len + 1 + HASH_LEN;
             if (verbose) {
-                LOG(LOG_INFO, "Hash data length=", hash_data_length);
+                LOG(LOG_INFO, "Hash data length=%zu", hash_data_length);
             }
             in_hash_t.recv(&buf, hash_data_length);
 

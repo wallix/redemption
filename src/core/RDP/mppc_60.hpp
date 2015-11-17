@@ -246,8 +246,8 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
         hexdump_d(this->history_buf, 16);
         LOG(LOG_INFO, "offsetCache");
         hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
     void dump() override {
@@ -256,8 +256,8 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
         hexdump_d(this->history_buf, RDP_60_HIST_BUF_LEN);
         LOG(LOG_INFO, "offsetCache");
         hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
 protected:

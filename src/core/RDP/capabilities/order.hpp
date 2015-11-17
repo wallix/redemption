@@ -397,7 +397,7 @@ struct OrderCaps : public Capability {
          */
         const unsigned expected = 32 + NB_ORDER_SUPPORT + 20;
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated OrderCaps, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated OrderCaps, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }

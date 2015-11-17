@@ -312,11 +312,11 @@ struct Font
                     }
                     // no more remaining glyphs in file
                     if (!stream.in_check_rem(1)){
-                        LOG(LOG_INFO, "Font file %s defines glyphs up to %u", file_path, index);
+                        LOG(LOG_INFO, "Font file %s defines glyphs up to %d", file_path, index);
                         break;
                     }
                     if (!stream.in_check_rem(16)){
-                        LOG(LOG_WARNING, "Font file %s defines glyphs up to %u, file looks broken", file_path, index);
+                        LOG(LOG_WARNING, "Font file %s defines glyphs up to %d, file looks broken", file_path, index);
                         break;
                     }
                 }
@@ -348,8 +348,8 @@ struct Font
                 // Read the data only if there is enough space left in buffer
                 if (!stream.in_check_rem(datasize)) {
                     LOG(LOG_ERR
-                       , "Error loading font %s: not enough data for definition of glyph %d (expected %d, got %d)\n"
-                        , file_path, index, datasize, static_cast<unsigned>(stream.in_remain())
+                       , "Error loading font %s: not enough data for definition of glyph %d (expected %u, got %zu)\n"
+                        , file_path, index, datasize, stream.in_remain()
                        );
                     goto ErrorReadingFontFile;
                 }

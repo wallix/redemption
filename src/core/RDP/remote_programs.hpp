@@ -137,7 +137,7 @@ public:
         const unsigned expected = 4;    // orderType(2) + orderLength(2)
 
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated RAIL PDU header: expected=%u remains=%u",
+            LOG(LOG_ERR, "Truncated RAIL PDU header: expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
@@ -206,7 +206,7 @@ public:
         const unsigned expected = 4;    // buildNumber(4)
 
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Handshake PDU: expected=%u remains=%u",
+            LOG(LOG_ERR, "Handshake PDU: expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
@@ -274,7 +274,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Client Information PDU: expected=%u remains=%u",
+                    "Truncated Client Information PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -421,7 +421,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Client Execute PDU: expected=%u remains=%u",
+                    "Truncated Client Execute PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -437,7 +437,7 @@ public:
                        size_t length_of_utf16_data_in_bytes) {
                 if (!stream.in_check_rem(length_of_utf16_data_in_bytes)) {
                     LOG(LOG_ERR,
-                        "Truncated Client Execute PDU: expected=%u remains=%u",
+                        "Truncated Client Execute PDU: expected=%zu remains=%zu",
                         length_of_utf16_data_in_bytes, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -656,7 +656,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Client System Parameters Update PDU: expected=%u remains=%u",
+                    "Truncated Client System Parameters Update PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -720,7 +720,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated High Contrast System Information Structure: expected=%u remains=%u (0)",
+                    "Truncated High Contrast System Information Structure: expected=%u remains=%zu (0)",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -731,7 +731,7 @@ public:
 
         if (!stream.in_check_rem(this->ColorSchemeLength)) {
             LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%u (1)",
+                "Truncated High Contrast System Information Structure: expected=%u remains=%zu (1)",
                 this->ColorSchemeLength, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
@@ -742,7 +742,7 @@ public:
 
         if (!stream.in_check_rem(CbString)) {
             LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%u (2)",
+                "Truncated High Contrast System Information Structure: expected=%u remains=%zu (2)",
                 this->ColorSchemeLength, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }

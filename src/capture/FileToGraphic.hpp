@@ -302,9 +302,9 @@ public:
          && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
             if (this->stream.get_current() == this->stream.get_data_end()
              && this->remaining_order_count) {
-                LOG(LOG_ERR, "Incomplete order batch at chunk %u "
-                             "order [%u/%u] "
-                             "remaining [%u/%u]",
+                LOG(LOG_ERR, "Incomplete order batch at chunk %" PRIu16 " "
+                             "order [%u/%" PRIu16 "] "
+                             "remaining [%zu/%" PRIu32 "]",
                              this->chunk_type,
                              (this->chunk_count-this->remaining_order_count), this->chunk_count,
                              this->stream.in_remain(), this->chunk_size);
@@ -372,11 +372,11 @@ public:
         case RDP_UPDATE_ORDERS:
         {
             if (!this->meta_ok){
-                LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+                LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
                 throw Error(ERR_WRM);
             }
             if (!this->timestamp_ok){
-                LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
+                LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
                 throw Error(ERR_WRM);
             }
             uint8_t control = this->stream.in_uint8();
@@ -652,9 +652,9 @@ public:
                     }
 
                     if (this->verbose > 16) {
-                        LOG( LOG_INFO, "TIMESTAMP %u.%u mouse (x=%u, y=%u)\n"
-                           , this->record_now.tv_sec
-                           , this->record_now.tv_usec
+                        LOG( LOG_INFO, "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
+                           , static_cast<unsigned long>(this->record_now.tv_sec)
+                           , static_cast<unsigned long>(this->record_now.tv_usec)
                            , this->mouse_x
                            , this->mouse_y);
                     }
@@ -680,11 +680,10 @@ public:
                                 const size_t    len = UTF32toUTF8(this->input, 4, key8, sizeof(key8));
                                 key8[len] = 0;
 
-                                LOG( LOG_INFO, "TIMESTAMP %u.%u keyboard '%s'(0x%X)"
-                                   , this->record_now.tv_sec
-                                   , this->record_now.tv_usec
-                                   , key8
-                                   , this->input);
+                                LOG( LOG_INFO, "TIMESTAMP %lu.%lu keyboard '%s'"
+                                   , static_cast<unsigned long>(this->record_now.tv_sec)
+                                   , static_cast<unsigned long>(this->record_now.tv_usec)
+                                   , key8);
                             }
                         }
                     }

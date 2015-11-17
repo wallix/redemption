@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_MCS_HPP_
 #define _REDEMPTION_CORE_RDP_MCS_HPP_
 
+#include <cinttypes>
+
 #include "error.hpp"
 #include "stream.hpp"
 #include "RDP/out_per_bstream.hpp"
@@ -205,12 +207,12 @@ namespace MCS
                 return -1;
             }
             if (!this->in_check_rem(len)){
-                LOG(LOG_ERR, "Truncated BER octet string (need=%u, remain=%u)",
+                LOG(LOG_ERR, "Truncated BER octet string (need=%zu, remain=%zu)",
                     len, this->stream.in_remain());
                 return -1;
             }
             if (len > target_len){
-                LOG(LOG_ERR, "target string too large (max=%u, got=%u)", target_len, len);
+                LOG(LOG_ERR, "target string too large (max=%" PRIu16 ", got=%zu)", target_len, len);
                 return -1;
             }
             this->stream.in_copy_bytes(target, len);
@@ -259,7 +261,7 @@ namespace MCS
                        v = this->stream.in_bytes_be(len);
                    }
                    else {
-                       LOG(LOG_ERR, "Truncated BER integer data (need=%u, remain=%u)",
+                       LOG(LOG_ERR, "Truncated BER integer data (need=%u, remain=%zu)",
                            len, this->stream.in_remain());
                        result = false;
                    }
@@ -270,7 +272,7 @@ namespace MCS
                }
             }
             else {
-                LOG(LOG_ERR, "Truncated BER integer (need=%u, remain=%u)",
+                LOG(LOG_ERR, "Truncated BER integer (need=%u, remain=%zu)",
                     expected, this->stream.in_remain());
                 result = false;
             }
@@ -310,7 +312,7 @@ namespace MCS
                         return len;
                     }
                     else {
-                        LOG(LOG_ERR, "Truncated PER length (need=%u, remain=%u)",
+                        LOG(LOG_ERR, "Truncated PER length (need=%u, remain=%zu)",
                             nbbytes, this->stream.in_remain());
                         l = 0;
                         result = false;
@@ -692,7 +694,7 @@ namespace MCS
                 return -1;
             }
             if (ber_stream.get_offset() != start_offset + len){
-                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", ber_stream.get_offset() - start_offset, len);
+                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %zu %zu", ber_stream.get_offset() - start_offset, len);
             }
             return 0;
         }
@@ -733,7 +735,7 @@ namespace MCS
                 bool in_result;
                 uint16_t tag = this->ber_stream.in_uint16_be_with_check(in_result);
                 if (!in_result){
-                    LOG(LOG_ERR, "Truncated Connect Initial PDU tag: expected=2, remains=%u",
+                    LOG(LOG_ERR, "Truncated Connect Initial PDU tag: expected=2, remains=%zu",
                         this->ber_stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -828,7 +830,7 @@ namespace MCS
                     throw Error(ERR_MCS);
                 }
                 if (payload_size != this->ber_stream.in_remain()){
-                    LOG(LOG_ERR, "ConnectInitial::BER payload size (%u) does not match available data size (%u)",
+                    LOG(LOG_ERR, "ConnectInitial::BER payload size (%zu) does not match available data size (%zu)",
                         payload_size, this->ber_stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -945,7 +947,7 @@ namespace MCS
                     bool in_result;
                     uint16_t tag = this->ber_stream.in_uint16_be_with_check(in_result);
                     if (!in_result){
-                        LOG(LOG_ERR, "Truncated Connect Response PDU tag: expected=2, remains=%u",
+                        LOG(LOG_ERR, "Truncated Connect Response PDU tag: expected=2, remains=%zu",
                             this->ber_stream.in_remain());
                         throw Error(ERR_MCS);
                     }
@@ -1013,7 +1015,7 @@ namespace MCS
                 }
 
                 if (!this->ber_stream.in_check_rem(len)) {
-                    LOG(LOG_ERR, "Truncated Connect Response PDU connectId: expected=%u, remains=%u",
+                    LOG(LOG_ERR, "Truncated Connect Response PDU connectId: expected=%zu, remains=%zu",
                         len, this->ber_stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -1047,7 +1049,7 @@ namespace MCS
                         throw Error(ERR_MCS);
                     }
                     if (payload_size != this->ber_stream.in_remain()){
-                        LOG(LOG_ERR, "ConnectResponse::BER payload size (%u) does not match available data size (%u)",
+                        LOG(LOG_ERR, "ConnectResponse::BER payload size (%zu) does not match available data size (%zu)",
                             payload_size, this->ber_stream.in_remain());
                         throw Error(ERR_MCS);
                     }
@@ -1213,7 +1215,7 @@ namespace MCS
 
             {
                 if (!stream.in_check_rem(2)) {
-                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %u)", stream.in_remain());
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %zu)", stream.in_remain());
                     throw Error(ERR_MCS);
                 }
                 uint16_t len = stream.in_2BUE();
@@ -1233,7 +1235,7 @@ namespace MCS
             }
             {
                 if (!stream.in_check_rem(2)) {
-                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subInterval len : (need 2, available %u)", stream.in_remain());
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subInterval len : (need 2, available %zu)", stream.in_remain());
                     throw Error(ERR_MCS);
                 }
                 uint16_t len = stream.in_2BUE();
@@ -1501,7 +1503,7 @@ namespace MCS
 
             const unsigned expected = 2; /* tag(1) + reason(1) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated DisconnectProviderUltimatum: expected=%u, remains=%u",
+                LOG(LOG_ERR, "Truncated DisconnectProviderUltimatum: expected=%u, remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS);
             }
@@ -1756,7 +1758,7 @@ namespace MCS
 
             const unsigned expected = 2; /* tag(1) + result(1) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated AttachUserConfirm: expected=%u, remains=%u",
+                LOG(LOG_ERR, "Truncated AttachUserConfirm: expected=%u, remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS);
             }
@@ -1772,7 +1774,7 @@ namespace MCS
             this->result = stream.in_uint8();
             if (this->initiator_flag){
                 if (!stream.in_check_rem(2)){
-                   LOG(LOG_ERR, "Truncated AttachUserConfirm indicator: expected=2, remains=%u",
+                   LOG(LOG_ERR, "Truncated AttachUserConfirm indicator: expected=2, remains=%zu",
                        stream.in_remain());
                    throw Error(ERR_MCS);
                 }
@@ -1942,7 +1944,7 @@ namespace MCS
 
             const unsigned expected = 5; /* tag(1) + initiator(2) + channelId(2) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated ChannelJoinRequest: expected=%u, remains=%u",
+                LOG(LOG_ERR, "Truncated ChannelJoinRequest: expected=%u, remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS);
             }
@@ -2080,7 +2082,7 @@ namespace MCS
 
             const unsigned expected = 6; /* tag(1) + result(1) + initiator(2) + requested(2) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated ChannelJoinConfirm: expected=%u, remains=%u",
+                LOG(LOG_ERR, "Truncated ChannelJoinConfirm: expected=%u, remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS);
             }
@@ -2100,7 +2102,7 @@ namespace MCS
             }
             if (this->channelId_flag){
                 if (!stream.in_check_rem(2)){
-                   LOG(LOG_ERR, "Truncated ChannelJoinConfirm indicator: expected=2, remains=%u",
+                   LOG(LOG_ERR, "Truncated ChannelJoinConfirm indicator: expected=2, remains=%zu",
                        stream.in_remain());
                    throw Error(ERR_MCS);
                 }
@@ -2372,7 +2374,7 @@ namespace MCS
                 }
 
                 if (!stream.in_check_rem(1)){ // tag
-                    LOG(LOG_ERR, "SendDataRequest: truncated MCS PDU, expected=1 remains=%u",
+                    LOG(LOG_ERR, "SendDataRequest: truncated MCS PDU, expected=1 remains=%zu",
                         stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -2389,7 +2391,7 @@ namespace MCS
                 const unsigned expected =
                       6; // initiator(2) + channelId(2) + magic(1) + first byte of PER length(1)
                 if (!stream.in_check_rem(expected)){
-                    LOG(LOG_ERR, "Truncated SendDataRequest data: expected=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated SendDataRequest data: expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -2412,7 +2414,7 @@ namespace MCS
                 uint16_t payload_size = stream.in_2BUE();
 
                 if (stream.in_remain() != payload_size){
-                    LOG(LOG_ERR, "Mismatching SendDataRequest data: expected=%u remains=%u",
+                    LOG(LOG_ERR, "Mismatching SendDataRequest data: expected=%u remains=%zu",
                         payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -2468,7 +2470,7 @@ namespace MCS
                 }
 
                 if (!stream.in_check_rem(1)){ // tag
-                    LOG(LOG_ERR, "SendDataIndication: truncated MCS PDU, expected=1 remains=%u",
+                    LOG(LOG_ERR, "SendDataIndication: truncated MCS PDU, expected=1 remains=%zu",
                         stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -2484,7 +2486,7 @@ namespace MCS
             , initiator([&stream](){
                 const unsigned expected = 5; /* initiator(2) + channelId(2) + magic(1) */
                 if (!stream.in_check_rem(expected)){
-                    LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%u",
+                    LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
@@ -2507,7 +2509,7 @@ namespace MCS
                 size_t payload_size = stream.in_2BUE();
 
                 if (!stream.in_check_rem(payload_size)){
-                    LOG(LOG_ERR, "Truncated SendDataIndication payload data: expected=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated SendDataIndication payload data: expected=%zu remains=%zu",
                         payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }

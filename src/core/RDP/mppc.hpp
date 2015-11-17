@@ -28,6 +28,7 @@
 #define _REDEMPTION_CORE_RDP_MPPC_HPP_
 
 #include <stdint.h>
+#include <cinttypes>
 
 #include "log.hpp"
 #include "error.hpp"
@@ -532,11 +533,11 @@ public:
                 uncompressed_data_size);
 
         if (verbose & 128) {
-            LOG(LOG_INFO, "compressedType=0x%02X", compressedType);
-            LOG(LOG_INFO, "uncompressed_data_size=%u compressed_data_size=%u rate=%.2f",
+            LOG(LOG_INFO, "compressedType=0x%02X", static_cast<unsigned>(compressedType));
+            LOG(LOG_INFO, "uncompressed_data_size=%" PRIu16 " compressed_data_size=%" PRIu16 " rate=%.2f",
                 uncompressed_data_size, compressed_data_size,
                 compressed_data_size * 100.0 / uncompressed_data_size);
-            LOG(LOG_INFO, "total_uncompressed_data_size=%llu total_compressed_data_size=%llu total_rate=%.2Lf",
+            LOG(LOG_INFO, "total_uncompressed_data_size=%" PRIu64 " total_compressed_data_size=%" PRIu64 " total_rate=%.2Lf",
                 total_uncompressed_data_size, total_compressed_data_size,
                 static_cast<long double>(total_compressed_data_size) * 100.0
                 / static_cast<long double>(total_uncompressed_data_size));

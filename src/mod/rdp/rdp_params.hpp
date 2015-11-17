@@ -277,15 +277,15 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams output_filename=\"%s\"",                 (this->output_filename ? this->output_filename : "<null>"));
         LOG(LOG_INFO,
-            "ModRDPParams persistent_key_list_transport=<%p>",     this->persistent_key_list_transport);
+            "ModRDPParams persistent_key_list_transport=<%p>",     static_cast<void*>(this->persistent_key_list_transport));
         LOG(LOG_INFO,
-            "ModRDPParams transparent_recorder_transport=<%p>",    this->transparent_recorder_transport);
+            "ModRDPParams transparent_recorder_transport=<%p>",    static_cast<void*>(this->transparent_recorder_transport));
 
         LOG(LOG_INFO,
             "ModRDPParams key_flags=%d",                           this->key_flags);
 
         LOG(LOG_INFO,
-            "ModRDPParams acl=<%p>",                               this->acl);
+            "ModRDPParams acl=<%p>",                               static_cast<void*>(this->acl));
 
         LOG(LOG_INFO,
             "ModRDPParams outbound_connection_blocking_rules=\"%s\"",
@@ -310,7 +310,7 @@ struct ModRDPParams {
             "ModRDPParams rdp_compression=%d",                     this->rdp_compression);
 
         LOG(LOG_INFO,
-            "ModRDPParams error_message=<%p>",                     this->error_message);
+            "ModRDPParams error_message=<%p>",                     static_cast<void*>(this->error_message));
         LOG(LOG_INFO,
             "ModRDPParams disconnect_on_logon_user_change=%s",     (this->disconnect_on_logon_user_change ? "yes" : "no"));
         LOG(LOG_INFO,

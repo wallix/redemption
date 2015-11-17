@@ -108,7 +108,7 @@ class FlatLoginMod : public InternalMod, public NotifyApi
                     }
                 }
                 else {
-                    LOG(LOG_WARNING, "Layout \"%.*s\" not found.", cend - cstr, cstr);
+                    LOG(LOG_WARNING, "Layout \"%.*s\" not found.", static_cast<int>(cend - cstr), cstr);
                 }
 
                 cstr = cend;

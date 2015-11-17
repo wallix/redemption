@@ -21,9 +21,11 @@
 #ifndef _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_
 #define _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_
 
-#include "stream.hpp"
-
 #include <cinttypes>
+
+#include "stream.hpp"
+#include "error.hpp"
+
 
 namespace fscc {
 
@@ -319,7 +321,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileAttributeTagInformation: expected=%u remains=%u",
+                    "Truncated FileAttributeTagInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -476,7 +478,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileBasicInformation: expected=%u remains=%u",
+                    "Truncated FileBasicInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -780,7 +782,7 @@ public:
                                             //     ShortName(24)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileBothDirectoryInformation (0): expected=%u remains=%u",
+                    "Truncated FileBothDirectoryInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -822,7 +824,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileBothDirectoryInformation (1): expected=%u remains=%u",
+                    "Truncated FileBothDirectoryInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1181,7 +1183,7 @@ public:
                                             //     EaSize(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFullDirectoryInformation (0): expected=%u remains=%u",
+                    "Truncated FileFullDirectoryInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1206,7 +1208,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFullDirectoryInformation (1): expected=%u remains=%u",
+                    "Truncated FileFullDirectoryInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1381,7 +1383,7 @@ public:
             const unsigned expected = 8;    // NextEntryOffset(4) + FileIndex(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileNamesInformation (0): expected=%u remains=%u",
+                    "Truncated FileNamesInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1397,7 +1399,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileNamesInformation (1): expected=%u remains=%u",
+                    "Truncated FileNamesInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1599,7 +1601,7 @@ public:
                                             //     Directory(1)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileStandardInformation: expected=%u remains=%u",
+                    "Truncated FileStandardInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1845,7 +1847,7 @@ public:
                                             //     FileSystemNameLength(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsAttributeInformation (0): expected=%u remains=%u",
+                    "Truncated FileFsAttributeInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1861,7 +1863,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsAttributeInformation (1): expected=%u remains=%u",
+                    "Truncated FileFsAttributeInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2023,7 +2025,7 @@ public:
                                             //     BytesPerSector(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsFullSizeInformation: expected=%u remains=%u",
+                    "Truncated FileFsFullSizeInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -2152,7 +2154,7 @@ public:
                                             //     BytesPerSector(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsSizeInformation: expected=%u remains=%u",
+                    "Truncated FileFsSizeInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -2308,7 +2310,7 @@ public:
                                             //     VolumeLabelLength(4) + SupportsObjects(1)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsVolumeInformation (0): expected=%u remains=%u",
+                    "Truncated FileFsVolumeInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -2328,7 +2330,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsVolumeInformation (1): expected=%u remains=%u",
+                    "Truncated FileFsVolumeInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2546,7 +2548,7 @@ public:
             const unsigned expected = 8;    // DeviceType(4) + Characteristics(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsDeviceInformation (0): expected=%u remains=%u",
+                    "Truncated FileFsDeviceInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }

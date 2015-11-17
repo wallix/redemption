@@ -608,6 +608,7 @@ public:
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
                 LOG(LOG_INFO, "Creation of new mod 'RDP'");
+                LOG(LOG_INFO, "Creation of new mod 'RDP'");
             }
             else {
                 LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
@@ -662,7 +663,7 @@ public:
                 if (this->lic_layer_license_data){
                     size_t lic_size = read(fd, this->lic_layer_license_data.get(), this->lic_layer_license_size);
                     if (lic_size != this->lic_layer_license_size){
-                        LOG(LOG_ERR, "license file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
+                        LOG(LOG_ERR, "license file truncated : expected %zu, got %zu", this->lic_layer_license_size, lic_size);
                     }
                 }
             }
@@ -681,7 +682,7 @@ public:
         this->encrypt.encryptionMethod = 2; /* 128 bits */
 
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_WARNING, "mod_rdp: hostname too long! %u >= %u", ::strlen(info.hostname), sizeof(this->hostname));
+            LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(info.hostname), sizeof(this->hostname));
         }
         strncpy(this->hostname, info.hostname, 15);
         this->hostname[15] = 0;
@@ -708,7 +709,7 @@ public:
                 domain_len   = strlen(domain_pos);
                 username_pos = mod_rdp_params.target_user;
                 username_len = separator - mod_rdp_params.target_user;
-                LOG(LOG_INFO, "mod_rdp: username_len=%u", username_len);
+                LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
             }
             else
             {
@@ -718,14 +719,14 @@ public:
         }
 
         if (username_len >= sizeof(this->username)) {
-            LOG(LOG_INFO, "mod_rdp: username too long! %u >= %u", username_len, sizeof(this->username));
+            LOG(LOG_INFO, "mod_rdp: username too long! %zu >= %zu", username_len, sizeof(this->username));
         }
         size_t count = std::min(sizeof(this->username) - 1, username_len);
         if (count > 0) strncpy(this->username, username_pos, count);
         this->username[count] = 0;
 
         if (domain_len >= sizeof(this->domain)) {
-            LOG(LOG_INFO, "mod_rdp: domain too long! %u >= %u", domain_len, sizeof(this->domain));
+            LOG(LOG_INFO, "mod_rdp: domain too long! %zu >= %zu", domain_len, sizeof(this->domain));
         }
         count = std::min(sizeof(this->domain) - 1, domain_len);
         if (count > 0) strncpy(this->domain, domain_pos, count);
@@ -1260,7 +1261,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1281,7 +1282,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1308,7 +1309,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1335,7 +1336,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1362,7 +1363,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1386,7 +1387,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1410,7 +1411,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -2031,7 +2032,7 @@ public:
                                        that it has been sent. If there are any channels not confirmed, they're
                                        going to be the last channels on the array sent in MCS Connect Initial */
                                     if (this->verbose & 16){
-                                        LOG(LOG_INFO, "server_channels_count=%u sent_channels_count=%u",
+                                        LOG(LOG_INFO, "server_channels_count=%" PRIu16 " sent_channels_count=%zu",
                                             sc_net.channelCount,
                                             mod_channel_list.size());
                                     }
@@ -2155,7 +2156,7 @@ public:
 
                             for (size_t index = 0; index < num_channels+2; index++) {
                                 if (this->verbose & 16){
-                                    LOG(LOG_INFO, "cjrq[%u] = %u", index, channels_id[index]);
+                                    LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
                                 }
                                 write_packets(
                                     this->nego.trans,
@@ -2179,7 +2180,7 @@ public:
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                                 TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
                                 if (this->verbose & 16){
-                                    LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
+                                    LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
                                 }
                             }
                         }
@@ -4893,7 +4894,7 @@ public:
 
         unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -4904,7 +4905,7 @@ public:
         for (uint16_t n = 0; n < ncapsets; n++) {
             expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS_PDU_TRUNCATED);
             }
@@ -4914,7 +4915,7 @@ public:
 
             expected = capset_length - 4 /* capabilitySetType(2) + lengthCapability(2) */;
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS_PDU_TRUNCATED);
             }
@@ -5679,11 +5680,13 @@ public:
         }
 
         if (!stream.in_check_rem(dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%u remain=%u)", dlen, stream.in_remain());
+            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%" PRIu16 " remain=%zu)",
+                dlen, stream.in_remain());
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
         if (!stream.in_check_rem(mlen + dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor mask (need=%u remain=%u)", mlen, stream.in_remain() - dlen);
+            LOG(LOG_ERR, "Not enough data for cursor mask (need=%" PRIu16 " remain=%zu)",
+                mlen, stream.in_remain() - dlen);
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
@@ -5695,9 +5698,9 @@ public:
         if ((mlen > sizeof(cursor.mask)) ||
             (out_data_len > sizeof(cursor.data))) {
             LOG(LOG_ERR,
-                "mod_rdp::Bad length for color pointer mask_len=%u "
-                    "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
-                unsigned(mlen), unsigned(dlen), cursor.width, cursor.height,
+                "mod_rdp::Bad length for color pointer mask_len=%" PRIu16 " "
+                    "data_len=%" PRIu16 " Width = %u Height = %u bpp = %u out_data_len = %zu nbbytes=%" PRIu8,
+                mlen, dlen, cursor.width, cursor.height,
                 data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
@@ -5771,7 +5774,7 @@ public:
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
         if (this->verbose & 64){
-            LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
+            LOG(LOG_INFO, "/* ---------------- Sending %zu rectangles ----------------- */", numberRectangles);
         }
 
         for (size_t i = 0; i < numberRectangles; i++) {
@@ -5845,7 +5848,9 @@ public:
 
             if (this->verbose & 64) {
                 LOG( LOG_INFO
-                     , "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */"
+                     , "/* Rect [%zu] bpp=%" PRIu16
+                       " width=%" PRIu16 " height=%" PRIu16
+                       " b(%" PRId16 ", %" PRId16 ", %" PRIu16 ", %" PRIu16 ") */"
                      , i
                      , bmpdata.bits_per_pixel
                      , bmpdata.width
@@ -5868,7 +5873,8 @@ public:
             if (bmpdata.flags & BITMAP_COMPRESSION) {
                 if ((bmpdata.width <= 0) || (bmpdata.height <= 0)) {
                     LOG( LOG_WARNING
-                         , "Unexpected bitmap size: width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u"
+                         , "Unexpected bitmap size: width=%" PRIu16 " height=%" PRIu16 " size=%" PRIu16
+                           " left=%" PRIu16 ", top=%" PRIu16 ", right=%" PRIu16 ", bottom=%" PRIu16
                          , bmpdata.width
                          , bmpdata.height
                          , bmpdata.cb_comp_main_body_size
@@ -5899,7 +5905,7 @@ public:
             if (   bmpdata.cb_scan_width
                    && ((bmpdata.cb_scan_width - bitmap.line_size()) >= nbbytes(bitmap.bpp()))) {
                 LOG( LOG_WARNING
-                     , "Bad line size: line_size=%u width=%u height=%u bpp=%u"
+                     , "Bad line size: line_size=%" PRIu16 " width=%" PRIu16 " height=%" PRIu16 " bpp=%" PRIu16
                      , bmpdata.cb_scan_width
                      , bmpdata.width
                      , bmpdata.height
@@ -5910,7 +5916,8 @@ public:
             if (   bmpdata.cb_uncompressed_size
                    && (bmpdata.cb_uncompressed_size != bitmap.bmp_size())) {
                 LOG( LOG_WARNING
-                     , "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u"
+                     , "final_size should be size of decompressed bitmap [%" PRIu16 " != %zu]"
+                       " width=%" PRIu16 " height=%" PRIu16 " bpp=%" PRIu16
                      , bmpdata.cb_uncompressed_size
                      , bitmap.bmp_size()
                      , bmpdata.width

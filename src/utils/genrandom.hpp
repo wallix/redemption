@@ -99,7 +99,7 @@ class UdevRandom : public Random
             LOG(LOG_INFO, "using /dev/random as random source");
             file.open("/dev/random", O_RDONLY);
             if (!file.is_open()) {
-                LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
+                LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device");
             }
         }
         else {
@@ -109,10 +109,10 @@ class UdevRandom : public Random
         ssize_t res = file.read(dest, size);
         if (res != static_cast<ssize_t>(size)) {
             if (res >= 0){
-                LOG(LOG_ERR, "random source failed to provide enough random data [%u]", res);
+                LOG(LOG_ERR, "random source failed to provide enough random data [%zd]", res);
             }
             else {
-                LOG(LOG_ERR, "random source failed to provide random data [%u]", strerror(errno));
+                LOG(LOG_ERR, "random source failed to provide random data [%s]", strerror(errno));
             }
             memset(dest, 0x44, size);
         }

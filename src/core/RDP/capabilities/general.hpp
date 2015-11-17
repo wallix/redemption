@@ -239,7 +239,7 @@ struct GeneralCaps : public Capability {
          */
         const unsigned expected = 20;
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated GeneralCaps, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated GeneralCaps, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }

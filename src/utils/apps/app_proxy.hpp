@@ -163,13 +163,13 @@ inline int shutdown(const char * pid_file)
             strcpy(buffer + path_len, entryp->d_name);
             struct stat st;
             if (stat(buffer, &st) < 0){
-                LOG(LOG_ERR, "Failed to read pid directory %s [%u: %s]",
+                LOG(LOG_ERR, "Failed to read pid directory %s [%d: %s]",
                     buffer, errno, strerror(errno));
                 continue;
             }
             LOG(LOG_INFO, "removing old pid file %s", buffer);
             if (unlink(buffer) < 0){
-                LOG(LOG_ERR, "Failed to remove old session pid file %s [%u: %s]",
+                LOG(LOG_ERR, "Failed to remove old session pid file %s [%d: %s]",
                     buffer, errno, strerror(errno));
             }
         }
@@ -178,7 +178,7 @@ inline int shutdown(const char * pid_file)
         free(buffer);
     }
     else {
-        LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%u: %s]",
+        LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%d: %s]",
             "/var/run/redemption" , errno, strerror(errno));
     }
 
@@ -301,7 +301,7 @@ int app_proxy(
             }
             CheckFile::ShowErrors(euser_check_file_list, euid, egid);
 
-            LOG(LOG_INFO,
+            LOG(LOG_INFO, "%s",
                 "Please verify that all tests passed. If not, "
                     "you may need to remove " PID_PATH "/redemption/"
                     LOCKFILE " or reinstall rdpproxy if some configuration "

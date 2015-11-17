@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <cinttypes>
 
 #include "RDP/share.hpp"
 
@@ -663,7 +664,7 @@ enum {
             : basicSecurityHeader([&stream](){
                 const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
                 if (!stream.in_check_rem(expected)){
-                    LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %u",
+                    LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %zu",
                        expected, stream.in_remain());
                     throw Error(ERR_SEC);
                 }
@@ -678,14 +679,14 @@ enum {
             , length([&stream](){
                 uint32_t length = stream.in_uint32_le();
                 if (length != stream.in_remain()){
-                    LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, stream.in_remain());
+                    LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%" PRIu32 " available=%zu", length, stream.in_remain());
                 }
                 return length;
             }())
             , payload(stream.get_current(), stream.in_remain() - 8)
         {
             if (this->payload.get_capacity() != 64){
-                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.get_capacity());
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %zu", this->payload.get_capacity());
                 throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
             }
             // Skip payload and 8 bytes trailing padding
@@ -714,7 +715,7 @@ enum {
         : basicSecurityHeader([&stream](){
             const unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated SEC_INFO_PKT, expected=%u remains %u",
+                LOG(LOG_ERR, "Truncated SEC_INFO_PKT, expected=%u remains %zu",
                    expected, stream.in_remain());
                 throw Error(ERR_SEC);
             }
@@ -755,7 +756,7 @@ enum {
             , flags([&stream](){
                 const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need)){
-                    LOG(LOG_ERR, "flags expected: need=%u remains=%u", need, stream.in_remain());
+                    LOG(LOG_ERR, "flags expected: need=%u remains=%zu", need, stream.in_remain());
                     throw Error(ERR_SEC);
                 }
                 return stream.in_uint32_le();
@@ -769,7 +770,7 @@ enum {
                     }
                     const unsigned need = 8; /* signature(8) */
                     if (!stream.in_check_rem(need)){
-                        LOG(LOG_ERR, "signature expected: need=%u remains=%u", need, stream.in_remain());
+                        LOG(LOG_ERR, "signature expected: need=%u remains=%zu", need, stream.in_remain());
                         throw Error(ERR_SEC);
                     }
 
@@ -781,7 +782,7 @@ enum {
                     }
                     crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
                     if (this->verbose >= 0x80){
-                        LOG(LOG_INFO, "Decrypted %u bytes", stream.in_remain());
+                        LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
                         hexdump_c(stream.get_current(), stream.in_remain());
                     }
                 }
@@ -808,7 +809,7 @@ enum {
                     const unsigned need = 4; /* flags(4) */
                     if (!stream.in_check_rem(need))
                     {
-                        LOG(LOG_ERR, "flags expected: need=%u remains=%u",
+                        LOG(LOG_ERR, "flags expected: need=%u remains=%zu",
                             need, stream.in_remain());
                         throw Error(ERR_SEC);
                     }
@@ -817,7 +818,7 @@ enum {
                         const unsigned need = 8; /* signature(8) */
                         if (!stream.in_check_rem(need))
                         {
-                            LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                            LOG(LOG_ERR, "signature expected: need=%u remains=%zu",
                                 need, stream.in_remain());
                             throw Error(ERR_SEC);
                         }
@@ -830,7 +831,7 @@ enum {
                         }
                         crypt.decrypt(const_cast<uint8_t *>(stream.get_current()), stream.in_remain());
                         if (this->verbose >= 0x80){
-                            LOG(LOG_INFO, "Decrypted %u bytes", stream.get_capacity());
+                            LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
                             hexdump_c(stream.get_current(), stream.in_remain());
                         }
                     }

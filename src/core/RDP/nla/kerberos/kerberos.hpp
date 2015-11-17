@@ -195,7 +195,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         output.value = malloc(size);
         snprintf(reinterpret_cast<char*>(output.value), size, "%s@%s", service_name, server);
         output.length = strlen(reinterpret_cast<const char*>(output.value)) + 1;
-        LOG(LOG_INFO, "GSS IMPORT NAME : %s", output.value);
+        LOG(LOG_INFO, "GSS IMPORT NAME : %s", reinterpret_cast<char const *>(output.value));
         major_status = gss_import_name(&minor_status, &output, type, name);
         free(output.value);
         if (GSS_ERROR(major_status)) {
@@ -605,7 +605,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         	if (ms != GSS_S_COMPLETE)
                     continue;
 
-                LOG(LOG_ERR," - %s\n", status_string.value);
+                LOG(LOG_ERR," - %s\n", reinterpret_cast<char const *>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
 

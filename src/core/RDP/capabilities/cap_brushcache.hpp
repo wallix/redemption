@@ -84,7 +84,7 @@ struct BrushCacheCaps : public Capability {
         this->len = len;
 
         if (!stream.in_check_rem(4)){
-            LOG(LOG_ERR, "Truncated BrushCacheCaps, need=4 remains=%u",
+            LOG(LOG_ERR, "Truncated BrushCacheCaps, need=4 remains=%zu",
                 stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }

@@ -580,6 +580,45 @@ static inline size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len,
     return i_t;
 }
 
+// Return number of UTF8 bytes used to encode UTF16 input
+// do not write trailing 0
+static inline size_t UTF16toUTF8(const uint16_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len)
+{
+    size_t i_t = 0;
+    for (size_t i = 0 ; i < utf16_len ; i++){
+        uint8_t lo = utf16_source[i*2];
+        uint8_t hi  = utf16_source[i*2+1];
+        if (lo == 0 && hi == 0){
+            if ((i_t + 1) > target_len) { break; }
+            utf8_target[i_t] = 0;
+            i_t++;
+            break;
+        }
+
+        if (hi & 0xF8){
+            // 3 bytes
+            if ((i_t + 3) > target_len) { break; }
+            utf8_target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
+            utf8_target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+            utf8_target[i_t + 2] = 0x80 | (lo & 0x3F);
+            i_t += 3;
+        }
+        else if (hi || (lo & 0x80)) {
+            // 2 bytes
+            if ((i_t + 2) > target_len) { break; }
+            utf8_target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+            utf8_target[i_t + 1] = 0x80 | (lo & 0x3F);
+            i_t += 2;
+        }
+        else {
+            if ((i_t + 1) > target_len) { break; }
+            utf8_target[i_t] = lo;
+            i_t++;
+        }
+    }
+    return i_t;
+}
+
 // Return number of UTF8 bytes used to encode UTF32 input
 // do not write trailing 0
 static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len, uint8_t * utf8_target, size_t target_len)

@@ -290,7 +290,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StringList>(), "proxy_managed_drives", r);
         W.sep();
         W.member(H, type_<bool>(), "ignore_auth_channel", set(false), r);
-        W.member(V, type_<StaticNilString<8>>(), "auth_channel", set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
+        W.member(V, type_<StaticString<8>>(), "auth_channel", set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
         W.sep();
         W.member(H, type_<std::string>(), "alternate_shell", r);
         W.member(H, type_<std::string>(), "shell_working_directory", r);

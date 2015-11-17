@@ -1348,7 +1348,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticNilString<8>;
+            using type = ::configs::StaticString<8>;
             type value{"*"};
         };
 

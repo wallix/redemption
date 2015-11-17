@@ -278,9 +278,9 @@ public:
     void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
         if (this->verbose) {
             LOG(LOG_INFO, "MS-Logon with following values:");
-            LOG(LOG_INFO, "Gen=%u", gen);
-            LOG(LOG_INFO, "Mod=%u", mod);
-            LOG(LOG_INFO, "Resp=%u", resp);
+            LOG(LOG_INFO, "Gen=%" PRIu64, gen);
+            LOG(LOG_INFO, "Mod=%" PRIu64, mod);
+            LOG(LOG_INFO, "Resp=%" PRIu64, resp);
         }
         DiffieHellman dh(gen, mod);
         uint64_t pub = dh.createInterKey();
@@ -1302,7 +1302,7 @@ private:
                 if (tile_data_length > sizeof(tile_data))
                 {
                     LOG(LOG_ERR,
-                        "VNC Encoding: ZRLE, tile buffer too small (%u < %u)",
+                        "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
                         sizeof(tile_data), tile_data_length);
                     throw Error(ERR_BUFFER_TOO_SMALL);
                 }
@@ -1779,7 +1779,7 @@ private:
                 {
                     LOG(LOG_ERR,
                         "VNC Encoding: ZRLE, compressed data buffer too small "
-                            "(65536 < %lu)",
+                            "(65536 < %" PRIu32 ")",
                         zlib_compressed_data_length);
                     throw Error(ERR_BUFFER_TOO_SMALL);
                 }
@@ -2376,7 +2376,7 @@ private:
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + requestedFormatId(4) */
                 if (!stream.in_check_rem(expected)) {
                     LOG( LOG_ERR
-                       , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_REQUEST(%d) data, need=%u remains=%u"
+                       , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_REQUEST(%d) data, need=%u remains=%zu"
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST, expected, stream.in_remain());
                     throw Error(ERR_VNC);
                 }
@@ -2563,7 +2563,7 @@ private:
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
-                               , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_RESPONSE(%d), need=%u remains=%u"
+                               , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_RESPONSE(%d), need=%" PRIu32 " remains=%zu"
                                , RDPECLIP::CB_FORMAT_DATA_RESPONSE
                                , format_data_response_pdu.dataLen(), stream.in_remain());
                             throw Error(ERR_VNC);

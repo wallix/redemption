@@ -74,7 +74,7 @@ public:
     {
         if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_index_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , this->ini.get<cfg::video::wrm_compression_algorithm>());
+               , this->ini.get<cfg::video::wrm_compression_algorithm>().get());
         }
 
         send_meta_chunk(

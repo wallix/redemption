@@ -334,7 +334,7 @@ private:
                         LOG(LOG_ERR,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                                 "Truncated DR_DEVICELIST_ANNOUNCE, "
-                                "need=%u remains=%u",
+                                "need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -606,7 +606,7 @@ private:
                     LOG(LOG_ERR,
                         "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
                             "Truncated DR_DEVICELIST_REMOVE (1), "
-                            "need=%u remains=%u",
+                            "need=%u remains=%zu",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -622,7 +622,7 @@ private:
                     LOG(LOG_ERR,
                         "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
                             "Truncated DR_DEVICELIST_REMOVE (2), "
-                            "need=%u remains=%u",
+                            "need=%u remains=%zu",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -957,7 +957,7 @@ public:
                 LOG(LOG_ERR,
                     "FileSystemVirtualChannel::process_client_core_capability_response: "
                         "Truncated DR_CORE_CAPABILITY_RSP (1), "
-                        "need=%u remains=%u",
+                        "need=%u remains=%zu",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -982,7 +982,7 @@ public:
                     LOG(LOG_ERR,
                         "FileSystemVirtualChannel::process_client_core_capability_response: "
                             "Truncated DR_CORE_CAPABILITY_RSP (2), "
-                            "need=%u remains=%u",
+                            "need=%u remains=%zu",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -1052,7 +1052,7 @@ public:
                                 "FileSystemVirtualChannel::process_client_drive_query_information_response: "
                                     "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
                                     "FileBasicInformation, "
-                                    "need=%u remains=%u",
+                                    "need=%u remains=%zu",
                                 expected, chunk.in_remain());
                             throw Error(ERR_RDP_DATA_TRUNCATED);
                         }
@@ -1080,7 +1080,7 @@ public:
                                 "FileSystemVirtualChannel::process_client_drive_query_information_response: "
                                     "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
                                     "FileStandardInformation, "
-                                    "need=%u remains=%u",
+                                    "need=%u remains=%zu",
                                 expected, chunk.in_remain());
                             throw Error(ERR_RDP_DATA_TRUNCATED);
                         }
@@ -1127,7 +1127,7 @@ public:
                             "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
                                 "Truncated DR_DRIVE_QUERY_VOLUME_INFORMATION_RSP - "
                                 "FileFsAttributeInformation, "
-                                "need=%u remains=%u",
+                                "need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -1315,7 +1315,7 @@ public:
                     if (!chunk.in_check_rem(expected)) {
                         LOG(LOG_ERR,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                "Truncated IRP_MJ_READ, need=%u remains=%u",
+                                "Truncated IRP_MJ_READ, need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -1657,7 +1657,7 @@ public:
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Undecoded PDU - "
-                            "Component=%s(0x%X) PacketId=0x%X",
+                            "Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
                         rdpdr::SharedHeader::get_Component_name(
                             this->server_message_header.component),
                         static_cast<uint16_t>(
@@ -2248,7 +2248,7 @@ public:
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Undecoded PDU - "
-                            "Component=%s(0x%X) PacketId=0x%X",
+                            "Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
                         rdpdr::SharedHeader::get_Component_name(
                             this->server_message_header.component),
                         static_cast<uint16_t>(

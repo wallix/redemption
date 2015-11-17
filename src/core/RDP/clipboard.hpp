@@ -213,7 +213,7 @@ struct RecvFactory {
     explicit RecvFactory(InStream & stream) {
         const unsigned expected = 2;    /* msgType(2) */
         if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "RDPECLIP::RecvFactory truncated msgType, need=%u remains=%u"
+            LOG( LOG_INFO, "RDPECLIP::RecvFactory truncated msgType, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -254,7 +254,7 @@ protected:
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         const unsigned expected = 6;    /* msgFlags_(2) + dataLen_(4) */
         if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "RDPECLIP::recv truncated data, need=%u remains=%u"
+            LOG( LOG_INFO, "RDPECLIP::recv truncated data, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -338,7 +338,7 @@ public:
         const unsigned expected = 4;    // cCapabilitiesSets(2) + pad1(2)
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO,
-                "RDPECLIP::ClipboardCapabilitiesPDU:recv(): recv truncated data, need=%u remains=%u"
+                "RDPECLIP::ClipboardCapabilitiesPDU:recv(): recv truncated data, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -395,7 +395,7 @@ struct CapabilitySetRecvFactory {
         const unsigned expected = 2;    /* capabilitySetType(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO
-               , "RDPECLIP::CapabilitySetRecvFactory truncated capabilitySetType, need=%u remains=%u"
+               , "RDPECLIP::CapabilitySetRecvFactory truncated capabilitySetType, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -534,7 +534,7 @@ public:
                                         //     generalFlags(4)
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO
-               , "RDPECLIP::GeneralCapabilitySet::recv truncated data, need=%u remains=%u"
+               , "RDPECLIP::GeneralCapabilitySet::recv truncated data, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -726,7 +726,7 @@ struct FormatListPDU : public CliprdrHeader {
         for (uint32_t i = 0; i < (dataLen_ / short_format_name_structure_size); i++) {
             if (!stream.in_check_rem(short_format_name_structure_size)) {
                 LOG( LOG_INFO
-                   , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%u"
+                   , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
                    , short_format_name_structure_size, stream.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -1119,7 +1119,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileDescriptor: expected=%u remains=%u",
+                    "Truncated FileDescriptor: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }

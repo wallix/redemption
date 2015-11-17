@@ -124,9 +124,6 @@ template<std::size_t N>
 using StaticString = StaticStringBase<N, StringCopier>;
 
 template<std::size_t N>
-using StaticNilString = StaticStringBase<N, StringCopier, true>;
-
-template<std::size_t N>
 struct StaticKeyString : StaticStringBase<N+1, null_fill, true>
 {
     explicit StaticKeyString(const char * s) {

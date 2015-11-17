@@ -622,7 +622,7 @@ public:
                 // have_pub_key_auth = true;
                 if (this->table->QueryContextAttributes(&this->context, SECPKG_ATTR_SIZES,
                                                         &this->ContextSizes) != SEC_E_OK) {
-                    LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+                    LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
                     return 0;
                 }
                 encrypted = this->credssp_encrypt_public_key_echo();
@@ -706,7 +706,7 @@ public:
         this->credssp_buffer_free();
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "Could not verify public key echo!\n");
+            LOG(LOG_ERR, "Could not verify public key echo!");
             this->credssp_buffer_free();
             return -1;
         }
@@ -813,7 +813,7 @@ public:
                                     input_buffer.Buffer.size());
 
            if (this->negoToken.size() < 1) {
-               LOG(LOG_ERR, "CredSSP: invalid negoToken!\n");
+               LOG(LOG_ERR, "CredSSP: invalid negoToken!");
                return -1;
            }
 
@@ -848,12 +848,12 @@ public:
                if (this->table->QueryContextAttributes(&this->context,
                                                        SECPKG_ATTR_SIZES,
                                                        &this->ContextSizes) != SEC_E_OK) {
-                   LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+                   LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
                    return 0;
                }
 
                if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
-                   LOG(LOG_ERR, "Error: could not verify client's public key echo\n");
+                   LOG(LOG_ERR, "Error: could not verify client's public key echo");
                    return -1;
                }
 
