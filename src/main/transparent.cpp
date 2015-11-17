@@ -277,7 +277,6 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
             mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
             mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
-            mod_rdp_params.certificate_change_action           = ini.get<cfg::mod_rdp::certificate_change_action>();
             mod_rdp_params.extra_orders                        = ini.get<cfg::mod_rdp::extra_orders>().c_str();
             mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
             mod_rdp_params.enable_cache_waiting_list           = ini.get<cfg::mod_rdp::cache_waiting_list>();

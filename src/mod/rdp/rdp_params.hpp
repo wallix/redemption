@@ -83,8 +83,6 @@ struct ModRDPParams {
     bool          disconnect_on_logon_user_change;
     uint32_t      open_session_timeout;
 
-    unsigned certificate_change_action;
-
     configs::ServerCertCheck server_cert_check;
     configs::ServerNotification server_access_allowed_notification;
     configs::ServerNotification server_cert_create_notification;
@@ -179,8 +177,6 @@ struct ModRDPParams {
         , error_message(nullptr)
         , disconnect_on_logon_user_change(false)
         , open_session_timeout(0)
-
-        , certificate_change_action(0)
 
         , server_cert_check(configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know)
         , server_access_allowed_notification(configs::ServerNotification::syslog)
@@ -315,9 +311,6 @@ struct ModRDPParams {
             "ModRDPParams disconnect_on_logon_user_change=%s",     (this->disconnect_on_logon_user_change ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams open_session_timeout=%d",                this->open_session_timeout);
-
-        LOG(LOG_INFO,
-            "ModRDPParams certificate_change_action=%d",           this->certificate_change_action);
 
         LOG(LOG_INFO,
             "ModRDPParams server_cert_check=%d",                   static_cast<unsigned>(this->server_cert_check));

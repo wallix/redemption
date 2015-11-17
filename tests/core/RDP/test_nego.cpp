@@ -106,27 +106,18 @@ BOOST_AUTO_TEST_CASE(TestNego)
     char domain[] = "Ithaque";
     char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
+    NullServerNotifier null_server_notifier;
     RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false);
     nego.test = true;
     nego.set_identity(user, domain, pass, host);
     nego.server_event(
-            true,
-            configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
+            configs::ServerCertCheck::always_succeed,
+            null_server_notifier,
             "/tmp/certif"
         );
     nego.server_event(
-            true,
-            configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
+            configs::ServerCertCheck::always_succeed,
+            null_server_notifier,
             "/tmp/certif"
         );
 }

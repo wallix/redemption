@@ -53,14 +53,11 @@ static void rdp_request(SocketTransport & sockettransport)
     sockettransport.tls = true;
     sockettransport.io = ssl;
 
+    NullServerNotifier null_server_notifier;
+
     sockettransport.enable_client_tls(
-            false,
             configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
-            configs::ServerNotification::nobody,
+            null_server_notifier,
             CERTIF_PATH
         );
 

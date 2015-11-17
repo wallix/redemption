@@ -147,13 +147,8 @@ struct RdpNego
     }
 
     void server_event(
-        bool ignore_certificate_change,
         configs::ServerCertCheck server_cert_check,
-        configs::ServerNotification server_access_allowed_notification,
-        configs::ServerNotification server_cert_create_notification,
-        configs::ServerNotification server_cert_success_notification,
-        configs::ServerNotification server_cert_failure_notification,
-        configs::ServerNotification server_cert_error_notification,
+        ServerNotifier & server_notifier,
         const char * certif_path)
     {
         switch (this->state){
@@ -174,39 +169,24 @@ struct RdpNego
         case NEGO_STATE_NLA:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
             this->recv_connection_confirm(
-                    ignore_certificate_change,
                     server_cert_check,
-                    server_access_allowed_notification,
-                    server_cert_create_notification,
-                    server_cert_success_notification,
-                    server_cert_failure_notification,
-                    server_cert_error_notification,
+                    server_notifier,
                     certif_path
                 );
         break;
         case NEGO_STATE_TLS:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
             this->recv_connection_confirm(
-                    ignore_certificate_change,
                     server_cert_check,
-                    server_access_allowed_notification,
-                    server_cert_create_notification,
-                    server_cert_success_notification,
-                    server_cert_failure_notification,
-                    server_cert_error_notification,
+                    server_notifier,
                     certif_path
                 );
         break;
         case NEGO_STATE_RDP:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
             this->recv_connection_confirm(
-                    ignore_certificate_change,
                     server_cert_check,
-                    server_access_allowed_notification,
-                    server_cert_create_notification,
-                    server_cert_success_notification,
-                    server_cert_failure_notification,
-                    server_cert_error_notification,
+                    server_notifier,
                     certif_path
                 );
         break;
@@ -323,13 +303,8 @@ struct RdpNego
 // +--------------------------------------+------------------------------------+
 
     void recv_connection_confirm(
-        bool ignore_certificate_change,
         configs::ServerCertCheck server_cert_check,
-        configs::ServerNotification server_access_allowed_notification,
-        configs::ServerNotification server_cert_create_notification,
-        configs::ServerNotification server_cert_success_notification,
-        configs::ServerNotification server_cert_failure_notification,
-        configs::ServerNotification server_cert_error_notification,
+        ServerNotifier & server_notifier,
         const char * certif_path)
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
@@ -357,13 +332,8 @@ struct RdpNego
                 // }
                 LOG(LOG_INFO, "activating SSL");
                 this->trans.enable_client_tls(
-                        ignore_certificate_change,
                         server_cert_check,
-                        server_access_allowed_notification,
-                        server_cert_create_notification,
-                        server_cert_success_notification,
-                        server_cert_failure_notification,
-                        server_cert_error_notification,
+                        server_notifier,
                         certif_path
                     );
                 LOG(LOG_INFO, "activating CREDSSP");
@@ -426,13 +396,8 @@ struct RdpNego
             && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans.enable_client_tls(
-                        ignore_certificate_change,
                         server_cert_check,
-                        server_access_allowed_notification,
-                        server_cert_create_notification,
-                        server_cert_success_notification,
-                        server_cert_failure_notification,
-                        server_cert_error_notification,
+                        server_notifier,
                         certif_path
                     );
                 this->state = NEGO_STATE_FINAL;

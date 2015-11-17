@@ -376,14 +376,7 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string end_session_reason;
     std::string end_session_message;
 
-    const unsigned certificate_change_action;
-
     const configs::ServerCertCheck server_cert_check;
-    const configs::ServerNotification server_access_allowed_notification;
-    const configs::ServerNotification server_cert_create_notification;
-    const configs::ServerNotification server_cert_success_notification;
-    const configs::ServerNotification server_cert_failure_notification;
-    const configs::ServerNotification server_cert_error_notification;
 
     const char * certif_path;
 
@@ -497,6 +490,105 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     };
 
+    class RDPServerNotifier : public ServerNotifier {
+    private:
+        auth_api * acl;
+
+        const configs::ServerNotification server_access_allowed_notification;
+        const configs::ServerNotification server_cert_create_notification;
+        const configs::ServerNotification server_cert_success_notification;
+        const configs::ServerNotification server_cert_failure_notification;
+        const configs::ServerNotification server_cert_error_notification;
+
+        uint32_t verbose;
+
+        bool is_syslog_notification_enabled(
+                configs::ServerNotification server_notification) {
+            return
+                ((server_notification & configs::ServerNotification::syslog) ==
+                 configs::ServerNotification::syslog);
+        }
+
+    public:
+        RDPServerNotifier(
+                auth_api * acl,
+                configs::ServerNotification server_access_allowed_notification,
+                configs::ServerNotification server_cert_create_notification,
+                configs::ServerNotification server_cert_success_notification,
+                configs::ServerNotification server_cert_failure_notification,
+                configs::ServerNotification server_cert_error_notification,
+                uint32_t verbose
+            )
+        : acl(acl)
+        , server_access_allowed_notification(server_access_allowed_notification)
+        , server_cert_create_notification(server_cert_create_notification)
+        , server_cert_success_notification(server_cert_success_notification)
+        , server_cert_failure_notification(server_cert_failure_notification)
+        , server_cert_error_notification(server_cert_error_notification)
+        , verbose(verbose)
+        {}
+
+        void server_access_allowed() override {
+            if (is_syslog_notification_enabled(
+                    this->server_access_allowed_notification) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "certificate_check_success",
+                        "data=\"Connexion to server allowed\""
+                    );
+            }
+        }
+
+        void server_cert_create() override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_create_notification) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "server_certificate_new",
+                        "data=\"New X.509 certificate created\""
+                    );
+            }
+        }
+
+        void server_cert_success() override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_success_notification) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "server_certificate_match_success",
+                        "data=\"X.509 server certificate match\""
+                    );
+            }
+        }
+
+        void server_cert_failure() override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_failure_notification) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "server_certificate_match_failure",
+                        "data=\"X.509 server certificate match failure\""
+                    );
+            }
+        }
+
+        void server_cert_error(const char * str_error) override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_error_notification) &&
+                this->acl) {
+                char extra[512];
+                snprintf(extra, sizeof(extra),
+                        "data=\"X.509 server certificate internal error: '%s'\"",
+                        (str_error ? str_error : "")
+                    );
+                this->acl->log4((this->verbose & 1),
+                        "server_certificate_error",
+                        extra
+                    );
+            }
+        }
+    } server_notifier;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -564,13 +656,7 @@ public:
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , open_session_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
-        , certificate_change_action(mod_rdp_params.certificate_change_action)
         , server_cert_check(mod_rdp_params.server_cert_check)
-        , server_access_allowed_notification(mod_rdp_params.server_access_allowed_notification)
-        , server_cert_create_notification(mod_rdp_params.server_cert_create_notification)
-        , server_cert_success_notification(mod_rdp_params.server_cert_success_notification)
-        , server_cert_failure_notification(mod_rdp_params.server_cert_failure_notification)
-        , server_cert_error_notification(mod_rdp_params.server_cert_error_notification)
         , certif_path([](const char * device_id){
             size_t lg_certif_path = strlen(CERTIF_PATH);
             size_t lg_dev_id = strlen(device_id);
@@ -604,6 +690,14 @@ public:
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , lang(mod_rdp_params.lang)
         , outbound_connection_monitor_rules("", mod_rdp_params.outbound_connection_blocking_rules)
+        , server_notifier(mod_rdp_params.acl,
+                          mod_rdp_params.server_access_allowed_notification,
+                          mod_rdp_params.server_cert_create_notification,
+                          mod_rdp_params.server_cert_success_notification,
+                          mod_rdp_params.server_cert_failure_notification,
+                          mod_rdp_params.server_cert_error_notification,
+                          mod_rdp_params.verbose
+                         )
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -1627,13 +1721,8 @@ public:
                     switch (this->nego.state){
                     default:
                         this->nego.server_event(
-                                this->certificate_change_action == 1,
                                 server_cert_check,
-                                server_access_allowed_notification,
-                                server_cert_create_notification,
-                                server_cert_success_notification,
-                                server_cert_failure_notification,
-                                server_cert_error_notification,
+                                this->server_notifier,
                                 this->certif_path
                             );
                         break;
@@ -6202,6 +6291,8 @@ public:
                 LOG(LOG_INFO, "Session Probe is ready.");
             }
 
+            this->front.session_probe_started();
+
             if (this->enable_session_probe_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
@@ -6355,13 +6446,13 @@ public:
                 std::string parameters(separator + 1);
 
                 if (!order.compare("PasswordTextBox.SetFocus")) {
-                    std::string info("status='" + parameters + "'");
+                    std::string info("status=\"" + parameters + "\"");
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_focus_on_password_textbox(!parameters.compare("yes"));
                 }
                 else if (!order.compare("ConsentUI.IsVisible")) {
-                    std::string info("status='" + parameters + "'");
+                    std::string info("status=\"" + parameters + "\"");
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_consent_ui_visible(!parameters.compare("yes"));
@@ -6374,7 +6465,7 @@ public:
                         std::string code(subitems, subitem_separator - subitems);
                         std::string display_name(subitem_separator + 1);
 
-                        std::string info("code='" + code + "' name='" + display_name + "'");
+                        std::string info("code=\"" + code + "\" name=\"" + display_name + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                         this->front.set_keylayout(::strtol(code.c_str(), nullptr, 16));
@@ -6385,7 +6476,7 @@ public:
                 }
                 else if (!order.compare("NewProcess") ||
                          !order.compare("CompletedProcess")) {
-                    std::string info("command_line='" + parameters + "'");
+                    std::string info("command_line=\"" + parameters + "\"");
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                 }
                 else if (!order.compare("OutboundConnectionBlocked")) {
@@ -6396,7 +6487,7 @@ public:
                         std::string rule(subitems, subitem_separator - subitems);
                         std::string application_name(subitem_separator + 1);
 
-                        std::string info("rule='" + rule + "' application_name='" + application_name + "'");
+                        std::string info("rule=\"" + rule + "\" application_name=\"" + application_name + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                         char message[4096];
@@ -6433,7 +6524,7 @@ public:
                             std::string window_class(subitems, subitem_separator - subitems);
                             std::string command_line(subitem_separator + 1);
 
-                            std::string info("text='" + text + "' class='" + window_class + "' command_line='" + command_line + "'");
+                            std::string info("text=\"" + text + "\" class=\"" + window_class + "\" command_line=\"" + command_line + "\"");
                             this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                         }
                         else {
@@ -6452,7 +6543,7 @@ public:
                         std::string window(subitems, subitem_separator - subitems);
                         std::string button(subitem_separator + 1);
 
-                        std::string info("window='" + window + "' button='" + button + "'");
+                        std::string info("window=\"" + window + "\" button=\"" + button + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                     }
                     else {
@@ -6467,7 +6558,7 @@ public:
                         std::string window(subitems, subitem_separator - subitems);
                         std::string edit(subitem_separator + 1);
 
-                        std::string info("window='" + window + "' edit='" + edit + "'");
+                        std::string info("window=\"" + window + "\" edit=\"" + edit + "\"");
                         this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
                     }
                     else {

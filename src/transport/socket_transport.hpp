@@ -141,7 +141,7 @@ public:
         this->ip_address[127] = 0;
     }
 
-    ~SocketTransport()override {
+    ~SocketTransport() override {
         if (!this->sck_closed){
             this->disconnect();
         }
@@ -449,13 +449,8 @@ public:
     }
 
     void enable_client_tls(
-                bool ignore_certificate_change,
                 configs::ServerCertCheck server_cert_check,
-                configs::ServerNotification server_access_allowed_notification,
-                configs::ServerNotification server_cert_create_notification,
-                configs::ServerNotification server_cert_success_notification,
-                configs::ServerNotification server_cert_failure_notification,
-                configs::ServerNotification server_cert_error_notification,
+                ServerNotifier & server_notifier,
                 const char * certif_path
             ) throw (Error) override {
         if (this->tls) {
@@ -812,6 +807,7 @@ public:
         X509 * px509 = SSL_get_peer_certificate(ssl);
         if (!px509) {
             LOG(LOG_INFO, "SSL_get_peer_certificate() failed");
+            server_notifier.server_cert_error(strerror(errno));
             return;
         }
 
@@ -823,6 +819,7 @@ public:
                 *this->error_message += certif_path;
                 *this->error_message += "\"\n";
             }
+            server_notifier.server_cert_error(strerror(errno));
             throw Error(ERR_TRANSPORT, 0);
         }
 
@@ -844,14 +841,24 @@ public:
                     *this->error_message += filename;
                     *this->error_message += "\"\n";
                 }
+                server_notifier.server_cert_error(strerror(errno));
                 throw Error(ERR_TRANSPORT, 0);
             }
             else {
+                if ((server_cert_check == configs::ServerCertCheck::fails_if_no_match_or_missing) ||
+                    (server_cert_check == configs::ServerCertCheck::succeed_if_exists_and_fails_if_missing)) {
+                    LOG(LOG_ERR, "There's no stored certificate: \"%s\"\n", filename);
+                    server_notifier.server_cert_error(strerror(errno));
+                    throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_MISSED);
+                }
+
                 LOG(LOG_INFO, "dumping X509 peer certificate\n");
                 fp = ::fopen(filename, "w+");
                 PEM_write_X509(fp, px509);
                 ::fclose(fp);
                 LOG(LOG_INFO, "dumped X509 peer certificate\n");
+
+                server_notifier.server_cert_create();
             }
         }
         else {
@@ -864,6 +871,7 @@ public:
                     *this->error_message += filename;
                     *this->error_message += "\"\n";
                 }
+                server_notifier.server_cert_error(strerror(errno));
                 throw Error(ERR_TRANSPORT, 0);
             }
             ::fclose(fp);
@@ -943,7 +951,9 @@ public:
                     this->ip_address, this->port,
                     issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
 
-                if (!ignore_certificate_change) {
+                if ((server_cert_check == configs::ServerCertCheck::fails_if_no_match_or_missing) ||
+                    (server_cert_check == configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know)) {
+                    server_notifier.server_cert_failure();
                     throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED, 0);
                 }
 
@@ -954,7 +964,14 @@ public:
                 PEM_write_X509(fp, px509);
                 ::fclose(fp);
                 LOG(LOG_INFO, "dumped X509 peer certificate\n");
+
+                server_notifier.server_cert_create();
             }
+            else {
+                server_notifier.server_cert_success();
+            }
+
+            server_notifier.server_access_allowed();
 
             if (issuer               != nullptr) { free(issuer              ); }
             if (issuer_existing      != nullptr) { free(issuer_existing     ); }

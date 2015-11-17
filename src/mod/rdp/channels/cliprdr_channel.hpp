@@ -363,11 +363,11 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name='");
+                    std::string info("file_name=\"");
                     info += fd.fileName();
-                    info += "' size='";
+                    info += "\" size=\"";
                     info += std::to_string(fd.file_size());
-                    info += "'";
+                    info += "\"";
 
                     this->param_acl->log4(
                         !this->param_dont_log_data_into_syslog,
@@ -399,11 +399,11 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name='");
+                    std::string info("file_name=\"");
                     info += fd.fileName();
-                    info += "' size='";
+                    info += "\" size=\"";
                     info += std::to_string(fd.file_size());
-                    info += "'";
+                    info += "\"";
 
                     this->param_acl->log4(
                         !this->param_dont_log_data_into_syslog,
@@ -898,11 +898,11 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name='");
+                    std::string info("file_name=\"");
                     info += fd.fileName();
-                    info += "' size='";
+                    info += "\" size=\"";
                     info += std::to_string(fd.file_size());
-                    info += "'";
+                    info += "\"";
 
                     this->param_acl->log4(
                         !this->param_dont_log_data_into_syslog,
@@ -934,11 +934,11 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name='");
+                    std::string info("file_name=\"");
                     info += fd.fileName();
-                    info += "' size='";
+                    info += "\" size=\"";
                     info += std::to_string(fd.file_size());
-                    info += "'";
+                    info += "\"";
 
                     this->param_acl->log4(
                         this->param_dont_log_data_into_syslog,

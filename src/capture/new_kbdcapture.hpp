@@ -292,7 +292,7 @@ public:
         if (this->unlogged_data.get_offset()) {
             if (this->authentifier) {
                 char extra[65536];
-                snprintf(extra, sizeof(extra), "data='%.*s'",
+                snprintf(extra, sizeof(extra), "data=\"%.*s\"",
                     (unsigned)this->unlogged_data.get_offset(),
                     this->unlogged_data.get_data());
                 this->authentifier->log4(this->enable_keyboard_log_syslog,

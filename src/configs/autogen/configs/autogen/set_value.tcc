@@ -253,9 +253,6 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "open_session_timeout")) {
             ::configs::parse(static_cast<cfg::mod_rdp::open_session_timeout&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "certificate_change_action")) {
-            ::configs::parse(static_cast<cfg::mod_rdp::certificate_change_action&>(this->variables).value, value);
-        }
         else if (0 == strcmp(key, "extra_orders")) {
             ::configs::parse(static_cast<cfg::mod_rdp::extra_orders&>(this->variables).value, value);
         }

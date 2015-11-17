@@ -835,8 +835,6 @@ public:
                 mod_rdp_params.disconnect_on_logon_user_change     = this->ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
                 mod_rdp_params.open_session_timeout                = this->ini.get<cfg::mod_rdp::open_session_timeout>();
 
-                mod_rdp_params.certificate_change_action           = this->ini.get<cfg::mod_rdp::certificate_change_action>();
-
                 mod_rdp_params.server_cert_check                   = this->ini.get<cfg::mod_rdp::server_cert_check>();
                 mod_rdp_params.server_access_allowed_notification  = this->ini.get<cfg::mod_rdp::server_access_allowed_notification>();
                 mod_rdp_params.server_cert_create_notification     = this->ini.get<cfg::mod_rdp::server_cert_create_notification>();
