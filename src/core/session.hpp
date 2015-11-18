@@ -98,8 +98,8 @@ class Session {
         Client( int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
         : auth_trans( "Authentifier"
                     , client_sck
-                    , ini.get<cfg::globals::authip>()
-                    , ini.get<cfg::globals::authport>()
+                    , ini.get<cfg::globals::authfile>().c_str()
+                    , 0
                     , ini.get<cfg::debug::auth>()
         )
         , acl( ini
@@ -288,11 +288,10 @@ public:
                             if (!mm.last_module) {
                                 // acl never opened or closed by me (close box)
                                 try {
-                                    int client_sck = ip_connect(this->ini.get<cfg::globals::authip>(),
-                                                                this->ini.get<cfg::globals::authport>(),
-                                                                30,
-                                                                1000,
-                                                                this->ini.get<cfg::debug::auth>());
+                                    int client_sck = local_connect(
+                                        this->ini.get<cfg::globals::authfile>().c_str(),
+                                        30, 1000, this->ini.get<cfg::debug::auth>()
+                                    );
 
                                     if (client_sck == -1) {
                                         LOG(LOG_ERR, "Failed to connect to authentifier");

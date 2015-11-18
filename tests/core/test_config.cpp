@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+    
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -288,8 +288,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -519,8 +519,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -760,8 +760,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.get<cfg::globals::persistent_path>().c_str());
@@ -977,8 +977,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::medium,           ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -1167,8 +1167,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::high,             ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -1359,8 +1359,8 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::high,             ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -1526,8 +1526,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -1692,8 +1692,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -1845,8 +1845,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -1997,8 +1997,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::authip>().c_str());
-    BOOST_CHECK_EQUAL(3350,                             ini.get<cfg::globals::authport>());
+    BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),

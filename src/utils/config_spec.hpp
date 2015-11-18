@@ -170,8 +170,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "nomouse", set(false));
         W.member(A, type_<bool>(), "notimestamp", set(false));
         W.member(A, type_<Level>(), "encryptionLevel", rdp_level_desc, set(Level::low));
-        W.member(A, type_<StaticIpString>(), "authip", set("127.0.0.1"));
-        W.member(A, type_<unsigned>(), "authport", set(3350));
+        W.member(A, type_<std::string>(), "authfile", set("/var/run/redemption-sesman-sock"));
         W.sep();
         W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));

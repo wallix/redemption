@@ -997,19 +997,12 @@ namespace cfg {
             using type = ::configs::Level;
             type value{static_cast< ::configs::Level>(0)};
         };
-        struct authip {
+        struct authfile {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticIpString;
-            type value{"127.0.0.1"};
-        };
-        struct authport {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::none;
-            }
-            using type = unsigned;
-            type value{3350};
+            using type = std::string;
+            type value{"/var/run/redemption-sesman-sock"};
         };
 
         // No traffic auto disconnection (in seconds).
@@ -1923,8 +1916,7 @@ struct globals
 , cfg::globals::nomouse
 , cfg::globals::notimestamp
 , cfg::globals::encryptionLevel
-, cfg::globals::authip
-, cfg::globals::authport
+, cfg::globals::authfile
 , cfg::globals::session_timeout
 , cfg::globals::keepalive_grace_delay
 , cfg::globals::close_timeout

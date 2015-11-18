@@ -170,11 +170,8 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "encryptionLevel")) {
             ::configs::parse(static_cast<cfg::globals::encryptionLevel&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "authip")) {
-            ::configs::parse(static_cast<cfg::globals::authip&>(this->variables).value, value);
-        }
-        else if (0 == strcmp(key, "authport")) {
-            ::configs::parse(static_cast<cfg::globals::authport&>(this->variables).value, value);
+        else if (0 == strcmp(key, "authfile")) {
+            ::configs::parse(static_cast<cfg::globals::authfile&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "session_timeout")) {
             ::configs::parse(static_cast<cfg::globals::session_timeout&>(this->variables).value, value);

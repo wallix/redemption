@@ -19,6 +19,7 @@ import sys
 #from sys import stdin
 
 from socket import fromfd
+from socket import AF_UNIX
 from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import SOL_SOCKET
@@ -28,33 +29,55 @@ from logger import Logger
 import os
 import signal
 
+socket_path = '/tmp/redemption-sesman-sock'
 
 def standalone():
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    
+    try:
+      os.remove(socket_path)
+    except:
+      pass
     # create socket from bounded port
-    s1 = socket.socket(AF_INET, SOCK_STREAM)
-    s1.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    s1.bind(('127.0.0.1', 3350))
-    s1.listen(100)
+    s = socket.socket(AF_UNIX, SOCK_STREAM)
+    s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    s.bind(socket_path)
+    s.listen(100)
 
-    s2 = socket.socket(AF_INET, SOCK_STREAM)
-    s2.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    s2.bind(('127.0.0.1', 3450))
-    s2.listen(100)
+    #create alternative socket for watchdog
+    sw = socket.socket(AF_INET, SOCK_STREAM)
+    sw.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    sw.bind(('127.0.0.1', 3351))
+    sw.listen(100)
+
+    watchdog = False
 
     try:
         while 1:
-            rfds, wfds, xfds = select([s1, s2], [], [], 1)
+            rfds, wfds, xfds = select([s, sw], [], [], 1)
             for sck in rfds:
-                if sck in [s1, s2]:
+                if sck in [sw, s]:
                     client_socket, client_addr = sck.accept()
                     child_pid = os.fork()
                     if child_pid == 0:
                         signal.signal(signal.SIGCHLD, signal.SIG_DFL)
                         sck.close()
-                        from sesmanworker import Sesman
+
+                        try:
+                            from sesmanworker import Sesman
+                            from sesmanworker.sesman import AuthentifierSocketClosed
+                        except Exception, e:
+                            raise RuntimeError(u"WABRDPAuthentifier importing Sesman : %s" % e)
+
                         server = Sesman(client_socket, client_addr)
-                        server.start()
+
+                        if sck == sw:
+                            watchdog = True
+                        try:
+                            server.start()
+                        except AuthentifierSocketClosed, e:
+                            if not watchdog:
+                                Logger().info("WABRDPAuthentifier socket closed")
                         sys.exit(0)
                     else:
                         client_socket.close()
@@ -67,7 +90,8 @@ def standalone():
     except socket.error, e:
         pass
     except Exception, e:
-        Logger().exception("%s" % e)
+        if not watchdog:
+            Logger().exception("%s" % e)
 
 if __name__ == '__main__':
     standalone()
