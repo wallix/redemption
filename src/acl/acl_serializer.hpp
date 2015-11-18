@@ -258,6 +258,9 @@ public:
                     throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
                 }
             }
+            else {
+                LOG(LOG_WARNING, "Unexpected receving '%s'", key);
+            }
         }
     }
 
