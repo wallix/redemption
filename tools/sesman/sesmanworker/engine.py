@@ -122,7 +122,7 @@ class Engine(object):
         self.client = SynClient('localhost', 'tcp:8803')
         self.session_id = None
         self.auth_x509 = None
-        self._trace_encryption = None            # local ?
+        self._trace_type = None                 # local ?
         self.challenge = None
         self.session_record = None
         self.deconnection_epoch = 0xffffffff
@@ -189,15 +189,15 @@ class Engine(object):
                 )
             )
 
-    def get_trace_encryption(self):
+    def get_trace_type(self):
         try:
             conf = Config("wabengine")
-            self._trace_encryption = True if conf['trace'] == u'cryptofile' else False # u'localfile'
-            return self._trace_encryption
+            self._trace_type = conf['trace'] if conf['trace'] else u'localfile_hashed'
+            return self._trace_type
         except Exception, e:
             import traceback
-            Logger().info("Engine get_trace_encryption failed: configuration file section 'wabengine', key 'trace', (((%s)))" % traceback.format_exc(e))
-        return False
+            Logger().info("Engine get_trace_type failed: configuration file section 'wabengine', key 'trace', (((%s)))" % traceback.format_exc(e))
+        return u'localfile_hashed'
 
     def password_expiration_date(self):
         try:

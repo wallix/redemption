@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::png_interval>(10); // one snapshot by second
 
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
-        ini.set_acl<cfg::globals::enable_file_encryption>(false);
+        ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
 
         Capture capture(
             now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ::unlink(filename);
     }
 
-    if (ini.get<cfg::globals::enable_file_encryption>()) {
+    if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.set<cfg::video::png_interval>(10); // one snapshot by second
 
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::png);
-        ini.set_acl<cfg::globals::enable_file_encryption>(false);
+        ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
         Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini);
 
         Pointer pointer1(Pointer::POINTER_EDIT);

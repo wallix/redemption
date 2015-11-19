@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>().c_str());
-    
+
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL((pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path)), temp_path),
@@ -88,7 +88,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+                                                        ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>().c_str());
@@ -318,7 +319,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+                                                        ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>().c_str());
@@ -552,7 +554,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+                                                        ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>().c_str());
@@ -668,7 +671,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "glyph_cache=yes\n"
                           "port=3390\n"
                           "encryptionLevel=low\n"
-                          "enable_file_encryption=yes\n"
+                          "trace_type=2\n"
                           "listen_address=192.168.1.1\n"
                           "enable_ip_transparent=yes\n"
                           "certificate_password=redemption\n"
@@ -789,7 +792,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>().c_str());
@@ -903,7 +906,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "[globals]\n"
                           "bitmap_cache=true\n"
                           "encryptionLevel=medium\n"
-                          "enable_file_encryption=no\n"
+                          "trace_type=0\n"
                           "listen_address=0.0.0.0\n"
                           "enable_ip_transparent=no\n"
                           "certificate_password=\n"
@@ -1007,7 +1010,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::localfile,    ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>().c_str());
@@ -1117,7 +1120,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "bitmap_cache=no\n"
                           "glyph_cache=no\n"
                           "encryptionLevel=high\n"
-                          "enable_file_encryption=true\n"
+                          "trace_type=2\n"
                           "listen_address=127.0.0.1\n"
                           "certificate_password=rdpproxy\n"
                           "enable_ip_transparent=true\n"
@@ -1200,7 +1203,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("rdpproxy",                       ini.get<cfg::globals::certificate_password>().c_str());
@@ -1302,7 +1305,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           " bitmap_cache\t= no \n"
                           " glyph_cache = no \n"
                           "encryptionLevel=high\n"
-                          "enable_file_encryption=true\n"
+                          "trace_type=2\n"
                           "listen_address=127.0.0.1\n"
                           "certificate_password=rdpproxy RDP\n"
                           "enable_ip_transparent=true\n"
@@ -1392,7 +1395,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("rdpproxy RDP",                   ini.get<cfg::globals::certificate_password>().c_str());
@@ -1494,7 +1497,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "bitmap_cache=no\n"
                           "port=3390\n"
                           "encryptionLevel=low\n"
-                          "enable_file_encryption=False\n"
+                          "trace_type=0\n"
                           "listen_address=0.0.0.0\n"
                           "certificate_password=redemption\n"
                           "enable_ip_transparent=False\n"
@@ -1559,7 +1562,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::localfile,    ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>().c_str());
@@ -1655,7 +1658,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     // see we can change configuration using parse without default setting of existing ini
     std::stringstream oss2(
                            "[globals]\n"
-                           "enable_file_encryption=yes\n"
+                           "trace_type=2\n"
                            "listen_address=192.168.1.1\n"
                            "certificate_password=\n"
                            "enable_ip_transparent=yes\n"
@@ -1725,7 +1728,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>().c_str());
@@ -1878,7 +1881,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+                                                        ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>().c_str());
@@ -2030,7 +2034,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
 
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_file_encryption>());
+    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+                                                        ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>().c_str());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>().c_str());
@@ -2543,13 +2548,6 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 //     BOOST_CHECK_EQUAL("linuxuser", ini.get<cfg::globals::target_user>().get_value());
 //     ini.ask<cfg::globals::target_user>());
 //     BOOST_CHECK_EQUAL("ASK",       ini.get<cfg::globals::target_user>().get_value());
-//
-//     ini.set<cfg::globals::enable_file_encryption>(true);
-//     BOOST_CHECK_EQUAL("True",      ini.get<cfg::globals::enable_file_encryption>().get_value());
-//     ini.set<cfg::globals::enable_file_encryption>(false);
-//     BOOST_CHECK_EQUAL("False",     ini.get<cfg::globals::enable_file_encryption>().get_value());
-//     ini.ask<cfg::globals::enable_file_encryption>());
-//     BOOST_CHECK_EQUAL("ASK",       ini.get<cfg::globals::enable_file_encryption>().get_value());
 //
 //     ini.ask<cfg::context::opt_bpp>());
 //     BOOST_CHECK_EQUAL("ASK",       ini.get<cfg::context::opt_bpp>().get_value());

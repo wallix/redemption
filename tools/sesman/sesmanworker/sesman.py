@@ -124,7 +124,7 @@ class Sesman():
         self.shared[u'real_target_device']      = MAGICASK
         self.shared[u'reporting']               = u''
 
-        self._enable_encryption = self.engine.get_trace_encryption()
+        self._trace_type = self.engine.get_trace_type()
         self.language           = None
         self.pid = os.getpid()
 
@@ -812,7 +812,12 @@ class Sesman():
 
                     self.full_path = RECORD_PATH + video_path
                     data_to_send[u'is_rec'] = True
-                    data_to_send[u"file_encryption"] = u'True' if self._enable_encryption else u'False'
+                    if self._trace_type == "localfile":
+                        data_to_send[u"trace_type"] = u'0'
+                    elif self._trace_type == "cryptofile":
+                        data_to_send[u"trace_type"] = u'2'
+                    else:   # localfile_hashed
+                        data_to_send[u"trace_type"] = u'1'
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
                     data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
 

@@ -376,6 +376,15 @@ enum class ServerCertCheck : unsigned {
 MK_ENUM_FIELD(::configs::ServerCertCheck, "0", "1", "2", "3")
 
 
+enum class TraceType : unsigned {
+    localfile,
+    localfile_hashed,
+    cryptofile,
+    NB
+};
+MK_ENUM_FIELD(::configs::TraceType, "0", "1", "2")
+
+
 #include "mk_enum_undef.hpp"
 
 }

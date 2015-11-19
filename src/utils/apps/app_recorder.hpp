@@ -334,13 +334,13 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     if (options.count("encryption") > 0) {
              if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
-            ini.set_acl<cfg::globals::enable_file_encryption>(true);
+            ini.set<cfg::globals::trace_type>(configs::TraceType::cryptofile);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
-            ini.set_acl<cfg::globals::enable_file_encryption>(false);
+            ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
-            ini.set_acl<cfg::globals::enable_file_encryption>(infile_is_encrypted);
+            ini.set<cfg::globals::trace_type>(infile_is_encrypted ? configs::TraceType::cryptofile : configs::TraceType::localfile);
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
@@ -348,10 +348,10 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
     }
     else {
-        ini.set_acl<cfg::globals::enable_file_encryption>(infile_is_encrypted);
+        ini.set<cfg::globals::trace_type>(infile_is_encrypted ? configs::TraceType::cryptofile : configs::TraceType::localfile);
     }
 
-    if (infile_is_encrypted || ini.get<cfg::globals::enable_file_encryption>()) {
+    if (infile_is_encrypted || (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile)) {
         if (int status = init_crypto(ini.get_ref<cfg::crypto::key0>(), ini.get_ref<cfg::crypto::key1>())) {
             return status;
         }
@@ -695,7 +695,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
             }
         };
 
-        if (ini.get<cfg::globals::enable_file_encryption>()) {
+        if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
             run(CryptoOutMetaSequenceTransport( &cctx, outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str()
                                               , begin_record, player.info_width, player.info_height
                                               , ini.get<cfg::video::capture_groupid>()));
