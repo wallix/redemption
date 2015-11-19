@@ -164,10 +164,10 @@ static inline int ip_connect(const char* ip, int port,
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+      sockaddr s;
+      sockaddr_storage ss;
+      sockaddr_in s4;
+      sockaddr_in6 s6;
     } u;
 
     memset(&u, 0, sizeof(u));
@@ -219,16 +219,21 @@ static inline int local_connect(const char* sck_name,
         return -1;
     }
 
-    sockaddr_un sunix;
-    auto len = strnlen(sck_name, sizeof(sunix.sun_path)-1u);
-    memcpy(sunix.sun_path, sck_name, len);
-    sunix.sun_path[len] = 0;
-    sunix.sun_family = AF_UNIX;
+    union
+    {
+      sockaddr_un s;
+      sockaddr addr;
+    } u;
+
+    auto len = strnlen(sck_name, sizeof(u.s.sun_path)-1u);
+    memcpy(u.s.sun_path, sck_name, len);
+    u.s.sun_path[len] = 0;
+    u.s.sun_family = AF_UNIX;
 
     return detail_::netutils::connect_sck(
         sck, nbretry, retry_delai_ms,
-        reinterpret_cast<sockaddr&>(sunix),
-        static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(sunix.sun_path) + 1u),
+        u.addr,
+        static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u),
         sck_name, -1
     );
 }

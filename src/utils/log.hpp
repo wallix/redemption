@@ -118,8 +118,8 @@ namespace { namespace compiler_aux_ {
 
 
 // checked by the compiler
-#define LOG_FORMAT_CHECK(priority, ...) \
-    LOGCHECK__REDEMPTION__INTERNAL(decltype(printf(" " __VA_ARGS__))(1))
+#define LOG_FORMAT_CHECK(...) \
+    void(decltype(printf(" " __VA_ARGS__)){1})
 
 
 #ifdef IN_IDE_PARSER
@@ -128,17 +128,17 @@ namespace { namespace compiler_aux_ {
 
 #elif defined(LOGPRINT)
 #  define LOG(priority, ...)                                       \
-    do {                                                           \
-        LOG_FORMAT_CHECK(priority, __VA_ARGS__);                   \
+    LOGCHECK__REDEMPTION__INTERNAL((void((                         \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                             \
         printf("%s (%d/%d) -- " PP_HEAD(__VA_ARGS__) "\n",         \
             prioritynames[priority], getpid(), getpid()            \
             PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__) \
-        );                                                         \
-    } while (0)
+        )                                                          \
+    )), 1))
 #  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
         user, device, service, account, priority, ...)                    \
-    do {                                                                  \
-        LOG_FORMAT_CHECK(priority, __VA_ARGS__);                          \
+    LOGCHECK__REDEMPTION__INTERNAL((void((                                \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                    \
         LOGNULL__REDEMPTION__SESSION__INTERNAL(                           \
             duplicate_with_pid,                                           \
             session_type,                                                 \
@@ -148,19 +148,19 @@ namespace { namespace compiler_aux_ {
             device,                                                       \
             service,                                                      \
             account                                                       \
-        );                                                                \
+        ),                                                                \
         printf("%s (%d/%d) -- " PP_HEAD(__VA_ARGS__) "\n",                \
             prioritynames[priority], getpid(), getpid()                   \
             PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__)        \
-        );                                                                \
-    } while (0)
+        )                                                                 \
+    )), 1))
 
 #elif defined(LOGNULL)
-#  define LOG(priority, ...) LOG_FORMAT_CHECK(priority, __VA_ARGS__)
+#  define LOG(priority, ...) LOG_FORMAT_CHECK(__VA_ARGS__)
 #  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
         user, device, service, account, priority, ...)                    \
-    do {                                                                  \
-        LOG_FORMAT_CHECK(priority, __VA_ARGS__);                          \
+    LOGCHECK__REDEMPTION__INTERNAL((void((                                \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                    \
         LOGNULL__REDEMPTION__SESSION__INTERNAL(                           \
             duplicate_with_pid,                                           \
             session_type,                                                 \
@@ -170,23 +170,23 @@ namespace { namespace compiler_aux_ {
             device,                                                       \
             service,                                                      \
             account                                                       \
-        );                                                                \
-    } while (0)
+        )                                                                 \
+    )), 1))
 
 #else
 #  define LOG(priority, ...)                                       \
-    do {                                                           \
-        LOG_FORMAT_CHECK(priority, __VA_ARGS__);                   \
+    LOGCHECK__REDEMPTION__INTERNAL((void((                         \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                             \
         syslog(priority, "%s (%d/%d) -- " PP_HEAD(__VA_ARGS__),    \
             prioritynames[priority], getpid(), getpid()            \
             PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__) \
-        );                                                         \
-    } while (0)
+        )                                                          \
+    )), 1))
 #  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
         user, device, service, account, priority, ...                     \
     )                                                                     \
-    do {                                                                  \
-        LOG_FORMAT_CHECK(priority, __VA_ARGS__);                          \
+    LOGCHECK__REDEMPTION__INTERNAL((void((                                \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                    \
         LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                         \
             duplicate_with_pid, session_type, type, session_id,           \
             user, device, service, account, priority,                     \
@@ -201,8 +201,8 @@ namespace { namespace compiler_aux_ {
                 PP_HEAD(__VA_ARGS__),                                     \
             ((*PP_HEAD(__VA_ARGS__)) ? " " : "")                          \
             PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__)        \
-        );                                                                \
-    } while (0)
+        )                                                                 \
+    )), 1))
 #endif
 
 namespace {

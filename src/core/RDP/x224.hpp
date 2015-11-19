@@ -1334,7 +1334,7 @@ namespace X224
                 const size_t _header_size = X224::TPKT_HEADER_LEN + 1 + this->LI;
                 if (_header_size != stream.get_offset()){
                     LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %zu",
-                        static_cast<size_t>(stream.get_offset() - _header_size));
+                        stream.get_offset() - _header_size);
                     throw Error(ERR_X224);
                 }
             }
@@ -1420,7 +1420,7 @@ namespace X224
             const size_t header_size = X224::TPKT_HEADER_LEN + 1 + this->tpdu_hdr.LI;
             if (header_size != stream.get_offset()){
                 LOG(LOG_ERR, "DT TPDU header should be terminated, got trailing data %zu",
-                    static_cast<size_t>(stream.get_offset() - header_size));
+                    stream.get_offset() - header_size);
                 throw Error(ERR_X224);
             }
             return header_size;
