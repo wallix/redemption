@@ -933,7 +933,7 @@ struct Keymap2
     unsigned layout_id() const {
         for (auto & k : keylayouts) {
             if (this->keylayout_WORK == k) {
-                return &k - keylayouts;
+                return k->LCID;
             }
         }
         return 0;
