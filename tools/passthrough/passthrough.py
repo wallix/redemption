@@ -279,6 +279,7 @@ class ACLPassthrough():
 
 
 from socket import fromfd
+from socket import AF_UNIX
 from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import SOL_SOCKET
@@ -286,12 +287,14 @@ from socket import SO_REUSEADDR
 from select import select
 from logger import Logger
 
+socket_path = '/tmp/redemption-sesman-sock'
+
 def standalone():
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
     # create socket from bounded port
-    s1 = socket.socket(AF_INET, SOCK_STREAM)
+    s1 = socket.socket(AF_UNIX, SOCK_STREAM)
     s1.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    s1.bind(('127.0.0.1', 3350))
+    s1.bind(socket_path)
     s1.listen(100)
 
     s2 = socket.socket(AF_INET, SOCK_STREAM)
