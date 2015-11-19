@@ -176,7 +176,16 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
-        W.member(A, type_<bool>(), "enable_file_encryption", str_authid{"file_encryption"}, rw);
+
+        W.member(A, type_<TraceType>(), "trace_type", desc{
+            "Session record options.\n"
+            "  0: No encryption (faster).\n"
+            "  1: No encryption, with checksum (default).\n"
+            "  2: Encryption enabled.\n"
+            "When session records are encrypted, they can be read only by the WAB where they have been generated."
+        }, set(TraceType::localfile_hashed), r);
+        W.sep();
+
         W.member(A, type_<StaticIpString>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
         W.member(A | P, type_<StaticString<256>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));

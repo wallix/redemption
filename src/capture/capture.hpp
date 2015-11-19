@@ -41,7 +41,7 @@ public:
     const bool capture_drawable;
     const bool capture_png;
 
-    const bool enable_file_encryption;
+    const configs::TraceType trace_type;
 
     OutFilenameSequenceTransport * png_trans;
     StaticCapture                * psc;
@@ -88,7 +88,7 @@ public:
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_drawable(this->capture_wrm || (ini.get<cfg::video::png_limit>() > 0))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
-    , enable_file_encryption(ini.get<cfg::globals::enable_file_encryption>())
+    , trace_type(ini.get<cfg::globals::trace_type>())
     , png_trans(nullptr)
     , psc(nullptr)
     , pkc(nullptr)
@@ -151,7 +151,7 @@ public:
             const int pointerCacheSize = 0x19;
             this->pnc_ptr_cache = new PointerCache(pointerCacheSize);
 
-            if (this->enable_file_encryption) {
+            if (this->trace_type == configs::TraceType::cryptofile) {
                 auto * trans = new CryptoOutMetaSequenceTransport(
                     &this->crypto_ctx, wrm_path, hash_path, basename, now
                   , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);

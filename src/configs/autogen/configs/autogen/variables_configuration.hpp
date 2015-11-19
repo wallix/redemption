@@ -1030,15 +1030,21 @@ namespace cfg {
             type value{600};
         };
 
-        // AUTHID_GLOBALS_ENABLE_FILE_ENCRYPTION
-        struct enable_file_encryption {
+        // Session record options.
+        //   0: No encryption (faster).
+        //   1: No encryption, with checksum (default).
+        //   2: Encryption enabled.
+        // When session records are encrypted, they can be read only by the WAB where they have been generated.
+        // AUTHID_GLOBALS_TRACE_TYPE
+        struct trace_type {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
+                return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 10; }
-            using type = bool;
-            type value{};
+            using type = ::configs::TraceType;
+            type value{static_cast< ::configs::TraceType>(1)};
         };
+
         struct listen_address {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
@@ -1920,7 +1926,7 @@ struct globals
 , cfg::globals::session_timeout
 , cfg::globals::keepalive_grace_delay
 , cfg::globals::close_timeout
-, cfg::globals::enable_file_encryption
+, cfg::globals::trace_type
 , cfg::globals::listen_address
 , cfg::globals::enable_ip_transparent
 , cfg::globals::certificate_password
@@ -2051,7 +2057,7 @@ using VariablesAclPack = Pack<
 , cfg::globals::target_application
 , cfg::globals::target_application_account
 , cfg::globals::target_application_password
-, cfg::globals::enable_file_encryption
+, cfg::globals::trace_type
 , cfg::globals::movie
 , cfg::globals::movie_path
 , cfg::client::keyboard_layout

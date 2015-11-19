@@ -182,8 +182,8 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "close_timeout")) {
             ::configs::parse(static_cast<cfg::globals::close_timeout&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "enable_file_encryption")) {
-            ::configs::parse(static_cast<cfg::globals::enable_file_encryption&>(this->variables).value, value);
+        else if (0 == strcmp(key, "trace_type")) {
+            ::configs::parse(static_cast<cfg::globals::trace_type&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "listen_address")) {
             ::configs::parse(static_cast<cfg::globals::listen_address&>(this->variables).value, value);
