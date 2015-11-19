@@ -26,14 +26,14 @@
 
 namespace transbuf {
 
-    class dynarray_base
+    class dynarray_buf
     {
         std::unique_ptr<uint8_t[]> data;
         std::size_t len = 0;
         std::size_t current = 0;
 
     public:
-        dynarray_base() = default;
+        dynarray_buf() = default;
 
         int open(size_t len, const char * data = nullptr)
         {

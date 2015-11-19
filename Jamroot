@@ -751,8 +751,14 @@ unit-test test_gzip_compression_transport : tests/transport/test_gzip_compressio
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp z snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
+## @}
 
-# unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+## Buffer Transport tests
+## @{
+unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+unit-test test_sum_buf : tests/transport/buffer/test_sum_buf.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
 

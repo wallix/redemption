@@ -33,7 +33,7 @@
 #include <memory>
 
 struct GeneratorTransport
-: InputTransport<transbuf::dynarray_base>
+: InputTransport<transbuf::dynarray_buf>
 {
     GeneratorTransport(const char * data, size_t len, uint32_t verbose = 0)
     {
