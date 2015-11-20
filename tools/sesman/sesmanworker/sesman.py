@@ -777,7 +777,7 @@ class Sesman():
         data_to_send = {
               u'is_rec'         : u'False'
             , u'rec_path'       : u""
-            , u'file_encryption': u"False"
+            , u'trace_type'     : u"0"
         }
 
         try:
