@@ -18,28 +18,33 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_META_SEQUENCE_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_META_SEQUENCE_TRANSPORT_HPP
+#ifndef REDEMPTION_TRANSPORT_META_SEQUENCE_TRANSPORT_WITH_SUM_HPP
+#define REDEMPTION_TRANSPORT_META_SEQUENCE_TRANSPORT_WITH_SUM_HPP
 
 #include "detail/meta_writer.hpp"
 #include "mixin_transport.hpp"
 // #include "buffer/buffering_buf.hpp"
 #include "buffer/file_buf.hpp"
 #include "fdbuf.hpp"
+#include "buffer/sum_buf.hpp"
 
-struct OutMetaSequenceTransport
+namespace detail
+{
+}
+
+struct OutMetaSequenceTransportWithSum
 : //SeekableTransport<
 // FlushingTransport<
 RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf<
-        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >,
-        detail::empty_ctor<transbuf::ofile_base>
+        transbuf::osum_and_mini_sum_buf</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >,
+        detail::empty_ctor<transbuf::osum_buf<transbuf::ofile_base>>
     >, detail::GetCurrentPath>
 >
 // >
 // >
 {
-    OutMetaSequenceTransport(
+    OutMetaSequenceTransportWithSum(
         const char * path,
         const char * basename,
         timeval now,
@@ -49,8 +54,11 @@ RequestCleaningTransport<
         auth_api * authentifier = nullptr,
         unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : OutMetaSequenceTransport::TransportType(
-        detail::out_meta_sequence_filename_buf_param<>(now.tv_sec, format, path, basename, ".wrm", groupid))
+    : OutMetaSequenceTransportWithSum::TransportType(
+        detail::out_meta_sequence_filename_buf_param<detail::no_param, transbuf::sum_and_mini_sum_buf_param<>>(
+            now.tv_sec, format, path, basename, ".wrm", groupid,
+            detail::no_param{}, transbuf::sum_and_mini_sum_buf_param<>{1024}
+        ))
     {
         (void)verbose;
 
@@ -58,7 +66,7 @@ RequestCleaningTransport<
             this->set_authentifier(authentifier);
         }
 
-        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, false);
+        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
     }
 
     void timestamp(timeval now) override {

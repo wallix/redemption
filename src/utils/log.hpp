@@ -63,12 +63,12 @@ namespace { namespace compiler_aux_ {
 #include <unistd.h>
 
 
-#define PP_CAT(a, b) PP_CAT_I(a, b)
-#define PP_CAT_I(a, b) a##b
+#define REDEMPTION_PP_CAT(a, b) REDEMPTION_PP_CAT_I(a, b)
+#define REDEMPTION_PP_CAT_I(a, b) a##b
 
-#define PP_CALL(_, ...) _(__VA_ARGS__)
+#define REDEMPTION_PP_CALL(_, ...) _(__VA_ARGS__)
 
-#define PP_DECL_0_LIST            \
+#define REDEMPTION_PP_DECL_0_LIST            \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
@@ -80,12 +80,18 @@ namespace { namespace compiler_aux_ {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, 0, 0
 
-#define PP_VARIADIC_HEAD(_, ...)                                                      \
-  PP_CALL(PP_CAT(_,                                                                   \
-    PP_CALL(PP_VARIADIC_HEAD_DIS, __VA_ARGS__, PP_DECL_0_LIST, 1, not_empty_variadic) \
+#define REDEMPTION_PP_VARIADIC_HEAD(_, ...) \
+  REDEMPTION_PP_CALL(REDEMPTION_PP_CAT(     \
+    _,                                      \
+    REDEMPTION_PP_CALL(                     \
+        REDEMPTION_PP_VARIADIC_HEAD_DIS,    \
+        __VA_ARGS__,                        \
+        REDEMPTION_PP_DECL_0_LIST,          \
+        1, not_empty_variadic               \
+    )                                       \
   ), __VA_ARGS__)
 
-#define PP_VARIADIC_HEAD_DIS(                          \
+#define REDEMPTION_PP_VARIADIC_HEAD_DIS(               \
     _1, _2, _3, _4, _5, _6, _7, _8, _9, _10,           \
     _11, _12, _13, _14, _15, _16, _17, _18, _19, _20,  \
     _21, _22, _23, _24, _25, _26, _27, _28, _29, _30,  \
@@ -99,27 +105,28 @@ namespace { namespace compiler_aux_ {
     _N, ...) _N
 
 
-#define PP_HEAD_0(x, ...) x
-#define PP_HEAD_1(x) x
+#define REDEMPTION_PP_HEAD_0(x, ...) x
+#define REDEMPTION_PP_HEAD_1(x) x
 
-#define PP_HEAD(...) PP_VARIADIC_HEAD(PP_HEAD_, __VA_ARGS__)
-
-
-#define PP_TAIL_0(x, ...) __VA_ARGS__
-#define PP_TAIL_1(x)
-
-#define PP_TAIL(...) PP_VARIADIC_HEAD(PP_TAIL_, __VA_ARGS__)
+#define REDEMPTION_PP_HEAD(...) REDEMPTION_PP_VARIADIC_HEAD(REDEMPTION_PP_HEAD_, __VA_ARGS__)
 
 
-#define PP_COMMA_IF_NOT_NULL_0(x, ...),
-#define PP_COMMA_IF_NOT_NULL_1(x)
+#define REDEMPTION_PP_TAIL_0(x, ...) __VA_ARGS__
+#define REDEMPTION_PP_TAIL_1(x)
 
-#define PP_COMMA_IF_NOT_NULL(...) PP_VARIADIC_HEAD(PP_COMMA_IF_NOT_NULL_, __VA_ARGS__)
+#define REDEMPTION_PP_TAIL(...) REDEMPTION_PP_VARIADIC_HEAD(REDEMPTION_PP_TAIL_, __VA_ARGS__)
+
+
+#define REDEMPTION_PP_COMMA_IF_NOT_NULL_0(x, ...),
+#define REDEMPTION_PP_COMMA_IF_NOT_NULL_1(x)
+
+#define REDEMPTION_PP_COMMA_IF_NOT_NULL(...) \
+    REDEMPTION_PP_VARIADIC_HEAD(REDEMPTION_PP_COMMA_IF_NOT_NULL_, __VA_ARGS__)
 
 
 // checked by the compiler
 #define LOG_FORMAT_CHECK(...) \
-    void(decltype(printf(" " __VA_ARGS__)){1})
+    void(decltype(printf(" " __VA_ARGS__)){})
 
 
 #ifdef IN_IDE_PARSER
@@ -127,39 +134,39 @@ namespace { namespace compiler_aux_ {
 #  define LOG_SESSION LOGSYSLOG__REDEMPTION__SESSION__INTERNAL
 
 #elif defined(LOGPRINT)
-#  define LOG(priority, ...)                                       \
-    LOGCHECK__REDEMPTION__INTERNAL((void((                         \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                             \
-        printf("%s (%d/%d) -- " PP_HEAD(__VA_ARGS__) "\n",         \
-            prioritynames[priority], getpid(), getpid()            \
-            PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__) \
-        )                                                          \
-    )), 1))
-#  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
-        user, device, service, account, priority, ...)                    \
-    LOGCHECK__REDEMPTION__INTERNAL((void((                                \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                                    \
-        LOGNULL__REDEMPTION__SESSION__INTERNAL(                           \
-            duplicate_with_pid,                                           \
-            session_type,                                                 \
-            type,                                                         \
-            session_id,                                                   \
-            user,                                                         \
-            device,                                                       \
-            service,                                                      \
-            account                                                       \
-        ),                                                                \
-        printf("%s (%d/%d) -- " PP_HEAD(__VA_ARGS__) "\n",                \
-            prioritynames[priority], getpid(), getpid()                   \
-            PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__)        \
-        )                                                                 \
-    )), 1))
+#  define LOG(priority, ...)                                                             \
+    LOGCHECK__REDEMPTION__INTERNAL((                                                     \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                                   \
+        printf("%s (%d/%d) -- " REDEMPTION_PP_HEAD(__VA_ARGS__) "\n",                    \
+            prioritynames[priority], getpid(), getpid()                                  \
+            REDEMPTION_PP_COMMA_IF_NOT_NULL(__VA_ARGS__) REDEMPTION_PP_TAIL(__VA_ARGS__) \
+        ), 1)                                                                            \
+    )
+#  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id,                \
+        user, device, service, account, priority, ...)                                   \
+    LOGCHECK__REDEMPTION__INTERNAL((                                                     \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                                   \
+        LOGNULL__REDEMPTION__SESSION__INTERNAL(                                          \
+            duplicate_with_pid,                                                          \
+            session_type,                                                                \
+            type,                                                                        \
+            session_id,                                                                  \
+            user,                                                                        \
+            device,                                                                      \
+            service,                                                                     \
+            account                                                                      \
+        ),                                                                               \
+        printf("%s (%d/%d) -- " REDEMPTION_PP_HEAD(__VA_ARGS__) "\n",                    \
+            prioritynames[priority], getpid(), getpid()                                  \
+            REDEMPTION_PP_COMMA_IF_NOT_NULL(__VA_ARGS__) REDEMPTION_PP_TAIL(__VA_ARGS__) \
+        ), 1)                                                                            \
+    )
 
 #elif defined(LOGNULL)
 #  define LOG(priority, ...) LOG_FORMAT_CHECK(__VA_ARGS__)
 #  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
         user, device, service, account, priority, ...)                    \
-    LOGCHECK__REDEMPTION__INTERNAL((void((                                \
+    LOGCHECK__REDEMPTION__INTERNAL((                                      \
         LOG_FORMAT_CHECK(__VA_ARGS__),                                    \
         LOGNULL__REDEMPTION__SESSION__INTERNAL(                           \
             duplicate_with_pid,                                           \
@@ -170,39 +177,39 @@ namespace { namespace compiler_aux_ {
             device,                                                       \
             service,                                                      \
             account                                                       \
-        )                                                                 \
-    )), 1))
+        ), 1)                                                             \
+    )
 
 #else
-#  define LOG(priority, ...)                                       \
-    LOGCHECK__REDEMPTION__INTERNAL((void((                         \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                             \
-        syslog(priority, "%s (%d/%d) -- " PP_HEAD(__VA_ARGS__),    \
-            prioritynames[priority], getpid(), getpid()            \
-            PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__) \
-        )                                                          \
-    )), 1))
-#  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
-        user, device, service, account, priority, ...                     \
-    )                                                                     \
-    LOGCHECK__REDEMPTION__INTERNAL((void((                                \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                                    \
-        LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                         \
-            duplicate_with_pid, session_type, type, session_id,           \
-            user, device, service, account, priority,                     \
-            "%s (%d/%d) -- type='%s'%s" PP_HEAD(__VA_ARGS__),             \
-            "[%s Session] "                                               \
-                "type='%s' "                                              \
-                "session_id='%s' "                                        \
-                "user='%s' "                                              \
-                "device='%s' "                                            \
-                "service='%s' "                                           \
-                "account='%s'%s"                                          \
-                PP_HEAD(__VA_ARGS__),                                     \
-            ((*PP_HEAD(__VA_ARGS__)) ? " " : "")                          \
-            PP_COMMA_IF_NOT_NULL(__VA_ARGS__) PP_TAIL(__VA_ARGS__)        \
-        )                                                                 \
-    )), 1))
+#  define LOG(priority, ...)                                                             \
+    LOGCHECK__REDEMPTION__INTERNAL((                                                     \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                                   \
+        syslog(priority, "%s (%d/%d) -- " REDEMPTION_PP_HEAD(__VA_ARGS__),               \
+            prioritynames[priority], getpid(), getpid()                                  \
+            REDEMPTION_PP_COMMA_IF_NOT_NULL(__VA_ARGS__) REDEMPTION_PP_TAIL(__VA_ARGS__) \
+        ), 1)                                                                            \
+    )
+#  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id,                \
+        user, device, service, account, priority, ...                                    \
+    )                                                                                    \
+    LOGCHECK__REDEMPTION__INTERNAL((                                                     \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                                   \
+        LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                                        \
+            duplicate_with_pid, session_type, type, session_id,                          \
+            user, device, service, account, priority,                                    \
+            "%s (%d/%d) -- type='%s'%s" REDEMPTION_PP_HEAD(__VA_ARGS__),                 \
+            "[%s Session] "                                                              \
+                "type='%s' "                                                             \
+                "session_id='%s' "                                                       \
+                "user='%s' "                                                             \
+                "device='%s' "                                                           \
+                "service='%s' "                                                          \
+                "account='%s'%s"                                                         \
+                REDEMPTION_PP_HEAD(__VA_ARGS__),                                         \
+            ((*REDEMPTION_PP_HEAD(__VA_ARGS__)) ? " " : "")                              \
+            REDEMPTION_PP_COMMA_IF_NOT_NULL(__VA_ARGS__) REDEMPTION_PP_TAIL(__VA_ARGS__) \
+        ), 1)                                                                            \
+    )
 #endif
 
 namespace {

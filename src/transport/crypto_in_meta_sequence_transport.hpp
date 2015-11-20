@@ -26,11 +26,15 @@
 #include "buffer/crypto_filename_buf.hpp"
 
 struct CryptoInMetaSequenceTransport
-: InputNextTransport<detail::in_meta_sequence_buf<transbuf::icrypto_filename_base, transbuf::icrypto_filename_base> >
+: InputNextTransport<detail::in_meta_sequence_buf<
+    transbuf::icrypto_filename_base,
+    transbuf::icrypto_filename_base
+> >
 {
     CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
-    : CryptoInMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(
-        detail::temporary_concat(filename, extension).c_str(), 0, crypto_ctx, crypto_ctx))
+    : CryptoInMetaSequenceTransport::TransportType(
+        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(
+            detail::temporary_concat(filename, extension).c_str(), 0, crypto_ctx, crypto_ctx))
     {}
 
     CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename)
@@ -38,10 +42,10 @@ struct CryptoInMetaSequenceTransport
         detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, 0, crypto_ctx, crypto_ctx))
     {}
 
-    unsigned begin_chunk_time() const noexcept
+    time_t begin_chunk_time() const noexcept
     { return this->buffer().get_begin_chunk_time(); }
 
-    unsigned end_chunk_time() const noexcept
+    time_t end_chunk_time() const noexcept
     { return this->buffer().get_end_chunk_time(); }
 
     const char * path() const noexcept
