@@ -59,10 +59,22 @@ namespace detail
 
     template<class Writer>
     void write_meta_headers(Writer & writer, const char * path,
-                            uint16_t width, uint16_t height, auth_api * authentifier)
+                            uint16_t width, uint16_t height,
+                            auth_api * authentifier,
+                            bool has_checksum
+                           )
     {
-        char header1[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2 + 3];
-        const int len = sprintf(header1, "%u %u\n\n\n", unsigned(width), unsigned(height));
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(
+            header1,
+            "v2\n"
+            "%u %u\n"
+            "%s\n"
+            "\n\n",
+            unsigned(width),
+            unsigned(height),
+            has_checksum  ? "checksum" : "nochecksum"
+        );
         const ssize_t res = writer.write(header1, len);
         if (res < 0) {
             int err = errno;
@@ -79,6 +91,69 @@ namespace detail
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
             }
         }
+    }
+
+    template<class Writer>
+    int write_meta_file(
+        Writer & writer, const char * filename,
+        time_t start_sec, time_t stop_sec,
+        char const * extra = ""
+    ) {
+        auto pfile = filename;
+        auto epfile = filename;
+        for (; *epfile; ++epfile) {
+            if (*epfile == '\\') {
+                bool const is_backslash = (*(epfile+1) == '\\');
+                ssize_t len = epfile - pfile + is_backslash;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    return res < 0 ? res : 1;
+                }
+                pfile = epfile + 1 + is_backslash;
+            }
+        }
+
+        if (pfile != epfile) {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+        }
+
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[
+            (std::numeric_limits<ll>::digits10 + 1 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            2
+        ];
+        struct stat stat;
+        if (0 != ::stat(filename, &stat)) {
+            return 1;
+        }
+        ssize_t len = sprintf(
+            mes,
+            " %lld %llu %lld %lld %llu %lld %lld %lld %lld %lld%s\n",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec),
+            ll(start_sec),
+            ll(stop_sec),
+            extra
+        );
+        ssize_t res = writer.write(mes, len);
+
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+
+        return 0;
     }
 
 
@@ -236,12 +311,12 @@ namespace detail
         }
     };
 
-    template<class T = no_param>
+    template<class MetaParams = no_param, class BufParams = no_param>
     struct out_meta_sequence_filename_buf_param
     {
-        out_sequence_filename_buf_param<> sq_params;
+        out_sequence_filename_buf_param<BufParams> sq_params;
         time_t sec;
-        T meta_buf_params;
+        MetaParams meta_buf_params;
 
         out_meta_sequence_filename_buf_param(
             time_t start_sec,
@@ -250,8 +325,9 @@ namespace detail
             const char * const filename,
             const char * const extension,
             const int groupid,
-            T const & meta_buf_params = T())
-        : sq_params(format, prefix, filename, extension, groupid)
+            MetaParams const & meta_buf_params = MetaParams(),
+            BufParams const & buf_params = BufParams())
+        : sq_params(format, prefix, filename, extension, groupid, buf_params)
         , sec(start_sec)
         , meta_buf_params(meta_buf_params)
         {}
@@ -307,17 +383,13 @@ namespace detail
                 if (!filename) {
                     return 1;
                 }
-                ssize_t len = strlen(filename);
-                ssize_t res = this->meta_buf_.write(filename, len);
-                if (res == len) {
-                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4];
-                    len = sprintf(mes, " %u %u\n", unsigned(this->start_sec_), unsigned(this->stop_sec_+1));
-                    res = this->meta_buf_.write(mes, len);
+
+                if (int err = write_meta_file(this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1)) {
+                    return err;
                 }
-                if (res < len) {
-                    return res < 0 ? res : 1;
-                }
+
                 this->start_sec_ = this->stop_sec_;
+
                 return 0;
             }
             return 1;

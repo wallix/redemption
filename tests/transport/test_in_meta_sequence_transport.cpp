@@ -51,6 +51,161 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
 }
 
+BOOST_AUTO_TEST_CASE(TestMetav2)
+{
+    transbuf::ifile_base ifile;
+    ifile.open("./tests/fixtures/sample_v2.mwrm");
+
+    struct ReaderBuf
+    {
+        transbuf::ifile_base & buf;
+
+        ssize_t operator()(char * buf, size_t len) const {
+            return this->buf.read(buf, len);
+        }
+    };
+
+    detail::ReaderLine<ReaderBuf> reader({ifile});
+    auto meta_header = detail::read_meta_headers(reader);
+    BOOST_REQUIRE_EQUAL(meta_header.version, 2);
+    BOOST_CHECK_EQUAL(meta_header.has_checksum, false);
+
+    detail::MetaLine meta_line;
+    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+    BOOST_CHECK_EQUAL(meta_line.size, 1);
+    BOOST_CHECK_EQUAL(meta_line.mode, 2);
+    BOOST_CHECK_EQUAL(meta_line.uid, 3);
+    BOOST_CHECK_EQUAL(meta_line.gid, 4);
+    BOOST_CHECK_EQUAL(meta_line.dev, 5);
+    BOOST_CHECK_EQUAL(meta_line.ino, 6);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+
+    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+    BOOST_CHECK_EQUAL(meta_line.size, 9);
+    BOOST_CHECK_EQUAL(meta_line.mode, 8);
+    BOOST_CHECK_EQUAL(meta_line.uid, 10);
+    BOOST_CHECK_EQUAL(meta_line.gid, 11);
+    BOOST_CHECK_EQUAL(meta_line.dev, 12);
+    BOOST_CHECK_EQUAL(meta_line.ino, 13);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 14);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 15);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304870);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304930);
+
+    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+    BOOST_CHECK_EQUAL(meta_line.size, 16);
+    BOOST_CHECK_EQUAL(meta_line.mode, 17);
+    BOOST_CHECK_EQUAL(meta_line.uid, 18);
+    BOOST_CHECK_EQUAL(meta_line.gid, 19);
+    BOOST_CHECK_EQUAL(meta_line.dev, 20);
+    BOOST_CHECK_EQUAL(meta_line.ino, 21);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 22);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 23);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304930);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304990);
+
+    BOOST_CHECK_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), ERR_TRANSPORT_NO_MORE_DATA);
+}
+
+BOOST_AUTO_TEST_CASE(TestMetav2sum)
+{
+    transbuf::ifile_base ifile;
+    ifile.open("./tests/fixtures/sample_v2_checksum.mwrm");
+
+    struct ReaderBuf
+    {
+        transbuf::ifile_base & buf;
+
+        ssize_t operator()(char * buf, size_t len) const {
+            return this->buf.read(buf, len);
+        }
+    };
+
+    detail::ReaderLine<ReaderBuf> reader({ifile});
+    auto meta_header = detail::read_meta_headers(reader);
+    BOOST_REQUIRE_EQUAL(meta_header.version, 2);
+    BOOST_CHECK_EQUAL(meta_header.has_checksum, true);
+
+    using std::begin;
+    using std::end;
+
+    struct is_char {
+        unsigned char c;
+        bool operator()(unsigned char c) const {
+            return this->c == c;
+        }
+    };
+
+    detail::MetaLine meta_line;
+    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+    BOOST_CHECK_EQUAL(meta_line.size, 1);
+    BOOST_CHECK_EQUAL(meta_line.mode, 2);
+    BOOST_CHECK_EQUAL(meta_line.uid, 3);
+    BOOST_CHECK_EQUAL(meta_line.gid, 4);
+    BOOST_CHECK_EQUAL(meta_line.dev, 5);
+    BOOST_CHECK_EQUAL(meta_line.ino, 6);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xaa}));
+    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xbb}));
+
+    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+    BOOST_CHECK_EQUAL(meta_line.size, 9);
+    BOOST_CHECK_EQUAL(meta_line.mode, 8);
+    BOOST_CHECK_EQUAL(meta_line.uid, 10);
+    BOOST_CHECK_EQUAL(meta_line.gid, 11);
+    BOOST_CHECK_EQUAL(meta_line.dev, 12);
+    BOOST_CHECK_EQUAL(meta_line.ino, 13);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 14);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 15);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304870);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304930);
+    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xcc}));
+    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xdd}));
+
+    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+    BOOST_CHECK_EQUAL(meta_line.size, 16);
+    BOOST_CHECK_EQUAL(meta_line.mode, 17);
+    BOOST_CHECK_EQUAL(meta_line.uid, 18);
+    BOOST_CHECK_EQUAL(meta_line.gid, 19);
+    BOOST_CHECK_EQUAL(meta_line.dev, 20);
+    BOOST_CHECK_EQUAL(meta_line.ino, 21);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 22);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 23);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304930);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304990);
+    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xee}));
+    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xff}));
+
+    BOOST_CHECK_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), ERR_TRANSPORT_NO_MORE_DATA);
+}
+
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
+{
+    // This is what we are actually testing, chaining of several files content
+    InMetaSequenceTransport wrm_trans("./tests/fixtures/sample_v2", ".mwrm");
+    char buffer[10000];
+    char * pbuffer = buffer;
+    size_t total = 0;
+    try {
+        for (size_t i = 0; i < 221 ; i++){
+            pbuffer = buffer;
+            wrm_trans.recv(&pbuffer, sizeof(buffer));
+            total += pbuffer - buffer;
+        }
+    } catch (const Error & e) {
+        BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_NO_MORE_DATA, (unsigned)e.id);
+        total += pbuffer - buffer;
+    };
+    // total size if sum of sample sizes
+    BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
+}
+
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 {
 //        "800 600\n",

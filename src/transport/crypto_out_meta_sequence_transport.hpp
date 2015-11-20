@@ -174,27 +174,25 @@ namespace detail {
                 if (!filename) {
                     return 1;
                 }
-                ssize_t len = strlen(filename);
-                ssize_t res = this->meta_buf().write(filename, len);
-                if (res == len) {
-                    char mes[(std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + HASH_LEN*2 + 2];
-                    len = sprintf(mes, " %u %u", unsigned(this->start_sec_), unsigned(this->stop_sec_+1));
-                    char * p = mes + len;
-                    *p++ = ' ';                           //     1 octet
-                    for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
-                        sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash1)
-                    }
-                    *p++ = ' ';                           //     1 octet
-                    for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
-                        sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash2)
-                    }
-                    *p++ = '\n';
-                    len = p-mes;
-                    res = this->meta_buf().write(mes, len);
+
+                char mes[HASH_LEN*2 + 2 + 1];
+                char * p = mes;
+                *p++ = ' ';                           //     1 octet
+                for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
+                    sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash1)
                 }
-                if (res < len) {
-                    return res < 0 ? res : 1;
+                *p++ = ' ';                           //     1 octet
+                for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
+                    sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash2)
                 }
+                *p = 0;
+
+                if (int err = write_meta_file(
+                    this->meta_buf(), filename, this->start_sec_, this->stop_sec_+1, mes
+                )) {
+                    return err;
+                }
+
                 this->start_sec_ = this->stop_sec_;
                 return 0;
             }
@@ -238,7 +236,7 @@ RequestCleaningTransport<
             this->set_authentifier(authentifier);
         }
 
-        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier);
+        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
     }
 
     void timestamp(timeval now) override {

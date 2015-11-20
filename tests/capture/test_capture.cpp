@@ -141,30 +141,39 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         , "./" , "capture", ".wrm", ini.get<cfg::video::capture_groupid>()
         );
 
+        struct {
+            size_t len = 0;
+            ssize_t write(char const *, size_t len) {
+                this->len += len;
+                return len;
+            }
+        } meta_len_writer;
+        detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
+
         const char * filename;
 
         filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(1646, ::filesize(filename));
+        detail::write_meta_file(meta_len_writer, filename, 1000, 1004);
         ::unlink(filename);
         filename = wrm_seq.get(1);
         BOOST_CHECK_EQUAL(3508, ::filesize(filename));
+        detail::write_meta_file(meta_len_writer, filename, 1003, 1007);
         ::unlink(filename);
         filename = wrm_seq.get(2);
         BOOST_CHECK_EQUAL(3484, ::filesize(filename));
+        detail::write_meta_file(meta_len_writer, filename, 1006, tvtime().tv_sec);
         ::unlink(filename);
         filename = wrm_seq.get(3);
         BOOST_CHECK_EQUAL(false, file_exist(filename));
-    }
 
-    {
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
           , "./", "capture", ".mwrm", groupid
         );
-        const char * filename = mwrm_seq.get(0);
-        timeval now = tvtime();
-        BOOST_CHECK_EQUAL(99 + std::to_string(now.tv_sec).size(), ::filesize(filename));
+        filename = mwrm_seq.get(0);
+        BOOST_CHECK_EQUAL(meta_len_writer.len, ::filesize(filename));
         ::unlink(filename);
     }
 

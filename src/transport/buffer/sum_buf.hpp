@@ -41,6 +41,13 @@ namespace transbuf
         : Buf(params)
         {}
 
+        template<class... Ts>
+        int open(Ts && ... args)
+        {
+            this->sum_ = 0;
+            return Buf::open(args...);
+        }
+
         long int write(const void * buffer, size_t len)
         {
             auto ret = Buf::write(buffer, len);
@@ -88,15 +95,24 @@ namespace transbuf
         , mini_sum_limit_(params.mini_sum_limit)
         {}
 
+        template<class... Ts>
+        int open(Ts && ... args)
+        {
+            this->mini_sum_ = 0;
+            this->after_sum_ = 0;
+            this->mini_sum_consumed_ = 0;
+            return Buf::open(args...);
+        }
+
         long int write(const void * buffer, size_t len)
         {
             auto ret = Buf::write(buffer, len);
 
             auto ubuf = static_cast<unsigned char const *>(buffer);
 
-            auto min_len = std::min(this->mini_sum_limit_ - this->consumed_, len);
+            auto min_len = std::min(this->mini_sum_limit_ - this->mini_sum_consumed_, len);
             auto new_len = len - min_len;
-            this->consumed_ += min_len;
+            this->mini_sum_consumed_ += min_len;
 
             for (auto c : iter(ubuf, min_len)) {
                 this->mini_sum_ += c;
@@ -120,7 +136,7 @@ namespace transbuf
     private:
         uint32_t mini_sum_ = 0;
         uint32_t after_sum_ = 0;
-        size_t consumed_ = 0;
+        size_t mini_sum_consumed_ = 0;
         size_t mini_sum_limit_;
     };
 }
