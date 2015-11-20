@@ -24,7 +24,7 @@ try:
     from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
         SUPPORTED_AUTHENTICATION_METHODS
-
+    from wabengine.common.const import AM_IL_DOMAIN
     from wabx509 import AuthX509
 except Exception, e:
     import traceback
@@ -132,6 +132,7 @@ class Engine(object):
         self.proxy_rights = None
         self.rights = None
         self.targets = {}
+        self.targetsdom = {}
         self.target_right = None
 
         self.physical_targets = []
@@ -501,17 +502,30 @@ class Engine(object):
     def get_proxy_rights(self, protocols, target_device=None, check_timeframes=False,
                          target_context=None):
         if self.proxy_rights is None:
-            self.proxy_rights = self.wabengine.get_proxy_rights(protocols, target_device,
-                                                                check_timeframes=check_timeframes)
+            try:
+                Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s, checktimeframe=%s" % (protocols, target_device, check_timeframes))
+                self.proxy_rights = self.wabengine.get_proxy_rights(
+                    protocols,
+                    target_device,
+                    check_timeframes=check_timeframes)
+                Logger().debug("** END Get_proxy_right **")
+            except Exception, e:
+                self.proxy_rights = None
+                return
         if self.rights is not None:
             return
         self.rights = self.proxy_rights.rights
         self.targets = {}
+        self.targetsdom = {}
         self.displaytargets = []
         for right in self.rights:
             if right.resource and right.account:
-                # target_login = self.get_account_login(right)
-                target_login = right.account.name
+                account_name = right.account.name
+                account_domain = right.account.domain_cn
+                account_login = right.account.login
+                account_namedom = account_name
+                if account_domain and account_domain != AM_IL_DOMAIN:
+                    account_namedom = "%s@%s" % (account_name, account_domain)
                 target_groups = [x.cn for x in right.group_targets]
                 if right.resource.application:
                     target_name = right.resource.application.cn
@@ -533,7 +547,7 @@ class Engine(object):
                         host != target_context.dnsname):
                         continue
                     if (target_context.login and
-                        target_login != target_context.login):
+                        account_login != target_context.login):
                         continue
                     if (target_context.service and
                         service_name != target_context.service):
@@ -541,16 +555,36 @@ class Engine(object):
                     if (target_context.group and
                         not (target_context.group in target_groups)):
                         continue
-                tuple_index = (target_login, target_name)
+
+                target_value = (service_name, target_groups, right)
+                # feed targets hashtable indexed on account_name and target_name
+                tuple_index = (account_name, target_name)
                 if not self.targets.get(tuple_index):
-                    self.targets[tuple_index] = []
-                self.targets[tuple_index].append((service_name, target_groups, right))
+                    self.targets[tuple_index] = {}
+                if not self.targets[tuple_index].get(account_domain):
+                    self.targets[tuple_index][account_domain] = []
+                self.targets[tuple_index][account_domain].append(target_value)
                 if alias:
-                    alias_index = (target_login, alias)
+                    alias_index = (account_name, alias)
                     if not self.targets.get(alias_index):
-                        self.targets[alias_index] = []
-                    self.targets[alias_index].append((service_name, target_groups, right))
-                self.displaytargets.append(DisplayInfo(target_login,
+                        self.targets[alias_index] = {}
+                    if not self.targets[alias_index].get(account_domain):
+                        self.targets[alias_index][account_domain] = []
+                    self.targets[alias_index][account_domain].append(target_value)
+
+                # feed targets hashtable indexed on
+                # account_name@account_domain and target_name
+                tuple_index = (account_namedom, target_name)
+                if not self.targetsdom.get(tuple_index):
+                    self.targetsdom[tuple_index] = []
+                self.targetsdom[tuple_index].append(target_value)
+                if alias:
+                    alias_index = (account_namedom, alias)
+                    if not self.targetsdom.get(alias_index):
+                        self.targetsdom[alias_index] = []
+                    self.targetsdom[alias_index].append(target_value)
+                # self.displaytargets.append(DisplayInfo(account_name,
+                self.displaytargets.append(DisplayInfo(account_namedom,
                                                        target_name,
                                                        service_name,
                                                        protocol,
@@ -566,7 +600,20 @@ class Engine(object):
                               check_timeframes=False)
         if target_login == MAGIC_AM:
             target_login = self.get_username()
-        results = self.targets.get((target_login, target_device), [])
+        try:
+            results = self.targetsdom.get((target_login, target_device), [])
+            if not results:
+                # domain might not be provided
+                # lets check the targets hashtable
+                domres = self.targets.get((target_login, target_device), {})
+                if len(domres) == 1:
+                    # no ambiguity
+                    dom, results = domres.items()[0]
+                else:
+                    # ambiguity on domain
+                    results = []
+        except Exception, e:
+            results = []
         right = None
         filtered = []
         for (r_service, r_groups, r) in results:
