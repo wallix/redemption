@@ -944,10 +944,19 @@ class Engine(object):
                          conn_cmd=conn_cmd)
 
     def get_account_login(self, right):
-        account_login = right.account.login
-        if account_login == MAGIC_AM:
-            account_login = self.get_username()
-        return account_login
+        login = right.account.login
+        try:
+            domain = right.account.domain_name
+        except:
+            domain = ""
+        if right.account.domain_cn == AM_IL_DOMAIN:
+            return login
+        trule = right.resource.service.connectionpolicy.data.get("rdp", {}).get("transformation_rule")
+        if (trule and '${LOGIN}' in trule):
+            return trule.replace('${LOGIN}', login).replace('${DOMAIN}', domain or '')
+        if not domain:
+            return login
+        return "%s@%s" % (login, domain)
 
 # Information Structs
 class TargetContext(object):
