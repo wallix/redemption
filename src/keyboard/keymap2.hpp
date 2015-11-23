@@ -276,11 +276,22 @@ struct Keymap2
         // Modifier keys
         //----------------
             case LEFT_SHIFT:  // left shift
+                this->key_flags ^= FLG_SHIFT;
+                break;
             case RIGHT_SHIFT: // right shift
+                this->key_flags ^= FLG_SHIFT;
+                break;
             case LEFT_CTRL:   // left ctrl
+                this->key_flags ^= FLG_CTRL;
+                break;
             case RIGHT_CTRL:  // right ctrl
+                this->key_flags ^= FLG_CTRL;
+                break;
             case LEFT_ALT:    // left alt
+                this->key_flags ^= FLG_ALT;
+                break;
             case RIGHT_ALT:   // right alt
+                this->key_flags ^= FLG_ALTGR;
                 break;
         //----------------
         // All other keys

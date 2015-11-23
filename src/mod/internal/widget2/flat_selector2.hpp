@@ -356,6 +356,22 @@ public:
         const char * texts[] = { device_group, target_label, protocol };
         this->selector_lines.add_line(texts);
     }
+
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+            case Keymap2::KEVENT_ESC:
+                keymap->get_kevent();
+                this->send_notify(NOTIFY_CANCEL);
+                break;
+            default:
+                WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                break;
+            }
+        }
+    }
+
+
 };
 
 #endif
