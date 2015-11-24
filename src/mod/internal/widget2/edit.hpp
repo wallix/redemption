@@ -404,7 +404,22 @@ public:
                         this->decrement_edit_pos();
                         this->update_draw_cursor(old_cursor_rect);
                     }
+
+                    if (keymap->is_ctrl_pressed()) {
+                        while ( (this->label.buffer[(this->edit_buffer_pos)-1] != 32)
+                                 || (this->label.buffer[(this->edit_buffer_pos)] == 32) ){
+                            if (this->edit_pos > 0) {
+                                Rect old_cursor_rect = this->get_cursor_rect();
+                                this->decrement_edit_pos();
+                                this->update_draw_cursor(old_cursor_rect);
+                            }
+                            else
+                                break;
+                        }
+                        break;
+                    }
                     break;
+
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
                     keymap->get_kevent();
@@ -413,7 +428,22 @@ public:
                         this->increment_edit_pos();
                         this->update_draw_cursor(old_cursor_rect);
                     }
+
+                    if (keymap->is_ctrl_pressed()) {
+                        while ( (this->label.buffer[(this->edit_buffer_pos)-1] == 32)
+                                || (this->label.buffer[(this->edit_buffer_pos)] != 32) ){
+                            if (this->edit_pos < this->num_chars) {
+                                Rect old_cursor_rect = this->get_cursor_rect();
+                                this->increment_edit_pos();
+                                this->update_draw_cursor(old_cursor_rect);
+                            }
+                            else
+                                break;
+                        }
+                        break;
+                    }
                     break;
+
                 case Keymap2::KEVENT_BACKSPACE:
                     keymap->get_kevent();
                     if (this->edit_pos > 0) {
