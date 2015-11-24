@@ -13,10 +13,9 @@
 
 #include "version.hpp"
 #include "crypto_in_filename_transport.hpp"
+#include "in_meta_sequence_transport.hpp"
 #include "ssl_calls.hpp"
 #include "config.hpp"
-//#include "crypto_impl.hpp"
-#include "ccryptofile.h"
 #include "fdbuf.hpp"
 
 #include "program_options/program_options.hpp"
@@ -33,16 +32,14 @@ static inline bool check_file_hash_sha256(
     size_t          hash_len,
     size_t len_to_check
 ) {
-    if (SHA256_DIGEST_LENGTH != hash_len){
-        return false;
-    }
+    REDASSERT(SHA256_DIGEST_LENGTH == hash_len);
 
     SslHMAC_Sha256 hmac(crypto_key, key_len);
 
     io::posix::fdbuf file;
     file.open(file_path, O_RDONLY);
     if (!file.is_open()) {
-        TODO("We should log if the file whose signature we check does not exists");
+        LOG(LOG_ERR, "failed opening=%s", file_path);
         return false;
     }
 
@@ -62,6 +59,7 @@ static inline bool check_file_hash_sha256(
     } while (number_of_bytes_read < len_to_check || len_to_check == 0);
 
     if (len_read < 0){
+        LOG(LOG_ERR, "failed reading=%s", file_path);
         return false;
     }
 
@@ -69,170 +67,11 @@ static inline bool check_file_hash_sha256(
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
 
+    if (memcmp(hash, hash_buf, hash_len)) {
+        LOG(LOG_ERR, "failed checking hash=%s", file_path);
+    }
+
     return (memcmp(hash, hash_buf, hash_len) == 0);
-}
-
-static inline int extract_file_info( const char * space_separated_values
-                     , OutStream & file_name
-                     , StaticOutStream<HASH_LEN> & _4kb_hash
-                     , StaticOutStream<HASH_LEN> & full_hash) {
-    file_name.rewind();
-    _4kb_hash.rewind();
-    full_hash.rewind();
-
-    //if ((_4kb_hash.get_capacity() < HASH_LEN / 2) || (full_hash.get_capacity() < HASH_LEN / 2)) {
-    //    return -1;
-    //}
-
-    size_t len = strlen(space_separated_values);
-
-    if (len == 0) {
-        return 0;
-    }
-
-    const char   * point_end;
-    const char   * point_start;
-    int            i, c;
-    unsigned int   code;
-    const char   * psz;
-
-    point_end = (space_separated_values[len - 1] == '\n') ?
-                &space_separated_values[len - 1] : &space_separated_values[len];
-    if (point_end == space_separated_values) {
-        return 0;
-    }
-
-    // full hash
-    for (point_start = point_end - 1;
-         (*point_start != ' ') && (point_start > space_separated_values);
-         point_start--);
-    if ((*point_start != ' ') || (point_end - (point_start + 1) != HASH_LEN)) {
-        return -1;
-    }
-//LOG(LOG_INFO, "full_hash='%.*s'", (unsigned)(point_end - (point_start + 1)), point_start + 1);
-    for (i = 0, c = HASH_LEN / 2, psz = point_start + 1; i < c; i++, psz += 2) {
-        sscanf(psz, "%02x", &code);
-
-        full_hash.out_uint8(static_cast<uint8_t>(code));
-    }
-
-    // first 4 kb hash
-    point_end = point_start;
-    for (point_start--;
-         (*point_start != ' ') && (point_start > space_separated_values);
-         point_start--);
-    if ((*point_start != ' ') || (point_end - (point_start + 1) != HASH_LEN)) {
-        return -1;
-    }
-//LOG(LOG_INFO, "_4kb_hash='%.*s'", (unsigned)(point_end - (point_start + 1)), point_start + 1);
-    for (i = 0, c = HASH_LEN / 2, psz = point_start + 1; i < c; i++, psz += 2) {
-        sscanf(psz, "%02x", &code);
-
-        _4kb_hash.out_uint8(static_cast<uint8_t>(code));
-    }
-
-    // end timestamp
-    for (/*point_end = point_start, */point_start--;
-         (*point_start != ' ') && (point_start > space_separated_values);
-         point_start--);
-    if (*point_start != ' ') {
-        return -1;
-    }
-//LOG(LOG_INFO, "end timestamp='%.*s'", (unsigned)(point_end - (point_start + 1)), point_start + 1);
-
-    // start timestamp
-    for (point_end = point_start, point_start--;
-         (*point_start != ' ') && (point_start > space_separated_values);
-         point_start--);
-    if (*point_start != ' ') {
-        return -1;
-    }
-//LOG(LOG_INFO, "start timestamp='%.*s'", (unsigned)(point_end - (point_start + 1)), point_start + 1);
-
-    // filename
-    point_end   = point_start;
-    point_start = space_separated_values;
-    if ((point_end <= point_start) || (file_name.get_capacity() < static_cast<size_t>(point_end - point_start))) {
-        return -1;
-    }
-//LOG(LOG_INFO, "filename='%.*s'", (unsigned)(point_end - point_start), point_start);
-    file_name.out_copy_bytes(point_start, (point_end - point_start));
-    file_name.out_uint8(0);
-
-    return 1;
-}
-
-// opaque_stream should be initialized before the first call to read_line.
-// opaque_data should be initialize with 1 before the first call to read_line.
-template <typename FileDescriptor>
-int read_line(  FileDescriptor fd
-              , int (*fp_read)(FileDescriptor, char *, unsigned int)
-              , OutStream & opaque_stream
-              , int & opaque_data
-              , char * line_buf
-              , size_t line_len) {
-    char    * internal_line_buf = line_buf;
-    size_t    internal_line_len = line_len;
-    uint8_t * psz                         ;
-
-    if (line_len == 0) {
-        return -1;
-    }
-
-    *line_buf = '\0';
-
-    do {
-        // Finds newline in buffer.
-        for (psz = opaque_stream.get_data();
-             (psz != opaque_stream.get_current()) && ((psz - opaque_stream.get_data()) < static_cast<ssize_t>(internal_line_len - 1));
-             psz++) {
-            if (*psz == '\n') {
-                psz++;
-
-                break;
-            }
-        }
-
-        if (psz > opaque_stream.get_data()) {
-            size_t len = psz - opaque_stream.get_data();
-
-            memcpy(internal_line_buf, opaque_stream.get_data(), len);
-
-            internal_line_buf[len] = '\0';
-
-            memmove(opaque_stream.get_data(), psz, opaque_stream.get_current() - opaque_stream.get_data() - len);
-
-            opaque_stream.rewind(opaque_stream.get_offset() - len);
-
-            // A newline is read or ...
-            if ((internal_line_buf[len - 1] == '\n') ||
-                // ... buffer is full.
-                (len == internal_line_len - 1)) {
-                return len;
-            }
-
-            internal_line_buf += len;
-            internal_line_len -= len;
-        }
-
-        if (opaque_data <= 0) {
-            if (internal_line_len != line_len) {
-                return line_len - internal_line_len;
-            }
-
-            return opaque_data;
-        }
-
-        int number_of_bytes_read = fp_read(fd, reinterpret_cast<char *>(opaque_stream.get_current()), opaque_stream.tailroom());
-
-        if (number_of_bytes_read > 0) {
-            opaque_stream.out_skip_bytes(number_of_bytes_read);
-        }
-        else {
-            opaque_data = number_of_bytes_read;
-        }
-    }
-    while (true);
 }
 
 bool check_file_hash(
@@ -248,81 +87,6 @@ bool check_file_hash(
     return check_file_hash_sha256(file_path, crypto_key, key_len, hash_ + (HASH_LEN / 2), HASH_LEN / 2, 0);
 }
 
-// opaque_stream should be initialized before the first call to read_line.
-// opaque_data should be initialize with 1 before the first call to read_line.
-/*
-static inline int crypto_read_line(crypto_file * cf_struct
-              , InStream & opaque_stream
-              , int & opaque_data
-              , char * line_buf
-              , size_t line_len) {
-    char    * internal_line_buf = line_buf;
-    size_t    internal_line_len = line_len;
-    uint8_t * psz                         ;
-    size_t    len                         ;
-    int       number_of_bytes_read        ;
-
-    if (line_len == 0) {
-        return -1;
-    }
-
-    *line_buf = '\0';
-
-    do {
-        // Finds newline in buffer.
-        for (psz = opaque_stream.get_data();
-             (psz != opaque_stream.p) && ((psz - opaque_stream.get_data()) < (ssize_t)(internal_line_len - 1));
-             psz++) {
-            if (*psz == '\n') {
-                psz++;
-
-                break;
-            }
-        }
-
-        if (psz > opaque_stream.get_data()) {
-            len = psz - opaque_stream.get_data();
-
-            memcpy(internal_line_buf, opaque_stream.get_data(), len);
-
-            internal_line_buf[len] = '\0';
-
-            memmove(opaque_stream.get_data(), psz, opaque_stream.p - opaque_stream.get_data() - len);
-
-            opaque_stream.p -= len;
-
-            // A newline is read or ...
-            if ((internal_line_buf[len - 1] == '\n') ||
-                // ... buffer is full.
-                (len == internal_line_len - 1)) {
-                return len;
-            }
-
-            internal_line_buf += len;
-            internal_line_len -= len;
-        }
-
-        if (opaque_data <= 0) {
-            if (internal_line_len != line_len) {
-                return line_len - internal_line_len;
-            }
-
-            return opaque_data;
-        }
-
-        number_of_bytes_read = crypto_read(cf_struct, reinterpret_cast<char *>(opaque_stream.p), opaque_stream.tailroom());
-
-        if (number_of_bytes_read > 0) {
-            opaque_stream.p += number_of_bytes_read;
-        }
-        else {
-            opaque_data = number_of_bytes_read;
-        }
-    }
-    while (true);
-}
-*/
-
 bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&hash)[HASH_LEN], bool quick_check) {
     TODO("Add unit test for this function")
     bool result = false;
@@ -333,74 +97,54 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
         get_derivator(file_path, derivator, DERIVATOR_LENGTH);
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         if (compute_hmac(trace_key, cctx->crypto_key, derivator) == -1){
+            LOG(LOG_ERR, "failed to compute message authentication code");
             return false;
         }
 
-        int system_fd = open(file_path, O_RDONLY, 0600);
-        if (system_fd == -1){
-            LOG(LOG_ERR, "failed opening=%s\n", file_path);
+        transbuf::icrypto_filename_base ifile(cctx);
+        if (ifile.open(file_path) < 0) {
+            LOG(LOG_ERR, "failed opening=%s", file_path);
             return false;
         }
 
-        crypto_file * cf_struct = crypto_open_read(system_fd, trace_key, cctx);
-        if (!cf_struct){
-            close(system_fd);
-        }
+        struct ReaderBuf
+        {
+            transbuf::icrypto_filename_base & buf;
 
-        if (cf_struct != nullptr) {
-            StaticOutStream<2048> opaque_stream;
+            ssize_t operator()(char * buf, size_t len) const {
+                return this->buf.read(buf, len);
+            }
+        };
 
-            int opaque_data = 1;
+        detail::ReaderLine<ReaderBuf> reader({ifile});
+        auto meta_header = detail::read_meta_headers(reader);
 
-            char header0[1024];
-            char header1[1024];
-            char header2[1024];
+        detail::MetaLine meta_line;
 
-            if (  (read_line(cf_struct, crypto_read, opaque_stream, opaque_data, header0, sizeof(header0)) > 0)
-               && (read_line(cf_struct, crypto_read, opaque_stream, opaque_data, header1, sizeof(header1)) > 0)
-               && (read_line(cf_struct, crypto_read, opaque_stream, opaque_data, header2, sizeof(header2)) > 0)
-               ) {
-                result = true;
+        result = true;
 
-                StaticOutStream<1024> file_name;
-                StaticOutStream<HASH_LEN> _4kb_hash;
-                StaticOutStream<HASH_LEN> full_hash;
-
-                char line[1024];
-                //int  line_len;
-
-                while ((/*line_len = */read_line(cf_struct, crypto_read, opaque_stream, opaque_data, line, sizeof(line))) > 0) {
-                    int extract_file_info_result = extract_file_info(line, file_name, _4kb_hash, full_hash);
-
-                    if ((extract_file_info_result > 0)
-                        && (((quick_check)
-                            && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
-                                        , cctx->hmac_key
-                                        , sizeof(cctx->hmac_key)
-                                        , _4kb_hash.get_data()
-                                        , _4kb_hash.get_offset()
-                                        , 4096) == false)
-                           )
-                          || ((!quick_check)
-                            && (check_file_hash_sha256(reinterpret_cast<const char *>(file_name.get_data())
-                                        , cctx->hmac_key
-                                        , sizeof(cctx->hmac_key)
-                                        , full_hash.get_data()
-                                        , full_hash.get_offset()
-                                        , 0) == false)
-                           ))) {
-                        result = false; break;
-                    }
-                    else if (extract_file_info_result < 0) {
-                        result = false; break;
-                    }
-                }
+        while (detail::read_meta_file(reader, meta_header, meta_line) !=
+               ERR_TRANSPORT_NO_MORE_DATA) {
+            if ((quick_check &&
+                 (check_file_hash_sha256(
+                          meta_line.filename
+                        , cctx->hmac_key
+                        , sizeof(cctx->hmac_key)
+                        , meta_line.hash1
+                        , sizeof(meta_line.hash1)
+                        , 4096) == false)) ||
+                (!quick_check &&
+                 (check_file_hash_sha256(
+                          meta_line.filename
+                        , cctx->hmac_key
+                        , sizeof(cctx->hmac_key)
+                        , meta_line.hash2
+                        , sizeof(meta_line.hash2)
+                        , 0) == false))) {
+                result = false;
+                break;
             }
         }
-
-        unsigned char ignore[HASH_LEN];
-
-        crypto_close(cf_struct, ignore, cctx->hmac_key);
     }
 
     return result;
@@ -412,6 +156,96 @@ void make_file_path(const char * directory_name, const char * file_name,  char *
         file_name);
 
     file_path_buf[file_path_len - 1] = '\0';
+}
+
+template<typename T>
+int check_encrypted_or_checksumed_file(CryptoContext & cctx,
+                                       std::string const & input_filename,
+                                       std::string const & hash_path,
+                                       const char * fullfilename,
+                                       bool quick_check,
+                                       uint32_t verbose) {
+    /*****************
+    * Load file hash *
+    *****************/
+    char hash[HASH_LEN];
+
+    {
+        char file_path[1024] = {};
+
+        size_t filename_len = input_filename.length();
+
+        bool hash_ok = false;
+
+        make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
+        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
+
+        char   temp_buffer[4096];
+        char * buf;
+
+        try {
+            T in_hash_t(&cctx, file_path);
+            if (verbose) {
+                LOG(LOG_INFO, "Transport created");
+            }
+
+            buf = temp_buffer;
+
+            memset(temp_buffer, 0, sizeof(temp_buffer));
+
+            const size_t hash_data_length = filename_len + 1 + HASH_LEN;
+            if (verbose) {
+                LOG(LOG_INFO, "Hash data length=%zu", hash_data_length);
+            }
+            in_hash_t.recv(&buf, hash_data_length);
+
+            if (verbose) {
+                LOG(LOG_INFO, "Hash data received");
+            }
+
+            // Filename HASH_64_BYTES
+            //         ^
+            //         |
+            //     separator
+            if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
+                // Separator
+                (temp_buffer[filename_len] == ' ')) {
+                if (temp_buffer + filename_len + 1 + HASH_LEN == buf){
+                    memcpy(hash, temp_buffer + filename_len + 1, sizeof(hash));
+                    hash_ok = true;
+                }
+                else {
+                    std::cerr << "Truncated hash: \"" << file_path << "\"" << std::endl << std::endl;
+                }
+            }
+            else {
+                std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
+            }
+        }
+        catch (Error const & e) {
+            std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
+        }
+        catch (...) {
+            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
+        }
+
+        if (hash_ok == false) {
+            exit(-1);
+        }
+    }
+
+    /******************
+    * Check mwrm file *
+    ******************/
+    if (check_mwrm_file(&cctx, fullfilename, hash, quick_check) == false) {
+        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
+
+        exit(-1);
+    }
+
+    std::cout << "No error detected during the data verification." << std::endl << std::endl;
+
+    return 0;
 }
 
 template<class F>
@@ -482,7 +316,6 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
         char temp_extension[256] = {};
 
         canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
-
         //cout << "temp_path: \"" << temp_path << "\", \"" << temp_basename << "\", \"" << temp_extension << "\"" << std::endl;
 
         if (strlen(temp_path) > 0) {
@@ -524,7 +357,30 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
         exit(-1);
     }
 
+    unsigned infile_version = 1;
+    bool infile_is_checksumed = false;
+
     if (!infile_is_encrypted) {
+        transbuf::ifile_base ifile;
+        ifile.open(fullfilename);
+
+        struct ReaderBuf
+        {
+            transbuf::ifile_base & buf;
+
+            ssize_t operator()(char * buf, size_t len) const {
+                return this->buf.read(buf, len);
+            }
+        };
+
+        detail::ReaderLine<ReaderBuf> reader({ifile});
+        auto meta_header = detail::read_meta_headers(reader);
+
+        infile_version       = meta_header.version;
+        infile_is_checksumed = meta_header.has_checksum;
+    }
+
+    if (!infile_is_encrypted && ((infile_version < 2) || !infile_is_checksumed)) {
         std::cout << "Input file is unencrypted.\n";
         return 0;
     }
@@ -537,96 +393,6 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
 
     OpenSSL_add_all_digests();
 
-    /*****************
-    * Load file hash *
-    *****************/
-    char hash[HASH_LEN];
-
-    {
-        char file_path[1024] = {};
-//        char temp_path[1024] = {};
-//        char temp_basename[1024] = {};
-//        char temp_extension[256] = {};
-//        char temp_filename[2048] = {};
-
-//        canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension));
-        //snprintf(temp_filename, sizeof(temp_filename), "%s%s", temp_basename, temp_extension);
-//        temp_filename[sizeof(temp_filename) - 1] = '\0';
-
-//        std::cout << "temp_filename: \"" << temp_filename << "\"" << std::endl << std::endl;
-//        size_t filename_len = strlen(temp_filename);
-        size_t filename_len = input_filename.length();
-
-        bool hash_ok = false;
-
-        make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
-        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
-
-        char   temp_buffer[4096];
-        char * buf;
-
-        try {
-            CryptoInFilenameTransport in_hash_t(&cctx, file_path);
-            if (verbose) {
-                LOG(LOG_INFO, "Transport created");
-            }
-
-            buf = temp_buffer;
-
-            memset(temp_buffer, 0, sizeof(temp_buffer));
-
-            const size_t hash_data_length = filename_len + 1 + HASH_LEN;
-            if (verbose) {
-                LOG(LOG_INFO, "Hash data length=%zu", hash_data_length);
-            }
-            in_hash_t.recv(&buf, hash_data_length);
-
-            if (verbose) {
-                LOG(LOG_INFO, "Hash data received");
-            }
-
-            // Filename HASH_64_BYTES
-            //         ^
-            //         |
-            //     separator
-//            if (!memcmp(temp_buffer, temp_filename, filename_len) &&
-            if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
-                // Separator
-                (temp_buffer[filename_len] == ' ')) {
-                if (temp_buffer + filename_len + 1 + HASH_LEN == buf){
-                    memcpy(hash, temp_buffer + filename_len + 1, sizeof(hash));
-                    hash_ok = true;
-                }
-                else {
-                    std::cerr << "Truncated hash: \"" << file_path << "\"" << std::endl << std::endl;
-                }
-            }
-            else {
-                std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
-            }
-        }
-        catch (Error const & e) {
-            std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
-        }
-        catch (...) {
-            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
-        }
-
-        if (hash_ok == false) {
-            exit(-1);
-        }
-    }
-
-    /*****************
-    * Check mwrm file *
-    *****************/
-    if (check_mwrm_file(&cctx, fullfilename, hash, quick_check) == false) {
-        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
-
-        exit(-1);
-    }
-
-    std::cout << "No error detected during the data verification." << std::endl << std::endl;
-
-    return 0;
+    return check_encrypted_or_checksumed_file<CryptoInFilenameTransport>(cctx, input_filename,
+        hash_path, fullfilename, quick_check, verbose);
 }

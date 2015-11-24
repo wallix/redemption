@@ -33,6 +33,14 @@
 
 namespace detail
 {
+    char chex_to_int(char c, int & err) {
+        return
+            '0' <= c && c <= '9' ? c-'0'
+          : 'a' <= c && c <= 'f' ? c-'a' + 10
+          : 'A' <= c && c <= 'F' ? c-'A' + 10
+          : ((err |= 1), '\0');
+    }
+
     template<class Reader>
     class ReaderLine
     {
@@ -196,10 +204,32 @@ namespace detail
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
         typedef std::reverse_iterator<char*> reverse_iterator;
 
+        using std::begin;
+
         reverse_iterator last(line);
         reverse_iterator first(line + len);
         reverse_iterator e1 = std::find(first, last, ' ');
+        if (e1 - first == 64) {
+            int err = 0;
+            auto phash = begin(meta_line.hash2);
+            for (char * b = e1.base(), * e = b + 64; e != b; ++b, ++phash) {
+                *phash = (chex_to_int(*b, err) << 4);
+                *phash |= chex_to_int(*++b, err);
+            }
+            REDASSERT(!err);
+        }
+
         reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
+        if (e2 - (e1 + 1) == 64) {
+            int err = 0;
+            auto phash = begin(meta_line.hash1);
+            for (char * b = e2.base(), * e = b + 64; e != b; ++b, ++phash) {
+                *phash = (chex_to_int(*b, err) << 4);
+                *phash |= chex_to_int(*++b, err);
+            }
+            REDASSERT(!err);
+        }
+
         if (e1 - first == 64 && e2 != last) {
             first = e2 + 1;
             e1 = std::find(first, last, ' ');
@@ -281,23 +311,16 @@ namespace detail
         if (meta_header.has_checksum
          && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
         ) {
-            auto chex_to_int = [&err](char c) {
-                return
-                    '0' <= c && c <= '9' ? c-'0'
-                  : 'a' <= c && c <= 'f' ? c-'a' + 10
-                  : 'A' <= c && c <= 'F' ? c-'A' + 10
-                  : ((err |= 1), '\0');
-            };
             auto phash = begin(meta_line.hash1);
             for (auto e = ++pend + sizeof(meta_line.hash1) * 2u; pend != e; ++pend, ++phash) {
-                *phash = (chex_to_int(*pend) << 4);
-                *phash |= chex_to_int(*++pend);
+                *phash = (chex_to_int(*pend, err) << 4);
+                *phash |= chex_to_int(*++pend, err);
             }
             err |= (*pend != ' ');
             phash = begin(meta_line.hash2);
             for (auto e = ++pend + sizeof(meta_line.hash2) * 2u; pend != e; ++pend, ++phash) {
-                *phash = (chex_to_int(*pend) << 4);
-                *phash |= chex_to_int(*++pend);
+                *phash = (chex_to_int(*pend, err) << 4);
+                *phash |= chex_to_int(*++pend, err);
             }
         }
 
