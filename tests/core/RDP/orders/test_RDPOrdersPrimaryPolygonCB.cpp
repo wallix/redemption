@@ -27,6 +27,9 @@
 #define BOOST_TEST_MODULE TestOrderPolygonCB
 #include <boost/test/auto_unit_test.hpp>
 
+//#define LOGPRINT
+#define LOGNULL
+
 #include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 
 #include "test_orders.hpp"

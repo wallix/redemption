@@ -25,6 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
+// #define LOGNULL
 
 #include <stdio.h>
 #include "ssl_calls.hpp"

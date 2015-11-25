@@ -40,7 +40,7 @@
 
 namespace transfil {
     namespace detail {
-        inline int init_cypher(EVP_CIPHER_CTX * ctx, unsigned char * trace_key, const unsigned char * iv, bool is_decrypion)
+        inline int init_cypher(EVP_CIPHER_CTX * ctx, const unsigned char * trace_key, const unsigned char * iv, bool is_decrypion)
         {
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
             const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
@@ -269,7 +269,7 @@ namespace transfil {
         //{}
 
         template<class Sink>
-        int open(Sink & snk, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
+        int open(Sink & snk, const unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));

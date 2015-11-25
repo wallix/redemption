@@ -145,7 +145,7 @@ namespace detail
             ll(stat.st_ctim.tv_sec),
             ll(start_sec),
             ll(stop_sec),
-            extra
+            extra ? extra : ""
         );
         ssize_t res = writer.write(mes, len);
 
@@ -348,8 +348,10 @@ namespace detail
         time_t stop_sec_;
 
     public:
-        template<class T>
-        explicit out_meta_sequence_filename_buf(out_meta_sequence_filename_buf_param<T> const & params)
+        template<class MetaParams, class BufParams>
+        explicit out_meta_sequence_filename_buf(
+            out_meta_sequence_filename_buf_param<MetaParams, BufParams> const & params
+        )
         : sequence_base_type(params.sq_params)
         , meta_buf_(params.meta_buf_params)
         , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
@@ -378,23 +380,31 @@ namespace detail
         {
             if (this->buf().is_open()) {
                 this->buf().close();
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->rename_filename();
-                if (!filename) {
-                    return 1;
-                }
-
-                if (int err = write_meta_file(this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1)) {
-                    return err;
-                }
-
-                this->start_sec_ = this->stop_sec_;
-
-                return 0;
+                return this->next_meta_file();
             }
             return 1;
         }
 
+    protected:
+        int next_meta_file(char const * extra_message = nullptr) {
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            const char * filename = this->rename_filename();
+            if (!filename) {
+                return 1;
+            }
+
+            if (int err = write_meta_file(
+                this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, extra_message
+            )) {
+                return err;
+            }
+
+            this->start_sec_ = this->stop_sec_;
+
+            return 0;
+        }
+
+    public:
         void request_full_cleaning()
         {
             this->sequence_base_type::request_full_cleaning();

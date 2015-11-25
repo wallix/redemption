@@ -26,6 +26,9 @@
 #define BOOST_TEST_MODULE TestOrderColCache
 #include <boost/test/auto_unit_test.hpp>
 
+//#define LOGPRINT
+#define LOGNULL
+
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "client_info.hpp"
 

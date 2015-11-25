@@ -26,6 +26,9 @@
 #define BOOST_TEST_MODULE TestOrderOpaqueRect
 #include <boost/test/auto_unit_test.hpp>
 
+//#define LOGPRINT
+#define LOGNULL
+
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 #include "test_orders.hpp"

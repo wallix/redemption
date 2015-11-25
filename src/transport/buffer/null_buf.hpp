@@ -28,11 +28,13 @@ namespace transbuf
 {
     struct null_buf
     {
+        int open() noexcept { return 0; }
+
         int close() noexcept { return 0; }
 
-        long int write(const void *, size_t len) noexcept { return len; }
+        ssize_t write(const void *, size_t len) noexcept { return len; }
 
-        long int read(void *, size_t len) noexcept { return len; }
+        ssize_t read(void *, size_t len) noexcept { return len; }
 
         int flush() const noexcept { return 0; }
     };

@@ -26,6 +26,9 @@
 #define BOOST_TEST_MODULE TestOrderDestBlt
 #include <boost/test/auto_unit_test.hpp>
 
+//#define LOGPRINT
+#define LOGNULL
+
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 
 #include "test_orders.hpp"

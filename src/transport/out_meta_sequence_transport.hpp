@@ -52,7 +52,7 @@ RequestCleaningTransport<
     : OutMetaSequenceTransport::TransportType(
         detail::out_meta_sequence_filename_buf_param<>(now.tv_sec, format, path, basename, ".wrm", groupid))
     {
-        (void)verbose;
+        this->verbose = verbose;
 
         if (authentifier) {
             this->set_authentifier(authentifier);

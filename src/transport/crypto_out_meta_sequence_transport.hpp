@@ -22,6 +22,7 @@
 #define REDEMPTION_TRANSPORT_CRYPTO_OUT_META_SEQUENCE_TRANSPORT_HPP
 
 #include "detail/meta_writer.hpp"
+#include "detail/meta_hash.hpp"
 #include "buffer/crypto_filename_buf.hpp"
 #include "mixin_transport.hpp"
 #include "urandom_read.hpp"
@@ -111,48 +112,8 @@ namespace detail {
                 }
             }
 
-            if (!this->meta_buf().is_open()) {
-                return 1;
-            }
-
-            char path[1024] = {};
-            char basename[1024] = {};
-            char extension[256] = {};
-            char filename[2048] = {};
-
-            canonical_path( hf_.filename, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)
-                          , this->verbose);
-            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-            unsigned char hash[HASH_LEN + 1] = {0};
-            hash[0] = ' ';
-
-            if (this->meta_buf().close(hash+1)) {
-                return 1;
-            }
-
             transbuf::ocrypto_filename_base crypto_hash(&this->cctx);
-            if (crypto_hash.open(hf_.filename) >= 0) {
-                const size_t len = strlen(filename);
-                if (crypto_hash.write(filename, len) != long(len)
-                 || crypto_hash.write(hash, HASH_LEN+1) != HASH_LEN+1
-                 || crypto_hash.close(hash) != 0) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf_.filename, -HASH_LEN);
-                    return 1;
-                }
-
-                if (chmod(hf_.filename, S_IRUSR|S_IRGRP) == -1){
-                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf_.filename, strerror(errno), errno);
-                }
-            }
-            else {
-                int e = errno;
-                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-                errno = e;
-                return 1;
-            }
-
-            return 0;
+            return close_meta_hash(this->hf_, this->meta_buf(), crypto_hash, this->verbose);
         }
 
         int next()
@@ -169,32 +130,8 @@ namespace detail {
                         return res2;
                     }
                 }
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->rename_filename();
-                if (!filename) {
-                    return 1;
-                }
 
-                char mes[HASH_LEN*2 + 2 + 1];
-                char * p = mes;
-                *p++ = ' ';                           //     1 octet
-                for (int i = 0; i < HASH_LEN / 2; i++, p += 2) {
-                    sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash1)
-                }
-                *p++ = ' ';                           //     1 octet
-                for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2) {
-                    sprintf(p, "%02x", unsigned(hash[i])); //    64 octets (hash2)
-                }
-                *p = 0;
-
-                if (int err = write_meta_file(
-                    this->meta_buf(), filename, this->start_sec_, this->stop_sec_+1, mes
-                )) {
-                    return err;
-                }
-
-                this->start_sec_ = this->stop_sec_;
-                return 0;
+                return this->next_meta_file(MetaHashMaker(hash).c_str());
             }
             return 1;
         }

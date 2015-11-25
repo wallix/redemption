@@ -21,6 +21,9 @@
 #ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
 
+#define LOGPRINT
+// #define LOGNULL
+
 // #include "buffer/buffering_buf.hpp"
 #include "detail/meta_writer.hpp"
 #include "mixin_transport.hpp"
