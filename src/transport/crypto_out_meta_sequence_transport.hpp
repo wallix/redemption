@@ -21,10 +21,8 @@
 #ifndef REDEMPTION_TRANSPORT_CRYPTO_OUT_META_SEQUENCE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_CRYPTO_OUT_META_SEQUENCE_TRANSPORT_HPP
 
-#include "detail/meta_writer.hpp"
-#include "detail/meta_hash.hpp"
+#include "out_meta_sequence_transport_with_sum.hpp"
 #include "buffer/crypto_filename_buf.hpp"
-#include "mixin_transport.hpp"
 #include "urandom_read.hpp"
 #include "fileutils.hpp"
 
@@ -53,16 +51,20 @@ namespace detail {
         {}
     };
 
-    template<class BufWrm, class BufMwrm>
+    using crypto_meta_sequence_filename_buf_base = out_meta_sequence_filename_buf<
+        detail::empty_ctor<io::posix::fdbuf>,
+        transbuf::ocrypto_filename_buf
+    >;
+
     class crypto_meta_sequence_filename_buf
-    : public out_meta_sequence_filename_buf<BufWrm, BufMwrm>
+    : public crypto_meta_sequence_filename_buf_base
     {
         detail::MetaFilename hf_;
         CryptoContext & cctx;
         transfil::encrypt_filter encrypt_wrm;
         uint32_t verbose;
 
-        typedef out_meta_sequence_filename_buf<BufWrm, BufMwrm> sequence_base_type;
+        using sequence_base_type = crypto_meta_sequence_filename_buf_base;
 
     public:
         explicit crypto_meta_sequence_filename_buf(crypto_out_meta_sequence_filename_buf_param const & params)
@@ -138,52 +140,9 @@ namespace detail {
     };
 }
 
-struct CryptoOutMetaSequenceTransport
-: //SeekableTransport<
-RequestCleaningTransport<
-    OutputNextTransport<detail::crypto_meta_sequence_filename_buf<
-        detail::empty_ctor<io::posix::fdbuf>,
-        transbuf::ocrypto_filename_buf
-    >, detail::GetCurrentPath>
->
-// >
-{
-    CryptoOutMetaSequenceTransport(
-        CryptoContext * crypto_ctx,
-        const char * path,
-        const char * hash_path,
-        const char * basename,
-        timeval now,
-        uint16_t width,
-        uint16_t height,
-        const int groupid,
-        auth_api * authentifier = nullptr,
-        unsigned verbose = 0,
-//        FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : CryptoOutMetaSequenceTransport::TransportType(
-        detail::crypto_out_meta_sequence_filename_buf_param(
-            *crypto_ctx,
-            now.tv_sec,
-            format, hash_path, path, basename, ".wrm", groupid, verbose))
-    {
-        this->verbose = verbose;
-
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
-    }
-
-    void timestamp(timeval now) override {
-        this->buffer().update_sec(now.tv_sec);
-    }
-
-    const FilenameGenerator * seqgen() const noexcept
-    {
-        return &(this->buffer().seqgen());
-    }
-};
+using CryptoOutMetaSequenceTransport = detail::OutHashedMetaSequenceTransport<
+    detail::crypto_meta_sequence_filename_buf,
+    detail::crypto_out_meta_sequence_filename_buf_param
+>;
 
 #endif

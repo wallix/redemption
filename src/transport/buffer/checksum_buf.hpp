@@ -78,19 +78,22 @@ class ochecksum_buf
 
     HMac hmac;
     HMac quick_hmac;
-    CryptoContext * cctx;
+    unsigned char (&hmac_key)[MD_HASH_LENGTH];
     size_t file_size = nosize;
 
 public:
-    ochecksum_buf(CryptoContext * cctx)
-    : cctx(cctx)
+    ochecksum_buf(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    : hmac_key(hmac_key)
     {}
+
+    ochecksum_buf(ochecksum_buf const &) = delete;
+    ochecksum_buf & operator=(ochecksum_buf const &) = delete;
 
     template<class... Ts>
     int open(Ts && ... args)
     {
-        this->hmac.init(cctx->hmac_key, sizeof(cctx->hmac_key));
-        this->quick_hmac.init(cctx->hmac_key, sizeof(cctx->hmac_key));
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
         int ret = this->Buf::open(args...);
         this->file_size = 0;
         return ret;

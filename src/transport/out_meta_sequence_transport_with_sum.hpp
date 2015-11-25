@@ -34,7 +34,7 @@ namespace detail
 {
     struct out_meta_sequence_filename_buf_with_sum_param
     {
-        out_meta_sequence_filename_buf_param<CryptoContext *> meta_sq_params;
+        out_meta_sequence_filename_buf_param<decltype((CryptoContext::hmac_key))> meta_sq_params;
         const char * hash_prefix;
         CryptoContext & cctx;
         uint32_t verbose;
@@ -49,29 +49,32 @@ namespace detail
             const char * const extension,
             const int groupid,
             uint32_t verbose = 0)
-        : meta_sq_params(start_sec, format, prefix, filename, extension, groupid, &cctx)
+        : meta_sq_params(start_sec, format, prefix, filename, extension, groupid, cctx.hmac_key)
         , hash_prefix(hash_prefix)
         , cctx(cctx)
         , verbose(verbose)
         {}
     };
 
+    using out_meta_sequence_filename_buf_with_sum_base = out_meta_sequence_filename_buf<
+        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
+        transbuf::ochecksum_buf<transbuf::ofile_buf>
+    >;
 
-    template<class BufWrm, class BufMwrm>
     class out_meta_sequence_filename_buf_with_sum
-    : public out_meta_sequence_filename_buf<BufWrm, BufMwrm>
+    : public out_meta_sequence_filename_buf_with_sum_base
     {
         detail::MetaFilename hf_;
         transbuf::ochecksum_buf<transbuf::null_buf> checksum_wrm;
         uint32_t verbose;
 
-        typedef out_meta_sequence_filename_buf<BufWrm, BufMwrm> sequence_base_type;
+        using sequence_base_type = out_meta_sequence_filename_buf_with_sum_base;
 
     public:
         explicit out_meta_sequence_filename_buf_with_sum(out_meta_sequence_filename_buf_with_sum_param const & params)
         : sequence_base_type(params.meta_sq_params)
         , hf_(params.hash_prefix, params.meta_sq_params.sq_params.filename, params.meta_sq_params.sq_params.format)
-        , checksum_wrm(&params.cctx)
+        , checksum_wrm(params.cctx.hmac_key)
         , verbose(params.verbose)
         {}
 
@@ -120,55 +123,54 @@ namespace detail
             return 1;
         }
     };
-}
 
-struct OutMetaSequenceTransportWithSum
-: //SeekableTransport<
-// FlushingTransport<
-RequestCleaningTransport<
-    OutputNextTransport<detail::out_meta_sequence_filename_buf_with_sum<
-        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
-        transbuf::ochecksum_buf<transbuf::ofile_buf>
-    >, detail::GetCurrentPath>
->
-// >
-// >
-{
-    OutMetaSequenceTransportWithSum(
-        CryptoContext * crypto_ctx,
-        const char * path,
-        const char * hash_path,
-        const char * basename,
-        timeval now,
-        uint16_t width,
-        uint16_t height,
-        const int groupid,
-        auth_api * authentifier = nullptr,
-        unsigned verbose = 0,
-        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : OutMetaSequenceTransportWithSum::TransportType(
-        detail::out_meta_sequence_filename_buf_with_sum_param(
+
+    template<class Buf, class Params>
+    struct OutHashedMetaSequenceTransport
+    : // FlushingTransport<
+    RequestCleaningTransport<OutputNextTransport<Buf, detail::GetCurrentPath>>
+    // >
+    {
+        OutHashedMetaSequenceTransport(
+            CryptoContext * crypto_ctx,
+            const char * path,
+            const char * hash_path,
+            const char * basename,
+            timeval now,
+            uint16_t width,
+            uint16_t height,
+            const int groupid,
+            auth_api * authentifier = nullptr,
+            unsigned verbose = 0,
+            FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+        : OutHashedMetaSequenceTransport::TransportType(Params(
             *crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid, verbose
-        )
-    ) {
-        this->verbose = verbose;
+        ))
+        {
+            this->verbose = verbose;
 
-        if (authentifier) {
-            this->set_authentifier(authentifier);
+            if (authentifier) {
+                this->set_authentifier(authentifier);
+            }
+
+            detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
         }
 
-        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
-    }
+        void timestamp(timeval now) override {
+            this->buffer().update_sec(now.tv_sec);
+        }
 
-    void timestamp(timeval now) override {
-        this->buffer().update_sec(now.tv_sec);
-    }
+        const FilenameGenerator * seqgen() const noexcept
+        {
+            return &(this->buffer().seqgen());
+        }
+    };
+}
 
-    const FilenameGenerator * seqgen() const noexcept
-    {
-        return &(this->buffer().seqgen());
-    }
-};
+using OutMetaSequenceTransportWithSum = detail::OutHashedMetaSequenceTransport<
+    detail::out_meta_sequence_filename_buf_with_sum,
+    detail::out_meta_sequence_filename_buf_with_sum_param
+>;
 
 #endif

@@ -44,7 +44,7 @@ struct checksum_buf : CryptoContext, checksum_buf_base {
         static_assert(N-1 <= sizeof(hmac_key), "");
         memcpy(hmac_key, crypto_key, N-1);
         memset(hmac_key + N - 1, 0, sizeof(hmac_key) - (N - 1));
-        return static_cast<CryptoContext*>(this);
+        return std::ref(hmac_key);
     }())
     {
         this->open();
