@@ -112,7 +112,7 @@ namespace detail {
                 }
             }
 
-            transbuf::ocrypto_filename_base crypto_hash(&this->cctx);
+            transbuf::ocrypto_filename_buf crypto_hash(&this->cctx);
             return close_meta_hash(this->hf_, this->meta_buf(), crypto_hash, this->verbose);
         }
 
@@ -143,7 +143,7 @@ struct CryptoOutMetaSequenceTransport
 RequestCleaningTransport<
     OutputNextTransport<detail::crypto_meta_sequence_filename_buf<
         detail::empty_ctor<io::posix::fdbuf>,
-        transbuf::ocrypto_filename_base
+        transbuf::ocrypto_filename_buf
     >, detail::GetCurrentPath>
 >
 // >

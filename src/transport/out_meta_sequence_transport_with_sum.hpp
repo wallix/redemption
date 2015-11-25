@@ -102,7 +102,7 @@ namespace detail
                 }
             }
 
-            transbuf::ofile_base file_hash;
+            transbuf::ofile_buf file_hash;
             return close_meta_hash(this->hf_, this->meta_buf(), file_hash, this->verbose);
         }
 
@@ -128,7 +128,7 @@ struct OutMetaSequenceTransportWithSum
 RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf_with_sum<
         detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
-        transbuf::ochecksum_buf<transbuf::ofile_base>
+        transbuf::ochecksum_buf<transbuf::ofile_buf>
     >, detail::GetCurrentPath>
 >
 // >

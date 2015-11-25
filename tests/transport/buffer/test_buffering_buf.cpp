@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestOBufferingBuf)
 {
     const char * filename = "./test_buffering_buf.test";
     {
-        typedef transbuf::obuffering_buf<transbuf::ofile_base, 10> obuffering_file;
+        typedef transbuf::obuffering_buf<transbuf::ofile_buf, 10> obuffering_file;
 
         obuffering_file file;
         BOOST_CHECK(file.open(filename, 0644) > 0);
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestIBufferingBuf)
     const char * filename = "./test_buffering_buf.test";
     char buf[11+10+6+5+4+3+2 + 1] = {0};
     {
-        typedef transbuf::ibuffering_buf<transbuf::ifile_base, 10> ibuffering_file;
+        typedef transbuf::ibuffering_buf<transbuf::ifile_buf, 10> ibuffering_file;
 
         ibuffering_file file;
         BOOST_CHECK(file.open(filename, 0644) > 0);

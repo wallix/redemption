@@ -31,7 +31,7 @@ struct OutFilenameTransport
 : SeekableTransport<
 // FlushingTransport<
 OutputTransport<
-    /*transbuf::obuffering_buf<*/ transbuf::ofile_base /*>*/
+    /*transbuf::obuffering_buf<*/ transbuf::ofile_buf/*>*/
 >
 // >
 >

@@ -25,7 +25,7 @@
 #include "mixin_transport.hpp"
 
 struct CryptoInFilenameTransport
-: InputTransport<transbuf::icrypto_filename_base>
+: InputTransport<transbuf::icrypto_filename_buf>
 {
     CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename)
     : CryptoInFilenameTransport::TransportType(crypto_ctx)

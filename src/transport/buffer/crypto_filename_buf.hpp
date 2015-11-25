@@ -40,14 +40,14 @@ namespace transbuf {
         }
     }
 
-    class icrypto_filename_base
+    class icrypto_filename_buf
     {
         transfil::decrypt_filter decrypt;
         CryptoContext * ctx;
-        ifile_base file;
+        ifile_buf file;
 
     public:
-        explicit icrypto_filename_base(CryptoContext * ctx)
+        explicit icrypto_filename_buf(CryptoContext * ctx)
         : ctx(ctx)
         {}
 
@@ -75,18 +75,18 @@ namespace transbuf {
         { return this->file.seek(offset, whence); }
     };
 
-    class ocrypto_filename_base
+    class ocrypto_filename_buf
     {
         transfil::encrypt_filter encrypt;
         CryptoContext * ctx;
-        ofile_base file;
+        ofile_buf file;
 
     public:
-        explicit ocrypto_filename_base(CryptoContext * ctx)
+        explicit ocrypto_filename_buf(CryptoContext * ctx)
         : ctx(ctx)
         {}
 
-        ~ocrypto_filename_base()
+        ~ocrypto_filename_buf()
         {
             if (this->is_open()) {
                 this->close();

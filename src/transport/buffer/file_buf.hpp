@@ -25,7 +25,7 @@
 
 namespace transbuf {
 
-    class ifile_base
+    class ifile_buf
     {
         io::posix::fdbuf fdbuf;
 
@@ -49,7 +49,7 @@ namespace transbuf {
         { return this->fdbuf.seek(offset, whence); }
     };
 
-    class ofile_base
+    class ofile_buf
     {
         io::posix::fdbuf fdbuf;
 

@@ -27,8 +27,8 @@
 
 struct CryptoInMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<
-    transbuf::icrypto_filename_base,
-    transbuf::icrypto_filename_base
+    transbuf::icrypto_filename_buf,
+    transbuf::icrypto_filename_buf
 > >
 {
     CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)

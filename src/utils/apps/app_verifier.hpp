@@ -101,7 +101,7 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
             return false;
         }
 
-        transbuf::icrypto_filename_base ifile(cctx);
+        transbuf::icrypto_filename_buf ifile(cctx);
         if (ifile.open(file_path) < 0) {
             LOG(LOG_ERR, "failed opening=%s", file_path);
             return false;
@@ -109,7 +109,7 @@ bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&
 
         struct ReaderBuf
         {
-            transbuf::icrypto_filename_base & buf;
+            transbuf::icrypto_filename_buf & buf;
 
             ssize_t operator()(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
@@ -361,12 +361,12 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     bool infile_is_checksumed = false;
 
     if (!infile_is_encrypted) {
-        transbuf::ifile_base ifile;
+        transbuf::ifile_buf ifile;
         ifile.open(fullfilename);
 
         struct ReaderBuf
         {
-            transbuf::ifile_base & buf;
+            transbuf::ifile_buf & buf;
 
             ssize_t operator()(char * buf, size_t len) const {
                 return this->buf.read(buf, len);

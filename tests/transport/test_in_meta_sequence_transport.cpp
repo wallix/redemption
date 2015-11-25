@@ -53,12 +53,12 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 
 BOOST_AUTO_TEST_CASE(TestMetav2)
 {
-    transbuf::ifile_base ifile;
+    transbuf::ifile_buf ifile;
     ifile.open("./tests/fixtures/sample_v2.mwrm");
 
     struct ReaderBuf
     {
-        transbuf::ifile_base & buf;
+        transbuf::ifile_buf & buf;
 
         ssize_t operator()(char * buf, size_t len) const {
             return this->buf.read(buf, len);
@@ -112,12 +112,12 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
 
 BOOST_AUTO_TEST_CASE(TestMetav2sum)
 {
-    transbuf::ifile_base ifile;
+    transbuf::ifile_buf ifile;
     ifile.open("./tests/fixtures/sample_v2_checksum.mwrm");
 
     struct ReaderBuf
     {
-        transbuf::ifile_base & buf;
+        transbuf::ifile_buf & buf;
 
         ssize_t operator()(char * buf, size_t len) const {
             return this->buf.read(buf, len);

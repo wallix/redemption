@@ -29,8 +29,8 @@
 
 struct InMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<
-    detail::empty_ctor</*transbuf::ibuffering_buf<*/transbuf::ifile_base/*> */>,
-    detail::empty_ctor<transbuf::ifile_base>
+    detail::empty_ctor</*transbuf::ibuffering_buf<*/transbuf::ifile_buf/*> */>,
+    detail::empty_ctor<transbuf::ifile_buf>
 > >
 {
     InMetaSequenceTransport(const char * filename, const char * extension, uint32_t verbose = 0)

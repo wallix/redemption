@@ -33,7 +33,7 @@ struct OutMetaSequenceTransport
 RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf<
         detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >,
-        detail::empty_ctor<transbuf::ofile_base>
+        detail::empty_ctor<transbuf::ofile_buf>
     >, detail::GetCurrentPath>
 >
 // >
