@@ -22,6 +22,7 @@
 #define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
 #include "out_meta_sequence_transport.hpp"
+#include "out_meta_sequence_transport_with_sum.hpp"
 #include "crypto_out_meta_sequence_transport.hpp"
 #include "out_filename_sequence_transport.hpp"
 
@@ -153,6 +154,14 @@ public:
 
             if (this->trace_type == configs::TraceType::cryptofile) {
                 auto * trans = new CryptoOutMetaSequenceTransport(
+                    &this->crypto_ctx, wrm_path, hash_path, basename, now
+                  , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
+                this->wrm_trans = trans;
+                this->wrm_filename_generator = trans->seqgen();
+            }
+            else if (this->trace_type == configs::TraceType::localfile_hashed) {
+LOG(LOG_INFO, "> > > > > OutMetaSequenceTransportWithSum < < < < <");
+                auto * trans = new OutMetaSequenceTransportWithSum(
                     &this->crypto_ctx, wrm_path, hash_path, basename, now
                   , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
                 this->wrm_trans = trans;
