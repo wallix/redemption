@@ -738,7 +738,7 @@ unit-test test_strings : tests/test_strings.cpp libboost_unit_test : $(TEST_DEPE
 unit-test test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_filename_sequence_transport : tests/transport/test_filename_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_out_meta_sequence_transport_with_sum : tests/transport/test_out_meta_sequence_transport_with_sum.cpp crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_out_meta_sequence_transport_with_sum : tests/transport/test_out_meta_sequence_transport_with_sum.cpp crypto dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_test_transport : tests/transport/test_test_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_count_transport : tests/transport/test_count_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp openssl crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
