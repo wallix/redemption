@@ -145,7 +145,7 @@ public:
             if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
                 auto * p = this->stream_buf;
                 this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
-                this->stream = InStream(this->stream_buf, this->stream_buf - p);
+                this->stream = InStream(this->stream_buf, p - this->stream_buf);
             }
         }
         catch (Error const & e) {

@@ -160,7 +160,6 @@ public:
                 this->wrm_filename_generator = trans->seqgen();
             }
             else if (this->trace_type == configs::TraceType::localfile_hashed) {
-LOG(LOG_INFO, "> > > > > OutMetaSequenceTransportWithSum < < < < <");
                 auto * trans = new OutMetaSequenceTransportWithSum(
                     &this->crypto_ctx, wrm_path, hash_path, basename, now
                   , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);

@@ -41,9 +41,9 @@ struct MetaHashMaker
 
     MetaHashMaker(unsigned char (&hash1)[MD_HASH_LENGTH], unsigned char (&hash2)[MD_HASH_LENGTH]) {
         char * p = this->mes;
-        auto write = [&](unsigned char (&hash)[MD_HASH_LENGTH]){
+        auto write = [&p](unsigned char (&hash)[MD_HASH_LENGTH]){
             *p++ = ' ';                // 1 octet
-            for (unsigned c : hash1) {
+            for (unsigned c : hash) {
                 sprintf(p, "%02x", c); // 64 octets (hash)
                 p += 2;
             }
