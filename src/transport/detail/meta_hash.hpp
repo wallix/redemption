@@ -89,17 +89,13 @@ int close_meta_hash(detail::MetaFilename hf, MetaBuf & meta_buf, HashBuf & crypt
                   , verbose);
     snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-    if (crypto_hash.open(hf.filename) >= 0) {
+    if (crypto_hash.open(hf.filename, S_IRUSR|S_IRGRP) >= 0) {
         const size_t len = strlen(filename);
         if (crypto_hash.write(filename, len) != long(len)
          || crypto_hash.write(hash, hash_len+1) != hash_len+1
          || crypto_hash.close(/*hash*/) != 0) {
             LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -hash_len);
             return 1;
-        }
-
-        if (chmod(hf.filename, S_IRUSR|S_IRGRP) == -1){
-            LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", hf.filename, strerror(errno), errno);
         }
     }
     else {

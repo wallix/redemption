@@ -33,8 +33,8 @@ namespace transbuf {
         int open(const char * filename)
         { return this->fdbuf.open(filename, O_RDONLY); }
 
-        int open(const char * filename, mode_t mode)
-        { return this->fdbuf.open(filename, O_RDONLY, mode); }
+        int open(const char * filename, mode_t /*mode*/)
+        { return this->fdbuf.open(filename, O_RDONLY); }
 
         int close()
         { return this->fdbuf.close(); }
@@ -54,9 +54,6 @@ namespace transbuf {
         io::posix::fdbuf fdbuf;
 
     public:
-        int open(const char * filename)
-        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT); }
-
         int open(const char * filename, mode_t mode)
         { return this->fdbuf.open(filename, O_WRONLY | O_CREAT, mode); }
 
