@@ -84,11 +84,11 @@ struct ModRDPParams {
     uint32_t      open_session_timeout;
 
     configs::ServerCertCheck server_cert_check;
-    configs::ServerNotification server_access_allowed_notification;
-    configs::ServerNotification server_cert_create_notification;
-    configs::ServerNotification server_cert_success_notification;
-    configs::ServerNotification server_cert_failure_notification;
-    configs::ServerNotification server_cert_error_notification;
+    configs::ServerNotification server_access_allowed_message;
+    configs::ServerNotification server_cert_create_message;
+    configs::ServerNotification server_cert_success_message;
+    configs::ServerNotification server_cert_failure_message;
+    configs::ServerNotification server_cert_error_message;
 
     const char * device_id;
 
@@ -179,11 +179,11 @@ struct ModRDPParams {
         , open_session_timeout(0)
 
         , server_cert_check(configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know)
-        , server_access_allowed_notification(configs::ServerNotification::syslog)
-        , server_cert_create_notification(configs::ServerNotification::syslog)
-        , server_cert_success_notification(configs::ServerNotification::syslog)
-        , server_cert_failure_notification(configs::ServerNotification::syslog)
-        , server_cert_error_notification(configs::ServerNotification::syslog)
+        , server_access_allowed_message(configs::ServerNotification::syslog)
+        , server_cert_create_message(configs::ServerNotification::syslog)
+        , server_cert_success_message(configs::ServerNotification::syslog)
+        , server_cert_failure_message(configs::ServerNotification::syslog)
+        , server_cert_error_message(configs::ServerNotification::syslog)
 
         , device_id("")
         , extra_orders("")
@@ -315,15 +315,15 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams server_cert_check=%d",                   static_cast<unsigned>(this->server_cert_check));
         LOG(LOG_INFO,
-            "ModRDPParams server_access_allowed_notification=%d",  static_cast<unsigned>(this->server_access_allowed_notification));
+            "ModRDPParams server_access_allowed_message=%d",       static_cast<unsigned>(this->server_access_allowed_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_create_notification=%d",     static_cast<unsigned>(this->server_cert_create_notification));
+            "ModRDPParams server_cert_create_message=%d",          static_cast<unsigned>(this->server_cert_create_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_success_notification=%d",    static_cast<unsigned>(this->server_cert_success_notification));
+            "ModRDPParams server_cert_success_message=%d",         static_cast<unsigned>(this->server_cert_success_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_failure_notification=%d",    static_cast<unsigned>(this->server_cert_failure_notification));
+            "ModRDPParams server_cert_failure_message=%d",         static_cast<unsigned>(this->server_cert_failure_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_error_notification=%d",      static_cast<unsigned>(this->server_cert_error_notification));
+            "ModRDPParams server_cert_error_message=%d",           static_cast<unsigned>(this->server_cert_error_message));
 
         LOG(LOG_INFO, "ModRDPParams extra_orders=%s",              (this->extra_orders ? this->extra_orders : "<none>"));
 

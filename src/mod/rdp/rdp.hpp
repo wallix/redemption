@@ -494,11 +494,11 @@ class mod_rdp : public RDPChannelManagerMod {
     private:
         auth_api * acl;
 
-        const configs::ServerNotification server_access_allowed_notification;
-        const configs::ServerNotification server_cert_create_notification;
-        const configs::ServerNotification server_cert_success_notification;
-        const configs::ServerNotification server_cert_failure_notification;
-        const configs::ServerNotification server_cert_error_notification;
+        const configs::ServerNotification server_access_allowed_message;
+        const configs::ServerNotification server_cert_create_message;
+        const configs::ServerNotification server_cert_success_message;
+        const configs::ServerNotification server_cert_failure_message;
+        const configs::ServerNotification server_cert_error_message;
 
         uint32_t verbose;
 
@@ -512,25 +512,25 @@ class mod_rdp : public RDPChannelManagerMod {
     public:
         RDPServerNotifier(
                 auth_api * acl,
-                configs::ServerNotification server_access_allowed_notification,
-                configs::ServerNotification server_cert_create_notification,
-                configs::ServerNotification server_cert_success_notification,
-                configs::ServerNotification server_cert_failure_notification,
-                configs::ServerNotification server_cert_error_notification,
+                configs::ServerNotification server_access_allowed_message,
+                configs::ServerNotification server_cert_create_message,
+                configs::ServerNotification server_cert_success_message,
+                configs::ServerNotification server_cert_failure_message,
+                configs::ServerNotification server_cert_error_message,
                 uint32_t verbose
             )
         : acl(acl)
-        , server_access_allowed_notification(server_access_allowed_notification)
-        , server_cert_create_notification(server_cert_create_notification)
-        , server_cert_success_notification(server_cert_success_notification)
-        , server_cert_failure_notification(server_cert_failure_notification)
-        , server_cert_error_notification(server_cert_error_notification)
+        , server_access_allowed_message(server_access_allowed_message)
+        , server_cert_create_message(server_cert_create_message)
+        , server_cert_success_message(server_cert_success_message)
+        , server_cert_failure_message(server_cert_failure_message)
+        , server_cert_error_message(server_cert_error_message)
         , verbose(verbose)
         {}
 
         void server_access_allowed() override {
             if (is_syslog_notification_enabled(
-                    this->server_access_allowed_notification) &&
+                    this->server_access_allowed_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
                         "certificate_check_success",
@@ -541,7 +541,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
         void server_cert_create() override {
             if (is_syslog_notification_enabled(
-                    this->server_cert_create_notification) &&
+                    this->server_cert_create_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
                         "server_certificate_new",
@@ -552,7 +552,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
         void server_cert_success() override {
             if (is_syslog_notification_enabled(
-                    this->server_cert_success_notification) &&
+                    this->server_cert_success_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
                         "server_certificate_match_success",
@@ -563,7 +563,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
         void server_cert_failure() override {
             if (is_syslog_notification_enabled(
-                    this->server_cert_failure_notification) &&
+                    this->server_cert_failure_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
                         "server_certificate_match_failure",
@@ -574,7 +574,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
         void server_cert_error(const char * str_error) override {
             if (is_syslog_notification_enabled(
-                    this->server_cert_error_notification) &&
+                    this->server_cert_error_message) &&
                 this->acl) {
                 char extra[512];
                 snprintf(extra, sizeof(extra),
@@ -691,11 +691,11 @@ public:
         , lang(mod_rdp_params.lang)
         , outbound_connection_monitor_rules("", mod_rdp_params.outbound_connection_blocking_rules)
         , server_notifier(mod_rdp_params.acl,
-                          mod_rdp_params.server_access_allowed_notification,
-                          mod_rdp_params.server_cert_create_notification,
-                          mod_rdp_params.server_cert_success_notification,
-                          mod_rdp_params.server_cert_failure_notification,
-                          mod_rdp_params.server_cert_error_notification,
+                          mod_rdp_params.server_access_allowed_message,
+                          mod_rdp_params.server_cert_create_message,
+                          mod_rdp_params.server_cert_success_message,
+                          mod_rdp_params.server_cert_failure_message,
+                          mod_rdp_params.server_cert_error_message,
                           mod_rdp_params.verbose
                          )
     {
