@@ -175,12 +175,12 @@ namespace {
     template<class... Ts>
     void LOGPRINT__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
-        #ifdef __clang__
+        #ifdef __GNUG__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         #endif
         printf(format, prioritynames[priority], getpid(), getpid(), args...);
-        #ifdef __clang__
+        #ifdef __GNUG__
             #pragma GCC diagnostic pop
         #endif
         puts("");
@@ -189,12 +189,12 @@ namespace {
     template<class... Ts>
     void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
-        #ifdef __clang__
+        #ifdef __GNUG__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         #endif
         syslog(priority, format, prioritynames[priority], getpid(), getpid(), args...);
-        #ifdef __clang__
+        #ifdef __GNUG__
             #pragma GCC diagnostic pop
         #endif
     }

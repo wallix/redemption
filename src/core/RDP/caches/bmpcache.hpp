@@ -33,7 +33,7 @@
 using std::size_t;
 
 struct BmpCache {
-    static const uint8_t  MAXIMUM_NUMBER_OF_CACHES = 5;
+    static const uint8_t MAXIMUM_NUMBER_OF_CACHES = 5;
 
     static const uint8_t IN_WAIT_LIST = 0x80;
 
@@ -757,5 +757,6 @@ public:
         return this->caches[cache_id];
     }
 };
+const uint8_t BmpCache::MAXIMUM_NUMBER_OF_CACHES;
 
 #endif
