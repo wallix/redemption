@@ -322,31 +322,30 @@ void config_spec_definition(Writer && W)
         }, set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know), r);
 
         std::string const server_notification_desc(
-            "  0: Nobody notified\n"
-            "  1: Syslog notification\n"
+            "  1: message sent to syslog\n"
             "  2: User notified (through proxy interface)\n"
             "  4: admin notified (wab notification)\n"
-            "Values can be added (notify everyone: 1+2+4=7)"
+            "Values can be added (everyone: 1+2+4=7, mute: 0)"
         );
 
-        W.member(type_<ServerNotification>(), "server_access_allowed_notification", desc{(
-            "Notify if check allow connexion to server.\n"
+        W.member(type_<ServerNotification>(), "server_access_allowed_message", desc{(
+            "Warn if check allow connexion to server.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_create_notification", desc{(
-            "Notify that new certificate file was created.\n"
+        W.member(type_<ServerNotification>(), "server_cert_create_message", desc{(
+            "Warn that new server certificate file was created.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_success_notification", desc{(
-            "Notify that server certificate file was successfully checked.\n"
+        W.member(type_<ServerNotification>(), "server_cert_success_message", desc{(
+            "Warn that server certificate file was successfully checked.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_failure_notification", desc{(
-            "Notify that server certificate file checking failed.\n"
+        W.member(type_<ServerNotification>(), "server_cert_failure_message", desc{(
+            "Warn that server certificate file checking failed.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_error_notification", desc{(
-            "Notify that server certificate check raised some internal error.\n"
+        W.member(type_<ServerNotification>(), "server_cert_error_message", desc{(
+            "Warn that server certificate check raised some internal error.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
         //@}

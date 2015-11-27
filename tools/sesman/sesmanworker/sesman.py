@@ -1175,24 +1175,26 @@ class Sesman():
                         connectionpolicy_kv = {}
 
                         #Logger().info(u"%s" % conn_opts)
+
                         rdp_section = conn_opts.get('rdp')
-
                         if rdp_section is not None:
-                            connectionpolicy_kv[u'server_cert_store'] = rdp_section.get('server_cert_store')
-                            connectionpolicy_kv[u'server_cert_check'] = rdp_section.get('server_cert_check')
-                            connectionpolicy_kv[u'server_access_allowed_notification'] = rdp_section.get('server_access_allowed_notification')
-                            connectionpolicy_kv[u'server_cert_create_notification'] = rdp_section.get('server_cert_create_notification')
-                            connectionpolicy_kv[u'server_cert_success_notification'] = rdp_section.get('server_cert_success_notification')
-                            connectionpolicy_kv[u'server_cert_failure_notification'] = rdp_section.get('server_cert_failure_notification')
-                            connectionpolicy_kv[u'server_cert_error_notification'] = rdp_section.get('server_cert_error_notification')
-
-                            connectionpolicy_kv[u'session_probe'] = rdp_section.get('enable_session_probe')
+                            connectionpolicy_kv[u'session_probe']                     = rdp_section.get('enable_session_probe')
                             connectionpolicy_kv[u'enable_session_probe_loading_mask'] = rdp_section.get('enable_session_probe_loading_mask')
-                            connectionpolicy_kv[u'session_probe_on_launch_failure'] = rdp_section.get('session_probe_on_launch_failure')
-                            connectionpolicy_kv[u'session_probe_launch_timeout'] = rdp_section.get('session_probe_launch_timeout')
-                            connectionpolicy_kv[u'session_probe_keepalive_timeout'] = rdp_section.get('session_probe_keepalive_timeout')
+                            connectionpolicy_kv[u'session_probe_on_launch_failure']   = rdp_section.get('session_probe_on_launch_failure')
+                            connectionpolicy_kv[u'session_probe_launch_timeout']      = rdp_section.get('session_probe_launch_timeout')
+                            connectionpolicy_kv[u'session_probe_keepalive_timeout']   = rdp_section.get('session_probe_keepalive_timeout')
 
                             connectionpolicy_kv[u'outbound_connection_blocking_rules'] = rdp_section.get('outbound_connection_blocking_rules')
+
+                        server_cert_section = conn_opts.get('server_cert')
+                        if server_cert_section is not None:
+                            connectionpolicy_kv[u'server_cert_store']             = server_cert_section.get('server_cert_store')
+                            connectionpolicy_kv[u'server_cert_check']             = server_cert_section.get('server_cert_check')
+                            connectionpolicy_kv[u'server_access_allowed_message'] = server_cert_section.get('server_access_allowed_message')
+                            connectionpolicy_kv[u'server_cert_create_message']    = server_cert_section.get('server_cert_create_message')
+                            connectionpolicy_kv[u'server_cert_success_message']   = server_cert_section.get('server_cert_success_message')
+                            connectionpolicy_kv[u'server_cert_failure_message']   = server_cert_section.get('server_cert_failure_message')
+                            connectionpolicy_kv[u'server_cert_error_message']     = server_cert_section.get('server_cert_error_message')
 
                         kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
 

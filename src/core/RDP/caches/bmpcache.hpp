@@ -442,7 +442,7 @@ public:
             LOG( LOG_ERR, "BmpCache: %s number_of_cache(%u) > %u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , this->number_of_cache
-                , MAXIMUM_NUMBER_OF_CACHES);
+                , unsigned(MAXIMUM_NUMBER_OF_CACHES));
             throw Error(ERR_RDP_PROTOCOL);
         }
 

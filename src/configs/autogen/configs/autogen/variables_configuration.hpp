@@ -1440,14 +1440,13 @@ namespace cfg {
             using type = ::configs::ServerCertCheck;
             type value{static_cast< ::configs::ServerCertCheck>(1)};
         };
-        // Notify if check allow connexion to server.
-        //   0: Nobody notified
-        //   1: Syslog notification
+        // Warn if check allow connexion to server.
+        //   1: message sent to syslog
         //   2: User notified (through proxy interface)
         //   4: admin notified (wab notification)
-        // Values can be added (notify everyone: 1+2+4=7)
-        // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_NOTIFICATION
-        struct server_access_allowed_notification {
+        // Values can be added (everyone: 1+2+4=7, mute: 0)
+        // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE
+        struct server_access_allowed_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1455,14 +1454,13 @@ namespace cfg {
             using type = ::configs::ServerNotification;
             type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // Notify that new certificate file was created.
-        //   0: Nobody notified
-        //   1: Syslog notification
+        // Warn that new server certificate file was created.
+        //   1: message sent to syslog
         //   2: User notified (through proxy interface)
         //   4: admin notified (wab notification)
-        // Values can be added (notify everyone: 1+2+4=7)
-        // AUTHID_MOD_RDP_SERVER_CERT_CREATE_NOTIFICATION
-        struct server_cert_create_notification {
+        // Values can be added (everyone: 1+2+4=7, mute: 0)
+        // AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE
+        struct server_cert_create_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1470,14 +1468,13 @@ namespace cfg {
             using type = ::configs::ServerNotification;
             type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // Notify that server certificate file was successfully checked.
-        //   0: Nobody notified
-        //   1: Syslog notification
+        // Warn that server certificate file was successfully checked.
+        //   1: message sent to syslog
         //   2: User notified (through proxy interface)
         //   4: admin notified (wab notification)
-        // Values can be added (notify everyone: 1+2+4=7)
-        // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_NOTIFICATION
-        struct server_cert_success_notification {
+        // Values can be added (everyone: 1+2+4=7, mute: 0)
+        // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE
+        struct server_cert_success_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1485,14 +1482,13 @@ namespace cfg {
             using type = ::configs::ServerNotification;
             type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // Notify that server certificate file checking failed.
-        //   0: Nobody notified
-        //   1: Syslog notification
+        // Warn that server certificate file checking failed.
+        //   1: message sent to syslog
         //   2: User notified (through proxy interface)
         //   4: admin notified (wab notification)
-        // Values can be added (notify everyone: 1+2+4=7)
-        // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_NOTIFICATION
-        struct server_cert_failure_notification {
+        // Values can be added (everyone: 1+2+4=7, mute: 0)
+        // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE
+        struct server_cert_failure_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1500,14 +1496,13 @@ namespace cfg {
             using type = ::configs::ServerNotification;
             type value{static_cast< ::configs::ServerNotification>(1)};
         };
-        // Notify that server certificate check raised some internal error.
-        //   0: Nobody notified
-        //   1: Syslog notification
+        // Warn that server certificate check raised some internal error.
+        //   1: message sent to syslog
         //   2: User notified (through proxy interface)
         //   4: admin notified (wab notification)
-        // Values can be added (notify everyone: 1+2+4=7)
-        // AUTHID_MOD_RDP_SERVER_CERT_ERROR_NOTIFICATION
-        struct server_cert_error_notification {
+        // Values can be added (everyone: 1+2+4=7, mute: 0)
+        // AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE
+        struct server_cert_error_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1976,11 +1971,11 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_alternate_shell
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
-, cfg::mod_rdp::server_access_allowed_notification
-, cfg::mod_rdp::server_cert_create_notification
-, cfg::mod_rdp::server_cert_success_notification
-, cfg::mod_rdp::server_cert_failure_notification
-, cfg::mod_rdp::server_cert_error_notification
+, cfg::mod_rdp::server_access_allowed_message
+, cfg::mod_rdp::server_cert_create_message
+, cfg::mod_rdp::server_cert_success_message
+, cfg::mod_rdp::server_cert_failure_message
+, cfg::mod_rdp::server_cert_error_message
 { static constexpr bool is_section = true; };
 
 struct mod_replay
@@ -2075,11 +2070,11 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
-, cfg::mod_rdp::server_access_allowed_notification
-, cfg::mod_rdp::server_cert_create_notification
-, cfg::mod_rdp::server_cert_success_notification
-, cfg::mod_rdp::server_cert_failure_notification
-, cfg::mod_rdp::server_cert_error_notification
+, cfg::mod_rdp::server_access_allowed_message
+, cfg::mod_rdp::server_cert_create_message
+, cfg::mod_rdp::server_cert_success_message
+, cfg::mod_rdp::server_cert_failure_message
+, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type

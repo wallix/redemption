@@ -836,11 +836,11 @@ public:
                 mod_rdp_params.open_session_timeout                = this->ini.get<cfg::mod_rdp::open_session_timeout>();
 
                 mod_rdp_params.server_cert_check                   = this->ini.get<cfg::mod_rdp::server_cert_check>();
-                mod_rdp_params.server_access_allowed_notification  = this->ini.get<cfg::mod_rdp::server_access_allowed_notification>();
-                mod_rdp_params.server_cert_create_notification     = this->ini.get<cfg::mod_rdp::server_cert_create_notification>();
-                mod_rdp_params.server_cert_success_notification    = this->ini.get<cfg::mod_rdp::server_cert_success_notification>();
-                mod_rdp_params.server_cert_failure_notification    = this->ini.get<cfg::mod_rdp::server_cert_failure_notification>();
-                mod_rdp_params.server_cert_error_notification      = this->ini.get<cfg::mod_rdp::server_cert_error_notification>();
+                mod_rdp_params.server_access_allowed_message       = this->ini.get<cfg::mod_rdp::server_access_allowed_message>();
+                mod_rdp_params.server_cert_create_message          = this->ini.get<cfg::mod_rdp::server_cert_create_message>();
+                mod_rdp_params.server_cert_success_message         = this->ini.get<cfg::mod_rdp::server_cert_success_message>();
+                mod_rdp_params.server_cert_failure_message         = this->ini.get<cfg::mod_rdp::server_cert_failure_message>();
+                mod_rdp_params.server_cert_error_message           = this->ini.get<cfg::mod_rdp::server_cert_error_message>();
 
                 mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
                 mod_rdp_params.enable_cache_waiting_list           = this->ini.get<cfg::mod_rdp::cache_waiting_list>();
