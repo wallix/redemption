@@ -759,7 +759,7 @@ unit-test test_compression_transport_wrapper : tests/utils/test_compression_tran
 ## @{
 unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_checksum_buf : tests/transport/buffer/test_checksum_buf.cpp crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_checksum_buf : tests/transport/buffer/test_checksum_buf.cpp crypto dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
 
