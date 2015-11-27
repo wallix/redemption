@@ -406,8 +406,8 @@ public:
                     }
 
                     if (keymap->is_ctrl_pressed()) {
-                        while ( (this->label.buffer[(this->edit_buffer_pos)-1] != 32)
-                                 || (this->label.buffer[(this->edit_buffer_pos)] == 32) ){
+                        while ( (this->label.buffer[(this->edit_buffer_pos)-1] != ' ')
+                                 || (this->label.buffer[(this->edit_buffer_pos)] ==' ') ){
                             if (this->edit_pos > 0) {
                                 Rect old_cursor_rect = this->get_cursor_rect();
                                 this->decrement_edit_pos();
@@ -430,8 +430,8 @@ public:
                     }
 
                     if (keymap->is_ctrl_pressed()) {
-                        while ( (this->label.buffer[(this->edit_buffer_pos)-1] == 32)
-                                || (this->label.buffer[(this->edit_buffer_pos)] != 32) ){
+                        while ( (this->label.buffer[(this->edit_buffer_pos)-1] == ' ')
+                                || (this->label.buffer[(this->edit_buffer_pos)] != ' ') ){
                             if (this->edit_pos < this->num_chars) {
                                 Rect old_cursor_rect = this->get_cursor_rect();
                                 this->increment_edit_pos();
@@ -462,6 +462,32 @@ public:
                         this->drawable.end_update();
                         this->w_text -= pxtmp - this->cursor_px_pos;
                     }
+
+                    if (keymap->is_ctrl_pressed()) {
+                        while (this->label.buffer[(this->edit_buffer_pos)-1] != ' '){
+                            if (this->edit_pos > 0) {
+                                this->num_chars--;
+                                size_t pxtmp = this->cursor_px_pos;
+                                size_t ebpos = this->edit_buffer_pos;
+                                this->decrement_edit_pos();
+                                UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                                this->buffer_size += this->edit_buffer_pos - ebpos;
+                                this->drawable.begin_update();
+                                this->draw(Rect(this->dx() + this->cursor_px_pos + this->label.x_text,
+                                        this->dy() + this->label.y_text + 1,
+                                        this->w_text - this->cursor_px_pos + 3,
+                                        this->h_text
+                                ));
+                                this->drawable.end_update();
+                                this->w_text -= pxtmp - this->cursor_px_pos;
+                            }
+                            else
+                                break;
+                        }
+                        break;
+                    }
+
+
                     break;
                 case Keymap2::KEVENT_DELETE:
                     keymap->get_kevent();
@@ -485,6 +511,37 @@ public:
                         this->drawable.end_update();
                         this->w_text -= w;
                     }
+
+
+                    if (keymap->is_ctrl_pressed()) {
+                        while ((this->label.buffer[(this->edit_buffer_pos)] != ' ')
+                            || (this->label.buffer[(this->edit_buffer_pos)-1] == ' ')){
+                            if (this->edit_pos < this->num_chars) {
+                                size_t len = this->utf8len_current_char();
+                                char c = this->label.buffer[this->edit_buffer_pos + len];
+                                this->label.buffer[this->edit_buffer_pos + len] = 0;
+                                int w;
+                                this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, this->h_text);
+                                this->label.buffer[this->edit_buffer_pos + len] = c;
+                                UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                                this->buffer_size -= len;
+                                this->num_chars--;
+                                this->drawable.begin_update();
+                                this->draw(Rect(this->dx() + this->cursor_px_pos + this->label.x_text,
+                                                this->dy() + this->label.y_text + 1,
+                                                this->w_text - this->cursor_px_pos + 3,
+                                                this->h_text
+                                                ));
+                                this->draw_cursor(this->get_cursor_rect());
+                                this->drawable.end_update();
+                                this->w_text -= w;
+                            }
+                            else
+                                break;
+                        }
+                        break;
+                    }
+
                     break;
                 case Keymap2::KEVENT_END:
                     keymap->get_kevent();
