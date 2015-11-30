@@ -250,7 +250,7 @@ void write_spec(std::ostream & os, SpecWriter & writer) {
     os << "## Config file for RDP proxy.\n\n\n";
     for (auto & section_name : writer.sections_ordered) {
         auto body = writer.sections_member.find(section_name)->second;
-        if (std::none_of(begin(body), end(body), std::isblank)) {
+        if (std::none_of(begin(body), end(body), [](int c){return std::isblank(c);} )) {
             continue;
         }
         if (!section_name.empty()) {
