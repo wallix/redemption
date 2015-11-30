@@ -696,13 +696,19 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         };
 
         if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
-            run(CryptoOutMetaSequenceTransport( &cctx, outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str()
-                                              , begin_record, player.info_width, player.info_height
-                                              , ini.get<cfg::video::capture_groupid>()));
+            run(CryptoOutMetaSequenceTransport(
+                &cctx,
+                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
+                begin_record, player.info_width, player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            ));
         }
         else {
-            run(OutMetaSequenceTransport( outfile_path.c_str(), outfile_basename.c_str(), begin_record
-                                        , player.info_width, player.info_height, ini.get<cfg::video::capture_groupid>()));
+            run(OutMetaSequenceTransport(
+                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
+                begin_record, player.info_width, player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            ));
         }
     }
     catch (...) {

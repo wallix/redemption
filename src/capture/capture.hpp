@@ -168,7 +168,7 @@ public:
             }
             else {
                 auto * trans = new OutMetaSequenceTransport(
-                    wrm_path, basename, now, width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
+                    wrm_path, hash_path, basename, now, width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
                 this->wrm_trans = trans;
                 this->wrm_filename_generator = trans->seqgen();
             }

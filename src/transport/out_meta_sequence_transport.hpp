@@ -41,6 +41,7 @@ RequestCleaningTransport<
 {
     OutMetaSequenceTransport(
         const char * path,
+        const char * hash_path,
         const char * basename,
         timeval now,
         uint16_t width,
@@ -49,8 +50,9 @@ RequestCleaningTransport<
         auth_api * authentifier = nullptr,
         unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : OutMetaSequenceTransport::TransportType(
-        detail::out_meta_sequence_filename_buf_param<>(now.tv_sec, format, path, basename, ".wrm", groupid))
+    : OutMetaSequenceTransport::TransportType(detail::out_meta_sequence_filename_buf_param<>(
+        now.tv_sec, format, hash_path, path, basename, ".wrm", groupid, verbose
+    ))
     {
         this->verbose = verbose;
 

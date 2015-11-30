@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaSequenceTransport wrm_trans("./", "xxx", now, 800, 600, groupid);
+        OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -51,25 +51,29 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
             return len;
         }
     } meta_len_writer;
+
+    const char * meta_path = "./xxx.mwrm";
+    const char * meta_hash_path = "./hash-xxx.mwrm";
+    meta_len_writer.len = 5; // header
+    detail::write_meta_file_impl<false>(meta_len_writer, meta_path, 0, 0, nullptr);
+    BOOST_CHECK_EQUAL(meta_len_writer.len - 2 /* "./" */, filesize(meta_hash_path));
+    BOOST_CHECK_EQUAL(0, ::unlink(meta_hash_path));
+
+
+    meta_len_writer.len = 0;
+
     detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
-//    char file1[1024];
-//    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
     const char * file1 = "./xxx-000000.wrm";
     detail::write_meta_file(meta_len_writer, file1, sec_start, sec_start+1);
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
 
-//    char file2[1024];
-//    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
     const char * file2 = "./xxx-000001.wrm";
     detail::write_meta_file(meta_len_writer, file2, sec_start, sec_start+1);
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
 
-//    char meta_path[1024];
-//    snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
-    const char * meta_path = "./xxx.mwrm";
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 }

@@ -30,6 +30,111 @@
 
 namespace detail {
 
+template<class FilterParams = no_param>
+struct out_hash_meta_sequence_filename_buf_param
+{
+    out_meta_sequence_filename_buf_param<CryptoContext&> meta_sq_params;
+    FilterParams filter_params;
+    CryptoContext & cctx;
+
+    out_hash_meta_sequence_filename_buf_param(
+        CryptoContext & cctx,
+        time_t start_sec,
+        FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        FilterParams const & filter_params = FilterParams(),
+        uint32_t verbose = 0)
+    : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, verbose, cctx)
+    , filter_params(filter_params)
+    , cctx(cctx)
+    {}
+};
+
+template<class Buf, class BufFilter, class BufMeta, class BufHash>
+class out_hash_meta_sequence_filename_buf_impl
+: public out_meta_sequence_filename_buf_impl<Buf, BufMeta>
+{
+    CryptoContext & cctx;
+    BufFilter wrm_filter;
+
+    using sequence_base_type = out_meta_sequence_filename_buf_impl<Buf, BufMeta>;
+
+public:
+    template<class FilterParams>
+    explicit out_hash_meta_sequence_filename_buf_impl(
+        out_hash_meta_sequence_filename_buf_param<FilterParams> const & params
+    )
+    : sequence_base_type(params.meta_sq_params)
+    , cctx(params.cctx)
+    , wrm_filter(params.filter_params)
+    {}
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf().is_open()) {
+            const char * filename = this->get_filename_generate();
+            const int res = this->open_filename(filename);
+            if (res < 0) {
+                return res;
+            }
+            if (int err = this->wrm_filter.open(this->buf(), this->cctx, filename)) {
+                return err;
+            }
+        }
+        return this->wrm_filter.write(this->buf(), data, len);
+    }
+
+    int close()
+    {
+        if (this->buf().is_open()) {
+            if (this->next()) {
+                return 1;
+            }
+        }
+
+        BufHash hash_buf(this->cctx);
+
+        if (!this->meta_buf().is_open()) {
+            return 1;
+        }
+
+        hash_type hash;
+
+        if (this->meta_buf().close(hash)) {
+            return 1;
+        }
+
+        return write_meta_hash(this->hash_filename(), this->meta_filename(), hash_buf, &hash, this->verbose);
+    }
+
+    int next()
+    {
+        if (this->buf().is_open()) {
+            hash_type hash;
+            {
+                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.hmac_key);
+                const int res2 = this->buf().close();
+                if (res1) {
+                    return res1;
+                }
+                if (res2) {
+                    return res2;
+                }
+            }
+
+            return this->next_meta_file(&hash);
+        }
+        return 1;
+    }
+};
+
+
+
+
 struct MetaHashMaker
 {
     MetaHashMaker(unsigned char (&hash)[MD_HASH_LENGTH*2])
@@ -60,53 +165,6 @@ struct MetaHashMaker
 private:
     char mes[(1 + MD_HASH_LENGTH*2) * 2 + 1];
 };
-
-template<class MetaBuf, class HashBuf>
-int close_meta_hash(detail::MetaFilename hf, MetaBuf & meta_buf, HashBuf & crypto_hash, uint32_t verbose)
-{
-    if (!meta_buf.is_open()) {
-        return 1;
-    }
-
-    unsigned const hash_len = MD_HASH_LENGTH * 2;
-
-    unsigned char hash[hash_len + 1] = {0};
-    hash[0] = ' ';
-
-    if (meta_buf.close(reinterpret_cast<unsigned char(&)[hash_len]>(hash[1]))) {
-        return 1;
-    }
-
-    char path[1024] = {};
-    char basename[1024] = {};
-    char extension[256] = {};
-    char filename[2048] = {};
-
-    canonical_path( hf.filename
-                  , path, sizeof(path)
-                  , basename, sizeof(basename)
-                  , extension, sizeof(extension)
-                  , verbose);
-    snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-    if (crypto_hash.open(hf.filename, S_IRUSR|S_IRGRP) >= 0) {
-        const size_t len = strlen(filename);
-        if (crypto_hash.write(filename, len) != long(len)
-         || crypto_hash.write(hash, hash_len+1) != hash_len+1
-         || crypto_hash.close(/*hash*/) != 0) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", hf.filename, -hash_len);
-            return 1;
-        }
-    }
-    else {
-        int e = errno;
-        LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-        errno = e;
-        return 1;
-    }
-
-    return 0;
-}
 
 }
 

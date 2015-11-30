@@ -86,6 +86,10 @@ namespace transbuf {
         : ctx(ctx)
         {}
 
+        explicit ocrypto_filename_buf(CryptoContext & ctx)
+        : ctx(&ctx)
+        {}
+
         ~ocrypto_filename_buf()
         {
             if (this->is_open()) {

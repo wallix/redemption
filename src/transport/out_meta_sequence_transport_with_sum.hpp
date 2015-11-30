@@ -32,103 +32,10 @@
 
 namespace detail
 {
-    struct out_meta_sequence_filename_buf_with_sum_param
-    {
-        out_meta_sequence_filename_buf_param<decltype((CryptoContext::hmac_key))> meta_sq_params;
-        const char * hash_prefix;
-        CryptoContext & cctx;
-        uint32_t verbose;
-
-        out_meta_sequence_filename_buf_with_sum_param(
-            CryptoContext & cctx,
-            time_t start_sec,
-            FilenameGenerator::Format format,
-            const char * const hash_prefix,
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid,
-            uint32_t verbose = 0)
-        : meta_sq_params(start_sec, format, prefix, filename, extension, groupid, cctx.hmac_key)
-        , hash_prefix(hash_prefix)
-        , cctx(cctx)
-        , verbose(verbose)
-        {}
-    };
-
-    using out_meta_sequence_filename_buf_with_sum_base = out_meta_sequence_filename_buf<
-        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
-        transbuf::ochecksum_buf<transbuf::ofile_buf>
-    >;
-
-    class out_meta_sequence_filename_buf_with_sum
-    : public out_meta_sequence_filename_buf_with_sum_base
-    {
-        detail::MetaFilename hf_;
-        transbuf::ochecksum_buf<transbuf::null_buf> checksum_wrm;
-        uint32_t verbose;
-
-        using sequence_base_type = out_meta_sequence_filename_buf_with_sum_base;
-
-    public:
-        explicit out_meta_sequence_filename_buf_with_sum(out_meta_sequence_filename_buf_with_sum_param const & params)
-        : sequence_base_type(params.meta_sq_params)
-        , hf_(params.hash_prefix, params.meta_sq_params.sq_params.filename, params.meta_sq_params.sq_params.format)
-        , checksum_wrm(params.cctx.hmac_key)
-        , verbose(params.verbose)
-        {}
-
-        ~out_meta_sequence_filename_buf_with_sum()
-        {
-            this->close();
-        }
-
-        ssize_t write(const void * data, size_t len)
-        {
-            if (!this->buf().is_open()) {
-                const char * filename = this->get_filename_generate();
-                const int res = this->open_filename(filename);
-                if (res < 0) {
-                    return res;
-                }
-                this->checksum_wrm.open();
-            }
-            this->checksum_wrm.write(data, len);
-            return this->buf().write(data, len);
-        }
-
-        int close()
-        {
-            if (this->buf().is_open()) {
-                if (this->next()) {
-                    return 1;
-                }
-            }
-
-            transbuf::ofile_buf file_hash;
-            return close_meta_hash(this->hf_, this->meta_buf(), file_hash, this->verbose);
-        }
-
-        int next()
-        {
-            if (this->buf().is_open()) {
-                unsigned char hash[MD_HASH_LENGTH * 2];
-                this->checksum_wrm.close(hash);
-                if (const int err = this->buf().close()) {
-                    return err;
-                }
-
-                return this->next_meta_file(MetaHashMaker(hash).c_str());
-            }
-            return 1;
-        }
-    };
-
-
     template<class Buf, class Params>
     struct OutHashedMetaSequenceTransport
     : // FlushingTransport<
-    RequestCleaningTransport<OutputNextTransport<Buf, detail::GetCurrentPath>>
+    RequestCleaningTransport<OutputNextTransport<CloseWrapper<Buf>, detail::GetCurrentPath>>
     // >
     {
         OutHashedMetaSequenceTransport(
@@ -145,7 +52,9 @@ namespace detail
             FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
         : OutHashedMetaSequenceTransport::TransportType(Params(
             *crypto_ctx,
-            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid, verbose
+            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
+            *crypto_ctx,
+            verbose
         ))
         {
             this->verbose = verbose;
@@ -166,11 +75,58 @@ namespace detail
             return &(this->buffer().seqgen());
         }
     };
+
+
+    class ochecksum_filter
+    {
+        transbuf::ochecksum_buf<transbuf::null_buf> sum_buf;
+
+    public:
+        ochecksum_filter(CryptoContext & cctx)
+        : sum_buf(cctx.hmac_key)
+        {}
+
+        template<class Buf>
+        int open(Buf &, CryptoContext &, char const * /*filename*/) {
+            return this->sum_buf.open();
+        }
+
+        template<class Buf>
+        int write(Buf & buf, const void * data, size_t len) {
+            this->sum_buf.write(data, len);
+            return buf.write(data, len);
+        }
+
+        template<class Buf>
+        int close(Buf &, hash_type &, unsigned char (&)[MD_HASH_LENGTH]) {
+            return this->sum_buf.open();
+        }
+    };
+
+    struct cctx_ofile_buf
+    : transbuf::ofile_buf
+    {
+        cctx_ofile_buf(CryptoContext &)
+        {}
+    };
+
+    struct cctx_ochecksum_file
+    : transbuf::ochecksum_buf<transbuf::ofile_buf>
+    {
+        cctx_ochecksum_file(CryptoContext & cctx)
+        : transbuf::ochecksum_buf<transbuf::ofile_buf>(cctx.hmac_key)
+        {}
+    };
 }
 
 using OutMetaSequenceTransportWithSum = detail::OutHashedMetaSequenceTransport<
-    detail::out_meta_sequence_filename_buf_with_sum,
-    detail::out_meta_sequence_filename_buf_with_sum_param
+    detail::out_hash_meta_sequence_filename_buf_impl<
+        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
+        detail::ochecksum_filter,
+        detail::cctx_ochecksum_file,
+        detail::cctx_ofile_buf
+    >,
+    detail::out_hash_meta_sequence_filename_buf_param<CryptoContext&>
 >;
 
 #endif
