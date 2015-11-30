@@ -682,7 +682,8 @@ class Engine(object):
         try:
             target_credentials = self.get_target_credentials(target_device)
             passwords = [ cred.data.get(CRED_DATA_PASSWORD) \
-                          for cred in target_credentials.get(CRED_TYPE_PASSWORD, []) ]
+                          for cred in target_credentials.get(CRED_TYPE_PASSWORD, []) \
+                          if cred.data.get(CRED_DATA_PASSWORD) ]
             Logger().info("Engine get_target_passwords done")
             return passwords
         except AccountLocked:
