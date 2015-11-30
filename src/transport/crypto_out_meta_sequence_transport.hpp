@@ -26,123 +26,43 @@
 #include "urandom_read.hpp"
 #include "fileutils.hpp"
 
-namespace detail {
-    struct crypto_out_meta_sequence_filename_buf_param
+namespace detail
+{
+    struct ocrypto_filter
+    : transfil::encrypt_filter
     {
-        out_meta_sequence_filename_buf_param<CryptoContext*> meta_sq_params;
-        const char * hash_prefix;
-        CryptoContext & cctx;
-        uint32_t verbose;
-
-        crypto_out_meta_sequence_filename_buf_param(
-            CryptoContext & cctx,
-            time_t start_sec,
-            FilenameGenerator::Format format,
-            const char * const hash_prefix,
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid,
-            uint32_t verbose = 0)
-        : meta_sq_params(start_sec, format, prefix, filename, extension, groupid, &cctx)
-        , hash_prefix(hash_prefix)
-        , cctx(cctx)
-        , verbose(verbose)
-        {}
-    };
-
-    using crypto_meta_sequence_filename_buf_base = out_meta_sequence_filename_buf<
-        detail::empty_ctor<io::posix::fdbuf>,
-        transbuf::ocrypto_filename_buf
-    >;
-
-    class crypto_meta_sequence_filename_buf
-    : public crypto_meta_sequence_filename_buf_base
-    {
-        detail::MetaFilename hf_;
-        CryptoContext & cctx;
-        transfil::encrypt_filter encrypt_wrm;
-        uint32_t verbose;
-
-        using sequence_base_type = crypto_meta_sequence_filename_buf_base;
-
-    public:
-        explicit crypto_meta_sequence_filename_buf(crypto_out_meta_sequence_filename_buf_param const & params)
-        : sequence_base_type(params.meta_sq_params)
-        , hf_(params.hash_prefix, params.meta_sq_params.sq_params.filename, params.meta_sq_params.sq_params.format)
-        , cctx(params.cctx)
-        , verbose(params.verbose)
+        ocrypto_filter(CryptoContext &)
         {}
 
-        ~crypto_meta_sequence_filename_buf()
-        {
-            this->close();
-        }
-
-        ssize_t write(const void * data, size_t len)
-        {
-            if (!this->buf().is_open()) {
-                const char * filename = this->get_filename_generate();
-                const int res = this->open_filename(filename);
-                if (res < 0) {
-                    return res;
-                }
-                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-                unsigned char derivator[DERIVATOR_LENGTH];
-                get_derivator(filename, derivator, DERIVATOR_LENGTH);
-                if (-1 == compute_hmac(trace_key, this->cctx.crypto_key, derivator)) {
-                    return -1;
-                }
-
-                unsigned char iv[32];
-                if (-1 == urandom_read(iv, 32)) {
-                    LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-                    this->buf().close();
-                    return -1;
-                }
-
-                this->encrypt_wrm.open(this->buf(), trace_key, &this->cctx, iv);
-            }
-            return this->encrypt_wrm.write(this->buf(), data, len);
-        }
-
-        int close()
-        {
-            if (this->buf().is_open()) {
-                if (this->next()) {
-                    return 1;
-                }
+        template<class Buf>
+        int open(Buf & buf, CryptoContext & cctx, char const * filename) {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            unsigned char derivator[DERIVATOR_LENGTH];
+            get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            if (-1 == compute_hmac(trace_key, cctx.crypto_key, derivator)) {
+                return -1;
             }
 
-            transbuf::ocrypto_filename_buf crypto_hash(&this->cctx);
-            return close_meta_hash(this->hf_, this->meta_buf(), crypto_hash, this->verbose);
-        }
-
-        int next()
-        {
-            if (this->buf().is_open()) {
-                unsigned char hash[HASH_LEN];
-                {
-                    const int res1 = this->encrypt_wrm.close(this->buf(), hash, this->cctx.hmac_key);
-                    const int res2 = this->buf().close();
-                    if (res1) {
-                        return res1;
-                    }
-                    if (res2) {
-                        return res2;
-                    }
-                }
-
-                return this->next_meta_file(MetaHashMaker(hash).c_str());
+            unsigned char iv[32];
+            if (-1 == urandom_read(iv, 32)) {
+                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
+                buf.close();
+                return -1;
             }
-            return 1;
+
+            return transfil::encrypt_filter::open(buf, trace_key, &cctx, iv);
         }
     };
 }
 
 using CryptoOutMetaSequenceTransport = detail::OutHashedMetaSequenceTransport<
-    detail::crypto_meta_sequence_filename_buf,
-    detail::crypto_out_meta_sequence_filename_buf_param
+    detail::out_hash_meta_sequence_filename_buf_impl<
+        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
+        detail::ocrypto_filter,
+        transbuf::ocrypto_filename_buf,
+        transbuf::ocrypto_filename_buf
+    >,
+    detail::out_hash_meta_sequence_filename_buf_param<CryptoContext&>
 >;
 
 #endif

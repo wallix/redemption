@@ -259,6 +259,7 @@ namespace detail
             PATH_MAX + 1 + 1 +
             (std::numeric_limits<long long>::digits10 + 1 + 1 + 1) * 8 +
             (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
+            (1 + MD_HASH_LENGTH*2) * 2 +
             2
         ];
         ssize_t len = reader.read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
