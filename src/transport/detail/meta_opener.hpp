@@ -263,9 +263,10 @@ namespace detail
         return pline;
     }
 
-    template<class Reader>
-    int read_meta_file_v2(ReaderLine<Reader> & reader, MetaHeader const & meta_header, MetaLine & meta_line)
-    {
+    template<bool read_start_stop_time, class Reader>
+    int read_meta_file_v2_impl(
+        ReaderLine<Reader> & reader, bool has_checksum, MetaLine & meta_line
+    ) {
         char line[
             PATH_MAX + 1 + 1 +
             (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -308,10 +309,12 @@ namespace detail
         err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
+        if (read_start_stop_time) {
         err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+        }
 
-        if (meta_header.has_checksum
+        if (has_checksum
          && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
         ) {
             auto read = [&](unsigned char (&hash)[HASH_LEN / 2]) {
@@ -333,6 +336,11 @@ namespace detail
         }
 
         return 0;
+    }
+
+    template<class Reader>
+    int read_meta_file_v2(ReaderLine<Reader> & reader, MetaHeader const & meta_header, MetaLine & meta_line) {
+        return read_meta_file_v2_impl<true>(reader, meta_header.has_checksum, meta_line);
     }
 
     template<class Reader>

@@ -163,78 +163,8 @@ HashHeader read_hash_headers(ReaderLine<Reader> & reader)
 }
 
 template<class Reader>
-int read_hash_file_v2(ReaderLine<Reader> & reader, HashHeader const & hash_header,  MetaLine & hash_line) {
-    char line[
-        PATH_MAX + 1 + 1 +
-        (std::numeric_limits<long long>::digits10 + 1 + 1 + 1) * 8 +
-        (1 + MD_HASH_LENGTH * 2) * 2 +
-        2
-    ];
-    ssize_t len = reader.read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
-    if (len < 0) {
-        return -len;
-    }
-    line[len] = 0;
-
-    // Line format "fffff
-    // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
-    //             hhhhh HHHHH"
-    //            ^  ^  ^  ^
-    //            |  |  |  |
-    //            |hash1|  |
-    //            |     |  |
-    //          space   |hash2
-    //                  |
-    //                space
-    //
-    // filename(1 or >) + ... + space(1) + hash1(64) + space(1) + hash2(64) >= 135
-
-    using std::begin;
-    using std::end;
-
-    // filename
-    auto pline = line;
-    {
-        auto p = begin(hash_line.filename);
-        auto e = end(hash_line.filename) - 1;
-        for (; p != e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
-            *p = *pline;
-        }
-        *p = 0;
-    }
-
-    int err = 0;
-    auto pend = pline;                   hash_line.size       = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; hash_line.mode       = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; hash_line.uid        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; hash_line.gid        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; hash_line.dev        = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; hash_line.ino        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; hash_line.mtime      = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; hash_line.ctime      = strtoll (pline, &pend, 10);
-
-    if (!(err |= (len - (pend - line) != (sizeof(hash_line.hash1) + sizeof(hash_line.hash2)) * 2 + 2))
-    ) {
-        auto phash = begin(hash_line.hash1);
-        for (auto e = ++pend + sizeof(hash_line.hash1) * 2u; pend != e; ++pend, ++phash) {
-            *phash = (chex_to_int(*pend, err) << 4);
-            *phash |= chex_to_int(*++pend, err);
-        }
-        err |= (*pend != ' ');
-        phash = begin(hash_line.hash2);
-        for (auto e = ++pend + sizeof(hash_line.hash2) * 2u; pend != e; ++pend, ++phash) {
-            *phash = (chex_to_int(*pend, err) << 4);
-            *phash |= chex_to_int(*++pend, err);
-        }
-    }
-
-    err |= bool(*pend);
-
-    if (err) {
-        throw Error(ERR_TRANSPORT_READ_FAILED);
-    }
-
-    return 0;
+int read_hash_file_v2(ReaderLine<Reader> & reader, HashHeader const & /*hash_header*/, MetaLine & hash_line) {
+    return read_meta_file_v2_impl<false>(reader, true, hash_line);
 }
 
 }
