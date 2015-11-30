@@ -253,11 +253,22 @@ namespace detail
         return 0;
     }
 
+    char const * sread_filename(char * p, char const * e, char const * pline)
+    {
+        e -= 1;
+        for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
+            *p = *pline;
+        }
+        *p = 0;
+        return pline;
+    }
+
     template<class Reader>
-    int read_meta_file_v2(ReaderLine<Reader> & reader, MetaHeader const & meta_header, MetaLine & meta_line) {
+    int read_meta_file_v2(ReaderLine<Reader> & reader, MetaHeader const & meta_header, MetaLine & meta_line)
+    {
         char line[
             PATH_MAX + 1 + 1 +
-            (std::numeric_limits<long long>::digits10 + 1 + 1 + 1) * 8 +
+            (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
             (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
             (1 + MD_HASH_LENGTH*2) * 2 +
             2
@@ -286,16 +297,7 @@ namespace detail
         using std::begin;
         using std::end;
 
-        // filename
-        auto pline = line;
-        {
-            auto p = begin(meta_line.filename);
-            auto e = end(meta_line.filename) - 1;
-            for (; p != e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
-                *p = *pline;
-            }
-            *p = 0;
-        }
+        auto pline = line + (sread_filename(begin(meta_line.filename), end(meta_line.filename), line) - line);
 
         int err = 0;
         auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
@@ -312,17 +314,16 @@ namespace detail
         if (meta_header.has_checksum
          && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
         ) {
-            auto phash = begin(meta_line.hash1);
-            for (auto e = ++pend + sizeof(meta_line.hash1) * 2u; pend != e; ++pend, ++phash) {
-                *phash = (chex_to_int(*pend, err) << 4);
-                *phash |= chex_to_int(*++pend, err);
-            }
+            auto read = [&](unsigned char (&hash)[HASH_LEN / 2]) {
+                auto phash = begin(hash);
+                for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
+                    *phash = (chex_to_int(*pend, err) << 4);
+                    *phash |= chex_to_int(*++pend, err);
+                }
+            };
+            read(meta_line.hash1);
             err |= (*pend != ' ');
-            phash = begin(meta_line.hash2);
-            for (auto e = ++pend + sizeof(meta_line.hash2) * 2u; pend != e; ++pend, ++phash) {
-                *phash = (chex_to_int(*pend, err) << 4);
-                *phash |= chex_to_int(*++pend, err);
-            }
+            read(meta_line.hash2);
         }
 
         err |= bool(*pend);

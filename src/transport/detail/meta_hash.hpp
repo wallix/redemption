@@ -132,40 +132,6 @@ public:
     }
 };
 
-
-
-
-struct MetaHashMaker
-{
-    MetaHashMaker(unsigned char (&hash)[MD_HASH_LENGTH*2])
-    : MetaHashMaker(
-        reinterpret_cast<unsigned char (&)[MD_HASH_LENGTH]>(hash[0]),
-        reinterpret_cast<unsigned char (&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH])
-    )
-    {}
-
-    MetaHashMaker(unsigned char (&hash1)[MD_HASH_LENGTH], unsigned char (&hash2)[MD_HASH_LENGTH]) {
-        char * p = this->mes;
-        auto write = [&p](unsigned char (&hash)[MD_HASH_LENGTH]){
-            *p++ = ' ';                // 1 octet
-            for (unsigned c : hash) {
-                sprintf(p, "%02x", c); // 64 octets (hash)
-                p += 2;
-            }
-        };
-        write(hash1);
-        write(hash2);
-        *p = 0;
-    }
-
-    char const * c_str() const noexcept {
-        return this->mes;
-    }
-
-private:
-    char mes[(1 + MD_HASH_LENGTH*2) * 2 + 1];
-};
-
 }
 
 #endif

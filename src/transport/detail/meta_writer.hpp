@@ -101,25 +101,31 @@ namespace detail
         }
     }
 
-    using hash_type = unsigned char[MD_HASH_LENGTH*2];
-
-    template<bool write_time, class Writer>
-    int write_meta_file_impl(
-        Writer & writer, const char * filename,
-        time_t start_sec, time_t stop_sec,
-        hash_type const * hash = nullptr
-    ) {
+    template<class Writer>
+    int write_filename(Writer & writer, const char * filename)
+    {
         auto pfile = filename;
         auto epfile = filename;
         for (; *epfile; ++epfile) {
             if (*epfile == '\\') {
-                bool const is_backslash = (*(epfile+1) == '\\');
-                ssize_t len = epfile - pfile + is_backslash;
+                ssize_t len = epfile - pfile + 1;
                 auto res = writer.write(pfile, len);
                 if (res < len) {
                     return res < 0 ? res : 1;
                 }
-                pfile = epfile + 1 + is_backslash;
+                pfile = epfile;
+            }
+            if (*epfile == ' ') {
+                ssize_t len = epfile - pfile;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    return res < 0 ? res : 1;
+                }
+                res = writer.write("\\", 1u);
+                if (res < 1) {
+                    return res < 0 ? res : 1;
+                }
+                pfile = epfile;
             }
         }
 
@@ -131,12 +137,43 @@ namespace detail
             }
         }
 
+        return 0;
+    }
+
+    using hash_type = unsigned char[MD_HASH_LENGTH*2];
+
+    constexpr std::size_t hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
+
+    char * swrite_hash(char * p, hash_type const & hash)
+    {
+        auto write = [&p](unsigned char const * hash) {
+            *p++ = ' ';                // 1 octet
+            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                sprintf(p, "%02x", c); // 64 octets (hash)
+                p += 2;
+            }
+        };
+        write(hash);
+        write(hash + MD_HASH_LENGTH);
+        return p;
+    }
+
+    template<bool write_time, class Writer>
+    int write_meta_file_impl(
+        Writer & writer, const char * filename,
+        time_t start_sec, time_t stop_sec,
+        hash_type const * hash = nullptr
+    ) {
+        if (int err = write_filename(writer, filename)) {
+            return err;
+        }
+
         using ull = unsigned long long;
         using ll = long long;
         char mes[
-            (std::numeric_limits<ll>::digits10 + 1 + 1 + 1) * 8 +
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
             (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            (1 + sizeof(hash_type)) * 2 + 1 +
+            hash_string_len + 1 +
             2
         ];
         struct stat stat;
@@ -166,15 +203,7 @@ namespace detail
 
         char * p = mes + len;
         if (hash) {
-            auto write = [&p](unsigned char const * hash){
-                *p++ = ' ';                // 1 octet
-                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                    sprintf(p, "%02x", c); // 64 octets (hash)
-                    p += 2;
-                }
-            };
-            write(*hash);
-            write(*hash + MD_HASH_LENGTH);
+            p = swrite_hash(p, *hash);
         }
         *p++ = '\n';
 

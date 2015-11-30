@@ -57,11 +57,13 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
     BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
     BOOST_CHECK_EQUAL(write(buf, "cde"), 3);
 
-    unsigned char hash[MD_HASH_LENGTH*2];
+    detail::hash_type hash;
     buf.close(hash);
 
+    char hash_str[detail::hash_string_len + 1];
+    *detail::swrite_hash(hash_str, hash) = 0;
     BOOST_CHECK_EQUAL(
-        detail::MetaHashMaker(hash).c_str(),
+        hash_str,
         " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
         " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
     );

@@ -735,6 +735,8 @@ unit-test test_strings : tests/test_strings.cpp libboost_unit_test : $(TEST_DEPE
 
 ## Transport tests
 ## @{
+unit-test test_meta_writer : tests/transport/test_meta_writer.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_meta_opener : tests/transport/test_meta_opener.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_filename_sequence_transport : tests/transport/test_filename_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
