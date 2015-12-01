@@ -439,24 +439,27 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     unsigned infile_version = 1;
     bool infile_is_checksumed = false;
 
-    if (!infile_is_encrypted) {
-        transbuf::ifile_buf ifile;
-        ifile.open(fullfilename);
+    transbuf::ifile_buf ifile;
+    ifile.open(fullfilename);
 
-        struct ReaderBuf
-        {
-            transbuf::ifile_buf & buf;
+    struct ReaderBuf
+    {
+        transbuf::ifile_buf & buf;
 
-            ssize_t operator()(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
-            }
-        };
+        ssize_t operator()(char * buf, size_t len) const {
+            return this->buf.read(buf, len);
+        }
+    };
 
-        detail::ReaderLine<ReaderBuf> reader({ifile});
-        auto meta_header = detail::read_meta_headers(reader);
+    detail::ReaderLine<ReaderBuf> reader({ifile});
+    auto meta_header = detail::read_meta_headers(reader);
 
-        infile_version       = meta_header.version;
-        infile_is_checksumed = meta_header.has_checksum;
+    infile_version       = meta_header.version;
+    infile_is_checksumed = meta_header.has_checksum;
+
+    if (verbose) {
+        LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
+            (infile_is_checksumed ? "yes" : "no"));
     }
 
     if (!infile_is_encrypted && ((infile_version < 2) || !infile_is_checksumed)) {
