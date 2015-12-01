@@ -136,81 +136,6 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
         len_to_check, is_status_enabled, meta_line);
 }
 
-bool check_file_hash(
-    const char * file_path,
-    uint8_t const * crypto_key, size_t key_len,
-    const char (&hash)[HASH_LEN],
-    bool quick_check
-) {
-    uint8_t const * hash_ = reinterpret_cast<uint8_t const *>(hash);
-    if (quick_check){
-        return check_file_hash_sha256(file_path, crypto_key, key_len, hash_, HASH_LEN / 2, 4096);
-    }
-    return check_file_hash_sha256(file_path, crypto_key, key_len, hash_ + (HASH_LEN / 2), HASH_LEN / 2, 0);
-}
-
-bool check_mwrm_file(CryptoContext * cctx, const char * file_path, const char (&hash)[HASH_LEN], bool quick_check) {
-    TODO("Add unit test for this function")
-    bool result = false;
-
-    if (check_file_hash(file_path, cctx->hmac_key, sizeof(cctx->hmac_key), hash, false) == true) {
-//        unsigned char derivator[DERIVATOR_LENGTH];
-//        get_derivator(file_path, derivator, DERIVATOR_LENGTH);
-//        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-//        if (compute_hmac(trace_key, cctx->crypto_key, derivator) == -1){
-//            LOG(LOG_ERR, "failed to compute message authentication code");
-//            return false;
-//        }
-
-        transbuf::icrypto_filename_buf ifile(cctx);
-        if (ifile.open(file_path) < 0) {
-            LOG(LOG_ERR, "failed opening=%s", file_path);
-            return false;
-        }
-
-        struct ReaderBuf
-        {
-            transbuf::icrypto_filename_buf & buf;
-
-            ssize_t operator()(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
-            }
-        };
-
-        detail::ReaderLine<ReaderBuf> reader({ifile});
-        auto meta_header = detail::read_meta_headers(reader);
-
-        detail::MetaLine meta_line;
-
-        result = true;
-
-        while (detail::read_meta_file(reader, meta_header, meta_line) !=
-               ERR_TRANSPORT_NO_MORE_DATA) {
-            if ((quick_check &&
-                 (check_file_hash_sha256(
-                          meta_line.filename
-                        , cctx->hmac_key
-                        , sizeof(cctx->hmac_key)
-                        , meta_line.hash1
-                        , sizeof(meta_line.hash1)
-                        , 4096) == false)) ||
-                (!quick_check &&
-                 (check_file_hash_sha256(
-                          meta_line.filename
-                        , cctx->hmac_key
-                        , sizeof(cctx->hmac_key)
-                        , meta_line.hash2
-                        , sizeof(meta_line.hash2)
-                        , 0) == false))) {
-                result = false;
-                break;
-            }
-        }
-    }
-
-    return result;
-}
-
 template<typename T, typename ... Args>
 bool check_mwrm_file(const char * file_path, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
@@ -261,96 +186,6 @@ void make_file_path(const char * directory_name, const char * file_name,  char *
         file_name);
 
     file_path_buf[file_path_len - 1] = '\0';
-}
-
-template<typename T>
-int check_encrypted_or_checksumed_file(CryptoContext & cctx,
-                                       std::string const & input_filename,
-                                       std::string const & hash_path,
-                                       const char * fullfilename,
-                                       bool quick_check,
-                                       uint32_t verbose) {
-    /*****************
-    * Load file hash *
-    *****************/
-    char hash[HASH_LEN];
-
-    {
-        char file_path[1024] = {};
-
-        size_t filename_len = input_filename.length();
-
-        bool hash_ok = false;
-
-        make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
-        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
-
-        char   temp_buffer[4096];
-        char * buf;
-
-        try {
-            T in_hash_t(&cctx, file_path);
-            if (verbose) {
-                LOG(LOG_INFO, "Transport created");
-            }
-
-            buf = temp_buffer;
-
-            memset(temp_buffer, 0, sizeof(temp_buffer));
-
-            const size_t hash_data_length = filename_len + 1 + HASH_LEN;
-            if (verbose) {
-                LOG(LOG_INFO, "Hash data length=%zu", hash_data_length);
-            }
-            in_hash_t.recv(&buf, hash_data_length);
-
-            if (verbose) {
-                LOG(LOG_INFO, "Hash data received");
-            }
-
-            // Filename HASH_64_BYTES
-            //         ^
-            //         |
-            //     separator
-            if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
-                // Separator
-                (temp_buffer[filename_len] == ' ')) {
-                if (temp_buffer + filename_len + 1 + HASH_LEN == buf){
-                    memcpy(hash, temp_buffer + filename_len + 1, sizeof(hash));
-                    hash_ok = true;
-                }
-                else {
-                    std::cerr << "Truncated hash: \"" << file_path << "\"" << std::endl << std::endl;
-                }
-            }
-            else {
-                std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
-            }
-        }
-        catch (Error const & e) {
-            std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
-        }
-        catch (...) {
-            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
-        }
-
-        if (hash_ok == false) {
-            exit(-1);
-        }
-    }
-
-    /******************
-    * Check mwrm file *
-    ******************/
-    if (check_mwrm_file(&cctx, fullfilename, hash, quick_check) == false) {
-        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
-
-        exit(-1);
-    }
-
-    std::cout << "No error detected during the data verification." << std::endl << std::endl;
-
-    return 0;
 }
 
 template<typename T, typename ... Args>
@@ -636,9 +471,6 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
     }
 
     OpenSSL_add_all_digests();
-
-//    return check_encrypted_or_checksumed_file<CryptoInFilenameTransport>(cctx, input_filename,
-//        hash_path, fullfilename, quick_check, verbose);
 
     if (infile_is_encrypted) {
         return check_encrypted_or_checksumed_file<transbuf::icrypto_filename_buf>(
