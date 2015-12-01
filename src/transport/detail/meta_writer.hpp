@@ -161,6 +161,7 @@ namespace detail
     template<bool write_time, class Writer>
     int write_meta_file_impl(
         Writer & writer, const char * filename,
+        struct stat const & stat,
         time_t start_sec, time_t stop_sec,
         hash_type const * hash = nullptr
     ) {
@@ -176,10 +177,6 @@ namespace detail
             hash_string_len + 1 +
             2
         ];
-        struct stat stat;
-        if (0 != ::stat(filename, &stat)) {
-            return 1;
-        }
         ssize_t len = sprintf(
             mes,
             " %lld %llu %lld %lld %llu %lld %lld %lld",
@@ -222,7 +219,9 @@ namespace detail
         time_t start_sec, time_t stop_sec,
         hash_type const * hash = nullptr
     ) {
-        return write_meta_file_impl<true>(writer, filename, start_sec, stop_sec, hash);
+        struct stat stat;
+        int err = ::stat(filename, &stat);
+        return err ? err : write_meta_file_impl<true>(writer, filename, stat, start_sec, stop_sec, hash);
     }
 
 
@@ -403,7 +402,12 @@ namespace detail
         if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
             char header[] = "v2\n\n\n";
             crypto_hash.write(header, sizeof(header)-1);
-            int err = write_meta_file_impl<false>(crypto_hash, filename, 0, 0, hash);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (!err) {
+                err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, hash);
+            }
             if (!err) {
                 err = crypto_hash.close(/*hash*/);
             }
