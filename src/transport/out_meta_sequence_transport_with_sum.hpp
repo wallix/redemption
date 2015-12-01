@@ -98,8 +98,8 @@ namespace detail
         }
 
         template<class Buf>
-        int close(Buf &, hash_type &, unsigned char (&)[MD_HASH_LENGTH]) {
-            return this->sum_buf.open();
+        int close(Buf &, hash_type & hash, unsigned char (&)[MD_HASH_LENGTH]) {
+            return this->sum_buf.close(hash);
         }
     };
 
