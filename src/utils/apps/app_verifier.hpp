@@ -399,6 +399,9 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
             }
 
             if (number_of_bytes_read == filename_len + 1 + HASH_LEN) {
+                if (verbose) {
+                    LOG(LOG_INFO, "Hash data v1");
+                }
                 REDASSERT(infile_version == 1);
 
                 // Filename HASH_64_BYTES
@@ -408,6 +411,10 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
                 if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
                     // Separator
                     (temp_buffer[filename_len] == ' ')) {
+
+                    if (verbose) {
+                        LOG(LOG_INFO, "Copy hash");
+                    }
 
                     memcpy(hash_line.hash1, temp_buffer + filename_len + 1, sizeof(hash_line.hash1));
                     memcpy(hash_line.hash2, temp_buffer + filename_len + 1 + sizeof(hash_line.hash1), sizeof(hash_line.hash2));
@@ -419,6 +426,10 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
                 }
             }
             else {
+                if (verbose) {
+                    LOG(LOG_INFO, "Hash data v2 or plus");
+                }
+
                 struct ReaderBuf
                 {
                     char    * remaining_data_buf;
@@ -469,7 +480,7 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
     ******************/
 
     const bool is_status_enabled = (infile_version > 1);
-    if (check_mwrm_file<T>(fullfilename, is_status_enabled, hash_line,
+    if (!check_mwrm_file<T>(fullfilename, is_status_enabled, hash_line,
             (quick_check ? QUICK_CHECK_LENGTH : 0), args ...)) {
         std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 
