@@ -182,7 +182,7 @@ enum {
         this->clear();
     }
 
-    virtual void move_xy(int16_t x, int16_t y) {
+    void move_xy(int16_t x, int16_t y) {
         this->rect.x += x;
         this->rect.y += y;
         this->WidgetParent::move_xy(x,y);

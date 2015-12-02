@@ -22,7 +22,7 @@
 #define REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
 
 #include "composite.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 class WidgetGroupBox : public WidgetParent
 {
@@ -64,36 +64,31 @@ public:
         const uint16_t border           = 6;
         const uint16_t text_margin      = 6;
         const uint16_t text_indentation = border + text_margin + 4;
-        const uint16_t x_offset         = 1;
 
         int w, h, tmp;
         this->drawable.text_metrics(this->font, "bp", tmp, h);
         this->drawable.text_metrics(this->font, this->buffer, w, tmp);
 
-        StaticOutStream<256> deltaPoints;
-
-        deltaPoints.out_sint16_le(border - (text_indentation - text_margin + 1));
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(this->rect.cy - h / 2 - border);
-
-        deltaPoints.out_sint16_le(this->rect.cx - border * 2 + x_offset);
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(-(this->rect.cy - h / 2 - border));    // OK
-
-        deltaPoints.out_sint16_le(-(this->rect.cx - border * 2 - w - text_indentation + x_offset));
-        deltaPoints.out_sint16_le(0);
-
-        InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
-
-        RDPPolyline polyline_box( this->rect.x + text_indentation - text_margin
-                                , this->rect.y + h / 2
-                                , 0x0D, 0, this->fg_color, 5, in_deltaPoints);
-        this->drawable.draw(polyline_box, clip);
-
+        auto gcy = this->rect.cy - h / 2 - border;
+        auto gcx = this->rect.cx - border * 2 + 1;
+        auto px = this->rect.x + border - 1;
+        auto wlabel = text_margin * 2 + w;
+        auto x = px;
+        auto y = this->rect.y + h / 2;
+        auto cx = text_indentation - text_margin - border + 2;
+        auto cy = 1;
+        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
+        cx = gcx;
+        this->drawable.draw(RDPOpaqueRect(Rect(x, y+gcy, cx+1, cy), this->fg_color), clip);
+        x += wlabel + 4;
+        cx -= wlabel + 4;
+        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
+        x = px;
+        cy = gcy;
+        cx = 1;
+        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
+        x += gcx;
+        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
 
         // Label.
         this->drawable.server_draw_text( this->font
@@ -111,7 +106,7 @@ public:
     int get_bg_color() const override {
         return this->bg_color;
     }
-    virtual void move_xy(int16_t x, int16_t y) {
+    void move_xy(int16_t x, int16_t y) {
         this->rect.x += x;
         this->rect.y += y;
         this->WidgetParent::move_xy(x,y);
