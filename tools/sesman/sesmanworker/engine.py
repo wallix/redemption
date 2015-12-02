@@ -952,7 +952,7 @@ class Engine(object):
             domain = ""
         if right.account.domain_cn == AM_IL_DOMAIN:
             return login
-        trule = right.resource.service.connectionpolicy.data.get("rdp", {}).get("transformation_rule")
+        trule = right.resource.service.connectionpolicy.data.get("global", {}).get("transformation_rule")
         if (trule and '${LOGIN}' in trule):
             return trule.replace('${LOGIN}', login).replace('${DOMAIN}', domain or '')
         if not domain:
