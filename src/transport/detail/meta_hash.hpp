@@ -163,8 +163,8 @@ HashHeader read_hash_headers(ReaderLine<Reader> & reader)
 }
 
 template<class Reader>
-int read_hash_file_v2(ReaderLine<Reader> & reader, HashHeader const & /*hash_header*/, MetaLine & hash_line) {
-    return read_meta_file_v2_impl<false>(reader, true, hash_line);
+int read_hash_file_v2(ReaderLine<Reader> & reader, HashHeader const & /*hash_header*/, bool has_hash, MetaLine & hash_line) {
+    return read_meta_file_v2_impl<false>(reader, has_hash, hash_line);
 }
 
 }

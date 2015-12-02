@@ -433,6 +433,7 @@ public:
 
             InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
+            TODO("Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)")
             RDPPolyline polyline_box( rect_tab.x + item_index_offset
                                     , rect_tab.y + ((current_item_index != item_index) ? 1 : 0)
                                     , 0x0D, 0, this->get_fg_color(), ((current_item_index != item_index) ? 3 : 2)
@@ -494,6 +495,7 @@ public:
 
         InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
+        TODO("Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)")
         RDPPolyline polyline_box( rect_tab.x + first_item_index_offset_left
                                 , rect_tab.y + border_width_height
                                 , 0x0D, 0, this->get_fg_color(), 6

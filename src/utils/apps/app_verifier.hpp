@@ -192,11 +192,44 @@ template<typename T, typename ... Args>
 int check_encrypted_or_checksumed_file(std::string const & input_filename,
                                        std::string const & hash_path,
                                        const char * fullfilename,
-                                       bool is_checksumed,
-                                       unsigned infile_version,
                                        bool quick_check,
                                        uint32_t verbose,
                                        Args ... args) {
+    unsigned infile_version = 1;
+    bool infile_is_checksumed = false;
+
+    {
+        T ifile(args ...);
+        ifile.open(fullfilename);
+
+        struct ReaderBuf
+        {
+            T & buf;
+
+            ssize_t operator()(char * buf, size_t len) const {
+                return this->buf.read(buf, len);
+            }
+        };
+
+        detail::ReaderLine<ReaderBuf> reader({ifile});
+        auto meta_header = detail::read_meta_headers(reader);
+
+        infile_version       = meta_header.version;
+        infile_is_checksumed = meta_header.has_checksum;
+    }
+
+    if (verbose) {
+        LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
+            (infile_is_checksumed ? "yes" : "no"));
+    }
+
+    static_assert((std::is_same<T, transbuf::icrypto_filename_buf>::value ||
+        std::is_same<T, transbuf::ifile_buf>::value), "Unexpected file_buf class!");
+    if (std::is_same<T, transbuf::ifile_buf>::value && (infile_version < 2)) {
+        std::cout << "Input file is unencrypted.\n";
+        return 0;
+    }
+
     /*****************
     * Load file hash *
     *****************/
@@ -224,20 +257,14 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
             memset(temp_buffer, 0, sizeof(temp_buffer));
 
             ssize_t number_of_bytes_read = in_hash_fb.read(temp_buffer, sizeof(temp_buffer));
-            if (number_of_bytes_read < filename_len + 1 + HASH_LEN) {
-                LOG(LOG_ERR, "Unexpected hash data length=%zd", number_of_bytes_read);
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-
             if (verbose) {
                 LOG(LOG_INFO, "Hash data received. Length=%zd", number_of_bytes_read);
             }
 
-            if (number_of_bytes_read == filename_len + 1 + HASH_LEN) {
+            if (infile_version == 1) {
                 if (verbose) {
                     LOG(LOG_INFO, "Hash data v1");
                 }
-                REDASSERT(infile_version == 1);
 
                 // Filename HASH_64_BYTES
                 //         ^
@@ -288,7 +315,7 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
                 detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
                 auto hash_header = detail::read_hash_headers(reader);
 
-                if (detail::read_hash_file_v2(reader, hash_header, hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
+                if (detail::read_hash_file_v2(reader, hash_header, infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
                     if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
                         hash_ok = true;
                     }
@@ -436,53 +463,23 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
         exit(-1);
     }
 
-    unsigned infile_version = 1;
-    bool infile_is_checksumed = false;
-
-    transbuf::ifile_buf ifile;
-    ifile.open(fullfilename);
-
-    struct ReaderBuf
-    {
-        transbuf::ifile_buf & buf;
-
-        ssize_t operator()(char * buf, size_t len) const {
-            return this->buf.read(buf, len);
-        }
-    };
-
-    detail::ReaderLine<ReaderBuf> reader({ifile});
-    auto meta_header = detail::read_meta_headers(reader);
-
-    infile_version       = meta_header.version;
-    infile_is_checksumed = meta_header.has_checksum;
-
-    if (verbose) {
-        LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
-            (infile_is_checksumed ? "yes" : "no"));
-    }
-
-    if (!infile_is_encrypted && ((infile_version < 2) || !infile_is_checksumed)) {
-        std::cout << "Input file is unencrypted.\n";
-        return 0;
-    }
-
     CryptoContext cctx;
     memset(&cctx, 0, sizeof(cctx));
-    if (int status = crypto_context_initializer(cctx)) {
-        return status;
-    }
+    if (infile_is_encrypted) {
+        if (int status = crypto_context_initializer(cctx)) {
+            return status;
+        }
 
-    OpenSSL_add_all_digests();
+        OpenSSL_add_all_digests();
+    }
 
     if (infile_is_encrypted) {
         return check_encrypted_or_checksumed_file<transbuf::icrypto_filename_buf>(
-            input_filename, hash_path, fullfilename, infile_is_checksumed,
-            infile_version, quick_check, verbose, &cctx);
+            input_filename, hash_path, fullfilename, quick_check, verbose,
+            &cctx);
     }
     else {
         return check_encrypted_or_checksumed_file<transbuf::ifile_buf>(
-            input_filename, hash_path, fullfilename, infile_is_checksumed,
-            infile_version, quick_check, verbose);
+            input_filename, hash_path, fullfilename, quick_check, verbose);
     }
 }
