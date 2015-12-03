@@ -976,8 +976,6 @@ public:
                 server_notifier.server_cert_success();
             }
 
-            server_notifier.server_access_allowed();
-
             if (issuer               != nullptr) { free(issuer              ); }
             if (issuer_existing      != nullptr) { free(issuer_existing     ); }
             if (subject              != nullptr) { free(subject             ); }
@@ -987,6 +985,8 @@ public:
 
             X509_free(px509Existing);
         }
+
+        server_notifier.server_access_allowed();
 
 
 //        SSL_get_verify_result();
