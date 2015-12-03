@@ -449,6 +449,7 @@ public:
     }
 
     void enable_client_tls(
+                bool server_cert_store,
                 configs::ServerCertCheck server_cert_check,
                 ServerNotifier & server_notifier,
                 const char * certif_path
@@ -852,13 +853,15 @@ public:
                     throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_MISSED);
                 }
 
-                LOG(LOG_INFO, "dumping X509 peer certificate\n");
-                fp = ::fopen(filename, "w+");
-                PEM_write_X509(fp, px509);
-                ::fclose(fp);
-                LOG(LOG_INFO, "dumped X509 peer certificate\n");
+                if (server_cert_store) {
+                    LOG(LOG_INFO, "dumping X509 peer certificate\n");
+                    fp = ::fopen(filename, "w+");
+                    PEM_write_X509(fp, px509);
+                    ::fclose(fp);
+                    LOG(LOG_INFO, "dumped X509 peer certificate\n");
 
-                server_notifier.server_cert_create();
+                    server_notifier.server_cert_create();
+                }
             }
         }
         else {
@@ -957,15 +960,17 @@ public:
                     throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED, 0);
                 }
 
-                ::unlink(filename);
+                if (server_cert_store) {
+                    ::unlink(filename);
 
-                LOG(LOG_INFO, "dumping X509 peer certificate\n");
-                fp = ::fopen(filename, "w+");
-                PEM_write_X509(fp, px509);
-                ::fclose(fp);
-                LOG(LOG_INFO, "dumped X509 peer certificate\n");
+                    LOG(LOG_INFO, "dumping X509 peer certificate\n");
+                    fp = ::fopen(filename, "w+");
+                    PEM_write_X509(fp, px509);
+                    ::fclose(fp);
+                    LOG(LOG_INFO, "dumped X509 peer certificate\n");
 
-                server_notifier.server_cert_create();
+                    server_notifier.server_cert_create();
+                }
             }
             else {
                 server_notifier.server_cert_success();

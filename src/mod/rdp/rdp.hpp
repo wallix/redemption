@@ -376,6 +376,7 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string end_session_reason;
     std::string end_session_message;
 
+    const bool                     server_cert_store;
     const configs::ServerCertCheck server_cert_check;
 
     const char * certif_path;
@@ -656,6 +657,7 @@ public:
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , open_session_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
+        , server_cert_store(mod_rdp_params.server_cert_store)
         , server_cert_check(mod_rdp_params.server_cert_check)
         , certif_path([](const char * device_id){
             size_t lg_certif_path = strlen(CERTIF_PATH);
@@ -1721,7 +1723,8 @@ public:
                     switch (this->nego.state){
                     default:
                         this->nego.server_event(
-                                server_cert_check,
+                                this->server_cert_store,
+                                this->server_cert_check,
                                 this->server_notifier,
                                 this->certif_path
                             );

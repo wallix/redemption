@@ -110,12 +110,15 @@ BOOST_AUTO_TEST_CASE(TestNego)
     RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false);
     nego.test = true;
     nego.set_identity(user, domain, pass, host);
+    const bool server_cert_store = true;
     nego.server_event(
+            server_cert_store,
             configs::ServerCertCheck::always_succeed,
             null_server_notifier,
             "/tmp/certif"
         );
     nego.server_event(
+            server_cert_store,
             configs::ServerCertCheck::always_succeed,
             null_server_notifier,
             "/tmp/certif"

@@ -83,7 +83,8 @@ struct ModRDPParams {
     bool          disconnect_on_logon_user_change;
     uint32_t      open_session_timeout;
 
-    configs::ServerCertCheck server_cert_check;
+    bool                        server_cert_store;
+    configs::ServerCertCheck    server_cert_check;
     configs::ServerNotification server_access_allowed_message;
     configs::ServerNotification server_cert_create_message;
     configs::ServerNotification server_cert_success_message;

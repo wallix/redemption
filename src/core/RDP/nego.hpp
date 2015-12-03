@@ -147,6 +147,7 @@ struct RdpNego
     }
 
     void server_event(
+        bool server_cert_store,
         configs::ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
         const char * certif_path)
@@ -169,6 +170,7 @@ struct RdpNego
         case NEGO_STATE_NLA:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
             this->recv_connection_confirm(
+                    server_cert_store,
                     server_cert_check,
                     server_notifier,
                     certif_path
@@ -177,6 +179,7 @@ struct RdpNego
         case NEGO_STATE_TLS:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
             this->recv_connection_confirm(
+                    server_cert_store,
                     server_cert_check,
                     server_notifier,
                     certif_path
@@ -185,6 +188,7 @@ struct RdpNego
         case NEGO_STATE_RDP:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
             this->recv_connection_confirm(
+                    server_cert_store,
                     server_cert_check,
                     server_notifier,
                     certif_path
@@ -303,6 +307,7 @@ struct RdpNego
 // +--------------------------------------+------------------------------------+
 
     void recv_connection_confirm(
+        bool server_cert_store,
         configs::ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
         const char * certif_path)
@@ -332,6 +337,7 @@ struct RdpNego
                 // }
                 LOG(LOG_INFO, "activating SSL");
                 this->trans.enable_client_tls(
+                        server_cert_store,
                         server_cert_check,
                         server_notifier,
                         certif_path
@@ -396,6 +402,7 @@ struct RdpNego
             && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans.enable_client_tls(
+                        server_cert_store,
                         server_cert_check,
                         server_notifier,
                         certif_path
