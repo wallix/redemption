@@ -849,7 +849,7 @@ public:
                 if ((server_cert_check == configs::ServerCertCheck::fails_if_no_match_or_missing) ||
                     (server_cert_check == configs::ServerCertCheck::succeed_if_exists_and_fails_if_missing)) {
                     LOG(LOG_ERR, "There's no stored certificate: \"%s\"\n", filename);
-                    server_notifier.server_cert_error(strerror(errno));
+                    server_notifier.server_cert_failure();
                     throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_MISSED);
                 }
 
