@@ -43,6 +43,7 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
+                        , unsigned png_width, unsigned png_height
                         , bool show_file_metadata, bool show_statistics
                         , bool force_record, uint32_t verbose
                         , ExtraArguments&&... extra_argument);
@@ -60,6 +61,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument);
 
@@ -116,6 +118,9 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     init_signals();
 
+    unsigned png_width  = 0;
+    unsigned png_height = 0;
+
     std::string input_filename;
     std::string output_filename;
 
@@ -137,6 +142,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string wrm_compression_algorithm;  // output compression algorithm.
     std::string wrm_color_depth;
     std::string wrm_encryption;
+    std::string png_geometry;
 
     std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
 
@@ -163,6 +169,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         {"clear", &clear, "clear old capture files with same prefix (default on)"},
         {"verbose", &verbose, "more logs"},
         {"zoom", &zoom, "scaling factor for png capture (default 100%)"},
+        {'g', "png-geometry", & png_geometry, "png capture geometry (Ex. 160x120)"},
         {'m', "meta", "show file metadata"},
         {'s', "statistics", "show statistics"},
 
@@ -212,6 +219,28 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     if (!output_filename.empty() && auto_output_file) {
         std::cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
         return -1;
+    }
+
+    if ((options.count("zoom") > 0) & (options.count("png-geometry") > 0)) {
+        std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
+        return -1;
+    }
+
+    if (options.count("png-geometry") > 0) {
+        const char * png_geometry_c = png_geometry.c_str();
+        const char * separator      = strchr(png_geometry_c, 'x');
+        int          png_w          = atoi(png_geometry_c);
+        int          png_h          = 0;
+        if (separator) {
+            png_h = atoi(separator + 1);
+        }
+        if (!png_w || !png_h) {
+            std::cerr << "Invalide png geometry\n\n";
+            return -1;
+        }
+        png_width  = png_w;
+        png_height = png_h;
+        std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
     }
 
     Inifile ini;
@@ -362,6 +391,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         input_filename, output_filename, capture_bpp, wrm_compression_algorithm_, ini
       , remove_input_file, infile_is_encrypted, auto_output_file
       , begin_cap, end_cap, order_count, clear, zoom
+      , png_width, png_height
       , show_file_metadata, show_statistics
       , has_extra_capture(ini)
       , verbose
@@ -398,6 +428,7 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                         , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
+                        , unsigned png_width, unsigned png_height
                         , bool show_file_metadata, bool show_statistics
                         , bool force_record, uint32_t verbose
                         , ExtraArguments&&... extra_argument)
@@ -502,6 +533,7 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                   , do_record<CaptureMaker>(
                       trans, begin_record, end_record, begin_capture, end_capture
                     , output_filename, capture_bpp, wrm_compression_algorithm_, ini, file_count, order_count, clear, zoom
+                    , png_width, png_height
                     , show_file_metadata, show_statistics, verbose
                     , std::forward<ExtraArguments>(extra_argument)...
                     )
@@ -814,6 +846,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
                     , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument) {
     for (unsigned i = 1; i < file_count ; i++) {
@@ -886,6 +919,17 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             auto & capture = capmake.capture;
 
             if (capture.capture_png) {
+                if (png_width && png_height) {
+                    auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
+                        return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
+                    };
+                    zoom = std::max<unsigned>(
+                            get_percent(png_width, player.screen_rect.cx),
+                            get_percent(png_height, player.screen_rect.cy)
+                        );
+                    //std::cout << "zoom: " << zoom << '%' << std::endl;
+                }
+
                 capture.psc->zoom(zoom);
             }
             player.add_consumer(&capture, &capture);

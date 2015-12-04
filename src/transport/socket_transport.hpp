@@ -892,9 +892,6 @@ public:
             fp = ::fopen(filename, "r");
             tmpfp = ::fopen(tmpfilename, "r");
 
-//            ::rewind(fp);
-//            ::rewind(tmpfp);
-
             char buffer1[2048];
             char buffer2[2048];
             int binary_check_failed = false;
@@ -919,19 +916,12 @@ public:
             ::unlink(tmpfilename);
             ::fclose(fp);
 
-            char * issuer               = nullptr;
-            char * issuer_existing      = nullptr;
-            char * subject              = nullptr;
-            char * subject_existing     = nullptr;
-            char * fingerprint          = nullptr;
-            char * fingerprint_existing = nullptr;
-
-            issuer               = crypto_print_name(X509_get_issuer_name(px509));
-            issuer_existing      = crypto_print_name(X509_get_issuer_name(px509Existing));
-            subject              = crypto_print_name(X509_get_subject_name(px509));
-            subject_existing     = crypto_print_name(X509_get_subject_name(px509Existing));
-            fingerprint          = crypto_cert_fingerprint(px509);
-            fingerprint_existing = crypto_cert_fingerprint(px509Existing);
+            char const * const issuer               = crypto_print_name(X509_get_issuer_name(px509));
+            char const * const issuer_existing      = crypto_print_name(X509_get_issuer_name(px509Existing));
+            char const * const subject              = crypto_print_name(X509_get_subject_name(px509));
+            char const * const subject_existing     = crypto_print_name(X509_get_subject_name(px509Existing));
+            char const * const fingerprint          = crypto_cert_fingerprint(px509);
+            char const * const fingerprint_existing = crypto_cert_fingerprint(px509Existing);;
 
             LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing);
             LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
@@ -976,18 +966,17 @@ public:
                 server_notifier.server_cert_success();
             }
 
-            if (issuer               != nullptr) { free(issuer              ); }
-            if (issuer_existing      != nullptr) { free(issuer_existing     ); }
-            if (subject              != nullptr) { free(subject             ); }
-            if (subject_existing     != nullptr) { free(subject_existing    ); }
-            if (fingerprint          != nullptr) { free(fingerprint         ); }
-            if (fingerprint_existing != nullptr) { free(fingerprint_existing); }
+            if (issuer               != nullptr) { free(const_cast<char *>(issuer              )); }
+            if (issuer_existing      != nullptr) { free(const_cast<char *>(issuer_existing     )); }
+            if (subject              != nullptr) { free(const_cast<char *>(subject             )); }
+            if (subject_existing     != nullptr) { free(const_cast<char *>(subject_existing    )); }
+            if (fingerprint          != nullptr) { free(const_cast<char *>(fingerprint         )); }
+            if (fingerprint_existing != nullptr) { free(const_cast<char *>(fingerprint_existing)); }
 
             X509_free(px509Existing);
         }
 
         server_notifier.server_access_allowed();
-
 
 //        SSL_get_verify_result();
 
