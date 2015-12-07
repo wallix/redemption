@@ -711,7 +711,7 @@ class Sesman():
                             Logger().info(u"Unexpected error in selector pagination %s" % traceback.format_exc(e))
                         return False, u"Unexpected error in selector pagination"
                 elif len(services) == 1:
-                    Logger().info(u"service len = 1")
+                    Logger().info(u"service len = 1 %s" % str(services))
                     s = services[0]
                     data_to_send = {}
                     data_to_send[u'login'] = wab_login
@@ -1195,7 +1195,6 @@ class Sesman():
                             connectionpolicy_kv[u'server_cert_success_message']   = server_cert_section.get('server_cert_success_message')
                             connectionpolicy_kv[u'server_cert_failure_message']   = server_cert_section.get('server_cert_failure_message')
                             connectionpolicy_kv[u'server_cert_error_message']     = server_cert_section.get('server_cert_error_message')
-
 
                         kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
 
