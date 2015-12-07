@@ -23,7 +23,7 @@ try:
     from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY
     from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
-        SUPPORTED_AUTHENTICATION_METHODS
+        PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
     from wabengine.common.const import AM_IL_DOMAIN
     from wabx509 import AuthX509
 except Exception, e:
@@ -663,6 +663,18 @@ class Engine(object):
         except Exception, e:
             import traceback
             Logger().info("Engine get_app_params failed: (((%s)))" % (traceback.format_exc(e)))
+        return None
+
+    def get_primary_password(self, target_device):
+        Logger().info("Engine get_primary_password ...")
+        try:
+            password = self.wabengine.get_primary_password(target_device)
+            Logger().info("Engine get_primary_password done")
+            return password
+        except Exception, e:
+            import traceback
+            Logger().info("Engine get_primary_password failed")
+            Logger().debug("Engine get_primary_password failed: (((%s)))" % (traceback.format_exc(e)))
         return None
 
     def get_target_credentials(self, target_device):
