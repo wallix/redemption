@@ -186,7 +186,7 @@ public:
                this->datasize();
     }
 
-    void emit(OutStream & stream) const {
+    void emiit(OutStream & stream) const {
         using namespace RDP;
         uint16_t size = this->datasize();
 

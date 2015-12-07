@@ -912,3 +912,17 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z :  $(TEST_DEPENDENCIES) ;
+
+
+# import qt4 ;
+# if ! [ qt4.initialized ]
+# {
+#     ECHO "oh nooo" ;
+# }
+# import cast ;
+
+lib qtcore : : <name>QtCore : ;
+lib qtgui : : <name>QtGui : ;
+
+unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qtcore qtgui :  $(TEST_DEPENDENCIES) <include>/usr/include/qt4/QtGui/ <include>/usr/include/qt4/ ;
+# unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <include>/usr/include/qt4/QtGui/ <include>/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;

@@ -202,9 +202,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     ~NTLMChallengeMessage() override {}
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         this->TargetInfo.buffer.reset();
-        this->AvPairList.emit(this->TargetInfo.buffer.ostream);
+        this->AvPairList.emiit(this->TargetInfo.buffer.ostream);
         this->TargetInfo.buffer.mark_end();
 
         uint32_t currentOffset = this->PayloadOffset;
@@ -214,14 +214,14 @@ struct NTLMChallengeMessage : public NTLMMessage {
         else {
             currentOffset -= 8;
         }
-        NTLMMessage::emit(stream);
-        currentOffset += this->TargetName.emit(stream, currentOffset);
-        this->negoFlags.emit(stream);
+        NTLMMessage::emiit(stream);
+        currentOffset += this->TargetName.emiit(stream, currentOffset);
+        this->negoFlags.emiit(stream);
         stream.out_copy_bytes(this->serverChallenge, 8);
         stream.out_clear_bytes(8);
-        /*currentOffset +=*/ this->TargetInfo.emit(stream, currentOffset);
+        /*currentOffset +=*/ this->TargetInfo.emiit(stream, currentOffset);
         if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.emit(stream);
+            this->version.emiit(stream);
         }
         // PAYLOAD
         this->TargetName.write_payload(stream);
@@ -254,7 +254,7 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     //void avpair_decode() {
     //    this->TargetInfo.Buffer.reset();
-    //    this->AvPairList.emit(this->TargetInfo.Buffer);
+    //    this->AvPairList.emiit(this->TargetInfo.Buffer);
     //}
 
 };

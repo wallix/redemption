@@ -183,7 +183,7 @@ struct GlyphCacheCaps : public Capability {
     GlyphCacheCaps()
     : Capability(CAPSTYPE_GLYPHCACHE, LENGTH_CAPABILITY) {}
 
-    void emit(OutStream & stream)override {
+    void emiit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         for (uint8_t i = 0; i < NUMBER_OF_CACHE; ++i) {

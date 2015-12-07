@@ -81,7 +81,7 @@ class RDPDestBlt {
              ;
     }
 
-    void emit(OutStream & stream,
+    void emiit(OutStream & stream,
               RDPOrderCommon & common,
               const RDPOrderCommon & oldcommon,
               const RDPDestBlt & oldcmd) const
@@ -116,9 +116,9 @@ class RDPDestBlt {
                       | (this->rop  != oldcmd.rop) * 0x10
                       ;
 
-        common.emit(stream, header, oldcommon);
+        common.emiit(stream, header, oldcommon);
 
-        header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
+        header.emiit_rect(stream, 0x01, this->rect, oldcmd.rect);
 
         if (header.fields & 0x10){
             stream.out_uint8(this->rop);

@@ -170,7 +170,7 @@ public:
             && (this->brush == other.brush));
     }
 
-    void emit(OutStream & stream,
+    void emiit(OutStream & stream,
               RDPOrderCommon & common,
               const RDPOrderCommon & oldcommon,
               const RDPEllipseCB & oldcmd) const
@@ -210,11 +210,11 @@ public:
             |(this->brush.hatch != oldcmd.brush.hatch) * 0x0800
             |(memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0) * 0x1000;
 
-        common.emit(stream, header, oldcommon);
-        header.emit_coord(stream, 0x0001, left,   oldleft);
-        header.emit_coord(stream, 0x0002, top,    oldtop);
-        header.emit_coord(stream, 0x0004, right,  oldright);
-        header.emit_coord(stream, 0x0008, bottom, oldbottom);
+        common.emiit(stream, header, oldcommon);
+        header.emiit_coord(stream, 0x0001, left,   oldleft);
+        header.emiit_coord(stream, 0x0002, top,    oldtop);
+        header.emiit_coord(stream, 0x0004, right,  oldright);
+        header.emiit_coord(stream, 0x0008, bottom, oldbottom);
 
         if (header.fields & 0x0010) { stream.out_uint8(this->brop2); }
 
@@ -230,7 +230,7 @@ public:
             stream.out_uint8(this->fore_color >> 8);
             stream.out_uint8(this->fore_color >> 16);
         }
-        header.emit_brush(stream, 0x0100, this->brush, oldcmd.brush);
+        header.emiit_brush(stream, 0x0100, this->brush, oldcmd.brush);
     }
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header)

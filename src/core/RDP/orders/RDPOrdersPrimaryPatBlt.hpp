@@ -1052,7 +1052,7 @@ class RDPPatBlt {
              ;
     }
 
-    void emit(OutStream & stream,
+    void emiit(OutStream & stream,
             RDPOrderCommon & common,
             const RDPOrderCommon & oldcommon,
             const RDPPatBlt & oldcmd) const
@@ -1102,9 +1102,9 @@ class RDPPatBlt {
                        | (memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0) * 0x800
                        ;
 
-        common.emit(stream, header, oldcommon);
+        common.emiit(stream, header, oldcommon);
 
-        header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
+        header.emiit_rect(stream, 0x01, this->rect, oldcmd.rect);
 
         if (header.fields & 0x10) {
             stream.out_uint8(this->rop);
@@ -1120,7 +1120,7 @@ class RDPPatBlt {
             stream.out_uint8(this->fore_color >> 16);
         }
 
-        header.emit_brush(stream, 0x80, this->brush, oldcmd.brush);
+        header.emiit_brush(stream, 0x80, this->brush, oldcmd.brush);
     }
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header)

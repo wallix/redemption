@@ -1278,7 +1278,7 @@ public:
                         if (this->verbose & 1) {
                             sc_core.log("Sending to client");
                         }
-                        sc_core.emit(stream);
+                        sc_core.emiit(stream);
                     }
                     // ------------------------------------------------------------------
                     {
@@ -1291,7 +1291,7 @@ public:
                         if (this->verbose & 1) {
                             sc_net.log("Sending to client");
                         }
-                        sc_net.emit(stream);
+                        sc_net.emiit(stream);
                     }
                     // ------------------------------------------------------------------
                     if (this->tls_client_active) {
@@ -1304,7 +1304,7 @@ public:
                         if (this->verbose & 1) {
                             sc_sec1.log("Sending to client");
                         }
-                        sc_sec1.emit(stream);
+                        sc_sec1.emiit(stream);
                     }
                     else {
                         GCC::UserData::SCSecurity sc_sec1;
@@ -1374,7 +1374,7 @@ public:
                         if (this->verbose & 1) {
                             sc_sec1.log("Sending to client");
                         }
-                        sc_sec1.emit(stream);
+                        sc_sec1.emiit(stream);
                     }
                 },
                 [](StreamSize<256>, OutStream & gcc_header, std::size_t packed_size) {
@@ -2550,7 +2550,7 @@ private:
                 if (this->verbose) {
                     general_caps.log("Sending to client");
                 }
-                general_caps.emit(stream);
+                general_caps.emiit(stream);
                 caps_count++;
 
                 BitmapCaps bitmap_caps;
@@ -2566,14 +2566,14 @@ private:
                 if (this->verbose) {
                     bitmap_caps.log("Sending to client");
                 }
-                bitmap_caps.emit(stream);
+                bitmap_caps.emiit(stream);
                 caps_count++;
 
                 FontCaps font_caps;
                 if (this->verbose) {
                     font_caps.log("Sending to client");
                 }
-                font_caps.emit(stream);
+                font_caps.emiit(stream);
                 caps_count++;
 
                 OrderCaps order_caps;
@@ -2603,7 +2603,7 @@ private:
                 if (this->verbose) {
                     order_caps.log("Sending to client");
                 }
-                order_caps.emit(stream);
+                order_caps.emiit(stream);
                 caps_count++;
 
                 if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
@@ -2611,7 +2611,7 @@ private:
                     if (this->verbose) {
                         bitmap_cache_host_support_caps.log("Sending to client");
                     }
-                    bitmap_cache_host_support_caps.emit(stream);
+                    bitmap_cache_host_support_caps.emiit(stream);
                     caps_count++;
                 }
 
@@ -2619,7 +2619,7 @@ private:
                 if (this->verbose) {
                     colorcache_caps.log("Sending to client");
                 }
-                colorcache_caps.emit(stream);
+                colorcache_caps.emiit(stream);
                 caps_count++;
 
                 PointerCaps pointer_caps;
@@ -2628,7 +2628,7 @@ private:
                 if (this->verbose) {
                     pointer_caps.log("Sending to client");
                 }
-                pointer_caps.emit(stream);
+                pointer_caps.emiit(stream);
                 caps_count++;
 
                 ShareCaps share_caps;
@@ -2637,7 +2637,7 @@ private:
                 if (this->verbose) {
                     share_caps.log("Sending to client");
                 }
-                share_caps.emit(stream);
+                share_caps.emiit(stream);
                 caps_count++;
 
                 InputCaps input_caps;
@@ -2654,7 +2654,7 @@ private:
                 if (this->verbose) {
                     input_caps.log("Sending to client");
                 }
-                input_caps.emit(stream);
+                input_caps.emiit(stream);
                 caps_count++;
 
                 if (this->client_info.remote_program) {
@@ -2663,7 +2663,7 @@ private:
                     if (this->verbose) {
                         rail_caps.log("Sending to client");
                     }
-                    rail_caps.emit(stream);
+                    rail_caps.emiit(stream);
                     caps_count++;
 
                     WindowListCaps window_list_caps;
@@ -2673,7 +2673,7 @@ private:
                     if (this->verbose) {
                         window_list_caps.log("Sending to client");
                     }
-                    window_list_caps.emit(stream);
+                    window_list_caps.emiit(stream);
                     caps_count++;
                 }
 
@@ -3680,7 +3680,7 @@ private:
                     uint16_t pdu_size_offset = persistent_key_list_stream.get_offset();
                     persistent_key_list_stream.out_clear_bytes(2);  // Size of Persistent Key List PDU.
 
-                    pklpdud.emit(persistent_key_list_stream);
+                    pklpdud.emiit(persistent_key_list_stream);
 
                     persistent_key_list_stream.set_out_uint16_le(
                           persistent_key_list_stream.get_offset() - 2 /* Size of Persistent Key List PDU(2) */

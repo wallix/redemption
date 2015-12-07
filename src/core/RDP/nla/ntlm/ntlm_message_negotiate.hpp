@@ -166,16 +166,16 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
             currentOffset -= 8;
         }
-        NTLMMessage::emit(stream);
-        this->negoFlags.emit(stream);
-        currentOffset += this->DomainName.emit(stream, currentOffset);
-        currentOffset += this->Workstation.emit(stream, currentOffset);
-        this->version.emit(stream);
+        NTLMMessage::emiit(stream);
+        this->negoFlags.emiit(stream);
+        currentOffset += this->DomainName.emiit(stream, currentOffset);
+        currentOffset += this->Workstation.emiit(stream, currentOffset);
+        this->version.emiit(stream);
 
         // PAYLOAD
         this->DomainName.write_payload(stream);

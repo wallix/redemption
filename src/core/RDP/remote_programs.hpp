@@ -159,14 +159,14 @@ public:
     explicit RAILPDUHeader_Send(OutStream & stream)
     : stream(stream), offset_of_orderLength(0) {}
 
-    void emit_begin(uint16_t orderType) {
+    void emiit_begin(uint16_t orderType) {
         this->stream.out_uint16_le(orderType);
 
         this->offset_of_orderLength = this->stream.get_offset();
         this->stream.out_clear_bytes(2);
     }
 
-    void emit_end() {
+    void emiit_end() {
         this->stream.set_out_uint16_le(
             this->stream.get_offset() - this->offset_of_orderLength +
                 2 /* orderType(2) */,

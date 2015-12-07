@@ -357,7 +357,7 @@ public:
              ;
     }
 
-    void emit( OutStream & stream
+    void emiit( OutStream & stream
              , RDPOrderCommon & common
              , const RDPOrderCommon & oldcommon
              , const RDPGlyphIndex & oldcmd) const {
@@ -419,7 +419,7 @@ public:
             | (data_len                 != 0                          ) * 0x200000
             ;
 
-        common.emit(stream, header, oldcommon);
+        common.emiit(stream, header, oldcommon);
 
         if (header.fields & 0x001) { stream.out_uint8(this->cache_id); }
         if (header.fields & 0x002) { stream.out_uint8(this->fl_accel); }
@@ -447,7 +447,7 @@ public:
         if (header.fields & 0x1000) { stream.out_uint16_le(this->op.x + this->op.cx - 1); }
         if (header.fields & 0x2000) { stream.out_uint16_le(this->op.y + this->op.cy - 1); }
 
-        header.emit_brush(stream, 0x4000, this->brush, oldcmd.brush);
+        header.emiit_brush(stream, 0x4000, this->brush, oldcmd.brush);
 
         if (header.fields & 0x080000) { stream.out_uint16_le(this->glyph_x); }
         if (header.fields & 0x100000) { stream.out_uint16_le(this->glyph_y); }

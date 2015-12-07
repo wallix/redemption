@@ -641,7 +641,7 @@ namespace GCC
             {
             }
 
-            void emit(OutStream & stream)
+            void emiit(OutStream & stream)
             {
                 if (this->length != 8
                 && this->length != 12
@@ -1153,7 +1153,7 @@ namespace GCC
 
             }
 
-            void emit(OutStream & stream)
+            void emiit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
@@ -1177,11 +1177,11 @@ namespace GCC
                 stream.out_utf16(this->imeFileName, 32);
 
                 // --------------------- Optional Fields ---------------------------------------
-                this->emit_optional(stream);
+                this->emiit_optional(stream);
             }
 
             private:
-            void emit_optional(OutStream & stream)
+            void emiit_optional(OutStream & stream)
             {
                 if (this->length < 134) { return; }
                 stream.out_uint16_le(this->postBeta2ColorDepth);
@@ -1442,7 +1442,7 @@ namespace GCC
             {
             }
 
-            void emit(OutStream & stream)
+            void emiit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
@@ -1581,7 +1581,7 @@ namespace GCC
             , monitorDefArray()
             , permissive(false) {}
 
-            void emit(OutStream & stream) {
+            void emiit(OutStream & stream) {
                 REDASSERT((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));
 
                 stream.out_uint16_le(this->userDataType);
@@ -1782,7 +1782,7 @@ namespace GCC
 
             bool permissive = false;
 
-            void emit(OutStream & stream)
+            void emiit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
                 this->length = this->channelCount * 12 + 8;
@@ -1917,7 +1917,7 @@ namespace GCC
             {
             }
 
-            void emit(OutStream & stream)
+            void emiit(OutStream & stream)
             {
                 this->length = 8 + 4 * ((this->channelCount+1) >> 1);
                 stream.out_uint16_le(this->userDataType);
@@ -2450,7 +2450,7 @@ namespace GCC
                 }
             }
 
-            void emit(OutStream & stream)
+            void emiit(OutStream & stream)
             {
                 stream.out_uint16_le(SC_SECURITY);
 
@@ -2768,7 +2768,7 @@ namespace GCC
             {
             }
 
-            void emit(OutStream & stream)
+            void emiit(OutStream & stream)
             {
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);

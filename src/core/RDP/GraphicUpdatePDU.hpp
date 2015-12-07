@@ -123,12 +123,12 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
 
     StaticOutStream<256> share_data_header;
     ShareData share_data(share_data_header);
-    share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
+    share_data.emiit_begin( pduType2, shareId, RDP::STREAM_MED
                          , data.get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */
                          , compressionFlags
                          , (compressionFlags ? data_.get().get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
                          );
-    share_data.emit_end();
+    share_data.emiit_end();
     data_.get().copy_to_head(share_data_header);
 
     StaticOutStream<256> share_ctrl_header;

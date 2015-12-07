@@ -410,7 +410,7 @@ struct ConfirmActivePDU_Send {
         , offset_capabilitySets(0) {
     }
 
-    void emit_begin(uint32_t shareId) {
+    void emiit_begin(uint32_t shareId) {
         const char * sourceDescriptor       = "MSTSC";
         uint16_t     lengthSourceDescriptor = ::strlen(sourceDescriptor);
 
@@ -454,12 +454,12 @@ struct ConfirmActivePDU_Send {
         this->offset_capabilitySets = payload.get_offset();
     }
 
-    void emit_capability_set(Capability & capability) {
-        capability.emit(this->payload);
+    void emiit_capability_set(Capability & capability) {
+        capability.emiit(this->payload);
         this->numberCapabilities++;
     }
 
-    void emit_end() {
+    void emiit_end() {
         uint16_t lengthCombinedCapabilities;
 
         // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer.

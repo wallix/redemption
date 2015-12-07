@@ -245,11 +245,11 @@ protected:
         , dataLen_(dataLen) {
     }   // CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(this->dataLen_);
-    }   // void emit(OutStream & stream)
+    }   // void emiit(OutStream & stream)
 
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         const unsigned expected = 6;    /* msgFlags_(2) + dataLen_(4) */
@@ -325,12 +325,12 @@ public:
         cCapabilitiesSets(cCapabilitiesSets)
     {}
 
-    void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+    void emiit(OutStream & stream) {
+        CliprdrHeader::emiit(stream);
 
         stream.out_uint16_le(cCapabilitiesSets);
         stream.out_clear_bytes(2);  // pad1(2)
-    }   // void emit(OutStream & stream)
+    }   // void emiit(OutStream & stream)
 
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
@@ -520,7 +520,7 @@ public:
         this->generalFlags_ = generalFlags;
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         stream.out_uint16_le(this->capabilitySetType);
         stream.out_uint16_le(this->lengthCapability);
         stream.out_uint32_le(this->version);
@@ -611,7 +611,7 @@ struct ServerMonitorReadyPDU : public CliprdrHeader {
     ServerMonitorReadyPDU() : CliprdrHeader(CB_MONITOR_READY, 0, 0) {
     }   // ServerMonitorReadyPDU(bool response_ok)
 
-    using CliprdrHeader::emit;
+    using CliprdrHeader::emiit;
     using CliprdrHeader::recv;
 
 };  // struct ServerMonitorReadyPDU
@@ -661,18 +661,18 @@ struct FormatListPDU : public CliprdrHeader {
         , contians_data_in_text_format(false)
         , contians_data_in_unicodetext_format(false) {}
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
+        CliprdrHeader::emiit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
     }
 
-    void emit_ex(OutStream & stream, bool unicodetext) {
+    void emiit_ex(OutStream & stream, bool unicodetext) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
+        CliprdrHeader::emiit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
@@ -773,7 +773,7 @@ struct FormatListResponsePDU : public CliprdrHeader {
                        , 0) {
     }   // FormatListResponsePDU(bool response_ok)
 
-    using CliprdrHeader::emit;
+    using CliprdrHeader::emiit;
     using CliprdrHeader::recv;
 };  // struct FormatListResponsePDU
 
@@ -816,11 +816,11 @@ struct FormatDataRequestPDU : public CliprdrHeader {
             , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
 
-    void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+    void emiit(OutStream & stream) {
+        CliprdrHeader::emiit(stream);
 
         stream.out_uint32_le(this->requestedFormatId);
-    }   // void emit(OutStream & stream)
+    }   // void emiit(OutStream & stream)
 
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
@@ -872,7 +872,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , 0) {
     }
 
-    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
+    void emiit(OutStream & stream, const uint8_t * data, size_t data_length) const {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
@@ -888,7 +888,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         }
     }
 
-    void emit_ex(OutStream & stream, size_t data_length) const {
+    void emiit_ex(OutStream & stream, size_t data_length) const {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
@@ -908,8 +908,8 @@ struct FileContentsResponse : CliprdrHeader {
     : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
     {}
 
-    void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+    void emiit(OutStream & stream) {
+        CliprdrHeader::emiit(stream);
 //         stream.out_uint32_le(0);
 //         stream.out_uint64_le(0);
     }
@@ -1078,7 +1078,7 @@ class FileDescriptor {
     std::string file_name;
 
 public:
-    void emit(OutStream & stream) const {
+    void emiit(OutStream & stream) const {
         stream.out_uint32_le(this->flags);
 
         stream.out_clear_bytes(32); // reserved1(32)

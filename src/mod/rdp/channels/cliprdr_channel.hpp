@@ -104,7 +104,7 @@ private:
 
         StaticOutStream<256> out_stream;
 
-        pdu.emit(out_stream, args...);
+        pdu.emiit(out_stream, args...);
 
         const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =
@@ -125,7 +125,7 @@ private:
 
         StaticOutStream<256> out_stream;
 
-        pdu.emit(out_stream, args...);
+        pdu.emiit(out_stream, args...);
 
         const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =

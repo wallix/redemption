@@ -774,7 +774,7 @@ struct InfoPacket {
         }
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         this->flags |= ((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON;
         this->flags |= (this->rdp5_support != 0 ) * ( INFO_LOGONERRORS/* | INFO_NOAUDIOPLAYBACK*/ );
 
@@ -860,7 +860,7 @@ struct InfoPacket {
 
         } // END IF (this->rdp5_support)
 
-    } // END FUNCT : emit()
+    } // END FUNCT : emiit()
 
     void recv(InStream & stream){
         unsigned expected =

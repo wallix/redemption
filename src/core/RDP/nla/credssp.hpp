@@ -140,7 +140,7 @@ struct TSRequest {
         return length;
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         int length;
         int ts_request_length;
         int nego_tokens_length;
@@ -169,7 +169,7 @@ struct TSRequest {
 
         /* [1] negoTokens (NegoData) */
         if (nego_tokens_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
+            LOG(LOG_INFO, "Credssp: TSCredentials::emiit() NegoToken");
             length = nego_tokens_length;
 
             int sequence_length   = BER::sizeof_sequence_octet_string(this->negoTokens.size());
@@ -188,7 +188,7 @@ struct TSRequest {
 
         /* [2] authInfo (OCTET STRING) */
         if (auth_info_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
+            LOG(LOG_INFO, "Credssp: TSCredentials::emiit() AuthInfo");
             length = auth_info_length;
             length -= BER::write_sequence_octet_string(stream, 2,
                                                        this->authInfo.get_data(),
@@ -198,7 +198,7 @@ struct TSRequest {
 
         /* [3] pubKeyAuth (OCTET STRING) */
         if (pub_key_auth_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
+            LOG(LOG_INFO, "Credssp: TSCredentials::emiit() pubKeyAuth");
             length = pub_key_auth_length;
             length -= BER::write_sequence_octet_string(stream, 3,
                                                        this->pubKeyAuth.get_data(),
@@ -327,7 +327,7 @@ struct TSPasswordCreds {
         return length;
     }
 
-    int emit(OutStream & stream) {
+    int emiit(OutStream & stream) {
         int size = 0;
         int innerSize = this->ber_sizeof();
 
@@ -416,9 +416,9 @@ struct TSCredentials {
         return size;
     }
 
-    int emit(OutStream & ts_credentials) {
+    int emiit(OutStream & ts_credentials) {
         // ts_credentials is the authInfo Stream field of TSRequest before it is sent
-        // ts_credentials will not be encrypted and should be encrypted after calling emit
+        // ts_credentials will not be encrypted and should be encrypted after calling emiit
         int size = 0;
 
         int innerSize = this->ber_sizeof();
@@ -437,7 +437,7 @@ struct TSCredentials {
 
         size += BER::write_contextual_tag(ts_credentials, 1, BER::sizeof_octet_string(passwordSize), true);
         size += BER::write_octet_string_tag(ts_credentials, passwordSize);
-        size += this->passCreds.emit(ts_credentials);
+        size += this->passCreds.emiit(ts_credentials);
 
         return size;
     }

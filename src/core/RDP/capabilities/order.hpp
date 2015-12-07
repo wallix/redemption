@@ -365,7 +365,7 @@ struct OrderCaps : public Capability {
         memset(this->orderSupport, 0, NB_ORDER_SUPPORT); // 32 bits array filled with 0 BY DEFAULT
     }
 
-    void emit(OutStream & stream)override {
+    void emiit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_copy_bytes(this->terminalDescriptor, 16);

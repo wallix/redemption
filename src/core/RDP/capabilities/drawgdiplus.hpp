@@ -222,8 +222,8 @@ struct DrawGdiPlusCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream) override {
-//        LOG(LOG_INFO, "DrawGdiPlus caps emit not implemented");
+    void emiit(OutStream & stream) override {
+//        LOG(LOG_INFO, "DrawGdiPlus caps emiit not implemented");
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->drawGDIPlusSupportLevel);

@@ -310,7 +310,7 @@ public:
     : FileAttributes(FileAttributes)
     , ReparseTag(ReparseTag) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint32_le(this->FileAttributes);
         stream.out_uint32_le(this->ReparseTag);
     }
@@ -459,7 +459,7 @@ public:
     , ChangeTime(ChangeTime)
     , FileAttributes_(FileAttributes) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint64_le(this->CreationTime);
         stream.out_uint64_le(this->LastAccessTime_);
         stream.out_uint64_le(this->LastWriteTime_);
@@ -712,7 +712,7 @@ public:
     , FileAttributes(FileAttributes)
     , file_name(file_name) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -1139,7 +1139,7 @@ public:
     , FileAttributes(FileAttributes)
     , file_name(file_name) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -1356,7 +1356,7 @@ public:
     explicit FileNamesInformation(const char * file_name)
     : file_name(file_name) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -1582,7 +1582,7 @@ public:
     , DeletePending(DeletePending)
     , Directory(Directory) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_sint64_le(this->AllocationSize);
         stream.out_sint64_le(this->EndOfFile);
 
@@ -1824,7 +1824,7 @@ public:
     , MaximumComponentNameLength(MaximumComponentNameLength)
     , file_system_name(file_system_name) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint32_le(this->FileSystemAttributes_);
         stream.out_sint32_le(this->MaximumComponentNameLength);
 
@@ -2008,7 +2008,7 @@ public:
     , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
     , BytesPerSector(BytesPerSector) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_sint64_le(this->TotalAllocationUnits);
         stream.out_sint64_le(this->CallerAvailableAllocationUnits);
         stream.out_sint64_le(this->ActualAvailableAllocationUnits);
@@ -2139,7 +2139,7 @@ public:
     , SectorsPerAllocationUnit(SectorsPerAllocationUnit)
     , BytesPerSector(BytesPerSector) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_sint64_le(this->TotalAllocationUnits);
         stream.out_sint64_le(this->AvailableAllocationUnits);
         stream.out_uint32_le(this->SectorsPerAllocationUnit);
@@ -2278,7 +2278,7 @@ public:
     , SupportsObjects(SupportsObjects)
     , volume_label(volume_label) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint64_le(this->VolumeCreationTime);
         stream.out_uint32_le(this->VolumeSerialNumber);
 
@@ -2538,7 +2538,7 @@ public:
     : DeviceType(DeviceType)
     , Characteristics(Characteristics) {}
 
-    inline void emit(OutStream & stream) const {
+    inline void emiit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceType);
         stream.out_uint32_le(this->Characteristics);
     }

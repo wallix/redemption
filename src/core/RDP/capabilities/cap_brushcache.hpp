@@ -74,7 +74,7 @@ struct BrushCacheCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)override {
+    void emiit(OutStream & stream)override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->brushSupportLevel);

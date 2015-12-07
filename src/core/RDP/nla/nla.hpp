@@ -369,7 +369,7 @@ public:
         this->credssp_encode_ts_credentials();
 
         StaticOutStream<65536> ts_credentials_send;
-        this->ts_credentials.emit(ts_credentials_send);
+        this->ts_credentials.emiit(ts_credentials_send);
 
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TSCredentials */
@@ -457,9 +457,9 @@ public:
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "rdpCredssp::send");
         }
-        StaticOutStream<65536> ts_request_emit;
-        this->ts_request.emit(ts_request_emit);
-        this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
+        StaticOutStream<65536> ts_request_emiit;
+        this->ts_request.emiit(ts_request_emiit);
+        this->trans.send(ts_request_emiit.get_data(), ts_request_emiit.get_offset());
     }
     int credssp_recv() {
         // ad hoc read of ber encoding size.

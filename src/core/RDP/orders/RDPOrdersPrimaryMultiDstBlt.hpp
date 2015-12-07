@@ -158,7 +158,7 @@ public:
             ;
     }
 
-    void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
+    void emiit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiDstBlt & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
@@ -200,12 +200,12 @@ public:
                                                             ) * 0x0040
               ;
 
-        common.emit(stream, header, oldcommon);
+        common.emiit(stream, header, oldcommon);
 
-        header.emit_coord(stream, 0x0001, this->nLeftRect, oldcmd.nLeftRect);
-        header.emit_coord(stream, 0x0002, this->nTopRect,  oldcmd.nTopRect);
-        header.emit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
-        header.emit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
+        header.emiit_coord(stream, 0x0001, this->nLeftRect, oldcmd.nLeftRect);
+        header.emiit_coord(stream, 0x0002, this->nTopRect,  oldcmd.nTopRect);
+        header.emiit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
+        header.emiit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
 
         if (header.fields & 0x0010) { stream.out_uint8(this->bRop); }
 
@@ -260,7 +260,7 @@ public:
 
             stream.set_out_uint16_le(stream.get_offset() - offset_cbData - 2, offset_cbData);
         }
-    }   // void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiDstBlt & oldcmd) const
+    }   // void emiit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiDstBlt & oldcmd) const
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         //LOG(LOG_INFO, "RDPMultiDstBlt::receive: header fields=0x%02X", header.fields);

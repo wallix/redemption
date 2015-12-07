@@ -395,12 +395,12 @@ struct ServerRedirectionPDU {
         }
     }
 
-    void emit(OutStream & stream) const {
+    void emiit(OutStream & stream) const {
         unsigned expected = 12; /* Flags(2) + Length(2) +
                                    SessionID(4) + RedirFlags(4) */
         if (!stream.has_room(expected)) {
             LOG( LOG_ERR
-               , "ServerRedirectionPDU::emit - stream too small, need=%u, remains=%u"
+               , "ServerRedirectionPDU::emiit - stream too small, need=%u, remains=%u"
                , expected
                , static_cast<unsigned>(stream.tailroom()));
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);

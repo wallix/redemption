@@ -5,6 +5,7 @@
 #define RDPQTDRAWABLE_HPP
 
 #include <QWidget>
+#include <QPicture>
 
 
 #include "../core/RDP/RDPGraphicDevice.hpp"
@@ -54,6 +55,7 @@ public:
 private:
     QLabel*   _label;
     QPainter* _p;
+    QPicture  _pi;
     
 };
 

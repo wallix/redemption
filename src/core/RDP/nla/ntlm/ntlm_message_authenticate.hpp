@@ -334,7 +334,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     ~NTLMAuthenticateMessage() override {}
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
             currentOffset -= 8;
@@ -342,15 +342,15 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         if (this->has_mic) {
             currentOffset += 16;
         }
-        NTLMMessage::emit(stream);
-        currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
-        currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
-        currentOffset += this->DomainName.emit(stream, currentOffset);
-        currentOffset += this->UserName.emit(stream, currentOffset);
-        currentOffset += this->Workstation.emit(stream, currentOffset);
-        currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
-        this->negoFlags.emit(stream);
-        this->version.emit(stream);
+        NTLMMessage::emiit(stream);
+        currentOffset += this->LmChallengeResponse.emiit(stream, currentOffset);
+        currentOffset += this->NtChallengeResponse.emiit(stream, currentOffset);
+        currentOffset += this->DomainName.emiit(stream, currentOffset);
+        currentOffset += this->UserName.emiit(stream, currentOffset);
+        currentOffset += this->Workstation.emiit(stream, currentOffset);
+        currentOffset += this->EncryptedRandomSessionKey.emiit(stream, currentOffset);
+        this->negoFlags.emiit(stream);
+        this->version.emiit(stream);
 
         if (this->has_mic) {
             if (this->ignore_mic) {
@@ -483,7 +483,7 @@ struct LMv2_Response {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         stream.out_copy_bytes(this->Response, 16);
         stream.out_copy_bytes(this->ClientChallenge, 8);
     }
@@ -582,7 +582,7 @@ struct NTLMv2_Client_Challenge {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         // ULONG length;
 
         this->RespType = 0x01;
@@ -594,7 +594,7 @@ struct NTLMv2_Client_Challenge {
         stream.out_copy_bytes(this->Timestamp, 8);
         stream.out_copy_bytes(this->ClientChallenge, 8);
         stream.out_clear_bytes(4);
-        this->AvPairList.emit(stream);
+        this->AvPairList.emiit(stream);
         stream.out_clear_bytes(4);
     }
 
@@ -648,9 +648,9 @@ struct NTLMv2_Response {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         stream.out_copy_bytes(this->Response, 16);
-        this->Challenge.emit(stream);
+        this->Challenge.emiit(stream);
     }
 
     void recv(InStream & stream) {

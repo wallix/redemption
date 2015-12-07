@@ -88,7 +88,7 @@ public:
         : palette(palette)
         , cacheIndex(cacheIndex) {}
 
-    void emit(OutStream & stream) const
+    void emiit(OutStream & stream) const
     {
         using namespace RDP;
 

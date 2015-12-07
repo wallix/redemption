@@ -311,7 +311,7 @@ struct PersistentKeyListPDUData {
         }
     }
 
-    void emit(OutStream & stream) {
+    void emiit(OutStream & stream) {
         stream.out_uint16_le(this->numEntriesCache[0]);
         stream.out_uint16_le(this->numEntriesCache[1]);
         stream.out_uint16_le(this->numEntriesCache[2]);
