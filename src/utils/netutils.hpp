@@ -93,6 +93,21 @@ int connect_sck(
 ) {
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
+    char ip_addr[256];
+    memset(ip_addr, 0, sizeof(ip_addr));
+    if ((addr.sa_family == AF_INET) && !isdigit(*ip)) {
+        union
+        {
+            struct sockaddr s;
+            struct sockaddr_storage ss;
+            struct sockaddr_in s4;
+            struct sockaddr_in6 s6;
+        } u;
+        memset(&u, 0, sizeof(u));
+        memcpy(&u.s, &addr, sizeof(u.s));
+        snprintf(ip_addr, sizeof(ip_addr), " (%s)", inet_ntoa(u.s4.sin_addr));
+    }
+
     int trial = 0;
     for (; trial < nbretry ; trial++){
         int res = ::connect(sck, &addr, addr_len);
@@ -102,7 +117,7 @@ int connect_sck(
         }
         int const err =  errno;
         if (trial > 0){
-            LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", ip, err, strerror(err));
+            LOG(LOG_INFO, "Connection to %s%s failed with errno = %d (%s)", ip, ip_addr, err, strerror(err));
         }
         if ((err == EINPROGRESS) || (err == EALREADY)){
             // try again
