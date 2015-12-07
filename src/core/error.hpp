@@ -63,6 +63,8 @@ enum error_type {
     ERR_TRANSPORT_TLS_CONNECT_FAILED = 1600,
     ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED,
     ERR_TRANSPORT_TLS_CERTIFICATE_MISSED,
+    ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED,
+    ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE,
 
     ERR_ACL_UNEXPECTED_IN_ITEM_OUT = 1700,
     ERR_ACL_MESSAGE_TOO_BIG,
@@ -346,6 +348,12 @@ public:
             return "Open file failed";
         case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
             return "TLS certificate changed";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+            return "TLS certificate missed";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+            return "TLS certificate corrupted";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+            return "TLS certificate is inaccessible";
         case ERR_VNC_CONNECTION_ERROR:
             return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
