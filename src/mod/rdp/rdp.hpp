@@ -3257,6 +3257,9 @@ public:
                 }
 
                 if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
                     (e.id == ERR_NLA_AUTHENTICATION_FAILED))
                 {
                     throw;
