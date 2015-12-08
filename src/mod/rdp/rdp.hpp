@@ -590,6 +590,8 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     } server_notifier;
 
+    bool session_probe_close_pending = false;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -3228,7 +3230,8 @@ public:
                     throw;
                 }
                 if (this->acl &&
-                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
+                    ((e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                     (e.id != ERR_SESSION_PROBE_CLOSE_PENDING)))
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
@@ -3238,6 +3241,7 @@ public:
                     this->end_session_message.clear();
                 }
 
+                if (e.id != ERR_SESSION_PROBE_CLOSE_PENDING)
                 {
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
@@ -3327,6 +3331,11 @@ public:
                     this->front.disable_input_event_and_graphics_update(false);
 
                     LOG(LOG_ERR, "No keep alive received from Session Probe!");
+
+                    if (this->session_probe_close_pending) {
+                        throw Error(ERR_SESSION_PROBE_CLOSE_PENDING);
+                    }
+
                     throw Error(ERR_SESSION_PROBE_KEEPALIVE);
                 }
                 else {
@@ -6462,6 +6471,12 @@ public:
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_consent_ui_visible(!parameters.compare("yes"));
+                }
+                else if (!order.compare("Self.Status")) {
+                    std::string info("status=\"" + parameters + "\"");
+                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
+
+                    this->session_probe_close_pending = (parameters.compare("Closing") == 0);
                 }
                 else if (!order.compare("InputLanguage")) {
                     const char * subitems          = parameters.c_str();
