@@ -229,6 +229,7 @@ variant asan : debug :
 
 project redemption
     : requirements
+    <include>src
     <include>src/utils
     <include>src/core
     <include>src/configs/autogen
@@ -250,6 +251,7 @@ project redemption
     <conditional>@defines
 
     <variant>debug:<define>REDASSERT_AS_ASSERT
+    <variant>debug:<define>_GLIBCXX_DEBUG
     <variant>debug:<cxxflags>-g
 
     <cxxflags>-std=c++11
@@ -900,6 +902,10 @@ unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : $(TEST_
 ## @{
 unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+## @}
+
+## GDI
+unit-test test_gdi_drawable : tests/gdi/test_drawable.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;

@@ -430,6 +430,7 @@ public:
 
                 InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
+                TODO("Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)")
                 RDPPolyline polyline_box( r.x, r.y
                                         , 0x0D, 0, BLACK, 4, in_deltaPoints);
                 mod.draw(polyline_box, r);

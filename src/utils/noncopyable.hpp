@@ -34,9 +34,22 @@ namespace adl_barrier
         noncopyable& operator=(noncopyable&&) = delete;
         noncopyable& operator=(const noncopyable&) = delete;
     };
+
+    class noncopyable_but_movable
+    {
+    protected:
+        noncopyable_but_movable() = default;
+        ~noncopyable_but_movable() = default;
+
+        noncopyable_but_movable(noncopyable_but_movable&&) = default;
+        noncopyable_but_movable(const noncopyable_but_movable&) = delete;
+        noncopyable_but_movable& operator=(noncopyable_but_movable&&) = default;
+        noncopyable_but_movable& operator=(const noncopyable_but_movable&) = delete;
+    };
 }
 
 using noncopyable = adl_barrier::noncopyable;
+using noncopyable_but_movable = adl_barrier::noncopyable_but_movable;
 
 #define REDEMPTION_NON_COPYABLE(class_name) \
     class_name(const class_name&) = delete; \
