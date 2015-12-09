@@ -143,8 +143,19 @@ struct StaticKeyString : StaticStringBase<N+1, null_fill, true>
 template<std::size_t N>
 struct CStrBuf<StaticKeyString<N>> {
     char buf[N*2 + 1];
-};
 
+    size_t size() const {
+        return N * 2;
+    }
+
+    char * get() {
+        return this->buf;
+    }
+
+    char const * get() const {
+        return this->buf;
+    }
+};
 
 template<std::size_t N>
 void parse(StaticKeyString<N> & key, char const * value) {
@@ -161,13 +172,14 @@ void parse(StaticKeyString<N> & key, char const * value) {
 
 template<std::size_t N>
 int copy_val(StaticKeyString<N> const & key, char * buff, std::size_t n) {
-    if (N * 2 < n) {
+    if (N * 2 <= n) {
         auto first = key.c_str();
-        auto last = key.c_str() + sizeof(key);
+        auto last = key.c_str() + N;
         for (; first != last; ++buff, ++first) {
-            auto x = unsigned(*first) & 0xf;
+            auto x = (unsigned(*first) & 0xf0) >> 4;
             *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
             ++buff;
+            x = unsigned(*first) & 0xf;
             *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
         }
     }

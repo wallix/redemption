@@ -669,6 +669,16 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
+
+        // AUTHID_CONTEXT_CRYPTO_KEY
+        struct crypto_key {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 94; }
+            using type = ::configs::StaticKeyString<32>;
+            type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
+        };
     };
 
     struct crypto {
@@ -1863,6 +1873,7 @@ struct context
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::crypto_key
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -2133,5 +2144,6 @@ using VariablesAclPack = Pack<
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::crypto_key
 >;
 }
