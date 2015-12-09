@@ -1420,7 +1420,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::StaticString<512>;
-            type value{""};
+            type value{"cmd /k"};
         };
         // Keep known server certificates on WAB
         // AUTHID_MOD_RDP_SERVER_CERT_STORE
