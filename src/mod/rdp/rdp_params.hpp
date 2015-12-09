@@ -54,7 +54,7 @@ struct ModRDPParams {
     bool disable_file_system_log_wrm;
 
     unsigned     session_probe_launch_timeout;
-    unsigned     session_probe_on_launch_failure;
+    bool         session_probe_on_launch_failure_disconnect_user;
     unsigned     session_probe_keepalive_timeout;
     const char * session_probe_alternate_shell;
 
@@ -150,7 +150,7 @@ struct ModRDPParams {
         , disable_file_system_log_wrm(false)
 
         , session_probe_launch_timeout(0)
-        , session_probe_on_launch_failure(0)
+        , session_probe_on_launch_failure_disconnect_user(true)
         , session_probe_keepalive_timeout(0)
         , session_probe_alternate_shell("")
 
@@ -255,7 +255,8 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_timeout=%u",        this->session_probe_launch_timeout);
         LOG(LOG_INFO,
-            "ModRDPParams session_probe_on_launch_failure=%u",     this->session_probe_on_launch_failure);
+            "ModRDPParams session_probe_on_launch_failure_disconnect_user=%s",
+                                                                   (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams session_probe_keepalive_timeout=%u",     this->session_probe_keepalive_timeout);
 

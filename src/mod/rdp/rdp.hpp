@@ -356,7 +356,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const int  rdp_compression;
 
     const unsigned    session_probe_launch_timeout;
-    const unsigned    session_probe_on_launch_failure;
+    const bool        session_probe_on_launch_failure_disconnect_user;
     const unsigned    session_probe_keepalive_timeout;
           std::string session_probe_alternate_shell;
 
@@ -650,7 +650,7 @@ public:
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
-        , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
+        , session_probe_on_launch_failure_disconnect_user(mod_rdp_params.session_probe_on_launch_failure_disconnect_user)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , recv_bmp_update(0)
@@ -941,9 +941,9 @@ public:
 
         if (this->verbose & 1) {
             LOG(LOG_INFO,
-                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure=%u",
+                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure_disconnect_user=%s",
                 (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
-                this->session_probe_on_launch_failure);
+                (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
         }
         if (this->enable_session_probe) {
             this->session_probe_event.object_and_time = true;
@@ -3307,14 +3307,14 @@ public:
             this->session_probe_event.waked_up_by_time = false;
 
             if (this->session_probe_launch_timeout && !this->session_probe_is_ready) {
-                LOG((this->session_probe_on_launch_failure ? LOG_WARNING : LOG_ERR), "Session Probe is not ready yet!");
+                LOG((this->session_probe_on_launch_failure_disconnect_user ? LOG_ERR : LOG_WARNING), "Session Probe is not ready yet!");
 
                 const bool need_full_screen_update =
                     (this->enable_session_probe_loading_mask ?
                      this->front.disable_input_event_and_graphics_update(false) :
                      false);
 
-                if (this->session_probe_on_launch_failure) {
+                if (!this->session_probe_on_launch_failure_disconnect_user) {
                     if (need_full_screen_update) {
                         LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
                             this->front_width, this->front_height);

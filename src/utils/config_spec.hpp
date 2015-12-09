@@ -301,11 +301,7 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
         W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
-        W.member(A, type_<Range<unsigned, 0, 1>>(), "session_probe_on_launch_failure", set(0), desc{
-            "Specifies the action to be performed is the launch of session probe fails.\n"
-            "  0: disconnects session\n"
-            "  1: remains connected"
-        }, r);
+        W.member(A, type_<bool>(), "session_probe_on_launch_failure_disconnect_user", set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set(""));
 
