@@ -481,7 +481,7 @@ private:
                             rdpdr::Component::RDPDR_CTYP_CORE,
                             rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
 
-                        client_message_header.emiit(
+                        client_message_header.emit(
                             this->current_device_announce_stream);
 
                         this->current_device_announce_stream.out_uint32_le(
@@ -512,7 +512,7 @@ private:
                             rdpdr::Component::RDPDR_CTYP_CORE,
                             rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY);
 
-                        server_message_header.emiit(out_stream);
+                        server_message_header.emit(out_stream);
 
                         rdpdr::ServerDeviceAnnounceResponse
                             server_device_announce_response(
@@ -520,7 +520,7 @@ private:
                                     0xC0000001  // STATUS_UNSUCCESSFUL
                                 );
 
-                        server_device_announce_response.emiit(out_stream);
+                        server_device_announce_response.emit(out_stream);
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                             LOG(LOG_INFO,
@@ -679,7 +679,7 @@ private:
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
 
-            client_message_header.emiit(client_drive_device_list_remove_stream);
+            client_message_header.emit(client_drive_device_list_remove_stream);
 
             const auto device_count_offset =
                 client_drive_device_list_remove_stream.get_offset();
@@ -933,7 +933,7 @@ public:
                     ~rdpdr::ENABLE_ASYNCIO);
             }
 
-            general_capability_set.emiit(out_stream, Version);
+            general_capability_set.emit(out_stream, Version);
 
             general_capability_set.receive(chunk, Version);
 
@@ -1591,7 +1591,7 @@ public:
                 //        rdpdr::Component::RDPDR_CTYP_CORE,
                 //        rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
                 //
-                //    client_message_header.emiit(out_stream);
+                //    client_message_header.emit(out_stream);
                 //
                 //    out_stream.out_uint32_le(1);    // DeviceCount(4)
                 //
@@ -1700,7 +1700,7 @@ public:
             rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
-            clent_message_header.emiit(out_stream);
+            clent_message_header.emit(out_stream);
 
             rdpdr::ClientAnnounceReply client_announce_reply(
                 0x0001, // VersionMajor, MUST be set to 0x0001.
@@ -1715,7 +1715,7 @@ public:
                     "FileSystemVirtualChannel::process_server_announce_request:");
                 client_announce_reply.log(LOG_INFO);
             }
-            client_announce_reply.emiit(out_stream);
+            client_announce_reply.emit(out_stream);
 
             this->send_message_to_server(
                 out_stream.get_offset(),
@@ -1731,7 +1731,7 @@ public:
             rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
-            clent_message_header.emiit(out_stream);
+            clent_message_header.emit(out_stream);
 
             rdpdr::ClientNameRequest client_name_request(
                 this->param_client_name);
@@ -1740,7 +1740,7 @@ public:
                     "FileSystemVirtualChannel::process_server_announce_request:");
                 client_name_request.log(LOG_INFO);
             }
-            client_name_request.emiit(out_stream);
+            client_name_request.emit(out_stream);
 
             this->send_message_to_server(
                 out_stream.get_offset(),
@@ -1768,7 +1768,7 @@ public:
             const rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY);
-            clent_message_header.emiit(out_stream);
+            clent_message_header.emit(out_stream);
 
             out_stream.out_uint16_le(5);    // 5 capabilities.
             out_stream.out_clear_bytes(2);  // Padding(2)
@@ -1806,7 +1806,7 @@ public:
                     "FileSystemVirtualChannel::process_server_client_id_confirm:");
                 general_capability_set.log(LOG_INFO);
             }
-            general_capability_set.emiit(out_stream, general_capability_version);
+            general_capability_set.emit(out_stream, general_capability_version);
 
             // Print capability set
             out_stream.out_uint16_le(rdpdr::CAP_PRINTER_TYPE);
@@ -1890,7 +1890,7 @@ public:
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
 
-            clent_message_header.emiit(out_stream);
+            clent_message_header.emit(out_stream);
 
             const rdpdr::DeviceIOResponse device_io_response(
                     this->server_device_io_request.DeviceId(),
@@ -1901,14 +1901,14 @@ public:
             if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 device_io_response.log(LOG_INFO);
             }
-            device_io_response.emiit(out_stream);
+            device_io_response.emit(out_stream);
 
             const rdpdr::DeviceCreateResponse device_create_response(
                 static_cast<uint32_t>(-1), 0);
             if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 device_create_response.log(LOG_INFO);
             }
-            device_create_response.emiit(out_stream);
+            device_create_response.emit(out_stream);
 
             this->send_message_to_server(
                 out_stream.get_offset(),

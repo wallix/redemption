@@ -160,7 +160,7 @@ struct RefreshRectPDU {
     encrypt(encrypt),
     area_count(0),
     offset_area_count(0) {
-        this->sdata.emiit_begin(PDUTYPE2_REFRESH_RECT,
+        this->sdata.emit_begin(PDUTYPE2_REFRESH_RECT,
                                shareId,
                                RDP::STREAM_MED);
 
@@ -182,11 +182,11 @@ struct RefreshRectPDU {
         area_count++;
     }
 
-    void emiit(Transport & trans) {
+    void emit(Transport & trans) {
         this->buffer_stream.set_out_uint8(this->area_count,
                                           this->offset_area_count);
 
-        this->sdata.emiit_end();
+        this->sdata.emit_end();
 
         write_packets(
             trans,

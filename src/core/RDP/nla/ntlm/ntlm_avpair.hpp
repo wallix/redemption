@@ -142,7 +142,7 @@ struct NtlmAvPair {
         }
     }
 
-    void emiit(OutStream & stream) {
+    void emit(OutStream & stream) {
         stream.out_uint16_le(this->AvId);
         stream.out_uint16_le(this->AvLen);
         stream.out_copy_bytes(this->Value.buf, this->Value.sz);
@@ -220,14 +220,14 @@ struct NtlmAvPairList {
        return res;
     }
 
-    void emiit(OutStream & stream) {
+    void emit(OutStream & stream) {
         for (int i = 1; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
-                this->list[i]->emiit(stream);
+                this->list[i]->emit(stream);
             }
         }
         // ASSUME this->list[MsvAvEOL] != nullptr
-        this->list[MsvAvEOL]->emiit(stream);
+        this->list[MsvAvEOL]->emit(stream);
     }
 
     void recv(InStream & stream) {

@@ -168,7 +168,7 @@ public:
         }
     }
 
-    void emiit(OutStream & stream) const
+    void emit(OutStream & stream) const
     {
         using namespace RDP;
 

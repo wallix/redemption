@@ -165,7 +165,7 @@ public:
             ;
     }
 
-    void emiit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
+    void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiOpaqueRect & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
@@ -209,12 +209,12 @@ public:
                                                                         ) * 0x0100
               ;
 
-        common.emiit(stream, header, oldcommon);
+        common.emit(stream, header, oldcommon);
 
-        header.emiit_coord(stream, 0x0001, this->nLeftRect, oldcmd.nLeftRect);
-        header.emiit_coord(stream, 0x0002, this->nTopRect,  oldcmd.nTopRect);
-        header.emiit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
-        header.emiit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
+        header.emit_coord(stream, 0x0001, this->nLeftRect, oldcmd.nLeftRect);
+        header.emit_coord(stream, 0x0002, this->nTopRect,  oldcmd.nTopRect);
+        header.emit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
+        header.emit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
 
         if (header.fields & 0x0010) { stream.out_uint8(this->_Color); }
         if (header.fields & 0x0020) { stream.out_uint8(this->_Color >> 8); }
@@ -270,7 +270,7 @@ public:
 
             stream.set_out_uint16_le(stream.get_offset() - offset_cbData - 2, offset_cbData);
         }
-    }   // void emiit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiOpaqueRect & oldcmd) const
+    }   // void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiOpaqueRect & oldcmd) const
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         //LOG(LOG_INFO, "RDPMultiOpaqueRect::receive: header fields=0x%02X", header.fields);

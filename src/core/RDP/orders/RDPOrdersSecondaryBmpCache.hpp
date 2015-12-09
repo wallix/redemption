@@ -473,7 +473,7 @@ class RDPBmpCache {
         : id(0), idx(0), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
     }
 
-    void emiit(uint8_t session_color_depth, OutStream & stream, const int bitmap_cache_version,
+    void emit(uint8_t session_color_depth, OutStream & stream, const int bitmap_cache_version,
         const int use_bitmap_comp, const int use_compact_packets) const
     {
         using namespace RDP;
@@ -484,13 +484,13 @@ class RDPBmpCache {
                 if (this->verbose){
                     LOG(LOG_INFO, "/* BMP Cache compressed V1*/");
                 }
-                this->emiit_v1_compressed(session_color_depth, stream, use_compact_packets);
+                this->emit_v1_compressed(session_color_depth, stream, use_compact_packets);
             }
             else {
                 if (this->verbose){
                     LOG(LOG_INFO, "/* BMP Cache raw V1 */");
                 }
-                this->emiit_raw_v1(stream);
+                this->emit_raw_v1(stream);
             }
         break;
         default:
@@ -498,18 +498,18 @@ class RDPBmpCache {
                 if (this->verbose){
                     LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 }
-                this->emiit_v2_compressed(session_color_depth, stream);
+                this->emit_v2_compressed(session_color_depth, stream);
             }
             else {
                 if (this->verbose){
                     LOG(LOG_INFO, "/* BMP Cache raw V2 */");
                 }
-                this->emiit_raw_v2(stream);
+                this->emit_raw_v2(stream);
             }
         }
     }
 
-    void emiit_v1_compressed(uint8_t session_color_depth, OutStream & stream, const int use_compact_packets) const {
+    void emit_v1_compressed(uint8_t session_color_depth, OutStream & stream, const int use_compact_packets) const {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -557,11 +557,11 @@ class RDPBmpCache {
         stream.set_out_uint16_le(stream.get_offset() - offset_after_type - 7, offset_header);
     }
 
-    void emiit_raw_v1(OutStream & stream) const
+    void emit_raw_v1(OutStream & stream) const
     {
         using namespace RDP;
 
-        TODO(" this should become some kind of emiit header");
+        TODO(" this should become some kind of emit header");
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
         stream.out_uint16_le(9 + this->bmp.bmp_size()  - 7); // length after orderType - 7
@@ -766,7 +766,7 @@ class RDPBmpCache {
           BITMAPCACHE_WAITING_LIST_INDEX = 32767
     };
 
-    void emiit_v2_compressed(uint8_t session_color_depth, OutStream & stream) const
+    void emit_v2_compressed(uint8_t session_color_depth, OutStream & stream) const
     {
         using namespace RDP;
 
@@ -814,10 +814,10 @@ class RDPBmpCache {
         stream.set_out_uint16_le(stream.get_offset() - (offset_header+12), offset_header); // length after type minus 7
     }
 
-    void emiit_raw_v2(OutStream & stream) const
+    void emit_raw_v2(OutStream & stream) const
     {
         using namespace RDP;
-        TODO(" this should become some kind of emiit header");
+        TODO(" this should become some kind of emit header");
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 
@@ -1075,7 +1075,7 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emiit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).");
+        TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).");
         const uint8_t * buf = stream.in_uint8p(bufsize);
         if (this->verbose & 0x8000) {
             LOG(LOG_INFO,

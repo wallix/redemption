@@ -924,5 +924,38 @@ unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test 
 lib qtcore : : <name>QtCore : ;
 lib qtgui : : <name>QtGui : ;
 
-unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qtcore qtgui :  $(TEST_DEPENDENCIES) <include>/usr/include/qt4/QtGui/ <include>/usr/include/qt4/ ;
-# unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <include>/usr/include/qt4/QtGui/ <include>/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
+using qt : / : /usr/bin : /usr/include/qt4 : /usr/lib ;
+
+#exe test_rdp_Qt :
+#fake_front_Qt.hpp
+#test_rdp_Qt.cpp
+#RDPQtDrawable.cpp
+#RDPQtDrawable.hpp
+#/qt//QtGui
+#/qt//QtCore ; 
+
+exe test_rdp_Qt :
+	tests/front/fake_front_Qt.hpp
+	tests/mod/rdp/test_rdp_Qt.cpp
+	src/utils/RDPQtDrawable.cpp
+	src/core/RDP/RDPQtDrawable.hpp
+	#/qt//QtGui
+	#/qt//QtCore
+	bitmap
+	cryptofile
+	krb5
+	gssglue
+	png
+	d3des
+	z
+	dl
+	crypto
+	#qtgui
+	#qtcore
+	libboost_unit_test  :  $(TEST_DEPENDENCIES) <cxxflags>-idirafter=/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
+
+# unit-test test_rdp_Qt : tests/mod/rdp/test_rdp_Qt.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <cxxflags>-I/usr/include/qt4/QtGui/ <cxxflags>-I/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
+
+#unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp bitmap cryptofile krb5 gssglue png d3des z dl crypto libboost_unit_test qtcore qtgui :  $(TEST_DEPENDENCIES) <cxxflags>-idirafter=/usr/include/qt4/QtGui/ <cxxflags>-idirafter=/usr/include/qt4/ ;
+
+# unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <cxxflags>-I/usr/include/qt4/QtGui/ <cxxflags>-I/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;

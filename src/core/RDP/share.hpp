@@ -591,7 +591,7 @@ struct ShareData
     } // END CONSTRUCTOR
 
     //==============================================================================
-    void emiit_begin( uint8_t pdu_type2
+    void emit_begin( uint8_t pdu_type2
                    , uint32_t share_id
                    , uint8_t streamid
                    , uint16_t _uncompressedLen = 0
@@ -614,10 +614,10 @@ struct ShareData
         stream.out_uint8(pdu_type2); // pdutype2
         stream.out_uint8(compressedType); // compressedType
         stream.out_uint16_le(compressedLen); // compressedLen
-    } // END METHOD emiit_begin
+    } // END METHOD emit_begin
 
     //==============================================================================
-    void emiit_end()
+    void emit_end()
     //==============================================================================
     {
         if (!this->uncompressedLen) {
@@ -625,7 +625,7 @@ struct ShareData
                                      + 6,                   // TS_SHARECONTROLHEADER(6)
                                      6);
         }
-    } // END METHOD emiit_end
+    } // END METHOD emit_end
 }; // END CLASS ShareData
 
 //##############################################################################

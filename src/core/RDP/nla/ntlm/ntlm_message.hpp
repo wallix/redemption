@@ -115,7 +115,7 @@ struct NTLMMessage {
 
     virtual ~NTLMMessage() {}
 
-    void emiit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->signature, 8);
         stream.out_uint32_le(this->msgType);
     }
@@ -230,7 +230,7 @@ struct NtlmVersion {
         this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
-    void emiit(OutStream & stream) {
+    void emit(OutStream & stream) {
         if (this->ignore_version) {
             return;
         }
@@ -494,7 +494,7 @@ struct NtlmNegotiateFlags {
     {
     }
 
-    void emiit(OutStream & stream) {
+    void emit(OutStream & stream) {
         stream.out_uint32_le(this->flags);
     }
 
@@ -585,7 +585,7 @@ struct NtlmField {
 
     ~NtlmField() {}
 
-    unsigned int emiit(OutStream & stream, unsigned int currentOffset) {
+    unsigned int emit(OutStream & stream, unsigned int currentOffset) {
         this->len = this->buffer.size();
         this->maxLen = this->len;
         this->bufferOffset = currentOffset;

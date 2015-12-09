@@ -579,7 +579,7 @@ class Bounds {
           ;
     }
 
-    void emiit(OutStream & stream)
+    void emit(OutStream & stream)
     {
         using namespace RDP;
 
@@ -607,7 +607,7 @@ class RDPPrimaryOrderHeader
     RDPPrimaryOrderHeader(uint8_t control, uint32_t fields)
         : control(control), fields(fields) {}
 
-    void emiit_coord(OutStream & stream, uint32_t base, int16_t coord, int16_t oldcoord) const {
+    void emit_coord(OutStream & stream, uint32_t base, int16_t coord, int16_t oldcoord) const {
         using namespace RDP;
 
         if (this->control & DELTA){
@@ -638,7 +638,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emiit_rect(OutStream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const
+    void emit_rect(OutStream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const
     {
         using namespace RDP;
 
@@ -706,7 +706,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emiit_src(OutStream & stream, uint32_t base,
+    void emit_src(OutStream & stream, uint32_t base,
                   uint16_t srcx, uint16_t srcy,
                   uint16_t oldx, uint16_t oldy) const
     {
@@ -753,7 +753,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emiit_pen(OutStream & stream, uint32_t base,
+    void emit_pen(OutStream & stream, uint32_t base,
                   const RDPPen & pen,
                   const RDPPen & old_pen) const {
 
@@ -791,7 +791,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emiit_brush(OutStream & stream, uint32_t base,
+    void emit_brush(OutStream & stream, uint32_t base,
                   const RDPBrush & brush,
                   const RDPBrush & old_brush) const {
 
@@ -871,7 +871,7 @@ class RDPOrderCommon {
     }
 
 private:
-    void _emiit(OutStream & stream, RDPPrimaryOrderHeader & header)
+    void _emit(OutStream & stream, RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;
 
@@ -939,7 +939,7 @@ private:
     }
 
 public:
-    void emiit(OutStream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
+    void emit(OutStream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
     {
         using namespace RDP;
 
@@ -951,11 +951,11 @@ public:
             header.control |= ((bounds.bounds_flags == 0) * LASTBOUNDS);
         }
 
-        this->_emiit(stream, header);
+        this->_emit(stream, header);
 
         if (header.control & BOUNDS){
             if (!(header.control & LASTBOUNDS)){
-                bounds.emiit(stream);
+                bounds.emit(stream);
             }
         }
         else {

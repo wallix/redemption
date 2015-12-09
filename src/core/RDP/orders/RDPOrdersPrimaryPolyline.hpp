@@ -233,7 +233,7 @@ public:
              ;
     }
 
-    void emiit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
+    void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
         int16_t pointx = this->xStart;
@@ -269,10 +269,10 @@ public:
                                                                 ) * 0x0040
               ;
 
-        common.emiit(stream, header, oldcommon);
+        common.emit(stream, header, oldcommon);
 
-        header.emiit_coord(stream, 0x0001, this->xStart, oldcmd.xStart);
-        header.emiit_coord(stream, 0x0002, this->yStart, oldcmd.yStart);
+        header.emit_coord(stream, 0x0001, this->xStart, oldcmd.xStart);
+        header.emit_coord(stream, 0x0002, this->yStart, oldcmd.yStart);
 
         if (header.fields & 0x0004) { stream.out_uint8(this->bRop2); }
 
@@ -320,7 +320,7 @@ public:
 
             stream.set_out_uint8(stream.get_offset() - offset_cbData - 1, offset_cbData);
         }
-    }   // void emiit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const
+    }   // void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         // LOG(LOG_INFO, "RDPPolyline::receive: header fields=0x%02X", header.fields);

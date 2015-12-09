@@ -91,7 +91,7 @@ public:
         if (this->remaining_number_of_bytes_to_read == this->total_number_of_bytes_to_read) {
             const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                            rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-            sh_s.emiit(out_stream);
+            sh_s.emit(out_stream);
 
             const rdpdr::DeviceIOResponse device_io_response(
                     DeviceId,
@@ -102,7 +102,7 @@ public:
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run");
                 device_io_response.log(LOG_INFO);
             }
-            device_io_response.emiit(out_stream);
+            device_io_response.emit(out_stream);
 
             out_stream.out_uint32_le(this->total_number_of_bytes_to_read);  // length(4)
 

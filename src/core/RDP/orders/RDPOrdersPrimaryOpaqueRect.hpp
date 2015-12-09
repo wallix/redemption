@@ -47,7 +47,7 @@ class RDPOpaqueRect {
 
     // order to stream returns true if state clip must be changed
     // it does not change state by itself
-    void emiit(OutStream & stream,
+    void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
                 const RDPOpaqueRect & oldcmd) const
@@ -88,7 +88,7 @@ class RDPOpaqueRect {
 
         uint32_t diff_color = this->color ^ oldcmd.color;
 
-//        LOG(LOG_INFO, "emiit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
+//        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
 
         header.fields =   (dr.dleft                != 0) * 0x01
                         | (dr.dtop                 != 0) * 0x02
@@ -99,8 +99,8 @@ class RDPOpaqueRect {
                         | ((diff_color & 0xFF0000) != 0) * 0x40
                         ;
 
-        common.emiit(stream, header, oldcommon);
-        header.emiit_rect(stream, 0x01, this->rect, oldcmd.rect);
+        common.emit(stream, header, oldcommon);
+        header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
 
         if (header.fields & 0x10){
             stream.out_uint8(this->color);

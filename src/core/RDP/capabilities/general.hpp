@@ -214,7 +214,7 @@ struct GeneralCaps : public Capability {
     }
     ~GeneralCaps() override {}
 
-    void emiit(OutStream & stream) override {
+    void emit(OutStream & stream) override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->os_major);

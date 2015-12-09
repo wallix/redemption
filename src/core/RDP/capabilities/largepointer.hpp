@@ -73,7 +73,7 @@ struct LargePointerCaps : public Capability {
     {
     }
 
-    void emiit(OutStream & stream){
+    void emit(OutStream & stream){
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->largePointerSupportFlags);

@@ -126,7 +126,7 @@ class RDPMemBlt {
              ;
     }
 
-    void emiit(OutStream & stream,
+    void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
                 const RDPMemBlt & oldcmd) const
@@ -173,19 +173,19 @@ class RDPMemBlt {
                       | (this->cache_idx != oldcmd.cache_idx) * 0x100
                       ;
 
-        common.emiit(stream, header, oldcommon);
+        common.emit(stream, header, oldcommon);
 
         if (header.fields & 0x01){
             stream.out_uint16_le(this->cache_id);
         }
 
-        header.emiit_rect(stream, 0x02, this->rect, oldcmd.rect);
+        header.emit_rect(stream, 0x02, this->rect, oldcmd.rect);
 
         if (header.fields & 0x20){
             stream.out_uint8(this->rop);
         }
 
-        header.emiit_src(stream, 0x40, this->srcx, this->srcy, oldcmd.srcx, oldcmd.srcy);
+        header.emit_src(stream, 0x40, this->srcx, this->srcy, oldcmd.srcx, oldcmd.srcy);
 
         if (header.fields & 0x100){
             stream.out_uint16_le(this->cache_idx);

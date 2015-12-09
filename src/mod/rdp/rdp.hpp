@@ -1780,7 +1780,7 @@ public:
                                 if (this->verbose & 1) {
                                     cs_core.log("Sending to Server");
                                 }
-                                cs_core.emiit(stream);
+                                cs_core.emit(stream);
                                 // ------------------------------------------------------------
 
                                 GCC::UserData::CSCluster cs_cluster;
@@ -1821,13 +1821,13 @@ public:
                                 if (this->verbose & 1) {
                                     cs_cluster.log("Sending to server");
                                 }
-                                cs_cluster.emiit(stream);
+                                cs_cluster.emit(stream);
                                 // ------------------------------------------------------------
                                 GCC::UserData::CSSecurity cs_security;
                                 if (this->verbose & 1) {
                                     cs_security.log("Sending to server");
                                 }
-                                cs_security.emiit(stream);
+                                cs_security.emit(stream);
                                 // ------------------------------------------------------------
 
                                 const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
@@ -1941,7 +1941,7 @@ public:
                                     if (this->verbose & 1) {
                                         cs_net.log("Sending to server");
                                     }
-                                    cs_net.emiit(stream);
+                                    cs_net.emit(stream);
                                 }
                             },
                             [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
@@ -3413,7 +3413,7 @@ public:
             [this](StreamSize<65536>, OutStream & stream) {
                 RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
 
-                confirm_active_pdu.emiit_begin(this->share_id);
+                confirm_active_pdu.emit_begin(this->share_id);
 
                 GeneralCaps general_caps;
                 general_caps.extraflags  =
@@ -3433,7 +3433,7 @@ public:
                 if (this->verbose & 1) {
                     general_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(general_caps);
+                confirm_active_pdu.emit_capability_set(general_caps);
 
                 BitmapCaps bitmap_caps;
                 TODO("Client SHOULD set this field to the color depth requested in the Client Core Data")
@@ -3450,7 +3450,7 @@ public:
                 if (this->verbose & 1) {
                     bitmap_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(bitmap_caps);
+                confirm_active_pdu.emit_capability_set(bitmap_caps);
 
                 OrderCaps order_caps;
                 order_caps.numberFonts                                   = 0;
@@ -3527,7 +3527,7 @@ public:
                 if (this->verbose & 1) {
                     order_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(order_caps);
+                confirm_active_pdu.emit_capability_set(order_caps);
 
 
                 BmpCacheCaps bmpcache_caps;
@@ -3561,7 +3561,7 @@ public:
                     if (this->verbose & 1) {
                         bmpcache2_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emiit_capability_set(bmpcache2_caps);
+                    confirm_active_pdu.emit_capability_set(bmpcache2_caps);
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(this->bpp,
@@ -3575,7 +3575,7 @@ public:
                     if (this->verbose & 1) {
                         bmpcache_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emiit_capability_set(bmpcache_caps);
+                    confirm_active_pdu.emit_capability_set(bmpcache_caps);
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(this->bpp,
@@ -3590,19 +3590,19 @@ public:
                 if (this->verbose & 1) {
                     colorcache_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(colorcache_caps);
+                confirm_active_pdu.emit_capability_set(colorcache_caps);
 
                 ActivationCaps activation_caps;
                 if (this->verbose & 1) {
                     activation_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(activation_caps);
+                confirm_active_pdu.emit_capability_set(activation_caps);
 
                 ControlCaps control_caps;
                 if (this->verbose & 1) {
                     control_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(control_caps);
+                confirm_active_pdu.emit_capability_set(control_caps);
 
                 PointerCaps pointer_caps;
                 pointer_caps.len                       = 10;
@@ -3615,31 +3615,31 @@ public:
                 if (this->verbose & 1) {
                     pointer_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(pointer_caps);
+                confirm_active_pdu.emit_capability_set(pointer_caps);
 
                 ShareCaps share_caps;
                 if (this->verbose & 1) {
                     share_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(share_caps);
+                confirm_active_pdu.emit_capability_set(share_caps);
 
                 InputCaps input_caps;
                 if (this->verbose & 1) {
                     input_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(input_caps);
+                confirm_active_pdu.emit_capability_set(input_caps);
 
                 SoundCaps sound_caps;
                 if (this->verbose & 1) {
                     sound_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(sound_caps);
+                confirm_active_pdu.emit_capability_set(sound_caps);
 
                 FontCaps font_caps;
                 if (this->verbose & 1) {
                     font_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(font_caps);
+                confirm_active_pdu.emit_capability_set(font_caps);
 
                 GlyphCacheCaps glyphcache_caps;
                 if (this->enable_glyph_cache) {
@@ -3651,7 +3651,7 @@ public:
                 if (this->verbose & 1) {
                     glyphcache_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emiit_capability_set(glyphcache_caps);
+                confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
                 if (this->remote_program) {
                     RailCaps rail_caps;
@@ -3659,7 +3659,7 @@ public:
                     if (this->verbose & 1) {
                         rail_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emiit_capability_set(rail_caps);
+                    confirm_active_pdu.emit_capability_set(rail_caps);
 
                     WindowListCaps window_list_caps;
                     window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
@@ -3668,9 +3668,9 @@ public:
                     if (this->verbose & 1) {
                         window_list_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emiit_capability_set(window_list_caps);
+                    confirm_active_pdu.emit_capability_set(window_list_caps);
                 }
-                confirm_active_pdu.emiit_end();
+                confirm_active_pdu.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
                 // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
@@ -5091,7 +5091,7 @@ public:
             GCC::MCS_GLOBAL_CHANNEL,
             [this, action](StreamSize<256>, OutStream & stream) {
                 ShareData sdata(stream);
-                sdata.emiit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
+                sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
                 // Payload
                 stream.out_uint16_le(action);
@@ -5099,7 +5099,7 @@ public:
                 stream.out_uint32_le(0); /* control id */
 
                 // Packet trailer
-                sdata.emiit_end();
+                sdata.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
@@ -5130,13 +5130,13 @@ public:
             [this, &data_writer, pdu_type2, stream_id](
                 StreamSize<256 + packet_size_t{}>, OutStream & stream) {
                 ShareData sdata(stream);
-                sdata.emiit_begin(pdu_type2, this->share_id, stream_id);
+                sdata.emit_begin(pdu_type2, this->share_id, stream_id);
                 {
                     OutStream substream(stream.get_current(), packet_size_t{});
                     data_writer(packet_size_t{}, substream);
                     stream.out_skip_bytes(substream.get_offset());
                 }
-                sdata.emiit_end();
+                sdata.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
                 ShareControl_Send(
@@ -5208,7 +5208,7 @@ public:
 
                         this->send_persistent_key_list_pdu(
                             [&pklpdu](StreamSize<2048>, OutStream & pdu_data_stream) {
-                                pklpdu.emiit(pdu_data_stream);
+                                pklpdu.emit(pdu_data_stream);
                             }
                         );
 
@@ -5407,7 +5407,7 @@ public:
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
-                rrpdu.emiit(this->nego.trans);
+                rrpdu.emit(this->nego.trans);
             }
         }
         if (this->verbose & 4){
@@ -5430,7 +5430,7 @@ public:
                     rrpdu.addInclusiveRect(vr[i].x, vr[i].y, vr[i].x + vr[i].cx - 1, vr[i].y + vr[i].cy - 1);
                 }
             }
-            rrpdu.emiit(this->nego.trans);
+            rrpdu.emit(this->nego.trans);
         }
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
@@ -5665,7 +5665,7 @@ public:
                 for (unsigned b = 0 ; b < 8 ; b++) {
                     // incoming new pointer is upside down, revert it
                     uint8_t * bstart = &(data[24 * (128 - 4 - (x & 0xFFFC) + (x & 3))]);
-                    // emiit all individual bits
+                    // emit all individual bits
                     ::out_bytes_le(bstart,      3, (px & 0x80) ? 0xFFFFFF : 0);
                     ::out_bytes_le(bstart +  3, 3, (px & 0x40) ? 0xFFFFFF : 0);
                     ::out_bytes_le(bstart +  6, 3, (px & 0x20) ? 0xFFFFFF : 0);
@@ -6057,7 +6057,7 @@ public:
                     infoPacket.flags |= INFO_RAIL;
                 }
 
-                infoPacket.emiit(stream);
+                infoPacket.emit(stream);
             },
             write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
         );
@@ -6217,9 +6217,9 @@ public:
     //
     //    BStream stream(65536);
     //    ShareData sdata(stream);
-    //    sdata.emiit_begin(PDUTYPE2_SHUTDOWN_REQUEST, this->share_id,
+    //    sdata.emit_begin(PDUTYPE2_SHUTDOWN_REQUEST, this->share_id,
     //                     RDP::STREAM_MED);
-    //    sdata.emiit_end();
+    //    sdata.emit_end();
     //    BStream sctrl_header(256);
     //    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
     //                      this->userid + GCC::MCS_USERCHANNEL_BASE,

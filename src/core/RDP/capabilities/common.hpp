@@ -254,8 +254,8 @@ struct Capability {
 
     virtual ~Capability() {}
 
-    virtual void emiit(OutStream & stream) = 0;/* {
-        LOG(LOG_ERR, "Capability::emiit [%u, %u] Implemented by subclass",
+    virtual void emit(OutStream & stream) = 0;/* {
+        LOG(LOG_ERR, "Capability::emit [%u, %u] Implemented by subclass",
             this->capabilityType, this->len);
     }*/
 

@@ -262,7 +262,7 @@ public:
              ;
     }
 
-    void emiit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
+    void emit(OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
               const RDPPolygonCB & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
@@ -305,10 +305,10 @@ public:
                ) * 0x1000
               ;
 
-        common.emiit(stream, header, oldcommon);
+        common.emit(stream, header, oldcommon);
 
-        header.emiit_coord(stream, 0x0001, this->xStart, oldcmd.xStart);
-        header.emiit_coord(stream, 0x0002, this->yStart, oldcmd.yStart);
+        header.emit_coord(stream, 0x0001, this->xStart, oldcmd.xStart);
+        header.emit_coord(stream, 0x0002, this->yStart, oldcmd.yStart);
 
         if (header.fields & 0x0004) { stream.out_uint8(this->bRop2); }
 
@@ -325,7 +325,7 @@ public:
             stream.out_uint8(this->foreColor >> 16);
         }
 
-        header.emiit_brush(stream, 0x0040, this->brush, oldcmd.brush);
+        header.emit_brush(stream, 0x0040, this->brush, oldcmd.brush);
 
         if (header.fields & 0x0800) { stream.out_uint8(this->NumDeltaEntries); }
 

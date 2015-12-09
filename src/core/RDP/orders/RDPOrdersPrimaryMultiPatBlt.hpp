@@ -235,7 +235,7 @@ public:
             ;
     }
 
-    void emiit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
+    void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiPatBlt & oldcmd) const {
         RDPPrimaryOrderHeader header(STANDARD, 0);
 
@@ -291,9 +291,9 @@ public:
                                                                     ) * 0x2000
                       ;
 
-        common.emiit(stream, header, oldcommon);
+        common.emit(stream, header, oldcommon);
 
-        header.emiit_rect(stream, 0x0001, this->rect, oldcmd.rect);
+        header.emit_rect(stream, 0x0001, this->rect, oldcmd.rect);
 
         if (header.fields & 0x0010) {
             stream.out_uint8(this->bRop);
@@ -309,7 +309,7 @@ public:
             stream.out_uint8(this->ForeColor >> 16);
         }
 
-        header.emiit_brush(stream, 0x0080, this->brush, oldcmd.brush);
+        header.emit_brush(stream, 0x0080, this->brush, oldcmd.brush);
 
         if (header.fields & 0x1000) { stream.out_uint8(this->nDeltaEntries); }
 
@@ -361,7 +361,7 @@ public:
 
             stream.set_out_uint16_le(stream.get_offset() - offset_cbData - 2, offset_cbData);
         }
-    }   // void emiit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiPatBlt & oldcmd) const
+    }   // void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiPatBlt & oldcmd) const
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         //LOG(LOG_INFO, "RDPMultiPatBlt::receive: header fields=0x%02X", header.fields);

@@ -1,5 +1,6 @@
 .gitignore
 *.kdev*
+/cmake_compil
 /bin
 /build
 /coverage.summary

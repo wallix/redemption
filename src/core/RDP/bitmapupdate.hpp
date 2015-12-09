@@ -219,7 +219,7 @@ struct RDPBitmapData {
     , cb_uncompressed_size(0) {
     }
 
-    void emiit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         unsigned expected;
 
         if (    (this->flags & BITMAP_COMPRESSION)
@@ -238,7 +238,7 @@ struct RDPBitmapData {
 
         if (!stream.has_room(expected)) {
             LOG( LOG_ERR
-               , "BitmapData::emiit - stream too small, need=%u, remains=%zu"
+               , "BitmapData::emit - stream too small, need=%u, remains=%zu"
                , expected, stream.tailroom());
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }

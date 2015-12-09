@@ -157,7 +157,7 @@ class RDPScrBlt {
              ;
     }
 
-    void emiit(OutStream & stream,
+    void emit(OutStream & stream,
                 RDPOrderCommon & common,
                 const RDPOrderCommon & oldcommon,
                 const RDPScrBlt & oldcmd) const
@@ -199,15 +199,15 @@ class RDPScrBlt {
                       | ((this->srcy - oldcmd.srcy) != 0 ) * 0x40
                       ;
 
-        common.emiit(stream, header, oldcommon);
+        common.emit(stream, header, oldcommon);
 
-        header.emiit_rect(stream, 0x01, this->rect, oldcmd.rect);
+        header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
 
         if (header.fields & 0x10){
             stream.out_uint8(this->rop);
         }
 
-        header.emiit_src(stream, 0x20,
+        header.emit_src(stream, 0x20,
                         this->srcx, this->srcy,
                         oldcmd.srcx, oldcmd.srcy);
 

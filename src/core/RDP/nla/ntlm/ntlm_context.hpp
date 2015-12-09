@@ -398,7 +398,7 @@ struct NTLMContext {
         // ServerName = AvPairs received in Challenge message
         auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
         // BStream AvPairsStream;
-        // this->CHALLENGE_MESSAGE.AvPairList.emiit(AvPairsStream);
+        // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
         size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Compute response: AvPairs size %zu", AvPairsStream.size());
@@ -1088,7 +1088,7 @@ struct NTLMContext {
         }
         this->ntlm_client_build_negotiate();
         StaticOutStream<65535> out_stream;
-        this->NEGOTIATE_MESSAGE.emiit(out_stream);
+        this->NEGOTIATE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.get_offset());
         output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
 
@@ -1120,7 +1120,7 @@ struct NTLMContext {
         }
         this->ntlm_server_build_challenge();
         StaticOutStream<65535> out_stream;
-        this->CHALLENGE_MESSAGE.emiit(out_stream);
+        this->CHALLENGE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.get_offset());
         output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
 
@@ -1159,7 +1159,7 @@ struct NTLMContext {
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
             this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-            this->AUTHENTICATE_MESSAGE.emiit(out_stream);
+            this->AUTHENTICATE_MESSAGE.emit(out_stream);
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
             this->SavedAuthenticateMessage.init(out_stream.get_offset());
@@ -1171,7 +1171,7 @@ struct NTLMContext {
         }
         out_stream.rewind();
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-        this->AUTHENTICATE_MESSAGE.emiit(out_stream);
+        this->AUTHENTICATE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.get_offset());
         output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
 

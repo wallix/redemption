@@ -1,0 +1,75 @@
+project(test_rdp_Qt)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+cmake_minimum_required(VERSION 2.4.0)
+find_package(Qt4 REQUIRED)
+include(${QT_USE_FILE})
+include(FindBoost)
+
+include_directories(${CMAKE_SOURCE_DIR}/src/utils)
+include_directories(${CMAKE_SOURCE_DIR}/src/core)
+include_directories(${CMAKE_SOURCE_DIR}/src/configs/autogen)
+include_directories(${CMAKE_SOURCE_DIR}/src/configs/variant)
+include_directories(${CMAKE_SOURCE_DIR}/src/configs/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/mod)
+include_directories(${CMAKE_SOURCE_DIR}/src/front)
+include_directories(${CMAKE_SOURCE_DIR}/src/acl)
+include_directories(${CMAKE_SOURCE_DIR}/src/capture)
+include_directories(${CMAKE_SOURCE_DIR}/src/keyboard)
+include_directories(${CMAKE_SOURCE_DIR}/src/transport)
+include_directories(${CMAKE_SOURCE_DIR}/src/regex)
+include_directories(${CMAKE_SOURCE_DIR}/src/headers)
+include_directories(${CMAKE_SOURCE_DIR}/src/main)
+include_directories(${CMAKE_SOURCE_DIR}/modules/includes)
+include_directories(/usr/include)
+include_directories(${CMAKE_SOURCE_DIR}/tests)
+
+set(spreadsheet_SRCS
+    tests/mod/rdp/test_rdp_Qt.cpp
+    src/utils/RDPQtDrawable.cpp	
+    src/utils/bitmap_data_allocator.cpp
+    
+)
+set(spreadsheet_MOC_SRCS
+    src/core/RDP/RDPQtDrawable.hpp
+    tests/front/fake_front_Qt.hpp
+    src/core/config.hpp
+)
+set(spreadsheet_UIS
+
+)
+set(spreadsheet_RCCS
+
+)
+
+qt4_wrap_cpp(spreadsheet_MOCS ${spreadsheet_MOC_SRCS})
+qt4_wrap_ui(spreadsheet_UIS_H ${spreadsheet_UIS})
+qt4_wrap_cpp(spreadsheet_MOC_UI ${spreadsheet_UIS_H})
+qt4_add_resources(spreadsheet_RCC_SRCS ${spreadsheet_RCCS})
+
+set(FIXTURES_PATH "./tests/fixtures")
+set(INSTALLDIR)
+set(PREFIX "/usr/local")
+set(BIN_PREFIX "$(PREFIX)/bin")
+set(LIB_PREFIX "$(PREFIX)/lib")
+set(SHARE_PREFIX "$(PREFIX)/share/rdpproxy")
+set(RECORD_TMP_PATH "/var/rdpproxy/tmp")
+set(RECORD_PATH "/var/rdpproxy/recorded")
+set(ETC_PREFIX "/etc/rdpproxy")
+set(CERT_PREFIX" /etc/rdpproxy/cert")
+set(HASH_PATH "/var/rdpproxy/hash")
+set(PERSISTENT_PATH "/var/lib/redemption/cache")
+set(DRIVE_REDIRECTION_PATH "/var/rdpproxy/drive_redirection")
+
+add_definitions(-DFIXTURES_PATH='\"${FIXTURES_PATH}\"')
+add_definitions(-DQT_NO_KEYWORDS)
+add_definitions(-DQT_NO_DEBUG)
+add_executable(test_rdp_Qt
+    ${spreadsheet_SRCS}
+    ${spreadsheet_MOCS}
+    ${spreadsheet_MOC_UI}
+    ${spreadsheet_RCC_SRCS})
+
+#link_directories(${BOOST_LIBRARYDIR})
+#include_directories(SYSTEM ${BOOST_INCLUDEDIR})
+
+target_link_libraries(test_rdp_Qt ${QT_LIBRARIES} pthread png krb5 gssglue png z dl crypto boost_unit_test_framework)

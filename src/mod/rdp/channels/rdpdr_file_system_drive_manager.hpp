@@ -172,7 +172,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
                     file_fs_volume_information.log(LOG_INFO);
                 }
-                file_fs_volume_information.emiit(out_stream);
+                file_fs_volume_information.emit(out_stream);
             }
             break;
 
@@ -202,7 +202,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
                     file_fs_size_information.log(LOG_INFO);
                 }
-                file_fs_size_information.emiit(out_stream);
+                file_fs_size_information.emit(out_stream);
             }
             break;
 
@@ -236,7 +236,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
                     file_fs_attribute_information.log(LOG_INFO);
                 }
-                file_fs_attribute_information.emiit(out_stream);
+                file_fs_attribute_information.emit(out_stream);
             }
             break;
 
@@ -267,7 +267,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
                     file_fs_full_size_information.log(LOG_INFO);
                 }
-                file_fs_full_size_information.emiit(out_stream);
+                file_fs_full_size_information.emit(out_stream);
             }
             break;
 
@@ -294,7 +294,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryVolumeInformationRequest");
                     file_fs_device_information.log(LOG_INFO);
                 }
-                file_fs_device_information.emiit(out_stream);
+                file_fs_device_information.emit(out_stream);
             }
             break;
 
@@ -360,7 +360,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest");
                     file_basic_information.log(LOG_INFO);
                 }
-                file_basic_information.emiit(out_stream);
+                file_basic_information.emit(out_stream);
             }
             break;
 
@@ -390,7 +390,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest");
                     file_standard_information.log(LOG_INFO);
                 }
-                file_standard_information.emiit(out_stream);
+                file_standard_information.emit(out_stream);
             }
             break;
 
@@ -416,7 +416,7 @@ public:
                         "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest");
                     file_attribute_tag_information.log(LOG_INFO);
                 }
-                file_attribute_tag_information.emiit(out_stream);
+                file_attribute_tag_information.emit(out_stream);
             }
             break;
 
@@ -681,7 +681,7 @@ protected:
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
             );
-        shared_header.emiit(out_stream);
+        shared_header.emit(out_stream);
 
         const rdpdr::DeviceIOResponse device_io_response(
                 device_io_request.DeviceId(),
@@ -692,7 +692,7 @@ protected:
             LOG(LOG_INFO, "%s", message);
             device_io_response.log(LOG_INFO);
         }
-        device_io_response.emiit(out_stream);
+        device_io_response.emit(out_stream);
     }
 
     static inline void SendClientDriveIoResponse(
@@ -897,7 +897,7 @@ public:
             LOG(LOG_INFO, "ManagedDirectory::ProcessServerCreateDriveRequest");
             device_create_response.log(LOG_INFO);
         }
-        device_create_response.emiit(out_stream);
+        device_create_response.emit(out_stream);
 
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -1073,7 +1073,7 @@ public:
 
                     out_stream.out_uint32_le(file_full_directory_information.size());   // Length(4)
 
-                    file_full_directory_information.emiit(out_stream);
+                    file_full_directory_information.emit(out_stream);
                 }
                 break;
 
@@ -1104,7 +1104,7 @@ public:
 
                     out_stream.out_uint32_le(file_both_directory_information.size());   // Length(4)
 
-                    file_both_directory_information.emiit(out_stream);
+                    file_both_directory_information.emit(out_stream);
                 }
                 break;
 
@@ -1126,7 +1126,7 @@ public:
 
                     out_stream.out_uint32_le(file_name_information.size()); // Length(4)
 
-                    file_name_information.emiit(out_stream);
+                    file_name_information.emit(out_stream);
                 }
                 break;
 
@@ -1310,7 +1310,7 @@ public:
             LOG(LOG_INFO, "ManagedFile::ProcessServerCreateDriveRequest");
             device_create_response.log(LOG_INFO);
         }
-        device_create_response.emiit(out_stream);
+        device_create_response.emit(out_stream);
 
         uint32_t out_flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -1576,7 +1576,7 @@ public:
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
 
-            client_message_header.emiit(virtual_channel_stream);
+            client_message_header.emit(virtual_channel_stream);
 
             virtual_channel_stream.out_uint32_le(
                  1  // DeviceCount(4)
@@ -1596,7 +1596,7 @@ public:
                 device_announce_header.log(LOG_INFO);
             }
 
-            device_announce_header.emiit(virtual_channel_stream);
+            device_announce_header.emit(virtual_channel_stream);
 
             to_server_sender(virtual_channel_stream.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
@@ -2092,7 +2092,7 @@ public:
 
         const rdpdr::SharedHeader sh_s(rdpdr::Component::RDPDR_CTYP_CORE,
                                        rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE);
-        sh_s.emiit(out_stream);
+        sh_s.emit(out_stream);
 
         out_stream.out_uint32_le(1);                            // DeviceCount(4)
         out_stream.out_uint32_le(old_session_probe_drive_id);   // DeviceIds(variable)

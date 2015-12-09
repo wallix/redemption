@@ -93,9 +93,9 @@ public:
         if (this->channel_) {
             StaticOutStream<256> out_s;
             RDPECLIP::ClipboardCapabilitiesPDU general_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
-            general_pdu.emiit(out_s);
+            general_pdu.emit(out_s);
             RDPECLIP::GeneralCapabilitySet general_caps(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-            general_caps.emiit(out_s);
+            general_caps.emit(out_s);
 
             const size_t length     = out_s.get_offset();
             const size_t chunk_size = length;
@@ -235,7 +235,7 @@ public:
 private:
     template<class PDU, class... Args>
     void send_to_front_channel_(OutStream & out_s, PDU && pdu, Args && ...args) {
-        pdu.emiit(out_s, args...);
+        pdu.emit(out_s, args...);
         const size_t length     = out_s.get_offset();
         const size_t chunk_size = length;
         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,

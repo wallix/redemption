@@ -671,8 +671,8 @@ public:
 
                 StaticOutStream<1024> out_s;
 
-                clip_cap_pdu.emiit(out_s);
-                general_caps.emiit(out_s);
+                clip_cap_pdu.emit(out_s);
+                general_caps.emit(out_s);
 
                 size_t length     = out_s.get_offset();
                 size_t chunk_size = length;
@@ -696,7 +696,7 @@ public:
 
                 out_s.rewind();
 
-                server_monitor_ready_pdu.emiit(out_s);
+                server_monitor_ready_pdu.emit(out_s);
 
                 length     = out_s.get_offset();
                 chunk_size = length;
@@ -1245,7 +1245,7 @@ public:
                 RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
                 StaticOutStream<256>           out_s;
 
-                format_data_request_pdu.emiit(out_s);
+                format_data_request_pdu.emit(out_s);
 
                 size_t length     = out_s.get_offset();
                 size_t chunk_size = length;
@@ -2018,7 +2018,7 @@ private:
             out_s.mark_end();
 */
 
-            server_monitor_ready_pdu.emiit(out_s);
+            server_monitor_ready_pdu.emit(out_s);
 
             size_t length     = out_s.get_offset();
             size_t chunk_size = length;
@@ -2127,7 +2127,7 @@ private:
 
             const bool unicodetext = this->to_rdp_clipboard_data_is_utf8_encoded;
 
-            format_list_pdu.emiit_ex(out_s, unicodetext);
+            format_list_pdu.emit_ex(out_s, unicodetext);
 
             size_t length     = out_s.get_offset();
             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
@@ -2258,7 +2258,7 @@ private:
                 RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
                 StaticOutStream<256>            out_s;
 
-                format_list_response_pdu.emiit(out_s);
+                format_list_response_pdu.emit(out_s);
 
                 size_t length     = out_s.get_offset();
                 size_t chunk_size = length;
@@ -2306,7 +2306,7 @@ private:
                         RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
                         out_s.rewind();
 
-                        format_data_request_pdu.emiit(out_s);
+                        format_data_request_pdu.emit(out_s);
 
                         length     = out_s.get_offset();
                         chunk_size = length;
@@ -2354,7 +2354,7 @@ private:
 
                             const bool unicodetext = (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT);
 
-                            format_list_pdu.emiit_ex(out_s, unicodetext);
+                            format_list_pdu.emit_ex(out_s, unicodetext);
 
                             size_t length     = out_s.get_offset();
                             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
@@ -2452,7 +2452,7 @@ private:
                     const bool response_ok = true;
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
-                    format_data_response_pdu.emiit_ex(out_stream, this->to_vnc_clipboard_data.get_offset());
+                    format_data_response_pdu.emit_ex(out_stream, this->to_vnc_clipboard_data.get_offset());
                     out_stream.out_copy_bytes(this->to_vnc_clipboard_data.get_data(), this->to_vnc_clipboard_data.get_offset());
 
                     send_format_data_response(out_stream);
@@ -2486,7 +2486,7 @@ private:
                     const bool response_ok = true;
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
-                    format_data_response_pdu.emiit_ex(out_stream, out_data_stream.get_offset());
+                    format_data_response_pdu.emit_ex(out_stream, out_data_stream.get_offset());
                     out_stream.out_skip_bytes(out_data_stream.get_offset());
 
                     send_format_data_response(out_stream);
@@ -2535,7 +2535,7 @@ private:
                     const bool response_ok = true;
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
-                    format_data_response_pdu.emiit_ex(out_stream, out_data_stream.get_offset());
+                    format_data_response_pdu.emit_ex(out_stream, out_data_stream.get_offset());
                     out_stream.out_skip_bytes(out_data_stream.get_offset());
 
                     send_format_data_response(out_stream);

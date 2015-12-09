@@ -139,7 +139,7 @@ struct SharedHeader {
     : component(component)
     , packet_id(packet_id) {}
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint16_le(static_cast<uint16_t>(this->component));
         stream.out_uint16_le(static_cast<uint16_t>(this->packet_id));
     }
@@ -452,7 +452,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceType_);
         stream.out_uint32_le(this->DeviceId_);
 
@@ -667,7 +667,7 @@ class DeviceIORequest {
     uint32_t MinorFunction_ = 0;
 
 public:
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->FileId_);
         stream.out_uint32_le(this->CompletionId_);
@@ -842,7 +842,7 @@ class DeviceCreateRequest {
     std::string path;
 
 public:
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DesiredAccess_);
         stream.out_uint64_le(this->AllocationSize);
         stream.out_uint32_le(this->FileAttributes);
@@ -999,7 +999,7 @@ public:
 //  to any value, and MUST be ignored on receipt.
 
 class DeviceCloseRequest {
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_clear_bytes(32); // Padding(32)
     }
 
@@ -1090,7 +1090,7 @@ class DeviceReadRequest {
     uint64_t Offset_ = 0LLU;
 
 public:
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length_);
         stream.out_uint64_le(this->Offset_);
     }
@@ -1267,7 +1267,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(DeviceControlRequest);
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->OutputBufferLength);
 
         stream.out_uint32_le(this->input_buffer.sz);    // InputBufferLength(4)
@@ -1388,7 +1388,7 @@ public:
     , CompletionId_(CompletionId)
     , IoStatus_(IoStatus) {}
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->CompletionId_);
         stream.out_uint32_le(this->IoStatus_);
@@ -1526,7 +1526,7 @@ public:
     : FileId_(FileId)
     , Information(Information) {}
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileId_);
         stream.out_uint8(this->Information);
     }
@@ -1722,7 +1722,7 @@ public:
     ServerDeviceAnnounceResponse(uint32_t device_id, uint32_t result_code) :
         DeviceId_(device_id), ResultCode_(result_code) {}
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->ResultCode_);
     }
@@ -1801,7 +1801,7 @@ class ServerAnnounceRequest {
     uint16_t ClientId_     = 0;
 
 public:
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint16_le(this->VersionMajor);
         stream.out_uint16_le(this->VersionMinor_);
         stream.out_uint16_le(this->ClientId_);
@@ -1902,7 +1902,7 @@ public:
     , VersionMinor(VersionMinor)
     , ClientId(ClientId) {}
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint16_le(this->VersionMajor);
         stream.out_uint16_le(this->VersionMinor);
         stream.out_uint32_le(this->ClientId);
@@ -2005,7 +2005,7 @@ public:
     explicit ClientNameRequest(const char * computer_name)
     : computer_name(computer_name) {}
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->UnicodeFlag);
         stream.out_uint32_le(this->CodePage);
 
@@ -2316,7 +2316,7 @@ public:
     , extraFlags2(extraFlags2)
     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
 
-    inline void emiit(OutStream & stream, uint32_t version) const {
+    inline void emit(OutStream & stream, uint32_t version) const {
         stream.out_uint32_le(this->osType);
         stream.out_uint32_le(this->osVersion);
         stream.out_uint16_le(this->protocolMajorVersion);
@@ -2612,7 +2612,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
         stream.out_uint32_le(this->query_buffer.sz);    // Length(4)
@@ -2844,7 +2844,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryVolumeInformationRequest);
 
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
         stream.out_uint32_le(this->query_volume_buffer.sz); // Length(4)
@@ -3038,7 +3038,7 @@ class ServerDriveSetInformationRequest {
     uint32_t Length_             = 0;
 
 public:
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint32_le(this->Length_);
 
@@ -3140,7 +3140,7 @@ class RDPFileRenameInformation {
     std::string file_name;
 
 public:
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint8(this->replace_if_exists_ ? static_cast<uint8_t>(-1) : static_cast<uint8_t>(0));
         stream.out_uint8(this->RootDirectory_);
 
@@ -3340,7 +3340,7 @@ class ServerDriveQueryDirectoryRequest {
     std::string path;
 
 public:
-    inline void emiit(OutStream & stream) const {
+    inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint8(this->InitialQuery_);
 
