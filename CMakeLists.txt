@@ -25,14 +25,14 @@ include_directories(${CMAKE_SOURCE_DIR}/tests)
 
 set(spreadsheet_SRCS
     tests/mod/rdp/test_rdp_Qt.cpp
-    src/utils/RDPQtDrawable.cpp	
     src/utils/bitmap_data_allocator.cpp
     
 )
 set(spreadsheet_MOC_SRCS
     src/core/RDP/RDPQtDrawable.hpp
     tests/front/fake_front_Qt.hpp
-    src/core/config.hpp
+    src/core/RDP/RDPQWidget.hpp
+    tests/mod/rdp/QTimerParent.hpp
 )
 set(spreadsheet_UIS
 
