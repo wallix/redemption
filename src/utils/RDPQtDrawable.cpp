@@ -102,5 +102,4 @@ RDPQtDrawable::~RDPQtDrawable(){
     delete (this->_timer);
 }
 
-
-
+#include "RDP/moc_RDPQtDrawable.cxx"

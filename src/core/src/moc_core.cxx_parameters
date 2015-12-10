@@ -1,9 +1,0 @@
--I/usr/include/qt4
--I/usr/include/qt4/QtGui
--I/usr/include/qt4/QtCore
--D$<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>
--DQT_GUI_LIB
--DQT_CORE_LIB
--o
-/home/cmoroldo/Bureau/redemption/src/core/src/moc_core.cxx
-/home/cmoroldo/Bureau/redemption/src/core/src/core
