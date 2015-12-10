@@ -27,8 +27,8 @@ Q_OBJECT
 private:
     
     QLabel     _label;
-    QPainter*  _p;
-    QPicture*  _pi;
+    QPainter* _painter;
+    QPicture  _picture;
     int        _width;
     int        _height;
 
@@ -43,7 +43,7 @@ private:
     
 public:
     
-    RDPQWidget(int width, int height) : QWidget(), _label(this), _width(width), _height(height) {
+    RDPQWidget(int width, int height) : QWidget(), _label(this), _width(width), _height(height), _picture() {
         
         this->setFixedSize(width, height);
         QSize size(sizeHint());
@@ -52,36 +52,36 @@ public:
         int centerH = (desktop->height()/2) - (size.height()/2);
         this->move(centerW, centerH);
         
-       
+        _painter = new QPainter(&(this->_picture));
         this->reInitView();
     }
     
     
     void draw(const RDPOpaqueRect       & cmd, const Rect & clip) {
         Rect rect(cmd.rect.intersect(clip));
-        this->_p->fillRect(rect.x, rect.y, rect.cx, rect.cy, u32_to_qcolor(cmd.color));
+        this->_painter->fillRect(rect.x, rect.y, rect.cx, rect.cy, u32_to_qcolor(cmd.color));
     }
     
     
     void draw(const RDPLineTo           & cmd, const Rect & clip) {
         // TO DO clipping
-        this->_p->setPen(QPen(u32_to_qcolor(cmd.back_color), 1));
-        this->_p->drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
+        this->_painter->setPen(QPen(u32_to_qcolor(cmd.back_color), 1));
+        this->_painter->drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
     }
     
     
     void flush() {
-        this->_p->end();
-        this->_label.setPicture(*(this->_pi));
+        this->_painter->end();
+        this->_label.setPicture(this->_picture);
         this->show();
     }
     
     
     void reInitView() {
-        this->_pi = new QPicture();
-        this->_p = new QPainter(this->_pi);
-        this->_p->setRenderHint(QPainter::Antialiasing);
-        this->_p->fillRect(0, 0, this->_width, this->_height, Qt::white);
+        this->_painter->restore();
+        this->_painter->begin(&(this->_picture));
+        this->_painter->setRenderHint(QPainter::Antialiasing);
+        this->_painter->fillRect(0, 0, this->_width, this->_height, Qt::white);
     }
     
     

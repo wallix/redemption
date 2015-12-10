@@ -33,6 +33,7 @@ private:
     
 public:
     using RDPGraphicDevice::draw;
+    
     void draw(const RDPDestBlt          & cmd, const Rect & clip) override {}
     void draw(const RDPMultiDstBlt      & cmd, const Rect & clip) override {}
     void draw(const RDPPatBlt           & cmd, const Rect & clip) override {}
@@ -58,7 +59,7 @@ public:
     void draw(const RDP::RAIL::CachedIcon          & order) override {}
     void draw(const RDP::RAIL::DeletedWindow       & order) override {}
 
-    void draw( const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size, const Bitmap & bmp) override {}
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size, const Bitmap & bmp) override {}
 
     void server_set_pointer(const Pointer & cursor) override {}
     
