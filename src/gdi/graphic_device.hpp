@@ -32,8 +32,37 @@
 #include "rect.hpp"
 
 
-class Rect;
+class BGRPalette;
+class RDPDestBlt;
+class RDPMultiDstBlt;
+class RDPPatBlt;
 class RDPOpaqueRect;
+class RDPMultiOpaqueRect;
+class RDPScrBlt;
+class RDPMemBlt;
+class RDPMem3Blt;
+class RDPLineTo;
+class RDPGlyphIndex;
+class RDPPolygonSC;
+class RDPPolygonCB;
+class RDPPolyline;
+class RDPEllipseSC;
+class RDPEllipseCB;
+class RDPColCache;
+class RDPGlyphCache;
+class RDPBrushCache;
+
+class RDPBitmapData;
+class Pointer;
+class Rect;
+class Bitmap;
+class GlyphCache;
+
+namespace RDP {
+    class RDPMultiPatBlt;
+    class RDPMultiScrBlt;
+    class FrameMarker;
+}
 
 
 namespace gdi {
@@ -153,8 +182,23 @@ struct GraphicDevice : private noncopyable
     GraphicDevice() = default;
     virtual ~GraphicDevice() = default;
 
-    virtual void draw(RDPOpaqueRect const & cmd, Rect const & rect) = 0;
-    virtual void replaced_by(GraphicDevicePtr &&) { }
+    virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPPatBlt           const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPOpaqueRect       const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPScrBlt           const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPLineTo           const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPPolygonSC        const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPPolygonCB        const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPPolyline         const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPEllipseSC        const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPEllipseCB        const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
+    virtual void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
+    virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
 };
 
 }

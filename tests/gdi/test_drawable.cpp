@@ -26,9 +26,12 @@
 
 #define LOGNULL
 #include "gdi/drawable.hpp"
+#include "gdi/null_gd.hpp"
+
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 template<class Fn>
-struct TestGD : gdi::GraphicDevice
+struct TestGD : gdi::NullGD
 {
     Fn fn;
     bool is_called = false;
@@ -41,7 +44,7 @@ struct TestGD : gdi::GraphicDevice
     : fn(other.fn)
     {}
 
-private:
+    using gdi::NullGD::draw;
     void draw(RDPOpaqueRect const & cmd, Rect const & rect) override {
         this->is_called = true;
         this->fn(cmd, rect);

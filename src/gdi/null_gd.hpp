@@ -26,8 +26,8 @@
 namespace gdi {
 
 struct NullProxy {
-    template<class Cmd>
-    void operator()(Cmd const &, Rect const &) {
+    template<class ... Ts>
+    void operator()(Ts const & ...) {
     }
 };
 

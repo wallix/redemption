@@ -30,6 +30,13 @@ struct static_const {
 template<class T>
 constexpr T static_const<T>::value;
 
+template<class T>
+struct final_ final : T
+{
+    using type = T;
+    using T::T;
+};
+
 template<class...>
 using void_t = void;
 

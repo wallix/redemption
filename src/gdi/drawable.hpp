@@ -24,11 +24,11 @@
 #include <memory>
 #include <iostream>
 
+#include "meta/meta.hpp"
 #include "utils/non_null.hpp"
 #include "graphic_device.hpp"
-#include "null_gd.hpp"
+#include "proxy_gd.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "exchange.hpp"
 
 
@@ -41,7 +41,10 @@ class Drawable : private noncopyable_but_movable
 public:
     struct NullFilter
     {
-        void operator()(GraphicDevice &, RDPOpaqueRect const &, Rect const &);
+        template<class... Ts>
+        void operator()(GraphicDevice & gd, Ts const & ... args) {
+            return gd.draw(args...);
+        }
     };
 
     using InterfacePtr = std::unique_ptr<InterfaceBase>;
@@ -55,7 +58,7 @@ public:
         if (!pgdi) {
             return {};
         }
-        return this->actions_->delegate.add_gdi(std::move(pgdi));
+        return this->actions().add(std::move(pgdi));
     }
 
     template<class FilterClass>
@@ -74,7 +77,7 @@ public:
     }
 
     GraphicDevicePtr remove_gdi(TypeId id) {
-        return this->actions_->delegate.remove_gdi(id);
+        return this->actions().remove(id);
     }
 
     InterfacePtr remove_filter(TypeId id);
@@ -100,48 +103,42 @@ private:
     };
 
     template<class Delegate>
-    struct InterfaceClass final : InterfaceBase
+    struct ProxyInterface
     {
-        void draw(RDPOpaqueRect const & cmd, Rect const & clip) override {
-            this->delegate(this->next.get(), cmd, clip);
+        template<class... Ts>
+        void operator()(InterfaceBase & base, Ts && ... args) {
+            this->delegate(base.next.get(), std::forward<Ts>(args)...);
         }
-
-        InterfaceClass() = default;
-
-        template<class... Args>
-        InterfaceClass(InterfacePtr && next, Args && ... args)
-        : InterfaceBase(std::move(next))
-        , delegate(std::forward<Args>(args)...)
-        {}
 
         Delegate delegate;
     };
 
+    template<class Delegate>
+    using ProxyClass = ProxyInterface<Delegate>;
+
+    template<class Delegate>
+    using InterfaceClass = meta::final_<ProxyGD<ProxyInterface<Delegate>, InterfaceBase>>;
+
     template<class TFilter>
     struct DelegtateFilter
     {
-        DelegtateFilter(TFilter && filter)
-        : filter(std::move(filter))
-        {}
-
-        template<class Cmd>
-        void operator()(utils::non_null<GraphicDevice*> next, Cmd const & cmd, Rect const & clip) {
-            this->filter(*next, cmd, clip);
+        template<class... Ts>
+        void operator()(InterfaceBase & base, Ts const & ... args) {
+            this->filter(*base.next, args...);
         }
 
         TFilter filter;
     };
     template<class TFilter>
-    using Filter = InterfaceClass<DelegtateFilter<TFilter>>;
+    using Filter = ProxyGD<DelegtateFilter<TFilter>, InterfaceBase>;
 
     template<class FilterClass>
     InterfaceBase * new_filter(FilterClass && filter) {
-        return {new Filter<FilterClass>(std::move(this->interface_), std::forward<FilterClass>(filter))};
+        return new Filter<FilterClass>(
+            DelegtateFilter<FilterClass>{std::forward<FilterClass>(filter)},
+            std::move(this->interface_)
+        );
     }
-
-
-    // TODO [performance] Filter -> FilterFilter & FilterActions
-
 
     struct IsId {
         TypeId id;
@@ -158,19 +155,19 @@ private:
 
     struct DelegtateActions
     {
-        template<class Cmd>
-        void operator()(GraphicDevice *, Cmd const & cmd, Rect const & clip) {
+        template<class... Ts>
+        void operator()(GraphicDevice *, Ts const & ... args) {
             for (auto & gd : this->gd_list_) {
-                gd->draw(cmd, clip);
+                gd->draw(args...);
             }
         }
 
-        TypeId add_gdi(GraphicDevicePtr && pgdi) {
+        TypeId add(GraphicDevicePtr && pgdi) {
             this->gd_list_.push_back(std::move(pgdi));
             return this->gd_list_.back().get();
         }
 
-        GraphicDevicePtr remove_gdi(TypeId id) {
+        GraphicDevicePtr remove(TypeId id) {
             auto pos = std::find_if(this->gd_list_.begin(), this->gd_list_.end(), IsId{id});
             if (pos != this->gd_list_.end()) {
                 using std::swap;
@@ -184,6 +181,10 @@ private:
         std::vector<GraphicDevicePtr> gd_list_;
     };
     using Actions = InterfaceClass<DelegtateActions>;
+
+    DelegtateActions & actions() const {
+        return this->actions_->get_proxy().delegate;
+    }
 
     Actions * actions_ {new Actions};
     InterfacePtr interface_ {actions_};

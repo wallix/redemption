@@ -24,22 +24,76 @@
 #include "graphic_device.hpp"
 #include "meta/meta.hpp"
 
+#include <type_traits>
+
+
 namespace gdi {
 
-template<class Proxy>
-struct ProxyGD : GraphicDevice
+template<class Proxy, class InterfaceBase = GraphicDevice>
+struct ProxyGD : InterfaceBase
 {
+    static_assert(std::is_base_of<GraphicDevice, InterfaceBase>::value, "InterfaceBase isn't a GraphicDevice");
+
     template<class... ProxyArgs>
     ProxyGD(ProxyArgs && ... args)
-    : proxy_(std::forward<ProxyArgs>(args)...)
+    : proxy_{std::forward<ProxyArgs>(args)...}
     {}
 
-    void draw(RDPOpaqueRect const & cmd, Rect const & clip) {
-        this->proxy_(cmd, clip);
+    template<class... Ts>
+    ProxyGD(Proxy && proxy, Ts && ... args)
+    : InterfaceBase{std::forward<Ts>(args)...}
+    , proxy_(std::move(proxy))
+    {}
+
+    template<class... Ts>
+    ProxyGD(Proxy const & proxy, Ts && ... args)
+    : InterfaceBase{std::forward<Ts>(args)...}
+    , proxy_(proxy)
+    {}
+
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->proxy_(*this, cmd, clip); }
+
+    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
+        this->proxy_(*this, cmd, clip, bmp);
     }
+
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override {
+        this->proxy_(*this, cmd, clip, bmp);
+    }
+
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
+        this->proxy_(*this, cmd, clip, gly_cache);
+    }
+
+    Proxy & get_proxy() { return this->proxy_; }
+    Proxy const & get_proxy() const { return this->proxy_; }
 
 private:
     Proxy proxy_;
+};
+
+template<class Proxy>
+struct ProxySkipBase : Proxy
+{
+    using Proxy::Proxy;
+
+    template<class Base, class... Ts>
+    void operator()(Base const, Ts const ... args) {
+        Proxy::operator()(args...);
+    }
 };
 
 
@@ -70,9 +124,19 @@ struct ProxyDraw
     : gd_(std::forward<GdArgs>(args)...)
     {}
 
-    template<class Cmd>
-    void draw(Cmd const & cmd, Rect const & clip) {
+    template<class Base, class Cmd>
+    void operator()(Base const &, Cmd const & cmd, Rect const & clip) {
         this->gd_.draw(cmd, clip);
+    }
+
+    template<class Base, class Cmd>
+    void operator()(Base const &, Cmd const & cmd, Rect const & clip, Bitmap const & bmp) {
+        this->gd_.draw(cmd, clip, bmp);
+    }
+
+    template<class Base, class Cmd>
+    void operator()(Base const &, Cmd const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
+        this->gd_.draw(cmd, clip, gly_cache);
     }
 
 private:
