@@ -18,20 +18,20 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_NULL_GD_HPP
-#define REDEMPTION_GDI_NULL_GD_HPP
+#ifndef REDEMPTION_GDI_DUMMY_GD_HPP
+#define REDEMPTION_GDI_DUMMY_GD_HPP
 
 #include "proxy_gd.hpp"
 
 namespace gdi {
 
-struct NullProxy {
+struct DummyProxy {
     template<class ... Ts>
     void operator()(Ts const & ...) {
     }
 };
 
-using NullGD = ProxyGD<NullProxy>;
+using DummyGD = ProxyGD<DummyProxy>;
 
 }
 

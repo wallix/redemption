@@ -22,7 +22,6 @@
 #define REDEMPTION_GDI_PROXY_GD_HPP
 
 #include "graphic_device.hpp"
-#include "meta/meta.hpp"
 
 #include <type_traits>
 
@@ -78,6 +77,10 @@ struct ProxyGD : InterfaceBase
         this->proxy_(*this, cmd, clip, gly_cache);
     }
 
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
+        this->proxy_(*this, cmd, bmp);
+    }
+
     Proxy & get_proxy() { return this->proxy_; }
     Proxy const & get_proxy() const { return this->proxy_; }
 
@@ -91,7 +94,7 @@ struct ProxySkipBase : Proxy
     using Proxy::Proxy;
 
     template<class Base, class... Ts>
-    void operator()(Base const, Ts const ... args) {
+    void operator()(Base const &, Ts const & ... args) {
         Proxy::operator()(args...);
     }
 };
@@ -99,48 +102,32 @@ struct ProxySkipBase : Proxy
 
 namespace detail_
 {
-    template<class T, class = void>
-    struct gd_draw_wrapper
-    { using type = T; };
+    template<class T>
+    typename std::pointer_traits<T>::element_type & to_ref(T & x) {
+        return *x;
+    }
 
-    template<class Ptr>
-    struct gd_draw_wrapper<Ptr, meta::void_t<typename std::pointer_traits<Ptr>::element_type>>
-    {
-        struct type {
-            template<class Cmd>
-            void draw(Cmd const & cmd, Rect const & clip) {
-                this->p->draw(cmd, clip);
-            }
-            Ptr p;
-        };
-    };
+    template<class T>
+    T & to_ref(T & x) {
+        return x;
+    }
 }
 
 template<class Gd>
-struct ProxyDraw
+struct DrawProxy
 {
     template<class... GdArgs>
-    ProxyDraw(GdArgs && ... args)
+    DrawProxy(GdArgs && ... args)
     : gd_(std::forward<GdArgs>(args)...)
     {}
 
-    template<class Base, class Cmd>
-    void operator()(Base const &, Cmd const & cmd, Rect const & clip) {
-        this->gd_.draw(cmd, clip);
-    }
-
-    template<class Base, class Cmd>
-    void operator()(Base const &, Cmd const & cmd, Rect const & clip, Bitmap const & bmp) {
-        this->gd_.draw(cmd, clip, bmp);
-    }
-
-    template<class Base, class Cmd>
-    void operator()(Base const &, Cmd const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
-        this->gd_.draw(cmd, clip, gly_cache);
+    template<class Base, class... Ts>
+    void operator()(Base const &, Ts const & ... args) {
+        detail_::to_ref(this->gd_).draw(args...);
     }
 
 private:
-    typename detail_::gd_draw_wrapper<Gd>::type gd_;
+    Gd gd_;
 };
 
 }

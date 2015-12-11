@@ -26,12 +26,12 @@
 
 #define LOGNULL
 #include "gdi/drawable.hpp"
-#include "gdi/null_gd.hpp"
+#include "gdi/dummy_gd.hpp"
 
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 template<class Fn>
-struct TestGD : gdi::NullGD
+struct TestGD : gdi::DummyGD
 {
     Fn fn;
     bool is_called = false;
@@ -44,7 +44,7 @@ struct TestGD : gdi::NullGD
     : fn(other.fn)
     {}
 
-    using gdi::NullGD::draw;
+    using gdi::DummyGD::draw;
     void draw(RDPOpaqueRect const & cmd, Rect const & rect) override {
         this->is_called = true;
         this->fn(cmd, rect);
@@ -173,4 +173,7 @@ BOOST_AUTO_TEST_CASE(TestGDIDrawable)
     drawable.draw(cmd, clip);
 
     BOOST_CHECK(!gd2.is_called);
+
+//     gdi::DrawProxy<gdi::Drawable&>{drawable}(cmd, clip);
+//     gdi::DrawProxy<gdi::Drawable*>{&drawable}(cmd, clip);
 }

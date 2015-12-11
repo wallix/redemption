@@ -18,34 +18,42 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_DRAWABLE_GD_HPP
-#define REDEMPTION_GDI_DRAWABLE_GD_HPP
+#ifndef REDEMPTION_UTILS_ARRAY_VIEW_HPP
+#define REDEMPTION_UTILS_ARRAY_VIEW_HPP
 
-#include "drawable.hpp"
-#include "proxy_gd.hpp"
+#include <cstddef>
 
-namespace gdi {
-
-struct DrawableGd : ProxyGD<ProxyDraw<Drawable>>
+template<class T>
+struct array_view
 {
-    using Drawable::TypeId;
-    using Drawable::GraphicDispatcher;
+    array_view() = default;
 
-    DrawableGd() = default;
+    array_view(T * p, std::size_t sz)
+    : p(p)
+    , sz(sz)
+    {}
 
-    TypeId add_gdi(GraphicDevicePtr && pgdi) {
-        return this->drawable_.add_gdi(std::move(pgdi));
-    }
+    template<std::size_t N>
+    array_view(T (&a)[N])
+    : p(a)
+    , sz(N)
+    {}
 
-    template<class FilterClass>
-    TypeId add_filter(FilterClass && filter) {
-        return this->drawable_.add_filter(std::forward<FilterClass>(filter));
-    }
+    explicit operator bool () const noexcept { return this->p; }
+
+    std::size_t size() const noexcept { return this->sz; }
+
+    T * data() noexcept { return this->p; }
+    T const * data() const noexcept { return this->p; }
+
+    T * begin() { return this->p; }
+    T * end() { return this->p + this->sz; }
+    T const * begin() const { return this->p; }
+    T const * end() const { return this->p + this->sz; }
 
 private:
-    Drawable drawable_;
+    T * p;
+    std::size_t sz;
 };
-
-}
 
 #endif

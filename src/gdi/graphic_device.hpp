@@ -26,10 +26,9 @@
 #include <cstdint>
 
 #include "meta/meta.hpp"
+#include "utils/virtual_deleter.hpp"
 
-#include "log.hpp"
 #include "noncopyable.hpp"
-#include "rect.hpp"
 
 
 class BGRPalette;
@@ -48,9 +47,6 @@ class RDPPolygonCB;
 class RDPPolyline;
 class RDPEllipseSC;
 class RDPEllipseCB;
-class RDPColCache;
-class RDPGlyphCache;
-class RDPBrushCache;
 
 class RDPBitmapData;
 class Pointer;
@@ -61,125 +57,13 @@ class GlyphCache;
 namespace RDP {
     class RDPMultiPatBlt;
     class RDPMultiScrBlt;
-    class FrameMarker;
 }
 
 
 namespace gdi {
 
-using BGRColor = uint32_t;
-
-class GraphicDevice;
-
-struct GraphicDeviceDeleterBase
-{
-    virtual ~GraphicDeviceDeleterBase() = default;
-    virtual void operator()(GraphicDevice * gd) = 0;
-};
-
-
-using DefaultDelete = std::default_delete<GraphicDeviceDeleterBase>;
-struct NoDelete { constexpr NoDelete() noexcept = default; };
-
-namespace {
-    auto && default_delete = meta::static_const<DefaultDelete>::value;
-    auto && no_delete = meta::static_const<NoDelete>::value;
-}
-
-struct GraphicDeviceDeleter
-{
-    GraphicDeviceDeleter(bool owner)
-    : pdeleter{owner ? gdi_default_delete() : gdi_no_delete()}
-    {}
-
-    GraphicDeviceDeleter(DefaultDelete)
-    : pdeleter{gdi_default_delete()}
-    {}
-
-    GraphicDeviceDeleter(NoDelete)
-    : pdeleter{gdi_no_delete()}
-    {}
-
-    template<class Deleter>
-    GraphicDeviceDeleter(Deleter && deleter);
-
-    GraphicDeviceDeleter(GraphicDeviceDeleter &&) = default;
-    GraphicDeviceDeleter(GraphicDeviceDeleter const &) = delete;
-    GraphicDeviceDeleter & operator = (GraphicDeviceDeleter &&) = default;
-    GraphicDeviceDeleter & operator = (GraphicDeviceDeleter const &) = delete;
-
-    void operator()(GraphicDevice * gd) noexcept {
-        (*this->pdeleter)(gd);
-    }
-
-private:
-    template<class Deleter>
-    struct gdi_user_delete_impl : GraphicDeviceDeleterBase
-    {
-        Deleter deleter;
-
-        template<class D>
-        gdi_user_delete_impl(D && d)
-        : deleter(std::forward<D>(d))
-        {}
-
-        void operator()(GraphicDevice * gd) {
-            this->deleter(gd);
-        }
-    };
-
-    static GraphicDeviceDeleterBase * gdi_no_delete() noexcept {
-        static struct : GraphicDeviceDeleterBase {
-            void operator()(GraphicDevice *) {}
-        } impl;
-        return &impl;
-    }
-
-    static GraphicDeviceDeleterBase * gdi_default_delete() noexcept {
-        static struct : GraphicDeviceDeleterBase {
-            void operator()(GraphicDevice * gd) {
-                std::default_delete<GraphicDevice>()(gd);
-            }
-        } impl;
-        return &impl;
-    }
-
-    struct gd_deleter {
-        void operator()(GraphicDeviceDeleterBase * gd) noexcept {
-            if (gdi_default_delete() != gd && gdi_no_delete() != gd) {
-                delete gd;
-            }
-        }
-    };
-
-    std::unique_ptr<GraphicDeviceDeleterBase, gd_deleter> pdeleter;
-};
-
-
-template<class Deleter>
-GraphicDeviceDeleter::GraphicDeviceDeleter(Deleter&& deleter)
-: pdeleter{new gdi_user_delete_impl<Deleter>{std::forward<Deleter>(deleter)}}
-{}
-
-
-
-using GraphicDevicePtr = std::unique_ptr<GraphicDevice, GraphicDeviceDeleter>;
-
-
-template<class Gd, class... Args>
-GraphicDevicePtr make_gd_ptr(Args && ... args) {
-    return GraphicDevicePtr(new Gd(std::forward<Args>(args)...), default_delete);
-}
-
-template<class Gd>
-GraphicDevicePtr make_gd_ref(Gd & gd) {
-    return GraphicDevicePtr(&gd, no_delete);
-}
-
-
 struct GraphicDevice : private noncopyable
 {
-    GraphicDevice() = default;
     virtual ~GraphicDevice() = default;
 
     virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
@@ -199,7 +83,24 @@ struct GraphicDevice : private noncopyable
     virtual void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
+    virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
 };
+
+using GraphicDeviceDeleterBase = utils::virtual_deleter_base<GraphicDevice>;
+using GraphicDevicePtr = utils::unique_ptr_with_virtual_deleter<GraphicDevice>;
+
+using utils::default_delete;
+using utils::no_delete;
+
+template<class Gd, class... Args>
+GraphicDevicePtr make_gd_ptr(Args && ... args) {
+    return GraphicDevicePtr(new Gd(std::forward<Args>(args)...), default_delete);
+}
+
+template<class Gd>
+GraphicDevicePtr make_gd_ref(Gd & gd) {
+    return GraphicDevicePtr(&gd, no_delete);
+}
 
 }
 

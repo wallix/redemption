@@ -24,190 +24,66 @@
 #include <memory>
 #include <iostream>
 
-#include "meta/meta.hpp"
-#include "utils/non_null.hpp"
+#include "utils/service_provier.hpp"
 #include "graphic_device.hpp"
 #include "proxy_gd.hpp"
-
-#include "exchange.hpp"
 
 
 namespace gdi {
 
-class Drawable : private noncopyable_but_movable
+namespace detail_
 {
-    struct InterfaceBase;
+    struct DrawerTrait
+    {
+        template<class... Ts>
+        static void delegate(GraphicDevice & gd, Ts const & ... args) {
+            gd.draw(args...);
+        }
+    };
 
-public:
+    using ServiceDrawable = utils::service_provider<GraphicDevice, DrawerTrait, ProxyGD, GraphicDevicePtr>;
+
+    struct ServiceDrawableProxy : ServiceDrawable
+    {
+        template<class Base, class... Ts>
+        void operator()(Base const &, Ts const & ... args) {
+            ServiceDrawable::operator()(args...);
+        }
+    };
+}
+
+struct Drawable
+: ProxyGD<detail_::ServiceDrawableProxy>
+//: ProxyGD<ProxySkipBase<detail_::ServiceDrawable>>
+{
+    using TypeId = detail_::ServiceDrawable::type_id;
+    using FilterPtr = detail_::ServiceDrawable::filter_pointer;
+
     struct NullFilter
     {
         template<class... Ts>
-        void operator()(GraphicDevice & gd, Ts const & ... args) {
-            return gd.draw(args...);
+        void operator()(GraphicDevice & gd, Ts && ... args) {
+            return gd.draw(std::forward<Ts>(args)...);
         }
     };
 
-    using InterfacePtr = std::unique_ptr<InterfaceBase>;
-
-    using TypeId = void const *;
-
-
-    Drawable() = default;
-
     TypeId add_gdi(GraphicDevicePtr && pgdi) {
-        if (!pgdi) {
-            return {};
-        }
-        return this->actions().add(std::move(pgdi));
+        return this->get_proxy().add_class(std::move(pgdi));
     }
 
-    template<class FilterClass>
-    TypeId add_filter(FilterClass && filter) {
-        this->interface_.reset(this->new_filter(std::forward<FilterClass>(filter)));
-        return this->interface_.get();
-    }
-
-    TypeId add_filter(InterfacePtr && pfilter) {
-        if (!pfilter) {
-            return {};
-        }
-        pfilter->next = std::move(this->interface_);
-        this->interface_ = std::move(pfilter);
-        return this->interface_.get();
+    template<class Filter>
+    TypeId add_filter(Filter && filter) {
+        return this->get_proxy().add_filter(std::forward<Filter>(filter));
     }
 
     GraphicDevicePtr remove_gdi(TypeId id) {
-        return this->actions().remove(id);
+        return this->get_proxy().remove_class(id);
     }
 
-    InterfacePtr remove_filter(TypeId id);
-
-
-    void draw(RDPOpaqueRect const & cmd, Rect const & clip) {
-        this->interface_->draw(cmd, clip);
+    FilterPtr remove_filter(TypeId id) {
+        return this->get_proxy().remove_filter(id);
     }
-
-
-private:
-    struct InterfaceBase : GraphicDevice
-    {
-        InterfaceBase() = default;
-
-        InterfaceBase(InterfacePtr && next)
-        : next(std::move(next))
-        {}
-
-    private:
-        friend class Drawable;
-        InterfacePtr next;
-    };
-
-    template<class Delegate>
-    struct ProxyInterface
-    {
-        template<class... Ts>
-        void operator()(InterfaceBase & base, Ts && ... args) {
-            this->delegate(base.next.get(), std::forward<Ts>(args)...);
-        }
-
-        Delegate delegate;
-    };
-
-    template<class Delegate>
-    using ProxyClass = ProxyInterface<Delegate>;
-
-    template<class Delegate>
-    using InterfaceClass = meta::final_<ProxyGD<ProxyInterface<Delegate>, InterfaceBase>>;
-
-    template<class TFilter>
-    struct DelegtateFilter
-    {
-        template<class... Ts>
-        void operator()(InterfaceBase & base, Ts const & ... args) {
-            this->filter(*base.next, args...);
-        }
-
-        TFilter filter;
-    };
-    template<class TFilter>
-    using Filter = ProxyGD<DelegtateFilter<TFilter>, InterfaceBase>;
-
-    template<class FilterClass>
-    InterfaceBase * new_filter(FilterClass && filter) {
-        return new Filter<FilterClass>(
-            DelegtateFilter<FilterClass>{std::forward<FilterClass>(filter)},
-            std::move(this->interface_)
-        );
-    }
-
-    struct IsId {
-        TypeId id;
-        bool operator()(GraphicDevice const & p) const noexcept {
-            return &p == this->id;
-        }
-        bool operator()(GraphicDevicePtr const & p) const noexcept {
-            return (*this)(*p);
-        }
-        bool operator()(InterfacePtr const & p) const noexcept {
-            return (*this)(*p);
-        }
-    };
-
-    struct DelegtateActions
-    {
-        template<class... Ts>
-        void operator()(GraphicDevice *, Ts const & ... args) {
-            for (auto & gd : this->gd_list_) {
-                gd->draw(args...);
-            }
-        }
-
-        TypeId add(GraphicDevicePtr && pgdi) {
-            this->gd_list_.push_back(std::move(pgdi));
-            return this->gd_list_.back().get();
-        }
-
-        GraphicDevicePtr remove(TypeId id) {
-            auto pos = std::find_if(this->gd_list_.begin(), this->gd_list_.end(), IsId{id});
-            if (pos != this->gd_list_.end()) {
-                using std::swap;
-                auto ret = exchange(*pos, std::move(this->gd_list_.back()));
-                this->gd_list_.pop_back();
-                return ret;
-            }
-            return GraphicDevicePtr{nullptr, no_delete};
-        }
-
-        std::vector<GraphicDevicePtr> gd_list_;
-    };
-    using Actions = InterfaceClass<DelegtateActions>;
-
-    DelegtateActions & actions() const {
-        return this->actions_->get_proxy().delegate;
-    }
-
-    Actions * actions_ {new Actions};
-    InterfacePtr interface_ {actions_};
 };
-
-Drawable::InterfacePtr Drawable::remove_filter(Drawable::TypeId id) {
-    if (this->interface_.get() == this->actions_) {
-        return InterfacePtr{};
-    }
-    IsId pred{id};
-    auto next = [](InterfacePtr * p) { return &(*p)->next; };
-    auto * iprev = &this->interface_;
-    auto * icurr = next(iprev);
-    while (iprev->get() != this->actions_) {
-        if (pred(*iprev)) {
-            return exchange(*iprev, std::move(*icurr));
-        }
-        iprev = icurr;
-        icurr = next(icurr);
-    }
-    return InterfacePtr{};
-}
-
 
 }
 
