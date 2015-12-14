@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestGDIDrawable)
 {
     gdi::Drawable drawable;
 
-    using gd_ptr = gdi::GraphicDevicePtr;
+    using gd_ptr = gdi::GraphicApiPtr;
 
     Rect clip{0, 0, 100, 100};
     RDPOpaqueRect cmd{clip, 0};
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestGDIDrawable)
     gd2.is_called = false;
 
     auto gd3 = gd_class(dummy_fn);
-    auto gd3_id = drawable.add_gdi(gd_ptr(&gd3, [](gdi::GraphicDevice*) {}));
+    auto gd3_id = drawable.add_gdi(gd_ptr(&gd3, [](gdi::GraphicApi*) {}));
     BOOST_REQUIRE(gd3_id);
 
     drawable.draw(cmd, clip);
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(TestGDIDrawable)
     struct FilterRect : gdi::Drawable::NullFilter {
         bool is_called = false;
 
-        void operator()(gdi::GraphicDevice &, RDPOpaqueRect const &, Rect const &) {
+        void operator()(gdi::GraphicApi &, RDPOpaqueRect const &, Rect const &) {
             this->is_called = true;
         }
 
@@ -173,7 +173,4 @@ BOOST_AUTO_TEST_CASE(TestGDIDrawable)
     drawable.draw(cmd, clip);
 
     BOOST_CHECK(!gd2.is_called);
-
-//     gdi::DrawProxy<gdi::Drawable&>{drawable}(cmd, clip);
-//     gdi::DrawProxy<gdi::Drawable*>{&drawable}(cmd, clip);
 }

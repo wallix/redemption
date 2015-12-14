@@ -25,7 +25,7 @@
 #include <iostream>
 
 #include "utils/service_provier.hpp"
-#include "graphic_device.hpp"
+#include "graphic_api.hpp"
 #include "proxy_gd.hpp"
 
 
@@ -36,12 +36,12 @@ namespace detail_
     struct DrawerTrait
     {
         template<class... Ts>
-        static void delegate(GraphicDevice & gd, Ts const & ... args) {
+        void operator()(GraphicApi & gd, Ts const & ... args) {
             gd.draw(args...);
         }
     };
 
-    using ServiceDrawable = utils::service_provider<GraphicDevice, DrawerTrait, ProxyGD, GraphicDevicePtr>;
+    using ServiceDrawable = utils::service_provider<GraphicApi, DrawerTrait, ProxyGD, GraphicApiPtr>;
 
     struct ServiceDrawableProxy : ServiceDrawable
     {
@@ -59,15 +59,9 @@ struct Drawable
     using TypeId = detail_::ServiceDrawable::type_id;
     using FilterPtr = detail_::ServiceDrawable::filter_pointer;
 
-    struct NullFilter
-    {
-        template<class... Ts>
-        void operator()(GraphicDevice & gd, Ts && ... args) {
-            return gd.draw(std::forward<Ts>(args)...);
-        }
-    };
+    using NullFilter = detail_::DrawerTrait;
 
-    TypeId add_gdi(GraphicDevicePtr && pgdi) {
+    TypeId add_gdi(GraphicApiPtr && pgdi) {
         return this->get_proxy().add_class(std::move(pgdi));
     }
 
@@ -76,7 +70,7 @@ struct Drawable
         return this->get_proxy().add_filter(std::forward<Filter>(filter));
     }
 
-    GraphicDevicePtr remove_gdi(TypeId id) {
+    GraphicApiPtr remove_gdi(TypeId id) {
         return this->get_proxy().remove_class(id);
     }
 

@@ -21,17 +21,17 @@
 #ifndef REDEMPTION_GDI_PROXY_GD_HPP
 #define REDEMPTION_GDI_PROXY_GD_HPP
 
-#include "graphic_device.hpp"
+#include "graphic_api.hpp"
 
 #include <type_traits>
 
 
 namespace gdi {
 
-template<class Proxy, class InterfaceBase = GraphicDevice>
+template<class Proxy, class InterfaceBase = GraphicApi>
 struct ProxyGD : InterfaceBase
 {
-    static_assert(std::is_base_of<GraphicDevice, InterfaceBase>::value, "InterfaceBase isn't a GraphicDevice");
+    static_assert(std::is_base_of<GraphicApi, InterfaceBase>::value, "InterfaceBase isn't a GraphicApi");
 
     template<class... ProxyArgs>
     ProxyGD(ProxyArgs && ... args)
@@ -102,15 +102,23 @@ struct ProxySkipBase : Proxy
 
 namespace detail_
 {
-    template<class T>
-    typename std::pointer_traits<T>::element_type & to_ref(T & x) {
-        return *x;
-    }
+    template<class T, class = void>
+    struct get_ref
+    {
+        using result_type = T &;
+        static result_type impl(T & x) {
+            return x;
+        }
+    };
 
-    template<class T>
-    T & to_ref(T & x) {
-        return x;
-    }
+    template<class Ptr>
+    struct get_ref<Ptr, meta::void_t<decltype(*std::declval<Ptr&>())>>
+    {
+        using result_type = decltype(*std::declval<Ptr&>());
+        static result_type impl(Ptr & x) {
+            return *x;
+        }
+    };
 }
 
 template<class Gd>
@@ -123,7 +131,7 @@ struct DrawProxy
 
     template<class Base, class... Ts>
     void operator()(Base const &, Ts const & ... args) {
-        detail_::to_ref(this->gd_).draw(args...);
+        detail_::get_ref<Gd>::impl(this->gd_).draw(args...);
     }
 
 private:

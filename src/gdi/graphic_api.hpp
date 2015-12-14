@@ -62,9 +62,9 @@ namespace RDP {
 
 namespace gdi {
 
-struct GraphicDevice : private noncopyable
+struct GraphicApi : private noncopyable
 {
-    virtual ~GraphicDevice() = default;
+    virtual ~GraphicApi() = default;
 
     virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) = 0;
@@ -86,20 +86,20 @@ struct GraphicDevice : private noncopyable
     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
 };
 
-using GraphicDeviceDeleterBase = utils::virtual_deleter_base<GraphicDevice>;
-using GraphicDevicePtr = utils::unique_ptr_with_virtual_deleter<GraphicDevice>;
+using GraphicApiDeleterBase = utils::virtual_deleter_base<GraphicApi>;
+using GraphicApiPtr = utils::unique_ptr_with_virtual_deleter<GraphicApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
 template<class Gd, class... Args>
-GraphicDevicePtr make_gd_ptr(Args && ... args) {
-    return GraphicDevicePtr(new Gd(std::forward<Args>(args)...), default_delete);
+GraphicApiPtr make_gd_ptr(Args && ... args) {
+    return GraphicApiPtr(new Gd(std::forward<Args>(args)...), default_delete);
 }
 
 template<class Gd>
-GraphicDevicePtr make_gd_ref(Gd & gd) {
-    return GraphicDevicePtr(&gd, no_delete);
+GraphicApiPtr make_gd_ref(Gd & gd) {
+    return GraphicApiPtr(&gd, no_delete);
 }
 
 }

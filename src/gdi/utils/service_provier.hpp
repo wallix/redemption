@@ -35,7 +35,7 @@ namespace gdi { namespace utils {
 
 template<
     class ServiceInterface,
-    class Trait,
+    class Delegate,
     template<class Proxy, class InterfaceBase> class ProxyInterface,
     class ServicePtr = ServiceInterface*
 >
@@ -85,7 +85,7 @@ public:
 
     template<class... Ts>
     void operator()(Ts && ... args) {
-        Trait::delegate(*this->interface_, std::forward<Ts>(args)...);
+        Delegate()(*this->interface_, std::forward<Ts>(args)...);
     }
 
 
@@ -143,7 +143,7 @@ private:
         template<class... Ts>
         void operator()(InterfaceBase &, Ts && ... args) {
             for (auto & gd : this->gd_list_) {
-                Trait::delegate(*gd, std::forward<Ts>(args)...);
+                Delegate()(*gd, std::forward<Ts>(args)...);
             }
         }
 
@@ -175,9 +175,9 @@ private:
     interface_pointer interface_ {actions_};
 };
 
-template<class ServiceIface, class Trait, template<class, class> class ProxyIface, class ServicePtr>
-typename service_provider<ServiceIface, Trait, ProxyIface, ServicePtr>::interface_pointer
-service_provider<ServiceIface, Trait, ProxyIface, ServicePtr>::remove_filter(service_provider::type_id id) {
+template<class ServiceIface, class Delegate, template<class, class> class ProxyIface, class ServicePtr>
+typename service_provider<ServiceIface, Delegate, ProxyIface, ServicePtr>::interface_pointer
+service_provider<ServiceIface, Delegate, ProxyIface, ServicePtr>::remove_filter(service_provider::type_id id) {
     if (this->interface_.get() == this->actions_) {
         return interface_pointer{};
     }

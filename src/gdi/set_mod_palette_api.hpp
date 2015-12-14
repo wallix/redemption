@@ -18,52 +18,40 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_CACHE_DEVICE_HPP
-#define REDEMPTION_GDI_CACHE_DEVICE_HPP
+#ifndef REDEMPTION_GDI_SET_MOD_PALETTE_API_HPP
+#define REDEMPTION_GDI_SET_MOD_PALETTE_API_HPP
 
-#include <memory>
-
-#include <cstdint>
-
-#include "meta/meta.hpp"
 #include "utils/virtual_deleter.hpp"
 
 #include "noncopyable.hpp"
 
-class RDPColCache;
-class RDPBrushCache;
-class RDPMemBlt;
-class RDPMem3Blt;
+class Pointer;
 
 namespace gdi {
 
-struct CacheDevice : private noncopyable
+struct SetModPaletteApi : private noncopyable
 {
-    virtual ~CacheDevice() = default;
+    virtual ~SetModPaletteApi() = default;
 
-    virtual void cache(RDPColCache   const & cmd) = 0;
-    virtual void cache(RDPBrushCache const & cmd) = 0;
-    virtual void cache(RDPMemBlt     const & cmd) = 0;
-    virtual void cache(RDPMem3Blt    const & cmd) = 0;
+    virtual void set_mod_palette(const BGRPalette & palette) {};
 };
 
-using CacheDeviceDeleterBase = utils::virtual_deleter_base<CacheDevice>;
-using CacheDevicePtr = utils::unique_ptr_with_virtual_deleter<CacheDevice>;
+using SetModPaletteApiDeleterBase = utils::virtual_deleter_base<SetModPaletteApi>;
+using SetModPaletteApiPtr = utils::unique_ptr_with_virtual_deleter<SetModPaletteApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class Gd, class... Args>
-CacheDevicePtr make_gd_ptr(Args && ... args) {
-    return CacheDevicePtr(new Gd(std::forward<Args>(args)...), default_delete);
+template<class SetModPaletteApi, class... Args>
+SetModPaletteApiPtr make_set_mod_pallete_ptr(Args && ... args) {
+    return SetModPaletteApiPtr(new SetModPaletteApi(std::forward<Args>(args)...), default_delete);
 }
 
-template<class Gd>
-CacheDevicePtr make_gd_ref(Gd & gd) {
-    return CacheDevicePtr(&gd, no_delete);
+template<class SetModPaletteApi>
+SetModPaletteApiPtr make_set_mod_pallete_ref(SetModPaletteApi & gd) {
+    return SetModPaletteApiPtr(&gd, no_delete);
 }
 
 }
 
 #endif
-// JE dois verrouiller ma session
