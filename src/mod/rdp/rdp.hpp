@@ -5680,8 +5680,8 @@ public:
             for (unsigned i = 0; i < dlen ; i++) {
                 BGRColor px = indata[i];
                 // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(data[6 * i]),     3, color_decode((px >> 4) & 0xF, bpp, this->orders.global_palette));
-                ::out_bytes_le(&(data[6 * i + 3]), 3, color_decode(px        & 0xF, bpp, this->orders.global_palette));
+                ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF]);
+                ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF]);
             }
         }
         break;
