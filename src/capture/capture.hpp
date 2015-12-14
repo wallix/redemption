@@ -36,6 +36,9 @@
 
 #include "wait_obj.hpp"
 
+#include "gdi/graphic_api.hpp"
+#include "gdi/proxy.hpp"
+
 class Capture final : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     const bool capture_wrm;
@@ -82,6 +85,153 @@ private:
 
     const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
+    struct NewGraphicDevice : gdi::GraphicApi {
+        RDPGraphicDevice * gd;
+    };
+
+    struct NewGraphicDeviceProxy {
+        template<class... Ts>
+        void operator()(NewGraphicDevice & ngd, Ts && ... args) {
+            ngd.gd->draw(args...);
+        }
+    };
+
+    template<class Encode, class Decode>
+    struct NewGraphicDeviceEncoderProxy : Encode, Decode
+    {
+        NewGraphicDeviceEncoderProxy(Encode enc, Decode dec)
+        : Encode(enc)
+        , Decode(dec)
+        {}
+
+        template<class... Ts>
+        void operator()(NewGraphicDevice & ngd, Ts && ... args) {
+            ngd.gd->draw(args...);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPBitmapData & , const Bitmap & ) {
+            // NOTE unimplmented
+        }
+
+        BGRColor color(BGRColor c) {
+            return Encode::operator()(Decode::operator()(c));
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+            RDPMultiOpaqueRect capture_cmd = cmd;
+            capture_cmd._Color = this->color(cmd._Color);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+            RDP::RDPMultiPatBlt capture_cmd = cmd;
+            capture_cmd.BackColor = this->color(cmd.BackColor);
+            capture_cmd.ForeColor = this->color(cmd.ForeColor);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPPatBlt & cmd, const Rect &clip) {
+            RDPPatBlt capture_cmd = cmd;
+            capture_cmd.back_color = this->color(cmd.back_color);
+            capture_cmd.fore_color = this->color(cmd.fore_color);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
+            RDPMem3Blt capture_cmd = cmd;
+            capture_cmd.back_color = this->color(cmd.back_color);
+            capture_cmd.fore_color = this->color(cmd.fore_color);
+            ngd.gd->draw(capture_cmd, clip, bmp);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPOpaqueRect & cmd, const Rect & clip) {
+            RDPOpaqueRect capture_cmd = cmd;
+            capture_cmd.color = this->color(cmd.color);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPLineTo & cmd, const Rect & clip) {
+            RDPLineTo capture_cmd = cmd;
+            capture_cmd.back_color = this->color(cmd.back_color);
+            capture_cmd.pen.color = this->color(cmd.pen.color);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
+            RDPGlyphIndex capture_cmd = cmd;
+            capture_cmd.back_color = this->color(cmd.back_color);
+            capture_cmd.fore_color = this->color(cmd.fore_color);
+            ngd.gd->draw(capture_cmd, clip, &gly_cache);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPPolygonSC & cmd, const Rect & clip) {
+            RDPPolygonSC capture_cmd = cmd;
+            capture_cmd.BrushColor = this->color(cmd.BrushColor);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPPolygonCB & cmd, const Rect & clip) {
+            RDPPolygonCB capture_cmd = cmd;
+            capture_cmd.foreColor = this->color(cmd.foreColor);
+            capture_cmd.backColor = this->color(cmd.backColor);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPPolyline & cmd, const Rect & clip) {
+            RDPPolyline capture_cmd = cmd;
+            capture_cmd.PenColor = this->color(cmd.PenColor);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPEllipseSC & cmd, const Rect & clip) {
+            RDPEllipseSC capture_cmd = cmd;
+            capture_cmd.color = this->color(cmd.color);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+
+        void operator()(NewGraphicDevice & ngd, const RDPEllipseCB & cmd, const Rect & clip) {
+            RDPEllipseCB capture_cmd = cmd;
+            capture_cmd.back_color = this->color(cmd.back_color);
+            capture_cmd.fore_color = this->color(cmd.fore_color);
+            ngd.gd->draw(capture_cmd, clip);
+        }
+    };
+
+    template<class Enc, class Dec>
+    NewGraphicDevice * gd_enc_dec(Enc const & enc, Dec const & dec) {
+        return new gdi::GraphicDelegate<NewGraphicDeviceEncoderProxy<Enc, Dec>, NewGraphicDevice>(enc, dec);
+    }
+
+    template<class Enc>
+    NewGraphicDevice * gd_enc_dec(Enc const &, Enc const &) {
+        return new gdi::GraphicDelegate<NewGraphicDeviceProxy, NewGraphicDevice>();
+    }
+
+    NewGraphicDevice * compile_color_enc_dec() {
+        switch (this->capture_bpp) {
+            case 8 : return this->compile_color_enc_dec(encode_color8{});
+            case 15: return this->compile_color_enc_dec(encode_color15{});
+            case 16: return this->compile_color_enc_dec(encode_color16{});
+            case 24:
+            case 32: return this->compile_color_enc_dec(encode_color24{});
+            default: return nullptr;
+        }
+    }
+
+    template<class Encoder>
+    NewGraphicDevice * compile_color_enc_dec(Encoder encoder) {
+        switch (this->order_bpp) {
+            case 8 : return this->gd_enc_dec(encoder, to_color8_palette<decode_color8_opaquerect>{this->mod_palette_rgb});
+            case 15: return this->gd_enc_dec(encoder, decode_color15_opaquerect{});
+            case 16: return this->gd_enc_dec(encoder, decode_color16_opaquerect{});
+            case 24:
+            case 32: return this->gd_enc_dec(encoder, decode_color24_opaquerect{});
+            default: return nullptr;
+        }
+    }
+
+    NewGraphicDevice * gapi;
+
 public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
@@ -109,6 +259,9 @@ public:
     {
         if (this->capture_drawable) {
             this->drawable = new RDPDrawable(width, height, capture_bpp);
+
+            this->gapi = this->compile_color_enc_dec();
+            REDASSERT(this->gapi);
         }
 
         if (this->capture_png) {
@@ -190,6 +343,10 @@ public:
         }
         else if (this->capture_drawable) {
             this->gd = this->drawable;
+        }
+
+        if (this->gapi) {
+            this->gapi->gd = this->gd;
         }
     }
 
@@ -324,41 +481,13 @@ public:
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPMultiOpaqueRect capture_cmd = cmd;
-
-                capture_cmd._Color = color_encode(
-                      color_decode_opaquerect(cmd._Color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDP::RDPMultiPatBlt capture_cmd = cmd;
-
-                capture_cmd.BackColor = color_encode(
-                      color_decode_opaquerect(cmd.BackColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.ForeColor = color_encode(
-                      color_decode_opaquerect(cmd.ForeColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
@@ -370,23 +499,7 @@ public:
 
     void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPatBlt capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
@@ -398,63 +511,19 @@ public:
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPMem3Blt capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip, bmp);
-            }
-            else {
-                this->gd->draw(cmd, clip, bmp);
-            }
+            this->gapi->draw(cmd, clip, bmp);
         }
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPOpaqueRect capture_cmd = cmd;
-
-                capture_cmd.color = color_encode(
-                      color_decode_opaquerect(cmd.color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPLineTo capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.pen.color = color_encode(
-                      color_decode_opaquerect(cmd.pen.color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
@@ -472,23 +541,7 @@ public:
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPGlyphIndex capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip, gly_cache);
-            }
-            else {
-                this->gd->draw(cmd, clip, gly_cache);
-            }
+            this->gapi->draw(cmd, clip, *gly_cache);
         }
     }
 
@@ -529,99 +582,31 @@ public:
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPolygonSC capture_cmd = cmd;
-
-                capture_cmd.BrushColor = color_encode(
-                      color_decode_opaquerect(cmd.BrushColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPolygonCB capture_cmd = cmd;
-
-                capture_cmd.foreColor = color_encode(
-                      color_decode_opaquerect(cmd.foreColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.backColor = color_encode(
-                      color_decode_opaquerect(cmd.backColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPolyline capture_cmd = cmd;
-
-                capture_cmd.PenColor = color_encode(
-                      color_decode_opaquerect(cmd.PenColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPEllipseSC capture_cmd = cmd;
-
-                capture_cmd.color = color_encode(
-                      color_decode_opaquerect(cmd.color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPEllipseCB capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
+            this->gapi->draw(cmd, clip);
         }
     }
 
