@@ -50,6 +50,15 @@ public:
 
     using filter_pointer = interface_pointer;
 
+    using delegate_filter_base = Delegate;
+
+    struct barrier_filter_base
+    {
+        template<class... Ts>
+        void operator()(ServiceInterface &, Ts const & ...) {
+        }
+    };
+
     using type_id = void const *;
 
 

@@ -26,12 +26,13 @@
 
 #define LOGNULL
 #include "gdi/drawable.hpp"
-#include "gdi/dummy_gd.hpp"
 
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
+using DummyGD = gdi::GraphicDelegate<gdi::DummyProxy>;
+
 template<class Fn>
-struct TestGD : gdi::DummyGD
+struct TestGD : DummyGD
 {
     Fn fn;
     bool is_called = false;
@@ -44,7 +45,7 @@ struct TestGD : gdi::DummyGD
     : fn(other.fn)
     {}
 
-    using gdi::DummyGD::draw;
+    using DummyGD::draw;
     void draw(RDPOpaqueRect const & cmd, Rect const & rect) override {
         this->is_called = true;
         this->fn(cmd, rect);

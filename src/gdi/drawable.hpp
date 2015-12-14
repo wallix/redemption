@@ -26,14 +26,14 @@
 
 #include "utils/service_provier.hpp"
 #include "graphic_api.hpp"
-#include "proxy_gd.hpp"
+#include "proxy.hpp"
 
 
 namespace gdi {
 
 namespace detail_
 {
-    struct DrawerTrait
+    struct DrawerDelegate
     {
         template<class... Ts>
         void operator()(GraphicApi & gd, Ts const & ... args) {
@@ -41,7 +41,7 @@ namespace detail_
         }
     };
 
-    using ServiceDrawable = utils::service_provider<GraphicApi, DrawerTrait, ProxyGD, GraphicApiPtr>;
+    using ServiceDrawable = utils::service_provider<GraphicApi, DrawerDelegate, GraphicDelegate, GraphicApiPtr>;
 
     struct ServiceDrawableProxy : ServiceDrawable
     {
@@ -53,13 +53,14 @@ namespace detail_
 }
 
 struct Drawable
-: ProxyGD<detail_::ServiceDrawableProxy>
-//: ProxyGD<ProxySkipBase<detail_::ServiceDrawable>>
+: GraphicDelegate<detail_::ServiceDrawableProxy>
+// : GraphicDelegate<SkipBaseProxy<detail_::ServiceDrawable>>
 {
     using TypeId = detail_::ServiceDrawable::type_id;
     using FilterPtr = detail_::ServiceDrawable::filter_pointer;
 
-    using NullFilter = detail_::DrawerTrait;
+    using NullFilter = detail_::ServiceDrawable::barrier_filter_base;
+    using DelegateFilter = detail_::ServiceDrawable::delegate_filter_base;
 
     TypeId add_gdi(GraphicApiPtr && pgdi) {
         return this->get_proxy().add_class(std::move(pgdi));
