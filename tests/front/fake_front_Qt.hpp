@@ -24,7 +24,6 @@
 #include "front_api.hpp"
 #include "channel_list.hpp"
 #include "client_info.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "RDP/RDPQtDrawable.hpp"
 
 //#include <openssl/ssl.h>
@@ -432,7 +431,7 @@ public:
     , mouse_y(0)
     , notimestamp(true)
     , nomouse(true)
-    , gd(info.width, info.height) {
+    , gd(info.width, info.height, 24) {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
