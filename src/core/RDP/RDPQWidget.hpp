@@ -29,9 +29,7 @@
 #include "orders/AlternateSecondaryWindowing.hpp"
 
 #include "caches/glyphcache.hpp"
-
 #include "capabilities/glyphcache.hpp"
-
 #include "bitmapupdate.hpp"
 #include "../src/utils/bitmap.hpp"
 #include "mod_api.hpp"
@@ -44,6 +42,9 @@
 #include <QtGui/QDesktopWidget>
 #include <QtGui/QApplication>
 #include <QImage>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QKeyEvent>
+
 
 class RDPQWidget : public QWidget 
 {
@@ -69,7 +70,7 @@ private:
 
     
 public:
-    RDPQWidget(int width, int height) : QWidget(), _label(this), _width(width), _height(height), _picture(), _pen(){
+    RDPQWidget(int width, int height) : QWidget(), _label(this), _width(width), _height(height), _picture(), _pen() {
         
         this->setFixedSize(width, height);
         QSize size(sizeHint());
@@ -78,12 +79,27 @@ public:
         int centerH = (desktop->height()/2) - (size.height()/2);
         this->move(centerW, centerH);
         
+        setMouseTracking(true);
+        
         this->_painter = new QPainter(&(this->_picture));
         this->_painter->setRenderHint(QPainter::Antialiasing);
         this->_painter->fillRect(0, 0, width, height, Qt::white);
         this->_pen.setWidth(1);
         this->_painter->setPen(this->_pen);
-        //this->setAttribute(Qt::WA_NoSystemBackground);
+        this->setAttribute(Qt::WA_NoSystemBackground);
+    }
+
+    
+    void flush() {
+        this->_painter->end();
+        this->_label.setPicture(this->_picture);
+        this->show(); 
+    }
+    
+    
+    void reInitView() {
+        this->_painter->begin(&(this->_picture));
+        this->_painter->fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
     }
     
     
@@ -97,20 +113,6 @@ public:
         // TO DO clipping
         this->_pen.setBrush(u32_to_qcolor(cmd.back_color));
         this->_painter->drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
-    }
-    
-    
-    void flush() {
-        this->_painter->end();
-        this->_label.setPicture(this->_picture);
-        this->show(); 
-    }
-    
-    
-    void reInitView() {
-        this->_painter->begin(&(this->_picture));
-        
-        //this->_painter->fillRect(0, 0, this->_width, this->_height, Qt::white);
     }
     
     
@@ -164,7 +166,6 @@ public:
             row += rowsize;
             rowYCoord--;
         }
- 
     }
     
     
@@ -187,6 +188,16 @@ public:
     void draw(const RDPPolyline         & cmd, const Rect & clip) {}
     void draw(const RDPEllipseSC        & cmd, const Rect & clip) {}
     void draw(const RDPEllipseCB        & cmd, const Rect & clip) {}
+    
+    
+    // CONTROLLER
+    void mousePressEvent(QMouseEvent *e) {
+        std::cout << "click " << "x=" << e->x() << " y=" << e->y() << std::endl;
+    }
+    
+    void keyPressEvent(QKeyEvent *e) {
+        std::cout << "keyPressed " << e->text().toStdString() << std::endl;
+    }
 };
 
 #endif

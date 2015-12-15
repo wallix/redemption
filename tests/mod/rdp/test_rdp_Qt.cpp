@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Clément Moroldo
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test to writing RDP orders to file and rereading them
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
-    QTimerParent qTimerParent(&(front.gd), 100, 38, mod);
+    QTimerParent qTimerParent(&(front.gd), 250, 38, mod);
     
     app.exec();
     

@@ -5,19 +5,21 @@
 #define RDPQTDRAWABLE_HPP
 
 #include <stdint.h>
+
 #include "../core/RDP/RDPGraphicDevice.hpp"
 #include "text_metrics.hpp"
 #include "mod_api.hpp"
 #include "RDPQWidget.hpp"
 #include "bitmap.hpp"
-#include "png.hpp"
+
+
 
 class RDPQtDrawable :  public RDPGraphicDevice
 {    
     
 private:
-    RDPQWidget _viewer;
-    int _order_bpp;
+    RDPQWidget     _viewer;
+    int            _order_bpp;
     
     
 public:
@@ -53,9 +55,6 @@ public:
     }
 
     void server_set_pointer(const Pointer & cursor) override {}
-    
-    void server_draw_text(Font const & font, int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip) {}
-    void text_metrics(Font const & font, const char * text, int & width, int & height) {}
 
     void flush() override {
         this->_viewer.flush();
@@ -68,6 +67,11 @@ public:
     
     RDPQtDrawable(int width, int height, int order_bpp) : RDPGraphicDevice(), _viewer(width, height), _order_bpp(order_bpp) {}
     ~RDPQtDrawable() {}
+    
+    
+    // Unused
+    void server_draw_text(Font const & font, int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip) {}
+    void text_metrics(Font const & font, const char * text, int & width, int & height) {}
     
 };
 
