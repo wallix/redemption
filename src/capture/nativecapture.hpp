@@ -47,6 +47,8 @@ public:
 
     typedef GraphicToFile::SendInput SendInput;
 
+    bool keyboard_input_mask_enabled = false;
+
     NativeCapture( const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache
                  , GlyphCache & gly_cache, PointerCache & ptr_cache, RDPDrawable & drawable, const Inifile & ini
                  , bool externally_generated_breakpoint = false, SendInput send_input = SendInput::NO)
@@ -113,10 +115,25 @@ public:
 
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
         if (!this->disable_keyboard_log_wrm) {
+            if (this->keyboard_input_mask_enabled) {
+                StaticOutStream<256> decoded_data;
+                for (unsigned char_count = data_sz / sizeof(uint32_t);
+                     char_count > 0; char_count--) {
+                    if (decoded_data.has_room(sizeof(uint32_t))) {
+                        decoded_data.out_uint32_le('*');
+                    }
+                }
+                return this->recorder.input(now, decoded_data.get_data(), decoded_data.get_offset());
+            }
+
             return this->recorder.input(now, input_data_32, data_sz);
         }
 
         return true;
+    }
+
+    void enable_keyboard_input_mask(bool enable) {
+        this->keyboard_input_mask_enabled = enable;
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {

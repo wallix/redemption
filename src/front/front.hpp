@@ -697,6 +697,8 @@ public:
         this->capture->capture_event.set();
         this->capture_state = CAPTURE_STATE_STARTED;
 
+        this->update_keyboard_input_mask_state();
+
         this->authentifier = authentifier;
     }
 
@@ -2441,6 +2443,8 @@ private:
 
     void session_probe_started() override {
         this->session_probe_started_ = true;
+
+        this->update_keyboard_input_mask_state();
     }
 
     void set_keylayout(int LCID) override {
@@ -2453,10 +2457,14 @@ private:
 
     void set_focus_on_password_textbox(bool set) override {
         this->focus_on_password_textbox = set;
+
+        this->update_keyboard_input_mask_state();
     }
 
     void set_consent_ui_visible(bool set) override {
         this->consent_ui_is_visible = set;
+
+        this->update_keyboard_input_mask_state();
     }
 
     void session_update(const char * message, bool & out__contian_window_title) override {
@@ -4612,14 +4620,6 @@ private:
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
             && decoded_data.get_offset()) {
-            if (this->focus_on_password_textbox || this->consent_ui_is_visible || !this->session_probe_started_) {
-                unsigned char_count = decoded_data.get_offset() / sizeof(uint32_t);
-                decoded_data.rewind();
-                for (; char_count > 0; char_count--) {
-                    decoded_data.out_uint32_le('*');
-                }
-            }
-
             send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.get_offset());
         }
 
@@ -4634,6 +4634,15 @@ private:
                 }
                 this->has_activity = true;
             }
+        }
+    }
+
+    void update_keyboard_input_mask_state() {
+        if (this->capture) {
+            this->capture->enable_keyboard_input_mask(
+                    this->focus_on_password_textbox ||
+                    this->consent_ui_is_visible || !this->session_probe_started_
+                );
         }
     }
 };
