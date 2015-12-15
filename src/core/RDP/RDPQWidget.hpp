@@ -192,11 +192,15 @@ public:
     
     // CONTROLLER
     void mousePressEvent(QMouseEvent *e) {
-        std::cout << "click " << "x=" << e->x() << " y=" << e->y() << std::endl;
+        std::cout << "click   " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
+    }
+    
+    void mouseReleaseEvent(QMouseEvent *e) {
+        std::cout << "release " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
     }
     
     void keyPressEvent(QKeyEvent *e) {
-        std::cout << "keyPressed " << e->text().toStdString() << std::endl;
+        std::cout << "keyPressed " << e->text().toStdString()  << std::endl;
     }
 };
 

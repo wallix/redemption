@@ -1,5 +1,6 @@
 .gitignore
 *.kdev*
+*.kate-swp
 /cmake_compil
 /bin
 /build
