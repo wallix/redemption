@@ -18,40 +18,36 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_FRAME_MARKER_API_HPP
-#define REDEMPTION_GDI_FRAME_MARKER_API_HPP
+#ifndef REDEMPTION_GDI_INPUT_KBD_API_HPP
+#define REDEMPTION_GDI_INPUT_KBD_API_HPP
 
 #include "utils/virtual_deleter.hpp"
 
 #include "noncopyable.hpp"
 
-namespace RDP {
-    class FrameMarker;
-}
-
 namespace gdi {
 
-struct FrameMarkerApi : private noncopyable
+struct InputKbdApi : private noncopyable
 {
-    virtual ~FrameMarkerApi() = default;
+    virtual ~InputKbdApi() = default;
 
-    virtual void marker(const RDP::FrameMarker &) = 0;
+    virtual bool input_kbd(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) = 0;
 };
 
-using FrameMarkerApiDeleterBase = utils::virtual_deleter_base<FrameMarkerApi>;
-using FrameMarkerApiPtr = utils::unique_ptr_with_virtual_deleter<FrameMarkerApi>;
+using InputKbdApiDeleterBase = utils::virtual_deleter_base<InputKbdApi>;
+using InputKbdApiPtr = utils::unique_ptr_with_virtual_deleter<InputKbdApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class FrameMarker, class... Args>
-FrameMarkerApiPtr make_frame_marker_ptr(Args && ... args) {
-    return FrameMarkerApiPtr(new FrameMarker(std::forward<Args>(args)...), default_delete);
+template<class InputKbd, class... Args>
+InputKbdApiPtr make_input_kbd_ptr(Args && ... args) {
+    return InputKbdApiPtr(new InputKbd(std::forward<Args>(args)...), default_delete);
 }
 
-template<class FrameMarker>
-FrameMarkerApiPtr make_frame_marker_ref(FrameMarker & gd) {
-    return FrameMarkerApiPtr(&gd, no_delete);
+template<class InputKbd>
+InputKbdApiPtr make_input_kbd_ref(InputKbd & gd) {
+    return InputKbdApiPtr(&gd, no_delete);
 }
 
 }

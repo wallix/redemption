@@ -18,40 +18,36 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_FRAME_MARKER_API_HPP
-#define REDEMPTION_GDI_FRAME_MARKER_API_HPP
+#ifndef REDEMPTION_GDI_SET_ROW_HPP
+#define REDEMPTION_GDI_SET_ROW_HPP
 
 #include "utils/virtual_deleter.hpp"
 
 #include "noncopyable.hpp"
 
-namespace RDP {
-    class FrameMarker;
-}
-
 namespace gdi {
 
-struct FrameMarkerApi : private noncopyable
+struct SetRowApi : private noncopyable
 {
-    virtual ~FrameMarkerApi() = default;
+    virtual ~SetRowApi() = default;
 
-    virtual void marker(const RDP::FrameMarker &) = 0;
+    virtual void set_row(std::size_t rownum, const uint8_t * data) const = 0;
 };
 
-using FrameMarkerApiDeleterBase = utils::virtual_deleter_base<FrameMarkerApi>;
-using FrameMarkerApiPtr = utils::unique_ptr_with_virtual_deleter<FrameMarkerApi>;
+using SetRowApiDeleterBase = utils::virtual_deleter_base<SetRowApi>;
+using SetRowApiPtr = utils::unique_ptr_with_virtual_deleter<SetRowApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class FrameMarker, class... Args>
-FrameMarkerApiPtr make_frame_marker_ptr(Args && ... args) {
-    return FrameMarkerApiPtr(new FrameMarker(std::forward<Args>(args)...), default_delete);
+template<class SetRow, class... Args>
+SetRowApiPtr make_set_row_ptr(Args && ... args) {
+    return SetRowApiPtr(new SetRow(std::forward<Args>(args)...), default_delete);
 }
 
-template<class FrameMarker>
-FrameMarkerApiPtr make_frame_marker_ref(FrameMarker & gd) {
-    return FrameMarkerApiPtr(&gd, no_delete);
+template<class SetRow>
+SetRowApiPtr make_set_row_ref(SetRow & gd) {
+    return SetRowApiPtr(&gd, no_delete);
 }
 
 }

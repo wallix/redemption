@@ -29,6 +29,8 @@
 #include "meta/meta.hpp"
 #include "utils/virtual_deleter.hpp"
 
+#include "proxy.hpp"
+
 #include "noncopyable.hpp"
 
 
@@ -106,40 +108,19 @@ GraphicApiPtr make_gd_ref(Gd & gd) {
 
 struct GraphicProxy
 {
-    template<class... Ts>
-    void operator()(GraphicApi & gd, Ts const & ... args) {
-        gd.draw(args...);
+    template<class Api, class... Ts>
+    void operator()(Api & api, Ts const & ... args) {
+        api.draw(args...);
     }
 };
 
 
 template<class Proxy, class InterfaceBase = GraphicApi>
-struct GraphicDelegate : InterfaceBase, private Proxy
+struct GraphicDelegate : ProxyBase<Proxy, InterfaceBase>
 {
     static_assert(std::is_base_of<GraphicApi, InterfaceBase>::value, "InterfaceBase isn't a GraphicApi");
 
-    using proxy_type = Proxy;
-    using interface_base = InterfaceBase;
-
-    GraphicDelegate() = default;
-    GraphicDelegate(GraphicDelegate const &) = delete;
-
-    template<class... ProxyArgs>
-    GraphicDelegate(ProxyArgs && ... args)
-    : Proxy{std::forward<ProxyArgs>(args)...}
-    {}
-
-    template<class... Ts>
-    GraphicDelegate(Proxy && proxy, Ts && ... args)
-    : InterfaceBase{std::forward<Ts>(args)...}
-    , Proxy(std::move(proxy))
-    {}
-
-    template<class... Ts>
-    GraphicDelegate(Proxy const & proxy, Ts && ... args)
-    : InterfaceBase{std::forward<Ts>(args)...}
-    , Proxy(proxy)
-    {}
+    using ProxyBase<Proxy, InterfaceBase>::ProxyBase;
 
     void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
@@ -169,13 +150,6 @@ struct GraphicDelegate : InterfaceBase, private Proxy
     void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
         this->prox()(*this, cmd, clip, gly_cache);
     }
-
-
-    proxy_type & get_proxy() noexcept { return static_cast<proxy_type&>(*this); }
-    proxy_type const & get_proxy() const noexcept { return static_cast<proxy_type const&>(*this); }
-
-private:
-    proxy_type & prox() noexcept { return static_cast<proxy_type&>(*this); }
 };
 
 }

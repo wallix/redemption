@@ -18,40 +18,37 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_FRAME_MARKER_API_HPP
-#define REDEMPTION_GDI_FRAME_MARKER_API_HPP
+#ifndef REDEMPTION_GDI_SESSION_UPDATE_API_HPP
+#define REDEMPTION_GDI_SESSION_UPDATE_API_HPP
 
 #include "utils/virtual_deleter.hpp"
 
+#include "array_view.hpp"
 #include "noncopyable.hpp"
-
-namespace RDP {
-    class FrameMarker;
-}
 
 namespace gdi {
 
-struct FrameMarkerApi : private noncopyable
+struct SessionUpdateApi : private noncopyable
 {
-    virtual ~FrameMarkerApi() = default;
+    virtual ~SessionUpdateApi() = default;
 
-    virtual void marker(const RDP::FrameMarker &) = 0;
+    virtual void session_update(const timeval & now, array_view<const char> const & message) = 0;
 };
 
-using FrameMarkerApiDeleterBase = utils::virtual_deleter_base<FrameMarkerApi>;
-using FrameMarkerApiPtr = utils::unique_ptr_with_virtual_deleter<FrameMarkerApi>;
+using SessionUpdateApiDeleterBase = utils::virtual_deleter_base<SessionUpdateApi>;
+using SessionUpdateApiPtr = utils::unique_ptr_with_virtual_deleter<SessionUpdateApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class FrameMarker, class... Args>
-FrameMarkerApiPtr make_frame_marker_ptr(Args && ... args) {
-    return FrameMarkerApiPtr(new FrameMarker(std::forward<Args>(args)...), default_delete);
+template<class SessionUpdate, class... Args>
+SessionUpdateApiPtr make_session_update_ptr(Args && ... args) {
+    return SessionUpdateApiPtr(new SessionUpdate(std::forward<Args>(args)...), default_delete);
 }
 
-template<class FrameMarker>
-FrameMarkerApiPtr make_frame_marker_ref(FrameMarker & gd) {
-    return FrameMarkerApiPtr(&gd, no_delete);
+template<class SessionUpdate>
+SessionUpdateApiPtr make_session_update_ref(SessionUpdate & gd) {
+    return SessionUpdateApiPtr(&gd, no_delete);
 }
 
 }

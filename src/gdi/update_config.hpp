@@ -18,40 +18,39 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_FRAME_MARKER_API_HPP
-#define REDEMPTION_GDI_FRAME_MARKER_API_HPP
+#ifndef REDEMPTION_GDI_UPDATE_CONFIG_HPP
+#define REDEMPTION_GDI_UPDATE_CONFIG_HPP
 
 #include "utils/virtual_deleter.hpp"
 
 #include "noncopyable.hpp"
 
-namespace RDP {
-    class FrameMarker;
-}
+class Inifile;
 
 namespace gdi {
 
-struct FrameMarkerApi : private noncopyable
+struct UpdateConfigApi : private noncopyable
 {
-    virtual ~FrameMarkerApi() = default;
+    virtual ~UpdateConfigApi() = default;
 
-    virtual void marker(const RDP::FrameMarker &) = 0;
+
+    virtual void update_config(const Inifile & ini) = 0;
 };
 
-using FrameMarkerApiDeleterBase = utils::virtual_deleter_base<FrameMarkerApi>;
-using FrameMarkerApiPtr = utils::unique_ptr_with_virtual_deleter<FrameMarkerApi>;
+using UpdateConfigApiDeleterBase = utils::virtual_deleter_base<UpdateConfigApi>;
+using UpdateConfigApiPtr = utils::unique_ptr_with_virtual_deleter<UpdateConfigApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class FrameMarker, class... Args>
-FrameMarkerApiPtr make_frame_marker_ptr(Args && ... args) {
-    return FrameMarkerApiPtr(new FrameMarker(std::forward<Args>(args)...), default_delete);
+template<class UpdateConfig, class... Args>
+UpdateConfigApiPtr make_update_config_ptr(Args && ... args) {
+    return UpdateConfigApiPtr(new UpdateConfig(std::forward<Args>(args)...), default_delete);
 }
 
-template<class FrameMarker>
-FrameMarkerApiPtr make_frame_marker_ref(FrameMarker & gd) {
-    return FrameMarkerApiPtr(&gd, no_delete);
+template<class UpdateConfig>
+UpdateConfigApiPtr make_update_config_ref(UpdateConfig & gd) {
+    return UpdateConfigApiPtr(&gd, no_delete);
 }
 
 }

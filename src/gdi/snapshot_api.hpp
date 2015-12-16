@@ -18,40 +18,44 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_FRAME_MARKER_API_HPP
-#define REDEMPTION_GDI_FRAME_MARKER_API_HPP
+#ifndef REDEMPTION_GDI_SNAPSHOT_API_HPP
+#define REDEMPTION_GDI_SNAPSHOT_API_HPP
 
 #include "utils/virtual_deleter.hpp"
 
 #include "noncopyable.hpp"
 
-namespace RDP {
-    class FrameMarker;
-}
+struct timeval;
+class wait_obj;
 
 namespace gdi {
 
-struct FrameMarkerApi : private noncopyable
+struct SnapshotApi : private noncopyable
 {
-    virtual ~FrameMarkerApi() = default;
+    virtual ~SnapshotApi() = default;
 
-    virtual void marker(const RDP::FrameMarker &) = 0;
+    virtual void snapshot(
+        const timeval & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval,
+        wait_obj & capture_event
+    ) = 0;
 };
 
-using FrameMarkerApiDeleterBase = utils::virtual_deleter_base<FrameMarkerApi>;
-using FrameMarkerApiPtr = utils::unique_ptr_with_virtual_deleter<FrameMarkerApi>;
+using SnapshotApiDeleterBase = utils::virtual_deleter_base<SnapshotApi>;
+using SnapshotApiPtr = utils::unique_ptr_with_virtual_deleter<SnapshotApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class FrameMarker, class... Args>
-FrameMarkerApiPtr make_frame_marker_ptr(Args && ... args) {
-    return FrameMarkerApiPtr(new FrameMarker(std::forward<Args>(args)...), default_delete);
+template<class Snapshot, class... Args>
+SnapshotApiPtr make_snapshot_ptr(Args && ... args) {
+    return SnapshotApiPtr(new Snapshot(std::forward<Args>(args)...), default_delete);
 }
 
-template<class FrameMarker>
-FrameMarkerApiPtr make_frame_marker_ref(FrameMarker & gd) {
-    return FrameMarkerApiPtr(&gd, no_delete);
+template<class Snapshot>
+SnapshotApiPtr make_snapshot_ref(Snapshot & gd) {
+    return SnapshotApiPtr(&gd, no_delete);
 }
 
 }

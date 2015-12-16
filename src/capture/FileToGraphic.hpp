@@ -1047,17 +1047,17 @@ public:
                             unsigned GBrg = *s++;
                             unsigned rgbR = *s++;
                             *t++ = ((GBrg << 16) & 0xFF000000)
-                               | ((bRGB << 16) & 0x00FF0000)
-                               | (bRGB         & 0x0000FF00)
-                               | ((bRGB >> 16) & 0x000000FF);
+                                 | ((bRGB << 16) & 0x00FF0000)
+                                 | (bRGB         & 0x0000FF00)
+                                 | ((bRGB >> 16) & 0x000000FF);
                             *t++ = (GBrg         & 0xFF000000)
-                               | ((rgbR << 16) & 0x00FF0000)
-                               | ((bRGB >> 16) & 0x0000FF00)
-                               | ( GBrg        & 0x000000FF);
+                                 | ((rgbR << 16) & 0x00FF0000)
+                                 | ((bRGB >> 16) & 0x0000FF00)
+                                 | ( GBrg        & 0x000000FF);
                             *t++ = ((rgbR << 16) & 0xFF000000)
-                               | (rgbR         & 0x00FF0000)
-                               | ((rgbR >> 16) & 0x0000FF00)
-                               | ((GBrg >> 16) & 0x000000FF);
+                                 | (rgbR         & 0x00FF0000)
+                                 | ((rgbR >> 16) & 0x0000FF00)
+                                 | ((GBrg >> 16) & 0x000000FF);
                         }
 
                         for (size_t cu = 0; cu < this->nbconsumers; cu++){
@@ -1067,7 +1067,6 @@ public:
                         }
                     }
                     png_read_end(ppng, pinfo);
-                    TODO("is there a memory leak ? is info structure destroyed of not ?");
                     png_destroy_read_struct(&ppng, &pinfo, nullptr);
                 }
                 else {

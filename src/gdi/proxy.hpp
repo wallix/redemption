@@ -28,6 +28,40 @@
 
 namespace gdi {
 
+template<class Proxy, class InterfaceBase>
+struct ProxyBase : InterfaceBase, private Proxy
+{
+    using proxy_type = Proxy;
+    using interface_base = InterfaceBase;
+
+    ProxyBase() = default;
+    ProxyBase(ProxyBase const &) = delete;
+
+    template<class... ProxyArgs>
+    ProxyBase(ProxyArgs && ... args)
+    : Proxy{std::forward<ProxyArgs>(args)...}
+    {}
+
+    template<class... Ts>
+    ProxyBase(Proxy && proxy, Ts && ... args)
+    : InterfaceBase{std::forward<Ts>(args)...}
+    , Proxy(std::move(proxy))
+    {}
+
+    template<class... Ts>
+    ProxyBase(Proxy const & proxy, Ts && ... args)
+    : InterfaceBase{std::forward<Ts>(args)...}
+    , Proxy(proxy)
+    {}
+
+    proxy_type & get_proxy() noexcept { return static_cast<proxy_type&>(*this); }
+    proxy_type const & get_proxy() const noexcept { return static_cast<proxy_type const&>(*this); }
+
+protected:
+    proxy_type & prox() noexcept { return static_cast<proxy_type&>(*this); }
+};
+
+
 struct DummyProxy {
     template<class ... Ts>
     void operator()(Ts const & ...) {

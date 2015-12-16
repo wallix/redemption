@@ -18,40 +18,39 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_FRAME_MARKER_API_HPP
-#define REDEMPTION_GDI_FRAME_MARKER_API_HPP
+#ifndef REDEMPTION_GDI_EXTERNAL_EVENT_HPP
+#define REDEMPTION_GDI_EXTERNAL_EVENT_HPP
 
 #include "utils/virtual_deleter.hpp"
 
 #include "noncopyable.hpp"
 
-namespace RDP {
-    class FrameMarker;
-}
+struct timeval;
 
 namespace gdi {
 
-struct FrameMarkerApi : private noncopyable
+struct ExternalEventApi : private noncopyable
 {
-    virtual ~FrameMarkerApi() = default;
+    virtual ~ExternalEventApi() = default;
 
-    virtual void marker(const RDP::FrameMarker &) = 0;
+    virtual void external_breakpoint() = 0;
+    virtual void external_time(const timeval & now) = 0;
 };
 
-using FrameMarkerApiDeleterBase = utils::virtual_deleter_base<FrameMarkerApi>;
-using FrameMarkerApiPtr = utils::unique_ptr_with_virtual_deleter<FrameMarkerApi>;
+using ExternalEventApiDeleterBase = utils::virtual_deleter_base<ExternalEventApi>;
+using ExternalEventApiPtr = utils::unique_ptr_with_virtual_deleter<ExternalEventApi>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class FrameMarker, class... Args>
-FrameMarkerApiPtr make_frame_marker_ptr(Args && ... args) {
-    return FrameMarkerApiPtr(new FrameMarker(std::forward<Args>(args)...), default_delete);
+template<class ExternalEvent, class... Args>
+ExternalEventApiPtr make_external_event_ptr(Args && ... args) {
+    return ExternalEventApiPtr(new ExternalEvent(std::forward<Args>(args)...), default_delete);
 }
 
-template<class FrameMarker>
-FrameMarkerApiPtr make_frame_marker_ref(FrameMarker & gd) {
-    return FrameMarkerApiPtr(&gd, no_delete);
+template<class ExternalEvent>
+ExternalEventApiPtr make_external_event_ref(ExternalEvent & gd) {
+    return ExternalEventApiPtr(&gd, no_delete);
 }
 
 }

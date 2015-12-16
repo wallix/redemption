@@ -26,30 +26,30 @@
 template<class T>
 struct array_view
 {
-    array_view() = default;
+    constexpr array_view() = default;
 
-    array_view(T * p, std::size_t sz)
+    constexpr array_view(T * p, std::size_t sz)
     : p(p)
     , sz(sz)
     {}
 
     template<std::size_t N>
-    array_view(T (&a)[N])
+    constexpr array_view(T (&a)[N])
     : p(a)
     , sz(N)
     {}
 
     explicit operator bool () const noexcept { return this->p; }
 
-    std::size_t size() const noexcept { return this->sz; }
+    constexpr std::size_t size() const noexcept { return this->sz; }
 
     T * data() noexcept { return this->p; }
-    T const * data() const noexcept { return this->p; }
+    constexpr T const * data() const noexcept { return this->p; }
 
     T * begin() { return this->p; }
     T * end() { return this->p + this->sz; }
-    T const * begin() const { return this->p; }
-    T const * end() const { return this->p + this->sz; }
+    constexpr T const * begin() const { return this->p; }
+    constexpr T const * end() const { return this->p + this->sz; }
 
 private:
     T * p;

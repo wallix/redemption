@@ -37,6 +37,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
+#include "gdi/dump_png24.hpp"
 
 
 template <size_t SZ>
@@ -103,7 +104,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     uint16_t mouse_x;
     uint16_t mouse_y;
     const bool send_input;
-    RDPDrawable & drawable;
+    gdi::DumpPng24Api & dump_png24;
 
 
     uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
@@ -127,7 +128,7 @@ public:
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
-                , RDPDrawable & drawable
+                , gdi::DumpPng24Api & dump_png24
                 , const Inifile & ini
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
@@ -146,7 +147,7 @@ public:
     , mouse_x(0)
     , mouse_y(0)
     , send_input(send_input == SendInput::YES)
-    , drawable(drawable)
+    , dump_png24(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , ini(ini)
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
@@ -166,7 +167,7 @@ public:
     }
 
     void dump_png24(Transport & trans, bool bgr) const {
-        this->drawable.dump_png24(trans, bgr);
+        this->dump_png24.dump_png24(trans, bgr);
     }
 
     REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event");
@@ -197,7 +198,7 @@ public:
         return true;
     }
 
-    void send_meta_chunk(void)
+    void send_meta_chunk()
     {
         const BmpCache::cache_ & c0 = this->bmp_cache.get_cache(0);
         const BmpCache::cache_ & c1 = this->bmp_cache.get_cache(1);
@@ -242,7 +243,7 @@ public:
     void send_image_chunk(void)
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
-        this->drawable.dump_png24(png_trans, false);
+        this->dump_png24.dump_png24(png_trans, false);
     }
 
     void send_reset_chunk()
@@ -522,7 +523,7 @@ public:
 
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
 
-        this->drawable.dump_png24(png_trans, true);
+        this->dump_png24.dump_png24(png_trans, true);
 
         this->send_caches_chunk();
     }
@@ -546,96 +547,6 @@ public:
         this->stream_orders.rewind();
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect &clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->drawable.draw(cmd, clip, bmp);
-        this->RDPSerializer::draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->drawable.draw(cmd, clip, bmp);
-        this->RDPSerializer::draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        this->drawable.draw(cmd, clip, gly_cache);
-        this->RDPSerializer::draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPPolyline& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {}
-    void draw(const RDP::RAIL::WindowIcon          & order) override {}
-    void draw(const RDP::RAIL::CachedIcon          & order) override {}
-    void draw(const RDP::RAIL::DeletedWindow       & order) override {}
-
 protected:
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
@@ -652,29 +563,12 @@ public:
         this->flush_orders();
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override {
-        this->drawable.draw(bitmap_data, data, size, bmp);
-        this->RDPSerializer::draw(bitmap_data, data, size, bmp);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->drawable.draw(order);
-        this->RDPSerializer::draw(order);
-    }
-
-    using RDPSerializer::draw;
-
     void send_bitmaps_chunk()
     {
         send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
         this->trans.send(this->stream_bitmaps.get_data(), this->stream_bitmaps.get_offset());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
-    }
-
-    void server_set_pointer(const Pointer & cursor) override {
-        this->drawable.server_set_pointer(cursor);
-        this->RDPSerializer::server_set_pointer(cursor);
     }
 
 protected:

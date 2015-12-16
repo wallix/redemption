@@ -23,6 +23,8 @@
 
 #include "utils/virtual_deleter.hpp"
 
+#include "proxy.hpp"
+
 #include "noncopyable.hpp"
 
 class RDPColCache;
@@ -57,6 +59,29 @@ template<class Cache>
 CacheApiPtr make_cache_ref(Cache & gd) {
     return CacheApiPtr(&gd, no_delete);
 }
+
+
+struct CacheProxy
+{
+    template<class Api, class T>
+    void operator()(Api & api, T const & cmd) {
+        api.cache(cmd);
+    }
+};
+
+
+template<class Proxy, class InterfaceBase = CacheApi>
+struct CacheDelegate : ProxyBase<Proxy, InterfaceBase>
+{
+    static_assert(std::is_base_of<CacheApi, InterfaceBase>::value, "InterfaceBase isn't a CacheApi");
+
+    using ProxyBase<Proxy, InterfaceBase>::ProxyBase;
+
+    void cache(RDPColCache   const & cmd) override { this->prox()(*this, cmd); }
+    void cache(RDPBrushCache const & cmd) override { this->prox()(*this, cmd); }
+    void cache(RDPMemBlt     const & cmd) override { this->prox()(*this, cmd); }
+    void cache(RDPMem3Blt    const & cmd) override { this->prox()(*this, cmd); }
+};
 
 }
 

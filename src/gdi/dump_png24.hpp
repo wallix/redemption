@@ -18,40 +18,38 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_FRAME_MARKER_API_HPP
-#define REDEMPTION_GDI_FRAME_MARKER_API_HPP
+#ifndef REDEMPTION_GDI_DUMP_PNG24_HPP
+#define REDEMPTION_GDI_DUMP_PNG24_HPP
 
 #include "utils/virtual_deleter.hpp"
 
 #include "noncopyable.hpp"
 
-namespace RDP {
-    class FrameMarker;
-}
+class Transport;
 
 namespace gdi {
 
-struct FrameMarkerApi : private noncopyable
+struct DumpPng24Api : private noncopyable
 {
-    virtual ~FrameMarkerApi() = default;
+    virtual ~DumpPng24Api() = default;
 
-    virtual void marker(const RDP::FrameMarker &) = 0;
+    virtual void dump_png24(Transport & trans, bool bgr) const = 0;
 };
 
-using FrameMarkerApiDeleterBase = utils::virtual_deleter_base<FrameMarkerApi>;
-using FrameMarkerApiPtr = utils::unique_ptr_with_virtual_deleter<FrameMarkerApi>;
+using DumpPng24ApiDeleterBase = utils::virtual_deleter_base<DumpPng24Api>;
+using DumpPng24ApiPtr = utils::unique_ptr_with_virtual_deleter<DumpPng24Api>;
 
 using utils::default_delete;
 using utils::no_delete;
 
-template<class FrameMarker, class... Args>
-FrameMarkerApiPtr make_frame_marker_ptr(Args && ... args) {
-    return FrameMarkerApiPtr(new FrameMarker(std::forward<Args>(args)...), default_delete);
+template<class DumpPng24, class... Args>
+DumpPng24ApiPtr make_dump_png24_ptr(Args && ... args) {
+    return DumpPng24ApiPtr(new DumpPng24(std::forward<Args>(args)...), default_delete);
 }
 
-template<class FrameMarker>
-FrameMarkerApiPtr make_frame_marker_ref(FrameMarker & gd) {
-    return FrameMarkerApiPtr(&gd, no_delete);
+template<class DumpPng24>
+DumpPng24ApiPtr make_dump_png24_ref(DumpPng24 & gd) {
+    return DumpPng24ApiPtr(&gd, no_delete);
 }
 
 }
