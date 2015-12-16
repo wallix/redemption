@@ -107,7 +107,7 @@
 #include <memory>
 
 
-class Front final : public FrontAPI, public ActivityChecker{
+class Front final : public FrontAPI, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
