@@ -152,10 +152,7 @@ public:
     void begin_update() override { REDASSERT(false); }
     void end_update() override { REDASSERT(false); }
 
-    void text_metrics(Font const & font, const char * text, int & width, int & height) override { REDASSERT(false); }
-
-    void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text
-                                 , uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) override { REDASSERT(false); }
+    
 
     // FrontAPI
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {

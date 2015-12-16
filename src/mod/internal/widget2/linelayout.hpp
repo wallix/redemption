@@ -28,7 +28,7 @@
 
 struct WidgetLineLayout : public WidgetLayout {
 
-    WidgetLineLayout(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLineLayout(mod_api & drawable, const Rect & rect, Widget2 & parent,
                      NotifyApi * notifier, int group_id = 0)
         : WidgetLayout(drawable, rect, parent, notifier, group_id)
     {

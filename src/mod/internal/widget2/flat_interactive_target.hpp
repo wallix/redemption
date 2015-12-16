@@ -56,7 +56,7 @@ public:
     // ASK DEVICE YES/NO
     // ASK CRED : LOGIN+PASSWORD/PASSWORD/NO
 
-    FlatInteractiveTarget(DrawApi& drawable, uint16_t width, uint16_t height,
+    FlatInteractiveTarget(mod_api& drawable, uint16_t width, uint16_t height,
                           Widget2 & parent, NotifyApi* notifier,
                           int group_id, bool ask_device,
                           bool ask_login, bool ask_password,

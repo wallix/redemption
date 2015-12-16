@@ -25,11 +25,10 @@
 #include "widget.hpp"
 #include "keymap2.hpp"
 #include "region.hpp"
-#include "draw_api.hpp"
 #include "colors.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
-inline void fill_region(DrawApi & drawable, const Region & region, int bg_color) {
+inline void fill_region(mod_api & drawable, const Region & region, int bg_color) {
     for (const Rect & rect : region.rects) {
         drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
     }
@@ -174,7 +173,7 @@ protected:
 public:
     Widget2 * current_focus;
 
-    WidgetParent(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetParent(mod_api & drawable, const Rect & rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , pressed(nullptr)
@@ -537,7 +536,7 @@ class WidgetComposite: public WidgetParent {
     CompositeArray composite_array;
 
 public:
-    WidgetComposite(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetComposite(mod_api & drawable, const Rect & rect, Widget2 & parent,
                     NotifyApi * notifier, int group_id = 0)
     : WidgetParent(drawable, rect, parent, notifier, group_id) {
         this->impl = & composite_array;

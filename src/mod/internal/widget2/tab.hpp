@@ -33,14 +33,14 @@ public:
 
     class DrawingPolicy {
     protected:
-        DrawApi & drawable;
+        mod_api & drawable;
 
     private:
         uint32_t bg_color;
         uint32_t fg_color;
 
     public:
-        explicit DrawingPolicy(DrawApi & drawable) : drawable(drawable), bg_color(BLACK), fg_color(WHITE) {}
+        explicit DrawingPolicy(mod_api & drawable) : drawable(drawable), bg_color(BLACK), fg_color(WHITE) {}
 
         virtual ~DrawingPolicy() {}
 
@@ -88,7 +88,7 @@ public:
 
     public:
         Item( const char * text
-            , DrawApi & drawable
+            , mod_api & drawable
 //            , DrawingPolicy & drawing_policy
             , const Rect & rect
             , Widget2 & parent
@@ -127,7 +127,7 @@ public:
     bool child_has_focus;
 
 public:
-    WidgetTab( DrawApi & drawable, DrawingPolicy & drawing_policy, int16_t x, int16_t y
+    WidgetTab( mod_api & drawable, DrawingPolicy & drawing_policy, int16_t x, int16_t y
              , uint16_t cx, uint16_t cy, Widget2 & parent
              , NotifyApi * notifier
              , int group_id, int fgcolor, int bgcolor)
@@ -372,7 +372,7 @@ private:
     Font const & font;
 
 public:
-    WidgetTabDPDefault(DrawApi & drawable, Font const & font)
+    WidgetTabDPDefault(mod_api & drawable, Font const & font)
     : WidgetTab::DrawingPolicy(drawable), text_height(0), item_index_height(0)
     , font(font) {
         int w, h;

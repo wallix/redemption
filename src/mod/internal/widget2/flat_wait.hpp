@@ -46,7 +46,7 @@ public:
     bool hasform;
     CompositeArray composite_array;
 
-    FlatWait(DrawApi& drawable, int16_t width, int16_t height,
+    FlatWait(mod_api& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
