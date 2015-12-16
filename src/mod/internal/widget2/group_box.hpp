@@ -39,7 +39,7 @@ public:
     Font const & font;
 
 public:
-    WidgetGroupBox( DrawApi & drawable, int16_t x, int16_t y
+    WidgetGroupBox( mod_api & drawable, int16_t x, int16_t y
                   , uint16_t cx, uint16_t cy, Widget2 & parent
                   , NotifyApi * notifier, const char * text
                   , int group_id, int fgcolor, int bgcolor, Font const & font)

@@ -39,7 +39,7 @@ public:
 
     Font const & font;
 
-    WidgetFlatButton(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetFlatButton(mod_api & drawable, int16_t x, int16_t y, Widget2& parent,
                      NotifyApi* notifier, const char * text, bool auto_resize,
                      int group_id, int fgcolor, int bgcolor,
                      int focuscolor, Font const & font, int xtext = 0, int ytext = 0,

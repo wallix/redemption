@@ -24,19 +24,27 @@
 #include <cstdio>
 
 #include "font.hpp"
-#include "draw_api.hpp"
+#include "mod_api.hpp"
 #include "RDP/RDPDrawable.hpp"
 
 #ifdef IN_IDE_PARSER
 #define FIXTURES_PATH
 #endif
 
-struct TestDraw : DrawApi
+struct TestDraw : mod_api
 {
     RDPDrawable gd;
 
-    TestDraw(uint16_t w, uint16_t h) : gd(w, h, 24) {}
+    TestDraw(uint16_t w, uint16_t h) : mod_api(w, h), gd(w, h, 24) {}
 
+    virtual void draw_event(time_t now) {}
+    virtual void rdp_input_invalidate(const Rect& r) {} 
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {}
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) {}
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) {}
+    virtual void send_to_front_channel(const char*const mod_channel_name, const uint8_t* data, size_t length, size_t chunk_size, int flags) {}
+
+    
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->gd.draw(cmd, clip);

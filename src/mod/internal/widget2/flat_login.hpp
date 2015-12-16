@@ -63,7 +63,7 @@ private:
     // WidgetHScrollBar hbar;
 
 public:
-    FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
+    FlatLogin(mod_api& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
               const char * login, const char * password,

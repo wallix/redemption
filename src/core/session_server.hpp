@@ -80,12 +80,6 @@ public:
                 ini.set<cfg::debug::config>(this->debug_config);
                 { ConfigurationLoader cfg_loader(ini, this->config_filename.c_str()); }
 
-                if (ini.get<cfg::mod_rdp::session_probe_alternate_shell>().empty()) {
-                    ini.set<cfg::mod_rdp::session_probe_alternate_shell>(
-                        this->parametersHldr.get_probe_alternate_shell()
-                    );
-                }
-
                 char local_host[] = "127.0.0.1";
                 bool get_crypto_key_enable_log = strncmp(source_ip, local_host, sizeof(local_host));
 

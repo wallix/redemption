@@ -32,7 +32,7 @@ struct WidgetLayout : public Widget2 {
     size_t    nb_items;
     int bgcolor;
 
-    WidgetLayout(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLayout(mod_api & drawable, const Rect & rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , nb_items(0)

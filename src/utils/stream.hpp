@@ -862,7 +862,7 @@ struct BasicStaticStream : StreamBase
 
     using array_type = uint8_t[N];
 
-    constexpr std::size_t original_capacity() const {
+    static constexpr std::size_t original_capacity() {
         return N;
     }
 

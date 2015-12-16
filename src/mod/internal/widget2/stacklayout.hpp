@@ -29,7 +29,7 @@ struct WidgetStackLayout : public WidgetLayout {
     size_t selected;
     int bgcolor;
 
-    WidgetStackLayout(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetStackLayout(mod_api & drawable, const Rect & rect, Widget2 & parent,
                       NotifyApi * notifier, int group_id = 0, int bgcolor = BLACK)
         : WidgetLayout(drawable, rect, parent, notifier, group_id)
         , selected(0)

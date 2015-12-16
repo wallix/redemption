@@ -43,7 +43,7 @@ public:
 
     Font const & font;
 
-    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, Font const & font,
+    WidgetScreen(mod_api& drawable, uint16_t width, uint16_t height, Font const & font,
                  NotifyApi * notifier = nullptr, Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme)

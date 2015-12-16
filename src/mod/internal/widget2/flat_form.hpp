@@ -70,7 +70,7 @@ enum {
     CompositeArray composite_array;
     int flags;
 
-    FlatForm(DrawApi& drawable, int16_t width, int16_t height,
+    FlatForm(mod_api& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
              int flags = 0)

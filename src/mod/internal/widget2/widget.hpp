@@ -61,7 +61,7 @@ public:
 
 public:
     Widget2 & parent;
-    DrawApi & drawable;
+    mod_api & drawable;
     NotifyApi * notifier;
     Rect rect;
     int group_id;
@@ -72,7 +72,7 @@ public:
     int notify_value;
 
 public:
-    Widget2(DrawApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
+    Widget2(mod_api & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)

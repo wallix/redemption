@@ -180,8 +180,10 @@ public:
         }
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
-            this->pkc = new NewKbdCapture(now, authentifier, nullptr, nullptr,
-                    !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
+            this->pkc = new NewKbdCapture(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(),
+                    ini.get<cfg::context::pattern_notify>().c_str(),
+                    !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
+                    ini.get<cfg::debug::capture>()
                 );
         }
 
@@ -297,11 +299,23 @@ public:
             this->pnc->input(now, input_data_32, data_sz);
         }
 
+        bool send_to_mod = true;
+
         if (this->pkc) {
-            this->pkc->input(now, input_data_32, data_sz);
+            send_to_mod = this->pkc->input(now, input_data_32, data_sz);
         }
 
-        return true;
+        return send_to_mod;
+    }
+
+    void enable_keyboard_input_mask(bool enable) {
+        if (this->capture_wrm) {
+            this->pnc->enable_keyboard_input_mask(enable);
+        }
+
+        if (this->pkc) {
+            this->pkc->enable_keyboard_input_mask(enable);
+        }
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {

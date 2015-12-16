@@ -32,7 +32,7 @@ public:
     WidgetLabel label;
     bool selected;
 
-    WidgetRadioButton(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetRadioButton(mod_api & drawable, int16_t x, int16_t y, Widget2& parent,
                       NotifyApi* notifier, const char * text, bool auto_resize,
                       int group_id, int fgcolor, int bgcolor,
                       int xtext = 0, int ytext = 0)
@@ -110,7 +110,7 @@ class WidgetRadioList : public Widget2
     int bgcolor;
 
 public:
-    WidgetRadioList(DrawApi & drawable, int x, int y, Widget2 & parent,
+    WidgetRadioList(mod_api & drawable, int x, int y, Widget2 & parent,
                     NotifyApi * notifier, int group_id, int fgcolor, int bgcolor)
         : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
         , size(0)

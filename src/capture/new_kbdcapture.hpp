@@ -45,6 +45,8 @@ private:
 
     bool enable_keyboard_log_syslog;
 
+    bool keyboard_input_mask_enabled = false;
+
     class Utf8KbdData {
         uint8_t kbd_data[128] = { 0, 0 };
 
@@ -124,7 +126,7 @@ public:
     }
 
 public:
-    virtual bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override
+    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override
     {
         bool can_be_sent_to_server = true;
 
@@ -268,6 +270,10 @@ public:
         }
 
         return can_be_sent_to_server;
+    }   // bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz)
+
+    void enable_keyboard_input_mask(bool enable) {
+        this->keyboard_input_mask_enabled = enable;
     }
 
     virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
@@ -291,10 +297,19 @@ public:
     void flush() {
         if (this->unlogged_data.get_offset()) {
             if (this->authentifier) {
-                char extra[65536];
-                snprintf(extra, sizeof(extra), "data=\"%.*s\"",
+                const char prefix[] = "data=\"";
+                const char suffix[] = "\"";
+
+                char extra[this->unlogged_data.original_capacity() + sizeof(prefix) + sizeof(suffix) + 1];
+                ::snprintf(extra, sizeof(extra), "%s%.*s%s",
+                    prefix,
                     (unsigned)this->unlogged_data.get_offset(),
-                    this->unlogged_data.get_data());
+                    this->unlogged_data.get_data(),
+                    suffix);
+                if (this->keyboard_input_mask_enabled) {
+                    ::memset(&extra[0] + sizeof(prefix) - 1, '*',
+                        this->unlogged_data.get_offset());
+                }
                 this->authentifier->log4(this->enable_keyboard_log_syslog,
                     "KBD input", extra);
             }

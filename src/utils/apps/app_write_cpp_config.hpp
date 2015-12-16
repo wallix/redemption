@@ -186,7 +186,18 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
     typename std::enable_if<!std::is_enum<T>::value>::type
     write(T const & r) { this->out() << r; }
 
-    void write(const char * s) { this->out() << '"' << s << '"'; }
+    void write(const char * s) {
+        this->out() << '"';
+        while (*s) {
+            if ((*s == '\\') || (*s == '"')) {
+                this->out() << "\\";
+            }
+
+            this->out() << *s;
+            s++;
+        }
+        this->out() << '"';
+    }
     void write(macro x) { this->out() << x.name; }
     void write(null_fill x) { this->out() << "::configs::null_fill()"; }
 

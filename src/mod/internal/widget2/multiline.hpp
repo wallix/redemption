@@ -47,7 +47,7 @@ public:
     Font const & font;
 
 public:
-    WidgetMultiLine(DrawApi& drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetMultiLine(mod_api& drawable, int16_t x, int16_t y, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize, int group_id,
                     int fgcolor, int bgcolor, Font const & font,

@@ -356,7 +356,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const int  rdp_compression;
 
     const unsigned    session_probe_launch_timeout;
-    const unsigned    session_probe_on_launch_failure;
+    const bool        session_probe_on_launch_failure_disconnect_user;
     const unsigned    session_probe_keepalive_timeout;
           std::string session_probe_alternate_shell;
 
@@ -590,6 +590,8 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     } server_notifier;
 
+    bool session_probe_close_pending = false;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -648,7 +650,7 @@ public:
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
-        , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
+        , session_probe_on_launch_failure_disconnect_user(mod_rdp_params.session_probe_on_launch_failure_disconnect_user)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , recv_bmp_update(0)
@@ -939,9 +941,9 @@ public:
 
         if (this->verbose & 1) {
             LOG(LOG_INFO,
-                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure=%u",
+                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure_disconnect_user=%s",
                 (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
-                this->session_probe_on_launch_failure);
+                (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
         }
         if (this->enable_session_probe) {
             this->session_probe_event.object_and_time = true;
@@ -3228,7 +3230,8 @@ public:
                     throw;
                 }
                 if (this->acl &&
-                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
+                    ((e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                     (e.id != ERR_SESSION_PROBE_CLOSE_PENDING)))
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
@@ -3238,6 +3241,7 @@ public:
                     this->end_session_message.clear();
                 }
 
+                if (e.id != ERR_SESSION_PROBE_CLOSE_PENDING)
                 {
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
@@ -3257,6 +3261,9 @@ public:
                 }
 
                 if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
                     (e.id == ERR_NLA_AUTHENTICATION_FAILED))
                 {
                     throw;
@@ -3300,14 +3307,14 @@ public:
             this->session_probe_event.waked_up_by_time = false;
 
             if (this->session_probe_launch_timeout && !this->session_probe_is_ready) {
-                LOG((this->session_probe_on_launch_failure ? LOG_WARNING : LOG_ERR), "Session Probe is not ready yet!");
+                LOG((this->session_probe_on_launch_failure_disconnect_user ? LOG_ERR : LOG_WARNING), "Session Probe is not ready yet!");
 
                 const bool need_full_screen_update =
                     (this->enable_session_probe_loading_mask ?
                      this->front.disable_input_event_and_graphics_update(false) :
                      false);
 
-                if (this->session_probe_on_launch_failure) {
+                if (!this->session_probe_on_launch_failure_disconnect_user) {
                     if (need_full_screen_update) {
                         LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
                             this->front_width, this->front_height);
@@ -3324,6 +3331,11 @@ public:
                     this->front.disable_input_event_and_graphics_update(false);
 
                     LOG(LOG_ERR, "No keep alive received from Session Probe!");
+
+                    if (this->session_probe_close_pending) {
+                        throw Error(ERR_SESSION_PROBE_CLOSE_PENDING);
+                    }
+
                     throw Error(ERR_SESSION_PROBE_KEEPALIVE);
                 }
                 else {
@@ -6459,6 +6471,12 @@ public:
                     this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
 
                     this->front.set_consent_ui_visible(!parameters.compare("yes"));
+                }
+                else if (!order.compare("Self.Status")) {
+                    std::string info("status=\"" + parameters + "\"");
+                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
+
+                    this->session_probe_close_pending = (parameters.compare("Closing") == 0);
                 }
                 else if (!order.compare("InputLanguage")) {
                     const char * subitems          = parameters.c_str();

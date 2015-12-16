@@ -81,7 +81,7 @@ protected:
     } click_interval;
 
 public:
-    WidgetGrid(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetGrid(mod_api & drawable, const Rect & rect, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,

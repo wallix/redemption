@@ -45,10 +45,6 @@ struct parameters_holder {
 
         return key;
     }
-
-    virtual const char * get_probe_alternate_shell() const {
-        return "cmd /k ";
-    }
 };
 
 #endif  // #ifndef _REDEMPTION_UTILS_PARAMETERSHOLDER_HPP_

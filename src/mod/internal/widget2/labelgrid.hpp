@@ -34,7 +34,7 @@ struct WidgetLabelGrid : public WidgetGrid {
 
     Font const & font;
 
-    WidgetLabelGrid(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLabelGrid(mod_api & drawable, const Rect & rect, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,

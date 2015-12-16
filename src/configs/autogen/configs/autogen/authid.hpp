@@ -23,7 +23,7 @@ enum authid_t {
     AUTHID_MOD_RDP_ENABLE_SESSION_PROBE,
     AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LOADING_MASK,
     AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT,
-    AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE,
+    AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE_DISCONNECT_USER,
     AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT,
     AUTHID_MOD_RDP_SERVER_CERT_STORE,
     AUTHID_MOD_RDP_SERVER_CERT_CHECK,
@@ -93,6 +93,7 @@ enum authid_t {
     AUTHID_CONTEXT_PATTERN_NOTIFY,
     AUTHID_CONTEXT_OPT_MESSAGE,
     AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES,
+    AUTHID_CONTEXT_CRYPTO_KEY,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -121,7 +122,7 @@ constexpr char const * const authstr[] = {
     "session_probe",
     "enable_session_probe_loading_mask",
     "session_probe_launch_timeout",
-    "session_probe_on_launch_failure",
+    "session_probe_on_launch_failure_disconnect_user",
     "session_probe_keepalive_timeout",
     "server_cert_store",
     "server_cert_check",
@@ -191,5 +192,6 @@ constexpr char const * const authstr[] = {
     "pattern_notify",
     "opt_message",
     "outbound_connection_blocking_rules",
+    "crypto_key",
 };
 

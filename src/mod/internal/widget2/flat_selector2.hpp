@@ -99,7 +99,7 @@ IDX_PROTOCOL,
         NAV_SEPARATOR = 15
     };
 public:
-    WidgetSelectorFlat2(DrawApi& drawable, const char * device_name, uint16_t width,
+    WidgetSelectorFlat2(mod_api& drawable, const char * device_name, uint16_t width,
                         uint16_t height, Widget2 & parent, NotifyApi* notifier,
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,

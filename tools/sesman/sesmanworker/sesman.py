@@ -44,7 +44,7 @@ import engine
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
-from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE
+from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
 from engine import TargetContext
 from engine import parse_auth
 
@@ -711,7 +711,7 @@ class Sesman():
                             Logger().info(u"Unexpected error in selector pagination %s" % traceback.format_exc(e))
                         return False, u"Unexpected error in selector pagination"
                 elif len(services) == 1:
-                    Logger().info(u"service len = 1")
+                    Logger().info(u"service len = 1 %s" % str(services))
                     s = services[0]
                     data_to_send = {}
                     data_to_send[u'login'] = wab_login
@@ -1176,15 +1176,15 @@ class Sesman():
 
                         #Logger().info(u"%s" % conn_opts)
 
-                        rdp_section = conn_opts.get('rdp')
-                        if rdp_section is not None:
-                            connectionpolicy_kv[u'session_probe']                     = rdp_section.get('enable_session_probe')
-                            connectionpolicy_kv[u'enable_session_probe_loading_mask'] = rdp_section.get('enable_session_probe_loading_mask')
-                            connectionpolicy_kv[u'session_probe_on_launch_failure']   = rdp_section.get('session_probe_on_launch_failure')
-                            connectionpolicy_kv[u'session_probe_launch_timeout']      = rdp_section.get('session_probe_launch_timeout')
-                            connectionpolicy_kv[u'session_probe_keepalive_timeout']   = rdp_section.get('session_probe_keepalive_timeout')
+                        session_probe_section = conn_opts.get('session_probe')
+                        if session_probe_section is not None:
+                            connectionpolicy_kv[u'session_probe']                                     = session_probe_section.get('enable_session_probe')
+                            connectionpolicy_kv[u'enable_session_probe_loading_mask']                 = session_probe_section.get('enable_loading_mask')
+                            connectionpolicy_kv[u'session_probe_on_launch_failure_disconnect_user']   = session_probe_section.get('on_launch_failure_disconnect_user')
+                            connectionpolicy_kv[u'session_probe_launch_timeout']                      = session_probe_section.get('launch_timeout')
+                            connectionpolicy_kv[u'session_probe_keepalive_timeout']                   = session_probe_section.get('keepalive_timeout')
 
-                            connectionpolicy_kv[u'outbound_connection_blocking_rules'] = rdp_section.get('outbound_connection_blocking_rules')
+                            connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
 
                         server_cert_section = conn_opts.get('server_cert')
                         if server_cert_section is not None:
@@ -1255,6 +1255,11 @@ class Sesman():
                         elif PASSWORD_VAULT in auth_policy_methods:
                             target_passwords = self.engine.get_target_passwords(physical_target)
                             target_password = u'\x01'.join(target_passwords)
+
+                        if (not target_password and
+                            PASSWORD_MAPPING in auth_policy_methods):
+                            target_password = \
+                                self.engine.get_primary_password(physical_target) or ''
 
                         allow_interactive_password = (
                             self.passthrough_mode or

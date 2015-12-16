@@ -814,7 +814,8 @@ public:
                 mod_rdp_params.enable_session_probe                = this->ini.get<cfg::mod_rdp::enable_session_probe>();
                 mod_rdp_params.enable_session_probe_loading_mask   = this->ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>();
                 mod_rdp_params.session_probe_launch_timeout        = this->ini.get<cfg::mod_rdp::session_probe_launch_timeout>();
-                mod_rdp_params.session_probe_on_launch_failure     = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
+                mod_rdp_params.session_probe_on_launch_failure_disconnect_user
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>();
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
                 mod_rdp_params.session_probe_alternate_shell       = this->ini.get<cfg::mod_rdp::session_probe_alternate_shell>();
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);

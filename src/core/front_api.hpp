@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_FRONT_API_HPP_
 #define _REDEMPTION_CORE_FRONT_API_HPP_
 
-#include "draw_api.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
 
 class Capability;
 class InStream;
@@ -35,7 +35,7 @@ namespace CHANNELS {
     class ChannelDef;
 }
 
-class FrontAPI : public DrawApi {
+class FrontAPI : public RDPGraphicDevice{
     public:
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
@@ -85,6 +85,11 @@ class FrontAPI : public DrawApi {
     }
 
     virtual bool disable_input_event_and_graphics_update(bool disable) { return false; }
+    
+    virtual void begin_update() = 0;
+    virtual void end_update() = 0;
+
+    virtual void flush() {}
 };
 
 #endif

@@ -61,7 +61,7 @@ private:
     Translation::language_t lang;
 
 public:
-    FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
+    FlatWabClose(mod_api& drawable, int16_t width, int16_t height, Widget2& parent,
                  NotifyApi* notifier, const char * diagnostic_text, int group_id,
                  const char * username, const char * target,
                  bool showtimer, Font const & font, Theme const & theme, Translation::language_t lang)

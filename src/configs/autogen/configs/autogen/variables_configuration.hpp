@@ -669,6 +669,16 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
+
+        // AUTHID_CONTEXT_CRYPTO_KEY
+        struct crypto_key {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 94; }
+            using type = ::configs::StaticKeyString<32>;
+            type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
+        };
     };
 
     struct crypto {
@@ -1387,17 +1397,14 @@ namespace cfg {
             using type = unsigned;
             type value{20000};
         };
-        // Specifies the action to be performed is the launch of session probe fails.
-        //   0: disconnects session
-        //   1: remains connected
-        // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
-        struct session_probe_on_launch_failure {
+        // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE_DISCONNECT_USER
+        struct session_probe_on_launch_failure_disconnect_user {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 24; }
-            using type = ::configs::Range<unsigned, 0, 1, 0>;
-            type value{0};
+            using type = bool;
+            type value{1};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         struct session_probe_keepalive_timeout {
@@ -1413,7 +1420,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::StaticString<512>;
-            type value{""};
+            type value{"cmd /k"};
         };
         // Keep known server certificates on WAB
         // AUTHID_MOD_RDP_SERVER_CERT_STORE
@@ -1866,6 +1873,7 @@ struct context
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::crypto_key
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -1966,7 +1974,7 @@ struct mod_rdp
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
 , cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::session_probe_alternate_shell
 , cfg::mod_rdp::server_cert_store
@@ -2066,7 +2074,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
 , cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
@@ -2136,5 +2144,6 @@ using VariablesAclPack = Pack<
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::crypto_key
 >;
 }
