@@ -908,25 +908,27 @@ public:
                 const_cast<uint8_t*>(chunk.get_current()),
                 rdpdr::GeneralCapabilitySet::size(Version));
 
-            if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
-                need_enable_user_loggedon_pdu) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_general_capability_set:"
-                        "Allow the server to send a "
-                        "Server User Logged On packet.");
+            if (need_enable_user_loggedon_pdu) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_general_capability_set:"
+                            "Allow the server to send a "
+                            "Server User Logged On packet.");
+                }
 
                 general_capability_set.set_extendedPDU(
                     general_capability_set.extendedPDU() |
                     rdpdr::RDPDR_USER_LOGGEDON_PDU);
             }
 
-            if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
-                need_deny_asyncio) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_general_capability_set:"
-                        "Deny user to send multiple simultaneous "
-                        "read or write requests on the same file from "
-                        "a redirected file system.");
+            if (need_deny_asyncio) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_general_capability_set:"
+                            "Deny user to send multiple simultaneous "
+                            "read or write requests on the same file from "
+                            "a redirected file system.");
+                }
 
                 general_capability_set.set_extraFlags1(
                     general_capability_set.extraFlags1() &
@@ -1044,56 +1046,50 @@ public:
         switch (FsInformationClass) {
             case rdpdr::FileBasicInformation:
             {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_query_information_response: "
+                                "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
+                                "FileBasicInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+                chunk.in_skip_bytes(4); // Length(4)
+
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    {
-                        const unsigned int expected = 4;    // Length(4)
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "FileSystemVirtualChannel::process_client_drive_query_information_response: "
-                                    "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
-                                    "FileBasicInformation, "
-                                    "need=%u remains=%zu",
-                                expected, chunk.in_remain());
-                            throw Error(ERR_RDP_DATA_TRUNCATED);
-                        }
-                    }
+                    fscc::FileBasicInformation file_basic_information;
 
-                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                        chunk.in_skip_bytes(4); // Length(4)
-
-                        fscc::FileBasicInformation file_basic_information;
-
-                        file_basic_information.receive(chunk);
-                        file_basic_information.log(LOG_INFO);
-                    }
+                    file_basic_information.receive(chunk);
+                    file_basic_information.log(LOG_INFO);
                 }
             }
             break;
 
             case rdpdr::FileStandardInformation:
             {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_query_information_response: "
+                                "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
+                                "FileStandardInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+                chunk.in_skip_bytes(4); // Length(4)
+
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    {
-                        const unsigned int expected = 4;    // Length(4)
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "FileSystemVirtualChannel::process_client_drive_query_information_response: "
-                                    "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
-                                    "FileStandardInformation, "
-                                    "need=%u remains=%zu",
-                                expected, chunk.in_remain());
-                            throw Error(ERR_RDP_DATA_TRUNCATED);
-                        }
-                    }
+                    fscc::FileStandardInformation file_standard_information;
 
-                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                        chunk.in_skip_bytes(4); // Length(4)
-
-                        fscc::FileStandardInformation file_standard_information;
-
-                        file_standard_information.receive(chunk);
-                        file_standard_information.log(LOG_INFO);
-                    }
+                    file_standard_information.receive(chunk);
+                    file_standard_information.log(LOG_INFO);
                 }
             }
             break;
@@ -1132,10 +1128,9 @@ public:
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
                 }
+                chunk.in_skip_bytes(4); // Length(4)
 
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    chunk.in_skip_bytes(4); // Length(4)
-
                     fscc::FileFsAttributeInformation
                         file_fs_Attribute_information;
 

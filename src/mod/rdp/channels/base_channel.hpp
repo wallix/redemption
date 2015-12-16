@@ -92,16 +92,6 @@ protected:
     {
         if (this->to_client_sender)
         {
-/*
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-*/
-
             (*this->to_client_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }
@@ -112,45 +102,13 @@ protected:
     {
         if (this->to_server_sender)
         {
-/*
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = false;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-*/
-
             (*this->to_server_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }
     }
 
-/*
-    inline void send_message(bool to_client, uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
+    inline void update_exchanged_data(uint32_t data_length)
     {
-        VirtualChannelDataSender* sender =
-            (to_client ? this->to_client_sender : this->to_server_sender);
-
-        if (sender)
-        {
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = to_client;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-
-            (*sender)(total_length, flags, chunk_data,
-                chunk_data_length);
-        }
-    }
-*/
-
-    inline void update_exchanged_data(uint32_t data_length) {
         this->exchanged_data += data_length;
 
         if (this->exchanged_data_limit &&
