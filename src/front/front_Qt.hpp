@@ -29,14 +29,14 @@
 #include "front_api.hpp"
 #include "channel_list.hpp"
 #include "client_info.hpp"
-#include "RDP/RDPQtDrawable.hpp"
+//#include "RDP/RDPQtDrawable.hpp"
 //#include "../core/RDP/RDPGraphicDevice.hpp"
-#include "text_metrics.hpp"
+//#include "text_metrics.hpp"
 #include "mod_api.hpp"
-#include "RDPQWidget.hpp"
+#include "RDP/RDPQWidget.hpp"
 #include "bitmap.hpp"
 
-class FakeFront_Qt : public FrontAPI {
+class Front_Qt : public FrontAPI {
 public:
     uint32_t                    verbose;
     ClientInfo                & info;
@@ -372,32 +372,6 @@ public:
         this->gd.server_set_pointer(cursor);
     }
 
-    virtual void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor
-                                 , uint32_t bgcolor, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "server_draw_text %s", text);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.server_draw_text(
-            font, x, y, text,
-            color_decode_opaquerect(fgcolor, this->mod_bpp, this->mod_palette),
-            color_decode_opaquerect(bgcolor, this->mod_bpp, this->mod_palette),
-            clip
-        );
-    }
-
-    virtual void text_metrics(Font const & font, const char* text, int& width, int& height) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "text_metrics");
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.text_metrics(font, text, width, height);
-    }
-
     virtual int server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
@@ -409,30 +383,8 @@ public:
         return 1;
     }
     
-    
-/*
-    void dump_png(const char * prefix) {
-        
-        
-        char tmpname[128];
-        sprintf(tmpname, "%sXXXXXX.png", prefix);
-        int fd = ::mkostemps(tmpname, 4, O_WRONLY | O_CREAT);
-        FILE * f = fdopen(fd, "wb");
-        ::dump_png24( f, this->gd.data(), this->gd.width(), this->gd.height()
-                    , this->gd.rowsize(), false);
-        ::fclose(f);
-        
-        
-    }
-
-    void save_to_png(const char * filename) {
-        std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.data(), this->gd.width(),
-        /          this->gd.height(), this->gd.rowsize(), true);
-        fclose(file);
-    }
-*/
-    FakeFront_Qt(ClientInfo & info, uint32_t verbose)
+ 
+    Front_Qt(ClientInfo & info, uint32_t verbose)
     : FrontAPI(false, false)
     , verbose(verbose)
     , info(info)

@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
-    QTimerParent qTimerParent(&(front.gd), 20, 38, mod);
+    QTimerParent qTimerParent(&(front.gd), 30, 38, mod);
     
     app.exec();
     
