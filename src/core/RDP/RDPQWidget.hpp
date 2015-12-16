@@ -44,6 +44,7 @@
 #include <QImage>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QKeyEvent>
+#include <QtGui/QWheelEvent>
 
 
 class RDPQWidget : public QWidget 
@@ -103,21 +104,67 @@ public:
     }
     
     
+    ~RDPQWidget() {}
+    
+    void draw(const RDPDestBlt          & cmd, const Rect & clip) {
+        std::cout << "RDPDestBlt" << std::endl;
+    }
+    void draw(const RDPMultiDstBlt      & cmd, const Rect & clip) {
+        std::cout << "RDPMultiDstBlt" << std::endl;
+    }
+    void draw(const RDPPatBlt           & cmd, const Rect & clip) {
+        std::cout << "RDPPatBlt" << std::endl;
+    }
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+        std::cout << "RDPMultiPatBlt" << std::endl;
+    }
     void draw(const RDPOpaqueRect       & cmd, const Rect & clip) {
+        std::cout << "RDPOpaqueRect" << std::endl;
         Rect rect(cmd.rect.intersect(clip));
         this->_painter->fillRect(rect.x, rect.y, rect.cx, rect.cy, u32_to_qcolor(cmd.color));
     }
-    
-    
+    void draw(const RDPMultiOpaqueRect  & cmd, const Rect & clip) {
+        std::cout << "RDPMultiOpaqueRect" << std::endl;
+    }
+    void draw(const RDPScrBlt           & cmd, const Rect & clip) {
+        std::cout << "RDPScrBlt" << std::endl;
+    }
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+        std::cout << "RDPMultiScrBlt" << std::endl;
+    }
+    void draw(const RDPMemBlt           & cmd, const Rect & clip, const Bitmap & bmp) {
+        std::cout << "RDPMemBlt" << std::endl;
+    }
+    void draw(const RDPMem3Blt          & cmd, const Rect & clip, const Bitmap & bmp) {
+        std::cout << "RDPMem3Blt" << std::endl;
+    }
     void draw(const RDPLineTo           & cmd, const Rect & clip) {
+        std::cout << "RDPLineTo" << std::endl;
         // TO DO clipping
         this->_pen.setBrush(u32_to_qcolor(cmd.back_color));
         this->_painter->drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
     }
-    
+    void draw(const RDPGlyphIndex       & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+        std::cout << "RDPGlyphIndex" << std::endl;
+    }
+    void draw(const RDPPolygonSC        & cmd, const Rect & clip) {
+        std::cout << "RDPPolygonSC" << std::endl;
+    }
+    void draw(const RDPPolygonCB        & cmd, const Rect & clip) {
+        std::cout << "RDPPolygonCB" << std::endl;
+    }
+    void draw(const RDPPolyline         & cmd, const Rect & clip) {
+        std::cout << "RDPPolyline" << std::endl;
+    }
+    void draw(const RDPEllipseSC        & cmd, const Rect & clip) {
+        std::cout << "RDPEllipseSC" << std::endl;
+    }
+    void draw(const RDPEllipseCB        & cmd, const Rect & clip) {
+        std::cout << "RDPEllipseCB" << std::endl;
+    }
     
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size, const Bitmap & bmp) {
-        
+        std::cout << "RDPBitmapData" << std::endl;
         if (!bmp.is_valid()){
             return;
         }
@@ -169,27 +216,6 @@ public:
     }
     
     
-    ~RDPQWidget() {}
-    
-    void draw(const RDPDestBlt          & cmd, const Rect & clip) {}
-    void draw(const RDPMultiDstBlt      & cmd, const Rect & clip) {}
-    void draw(const RDPPatBlt           & cmd, const Rect & clip) {}
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {}
-
-    void draw(const RDPMultiOpaqueRect  & cmd, const Rect & clip) {}
-    void draw(const RDPScrBlt           & cmd, const Rect & clip) {}
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {}
-    void draw(const RDPMemBlt           & cmd, const Rect & clip, const Bitmap & bmp) {}
-    void draw(const RDPMem3Blt          & cmd, const Rect & clip, const Bitmap & bmp) {}
-
-    void draw(const RDPGlyphIndex       & cmd, const Rect & clip, const GlyphCache * gly_cache) {}
-    void draw(const RDPPolygonSC        & cmd, const Rect & clip) {}
-    void draw(const RDPPolygonCB        & cmd, const Rect & clip) {}
-    void draw(const RDPPolyline         & cmd, const Rect & clip) {}
-    void draw(const RDPEllipseSC        & cmd, const Rect & clip) {}
-    void draw(const RDPEllipseCB        & cmd, const Rect & clip) {}
-    
-    
     // CONTROLLER
     void mousePressEvent(QMouseEvent *e) {
         std::cout << "click   " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
@@ -201,6 +227,10 @@ public:
     
     void keyPressEvent(QKeyEvent *e) {
         std::cout << "keyPressed " << e->text().toStdString()  << std::endl;
+    }
+    
+    void wheelEvent(QWheelEvent *e) {
+        std::cout << "wheel " << " delta=" << e->delta() << std::endl;
     }
 };
 

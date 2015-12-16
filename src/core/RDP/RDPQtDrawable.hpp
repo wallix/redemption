@@ -50,19 +50,13 @@ public:
     void draw(const RDP::RAIL::CachedIcon          & order) override {}
     void draw(const RDP::RAIL::DeletedWindow       & order) override {}
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size, const Bitmap & bmp) override {
-        this->_viewer.draw(bitmap_data, data, size, bmp);
-    }
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, std::size_t size, const Bitmap & bmp) override {this->_viewer.draw(bitmap_data, data, size, bmp);}
 
     void server_set_pointer(const Pointer & cursor) override {}
 
-    void flush() override {
-        this->_viewer.flush();
-    }
+    void flush() override {this->_viewer.flush();}
 
-    void reInitView() {
-        this->_viewer.reInitView();
-    }
+    void reInitView() {this->_viewer.reInitView();}
     
     
     RDPQtDrawable(int width, int height, int order_bpp) : RDPGraphicDevice(), _viewer(width, height), _order_bpp(order_bpp) {}

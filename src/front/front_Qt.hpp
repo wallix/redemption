@@ -20,13 +20,21 @@
    Fake Front class for Unit Testing
 */
 
+#ifndef FRONT_QT_HPP
+#define FRONT_QT_HPP
+
+#include <openssl/ssl.h>
+
 #include "log.hpp"
 #include "front_api.hpp"
 #include "channel_list.hpp"
 #include "client_info.hpp"
 #include "RDP/RDPQtDrawable.hpp"
-
-#include <openssl/ssl.h>
+//#include "../core/RDP/RDPGraphicDevice.hpp"
+#include "text_metrics.hpp"
+#include "mod_api.hpp"
+#include "RDPQWidget.hpp"
+#include "bitmap.hpp"
 
 class FakeFront_Qt : public FrontAPI {
 public:
@@ -41,8 +49,10 @@ public:
 
     bool notimestamp;
     bool nomouse;
-
-    RDPQtDrawable gd;
+    
+    RDPQWidget     gd;
+    int            _order_bpp;
+    //RDPQtDrawable gd;
 
     virtual void flush() override {
         if (this->verbose > 10) {
@@ -50,6 +60,7 @@ public:
              LOG(LOG_INFO, "flush()");
              LOG(LOG_INFO, "========================================\n");
         }
+        this->gd.flush();
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
@@ -431,7 +442,7 @@ public:
     , mouse_y(0)
     , notimestamp(true)
     , nomouse(true)
-    , gd(info.width, info.height, 24) {
+    , gd(info.width, info.height) {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
@@ -464,3 +475,5 @@ public:
         //SSL_library_init();
     }
 };
+
+#endif

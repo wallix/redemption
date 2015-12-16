@@ -85,4 +85,4 @@ add_executable(test_rdp_Qt
 #link_directories(${BOOST_LIBRARYDIR})
 #include_directories(SYSTEM ${BOOST_INCLUDEDIR})
 
-target_link_libraries(test_rdp_Qt ${QT_LIBRARIES} pthread png krb5 gssglue png z dl crypto boost_unit_test_framework)
+target_link_libraries(test_rdp_Qt ${QT_LIBRARIES} pthread png krb5 gssglue png z dl crypto boost_unit_test_framework ssl)

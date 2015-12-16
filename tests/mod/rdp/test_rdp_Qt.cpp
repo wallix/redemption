@@ -31,7 +31,7 @@
 #define LOGNULL
 //#define LOGPRINT
 #include "config.hpp"
-//#include "socket_transport.hpp"
+#include "socket_transport.hpp"
 #include "test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
@@ -62,20 +62,21 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     
     
 
-    const char * name = "RDP W2008 Target";
+    //const char * name = "RDP W2008 Target";
+    const char * name = "QA\\administrateur";
+// S3cur3!1nux
+    int client_sck = ip_connect("10.10.46.88", 3389, 3, 1000, verbose);
+    std::string error_message;
+    SocketTransport t( name
+                     , client_sck
+                     , "10.10.46.88"
+                     , 3389
+                     , verbose
+                     , &error_message
+                     );
 
-    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
-    // std::string error_message;
-    // SocketTransport t( name
-    //                  , client_sck
-    //                  , "10.10.47.36"
-    //                  , 3389
-    //                  , verbose
-    //                  , &error_message
-    //                  );
-
-    #include "fixtures/dump_w2008.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    //#include "fixtures/dump_w2008.hpp"
+    //TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -83,10 +84,10 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
 
     Inifile ini;
 
-    ModRDPParams mod_rdp_params( "administrateur"
+    ModRDPParams mod_rdp_params( "qa\\administrateur"
                                , "S3cur3!1nux"
-                               , "10.10.47.36"
-                               , "10.10.43.33"
+                               , "10.10.46.88"
+                               , "10.10.43.46"
                                , 2
                                , 0
                                );
@@ -119,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
-    QTimerParent qTimerParent(&(front.gd), 250, 38, mod);
+    QTimerParent qTimerParent(&(front.gd), 20, 38, mod);
     
     app.exec();
     
