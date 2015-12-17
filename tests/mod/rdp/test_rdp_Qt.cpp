@@ -36,7 +36,8 @@
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 
-//#include "QTimerParent.hpp"
+#include "../src/front/front_Qt.hpp"
+
 
 
 BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
