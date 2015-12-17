@@ -65,7 +65,7 @@ class FlatLoginMod : public InternalMod, public NotifyApi
         ButtonLanguage(
             std::string const & enable_locales,
             Widget2 & parent,
-            DrawApi & drawable,
+            mod_api & drawable,
             FrontAPI & front,
             Font const & font,
             Theme const & theme

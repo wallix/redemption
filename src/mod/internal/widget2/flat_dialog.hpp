@@ -55,7 +55,7 @@ public:
 
     Font const & font;
 
-    FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
+    FlatDialog(mod_api& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
                Theme const & theme, Font const & font, const char * ok_text = "Ok",

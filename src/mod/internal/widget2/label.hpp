@@ -45,7 +45,7 @@ public:
     Font const & font;
 
 public:
-    WidgetLabel(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetLabel(mod_api & drawable, int16_t x, int16_t y, Widget2& parent,
                 NotifyApi* notifier, const char * text, bool auto_resize,
                 int group_id, uint32_t fgcolor, uint32_t bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0)

@@ -379,12 +379,12 @@ if ! [ os.environ NO_MAKE_CONFIG ]
 
     constant CONFIG_DEPENDENCY : <implicit-dependency>generate_configs ;
 
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV_NO_BUILD) ;
+    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
     constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
 }
 else
 {
-    constant EXE_DEPENDENCIES : $(GCOV_NO_BUILD) ;
+    constant EXE_DEPENDENCIES : $(GCOV) ;
     constant TEST_DEPENDENCIES : $(GCOV) ;
 }
 
@@ -566,7 +566,7 @@ exe tls_test_server
 
 exe make_cpp_config
     : src/main/write_cpp_config.cpp
-    : $(GCOV_NO_BUILD)
+    : $(GCOV)
 ;
 
 explicit make_cpp_config ;
@@ -706,7 +706,7 @@ unit-test test_server : tests/core/test_server.cpp libboost_unit_test : $(TEST_D
 unit-test test_session : tests/core/test_session.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_front : tests/front/test_front.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_front : tests/front/test_front.cpp bitmap cryptofile openssl snappy d3des krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_osd : tests/mod/test_mod_osd.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -912,3 +912,94 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z :  $(TEST_DEPENDENCIES) ;
+
+
+# import qt4 ;
+# if ! [ qt4.initialized ]
+# {
+#     ECHO "oh nooo" ;
+# }
+# import cast ;
+
+lib libqtcore : : <name>QtCore : ;
+lib libqtgui : : <name>QtGui : ;
+
+alias qtgui : libqtgui libqtcore ;
+
+constant QtFLAGS : 
+  <cxxflags>-idirafter=/usr/include/qt4/QtGui/ 
+  <cxxflags>-idirafter=/usr/include/qt4/ 
+  <define>QT_NO_KEYWORDS
+  #   <linkflags>-rdynamic 
+  <linkflags>-lQtGui 
+  <linkflags>-lQtCore 
+;
+
+using qt : / : /usr/bin : /usr/include/qt4 : /usr/lib ;
+
+#exe test_rdp_Qt :
+#fake_front_Qt.hpp
+#test_rdp_Qt.cpp
+#RDPQtDrawable.cpp
+#RDPQtDrawable.hpp
+#/qt//QtGui
+#/qt//QtCore ; 
+
+# exe test_rdp_Qt :
+# 	tests/front/fake_front_Qt.hpp
+# 	tests/mod/rdp/test_rdp_Qt.cpp
+# 	src/utils/RDPQtDrawable.cpp
+# 	src/core/RDP/RDPQtDrawable.hpp
+# 	#/qt//QtGui
+# 	#/qt//QtCore
+# 	bitmap
+# 	cryptofile
+# 	krb5
+# 	gssglue
+# 	png
+# 	d3des
+# 	z
+# 	dl
+# 	crypto
+# 	#qtgui
+# 	#qtcore
+# 	libboost_unit_test  :  $(TEST_DEPENDENCIES) <cxxflags>-idirafter=/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
+
+# unit-test test_rdp_Qt : tests/mod/rdp/test_rdp_Qt.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <cxxflags>-I/usr/include/qt4/QtGui/ <cxxflags>-I/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
+
+#unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp bitmap cryptofile krb5 gssglue png d3des z dl crypto libboost_unit_test qtcore qtgui :  $(TEST_DEPENDENCIES) <cxxflags>-idirafter=/usr/include/qt4/QtGui/ <cxxflags>-idirafter=/usr/include/qt4/ ;
+
+# unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <cxxflags>-I/usr/include/qt4/QtGui/ <cxxflags>-I/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
+import qt4 ;
+if ! [ qt4.initialized ]
+{
+    echo "qt4 is not initialized" ;
+    exit  ;
+}
+import cast ;
+unit-test test_rdp_Qt 
+:
+#   [ cast _ moccable-cpp : src/core/RDPQtDrawable.hpp ] 
+#   [ glob-tree *.ui  : .svn ] 
+        
+  tests/mod/rdp/test_rdp_Qt.cpp
+  src/utils/RDPQtDrawable.cpp
+#   src/utils/bitmap_data_allocator.cpp
+    
+  bitmap
+  cryptofile
+  krb5
+  gssglue
+  png
+  d3des
+  z
+  dl
+  crypto
+  
+  libboost_unit_test
+  
+  qtgui 
+:
+  $(TEST_DEPENDENCIES) 
+  $(QtFLAGS)
+;

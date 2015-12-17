@@ -33,7 +33,7 @@ class WidgetTooltip : public Widget2
     WidgetMultiLine desc;
     int border_color;
 public:
-    WidgetTooltip(DrawApi & drawable, int16_t x, int16_t y, Widget2 & parent,
+    WidgetTooltip(mod_api & drawable, int16_t x, int16_t y, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
                   int fgcolor, int bgcolor, int border_color, Font const & font)
         : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)

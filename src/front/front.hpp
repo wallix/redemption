@@ -107,7 +107,7 @@
 #include <memory>
 
 
-class Front final : public FrontAPI, public ActivityChecker{
+class Front final : public FrontAPI, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -617,15 +617,6 @@ public:
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             this->capture->update_pointer_position(xPos, yPos);
         }
-    }
-
-    void text_metrics(Font const & font, const char * text, int & width, int & height) override {
-        REDASSERT(false);
-    }
-
-    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
-                                  uint32_t bgcolor, const Rect & clip) override {
-        REDASSERT(false);
     }
 
     // ===========================================================================

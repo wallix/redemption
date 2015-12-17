@@ -31,12 +31,14 @@
 
 #define LOGNULL
 
+#include "widget2/fake_draw.hpp"
 #include "font.hpp"
 #include "internal/copy_paste.hpp"
 #include "internal/widget2/edit.hpp"
 #include "internal/widget2/screen.hpp"
 #include "../../front/fake_front.hpp"
 #include "check_sig.hpp"
+
 
 struct CopyPasteFront : FakeFront
 {
@@ -134,7 +136,8 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     CopyPaste copy_paste;
     CopyPasteFront front(info, copy_paste);
-
+    TestDraw mod(info.width, info.height);
+    
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
@@ -142,8 +145,8 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(front, info.width, info.height, font);
-    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
+    WidgetScreen parent(mod, info.width, info.height, font);
+    WidgetEdit edit(mod, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
 
     BOOST_REQUIRE(copy_paste.ready(front));
 
@@ -154,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestPaste)
         //front.dump_png("/tmp/test_copy_paste_");
         BOOST_CHECK_EQUAL(s, edit.get_text());
         char message[1024];
-        if (!check_sig(front.gd.impl(), message, sig)){
+        if (!check_sig(mod.gd.impl(), message, sig)){
             BOOST_CHECK_MESSAGE(false, message);
         }
     };

@@ -379,33 +379,7 @@ class ClientFront : public FrontAPI {
             LOG(LOG_INFO, "========================================\n");
         }
     }
-
-
-    void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor
-                         , uint32_t bgcolor, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- ClientFront ------------------");
-            LOG(LOG_INFO, "server_draw_text %s", text);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.server_draw_text(
-            font, x, y, text,
-            color_decode_opaquerect(fgcolor, this->mod_bpp, this->mod_palette),
-            color_decode_opaquerect(bgcolor, this->mod_bpp, this->mod_palette),
-            clip
-        );
-    }
-
-    void text_metrics(Font const & font, const char* text, int& width, int& height) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- ClientFront ------------------");
-            LOG(LOG_INFO, "text_metrics");
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.text_metrics(font, text, width, height);
-    }
+    
 
     // reutiliser le FakeFront
     // creer un main calqué sur celui de transparent.cpp et reussir a lancer un mod_rdp
