@@ -36,7 +36,6 @@
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 
-#include "../../front/fake_front_Qt.hpp"
 #include "QTimerParent.hpp"
 
 
@@ -46,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     char chartab[] = "myprog";
     char *argv[] {chartab};
     QApplication app(argc, argv);
-    
+
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -58,14 +57,13 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 511;
 
-    FakeFront_Qt front(info, verbose);
-    
-    
-
     //const char * name = "RDP W2008 Target";
     const char * name = "QA\\administrateur";
-// S3cur3!1nux
+
     int client_sck = ip_connect("10.10.46.88", 3389, 3, 1000, verbose);
+    
+    Front_Qt front(info, verbose, client_sck);
+    
     std::string error_message;
     SocketTransport t( name
                      , client_sck
@@ -81,6 +79,8 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
+    
+    
 
     Inifile ini;
 
@@ -110,9 +110,10 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
+    
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
     mod_api * mod = &mod_;
-
+    front.setCallback(mod);
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
@@ -120,7 +121,8 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
-    QTimerParent qTimerParent(&(front.gd), 30, 38, mod);
+    //QTimerParent qTimerParent(&front, 100, 0, mod);
+    
     
     app.exec();
     

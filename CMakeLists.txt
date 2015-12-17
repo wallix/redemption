@@ -31,8 +31,8 @@ set(spreadsheet_MOC_SRCS
     #src/core/RDP/RDPQtDrawable.hpp
     src/front/front_Qt.hpp
     #tests/front/fake_front_Qt.hpp
-    src/core/RDP/RDPQWidget.hpp
-    tests/mod/rdp/QTimerParent.hpp
+    #src/core/RDP/RDPQWidget.hpp
+    #tests/mod/rdp/QTimerParent.hpp
 )
 set(spreadsheet_UIS
 
