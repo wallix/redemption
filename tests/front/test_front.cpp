@@ -27,8 +27,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "config.hpp"
 //#include "socket_transport.hpp"
@@ -81,12 +81,10 @@ BOOST_AUTO_TEST_CASE(TestFront)
         LCGRandom gen1(0);
 
         // Comment the code block below to generate testing data.
-        #include "fixtures/trace_rdesktop_client.hpp"
+        #include "fixtures/trace_front_client.hpp"
 
         // Comment the code block below to generate testing data.
-        const char * name1    = "Test Front Transport";
-        TestTransport front_trans(name1, indata, sizeof(indata), outdata, sizeof(outdata),
-            verbose);
+        GeneratorTransport front_trans(outdata, sizeof(outdata), verbose);
 
         BOOST_CHECK(true);
 
@@ -152,6 +150,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
+        mod_rdp_params.verbose = verbose;
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
