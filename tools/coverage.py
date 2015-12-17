@@ -44,14 +44,14 @@ if BJAMGCC and BJAMGCC[0]:
 else:
   gccinfo = subprocess.Popen(['gcc', "--version"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
   #res = re.match("\s+(\d+[.]*\d+)[.]?\d+$", gccinfo)
-  res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
+  res = re.search(r"(\d+[.]*\d+[.]?\d+)(\s+\d+)?\n", gccinfo)
   GCCVERSION = 'gcc-%s' % res.group(1)
 
 if BJAMGCC and BJAMGCC[1]:
   GCOVVERSION = BJAMGCC[1].replace('g++', 'gcov')
 
 TESTSSUBDIR = ''
-if GCCVERSION[:9] in ['gcc-4.6.1']:
+if GCCVERSION[:9] in ['gcc-4.6.1', 'gcc-5.2.1']:
     GCCVERSION = GCCVERSION[:9]
     TESTSSUBDIR = 'tests/'
 elif GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7', 'gcc-4.8', 'gcc-4.9']:

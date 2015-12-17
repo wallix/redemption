@@ -379,12 +379,12 @@ if ! [ os.environ NO_MAKE_CONFIG ]
 
     constant CONFIG_DEPENDENCY : <implicit-dependency>generate_configs ;
 
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV_NO_BUILD) ;
+    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
     constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
 }
 else
 {
-    constant EXE_DEPENDENCIES : $(GCOV_NO_BUILD) ;
+    constant EXE_DEPENDENCIES : $(GCOV) ;
     constant TEST_DEPENDENCIES : $(GCOV) ;
 }
 
