@@ -379,12 +379,12 @@ if ! [ os.environ NO_MAKE_CONFIG ]
 
     constant CONFIG_DEPENDENCY : <implicit-dependency>generate_configs ;
 
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV_NO_BUILD) ;
+    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
     constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
 }
 else
 {
-    constant EXE_DEPENDENCIES : $(GCOV_NO_BUILD) ;
+    constant EXE_DEPENDENCIES : $(GCOV) ;
     constant TEST_DEPENDENCIES : $(GCOV) ;
 }
 
@@ -566,7 +566,7 @@ exe tls_test_server
 
 exe make_cpp_config
     : src/main/write_cpp_config.cpp
-    : $(GCOV_NO_BUILD)
+    : $(GCOV)
 ;
 
 explicit make_cpp_config ;
@@ -706,7 +706,7 @@ unit-test test_server : tests/core/test_server.cpp libboost_unit_test : $(TEST_D
 unit-test test_session : tests/core/test_session.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_front : tests/front/test_front.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_front : tests/front/test_front.cpp bitmap cryptofile openssl snappy d3des krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_osd : tests/mod/test_mod_osd.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;

@@ -41,6 +41,16 @@ struct GeneratorTransport
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
     }
+
+    void do_send(const char * const buffer, size_t len) {
+        LOG(LOG_INFO, "do_send %zu bytes", len);
+        if (verbose > 127){
+            LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
+            hexdump_c(buffer, len);
+            LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
+        }
+    }
+
 };
 
 
@@ -145,6 +155,7 @@ private:
         this->check.send(buffer, len);
     }
 };
+
 
 
 class LogTransport
