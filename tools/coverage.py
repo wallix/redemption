@@ -101,7 +101,7 @@ class Cover:
     def cover(self, module, name, extension):
         print "Computing coverage for %s" % module
         cmd1 = ["bjam", "coverage", "test_%s" % name]
-        cmd2 = [GCOVVERSION, "--unconditional-branches", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
+        cmd2 = [GCOVVERSION, "--unconditional-branches", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "--demangled-names", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
         cmd3 = ["etags", "-o", "coverage/%s/%s%s.TAGS" % (module, name, extension), "src/%s%s" % (module, extension)]
 
         res = subprocess.Popen(cmd1, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]

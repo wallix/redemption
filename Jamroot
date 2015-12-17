@@ -566,7 +566,7 @@ exe tls_test_server
 
 exe make_cpp_config
     : src/main/write_cpp_config.cpp
-    : $(GCOV_NO_BUILD)
+    : $(GCOV)
 ;
 
 explicit make_cpp_config ;
