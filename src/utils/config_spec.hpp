@@ -404,19 +404,19 @@ void config_spec_definition(Writer && W)
             "Disable keyboard log:\n"
             "  1: disable keyboard log in syslog\n"
             "  2: disable keyboard log in recorded sessions"
-        }, r);
+        }, set(KeyboardLogFlags::syslog), r);
         W.sep();
         W.member(V, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{
             "Disable clipboard log:\n"
             "  1: disable clipboard log in syslog\n"
             "  2: disable clipboard log in recorded sessions"
-        }, r);
+        }, set(ClipboardLogFlags::syslog), r);
         W.sep();
         W.member(V, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{
             "Disable (redirected) file system log:\n"
             "  1: disable (redirected) file system log in syslog\n"
             "  2: disable (redirected) file system log in recorded sessions"
-        }, r);
+        }, set(FileSystemLogFlags::syslog), r);
         W.sep();
         W.member(H, type_<unsigned>(), "rt_display", set(0), r);
         W.sep();

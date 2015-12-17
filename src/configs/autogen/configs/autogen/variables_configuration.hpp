@@ -1735,7 +1735,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 37; }
             using type = ::configs::KeyboardLogFlags;
-            type value{};
+            type value{static_cast< ::configs::KeyboardLogFlags>(1)};
         };
 
         // Disable clipboard log:
@@ -1748,7 +1748,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 38; }
             using type = ::configs::ClipboardLogFlags;
-            type value{};
+            type value{static_cast< ::configs::ClipboardLogFlags>(1)};
         };
 
         // Disable (redirected) file system log:
@@ -1761,7 +1761,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 39; }
             using type = ::configs::FileSystemLogFlags;
-            type value{};
+            type value{static_cast< ::configs::FileSystemLogFlags>(1)};
         };
 
         // AUTHID_VIDEO_RT_DISPLAY
