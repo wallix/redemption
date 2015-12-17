@@ -36,7 +36,7 @@
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 
-#include "QTimerParent.hpp"
+//#include "QTimerParent.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
