@@ -706,7 +706,7 @@ unit-test test_server : tests/core/test_server.cpp libboost_unit_test : $(TEST_D
 unit-test test_session : tests/core/test_session.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-#unit-test test_front : tests/front/test_front.cpp bitmap cryptofile krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_front : tests/front/test_front.cpp bitmap cryptofile openssl snappy d3des krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_osd : tests/mod/test_mod_osd.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;

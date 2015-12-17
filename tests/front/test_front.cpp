@@ -36,7 +36,13 @@
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 
-#include "fake_front.hpp"
+#include "front.hpp"
+#include "null/null.hpp"
+
+namespace dump2008 {
+    #include "fixtures/dump_w2008.hpp"
+}
+
 
 BOOST_AUTO_TEST_CASE(TestFront)
 {
@@ -49,13 +55,55 @@ BOOST_AUTO_TEST_CASE(TestFront)
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
-    int verbose = 511;
+    uint32_t verbose = 511;
 
-//    FakeFront front(info, verbose);
 
-    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
-                           , this->ini, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
+    Inifile ini;
+    ini.set<cfg::debug::front>(511);
+    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::client::cache_waiting_list>(true);
+    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::video::png_interval>(3000);
+    ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(0);
 
+    // Uncomment the code block below to generate testing data.
+    //int nodelay = 1;
+    //if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY
+    //                    , (char *)&nodelay, sizeof(nodelay))) {
+    //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+    //}
+    //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
+    //                           , ini.get<cfg::debug::front,>() 0);
+
+    LCGRandom gen1(0);
+
+    // Comment the code block below to generate testing data.
+    #include "fixtures/trace_rdesktop_client.hpp"
+
+    // Comment the code block below to generate testing data.
+    const char * name1    = "Test Front Transport";
+    TestTransport front_trans(name1, indata, sizeof(indata), outdata, sizeof(outdata),
+        verbose);
+
+    const bool fastpath_support = false;
+    const bool mem3blt_support  = false;
+
+    ini.set<cfg::client::tls_support>(false);
+    ini.set<cfg::client::tls_fallback_legacy>(true);
+    ini.set<cfg::client::bogus_user_id>(false);
+    ini.set<cfg::client::rdp_compression>(0);
+    ini.set<cfg::client::fast_path>(fastpath_support);
+
+    Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
+               , fastpath_support, mem3blt_support);
+    null_mod no_mod(front);
+
+    while (front.up_and_running == 0) {
+        front.incoming(no_mod);
+    }
+
+    LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     const char * name = "RDP W2008 Target";
 
@@ -69,16 +117,13 @@ BOOST_AUTO_TEST_CASE(TestFront)
     //                  , &error_message
     //                  );
 
-    #include "fixtures/dump_w2008.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(name, dump2008::indata, sizeof(dump2008::indata), dump2008::outdata, sizeof(dump2008::outdata), verbose);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    Inifile ini;
-
-    ModRDPParams mod_rdp_params( "administrateur"
+     ModRDPParams mod_rdp_params( "administrateur"
                                , "S3cur3!1nux"
                                , "10.10.47.36"
                                , "10.10.43.33"
@@ -103,8 +148,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
     mod_rdp_params.server_redirection_support        = true;
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    LCGRandom gen2(0);
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
