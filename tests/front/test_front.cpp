@@ -26,6 +26,10 @@
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
+#undef RECORD_PATH
+#define RECORD_PATH "/tmp/"
+#undef WRM_PATH
+#define WRM_PATH "/tmp/"
 
 //#define LOGNULL
 #define LOGPRINT
@@ -38,6 +42,7 @@
 
 #include "front.hpp"
 #include "null/null.hpp"
+#include "config_spec.hpp"
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -47,7 +52,6 @@ namespace dump2008 {
 BOOST_AUTO_TEST_CASE(TestFront)
 {
     try {
-
         ClientInfo info;
         info.keylayout = 0x04C;
         info.console_session = 0;
@@ -58,7 +62,6 @@ BOOST_AUTO_TEST_CASE(TestFront)
         info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         snprintf(info.hostname,sizeof(info.hostname),"test");
         uint32_t verbose = 511;
-
 
         Inifile ini;
         ini.set<cfg::debug::front>(511);
@@ -84,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         #include "fixtures/trace_front_client.hpp"
 
         // Comment the code block below to generate testing data.
-        GeneratorTransport front_trans(outdata, sizeof(outdata), verbose);
+        GeneratorTransport front_trans(indata, sizeof(indata), verbose);
 
         BOOST_CHECK(true);
 
@@ -96,8 +99,57 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::client::bogus_user_id>(false);
         ini.set<cfg::client::rdp_compression>(0);
         ini.set<cfg::client::fast_path>(fastpath_support);
+        ini.set<cfg::globals::movie>(true);
+        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
 
-        Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
+        class MyFront : public Front
+        {
+            public:
+            
+            MyFront( Transport & trans
+                   , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
+                   , Random & gen
+                   , Inifile & ini
+                   , bool fp_support // If true, fast-path must be supported
+                   , bool mem3blt_support
+                   , const char * server_capabilities_filename = ""
+                   , Transport * persistent_key_list_transport = nullptr
+                   )
+            : Front( trans
+                   , default_font_name
+                   , gen
+                   , ini
+                   , fp_support
+                   , mem3blt_support
+                   , server_capabilities_filename
+                   , persistent_key_list_transport)
+                {
+                }
+            
+                void clear_channels()
+                {
+                    this->channel_list.clear_channels();
+                }
+            
+                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override 
+                {
+                    return this->channel_list; 
+                }
+
+                virtual void send_to_channel(
+                    const CHANNELS::ChannelDef & channel,
+                    uint8_t const * data,
+                    size_t length,
+                    size_t chunk_size,
+                    int flags) override 
+                {
+                    LOG(LOG_INFO, "--------- FRONT ------------------------");
+                    LOG(LOG_INFO, "send_to_channel");
+                    LOG(LOG_INFO, "========================================\n");
+                }                
+        };
+
+        MyFront front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                    , fastpath_support, mem3blt_support);
         null_mod no_mod(front);
 
@@ -106,8 +158,6 @@ BOOST_AUTO_TEST_CASE(TestFront)
         }
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
-
-        const char * name = "RDP W2008 Target";
 
         // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
         // std::string error_message;
@@ -119,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //                  , &error_message
         //                  );
 
-        TestTransport t(name, dump2008::indata, sizeof(dump2008::indata), dump2008::outdata, sizeof(dump2008::outdata), verbose);
+        GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata), verbose);
 
         if (verbose > 2){
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -156,9 +206,12 @@ BOOST_AUTO_TEST_CASE(TestFront)
         LCGRandom gen2(0);
 
         BOOST_CHECK(true);
+        
+        front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
+
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -167,15 +220,26 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
+        LOG(LOG_INFO, "Before Start Capture");
+
+        NullAuthentifier blackhole;
+        front.start_capture(800, 600, ini, &blackhole);
+
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 38) break;
             mod->draw_event(time(nullptr));
+            LOG(LOG_INFO, "Calling Snapshot");
+            front.periodic_snapshot();
         }
 
+        front.stop_capture();
+
     //    front.dump_png("trace_w2008_");
-    } catch (...) {};
+    } catch (...) {
+        LOG(LOG_INFO, "Exiting on Exception");
+    };
 }
 

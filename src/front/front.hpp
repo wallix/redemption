@@ -107,7 +107,7 @@
 #include <memory>
 
 
-class Front final : public FrontAPI, public ActivityChecker {
+class Front : public FrontAPI, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -334,7 +334,7 @@ private:
 public:
     Keymap2 keymap;
 
-private:
+protected:
     CHANNELS::ChannelDefArray channel_list;
 
 public:
@@ -422,7 +422,7 @@ private:
     bool session_probe_started_ = false;
 
 public:
-    Front ( Transport & trans
+    Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random & gen
           , Inifile & ini
@@ -622,7 +622,10 @@ public:
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
+        LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
+        TODO("simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types")
+        
         if (!ini.get<cfg::globals::movie>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) &&
 //            ini.get<cfg::context::pattern_kill>().empty() &&
@@ -630,12 +633,14 @@ public:
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
            ) {
+            LOG(LOG_INFO, "No Capture 1");
             return;
         }
 
         if (this->capture) {
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
 
+            LOG(LOG_INFO, "No Capture 2");
             return;
         }
 
@@ -736,6 +741,7 @@ public:
 
     void periodic_snapshot()
     {
+        LOG(LOG_INFO, "periodic snapshot");
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();

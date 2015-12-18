@@ -600,8 +600,7 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : RDPChannelManagerMod(info.width - (info.width % 4), info.height,
-                               front)
+        : RDPChannelManagerMod(info.width - (info.width % 4), info.height, front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}

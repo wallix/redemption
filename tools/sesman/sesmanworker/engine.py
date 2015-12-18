@@ -19,7 +19,7 @@ try:
     from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
         APPROVAL_PENDING, APPROVAL_NONE
     from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
-    from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEYS
+    from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEY
     from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY
     from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
@@ -721,7 +721,7 @@ class Engine(object):
             target_credentials = self.get_target_credentials(target_device)
             privkeys = [ (cred.data.get(CRED_DATA_PRIVATE_KEY),
                           cred.data.get("passphrase", None)) \
-                         for cred in target_credentials.get(CRED_TYPE_SSH_KEYS, []) ]
+                         for cred in target_credentials.get(CRED_TYPE_SSH_KEY, []) ]
             Logger().info("Engine get_target_privkeys done")
             return privkeys
         except AccountLocked:

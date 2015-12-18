@@ -913,18 +913,17 @@ unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_u
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z :  $(TEST_DEPENDENCIES) ;
 
-explicit test_rdp_Qt.o bitmap_data_allocator.o moc_front_Qt.o test_rdp_Qt ;
+explicit test_rdp_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
 
 using qt : /usr ;
 
 obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
-obj moc_front_Qt.o : src/front/moc_front_Qt.cxx : <include>/usr/include/qt4 ;
 
 exe test_rdp_Qt : 
+    src/front/front_Qt.hpp
     test_rdp_Qt.o 
     bitmap_data_allocator.o 
-    moc_front_Qt.o 
     /qt//QtGui 
     krb5 
     openssl 
@@ -935,5 +934,8 @@ exe test_rdp_Qt :
     d3des 
     z 
     dl 
-    libboost_unit_test ;
+    libboost_unit_test 
+    :
+    <include>/usr/include/qt4
+    ;
 
