@@ -69,11 +69,11 @@
 #include <QtGui/QColor>
 #include <QtGui/QDesktopWidget>
 #include <QtGui/QApplication>
-#include <QImage>
+#include <QtGui/QImage>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QWheelEvent>
-#include <QSocketNotifier>
+#include <QtCore/QSocketNotifier>
 
 
 
