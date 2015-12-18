@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Clément Moroldo
 
    Fake Front class for Unit Testing
 */
@@ -60,7 +60,7 @@
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "../src/utils/bitmap.hpp"
-#include "callback.hpp"
+
 
 #include <QtGui/QWidget>
 #include <QtGui/QPicture>
@@ -81,7 +81,7 @@
 class Front_Qt : public QWidget, public FrontAPI
 {
     
-    Q_OBJECT
+Q_OBJECT
     
     
 public:
@@ -91,14 +91,12 @@ public:
     uint8_t                     mod_bpp;
     BGRPalette                  mod_palette;
 
-    int mouse_x;
-    int mouse_y;
-
+    int  mouse_x;
+    int  mouse_y;
     bool notimestamp;
     bool nomouse;
     
-    int            _order_bpp;
-    
+    int             _order_bpp;
     QLabel          _label;
     QPainter*       _painter;
     QPicture        _picture;
@@ -117,13 +115,11 @@ public:
         return {r, g, b};
     }
     
-    
     void reInitView() {
         this->_painter->begin(&(this->_picture));
         this->_painter->fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
     }
     
-
     virtual void flush() override {
         if (this->verbose > 10) {
              LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -134,6 +130,77 @@ public:
         this->_label.setPicture(this->_picture);
         this->show();
     }
+    
+    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
+
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
+                                , size_t chunk_size, int flags) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "send_to_channel");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    virtual void send_global_palette() override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "send_global_palette()");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    virtual void begin_update() override {
+        //if (this->verbose > 10) {
+        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
+        //    LOG(LOG_INFO, "begin_update");
+        //    LOG(LOG_INFO, "========================================\n");
+        //}
+    }
+
+    virtual void end_update() override {
+        //if (this->verbose > 10) {
+        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
+        //    LOG(LOG_INFO, "end_update");
+        //    LOG(LOG_INFO, "========================================\n");
+        //}
+    }
+
+    virtual void set_mod_palette(const BGRPalette & palette) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_mod_palette");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    virtual void server_set_pointer(const Pointer & cursor) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "server_set_pointer");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        //this->gd.server_set_pointer(cursor);
+    }
+
+    virtual int server_resize(int width, int height, int bpp) override {
+        this->mod_bpp = bpp;
+        this->info.bpp = bpp;
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+            LOG(LOG_INFO, "========================================\n");
+        }
+        return 1;
+    }
+    
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+    //-------------------------------
+    // DRAWING FONCTIONS 
+    //------------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
@@ -409,8 +476,6 @@ public:
             bitmap_data.log(LOG_INFO, "FakeFront");
             LOG(LOG_INFO, "========================================\n");
         }
-
-        std::cout << "RDPBitmapData" << std::endl;
         
         std::cout << "RDPBitmapData" << std::endl;
         if (!bmp.is_valid()){
@@ -438,7 +503,7 @@ public:
       
         const uint8_t * row = bmp.data();
         
-        QImage::Format format(QImage::Format_RGB16); //bpp
+        QImage::Format format; //bpp
         if (bmp.bpp() == 16){
             format = QImage::Format_RGB16;
         }
@@ -462,73 +527,13 @@ public:
             rowYCoord--;
         }
     }
-
-    using FrontAPI::draw;
-
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
-
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
-                                , size_t chunk_size, int flags) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_to_channel");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
-
-    virtual void send_global_palette() override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_global_palette()");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
-
-    virtual void begin_update() override {
-        //if (this->verbose > 10) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "begin_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
-    }
-
-    virtual void end_update() override {
-        //if (this->verbose > 10) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "end_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
-    }
-
-    virtual void set_mod_palette(const BGRPalette & palette) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "set_mod_palette");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
-
-    virtual void server_set_pointer(const Pointer & cursor) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "server_set_pointer");
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        //this->gd.server_set_pointer(cursor);
-    }
-
-    virtual int server_resize(int width, int height, int bpp) override {
-        this->mod_bpp = bpp;
-        this->info.bpp = bpp;
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        return 1;
-    }
     
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+    //------------------------
+    // Constructor
+    //------------------------
  
     Front_Qt(ClientInfo & info, uint32_t verbose, int client_sck)
     : QWidget(), FrontAPI(false, false)
@@ -602,9 +607,12 @@ public:
         //SSL_library_init();
     }
     
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
     
-    // CONTROLLER
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+    //-------------
+    // CONTROLLERS
+    //-------------
     
     void mousePressEvent(QMouseEvent *e) {
         std::cout << "click   " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
@@ -619,7 +627,6 @@ public:
         }
         this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), keymap);;
     }
-    
     
     void mouseReleaseEvent(QMouseEvent *e) {
         std::cout << "release " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
@@ -639,16 +646,13 @@ public:
         }
     }
     
-    
     void keyPressEvent(QKeyEvent *e) {
         std::cout << "keyPressed " << e->text().toStdString()  << std::endl;
     }
     
-    
     void wheelEvent(QWheelEvent *e) {
         std::cout << "wheel " << " delta=" << e->delta() << std::endl;
     }
-    
     
     bool eventFilter(QObject *obj, QEvent *e)
     {
@@ -666,20 +670,27 @@ public:
         return false;
     }
     
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+    //-------------------------
+    // Socket events listening
+    //-------------------------
     
 public Q_SLOTS:
-    void readSck() {
-        if (_callback != nullptr) {
+    void readSckAndShowView() {
+        if (this->_callback != nullptr) {
             this->reInitView();
             this->_callback->draw_event(time(nullptr));
             this->flush();
         }
     }
     
+    
 public:
-    void setCallback(mod_api* callback) {
+    void setCallbackAndStartListening(mod_api* callback) {
         _callback = callback;
-        QObject::connect(&(this->_sckRead), SIGNAL(activated(int)), this, SLOT(readSck()));
+        QObject::connect(&(this->_sckRead), SIGNAL(activated(int)), this, SLOT(readSckAndShowView()));
     }
 };
 

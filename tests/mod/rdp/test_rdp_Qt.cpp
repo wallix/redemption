@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
     mod_api * mod = &mod_;
-    front.setCallback(mod);
+    
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
@@ -122,8 +122,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
-    //QTimerParent qTimerParent(&front, 100, 0, mod);
-    
+    front.setCallbackAndStartListening(mod);
     
     app.exec();
     
