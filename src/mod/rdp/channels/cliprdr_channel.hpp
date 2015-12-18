@@ -287,12 +287,12 @@ private:
                     std::min(chunk.in_remain(),
                              max_length_of_data_to_dump * 2);
 
-                const size_t size_of_utf8_string =
-                    length_of_data_to_dump / 2 *
+                constexpr size_t size_of_utf8_string =
+                    max_length_of_data_to_dump *
                         maximum_length_of_utf8_character_in_bytes;
 
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
+                uint8_t utf8_string[size_of_utf8_string + 1];
+                ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
                     chunk.get_current(), length_of_data_to_dump / 2, utf8_string,
                     size_of_utf8_string);
@@ -512,17 +512,17 @@ private:
                     }
                 }
 
-                const uint32_t formatId           = chunk.in_uint32_le();
-                const size_t   format_name_length =
+                const     uint32_t formatId           = chunk.in_uint32_le();
+                constexpr size_t   format_name_length =
                         32      // formatName(32)
                            / 2  // size_of(Unicode characters)(2)
                     ;
 
-                const size_t size_of_utf8_string =
+                constexpr size_t size_of_utf8_string =
                     format_name_length *
                     maximum_length_of_utf8_character_in_bytes;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
+                uint8_t utf8_string[size_of_utf8_string + 1];
+                ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
                     chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
@@ -530,8 +530,9 @@ private:
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                            "formatId=%d wszFormatName=\"%s\"",
-                        formatId, utf8_string);
+                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                        RDPECLIP::get_Format_name(formatId), formatId,
+                        utf8_string);
                 }
 
                 remaining_data_length -=
@@ -571,23 +572,31 @@ private:
                     }
                 }
 
-                const uint32_t formatId           = chunk.in_uint32_le();
-                const size_t   format_name_length = UTF16StrLen(chunk.get_current()) + 1;
+                const size_t max_length_of_format_name = 256;
 
-                const size_t size_of_utf8_string =
-                    format_name_length *
-                    maximum_length_of_utf8_character_in_bytes;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
+                const uint32_t formatId                    =
+                    chunk.in_uint32_le();
+                const size_t   format_name_length          =
+                    ::UTF16StrLen(chunk.get_current()) + 1;
+                const size_t   adjusted_format_name_length =
+                    std::min(format_name_length - 1,
+                             max_length_of_format_name);
+
+                constexpr size_t size_of_utf8_string =
+                    max_length_of_format_name *
+                        maximum_length_of_utf8_character_in_bytes;
+                uint8_t utf8_string[size_of_utf8_string + 1];
+                ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.get_current(), format_name_length, utf8_string,
-                    size_of_utf8_string);
+                    chunk.get_current(), adjusted_format_name_length,
+                    utf8_string, size_of_utf8_string);
 
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                            "formatId=%d wszFormatName=\"%s\"",
-                        formatId, utf8_string);
+                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                        RDPECLIP::get_Format_name(formatId), formatId,
+                        utf8_string);
                 }
 
                 remaining_data_length -=
@@ -836,12 +845,12 @@ public:
                     std::min(chunk.in_remain(),
                              max_length_of_data_to_dump * 2);
 
-                const size_t size_of_utf8_string =
-                    length_of_data_to_dump / 2 *
+                constexpr size_t size_of_utf8_string =
+                    max_length_of_data_to_dump *
                         maximum_length_of_utf8_character_in_bytes;
 
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
+                uint8_t utf8_string[size_of_utf8_string + 1];
+                ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
                     chunk.get_current(), length_of_data_to_dump / 2, utf8_string,
                     size_of_utf8_string);
@@ -1011,17 +1020,17 @@ public:
 
             for (uint32_t remaining_data_length = dataLen;
                  remaining_data_length; ) {
-                const uint32_t formatId           = chunk.in_uint32_le();
-                const size_t   format_name_length =
+                const     uint32_t formatId           = chunk.in_uint32_le();
+                constexpr size_t   format_name_length =
                         32      // formatName(32)
                            / 2  // size_of(Unicode characters)(2)
                     ;
 
-                const size_t size_of_utf8_string =
+                constexpr size_t size_of_utf8_string =
                     format_name_length *
-                    maximum_length_of_utf8_character_in_bytes;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
+                        maximum_length_of_utf8_character_in_bytes;
+                uint8_t utf8_string[size_of_utf8_string + 1];
+                ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
                     chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
@@ -1029,8 +1038,9 @@ public:
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                            "formatId=%d wszFormatName=\"%s\"",
-                        formatId, utf8_string);
+                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                        RDPECLIP::get_Format_name(formatId), formatId,
+                        utf8_string);
                 }
 
                 remaining_data_length -=
@@ -1056,25 +1066,32 @@ public:
                         "for exchanging updated format names.");
             }
 
+            const size_t max_length_of_format_name = 256;
+
             for (uint32_t remaining_data_length = dataLen;
                  remaining_data_length; ) {
-                const uint32_t formatId           = chunk.in_uint32_le();
-                const size_t   format_name_length = UTF16StrLen(chunk.get_current()) + 1;
+                const uint32_t formatId                     =
+                    chunk.in_uint32_le();
+                const size_t   format_name_length           =
+                    ::UTF16StrLen(chunk.get_current()) + 1;
+                const size_t   adjusted_format_name_length =
+                    std::min(format_name_length - 1,
+                        max_length_of_format_name);
 
-                const size_t size_of_utf8_string =
-                    format_name_length *
+                constexpr size_t size_of_utf8_string =
+                    max_length_of_format_name *
                     maximum_length_of_utf8_character_in_bytes;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
+                uint8_t utf8_string[size_of_utf8_string + 1];
+                ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.get_current(), format_name_length, utf8_string,
-                    size_of_utf8_string);
+                    chunk.get_current(), adjusted_format_name_length,
+                    utf8_string, size_of_utf8_string);
 
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                            "formatId=%d wszFormatName=\"%s\"",
-                        formatId, utf8_string);
+                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                        RDPECLIP::get_Format_name(formatId), formatId, utf8_string);
                 }
 
                 remaining_data_length -=
