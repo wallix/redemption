@@ -160,12 +160,16 @@ BOOST_AUTO_TEST_CASE(TestFront)
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
 
+
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
         BOOST_CHECK(t.get_status());
         BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+
+        NullAuthentifier blackhole;
+        front.start_capture(800, 600, ini, &blackhole);
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
