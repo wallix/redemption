@@ -23,7 +23,7 @@
 #ifndef FRONT_QT_HPP
 #define FRONT_QT_HPP
 
-
+#include <stdio.h>
 #include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
@@ -131,6 +131,11 @@ public:
         this->show();
     }
     
+    void refresh() {
+        Rect rect(0, 0, this->_width, this->_height);
+        this->_callback->rdp_input_invalidate(rect);
+    }
+    
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
@@ -199,7 +204,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //-------------------------------
-    // DRAWING FONCTIONS 
+    //      DRAWING FUNCTIONS 
     //------------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
@@ -532,7 +537,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //------------------------
-    // Constructor
+    //      Constructor
     //------------------------
  
     Front_Qt(ClientInfo & info, uint32_t verbose, int client_sck)
@@ -610,44 +615,59 @@ public:
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
-    //-------------
-    // CONTROLLERS
-    //-------------
+    //------------------------
+    //      CONTROLLERS
+    //------------------------
     
     void mousePressEvent(QMouseEvent *e) {
         std::cout << "click   " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
         this->_clickOn = true;
-        Keymap2* keymap;
-        int flag;
+        Keymap2* keymap(nullptr);
+        int flag(0);
         switch (e->button()) {
             case 1: flag = MOUSE_FLAG_BUTTON1; break;
             case 2: flag = MOUSE_FLAG_BUTTON2; break;
             case 3: flag = MOUSE_FLAG_BUTTON3; break;
             case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            default: break;
         }
-        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), keymap);;
+        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), keymap);
     }
     
     void mouseReleaseEvent(QMouseEvent *e) {
         std::cout << "release " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
-        Keymap2* keymap;
-        int flag;
+        Keymap2* keymap(nullptr);
+        int flag(0);
         switch (e->button()) {
             case 1: flag = MOUSE_FLAG_BUTTON1; break;
-            case 2: flag = MOUSE_FLAG_BUTTON2; break;
+            case 2: flag = MOUSE_FLAG_BUTTON2; break; 
             case 3: flag = MOUSE_FLAG_BUTTON3; break;
-            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            case 4: flag = MOUSE_FLAG_BUTTON4; break; 
+            default: break;
         }
         this->_callback->rdp_input_mouse(flag, e->x(), e->y(), keymap);
         if (this->_clickOn) {
-            Rect rect(0, 0, this->_width, this->_height);
-            this->_callback->rdp_input_invalidate(rect);
+            this->refresh();
             this->_clickOn = false;
         }
     }
     
     void keyPressEvent(QKeyEvent *e) {
-        std::cout << "keyPressed " << e->text().toStdString()  << std::endl;
+        uint32_t unicode(e->nativeScanCode()); 
+        if (unicode != 0) {
+            Keymap2* keymap(nullptr); 
+            
+            //keymap->event(keyboardFlags, e->nativeScanCode(), decoded_data, ctrl_alt_delete);
+            this->_callback->rdp_input_scancode(16777249/*e->key()*/, 0, 0000, 539317998, keymap);
+            
+            std::cout << "keyPressed " << e->key() << std::endl;
+        }
+    }
+    
+    void keyReleaseEvent(QKeyEvent *e) {
+
+        std::cout << "keyRelease " << e->text().toStdString()  << std::endl;
+        
     }
     
     void wheelEvent(QWheelEvent *e) {
@@ -660,11 +680,10 @@ public:
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
             std::cout << "mouseMove " <<  "x=" << mouseEvent->x() << " y=" << mouseEvent->y() << std::endl;
-            Keymap2* keymap;
+            Keymap2* keymap(nullptr);
             this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), keymap);
             /*if (this->_clickOn) {
-                Rect rect(0, 0, this->_width, this->_height);
-                this->_callback->rdp_input_invalidate(rect);
+                this->refresh();
             }*/
         }
         return false;
@@ -673,12 +692,12 @@ public:
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
-    //-------------------------
-    // Socket events listening
-    //-------------------------
+    //-------------------------------
+    //    Socket events listening
+    //-------------------------------
     
 public Q_SLOTS:
-    void readSckAndShowView() {
+    void readSck_And_ShowView() {
         if (this->_callback != nullptr) {
             this->reInitView();
             this->_callback->draw_event(time(nullptr));
@@ -688,9 +707,9 @@ public Q_SLOTS:
     
     
 public:
-    void setCallbackAndStartListening(mod_api* callback) {
-        _callback = callback;
-        QObject::connect(&(this->_sckRead), SIGNAL(activated(int)), this, SLOT(readSckAndShowView()));
+    void setCallback_And_StartListening(mod_api* callback) {
+        this->_callback = callback;
+        QObject::connect(&(this->_sckRead), SIGNAL(activated(int)), this, SLOT(readSck_And_ShowView()));
     }
 };
 

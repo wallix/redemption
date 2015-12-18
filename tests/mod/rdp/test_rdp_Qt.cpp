@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
-    front.setCallbackAndStartListening(mod);
+    front.setCallback_And_StartListening(mod);
     
     app.exec();
     
