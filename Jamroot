@@ -913,93 +913,27 @@ unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_u
 
 unit-test test_verifier : tests/test_verifier.cpp cryptofile libboost_unit_test openssl crypto ccryptofile snappy dl z :  $(TEST_DEPENDENCIES) ;
 
+explicit test_rdp_Qt.o bitmap_data_allocator.o moc_front_Qt.o test_rdp_Qt ;
 
-# import qt4 ;
-# if ! [ qt4.initialized ]
-# {
-#     ECHO "oh nooo" ;
-# }
-# import cast ;
+using qt : /usr ;
 
-# lib libqtcore : : <name>QtCore : ;
-# lib libqtgui : : <name>QtGui : ;
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
+obj moc_front_Qt.o : src/front/moc_front_Qt.cxx : <include>/usr/include/qt4 ;
 
-# alias qtgui : libqtgui libqtcore ;
+exe test_rdp_Qt : 
+    test_rdp_Qt.o 
+    bitmap_data_allocator.o 
+    moc_front_Qt.o 
+    /qt//QtGui 
+    krb5 
+    openssl 
+    crypto 
+    cryptofile
+    gssglue 
+    png 
+    d3des 
+    z 
+    dl 
+    libboost_unit_test ;
 
-# constant QtFLAGS : 
-#  <cxxflags>-idirafter=/usr/include/qt4/QtGui/ 
-#  <cxxflags>-idirafter=/usr/include/qt4/ 
-#  <define>QT_NO_KEYWORDS
-#  #   <linkflags>-rdynamic 
-#  <linkflags>-lQtGui 
-#  <linkflags>-lQtCore 
-# ;
-
-# using qt : / : /usr/bin : /usr/include/qt4 : /usr/lib ;
-
-#exe test_rdp_Qt :
-#fake_front_Qt.hpp
-#test_rdp_Qt.cpp
-#RDPQtDrawable.cpp
-#RDPQtDrawable.hpp
-#/qt//QtGui
-#/qt//QtCore ; 
-
-# exe test_rdp_Qt :
-# 	tests/front/fake_front_Qt.hpp
-# 	tests/mod/rdp/test_rdp_Qt.cpp
-# 	src/utils/RDPQtDrawable.cpp
-# 	src/core/RDP/RDPQtDrawable.hpp
-# 	#/qt//QtGui
-# 	#/qt//QtCore
-# 	bitmap
-# 	cryptofile
-# 	krb5
-# 	gssglue
-# 	png
-# 	d3des
-# 	z
-# 	dl
-# 	crypto
-# 	#qtgui
-# 	#qtcore
-# 	libboost_unit_test  :  $(TEST_DEPENDENCIES) <cxxflags>-idirafter=/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
-
-# unit-test test_rdp_Qt : tests/mod/rdp/test_rdp_Qt.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <cxxflags>-I/usr/include/qt4/QtGui/ <cxxflags>-I/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
-
-# unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp bitmap cryptofile krb5 gssglue png d3des z dl crypto libboost_unit_test qtcore qtgui :  $(TEST_DEPENDENCIES) <cxxflags>-idirafter=/usr/include/qt4/QtGui/ <cxxflags>-idirafter=/usr/include/qt4/ ;
-
-# unit-test test_RDPQtDrawable : tests/utils/test_RDPQtDrawable.cpp src/utils/RDPQtDrawable.cpp libboost_unit_test qt4 :  $(TEST_DEPENDENCIES) <cxxflags>-I/usr/include/qt4/QtGui/ <cxxflags>-I/usr/include/qt4/ <linkflags>-rdynamic <linkflags>-lQtGui <linkflags>-lQtCore ;
-# import qt4 ;
-# if ! [ qt4.initialized ]
-# {
-#     echo "qt4 is not initialized" ;
-#    exit  ;
-# }
-# import cast ;
-# unit-test test_rdp_Qt 
-# :
-#   [ cast _ moccable-cpp : src/core/RDPQtDrawable.hpp ] 
-#   [ glob-tree *.ui  : .svn ] 
-        
-#  tests/mod/rdp/test_rdp_Qt.cpp
-#  src/utils/RDPQtDrawable.cpp
-#   src/utils/bitmap_data_allocator.cpp
-    
-#  bitmap
-#  cryptofile
-#  krb5
-#  gssglue
-#  png
-#  d3des
-#  z
-#  dl
-#  crypto
-#  
-#  libboost_unit_test
-#  
-#  qtgui 
-# :
-#  $(TEST_DEPENDENCIES) 
-#  $(QtFLAGS)
-# ;
