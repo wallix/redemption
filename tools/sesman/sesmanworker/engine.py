@@ -200,6 +200,12 @@ class Engine(object):
             Logger().info("Engine get_trace_type failed: configuration file section 'wabengine', key 'trace', (((%s)))" % traceback.format_exc(e))
         return u'localfile_hashed'
 
+    def get_trace_encryption_key(self, path, old_scheme=False):
+        return self.wabengine.get_trace_sign_key(path, old_scheme)
+
+    def get_trace_sign_key(self):
+        return self.wabengine.get_trace_sign_key()
+
     def password_expiration_date(self):
         try:
             _data = self.wabengine.check_password_expiration_info()
