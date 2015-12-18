@@ -107,7 +107,7 @@
 #include <memory>
 
 
-class Front final : public FrontAPI, public ActivityChecker {
+class Front : public FrontAPI, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -334,7 +334,7 @@ private:
 public:
     Keymap2 keymap;
 
-private:
+protected:
     CHANNELS::ChannelDefArray channel_list;
 
 public:
@@ -422,7 +422,7 @@ private:
     bool session_probe_started_ = false;
 
 public:
-    Front ( Transport & trans
+    Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random & gen
           , Inifile & ini

@@ -102,8 +102,54 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::globals::movie>(true);
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
 
+        class MyFront : public Front
+        {
+            public:
+            
+            MyFront( Transport & trans
+                   , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
+                   , Random & gen
+                   , Inifile & ini
+                   , bool fp_support // If true, fast-path must be supported
+                   , bool mem3blt_support
+                   , const char * server_capabilities_filename = ""
+                   , Transport * persistent_key_list_transport = nullptr
+                   )
+            : Front( trans
+                   , default_font_name
+                   , gen
+                   , ini
+                   , fp_support
+                   , mem3blt_support
+                   , server_capabilities_filename
+                   , persistent_key_list_transport)
+                {
+                }
+            
+                void clear_channels()
+                {
+                    this->channel_list.clear_channels();
+                }
+            
+                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override 
+                {
+                    return this->channel_list; 
+                }
 
-        Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
+                virtual void send_to_channel(
+                    const CHANNELS::ChannelDef & channel,
+                    uint8_t const * data,
+                    size_t length,
+                    size_t chunk_size,
+                    int flags) override 
+                {
+                    LOG(LOG_INFO, "--------- FRONT ------------------------");
+                    LOG(LOG_INFO, "send_to_channel");
+                    LOG(LOG_INFO, "========================================\n");
+                }                
+        };
+
+        MyFront front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                    , fastpath_support, mem3blt_support);
         null_mod no_mod(front);
 
@@ -112,8 +158,6 @@ BOOST_AUTO_TEST_CASE(TestFront)
         }
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
-
-        const char * name = "RDP W2008 Target";
 
         // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
         // std::string error_message;
@@ -162,6 +206,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         LCGRandom gen2(0);
 
         BOOST_CHECK(true);
+        
+        front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
