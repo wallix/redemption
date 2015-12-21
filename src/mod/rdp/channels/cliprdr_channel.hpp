@@ -236,13 +236,22 @@ private:
 
         this->requestedFormatId = chunk.in_uint32_le();
 
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
+                    "requestedFormatId=%s(%u)",
+                RDPECLIP::get_Format_name(this->requestedFormatId),
+                this->requestedFormatId);
+        }
+
         return true;
     }
 
     bool process_client_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+            !this->param_dont_log_data_into_syslog) {
             const auto saved_chunk_p = chunk.get_current();
 
             {
@@ -262,47 +271,68 @@ private:
 
             const uint32_t dataLen = chunk.in_uint32_le();
 
-            // !this->param_dont_log_data_into_syslog
             LOG(LOG_INFO,
-                "Sending %s(%u) clipboard data to server (%u) bytes%s",
+                "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
+                    "Sending %s(%u) clipboard data to server (%u) bytes%s",
                 RDPECLIP::get_Format_name(this->requestedFormatId),
                 this->requestedFormatId, dataLen,
-                (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
-                  (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
+                ((/*(this->requestedFormatId == RDPECLIP::CF_TEXT) ||
+                  (*/this->requestedFormatId == RDPECLIP::CF_UNICODETEXT/*)*/) ?
                  ":" : "."));
 
             const size_t max_length_of_data_to_dump = 256;
 
-            if (this->requestedFormatId == RDPECLIP::CF_TEXT) {
-                const size_t length_of_data_to_dump =
-                    std::min(chunk.in_remain(), max_length_of_data_to_dump);
-                const std::string data_to_dump(::char_ptr_cast(chunk.get_current()),
-                    length_of_data_to_dump);
-                LOG(LOG_INFO, "%s", data_to_dump.c_str());
-            }
-            else if (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
-                REDASSERT(!(chunk.in_remain() & 1));
+            switch (this->requestedFormatId)
+            {
+/*
+                case RDPECLIP::CF_TEXT:
+                {
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(), max_length_of_data_to_dump);
+                    const std::string data_to_dump(
+                        ::char_ptr_cast(chunk.get_current()),
+                        length_of_data_to_dump);
+                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                }
+                break;
+*/
 
-                const size_t length_of_data_to_dump =
-                    std::min(chunk.in_remain(),
-                             max_length_of_data_to_dump * 2);
+                case RDPECLIP::CF_UNICODETEXT:
+                {
+                    REDASSERT(!(chunk.in_remain() & 1));
 
-                constexpr size_t size_of_utf8_string =
-                    max_length_of_data_to_dump *
-                        maximum_length_of_utf8_character_in_bytes;
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(), max_length_of_data_to_dump * 2);
 
-                uint8_t utf8_string[size_of_utf8_string + 1];
-                ::memset(utf8_string, 0, sizeof(utf8_string));
-                const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.get_current(), length_of_data_to_dump / 2, utf8_string,
-                    size_of_utf8_string);
-                const std::string data_to_dump(::char_ptr_cast(utf8_string),
-                    length_of_utf8_string);
-                LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                    constexpr size_t size_of_utf8_string =
+                        max_length_of_data_to_dump *
+                            maximum_length_of_utf8_character_in_bytes;
+
+                    uint8_t utf8_string[size_of_utf8_string + 1];
+                    ::memset(utf8_string, 0, sizeof(utf8_string));
+                    const size_t length_of_utf8_string = ::UTF16toUTF8(
+                        chunk.get_current(), length_of_data_to_dump / 2,
+                        utf8_string, size_of_utf8_string);
+                    const std::string data_to_dump(
+                        ::char_ptr_cast(utf8_string), length_of_utf8_string);
+                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                }
+                break;
+
+                case RDPECLIP::CF_LOCALE:
+                {
+                    const uint32_t locale_identifier = chunk.in_uint32_le();
+
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
+                            "locale_identifier=0x%04X",
+                        locale_identifier);
+                }
+                break;
             }
 
             chunk.rewind(saved_chunk_p - chunk.get_data());
-        }
+        }   // if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
 
         //LOG(LOG_INFO,
         //    "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
@@ -332,12 +362,14 @@ private:
 
                 const uint32_t cItems = chunk.in_uint32_le();
 
-                LOG(LOG_INFO,
-                    "Sending %sFileGroupDescriptorW(%u) clipboard data to server. "
-                        "cItems=%u",
-                    ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
-                     "" : "(chunked) "),
-                    this->client_file_list_format_id, cItems);
+                if (!this->param_dont_log_data_into_syslog) {
+                    LOG(LOG_INFO,
+                        "Sending %sFileGroupDescriptorW(%u) clipboard data to server. "
+                            "cItems=%u",
+                        ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
+                         "" : "(chunked) "),
+                        this->client_file_list_format_id, cItems);
+                }
             }
             else if (this->file_descriptor_stream.get_offset()) {
                 const uint32_t complementary_data_length =
@@ -438,7 +470,7 @@ private:
             }
 
             chunk.rewind(saved_chunk_p - chunk.get_data());
-        }
+        }   // if (this->client_file_list_format_id &&
 
         return true;
     }   // process_client_format_data_response_pdu
@@ -729,6 +761,16 @@ public:
                     this->update_exchanged_data(total_length);
                 }
             break;
+
+            default:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_message: "
+                            "Delivering unprocessed messages %s(%u) to server.",
+                        RDPECLIP::get_msgType_name(this->client_message_type),
+                        (unsigned)this->client_message_type);
+                }
+            break;
         }   // switch (this->client_message_type)
 
         if (send_message_to_server) {
@@ -808,59 +850,90 @@ public:
 
         this->requestedFormatId = chunk.in_uint32_le();
 
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                    "requestedFormatId=%s(%u)",
+                RDPECLIP::get_Format_name(this->requestedFormatId),
+                this->requestedFormatId);
+        }
+
         return true;
     }
 
     bool process_server_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
+            !this->param_dont_log_data_into_syslog) {
             const auto saved_chunk_p = chunk.get_current();
 
             chunk.in_skip_bytes(2 /* msgFlags(2) */);
 
             const uint32_t dataLen = chunk.in_uint32_le();
 
-            // !this->param_dont_log_data_into_syslog
-            LOG(LOG_INFO, "Sending %s(%u) clipboard data to client (%u) bytes%s",
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                    "Sending %s(%u) clipboard data to client (%u) bytes%s",
                 RDPECLIP::get_Format_name(this->requestedFormatId),
                 this->requestedFormatId, dataLen,
-                (((this->requestedFormatId == RDPECLIP::CF_TEXT) ||
-                  (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT)) ?
+                ((/*(this->requestedFormatId == RDPECLIP::CF_TEXT) ||
+                  (*/this->requestedFormatId == RDPECLIP::CF_UNICODETEXT/*)*/) ?
                  ":" : "."));
 
             const size_t max_length_of_data_to_dump = 256;
 
-            if (this->requestedFormatId == RDPECLIP::CF_TEXT) {
-                const size_t length_of_data_to_dump =
-                    std::min(chunk.in_remain(), max_length_of_data_to_dump);
-                const std::string data_to_dump(::char_ptr_cast(chunk.get_current()),
-                    length_of_data_to_dump);
-                LOG(LOG_INFO, "%s", data_to_dump.c_str());
-            }
-            else if (this->requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
-                REDASSERT(!(chunk.in_remain() & 1));
+            switch (this->requestedFormatId) {
+/*
+                case RDPECLIP::CF_TEXT:
+                {
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(),
+                        max_length_of_data_to_dump);
+                    const std::string data_to_dump(::char_ptr_cast(
+                        chunk.get_current()), length_of_data_to_dump);
+                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                }
+                break;
+*/
 
-                const size_t length_of_data_to_dump =
-                    std::min(chunk.in_remain(),
-                             max_length_of_data_to_dump * 2);
+                case RDPECLIP::CF_UNICODETEXT:
+                {
+                    REDASSERT(!(chunk.in_remain() & 1));
 
-                constexpr size_t size_of_utf8_string =
-                    max_length_of_data_to_dump *
-                        maximum_length_of_utf8_character_in_bytes;
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(),
+                        max_length_of_data_to_dump * 2);
 
-                uint8_t utf8_string[size_of_utf8_string + 1];
-                ::memset(utf8_string, 0, sizeof(utf8_string));
-                const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.get_current(), length_of_data_to_dump / 2, utf8_string,
-                    size_of_utf8_string);
-                const std::string data_to_dump(::char_ptr_cast(utf8_string),
-                    length_of_utf8_string);
-                LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                    constexpr size_t size_of_utf8_string =
+                        max_length_of_data_to_dump *
+                            maximum_length_of_utf8_character_in_bytes;
+
+                    uint8_t utf8_string[size_of_utf8_string + 1];
+                    ::memset(utf8_string, 0, sizeof(utf8_string));
+                    const size_t length_of_utf8_string = ::UTF16toUTF8(
+                        chunk.get_current(), length_of_data_to_dump / 2,
+                        utf8_string, size_of_utf8_string);
+                    const std::string data_to_dump(
+                        ::char_ptr_cast(utf8_string), length_of_utf8_string);
+                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                }
+                break;
+
+                case RDPECLIP::CF_LOCALE:
+                {
+                    const uint32_t locale_identifier = chunk.in_uint32_le();
+
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                            "locale_identifier=0x%04X",
+                        locale_identifier);
+                }
+                break;
             }
 
             chunk.rewind(saved_chunk_p - chunk.get_data());
-        }
+        }   // if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
 
         //LOG(LOG_INFO,
         //    "ClipboardVirtualChannel::process_server_format_data_response_pdu: "
@@ -876,12 +949,14 @@ public:
 
                 const uint32_t cItems = chunk.in_uint32_le();
 
-                LOG(LOG_INFO,
-                    "Sending %sFileGroupDescriptorW(%u) clipboard data to client. "
-                        "cItems=%u",
-                    ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
-                     "" : "(chunked) "),
-                    this->server_file_list_format_id, cItems);
+                if (!this->param_dont_log_data_into_syslog) {
+                    LOG(LOG_INFO,
+                        "Sending %sFileGroupDescriptorW(%u) clipboard data to client. "
+                            "cItems=%u",
+                        ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
+                         "" : "(chunked) "),
+                        this->server_file_list_format_id, cItems);
+                }
             }
             else if (this->file_descriptor_stream.get_offset()) {
                 const uint32_t complementary_data_length =
@@ -1216,13 +1291,24 @@ public:
             case RDPECLIP::CB_FILECONTENTS_RESPONSE:
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_message: "
+                        "ClipboardVirtualChannel::process_server_message: "
                             "File Contents Response PDU");
                 }
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
                 }
+            break;
+
+            default:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "Delivering unprocessed messages %s(%u) to client.",
+                        RDPECLIP::get_msgType_name(this->server_message_type),
+                        (unsigned)this->server_message_type);
+                }
+            break;
         }   // switch (this->server_message_type)
 
         if (send_message_to_client) {

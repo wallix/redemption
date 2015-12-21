@@ -625,7 +625,7 @@ public:
         LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
         TODO("simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types")
-        
+
         if (!ini.get<cfg::globals::movie>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) &&
 //            ini.get<cfg::context::pattern_kill>().empty() &&
@@ -741,7 +741,7 @@ public:
 
     void periodic_snapshot()
     {
-        LOG(LOG_INFO, "periodic snapshot");
+        //LOG(LOG_INFO, "periodic snapshot");
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
