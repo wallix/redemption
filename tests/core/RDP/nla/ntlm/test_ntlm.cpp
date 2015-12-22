@@ -29,7 +29,9 @@
 
 BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
 {
-    Ntlm_SecurityFunctionTable table;
+    LCGRandom rand(0);
+
+    Ntlm_SecurityFunctionTable table(rand);
     SEC_STATUS status;
     uint8_t name[] = "Ménélas";
     uint8_t dom[] = "Sparte";
@@ -65,7 +67,9 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
 
 BOOST_AUTO_TEST_CASE(TestInitialize)
 {
-    Ntlm_SecurityFunctionTable table;
+    LCGRandom rand(0);
+
+    Ntlm_SecurityFunctionTable table(rand);
     SEC_STATUS status;
     uint8_t name[] = "Ménélas";
     uint8_t dom[] = "Sparte";
