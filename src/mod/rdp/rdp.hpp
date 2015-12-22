@@ -3326,8 +3326,10 @@ public:
             }
 
             if (this->session_probe_is_ready && this->session_probe_keepalive_timeout) {
-                if (!this->session_probe_keep_alive_received && this->enable_session_probe_loading_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
+                if (!this->session_probe_keep_alive_received) {
+                    if (this->enable_session_probe_loading_mask) {
+                        this->front.disable_input_event_and_graphics_update(false);
+                    }
 
                     LOG(LOG_ERR, "No keep alive received from Session Probe!");
 

@@ -98,6 +98,40 @@ enum {
     MODULE_CLI
 };
 
+const char * get_module_name(int module_id) {
+    switch (module_id) {
+        case MODULE_EXIT:                               return "MODULE_EXIT";
+        case MODULE_WAITING:                            return "MODULE_WAITING";
+        case MODULE_RUNNING:                            return "MODULE_RUNNING";
+        case MODULE_REFRESH:                            return "MODULE_REFRESH";
+        case MODULE_VNC:                                return "MODULE_VNC";
+        case MODULE_RDP:                                return "MODULE_RDP";
+        case MODULE_XUP:                                return "MODULE_XUP";
+        case MODULE_INTERNAL:                           return "MODULE_INTERNAL";
+        case MODULE_INTERNAL_CLOSE:                     return "MODULE_INTERNAL_CLOSE";
+        case MODULE_INTERNAL_WIDGET2_DIALOG:            return "MODULE_INTERNAL_WIDGET2_DIALOG";
+        case MODULE_INTERNAL_WIDGET2_MESSAGE:           return "MODULE_INTERNAL_WIDGET2_MESSAGE";
+        case MODULE_INTERNAL_WIDGET2_LOGIN:             return "MODULE_INTERNAL_WIDGET2_LOGIN";
+        case MODULE_INTERNAL_CARD:                      return "MODULE_INTERNAL_CARD";
+        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:    return "MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE";
+        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:      return "MODULE_INTERNAL_DIALOG_VALID_MESSAGE";
+        case MODULE_INTERNAL_DIALOG_CHALLENGE:          return "MODULE_INTERNAL_DIALOG_CHALLENGE";
+        case MODULE_INTERNAL_TARGET:                    return "MODULE_INTERNAL_TARGET";
+        case MODULE_INTERNAL_BOUNCER2:                  return "MODULE_INTERNAL_BOUNCER2";
+        case MODULE_INTERNAL_TEST:                      return "MODULE_INTERNAL_TEST";
+        case MODULE_INTERNAL_WIDGET2_SELECTOR:          return "MODULE_INTERNAL_WIDGET2_SELECTOR";
+        case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:   return "MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY";
+        case MODULE_INTERNAL_WIDGETTEST:                return "MODULE_INTERNAL_WIDGETTEST";
+        case MODULE_INTERNAL_WAIT_INFO:                 return "MODULE_INTERNAL_WAIT_INFO";
+        case MODULE_EXIT_INTERNAL_CLOSE:                return "MODULE_EXIT_INTERNAL_CLOSE";
+        case MODULE_TRANSITORY:                         return "MODULE_TRANSITORY";
+        case MODULE_AUTH:                               return "MODULE_AUTH";
+        case MODULE_CLI:                                return "MODULE_CLI";
+    }
+
+    return "<unknown>";
+}
+
 class MMIni : public MMApi {
 public:
     Inifile & ini;
@@ -121,7 +155,8 @@ public:
     };
 
     void invoke_close_box(const char * auth_error_message,
-                                  BackEvent_t & signal, time_t now) override {
+                          BackEvent_t & signal, time_t now) override {
+        LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
         this->last_module = true;
         if (auth_error_message) {
             this->ini.set<cfg::context::auth_error_message>(auth_error_message);
@@ -189,7 +224,7 @@ public:
             return MODULE_TRANSITORY;
         }
         else if (module_cstr == STRMODULE_CLOSE) {
-            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE");
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
             return MODULE_INTERNAL_CLOSE;
         }
         else if (module_cstr == STRMODULE_RDP) {
@@ -474,7 +509,8 @@ public:
     }
 
     void new_mod(int target_module, time_t now, auth_api * acl) override {
-        LOG(LOG_INFO, "target_module=%u", target_module);
+        LOG(LOG_INFO, "----------> ACL new_mod <--------");
+        LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
         if (this->last_module) this->front.stop_capture();
         switch (target_module)
         {
