@@ -3229,8 +3229,7 @@ public:
                     throw;
                 }
                 if (this->acl &&
-                    ((e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                     (e.id != ERR_SESSION_PROBE_CLOSE_PENDING)))
+                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
@@ -3240,18 +3239,15 @@ public:
                     this->end_session_message.clear();
                 }
 
-                if (e.id != ERR_SESSION_PROBE_CLOSE_PENDING)
-                {
-                    StaticOutStream<256> stream;
-                    X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-                    try {
-                        this->nego.trans.send(stream.get_data(), stream.get_offset());
-                        LOG(LOG_INFO, "Connection to server closed");
-                    }
-                    catch(Error const & e){
-                        LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
-                    };
+                StaticOutStream<256> stream;
+                X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+                try {
+                    this->nego.trans.send(stream.get_data(), stream.get_offset());
+                    LOG(LOG_INFO, "Connection to server closed");
                 }
+                catch(Error const & e){
+                    LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
+                };
 
                 this->event.signal = BACK_EVENT_NEXT;
 
