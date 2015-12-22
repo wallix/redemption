@@ -113,7 +113,7 @@ template<
 int app_recorder( int argc, char ** argv, const char * copyright_notice
                 , AddProgramOtion add_prog_option, ParseFormat parse_format
                 , std::string & config_filename, Inifile & ini
-                , CryptoContext & cctx, Random & rnd, InitCryptoIni init_crypto, HasExtraCapture has_extra_capture
+                , CryptoContext & cctx, Random & rnd, HasExtraCapture has_extra_capture
                 , ExtraArguments&&... extra_argument)
 {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -380,9 +380,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     if (infile_is_encrypted || (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile)) {
-        if (int status = init_crypto(ini.get_ref<cfg::crypto::key0>(), ini.get_ref<cfg::crypto::key1>())) {
-            return status;
-        }
         OpenSSL_add_all_digests();
     }
 
@@ -425,7 +422,7 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , int capture_bpp, int wrm_compression_algorithm_
-                        , Inifile & ini, bool remove_input_file 
+                        , Inifile & ini, bool remove_input_file
                         , CryptoContext & cctx, Random & rnd, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
