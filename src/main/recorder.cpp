@@ -78,7 +78,7 @@ int main(int argc, char** argv)
             return 0;
       }
       // TODO: now that we have cctx the lambda is useless
-      , config_filename, ini, cctx, rnd, [](cfg::crypto::key0::type const &, cfg::crypto::key1::type const &) { return 0; }
+      , config_filename, ini, cctx, rnd
       , [](Inifile const &) { return false; }/*has_extra_capture*/
     );
 }
