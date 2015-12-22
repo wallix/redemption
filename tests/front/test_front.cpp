@@ -39,6 +39,7 @@
 #include "test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
+#include "utils/fileutils.hpp"
 
 #include "front.hpp"
 #include "null/null.hpp"
@@ -52,6 +53,10 @@ namespace dump2008 {
 BOOST_AUTO_TEST_CASE(TestFront)
 {
     try {
+
+        ::unlink("/tmp/redemption.mwrm");
+        ::unlink("/tmp/redemption-000000.wrm");
+
         ClientInfo info;
         info.keylayout = 0x04C;
         info.console_session = 0;
@@ -61,16 +66,27 @@ BOOST_AUTO_TEST_CASE(TestFront)
         info.height = 600;
         info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         snprintf(info.hostname,sizeof(info.hostname),"test");
-        uint32_t verbose = 511;
+        uint32_t verbose = 3;
 
         Inifile ini;
-        ini.set<cfg::debug::front>(511);
+        ini.set<cfg::debug::front>(verbose);
         ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
         ini.set<cfg::client::cache_waiting_list>(true);
         ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
         ini.set<cfg::video::png_interval>(3000);
         ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
         ini.set<cfg::video::wrm_compression_algorithm>(0);
+
+        ini.set_value("crypto", "key0", "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                        "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+
+        ini.set_value("crypto", "key1", "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                        "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+
 
         // Uncomment the code block below to generate testing data.
         //int nodelay = 1;

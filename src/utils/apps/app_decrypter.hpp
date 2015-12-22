@@ -22,15 +22,8 @@
 #include "program_options/program_options.hpp"
 
 
-template<class F>
-// crypto_context_initializer = int(CryptoContext&)
-int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypto_context_initializer)
+int app_decrypter(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
 {
-    static_assert(
-        std::is_same<int, decltype(crypto_context_initializer(std::declval<CryptoContext&>()))>::value
-      , "crypto_context_initializer result type may be 'int'"
-    );
-
     openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
 
     std::string input_filename;
@@ -91,12 +84,6 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
     if (infile_is_encrypted == false) {
         std::cout << "Input file is unencrypted.\n\n";
         return 0;
-    }
-
-    CryptoContext cctx;
-    memset(&cctx, 0, sizeof(cctx));
-    if (int status = crypto_context_initializer(cctx)) {
-        return status;
     }
 
     OpenSSL_add_all_digests();

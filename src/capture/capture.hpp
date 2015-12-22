@@ -82,10 +82,12 @@ private:
 
     const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
+    // TODO: why so many uninitialized constants ?
 public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini
+           , Random & rnd, bool externally_generated_breakpoint = false)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_drawable(this->capture_wrm || (ini.get<cfg::video::png_limit>() > 0))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
@@ -99,6 +101,7 @@ public:
     , pnc_ptr_cache(nullptr)
     , pnc(nullptr)
     , drawable(nullptr)
+    , crypto_ctx(rnd)
     , gd(nullptr)
     , last_now(now)
     , last_x(width / 2)

@@ -686,6 +686,7 @@ public:
                                    , false
                                    , authentifier
                                    , ini
+                                   , this->gen
                                    );
         if (this->nomouse) {
             this->capture->set_pointer_display();

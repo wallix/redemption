@@ -73,8 +73,10 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
 
     ::unlink(filename);
 
-    CryptoContext cctx;
-    memset(&cctx, 0, sizeof(cctx));
+    LCGRandom rnd(0);
+
+    CryptoContext cctx(rnd);
+//    memset(&cctx, 0, sizeof(cctx));
     memcpy(cctx.crypto_key,
            "\x00\x01\x02\x03\x04\x05\x06\x07"
            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"

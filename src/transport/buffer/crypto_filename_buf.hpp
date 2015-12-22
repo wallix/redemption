@@ -28,11 +28,11 @@
 namespace transbuf {
     namespace detail {
         template<class Buf>
-        int init_trace_key(Buf & buf, CryptoContext * ctx, const char * filename, mode_t mode, unsigned char * trace_key)
+        int init_trace_key(Buf & buf, CryptoContext * cctx, const char * filename, mode_t mode, unsigned char * trace_key)
         {
             unsigned char derivator[DERIVATOR_LENGTH];
             get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == compute_hmac(trace_key, ctx->crypto_key, derivator)) {
+            if (-1 == compute_hmac(trace_key, cctx->crypto_key, derivator)) {
                 return -1;
             }
 
@@ -43,18 +43,18 @@ namespace transbuf {
     class icrypto_filename_buf
     {
         transfil::decrypt_filter decrypt;
-        CryptoContext * ctx;
+        CryptoContext * cctx;
         ifile_buf file;
 
     public:
-        explicit icrypto_filename_buf(CryptoContext * ctx)
-        : ctx(ctx)
+        explicit icrypto_filename_buf(CryptoContext * cctx)
+        : cctx(cctx)
         {}
 
         int open(const char * filename, mode_t mode = 0600)
         {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            const int err = detail::init_trace_key(this->file, this->ctx, filename, mode, trace_key);
+            const int err = detail::init_trace_key(this->file, this->cctx, filename, mode, trace_key);
             if (err < 0) {
                 return err;
             }
@@ -78,16 +78,16 @@ namespace transbuf {
     class ocrypto_filename_buf
     {
         transfil::encrypt_filter encrypt;
-        CryptoContext * ctx;
+        CryptoContext * cctx;
         ofile_buf file;
 
     public:
-        explicit ocrypto_filename_buf(CryptoContext * ctx)
-        : ctx(ctx)
+        explicit ocrypto_filename_buf(CryptoContext * cctx)
+        : cctx(cctx)
         {}
 
-        explicit ocrypto_filename_buf(CryptoContext & ctx)
-        : ctx(&ctx)
+        explicit ocrypto_filename_buf(CryptoContext & cctx)
+        : cctx(&cctx)
         {}
 
         ~ocrypto_filename_buf()
@@ -100,18 +100,19 @@ namespace transbuf {
         int open(const char * filename, mode_t mode = 0600)
         {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            const int err = detail::init_trace_key(this->file, this->ctx, filename, mode, trace_key);
+            const int err = detail::init_trace_key(this->file, this->cctx, filename, mode, trace_key);
             if (err < 0) {
                 return err;
             }
 
             unsigned char iv[32];
-            if (-1 == urandom_read(iv, 32)) {
-                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-                return -1;
-            }
+            this->cctx->random(iv, 32);
+//            if (-1 == urandom_read(iv, 32)) {
+//                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
+//                return -1;
+//            }
 
-            return this->encrypt.open(this->file, trace_key, this->ctx, iv);
+            return this->encrypt.open(this->file, trace_key, this->cctx, iv);
         }
 
         ssize_t write(const void * data, size_t len)
@@ -119,7 +120,7 @@ namespace transbuf {
 
         int close(unsigned char hash[MD_HASH_LENGTH << 1])
         {
-            const int res1 = this->encrypt.close(this->file, hash, this->ctx->hmac_key);
+            const int res1 = this->encrypt.close(this->file, hash, this->cctx->hmac_key);
             const int res2 = this->file.close();
             return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
         }

@@ -33,7 +33,8 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
     unsigned sec_start = 1352304810;
 
-    CryptoContext cctx;
+    LCGRandom rnd(0);
+    CryptoContext cctx(rnd);
     memset(&cctx, 0, sizeof(cctx));
     memcpy(cctx.hmac_key,
        "1234567890"
