@@ -630,7 +630,7 @@ public:
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
-              , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
+              , mod_rdp_params.enable_krb, gen, mod_rdp_params.verbose)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)

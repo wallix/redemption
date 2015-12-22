@@ -21,7 +21,6 @@ int main(int argc, char ** argv) {
     CryptoContext cctx(rnd);
 
     TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
-    memset(&cctx, 0, sizeof(cctx));
     memcpy(cctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(cctx.crypto_key));
     memcpy(cctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(cctx.hmac_key  ));
 

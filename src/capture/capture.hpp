@@ -137,7 +137,6 @@ public:
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
-            memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
             memcpy(this->crypto_ctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(this->crypto_ctx.crypto_key));
             memcpy(this->crypto_ctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(this->crypto_ctx.hmac_key  ));
 

@@ -445,12 +445,15 @@ public:
 
     Front & front;
     null_mod no_mod;
-    SocketTransport * mod_transport = nullptr;
+    SocketTransport * mod_transport;
+    Random & gen;
 
-    ModuleManager(Front & front, Inifile & ini)
+    ModuleManager(Front & front, Inifile & ini, Random & gen)
         : MMIni(ini)
         , front(front)
         , no_mod(this->front)
+        , mod_transport(nullptr)
+        , gen(gen)
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -866,8 +869,6 @@ public:
 
                 mod_rdp_params.lang                                = language(this->ini);
 
-                UdevRandom gen;
-
                 if (acl) {
                     acl->log4(false, "CREATE_SESSION");
                 }
@@ -883,7 +884,7 @@ public:
                                                           , this->front
                                                           , client_info
                                                           , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                          , gen
+                                                          , this->gen
                                                           , mod_rdp_params
                                                           );
                 }

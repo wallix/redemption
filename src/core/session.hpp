@@ -148,7 +148,7 @@ public:
             this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
                                    , this->ini, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
 
-            ModuleManager mm(*this->front, this->ini);
+            ModuleManager mm(*this->front, this->ini, this->gen);
             BackEvent_t signal = BACK_EVENT_NONE;
 
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
