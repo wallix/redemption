@@ -28,6 +28,8 @@
 #include <iostream>
 #include <stdint.h>
 
+#include "RDP/caches/brushcache.hpp"
+#include "RDP/capabilities/colcache.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -49,6 +51,7 @@
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/orders/AlternateSecondaryWindowing.hpp"
 
+#include "../src/keyboard/KeyBoardRDPQt.hpp"
 #include "log.hpp"
 #include "front_api.hpp"
 #include "channel_list.hpp"
@@ -60,6 +63,7 @@
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "../src/utils/bitmap.hpp"
+#include "keylayouts.hpp"
 
 
 #include <QtGui/QWidget>
@@ -74,7 +78,6 @@
 #include <QtGui/QKeyEvent>
 #include <QtGui/QWheelEvent>
 #include <QtCore/QSocketNotifier>
-
 
 
 
@@ -96,17 +99,18 @@ public:
     bool notimestamp;
     bool nomouse;
     
-    int             _order_bpp;
-    QLabel          _label;
-    QPainter*       _painter;
-    QPicture        _picture;
-    int             _width;
-    int             _height;
-    QPen            _pen;
-    mod_api*        _callback;
-    QSocketNotifier _sckRead;
-    bool            _clickOn;
-    
+    QLabel               _label;
+    QPicture             _picture;
+    int                  _width;
+    int                  _height;
+    QPen                 _pen;
+    QSocketNotifier      _sckRead;
+    bool                 _clickOn;
+    QPainter*            _painter;
+    mod_api*             _callback;
+    Keymap2              _keymap;
+    bool                 _ctrl_alt_delete;
+    StaticOutStream<256> _decoded_data;
 
     QColor u32_to_qcolor(uint32_t color){
         uint8_t b(color >> 16);
@@ -214,7 +218,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
         
-        std::cout << "RDPOpaqueRect" << std::endl;
+        //std::cout << "RDPOpaqueRect" << std::endl;
 
         RDPOpaqueRect new_cmd24 = cmd;
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
@@ -290,11 +294,11 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
         
-        std::cout << "RDPPatBlt" << std::endl;
+        //std::cout << "RDPPatBlt" << std::endl;
 
-        RDPPatBlt new_cmd24 = cmd;
+        /*RDPPatBlt new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);*/
         //this->gd.draw(new_cmd24, clip);
     }
 
@@ -333,7 +337,7 @@ public:
 
         
         // TO DO clipping
-        this->_pen.setBrush(u32_to_qcolor(new_cmd24.back_color));
+        this->_pen.setBrush(this->u32_to_qcolor(new_cmd24.back_color));
         this->_painter->drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
     }
 
@@ -346,9 +350,9 @@ public:
         
         std::cout << "RDPGlyphIndex" << std::endl;
 
-        RDPGlyphIndex new_cmd24 = cmd;
+       /* RDPGlyphIndex new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);*/
         //this->gd.draw(new_cmd24, clip, gly_cache);
     }
 
@@ -361,8 +365,8 @@ public:
         
         std::cout << "RDPPolygonSC" << std::endl;
 
-        RDPPolygonSC new_cmd24 = cmd;
-        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
+        /*RDPPolygonSC new_cmd24 = cmd;
+        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);*/
         //this->gd.draw(new_cmd24, clip);
     }
 
@@ -375,9 +379,9 @@ public:
         
         std::cout << "RDPPolygonCB" << std::endl;
 
-        RDPPolygonCB new_cmd24 = cmd;
+        /*RDPPolygonCB new_cmd24 = cmd;
         new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
-        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
+        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);*/
         //this->gd.draw(new_cmd24, clip);
     }
 
@@ -390,8 +394,8 @@ public:
         
         std::cout << "RDPPolyline" << std::endl;
 
-        RDPPolyline new_cmd24 = cmd;
-        new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
+        /*RDPPolyline new_cmd24 = cmd;
+        new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);*/
         //this->gd.draw(new_cmd24, clip);
     }
 
@@ -404,8 +408,8 @@ public:
         
         std::cout << "RDPEllipseSC" << std::endl;
 
-        RDPEllipseSC new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+        /*RDPEllipseSC new_cmd24 = cmd;
+        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);*/
         //this->gd.draw(new_cmd24, clip);
     }
 
@@ -417,10 +421,10 @@ public:
         }
         
         std::cout << "RDPEllipseCB" << std::endl;
-
+/*
         RDPEllipseCB new_cmd24 = cmd;
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);*/
         //this->gd.draw(new_cmd24, clip);
     }
 
@@ -473,8 +477,13 @@ public:
 
         //this->gd.draw(order);
     }
-
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+    
+    virtual void draw(const RDPColCache   & cmd) {}
+    
+    virtual void draw(const RDPBrushCache & cmd) {}
+    
+    
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
         size_t size, const Bitmap & bmp) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -482,13 +491,10 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
         
-        std::cout << "RDPBitmapData" << std::endl;
+        //std::cout << "RDPBitmapData" << std::endl;
         if (!bmp.is_valid()){
             return;
         }
-        if (bmp.cx() < 0 || bmp.cy() < 0) {
-            return ;
-        } 
 
         const QRect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top, 
                              (bitmap_data.dest_right - bitmap_data.dest_left + 1), 
@@ -537,7 +543,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //------------------------
-    //      Constructor
+    //      CONSTRUCTOR
     //------------------------
  
     Front_Qt(ClientInfo & info, uint32_t verbose, int client_sck)
@@ -551,16 +557,20 @@ public:
     , notimestamp(true)
     , nomouse(true) 
     , _label(this)
+    , _picture()
     , _width(info.width)
     , _height(info.height)
-    , _picture()
-    , _painter()
     , _pen() 
-    , _sckRead(client_sck, QSocketNotifier::Read, this) 
-    , _clickOn(false) {
+    , _sckRead(client_sck, QSocketNotifier::Read, this)
+    , _clickOn(false) 
+    , _painter(nullptr) 
+    , _callback(nullptr)
+    , _keymap() {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
+        
+        _keymap.init_layout(info.keylayout);
             
         this->setFixedSize(_width, _height);
             
@@ -620,54 +630,84 @@ public:
     //------------------------
     
     void mousePressEvent(QMouseEvent *e) {
-        std::cout << "click   " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
-        this->_clickOn = true;
-        Keymap2* keymap(nullptr);
-        int flag(0);
-        switch (e->button()) {
-            case 1: flag = MOUSE_FLAG_BUTTON1; break;
-            case 2: flag = MOUSE_FLAG_BUTTON2; break;
-            case 3: flag = MOUSE_FLAG_BUTTON3; break;
-            case 4: flag = MOUSE_FLAG_BUTTON4; break;
-            default: break;
-        }
-        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), keymap);
-    }
-    
-    void mouseReleaseEvent(QMouseEvent *e) {
-        std::cout << "release " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
-        Keymap2* keymap(nullptr);
-        int flag(0);
+        int flag(0); //std::cout << "click   " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
         switch (e->button()) {
             case 1: flag = MOUSE_FLAG_BUTTON1; break;
             case 2: flag = MOUSE_FLAG_BUTTON2; break; 
-            case 3: flag = MOUSE_FLAG_BUTTON3; break;
+            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            default: break;
+        }
+        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &_keymap);
+        this->_clickOn = true;
+    }
+    
+    void mouseReleaseEvent(QMouseEvent *e) {
+        int flag(0); //std::cout << "release " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
+        switch (e->button()) {
+            case 1: flag = MOUSE_FLAG_BUTTON1; break; 
+            case 2: flag = MOUSE_FLAG_BUTTON2; break; 
             case 4: flag = MOUSE_FLAG_BUTTON4; break; 
             default: break;
         }
-        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), keymap);
+        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &_keymap);
         if (this->_clickOn) {
             this->refresh();
-            this->_clickOn = false;
-        }
+            this->_clickOn = false;  
+        } 
     }
     
-    void keyPressEvent(QKeyEvent *e) {
-        uint32_t unicode(e->nativeScanCode()); 
-        if (unicode != 0) {
-            Keymap2* keymap(nullptr); 
+    void keyPressEvent(QKeyEvent *e) { 
+        int keyStatusFlag(0x0000);
+        uint32_t keyCode(e->key()); 
+        if (keyCode != 0) {;
+            if (keyCode < 128) {
+                keyCode = e->text().toStdString()[0];
+                
+                const Keylayout::KeyLayout_t & layout = this->_keymap.keylayout_WORK->noMod;
+                
+                int i;
+                for (i = 0; i < 128 && layout[i] != keyCode; i++) {std::cout << "layoutVal=" << layout[i] << " i=" << i << " keycode=" << keyCode << std::endl;}
+                keyCode = i;
+                
+            } else {
+                switch (keyCode) {
+                    case 16781571 : keyCode = 0x38; 
+                    break; //  R ALT
+                    case 16777249 : keyCode = 0x1D; 
+                    break; //  R CTRL
+                    case 16777220 : keyCode = 0x1C; 
+                    break; //  ENTER
+                    case 16777248 : keyCode = 0x36; 
+                    break; //  R SHFT
+                    case 16777216 : keyCode = 0x01; 
+                    break; //  ESC
+                    case 16777219 : keyCode = 0x0E; 
+                    break; //  BKSP
+                    default: break;
+                }
+            } 
+                
             
-            //keymap->event(keyboardFlags, e->nativeScanCode(), decoded_data, ctrl_alt_delete);
-            this->_callback->rdp_input_scancode(16777249/*e->key()*/, 0, 0000, 539317998, keymap);
             
-            std::cout << "keyPressed " << e->key() << std::endl;
+            this->_keymap.event(0x0000, keyCode, _decoded_data, _ctrl_alt_delete); 
+            this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag, 0000, &_keymap);
+
+            std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
         }
     }
     
     void keyReleaseEvent(QKeyEvent *e) {
+        uint32_t keyCode(e->key());
+        if (keyCode != 0) {
+            if (keyCode < 128) {
+                keyCode = e->text().toStdString()[0];
+            }
+            int scanCode(KeyBoardRDPQt::keyCodeToScanCode(this->_keymap.keylayout_WORK, keyCode));
+            this->_keymap.event(0xC000, scanCode, _decoded_data, _ctrl_alt_delete);
+            this->_callback->rdp_input_scancode(scanCode, 0, 0x8000, 0000, &_keymap);
 
-        std::cout << "keyRelease " << e->text().toStdString()  << std::endl;
-        
+            std::cout << "keyRelease " << e->key() << " " << scanCode  << std::endl;
+        }
     }
     
     void wheelEvent(QWheelEvent *e) {
@@ -679,12 +719,7 @@ public:
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
-            std::cout << "mouseMove " <<  "x=" << mouseEvent->x() << " y=" << mouseEvent->y() << std::endl;
-            Keymap2* keymap(nullptr);
-            this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), keymap);
-            /*if (this->_clickOn) {
-                this->refresh();
-            }*/
+            this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &_keymap);
         }
         return false;
     }
@@ -692,9 +727,9 @@ public:
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
-    //-------------------------------
-    //    Socket events listening
-    //-------------------------------
+    //-----------------------------------------
+    //    SOCKET EVENTS LISTENING FUNCTIONS
+    //-----------------------------------------
     
 public Q_SLOTS:
     void readSck_And_ShowView() {

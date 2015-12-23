@@ -35,9 +35,7 @@
 #include "test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
-
 #include "../src/front/front_Qt.hpp"
-
 
 
 BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
@@ -48,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     QApplication app(argc, argv);
 
     ClientInfo info;
-    info.keylayout = 0x04C;
+    info.keylayout = 0x040C;// 0x40C , 0x409 USA
     info.console_session = 0;
     info.brush_cache_code = 0;
     info.bpp = 24;
