@@ -240,6 +240,10 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
+        // Force Front to be up and running after Deactivation-Reactivation
+        //  Sequence initiated by mod_rdp.
+        front.up_and_running = 1;
+
         LOG(LOG_INFO, "Before Start Capture");
 
         NullAuthentifier blackhole;
