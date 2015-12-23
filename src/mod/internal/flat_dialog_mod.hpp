@@ -47,7 +47,7 @@ class FlatDialogMod : public InternalMod, public NotifyApi
     FlatDialog dialog_widget;
 
     FlatDialogModVariables vars;
-    TimeoutT<time_t>   timeout;
+    Timeout   timeout;
 
 public:
     FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
@@ -119,10 +119,10 @@ private:
 public:
     void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->accepted();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
         default:
