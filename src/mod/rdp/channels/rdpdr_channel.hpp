@@ -877,11 +877,13 @@ public:
         REDASSERT(!make_boom_in_debug_mode);
     }
 
+protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const override
     {
         return "RDPDR_LIMIT";
     }
 
+public:
     void process_client_general_capability_set(uint32_t total_length,
             uint32_t flags, InStream& chunk, uint32_t Version) {
         rdpdr::GeneralCapabilitySet general_capability_set;

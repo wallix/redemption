@@ -74,7 +74,7 @@ protected:
 public:
     virtual void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length) = 0;
+        uint32_t chunk_data_length) {}
 
     virtual void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
