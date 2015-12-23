@@ -163,7 +163,7 @@ struct ModRDPParams {
 
         , acl(nullptr)
 
-        , outbound_connection_blocking_rules(nullptr)
+        , outbound_connection_blocking_rules("")
 
         , ignore_auth_channel(false)
         , auth_channel("")
