@@ -43,6 +43,8 @@ private:
 
     const bool     param_session_probe_on_launch_failure_disconnect_user;
 
+    std::string param_auth_user;
+
     const uint16_t param_front_width;
     const uint16_t param_front_height;
 
@@ -73,6 +75,8 @@ public:
         unsigned session_probe_keepalive_timeout;
 
         bool session_probe_on_launch_failure_disconnect_user;
+
+        const char* auth_user;
 
         uint16_t front_width;
         uint16_t front_height;
@@ -106,6 +110,7 @@ public:
           params.session_probe_keepalive_timeout)
     , param_session_probe_on_launch_failure_disconnect_user(
           params.session_probe_on_launch_failure_disconnect_user)
+    , param_auth_user(params.auth_user)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
     , param_real_alternate_shell(params.real_alternate_shell)
@@ -414,6 +419,32 @@ public:
 
                 this->session_probe_event.set(
                     this->param_session_probe_keepalive_timeout * 1000);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "AuthUser=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_copy_bytes(this->param_auth_user.data(),
+                    this->param_auth_user.size());
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
             }
         }
         else if (!session_probe_message.compare(

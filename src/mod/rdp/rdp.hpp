@@ -393,6 +393,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
+    std::string auth_user;
     std::string outbound_connection_killing_rules;
 
     size_t recv_bmp_update;
@@ -687,6 +688,7 @@ public:
         , session_probe_on_launch_failure_disconnect_user(mod_rdp_params.session_probe_on_launch_failure_disconnect_user)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
+        , auth_user(mod_rdp_params.auth_user)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -1189,6 +1191,9 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_on_launch_failure_disconnect_user =
             this->session_probe_on_launch_failure_disconnect_user;
+
+        session_probe_virtual_channel_params.auth_user                                       =
+            this->auth_user.c_str();
 
         session_probe_virtual_channel_params.front_width                                     =
             this->front_width;
@@ -3463,11 +3468,8 @@ public:
 //        if (this->session_probe_event.set_state) {
 //            return &this->session_probe_event;
 //        }
-        if (this->enable_session_probe) {
-            SessionProbeVirtualChannel &channel =
-                this->get_session_probe_virtual_channel();
-
-            return channel.get_event();
+        if (this->session_probe_virtual_channel_p) {
+            return session_probe_virtual_channel_p->get_event();
         }
 
         return nullptr;
