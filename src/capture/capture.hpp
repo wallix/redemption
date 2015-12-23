@@ -701,8 +701,11 @@ public:
         if (this->capture_wrm) {
             this->pnc->session_update(now, message,
                 out__contian_window_title);
+        }
 
-            return;
+        if (this->pkc) {
+            this->pkc->session_update(now, message,
+                out__contian_window_title);
         }
 
         out__contian_window_title = false;
