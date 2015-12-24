@@ -51,7 +51,6 @@
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/orders/AlternateSecondaryWindowing.hpp"
 
-#include "../src/keyboard/KeyBoardRDPQt.hpp"
 #include "log.hpp"
 #include "front_api.hpp"
 #include "channel_list.hpp"
@@ -62,8 +61,6 @@
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
-#include "../src/utils/bitmap.hpp"
-#include "keylayouts.hpp"
 
 
 #include <QtGui/QWidget>
@@ -104,23 +101,29 @@ public:
     int                  _width;
     int                  _height;
     QPen                 _pen;
-    QPainter*            _painter;
+    QPainter             _painter;
     
     // Connexion socket members
     QSocketNotifier      _sckRead;
     mod_api*             _callback;
     
     // Controllers members
-    Keymap2                  _keymap;
-    bool                     _capslock;
-    bool                     _shift;
-    bool                     _altgr;
-    bool                     _ctrl;
+    Keymap2                        _keymap;
+    bool                           _capslock;
+    bool                           _shift;
+    bool                           _altgr;
+    bool                           _ctrl;
     const Keylayout::KeyLayout_t * _layout;
-    bool                     _ctrl_alt_delete;
-    StaticOutStream<256>     _decoded_data;
+    bool                           _ctrl_alt_delete;
+    StaticOutStream<256>           _decoded_data;
+    uint8_t                        _keyboardMods;
     
-     
+    enum {
+          CTRL_MOD     = 0x08
+        , CAPSLOCK_MOD = 0x04
+        , ALT_MOD      = 0x02
+        , SHIFT_MOD    = 0x01
+    };
      
 
     QColor u32_to_qcolor(uint32_t color){
@@ -131,8 +134,8 @@ public:
     }
     
     void reInitView() {
-        this->_painter->begin(&(this->_picture));
-        this->_painter->fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
+        this->_painter.begin(&(this->_picture));
+        this->_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
     }
     
     virtual void flush() override {
@@ -141,7 +144,7 @@ public:
              LOG(LOG_INFO, "flush()");
              LOG(LOG_INFO, "========================================\n");
         }
-        this->_painter->end();
+        this->_painter.end();
         this->_label.setPicture(this->_picture);
         this->show();
     }
@@ -216,6 +219,7 @@ public:
     }
     
     
+    
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //-------------------------------
@@ -235,7 +239,7 @@ public:
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
         
         Rect rect(new_cmd24.rect.intersect(clip));
-        this->_painter->fillRect(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
+        this->_painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
@@ -349,7 +353,7 @@ public:
         
         // TO DO clipping
         this->_pen.setBrush(this->u32_to_qcolor(new_cmd24.back_color));
-        this->_painter->drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
+        this->_painter.drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
@@ -543,12 +547,13 @@ public:
             
             QImage qbitmap(const_cast<unsigned char*>(row), mincx, mincy, format);
             const QRect trect(rect.x(), rowYCoord, mincx, mincy);
-            this->_painter->drawImage(trect, qbitmap);
+            this->_painter.drawImage(trect, qbitmap);
 
             row += rowsize;
             rowYCoord--;
         }
     }
+    
     
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -572,15 +577,14 @@ public:
     , _width(info.width)
     , _height(info.height)
     , _pen() 
-    , _painter(nullptr)
+    , _painter()
     , _sckRead(client_sck, QSocketNotifier::Read, this)
-    , _callback(nullptr)
     , _keymap() 
     , _capslock(false)
     , _shift(false)
     , _altgr(false)
-    , _ctrl(false) 
-    , _layout(nullptr) {
+    , _ctrl(false)
+    , _keyboardMods(0) {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
@@ -597,14 +601,12 @@ public:
         this->move(centerW, centerH);
             
         this->_label.setMouseTracking(true);
-
         this->_label.installEventFilter(this);
             
-        this->_painter = new QPainter(&(this->_picture));
-        this->_painter->setRenderHint(QPainter::Antialiasing);
-        this->_painter->fillRect(0, 0, this->_width, this->_height, Qt::white);
+        this->_painter.setRenderHint(QPainter::Antialiasing);
+        this->_painter.fillRect(0, 0, this->_width, this->_height, Qt::white);
         this->_pen.setWidth(1);
-        this->_painter->setPen(this->_pen);
+        this->_painter.setPen(this->_pen);
             
         this->setAttribute(Qt::WA_NoSystemBackground);
 
@@ -638,6 +640,9 @@ public:
         //SSL_library_init();
     }
     
+    ~Front_Qt() {}
+    
+    
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
@@ -645,8 +650,33 @@ public:
     //      CONTROLLERS
     //------------------------
     
+    void layout_Work_Update() {
+        //                                ___________________________
+        //                               |      |      |      |      |
+        //   bitcode for _keyboardMods:  | CTRL | CAPS | ALT  | SHFT |
+        //                               |______|______|______|______|
+        
+        if (this->_keyboardMods & CTRL_MOD) {
+            this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
+        } else {
+            switch (this->_keyboardMods) {
+                
+                case 0 : this->_layout = &(this->_keymap.keylayout_WORK->noMod);               break;
+                case 1 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);      break;
+                case 2 : this->_layout = &(this->_keymap.keylayout_WORK->altGr);               break;
+                case 3 : this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);          break;
+                case 4 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);      break;
+                case 5 : this->_layout = &(this->_keymap.keylayout_WORK->shift);               break;
+                case 6 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);      break;
+                case 7 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr); break;
+                
+                default: break;
+            }   
+        }
+    }
+    
     void keyQtEvent(int keyStatusFlag, QKeyEvent *e) { 
-        uint32_t keyCode(e->key()); 
+        int keyCode(e->key()); 
         bool unrecognised(false);
         if (keyCode != 0) {
             
@@ -663,17 +693,23 @@ public:
                 this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag, 0000, &(this->_keymap)); std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
                 
             } else {
+                int keyboardFlag(0);
+                
                 switch (keyCode) {
                     
                     //--------------
                     // keyboard mod
                     //--------------
                     case 16777251 : keyCode = 0x38;   //  L ALT
+                        keyboardFlag = 0x0100;
                         if (keyStatusFlag == 0x0000) {
                             this->_altgr = true;
                             if (!this->_ctrl) {
                                 if (this->_shift && this->_capslock) {
                                     this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
+                                }
+                                if (!this->_shift && this->_capslock) {
+                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
                                 }
                                 if (this->_shift && !this->_capslock) {
                                     this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
@@ -682,6 +718,7 @@ public:
                                     this->_layout = &(this->_keymap.keylayout_WORK->altGr);
                                 }
                             }
+                            
                         } else {
                             this->_altgr = false;
                             if (this->_ctrl) {
@@ -704,11 +741,15 @@ public:
                         break; 
                         
                     case 16781571 : keyCode = 0x38;   //  R ALT GR
+                        keyboardFlag = 0x0100;
                         if (keyStatusFlag == 0x0000) {
                             this->_altgr = true;
                             if (!this->_ctrl) {
                                 if (this->_shift && this->_capslock) {
                                     this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
+                                }
+                                if (!this->_shift && this->_capslock) {
+                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
                                 }
                                 if (this->_shift && !this->_capslock) {
                                     this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
@@ -717,6 +758,7 @@ public:
                                     this->_layout = &(this->_keymap.keylayout_WORK->altGr);
                                 }
                             }
+                            
                         } else {
                             this->_altgr = false;
                             if (this->_ctrl) {
@@ -739,11 +781,11 @@ public:
                         break; 
                         
                     case 16777249 : keyCode = 0x1D;   //  R L CTRL
+                        keyboardFlag = 0x0100;
                         if (keyStatusFlag == 0x0000) {
                             this->_ctrl = true;
                             if (this->_altgr) {
                                 this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                                
                             } else {
                                 this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
                             } 
@@ -784,6 +826,9 @@ public:
                                 if (this->_altgr && this->_capslock) {
                                     this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
                                 }
+                                if (!this->_altgr && this->_capslock) {
+                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);
+                                }
                                 if (this->_altgr && !this->_capslock) {                                
                                     this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
                                 } 
@@ -791,6 +836,7 @@ public:
                                     this->_layout = &(this->_keymap.keylayout_WORK->shift);
                                 }
                             }
+                            
                         } else {
                             this->_shift = false;
                             if (this->_ctrl) {
@@ -816,36 +862,41 @@ public:
                         if (keyStatusFlag == 0x0000) {
                             if (!this->_capslock) {
                                 this->_capslock = true;
-                                if (this->_shift && this->_altgr)   {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
+                                if (!this->_ctrl) {
+                                    if (this->_shift && this->_altgr)   {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
+                                    }
+                                    if (!this->_shift && this->_altgr)  {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
+                                    }
+                                    if (this->_shift && !this->_altgr)  {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);
+                                    }
+                                    if (!this->_shift && !this->_altgr) {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);
+                                    }
                                 }
-                                if (!this->_shift && this->_altgr)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
-                                }
-                                if (this->_shift && !this->_altgr)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);
-                                }
-                                if (!this->_shift && !this->_altgr) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);
-                                }
+                                
                             } else {
-                                this->_capslock = false;
-                                if (this->_shift && this->_altgr)   {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
-                                }
-                                if (!this->_shift && this->_altgr)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                                }
-                                if (this->_shift && !this->_altgr)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shift);
-                                }
-                                if (!this->_shift && !this->_altgr) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->noMod);
+                                if (!this->_ctrl) {
+                                    this->_capslock = false;
+                                    if (this->_shift && this->_altgr)   {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
+                                    }
+                                    if (!this->_shift && this->_altgr)  {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->altGr);
+                                    }
+                                    if (this->_shift && !this->_altgr)  {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->shift);
+                                    }
+                                    if (!this->_shift && !this->_altgr) {
+                                        this->_layout = &(this->_keymap.keylayout_WORK->noMod);
+                                    }
                                 }
                             }
                         }
                         break;
-                    
+                     
                     //----------------------------
                     // None mod neither char keys
                     //----------------------------
@@ -853,15 +904,15 @@ public:
                     case 16777220 : keyCode = 0x1C; break; //  ENTER
                     case 16777219 : keyCode = 0x0E; break; //  BKSP
                     case 16777216 : keyCode = 0x01; break; //  ESCAPE
-                    case 16777222 : keyCode = 0x52; break; //  INSERT
-                    case 16777223 : keyCode = 0x53; break; //  DELETE               
-                    case 16777233 : keyCode = 0x4F; break; //  END
-                    case 16777239 : keyCode = 0x51; break; //  PG DN
-                    case 16777238 : keyCode = 0x49; break; //  PG UP
-                    case 16777235 : keyCode = 0x48; break; //  U ARROW
-                    case 16777234 : keyCode = 0x4B; break; //  L ARROW
-                    case 16777237 : keyCode = 0x50; break; //  D ARROW
-                    case 16777236 : keyCode = 0x4D; break; //  R ARROW
+                    case 16777222 : keyCode = 0x52; keyboardFlag = 0x0100; break; //  INSERT
+                    case 16777223 : keyCode = 0x53; keyboardFlag = 0x0100; break; //  DELETE               
+                    case 16777233 : keyCode = 0x4F; keyboardFlag = 0x0100; break; //  END
+                    case 16777239 : keyCode = 0x51; keyboardFlag = 0x0100; break; //  PG DN
+                    case 16777238 : keyCode = 0x49; keyboardFlag = 0x0100; break; //  PG UP
+                    case 16777235 : keyCode = 0x48; keyboardFlag = 0x0100; break; //  U ARROW
+                    case 16777234 : keyCode = 0x4B; keyboardFlag = 0x0100; break; //  L ARROW
+                    case 16777237 : keyCode = 0x50; keyboardFlag = 0x0100; break; //  D ARROW
+                    case 16777236 : keyCode = 0x4D; keyboardFlag = 0x0100; break; //  R ARROW
                     case 16777264 : keyCode = 0x3B; break; //  F1
                     case 16777265 : keyCode = 0x3C; break; //  F2
                     case 16777266 : keyCode = 0x3D; break; //  F3
@@ -877,6 +928,7 @@ public:
                     case 16777254 : keyCode = 0x46; break; //  SCROLL
                     case 16777224 : keyCode = 0xE1; break; //  PAUSE
                     case 16777217 : keyCode = 0x0F; break; //  TAB
+                    case 338      : keyCode = 0x29; break; //  œ
                     
                     // 16781906 // trema + circonflex
                     //case 36 : scanCode = 0xE0; break; //  HOME
@@ -895,10 +947,11 @@ public:
                 }
                 
                 if (!unrecognised) {
-                    this->_keymap.event(0x0000, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-                    this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag, 0000, &(this->_keymap)); std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
+                    this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+                    this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, 0000, &(this->_keymap)); 
                 }
             } 
+            std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
         }
     }
     
@@ -922,7 +975,7 @@ public:
             default: break;
         }
         this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
-        this->refresh(); 
+        //this->refresh(); 
     }
     
     void keyPressEvent(QKeyEvent *e) { 

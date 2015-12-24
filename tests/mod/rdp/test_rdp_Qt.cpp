@@ -23,13 +23,13 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdp
+#define BOOST_TEST_MODULE TestRDPQtDrawablePNGLike
 #include <boost/test/auto_unit_test.hpp>
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+//#define LOGPRINTlibboost_unit_test
 #include "config.hpp"
 #include "socket_transport.hpp"
 #include "test_transport.hpp"
