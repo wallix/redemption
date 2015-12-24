@@ -27,9 +27,13 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 #undef RECORD_PATH
-#define RECORD_PATH "/tmp/"
+#define RECORD_PATH "/tmp/recorded"
 #undef WRM_PATH
-#define WRM_PATH "/tmp/"
+#define WRM_PATH "/tmp/recorded"
+#undef HASH_PATH
+#define HASH_PATH "/tmp/hash"
+#undef RECORD_TMP_PATH
+#define RECORD_TMP_PATH "/tmp/tmp"
 
 //#define LOGNULL
 #define LOGPRINT
@@ -54,8 +58,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
 {
     try {
 
-        ::unlink("/tmp/redemption.mwrm");
-        ::unlink("/tmp/redemption-000000.wrm");
+        ::unlink(RECORD_PATH "/redemption.mwrm");
+        ::unlink(RECORD_PATH "/redemption-000000.wrm");
 
         ClientInfo info;
         info.keylayout = 0x04C;
@@ -123,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         class MyFront : public Front
         {
             public:
-            
+
             MyFront( Transport & trans
                    , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
                    , Random & gen
@@ -143,15 +147,15 @@ BOOST_AUTO_TEST_CASE(TestFront)
                    , persistent_key_list_transport)
                 {
                 }
-            
+
                 void clear_channels()
                 {
                     this->channel_list.clear_channels();
                 }
-            
-                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override 
+
+                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override
                 {
-                    return this->channel_list; 
+                    return this->channel_list;
                 }
 
                 virtual void send_to_channel(
@@ -159,12 +163,12 @@ BOOST_AUTO_TEST_CASE(TestFront)
                     uint8_t const * data,
                     size_t length,
                     size_t chunk_size,
-                    int flags) override 
+                    int flags) override
                 {
                     LOG(LOG_INFO, "--------- FRONT ------------------------");
                     LOG(LOG_INFO, "send_to_channel");
                     LOG(LOG_INFO, "========================================\n");
-                }                
+                }
         };
 
         MyFront front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
@@ -224,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         LCGRandom gen2(0);
 
         BOOST_CHECK(true);
-        
+
         front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
         mod_api * mod = &mod_;
@@ -237,6 +241,10 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK(t.get_status());
         BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+
+        // Force Front to be up and running after Deactivation-Reactivation
+        //  Sequence initiated by mod_rdp.
+        front.up_and_running = 1;
 
         LOG(LOG_INFO, "Before Start Capture");
 

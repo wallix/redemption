@@ -85,24 +85,29 @@
 #include "channel_names.hpp"
 #include "finally.hpp"
 #include "timeout.hpp"
-#include "outbound_connection_monitor_rules.hpp"
+//#include "outbound_connection_monitor_rules.hpp"
 
 #include "channels/cliprdr_channel.hpp"
 #include "channels/rdpdr_channel.hpp"
 #include "channels/rdpdr_file_system_drive_manager.hpp"
+#include "channels/sespro_channel.hpp"
 
 class RDPChannelManagerMod : public mod_api
 {
 private:
-    std::unique_ptr<VirtualChannelDataSender> file_system_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender> file_system_to_server_sender;
+    std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>   file_system_to_server_sender;
 
-    std::unique_ptr<FileSystemVirtualChannel> file_system_virtual_channel;
+    std::unique_ptr<FileSystemVirtualChannel>   file_system_virtual_channel;
 
-    std::unique_ptr<VirtualChannelDataSender> clipboard_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender> clipboard_to_server_sender;
+    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_server_sender;
 
-    std::unique_ptr<ClipboardVirtualChannel>  clipboard_virtual_channel;
+    std::unique_ptr<ClipboardVirtualChannel>    clipboard_virtual_channel;
+
+    std::unique_ptr<VirtualChannelDataSender>   session_probe_to_server_sender;
+
+    std::unique_ptr<SessionProbeVirtualChannel> session_probe_virtual_channel;
 
 protected:
     FileSystemDriveManager file_system_drive_manager;
@@ -248,12 +253,38 @@ public:
         return *this->file_system_virtual_channel;
     }
 
+    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
+        if (!this->session_probe_virtual_channel) {
+            REDASSERT(!this->session_probe_to_server_sender);
+
+            this->session_probe_to_server_sender =
+                this->create_to_server_sender(channel_names::sespro);
+
+            FileSystemVirtualChannel& file_system_virtual_channel =
+                get_file_system_virtual_channel();
+
+            this->session_probe_virtual_channel =
+                std::make_unique<SessionProbeVirtualChannel>(
+                    this->session_probe_to_server_sender.get(),
+                    this->file_system_drive_manager,
+                    this->front,
+                    *this,
+                    file_system_virtual_channel.to_server_sender,
+                    this->get_session_probe_virtual_channel_params());
+        }
+
+        return *this->session_probe_virtual_channel;
+    }
+
 protected:
     virtual const ClipboardVirtualChannel::Params
         get_clipboard_virtual_channel_params() const = 0;
 
     virtual const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const = 0;
+
+    virtual const SessionProbeVirtualChannel::Params
+        get_session_probe_virtual_channel_params() const = 0;
 };  // RDPChannelManagerMod
 
 class mod_rdp : public RDPChannelManagerMod {
@@ -360,6 +391,11 @@ class mod_rdp : public RDPChannelManagerMod {
     const unsigned    session_probe_keepalive_timeout;
           std::string session_probe_alternate_shell;
 
+    SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
+
+    std::string auth_user;
+    std::string outbound_connection_killing_rules;
+
     size_t recv_bmp_update;
 
     rdp_mppc_unified_dec mppc_dec;
@@ -411,16 +447,16 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-    wait_obj    session_probe_event;
-    bool        session_probe_is_ready            = false;
-    bool        session_probe_keep_alive_received = true;
+//    wait_obj    session_probe_event;
+//    bool        session_probe_is_ready            = false;
+//    bool        session_probe_keep_alive_received = true;
 
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
     Translation::language_t lang;
 
-    OutboundConnectionMonitorRules outbound_connection_monitor_rules;
+//    OutboundConnectionMonitorRules outbound_connection_monitor_rules;
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -590,7 +626,7 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     } server_notifier;
 
-    bool session_probe_close_pending = false;
+//    bool session_probe_close_pending = false;
 
 public:
     mod_rdp( Transport & trans
@@ -652,6 +688,8 @@ public:
         , session_probe_on_launch_failure_disconnect_user(mod_rdp_params.session_probe_on_launch_failure_disconnect_user)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
+        , auth_user(mod_rdp_params.auth_user)
+        , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -692,7 +730,7 @@ public:
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , lang(mod_rdp_params.lang)
-        , outbound_connection_monitor_rules("", mod_rdp_params.outbound_connection_blocking_rules)
+//        , outbound_connection_monitor_rules("", mod_rdp_params.outbound_connection_blocking_rules)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
@@ -939,20 +977,28 @@ public:
         }
 
         if (this->verbose & 1) {
-            LOG(LOG_INFO,
-                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure_disconnect_user=%s",
-                (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
-                (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
+//            LOG(LOG_INFO,
+//                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure_disconnect_user=%s",
+//                (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
+//                (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
+            LOG(LOG_INFO, "enable_session_probe=%s",
+                (this->enable_session_probe ? "yes" : "no"));
         }
+//        if (this->enable_session_probe) {
+//            this->session_probe_event.object_and_time = true;
+//
+//            if (this->session_probe_launch_timeout > 0) {
+//                if (this->verbose & 1) {
+//                    LOG(LOG_INFO, "Enable Session Probe launch timer");
+//                }
+//                this->session_probe_event.set(this->session_probe_launch_timeout * 1000);
+//            }
+//        }
         if (this->enable_session_probe) {
-            this->session_probe_event.object_and_time = true;
+            SessionProbeVirtualChannel& channel =
+                this->get_session_probe_virtual_channel();
 
-            if (this->session_probe_launch_timeout > 0) {
-                if (this->verbose & 1) {
-                    LOG(LOG_INFO, "Enable Session Probe launch timer");
-                }
-                this->session_probe_event.set(this->session_probe_launch_timeout * 1000);
-            }
+            this->session_probe_virtual_channel_p = &channel;
         }
 
         if (this->acl) {
@@ -1127,6 +1173,50 @@ protected:
             this->acl;
 
         return file_system_virtual_channel_params;
+    }
+
+    const SessionProbeVirtualChannel::Params
+        get_session_probe_virtual_channel_params() const override
+    {
+        SessionProbeVirtualChannel::Params
+            session_probe_virtual_channel_params;
+
+        session_probe_virtual_channel_params.session_probe_loading_mask_enabled              =
+            this->enable_session_probe_loading_mask;
+
+        session_probe_virtual_channel_params.session_probe_launch_timeout                    =
+            this->session_probe_launch_timeout;
+        session_probe_virtual_channel_params.session_probe_keepalive_timeout                 =
+            this->session_probe_keepalive_timeout;
+
+        session_probe_virtual_channel_params.session_probe_on_launch_failure_disconnect_user =
+            this->session_probe_on_launch_failure_disconnect_user;
+
+        session_probe_virtual_channel_params.auth_user                                       =
+            this->auth_user.c_str();
+
+        session_probe_virtual_channel_params.front_width                                     =
+            this->front_width;
+        session_probe_virtual_channel_params.front_height                                    =
+            this->front_height;
+
+        session_probe_virtual_channel_params.real_alternate_shell                            =
+            this->real_alternate_shell.c_str();
+        session_probe_virtual_channel_params.real_working_dir                                =
+            this->real_working_dir.c_str();
+
+        session_probe_virtual_channel_params.outbound_connection_notifying_rules             =
+            "";
+        session_probe_virtual_channel_params.outbound_connection_killing_rules               =
+            this->outbound_connection_killing_rules.c_str();
+
+        session_probe_virtual_channel_params.lang                                            =
+            this->lang;
+
+        session_probe_virtual_channel_params.acl                                             =
+            this->acl;
+
+        return session_probe_virtual_channel_params;
     }
 
 public:
@@ -1711,10 +1801,9 @@ private:
 
 public:
     void draw_event(time_t now) override {
-        if (!this->event.waked_up_by_time 
-        && (!this->enable_session_probe 
-         || !this->session_probe_event.set_state 
-         || !this->session_probe_event.waked_up_by_time)) {
+        if (!this->event.waked_up_by_time &&
+//            (!this->enable_session_probe || !this->session_probe_event.set_state || !this->session_probe_event.waked_up_by_time)) {
+            (!this->session_probe_virtual_channel_p || !this->session_probe_virtual_channel_p->is_event_signaled())) {
             try{
                 char * hostname = this->hostname;
 
@@ -3297,6 +3386,10 @@ public:
             }
         }
 
+        if (this->session_probe_virtual_channel_p) {
+            this->session_probe_virtual_channel_p->process_event();
+        }
+/*
         if (this->session_probe_event.set_state && this->session_probe_event.waked_up_by_time) {
             REDASSERT(this->enable_session_probe);
 
@@ -3368,11 +3461,15 @@ public:
                 }
             }
         }
+*/
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
-        if (this->session_probe_event.set_state) {
-            return &this->session_probe_event;
+//        if (this->session_probe_event.set_state) {
+//            return &this->session_probe_event;
+//        }
+        if (this->session_probe_virtual_channel_p) {
+            return session_probe_virtual_channel_p->get_event();
         }
 
         return nullptr;
@@ -6285,6 +6382,15 @@ public:
 
     void process_session_probe_event(const CHANNELS::ChannelDef & session_probe_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        BaseVirtualChannel& channel = this->get_session_probe_virtual_channel();
+
+        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
+            out_asynchronous_task);
+
+        REDASSERT(!out_asynchronous_task);
+/*
         REDASSERT(stream.in_remain() == chunk_size);
 
         uint16_t message_length = stream.in_uint16_le();
@@ -6605,6 +6711,7 @@ public:
                     message);
             }
         }
+*/
     }
 
     void process_cliprdr_event(

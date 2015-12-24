@@ -91,6 +91,7 @@ public:
           file_descriptor_data.get(), RDPECLIP::FileDescriptor::size())
     , front(front) {}
 
+protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
         override
     {

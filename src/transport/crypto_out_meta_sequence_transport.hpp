@@ -45,12 +45,6 @@ namespace detail
 
             unsigned char iv[32];
             cctx.random(iv, 32);
-//            if (-1 == urandom_read(iv, 32)) {
-//                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-//                buf.close();
-//                return -1;
-//            }
-
             return transfil::encrypt_filter::open(buf, trace_key, &cctx, iv);
         }
     };

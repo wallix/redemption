@@ -412,7 +412,6 @@ class ModuleManager : public MMIni
             }
         }
 
-    protected:
         void display_osd_message(std::string & message) override {
             this->mm.osd_message(message, false);
         }
@@ -834,6 +833,8 @@ public:
                                            , this->ini.get<cfg::debug::mod_rdp>()
                                            );
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
+
+                mod_rdp_params.auth_user                           = this->ini.get<cfg::globals::auth_user>().c_str();
 
                 mod_rdp_params.client_name                         = this->front.client_info.hostname;
 
