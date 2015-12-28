@@ -23,7 +23,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPQtDrawablePNGLike
+#define BOOST_TEST_MODULE TestRDPQt
 #include <boost/test/auto_unit_test.hpp>
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -38,7 +38,7 @@
 #include "../src/front/front_Qt.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
+BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
     int argc(0);
     char chartab[] = "myprog";

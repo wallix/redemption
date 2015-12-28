@@ -92,8 +92,6 @@ public:
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
-    int                   mouse_x;
-    int                   mouse_y;
     bool                  notimestamp;
     bool                  nomouse;
     QLabel               _label;
@@ -109,14 +107,12 @@ public:
     
     // Controllers members
     Keymap2                        _keymap;
-    bool                           _capslock;
-    bool                           _shift;
-    bool                           _altgr;
-    bool                           _ctrl;
     const Keylayout::KeyLayout_t * _layout;
     bool                           _ctrl_alt_delete;
     StaticOutStream<256>           _decoded_data;
     uint8_t                        _keyboardMods;
+    
+    
     
     enum {
           CTRL_MOD     = 0x08
@@ -124,8 +120,8 @@ public:
         , ALT_MOD      = 0x02
         , SHIFT_MOD    = 0x01
     };
-     
-
+    
+    
     QColor u32_to_qcolor(uint32_t color){
         uint8_t b(color >> 16);
         uint8_t g(color >> 8);
@@ -568,8 +564,6 @@ public:
     , info(info)
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::no_init())
-    , mouse_x(0)
-    , mouse_y(0)
     , notimestamp(true)
     , nomouse(true) 
     , _label(this)
@@ -580,10 +574,7 @@ public:
     , _painter()
     , _sckRead(client_sck, QSocketNotifier::Read, this)
     , _keymap() 
-    , _capslock(false)
-    , _shift(false)
-    , _altgr(false)
-    , _ctrl(false)
+    , _ctrl_alt_delete(false)
     , _keyboardMods(0) {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
@@ -655,18 +646,18 @@ public:
         //                               |      |      |      |      |
         //   bitcode for _keyboardMods:  | CTRL | CAPS | ALT  | SHFT |
         //                               |______|______|______|______|
-        
-        if (this->_keyboardMods & CTRL_MOD) {
+        //
+        if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
             this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
         } else {
             switch (this->_keyboardMods) {
                 
                 case 0 : this->_layout = &(this->_keymap.keylayout_WORK->noMod);               break;
-                case 1 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);      break;
+                case 1 : this->_layout = &(this->_keymap.keylayout_WORK->shift);               break;
                 case 2 : this->_layout = &(this->_keymap.keylayout_WORK->altGr);               break;
                 case 3 : this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);          break;
                 case 4 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);      break;
-                case 5 : this->_layout = &(this->_keymap.keylayout_WORK->shift);               break;
+                case 5 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);      break;
                 case 6 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);      break;
                 case 7 : this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr); break;
                 
@@ -676,259 +667,181 @@ public:
     }
     
     void keyQtEvent(int keyStatusFlag, QKeyEvent *e) { 
+        int keyboardFlag(0);
         int keyCode(e->key()); 
         bool unrecognised(false);
+        
         if (keyCode != 0) {
             
-            if (keyCode < 255 && keyCode > 0) {
-                keyCode = e->text().toStdString()[0];
+            if (keyCode < 255 && keyCode > 0 && keyCode != Qt::Key_section && keyCode != Qt::Key_Slash) {
+                
+                
+                if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
+                    
+                    //---------------------
+                    //      ShortCuts
+                    //---------------------
+                    this->_layout = &(this->_keymap.keylayout_WORK->noMod);
+
+                    switch (keyCode) {
+                        case Qt::Key_A         : keyCode = 'a'; break; // CTRL + A
+                        case Qt::Key_Z         : keyCode = 'z'; break; // CTRL + Z
+                        case Qt::Key_Y         : keyCode = 'y'; break; // CTRL + Y
+                        case Qt::Key_X         : keyCode = 'x'; break; // CTRL + X
+                        case Qt::Key_C         : keyCode = 'c'; break; // CTRL + C
+                        case Qt::Key_V         : keyCode = 'v'; break; // CTRL + V
+                        
+                        case Qt::Key_E         : keyCode = 'e'; break; // CTRL + E
+                        case Qt::Key_R         : keyCode = 'r'; break; // CTRL + R
+                        case Qt::Key_T         : keyCode = 't'; break; // CTRL + T
+                        case Qt::Key_U         : keyCode = 'u'; break; // CTRL + U
+                        case Qt::Key_I         : keyCode = 'i'; break; // CTRL + I
+                        case Qt::Key_B         : keyCode = 'b'; break; // CTRL + B
+                        case Qt::Key_D         : keyCode = 'd'; break; // CTRL + D
+                        case Qt::Key_F         : keyCode = 'f'; break; // CTRL + F
+                        case Qt::Key_G         : keyCode = 'g'; break; // CTRL + G
+                        case Qt::Key_H         : keyCode = 'h'; break; // CTRL + H
+                        case Qt::Key_J         : keyCode = 'j'; break; // CTRL + J
+                        case Qt::Key_K         : keyCode = 'k'; break; // CTRL + K
+                        case Qt::Key_L         : keyCode = 'l'; break; // CTRL + L
+                        case Qt::Key_M         : keyCode = 'm'; break; // CTRL + M
+                        case Qt::Key_N         : keyCode = 'n'; break; // CTRL + N
+                        case Qt::Key_O         : keyCode = 'o'; break; // CTRL + O
+                        case Qt::Key_P         : keyCode = 'p'; break; // CTRL + P
+                        case Qt::Key_Q         : keyCode = 'q'; break; // CTRL + Q
+                        case Qt::Key_S         : keyCode = 's'; break; // CTRL + S
+                        case Qt::Key_W         : keyCode = 'w'; break; // CTRL + W
+                        
+                        default: this->_layout = &(this->_keymap.keylayout_WORK->ctrl); break;
+                    }
+                    
+                } else {
+                    //-------------------
+                    //    Characters
+                    //-------------------
+                    keyCode = e->text().toStdString()[0];
+                }
+    
+    
+                // to reverse start
                 int i(0);
                 if (this->_layout != nullptr) {
                     const Keylayout::KeyLayout_t & layout = *(this->_layout);
-                    for (; i < 128 && layout[i] != keyCode; i++) {}; //std::cout << "layoutVal=" << layout[i] << " i=" << i << " keycode=" << keyCode << std::endl;}
+                    for (; i < 128 && layout[i] != keyCode; i++) {};
                 }
                 keyCode = i;
+                // to reverse end
                 
-                this->_keymap.event(0x0000, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-                this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag, 0000, &(this->_keymap)); std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
+                
+                if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
+                    this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
+                }
+                    
                 
             } else {
-                int keyboardFlag(0);
+                
                 
                 switch (keyCode) {
                     
-                    //--------------
-                    // keyboard mod
-                    //--------------
-                    case 16777251 : keyCode = 0x38;   //  L ALT
-                        keyboardFlag = 0x0100;
-                        if (keyStatusFlag == 0x0000) {
-                            this->_altgr = true;
-                            if (!this->_ctrl) {
-                                if (this->_shift && this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
-                                }
-                                if (!this->_shift && this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
-                                }
-                                if (this->_shift && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
-                                } 
-                                if (!this->_shift && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                                }
-                            }
-                            
+                    //----------------
+                    //  keyboard mod
+                    //----------------
+                    case Qt::Key_Alt : keyCode = 0x38;         //  L ALT
+                        keyboardFlag = Keymap2::KBDFLAGS_EXTENDED;
+                        if (keyStatusFlag == 0) {
+                            this->_keyboardMods += ALT_MOD;
                         } else {
-                            this->_altgr = false;
-                            if (this->_ctrl) {
-                                this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
-                            } else {
-                                if (this->_shift && this->_capslock)   {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);
-                                }
-                                if (!this->_shift && this->_capslock)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);
-                                }
-                                if (this->_shift && !this->_capslock)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shift);
-                                }
-                                if (!this->_shift && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->noMod);                      
-                                }
-                            }
+                            this->_keyboardMods -= ALT_MOD;
                         }
+                        this->layout_Work_Update();
                         break; 
                         
-                    case 16781571 : keyCode = 0x38;   //  R ALT GR
-                        keyboardFlag = 0x0100;
-                        if (keyStatusFlag == 0x0000) {
-                            this->_altgr = true;
-                            if (!this->_ctrl) {
-                                if (this->_shift && this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
-                                }
-                                if (!this->_shift && this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
-                                }
-                                if (this->_shift && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
-                                } 
-                                if (!this->_shift && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                                }
-                            }
-                            
+                    case Qt::Key_AltGr : keyCode = 0x38;       //  R ALT GR
+                        keyboardFlag = Keymap2::KBDFLAGS_EXTENDED;
+                        if (keyStatusFlag == 0) {
+                            this->_keyboardMods += ALT_MOD;
                         } else {
-                            this->_altgr = false;
-                            if (this->_ctrl) {
-                                this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
-                            } else {
-                                if (this->_shift && this->_capslock)   {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);
-                                }
-                                if (!this->_shift && this->_capslock)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);   
-                                }
-                                if (this->_shift && !this->_capslock)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shift);
-                                }
-                                if (!this->_shift && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->noMod);
-                                }
-                            }
+                            this->_keyboardMods -= ALT_MOD;
                         }
+                        this->layout_Work_Update();
                         break; 
                         
-                    case 16777249 : keyCode = 0x1D;   //  R L CTRL
-                        keyboardFlag = 0x0100;
-                        if (keyStatusFlag == 0x0000) {
-                            this->_ctrl = true;
-                            if (this->_altgr) {
-                                this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                            } else {
-                                this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
-                            } 
-                            
+                    case Qt::Key_Control : keyCode = 0x1D;     //  R L CTRL
+                        keyboardFlag = Keymap2::KBDFLAGS_EXTENDED;
+                        if (keyStatusFlag == 0) {
+                            this->_keyboardMods += CTRL_MOD;
                         } else {
-                            this->_ctrl = false;
-                            if (this->_shift && this->_altgr && this->_capslock)   {
-                                this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
-                            }
-                            if (!this->_shift && this->_altgr  && this->_capslock) {
-                                this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
-                            }
-                            if (this->_shift && !this->_altgr && this->_capslock)  {
-                                this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);   
-                            }
-                            if (!this->_shift && !this->_altgr && this->_capslock) {
-                                this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);
-                            }
-                            if (this->_shift && this->_altgr && !this->_capslock)   {
-                                this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
-                            }
-                            if (!this->_shift && this->_altgr && !this->_capslock)  {
-                                this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                            }
-                            if (this->_shift && !this->_altgr && !this->_capslock)  {
-                                this->_layout = &(this->_keymap.keylayout_WORK->shift);
-                            }
-                            if (!this->_shift && !this->_altgr && !this->_capslock) {
-                                this->_layout = &(this->_keymap.keylayout_WORK->noMod);
-                            }
+                            this->_keyboardMods -= CTRL_MOD;
                         }
+                        this->layout_Work_Update();
                         break; 
                         
-                    case 16777248 : keyCode = 0x36;   // R L SHFT
-                        if (keyStatusFlag == 0x0000) {
-                            this->_shift = true;
-                            if (!this->_ctrl) {
-                                if (this->_altgr && this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
-                                }
-                                if (!this->_altgr && this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);
-                                }
-                                if (this->_altgr && !this->_capslock) {                                
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
-                                } 
-                                if (!this->_altgr && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->shift);
-                                }
-                            }
-                            
+                    case Qt::Key_Shift : keyCode = 0x36;       // R L SHFT
+                        if (keyStatusFlag == 0) {
+                            this->_keyboardMods += SHIFT_MOD;
                         } else {
-                            this->_shift = false;
-                            if (this->_ctrl) {
-                                this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
-                            } else {
-                                if (this->_altgr && this->_capslock)   {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
-                                }
-                                if (!this->_altgr && this->_capslock)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);
-                                }
-                                if (this->_altgr && !this->_capslock)  {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                                }
-                                if (!this->_altgr && !this->_capslock) {
-                                    this->_layout = &(this->_keymap.keylayout_WORK->noMod);
-                                }
-                            }
+                            this->_keyboardMods -= SHIFT_MOD;
                         }
+                        this->layout_Work_Update();
                         break; 
                         
-                    case 16777252 : keyCode = 0x3A;   //  CAPSLOCK 
-                        if (keyStatusFlag == 0x0000) {
-                            if (!this->_capslock) {
-                                this->_capslock = true;
-                                if (!this->_ctrl) {
-                                    if (this->_shift && this->_altgr)   {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_shiftAltGr);
-                                    }
-                                    if (!this->_shift && this->_altgr)  {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_altGr);
-                                    }
-                                    if (this->_shift && !this->_altgr)  {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_shift);
-                                    }
-                                    if (!this->_shift && !this->_altgr) {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->capslock_noMod);
-                                    }
-                                }
-                                
+                    case Qt::Key_CapsLock : keyCode = 0x3A;    //  CAPSLOCK 
+                        if (keyStatusFlag == 0) {
+                            if ((this->_keyboardMods & CAPSLOCK_MOD) == CAPSLOCK_MOD) {
+                                this->_keyboardMods -= CAPSLOCK_MOD;
                             } else {
-                                if (!this->_ctrl) {
-                                    this->_capslock = false;
-                                    if (this->_shift && this->_altgr)   {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->shiftAltGr);
-                                    }
-                                    if (!this->_shift && this->_altgr)  {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->altGr);
-                                    }
-                                    if (this->_shift && !this->_altgr)  {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->shift);
-                                    }
-                                    if (!this->_shift && !this->_altgr) {
-                                        this->_layout = &(this->_keymap.keylayout_WORK->noMod);
-                                    }
-                                }
+                                this->_keyboardMods += CAPSLOCK_MOD;
                             }
-                        }
+                            this->layout_Work_Update();
+                        }                 
                         break;
                      
-                    //----------------------------
-                    // None mod neither char keys
-                    //----------------------------
-                    case 16777221 : keyCode = 0x1C; break; //  ENTER KP
-                    case 16777220 : keyCode = 0x1C; break; //  ENTER
-                    case 16777219 : keyCode = 0x0E; break; //  BKSP
-                    case 16777216 : keyCode = 0x01; break; //  ESCAPE
-                    case 16777222 : keyCode = 0x52; keyboardFlag = 0x0100; break; //  INSERT
-                    case 16777223 : keyCode = 0x53; keyboardFlag = 0x0100; break; //  DELETE               
-                    case 16777233 : keyCode = 0x4F; keyboardFlag = 0x0100; break; //  END
-                    case 16777239 : keyCode = 0x51; keyboardFlag = 0x0100; break; //  PG DN
-                    case 16777238 : keyCode = 0x49; keyboardFlag = 0x0100; break; //  PG UP
-                    case 16777235 : keyCode = 0x48; keyboardFlag = 0x0100; break; //  U ARROW
-                    case 16777234 : keyCode = 0x4B; keyboardFlag = 0x0100; break; //  L ARROW
-                    case 16777237 : keyCode = 0x50; keyboardFlag = 0x0100; break; //  D ARROW
-                    case 16777236 : keyCode = 0x4D; keyboardFlag = 0x0100; break; //  R ARROW
-                    case 16777264 : keyCode = 0x3B; break; //  F1
-                    case 16777265 : keyCode = 0x3C; break; //  F2
-                    case 16777266 : keyCode = 0x3D; break; //  F3
-                    case 16777267 : keyCode = 0x3E; break; //  F4
-                    case 16777268 : keyCode = 0x3F; break; //  F5
-                    case 16777269 : keyCode = 0x40; break; //  F6
-                    case 16777270 : keyCode = 0x41; break; //  F7
-                    case 16777271 : keyCode = 0x42; break; //  F8
-                    case 16777272 : keyCode = 0x43; break; //  F9
-                    case 16777273 : keyCode = 0x44; break; //  F10
-                    case 16777274 : keyCode = 0x57; break; //  F11
-                    case 16777275 : keyCode = 0x58; break; //  F12
-                    case 16777254 : keyCode = 0x46; break; //  SCROLL
-                    case 16777224 : keyCode = 0xE1; break; //  PAUSE
-                    case 16777217 : keyCode = 0x0F; break; //  TAB
-                    case 338      : keyCode = 0x29; break; //  œ
+                    //-----------------------------
+                    //  Not mod neither char keys
+                    //-----------------------------
+                    case Qt::Key_Enter      : keyCode = 0x1C; break; //  ENTER KP
+                    case Qt::Key_Return     : keyCode = 0x1C; break; //  ENTER
+                    case Qt::Key_Backspace  : keyCode = 0x0E; break; //  BKSP
+                    case Qt::Key_Escape     : keyCode = 0x01; break; //  ESCAPE
+                    case Qt::Key_NumLock    : keyCode = 0x45; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  NUMLOCK
+                    case Qt::Key_Insert     : keyCode = 0x52; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  INSERT
+                    case Qt::Key_Delete     : keyCode = 0x53; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  DELETE               
+                    case Qt::Key_End        : keyCode = 0x4F; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  END
+                    case Qt::Key_PageDown   : keyCode = 0x51; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  PG DN
+                    case Qt::Key_PageUp     : keyCode = 0x49; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  PG UP
+                    case Qt::Key_Up         : keyCode = 0x48; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  U ARROW
+                    case Qt::Key_Left       : keyCode = 0x4B; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  L ARROW
+                    case Qt::Key_Down       : keyCode = 0x50; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  D ARROW
+                    case Qt::Key_Right      : keyCode = 0x4D; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  R ARROW
+                    case Qt::Key_F1         : keyCode = 0x3B; break; //  F1
+                    case Qt::Key_F2         : keyCode = 0x3C; break; //  F2
+                    case Qt::Key_F3         : keyCode = 0x3D; break; //  F3
+                    case Qt::Key_F4         : keyCode = 0x3E; break; //  F4
+                    case Qt::Key_F5         : keyCode = 0x3F; break; //  F5
+                    case Qt::Key_F6         : keyCode = 0x40; break; //  F6
+                    case Qt::Key_F7         : keyCode = 0x41; break; //  F7
+                    case Qt::Key_F8         : keyCode = 0x42; break; //  F8
+                    case Qt::Key_F9         : keyCode = 0x43; break; //  F9
+                    case Qt::Key_F10        : keyCode = 0x44; break; //  F10
+                    case Qt::Key_F11        : keyCode = 0x57; break; //  F11
+                    case Qt::Key_F12        : keyCode = 0x58; break; //  F12
+                    case Qt::Key_ScrollLock : keyCode = 0x46; break; //  SCROLL 
+                    case Qt::Key_Pause      : keyCode = 0xE1; break; //  PAUSE
+                    case Qt::Key_Tab        : keyCode = 0x0F; break; //  TAB
+                    case 338                : keyCode = 0x29; break; //  œ / square
+                    case Qt::Key_section    : keyCode = 0x35; break; //  § 
+                    case Qt::Key_Acircumflex: 
+                        if (this->_keyboardMods == 0) {
+                            //const Keylayout::KeyLayout_t & layout = *(this->_keymap.keylayout_WORK->deadkeys);
+                                              keyCode = 0x005e;
+                        }    
+                        if ((this->_keyboardMods & SHIFT_MOD) == SHIFT_MOD) {
+                            //const Keylayout::KeyLayout_t & layout = *(this->_keymap.keylayout_WORK->deadkeys);
+                                              keyCode = 0x005e;
+                        }   
+                                                              break; //  ^ ¨
+                    case Qt::Key_Slash      : keyCode = 0x62; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; // DIVIDE KP
+
                     
                     // 16781906 // trema + circonflex
                     //case 36 : scanCode = 0xE0; break; //  HOME
@@ -945,18 +858,20 @@ public:
                         unrecognised = true;
                         break;
                 }
-                
-                if (!unrecognised) {
+
+            } 
+            
+            if (!unrecognised) {
                     this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
                     this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, 0000, &(this->_keymap)); 
                 }
-            } 
+                
             std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
         }
     }
     
     void mousePressEvent(QMouseEvent *e) {
-        int flag(0); //std::cout << "click   " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
+        int flag(0); 
         switch (e->button()) {
             case 1: flag = MOUSE_FLAG_BUTTON1; break;
             case 2: flag = MOUSE_FLAG_BUTTON2; break; 
@@ -967,7 +882,7 @@ public:
     }
     
     void mouseReleaseEvent(QMouseEvent *e) {
-        int flag(0); //std::cout << "release " << "x=" << e->x() << " y=" << e->y() << " button:" << e->button() << std::endl;
+        int flag(0); 
         switch (e->button()) {
             case 1: flag = MOUSE_FLAG_BUTTON1; break; 
             case 2: flag = MOUSE_FLAG_BUTTON2; break; 
