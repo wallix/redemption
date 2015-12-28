@@ -52,7 +52,7 @@
 #include "RDP/orders/AlternateSecondaryWindowing.hpp"
 
 #include "log.hpp"
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "channel_list.hpp"
 #include "client_info.hpp"
 #include "mod_api.hpp"
@@ -111,7 +111,7 @@ public:
     bool                           _ctrl_alt_delete;
     StaticOutStream<256>           _decoded_data;
     uint8_t                        _keyboardMods;
-    
+    int                            _timer;
     
     
     enum {
@@ -575,7 +575,8 @@ public:
     , _sckRead(client_sck, QSocketNotifier::Read, this)
     , _keymap() 
     , _ctrl_alt_delete(false)
-    , _keyboardMods(0) {
+    , _keyboardMods(0) 
+    , _timer(0){
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
@@ -673,8 +674,9 @@ public:
         
         if (keyCode != 0) {
             
-            if (keyCode < 255 && keyCode > 0 && keyCode != Qt::Key_section && keyCode != Qt::Key_Slash) {
+            if (keyCode < 256 && keyCode > 0 && keyCode != Qt::Key_section /*&& keyCode != Qt::Key_Slash*/ || keyCode == 338) {
                 
+                const Keylayout::KeyLayout_t &layout = *(this->_layout);
                 
                 if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
                     
@@ -716,10 +718,25 @@ public:
                     }
                     
                 } else {
+                    
                     //-------------------
                     //    Characters
                     //-------------------
-                    keyCode = e->text().toStdString()[0];
+                    if (       keyCode == Qt::Key_Eacute)   { //  é
+                        keyCode = 0xE9;  
+                    } else if (keyCode == Qt::Key_Ccedilla) { //  ç
+                        keyCode = 0xE7;  
+                    } else if (keyCode == Qt::Key_Agrave)   { //  à
+                        keyCode = 0xE0;
+                    } else if (keyCode == Qt::Key_Ugrave)   { //  ù
+                        keyCode = 0xF9; 
+                    } else if (keyCode == 338           )   { //  œ / square
+                        keyCode = 0xB2; 
+                    } else if (keyCode == Qt::Key_Egrave)   { //  è
+                        keyCode = 0x00; // TODO
+                    } else {
+                        keyCode = e->text().toStdString()[0];
+                    }
                 }
     
     
@@ -735,8 +752,7 @@ public:
                 
                 if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
                     this->_layout = &(this->_keymap.keylayout_WORK->ctrl);
-                }
-                    
+                }     
                 
             } else {
                 
@@ -828,29 +844,21 @@ public:
                     case Qt::Key_ScrollLock : keyCode = 0x46; break; //  SCROLL 
                     case Qt::Key_Pause      : keyCode = 0xE1; break; //  PAUSE
                     case Qt::Key_Tab        : keyCode = 0x0F; break; //  TAB
-                    case 338                : keyCode = 0x29; break; //  œ / square
                     case Qt::Key_section    : keyCode = 0x35; break; //  § 
-                    case Qt::Key_Acircumflex: 
-                        if (this->_keyboardMods == 0) {
-                            //const Keylayout::KeyLayout_t & layout = *(this->_keymap.keylayout_WORK->deadkeys);
-                                              keyCode = 0x005e;
-                        }    
-                        if ((this->_keyboardMods & SHIFT_MOD) == SHIFT_MOD) {
-                            //const Keylayout::KeyLayout_t & layout = *(this->_keymap.keylayout_WORK->deadkeys);
-                                              keyCode = 0x005e;
-                        }   
-                                                              break; //  ^ ¨
-                    case Qt::Key_Slash      : keyCode = 0x62; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; // DIVIDE KP
-
+                    //case Qt::Key_Slash      : keyCode = 0x62; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  DIVIDE KP keyboardFlag = Keymap2::KBDFLAGS_EXTENDED;
                     
-                    // 16781906 // trema + circonflex
+                    // DeadKeys
+                    case Qt::Key_Dead_Circumflex: keyCode = 0x1a; break; //  ^ ¨
+                    case Qt::Key_Dead_Grave     : keyCode = 0x08; break; //  ` grave accent
+                    
+                    
+                    
                     //case 36 : scanCode = 0xE0; break; //  HOME
                     //case 0  : keyCode = 0xE0; break; //  PRNT_SCRN
                     //case 16777232 : keyCode = 0x00; break; // arrow between insert and up pg        
                     //case 0  : keyCode = 0xE0; break; //  R GUI
                     //case 0  : keyCode = 0xE0; break; //  APPS
                     //case 0  : keyCode = 0xE0; break; //  L GUI
-                    //case 144: keyCode = 0x45; break; //  NUM
                     //case 16777301 : keyCOde = 0x00; break; // key beside R CTRL
                     //case 16777250 : keyCOde = 0x00; break; // R window
                     
@@ -858,14 +866,13 @@ public:
                         unrecognised = true;
                         break;
                 }
-
             } 
             
             if (!unrecognised) {
                     this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-                    this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, 0000, &(this->_keymap)); 
-                }
-                
+                    this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap)); 
+            }
+            
             std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
         }
     }
