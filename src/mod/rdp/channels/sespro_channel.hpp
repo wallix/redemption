@@ -518,6 +518,8 @@ public:
         }
         else {
             const char * message   = session_probe_message.c_str();
+            this->front.session_update(message);
+
             const char * separator = ::strchr(message, '=');
 
             bool message_format_invalid = false;
@@ -703,10 +705,6 @@ public:
                             "Unexpected order. Message=\"%s\"",
                         message);
                 }
-
-                bool contian_window_title = false;
-                this->front.session_update(session_probe_message.c_str(),
-                    contian_window_title);
             }
             else {
                 message_format_invalid = true;

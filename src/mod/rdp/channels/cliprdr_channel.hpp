@@ -415,9 +415,7 @@ private:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    bool contian_window_title = false;
-                    this->front.session_update(message.c_str(),
-                        contian_window_title);
+                    this->front.session_update(message.c_str());
                 }
 
                 this->file_descriptor_stream.rewind();
@@ -451,9 +449,7 @@ private:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    bool contian_window_title = false;
-                    this->front.session_update(message.c_str(),
-                        contian_window_title);
+                    this->front.session_update(message.c_str());
                 }
             }
 
@@ -1002,9 +998,7 @@ public:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    bool contian_window_title = false;
-                    this->front.session_update(message.c_str(),
-                        contian_window_title);
+                    this->front.session_update(message.c_str());
                 }
 
                 this->file_descriptor_stream.rewind();
@@ -1038,9 +1032,7 @@ public:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    bool contian_window_title = false;
-                    this->front.session_update(message.c_str(),
-                        contian_window_title);
+                    this->front.session_update(message.c_str());
                 }
             }
 

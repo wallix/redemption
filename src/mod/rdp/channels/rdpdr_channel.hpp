@@ -1382,11 +1382,8 @@ public:
                                                 message +=
                                                     std::get<2>(*target_iter)->c_str();
 
-                                                bool contian_window_title =
-                                                    false;
                                                 this->front.session_update(
-                                                    message.c_str(),
-                                                    contian_window_title);
+                                                    message.c_str());
                                             }
                                         }
 
@@ -1437,7 +1434,8 @@ public:
                                          this->device_io_target_info_inventory.begin();
                                  target_iter != this->device_io_target_info_inventory.end();
                                  ++target_iter) {
-                                if ((device_io_response.DeviceId() == std::get<0>(*target_iter)) &&
+                                if ((device_io_response.DeviceId() ==
+                                    std::get<0>(*target_iter)) &&
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<4>(*target_iter)) {
                                         if (this->param_acl) {
@@ -1452,12 +1450,13 @@ public:
                                         }
 
                                         if (!this->param_dont_log_data_into_wrm) {
-                                            std::string message("WriteRedirectedFileSystem=");
-                                            message += std::get<2>(*target_iter)->c_str();
+                                            std::string message(
+                                                "WriteRedirectedFileSystem=");
+                                            message +=
+                                                std::get<2>(*target_iter)->c_str();
 
-                                            bool contian_window_title = false;
-                                            this->front.session_update(message.c_str(),
-                                                contian_window_title);
+                                            this->front.session_update(
+                                                message.c_str());
                                         }
 
                                         std::get<4>(*target_iter) = true;

@@ -184,9 +184,11 @@ public:
         }
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
+            const bool is_kc_driven_by_ocr = false;
             this->pkc = new NewKbdCapture(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(),
                     ini.get<cfg::context::pattern_notify>().c_str(),
                     !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
+                    is_kc_driven_by_ocr,
                     ini.get<cfg::debug::capture>()
                 );
         }
@@ -687,19 +689,14 @@ public:
         }
     }
 
-    void session_update(const timeval & now, const char * message,
-            bool & out__contian_window_title) override {
+    void session_update(const timeval & now, const char * message) override {
         if (this->capture_wrm) {
-            this->pnc->session_update(now, message,
-                out__contian_window_title);
+            this->pnc->session_update(now, message);
         }
 
         if (this->pkc) {
-            this->pkc->session_update(now, message,
-                out__contian_window_title);
+            this->pkc->session_update(now, message);
         }
-
-        out__contian_window_title = false;
     }
 };
 
