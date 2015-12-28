@@ -100,6 +100,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //}
         //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
         //                           , ini.get<cfg::debug::front,>() 0);
+        
+        time_t now = 1450864840;
 
         LCGRandom gen1(0);
 
@@ -254,7 +256,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 38) break;
-            mod->draw_event(time(nullptr));
+            mod->draw_event(now);
+            now++;
             LOG(LOG_INFO, "Calling Snapshot");
             front.periodic_snapshot();
         }

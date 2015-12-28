@@ -47,7 +47,7 @@ using FlatWabCloseModVariables = vcfg::variables<
 class FlatWabCloseMod : public InternalMod, public NotifyApi
 {
     FlatWabClose     close_widget;
-    TimeoutT<time_t> timeout;
+    Timeout timeout;
 
 private:
     bool showtimer;
@@ -116,11 +116,11 @@ public:
 
     void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             if (this->showtimer) {
                 this->close_widget.refresh_timeleft(this->timeout.timeleft(now));
             }

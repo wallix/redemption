@@ -405,7 +405,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool     disconnect_on_logon_user_change;
     const uint32_t open_session_timeout;
 
-    TimeoutT<time_t> open_session_timeout_checker;
+    Timeout open_session_timeout_checker;
 
     std::string output_filename;
 
@@ -2432,7 +2432,7 @@ public:
                             LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
                         }
 
-                        this->send_client_info_pdu(this->userid, this->password);
+                        this->send_client_info_pdu(this->userid, this->password, now);
 
                         this->state = MOD_RDP_GET_LICENSE;
                     }
@@ -3359,7 +3359,7 @@ public:
 
         if (this->open_session_timeout) {
             switch(this->open_session_timeout_checker.check(now)) {
-            case TimeoutT<time_t>::TIMEOUT_REACHED:
+            case Timeout::TIMEOUT_REACHED:
                 if (this->error_message) {
                     *this->error_message = "Logon timer expired!";
                 }
@@ -3378,10 +3378,10 @@ public:
                     this->hostname);
                 throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
             break;
-            case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+            case Timeout::TIMEOUT_NOT_REACHED:
                 this->event.set(1000000);
             break;
-            case TimeoutT<time_t>::TIMEOUT_INACTIVE:
+            case Timeout::TIMEOUT_INACTIVE:
             break;
             }
         }
@@ -6133,7 +6133,7 @@ public:
         }
     }   // process_bitmap_updates
 
-    void send_client_info_pdu(int userid, const char * password) {
+    void send_client_info_pdu(int userid, const char * password, const time_t & now) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
@@ -6176,7 +6176,7 @@ public:
 
         if (this->open_session_timeout) {
             this->open_session_timeout_checker.restart_timeout(
-                time(nullptr), this->open_session_timeout);
+                now, this->open_session_timeout);
             this->event.set(1000000);
         }
 
