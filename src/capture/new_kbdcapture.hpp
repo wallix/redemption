@@ -46,7 +46,7 @@ private:
 
     bool enable_keyboard_log_syslog;
 
-    bool is_agent_enabled_session = false;
+    bool is_driven_by_ocr = false;
 
     bool keyboard_input_mask_enabled = false;
 
@@ -114,11 +114,13 @@ public:
                  , char const * const filters_kill
                  , char const * const filters_notify
                  , bool enable_keyboard_log_syslog
+                 , bool is_driven_by_ocr
                  , int verbose = 0)
     : last_snapshot(now)
     , wait_until_next_snapshot(false)
     , authentifier(authentifier)
     , enable_keyboard_log_syslog(enable_keyboard_log_syslog)
+    , is_driven_by_ocr(is_driven_by_ocr)
     , verbose(verbose) {
         if (filters_kill) {
             utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
@@ -343,7 +345,7 @@ public:
                     unlogged_data_length);
             }
 
-            if (this->is_agent_enabled_session) {
+            if (this->is_driven_by_ocr) {
                 size_t stream_tail_room = this->session_data.tailroom();
                 if (stream_tail_room < unlogged_data_length) {
                     this->send_session_data();
@@ -405,7 +407,7 @@ public:
 
     virtual void session_update(const timeval & now, const char * message)
             override {
-        this->is_agent_enabled_session = true;
+        this->is_driven_by_ocr = true;
 
         if (!this->session_data.get_offset()) return;
 
