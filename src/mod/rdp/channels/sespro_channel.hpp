@@ -518,6 +518,8 @@ public:
         }
         else {
             const char * message   = session_probe_message.c_str();
+            this->front.session_update(message);
+
             const char * separator = ::strchr(message, '=');
 
             bool message_format_invalid = false;
@@ -703,8 +705,6 @@ public:
                             "Unexpected order. Message=\"%s\"",
                         message);
                 }
-
-                this->front.session_update(session_probe_message.c_str());
             }
             else {
                 message_format_invalid = true;

@@ -46,7 +46,11 @@ private:
 
     bool enable_keyboard_log_syslog;
 
+    bool is_agent_enabled_session = false;
+
     bool keyboard_input_mask_enabled = false;
+
+    uint32_t verbose;
 
     class Utf8KbdData {
         uint8_t kbd_data[128] = { 0, 0 };
@@ -114,7 +118,8 @@ public:
     : last_snapshot(now)
     , wait_until_next_snapshot(false)
     , authentifier(authentifier)
-    , enable_keyboard_log_syslog(enable_keyboard_log_syslog) {
+    , enable_keyboard_log_syslog(enable_keyboard_log_syslog)
+    , verbose(verbose) {
         if (filters_kill) {
             utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                 filters_kill, this->regexes_filter_kill, verbose);
@@ -124,6 +129,10 @@ public:
             utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                 filters_notify, this->regexes_filter_notify, verbose);
         }
+    }
+
+    ~NewKbdCapture() {
+        this->send_session_data();
     }
 
 public:
@@ -315,55 +324,45 @@ public:
     }
 
     void flush() {
-        if (this->unlogged_data.get_offset()) {
-/*
-            if (this->authentifier) {
-                const char prefix[] = "data=\"";
-                const char suffix[] = "\"";
+        const uint8_t * unlogged_data_p      = this->unlogged_data.get_data();
+        const size_t    unlogged_data_length = this->unlogged_data.get_offset();
 
-                char extra[this->unlogged_data.original_capacity() + sizeof(prefix) + sizeof(suffix) + 1];
-                ::snprintf(extra, sizeof(extra), "%s%.*s%s",
-                    prefix,
-                    (unsigned)this->unlogged_data.get_offset(),
-                    this->unlogged_data.get_data(),
-                    suffix);
-                if (this->keyboard_input_mask_enabled) {
-                    ::memset(&extra[0] + sizeof(prefix) - 1, '*',
-                        this->unlogged_data.get_offset());
+        if (unlogged_data_length) {
+            if (this->verbose) {
+                log_input_data<this->unlogged_data.original_capacity()>(
+                          [] (char const * data) {
+                              LOG(LOG_INFO, "type=\"KBD input\" %s", data);
+                          }
+                        , unlogged_data_p
+                        , unlogged_data_length
+                    );
+            }
+
+            if (this->data.has_room(unlogged_data_length)) {
+                this->data.out_copy_bytes(unlogged_data_p,
+                    unlogged_data_length);
+            }
+
+            if (this->is_agent_enabled_session) {
+                size_t stream_tail_room = this->session_data.tailroom();
+                if (stream_tail_room < unlogged_data_length) {
+                    this->send_session_data();
+                    stream_tail_room = this->session_data.tailroom();
                 }
-                this->authentifier->log4(this->enable_keyboard_log_syslog,
-                    "KBD input", extra);
-            }
-*/
-            log_input_data<this->unlogged_data.original_capacity()>(
-                      [] (char const * data) {
-                          LOG(LOG_INFO, "type=\"KBD input\" %s", data);
-                      }
-                    , this->unlogged_data.get_data()
-                    , this->unlogged_data.get_offset()
-                );
-
-            if (this->data.has_room(this->unlogged_data.get_offset())) {
-                this->data.out_copy_bytes(this->unlogged_data.get_data(),
-                    this->unlogged_data.get_offset());
-            }
-
-            if (!this->session_data.has_room(this->unlogged_data.get_offset())) {
-                if (this->authentifier) {
-                    log_input_data<this->session_data.original_capacity()>(
-                              [this] (char const * data) {
-                                  this->authentifier->log4(false,
-                                      "KBD input", data);
-                              }
-                            , this->session_data.get_data()
-                            , this->session_data.get_offset()
-                        );
+                if (stream_tail_room >= unlogged_data_length) {
+                    this->session_data.out_copy_bytes(unlogged_data_p,
+                        unlogged_data_length);
                 }
-                this->session_data.rewind();
             }
-            if (this->session_data.has_room(this->unlogged_data.get_offset())) {
-                this->session_data.out_copy_bytes(this->unlogged_data.get_data(),
-                    this->unlogged_data.get_offset());
+            else if (this->authentifier) {
+                log_input_data<this->unlogged_data.original_capacity()>(
+                          [this] (char const * data) {
+                              this->authentifier->log4(false,
+                                  "KBD input", data);
+                          }
+                        , unlogged_data_p
+                        , unlogged_data_length
+                    );
             }
 
             this->unlogged_data.rewind();
@@ -384,19 +383,8 @@ public:
         this->data.rewind();
     }
 
-    void reset_data() {
-        this->data.rewind();
-    }
-
-    virtual void session_update(const timeval & now, const char * message)
-            override {
+    void send_session_data() {
         if (!this->session_data.get_offset()) return;
-
-        const char * separator = ::strchr(message, '=');
-        if (!separator) return;
-
-        std::string order(message, separator - message);
-        if (order.compare("ForegroundWindowChanged")) return;
 
         if (this->authentifier) {
             log_input_data<this->session_data.original_capacity()>(
@@ -409,6 +397,25 @@ public:
                 );
         }
         this->session_data.rewind();
+    }
+
+    void reset_data() {
+        this->data.rewind();
+    }
+
+    virtual void session_update(const timeval & now, const char * message)
+            override {
+        this->is_agent_enabled_session = true;
+
+        if (!this->session_data.get_offset()) return;
+
+        const char * separator = ::strchr(message, '=');
+        if (!separator) return;
+
+        std::string order(message, separator - message);
+        if (order.compare("ForegroundWindowChanged")) return;
+
+        this->send_session_data();
     }
 };
 
