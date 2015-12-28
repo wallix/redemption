@@ -182,9 +182,11 @@ public:
         }
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
+            const bool is_kc_driven_by_ocr = false;
             this->pkc = new NewKbdCapture(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(),
                     ini.get<cfg::context::pattern_notify>().c_str(),
                     !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
+                    is_kc_driven_by_ocr,
                     ini.get<cfg::debug::capture>()
                 );
         }

@@ -359,6 +359,8 @@ public:
             return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
             return "Composite Widget Destroyed without child list not empty.";
+        case ERR_SESSION_PROBE_CLOSE_PENDING:
+            return "Session logoff in progress";
         default:
             {
                 int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);
