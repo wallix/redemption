@@ -82,10 +82,12 @@ private:
 
     const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
+    // TODO: why so many uninitialized constants ?
 public:
     Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini
+           , Random & rnd, bool externally_generated_breakpoint = false)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_drawable(this->capture_wrm || (ini.get<cfg::video::png_limit>() > 0))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
@@ -99,6 +101,7 @@ public:
     , pnc_ptr_cache(nullptr)
     , pnc(nullptr)
     , drawable(nullptr)
+    , crypto_ctx(rnd)
     , gd(nullptr)
     , last_now(now)
     , last_x(width / 2)
@@ -134,7 +137,6 @@ public:
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
-            memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
             memcpy(this->crypto_ctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(this->crypto_ctx.crypto_key));
             memcpy(this->crypto_ctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(this->crypto_ctx.hmac_key  ));
 
@@ -694,16 +696,14 @@ public:
         }
     }
 
-    void session_update(const timeval & now, const char * message,
-            bool & out__contian_window_title) override {
+    void session_update(const timeval & now, const char * message) override {
         if (this->capture_wrm) {
-            this->pnc->session_update(now, message,
-                out__contian_window_title);
-
-            return;
+            this->pnc->session_update(now, message);
         }
 
-        out__contian_window_title = false;
+        if (this->pkc) {
+            this->pkc->session_update(now, message);
+        }
     }
 };
 

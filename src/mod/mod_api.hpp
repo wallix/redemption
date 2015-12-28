@@ -181,14 +181,12 @@ public:
     virtual bool is_up_and_running() { return false; }
 
     virtual void disconnect() {}
-    
+
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 
     virtual void flush() {}
-    
 
-protected:
     virtual void display_osd_message(std::string & message) {}
 };
 

@@ -24,6 +24,9 @@
 #include "RDP/nla/sspi.hpp"
 #include "RDP/nla/ntlm/ntlm_context.hpp"
 
+// TODO: constants below are still globals, 
+// better to move them in the scope of functions/objects using them
+
 const char* NTLM_PACKAGE_NAME = "NTLM";
 const char Ntlm_Name[] = "NTLM";
 const char Ntlm_Comment[] = "NTLM Security Package";
@@ -37,6 +40,10 @@ const SecPkgInfo NTLM_SecPkgInfo = {
 };
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
+
+    Random & rand;
+
+    Ntlm_SecurityFunctionTable(Random & rand) : rand(rand) {}
 
     ~Ntlm_SecurityFunctionTable() override {}
 
@@ -162,7 +169,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
 
         if (!context) {
-            context = new NTLMContext;
+            context = new NTLMContext(this->rand);
 
             if (!context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
@@ -279,7 +286,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
 
         if (!context) {
-            context = new NTLMContext;
+            context = new NTLMContext(this->rand);
 
             if (!context) {
                 return SEC_E_INSUFFICIENT_MEMORY;

@@ -625,7 +625,7 @@ public:
         LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
         TODO("simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types")
-        
+
         if (!ini.get<cfg::globals::movie>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) &&
 //            ini.get<cfg::context::pattern_kill>().empty() &&
@@ -686,6 +686,7 @@ public:
                                    , false
                                    , authentifier
                                    , ini
+                                   , this->gen
                                    );
         if (this->nomouse) {
             this->capture->set_pointer_display();
@@ -741,7 +742,7 @@ public:
 
     void periodic_snapshot()
     {
-        LOG(LOG_INFO, "periodic snapshot");
+        //LOG(LOG_INFO, "periodic snapshot");
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
@@ -2464,18 +2465,13 @@ private:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(const char * message, bool & out__contian_window_title) override {
+    void session_update(const char * message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
 
-            this->capture->session_update(now, message,
-                out__contian_window_title);
-
-            return;
+            this->capture->session_update(now, message);
         }
-
-        out__contian_window_title = false;
     }
 
     bool disable_input_event_and_graphics_update(bool disable) override {

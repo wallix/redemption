@@ -55,6 +55,7 @@ struct rdpCredssp
     SecInterface sec_interface;
 
     const char * target_host;
+    Random & rand;
     const uint32_t verbose;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
@@ -68,6 +69,7 @@ struct rdpCredssp
                const char * target_host,
                const bool krb,
                const bool restricted_admin_mode,
+               Random & rand,
                const uint32_t verbose = 0)
         : server(false)
         , send_seq_num(0)
@@ -80,6 +82,7 @@ struct rdpCredssp
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_host(target_host)
+        , rand(rand)
         , verbose(verbose)
         , hardcodedtests(false)
     {
@@ -144,7 +147,7 @@ public:
         }
         if (secInter == NTLM_Interface) {
             LOG(LOG_INFO, "Credssp: NTLM Authentication");
-            this->table = new Ntlm_SecurityFunctionTable;
+            this->table = new Ntlm_SecurityFunctionTable(this->rand);
         }
         if (secInter == Kerberos_Interface) {
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");

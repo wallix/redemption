@@ -40,7 +40,8 @@
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , int capture_bpp, int wrm_compression_algorithm_
-                        , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
+                        , Inifile & ini, bool remove_input_file
+                        , CryptoContext & cctx, Random & rnd, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
                         , unsigned png_width, unsigned png_height
@@ -108,10 +109,11 @@ void init_signals(void)
 
 template<
     class CaptureMaker, class AddProgramOtion, class ParseFormat
-  , class InitCryptoIni, class HasExtraCapture, class... ExtraArguments>
+  , class HasExtraCapture, class... ExtraArguments>
 int app_recorder( int argc, char ** argv, const char * copyright_notice
                 , AddProgramOtion add_prog_option, ParseFormat parse_format
-                , InitCryptoIni init_crypto, HasExtraCapture has_extra_capture
+                , std::string & config_filename, Inifile & ini
+                , CryptoContext & cctx, Random & rnd, HasExtraCapture has_extra_capture
                 , ExtraArguments&&... extra_argument)
 {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -143,8 +145,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string wrm_color_depth;
     std::string wrm_encryption;
     std::string png_geometry;
-
-    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -243,7 +243,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
     }
 
-    Inifile ini;
     { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
 
     int wrm_compression_algorithm_;
@@ -381,15 +380,13 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     if (infile_is_encrypted || (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile)) {
-        if (int status = init_crypto(ini.get_ref<cfg::crypto::key0>(), ini.get_ref<cfg::crypto::key1>())) {
-            return status;
-        }
         OpenSSL_add_all_digests();
     }
 
     return recompress_or_record<CaptureMaker>(
         input_filename, output_filename, capture_bpp, wrm_compression_algorithm_, ini
-      , remove_input_file, infile_is_encrypted, auto_output_file
+      , remove_input_file
+      , cctx, rnd, infile_is_encrypted, auto_output_file
       , begin_cap, end_cap, order_count, clear, zoom
       , png_width, png_height
       , show_file_metadata, show_statistics
@@ -425,7 +422,8 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 template<class CaptureMaker, class... ExtraArguments>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , int capture_bpp, int wrm_compression_algorithm_
-                        , Inifile & ini, bool remove_input_file, bool infile_is_encrypted
+                        , Inifile & ini, bool remove_input_file
+                        , CryptoContext & cctx, Random & rnd, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
                         , unsigned png_width, unsigned png_height
@@ -484,11 +482,6 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
     TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
     TODO("if start and stop time are outside wrm, users should also be warned")
 
-    CryptoContext cctx;
-    memset(&cctx, 0, sizeof(cctx));
-    memcpy(cctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(cctx.crypto_key));
-    memcpy(cctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(cctx.hmac_key  ));
-
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };
     unsigned file_count   = 0;
@@ -532,7 +525,8 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                 ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
                   , do_record<CaptureMaker>(
                       trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, capture_bpp, wrm_compression_algorithm_, ini, file_count, order_count, clear, zoom
+                    , output_filename, capture_bpp, wrm_compression_algorithm_, ini, rnd
+                    , file_count, order_count, clear, zoom
                     , png_width, png_height
                     , show_file_metadata, show_statistics, verbose
                     , std::forward<ExtraArguments>(extra_argument)...
@@ -845,7 +839,7 @@ template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
-                    , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , Inifile & ini, Random & rnd, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument) {
@@ -915,7 +909,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             CaptureMaker capmake( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx, player.screen_rect.cy
                                 , player.info_bpp, capture_bpp, outfile_path, outfile_basename, outfile_extension
-                                , ini, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
+                                , ini, rnd, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
             auto & capture = capmake.capture;
 
             if (capture.capture_png) {

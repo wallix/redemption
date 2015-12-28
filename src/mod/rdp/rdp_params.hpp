@@ -35,6 +35,8 @@ struct ModRDPParams {
     const char * target_host;
     const char * client_address;
 
+    const char * auth_user;
+
     const char * client_name;
 
     bool enable_tls;
@@ -130,6 +132,8 @@ struct ModRDPParams {
         , target_host(target_host)
         , client_address(client_address)
 
+        , auth_user("")
+
         , client_name(nullptr)
 
         , enable_tls(true)
@@ -163,7 +167,7 @@ struct ModRDPParams {
 
         , acl(nullptr)
 
-        , outbound_connection_blocking_rules(nullptr)
+        , outbound_connection_blocking_rules("")
 
         , ignore_auth_channel(false)
         , auth_channel("")
@@ -227,6 +231,9 @@ struct ModRDPParams {
             "ModRDPParams target_host=\"%s\"",                     this->target_host);
         LOG(LOG_INFO,
             "ModRDPParams client_address=\"%s\"",                  this->client_address);
+
+        LOG(LOG_INFO,
+            "ModRDPParams auth_user=\"%s\"",                       (this->auth_user ? this->auth_user : "<null>"));
 
         LOG(LOG_INFO,
             "ModRDPParams client_name=\"%s\"",                     (this->client_name ? this->client_name : "<null>"));

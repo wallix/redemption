@@ -10,10 +10,7 @@
 #ifndef WABCRYPTOFILE_H
 #define WABCRYPTOFILE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#include "utils/genrandom.hpp"
 #include "openssl_crypto.hpp"
 #include "openssl_evp.hpp"
 
@@ -46,9 +43,22 @@ enum {
 #define HMAC_KEY_LENGTH   CRYPTO_KEY_LENGTH
 
 struct CryptoContext {
+    Random & gen;
+
+    CryptoContext(Random & gen) : gen(gen) {}
+
     unsigned char hmac_key[HMAC_KEY_LENGTH];
     unsigned char crypto_key[CRYPTO_KEY_LENGTH];
+
+    void random(void * dest, size_t size) 
+    {
+        this->gen.random(dest, size);
+    }
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Standard unbase64, store result in buffer. Returns written bytes
  */

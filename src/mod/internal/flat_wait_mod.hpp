@@ -48,7 +48,7 @@ class FlatWaitMod : public InternalMod, public NotifyApi
     FlatWait wait_widget;
 
     FlatWaitModVariables vars;
-    TimeoutT<time_t>   timeout;
+    Timeout timeout;
 
     CopyPaste copy_paste;
 
@@ -121,10 +121,10 @@ private:
 public:
     void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->refused();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
         default:

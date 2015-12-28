@@ -27,9 +27,13 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 #undef RECORD_PATH
-#define RECORD_PATH "/tmp/"
+#define RECORD_PATH "/tmp/recorded"
 #undef WRM_PATH
-#define WRM_PATH "/tmp/"
+#define WRM_PATH "/tmp/recorded"
+#undef HASH_PATH
+#define HASH_PATH "/tmp/hash"
+#undef RECORD_TMP_PATH
+#define RECORD_TMP_PATH "/tmp/tmp"
 
 //#define LOGNULL
 #define LOGPRINT
@@ -39,6 +43,7 @@
 #include "test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
+#include "utils/fileutils.hpp"
 
 #include "front.hpp"
 #include "null/null.hpp"
@@ -52,6 +57,10 @@ namespace dump2008 {
 BOOST_AUTO_TEST_CASE(TestFront)
 {
     try {
+
+        ::unlink(RECORD_PATH "/redemption.mwrm");
+        ::unlink(RECORD_PATH "/redemption-000000.wrm");
+
         ClientInfo info;
         info.keylayout = 0x04C;
         info.console_session = 0;
@@ -61,16 +70,27 @@ BOOST_AUTO_TEST_CASE(TestFront)
         info.height = 600;
         info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         snprintf(info.hostname,sizeof(info.hostname),"test");
-        uint32_t verbose = 511;
+        uint32_t verbose = 3;
 
         Inifile ini;
-        ini.set<cfg::debug::front>(511);
+        ini.set<cfg::debug::front>(verbose);
         ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
         ini.set<cfg::client::cache_waiting_list>(true);
         ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
         ini.set<cfg::video::png_interval>(3000);
         ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
         ini.set<cfg::video::wrm_compression_algorithm>(0);
+
+        ini.set_value("crypto", "key0", "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                        "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+
+        ini.set_value("crypto", "key1", "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                        "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+
 
         // Uncomment the code block below to generate testing data.
         //int nodelay = 1;
@@ -80,6 +100,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //}
         //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
         //                           , ini.get<cfg::debug::front,>() 0);
+        
+        time_t now = 1450864840;
 
         LCGRandom gen1(0);
 
@@ -105,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         class MyFront : public Front
         {
             public:
-            
+
             MyFront( Transport & trans
                    , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
                    , Random & gen
@@ -125,15 +147,15 @@ BOOST_AUTO_TEST_CASE(TestFront)
                    , persistent_key_list_transport)
                 {
                 }
-            
+
                 void clear_channels()
                 {
                     this->channel_list.clear_channels();
                 }
-            
-                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override 
+
+                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override
                 {
-                    return this->channel_list; 
+                    return this->channel_list;
                 }
 
                 virtual void send_to_channel(
@@ -141,12 +163,12 @@ BOOST_AUTO_TEST_CASE(TestFront)
                     uint8_t const * data,
                     size_t length,
                     size_t chunk_size,
-                    int flags) override 
+                    int flags) override
                 {
                     LOG(LOG_INFO, "--------- FRONT ------------------------");
                     LOG(LOG_INFO, "send_to_channel");
                     LOG(LOG_INFO, "========================================\n");
-                }                
+                }
         };
 
         MyFront front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
@@ -206,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         LCGRandom gen2(0);
 
         BOOST_CHECK(true);
-        
+
         front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
         mod_api * mod = &mod_;
@@ -220,6 +242,10 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
+        // Force Front to be up and running after Deactivation-Reactivation
+        //  Sequence initiated by mod_rdp.
+        front.up_and_running = 1;
+
         LOG(LOG_INFO, "Before Start Capture");
 
         NullAuthentifier blackhole;
@@ -230,7 +256,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 38) break;
-            mod->draw_event(time(nullptr));
+            mod->draw_event(now);
+            now++;
             LOG(LOG_INFO, "Calling Snapshot");
             front.periodic_snapshot();
         }

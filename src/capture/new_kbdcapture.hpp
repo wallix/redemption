@@ -33,6 +33,7 @@ struct NewKbdCapture : public RDPCaptureDevice
 private:
     StaticOutStream<49152> unlogged_data;
     StaticOutStream<24576> data;
+    StaticOutStream<16384> session_data;
 
     timeval last_snapshot;
 
@@ -294,8 +295,28 @@ public:
         this->last_snapshot = now;
     }
 
+    template<int N, class LogMgr>
+    void log_input_data(LogMgr log_mgr, uint8_t const * data, size_t data_len) {
+        const char prefix[] = "data=\"";
+        const char suffix[] = "\"";
+
+        char extra[N + sizeof(prefix) + sizeof(suffix) + 1];
+        ::snprintf(extra, sizeof(extra), "%s%.*s%s",
+            prefix,
+            (unsigned)data_len,
+            data,
+            suffix);
+        if (this->keyboard_input_mask_enabled) {
+            ::memset(&extra[0] + sizeof(prefix) - 1, '*',
+                this->unlogged_data.get_offset());
+        }
+
+        log_mgr(extra);
+    }
+
     void flush() {
         if (this->unlogged_data.get_offset()) {
+/*
             if (this->authentifier) {
                 const char prefix[] = "data=\"";
                 const char suffix[] = "\"";
@@ -313,9 +334,35 @@ public:
                 this->authentifier->log4(this->enable_keyboard_log_syslog,
                     "KBD input", extra);
             }
+*/
+            log_input_data<this->unlogged_data.original_capacity()>(
+                      [] (char const * data) {
+                          LOG(LOG_INFO, "type=\"KBD input\" %s", data);
+                      }
+                    , this->unlogged_data.get_data()
+                    , this->unlogged_data.get_offset()
+                );
 
             if (this->data.has_room(this->unlogged_data.get_offset())) {
                 this->data.out_copy_bytes(this->unlogged_data.get_data(),
+                    this->unlogged_data.get_offset());
+            }
+
+            if (!this->session_data.has_room(this->unlogged_data.get_offset())) {
+                if (this->authentifier) {
+                    log_input_data<this->session_data.original_capacity()>(
+                              [this] (char const * data) {
+                                  this->authentifier->log4(false,
+                                      "KBD input", data);
+                              }
+                            , this->session_data.get_data()
+                            , this->session_data.get_offset()
+                        );
+                }
+                this->session_data.rewind();
+            }
+            if (this->session_data.has_room(this->unlogged_data.get_offset())) {
+                this->session_data.out_copy_bytes(this->unlogged_data.get_data(),
                     this->unlogged_data.get_offset());
             }
 
@@ -339,6 +386,29 @@ public:
 
     void reset_data() {
         this->data.rewind();
+    }
+
+    virtual void session_update(const timeval & now, const char * message)
+            override {
+        if (!this->session_data.get_offset()) return;
+
+        const char * separator = ::strchr(message, '=');
+        if (!separator) return;
+
+        std::string order(message, separator - message);
+        if (order.compare("ForegroundWindowChanged")) return;
+
+        if (this->authentifier) {
+            log_input_data<this->session_data.original_capacity()>(
+                      [this] (char const * data) {
+                          this->authentifier->log4(false,
+                              "KBD input", data);
+                      }
+                    , this->session_data.get_data()
+                    , this->session_data.get_offset()
+                );
+        }
+        this->session_data.rewind();
     }
 };
 

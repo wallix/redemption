@@ -23,12 +23,7 @@
 
 #include "asynchronous_task_manager.hpp"
 #include "virtual_channel_data_sender.hpp"
-
-#define MODRDP_LOGLEVEL_CLIPRDR      0x04000000
-#define MODRDP_LOGLEVEL_RDPDR        0x08000000
-
-#define MODRDP_LOGLEVEL_CLIPRDR_DUMP 0x40000000
-#define MODRDP_LOGLEVEL_RDPDR_DUMP   0x80000000
+#include "rdp/rdp_log.hpp"
 
 typedef int_fast32_t data_size_type;
 
@@ -79,7 +74,7 @@ protected:
 public:
     virtual void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length) = 0;
+        uint32_t chunk_data_length) {}
 
     virtual void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,

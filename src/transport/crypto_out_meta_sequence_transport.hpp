@@ -23,7 +23,7 @@
 
 #include "out_meta_sequence_transport_with_sum.hpp"
 #include "buffer/crypto_filename_buf.hpp"
-#include "urandom_read.hpp"
+#include "utils/genrandom.hpp"
 #include "fileutils.hpp"
 
 namespace detail
@@ -44,12 +44,7 @@ namespace detail
             }
 
             unsigned char iv[32];
-            if (-1 == urandom_read(iv, 32)) {
-                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-                buf.close();
-                return -1;
-            }
-
+            cctx.random(iv, 32);
             return transfil::encrypt_filter::open(buf, trace_key, &cctx, iv);
         }
     };

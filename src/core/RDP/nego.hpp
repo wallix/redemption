@@ -82,14 +82,14 @@ struct RdpNego
     const char * target_host;
 
     uint8_t * current_password;
-
+    Random & rand;
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
     bool test;
     const uint32_t verbose;
     char * lb_info;
 
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
-            const char * target_host, const char krb, const uint32_t verbose = 0)
+            const char * target_host, const char krb, Random & rand, const uint32_t verbose = 0)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -101,6 +101,7 @@ struct RdpNego
     , trans(socket_trans)
     , target_host(target_host)
     , current_password(nullptr)
+    , rand(rand)
     , test(false)
     , verbose(verbose)
     , lb_info(nullptr)
@@ -348,6 +349,7 @@ struct RdpNego
                                    this->domain, this->current_password,
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
+                                   this->rand,
                                    this->verbose);
                 if (this->test) {
                     credssp.hardcodedtests = true;

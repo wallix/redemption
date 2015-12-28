@@ -42,6 +42,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     ini.set<cfg::video::wrm_compression_algorithm>(0);
     const int groupid = 0;
     {
+        LCGRandom rnd(0);
+
         // Timestamps are applied only when flushing
         timeval now;
         now.tv_usec = 0;
@@ -59,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
 
         Capture capture(
-            now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini
+            now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini, rnd
         );
 
         bool ignore_frame_in_timeval = false;
@@ -191,6 +193,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
 BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
+    LCGRandom rnd(0);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     {
@@ -209,7 +212,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::png);
         ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
-        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini);
+        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini, rnd);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.server_set_pointer(pointer1);
