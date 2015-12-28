@@ -696,19 +696,14 @@ public:
         }
     }
 
-    void session_update(const timeval & now, const char * message,
-            bool & out__contian_window_title) override {
+    void session_update(const timeval & now, const char * message) override {
         if (this->capture_wrm) {
-            this->pnc->session_update(now, message,
-                out__contian_window_title);
+            this->pnc->session_update(now, message);
         }
 
         if (this->pkc) {
-            this->pkc->session_update(now, message,
-                out__contian_window_title);
+            this->pkc->session_update(now, message);
         }
-
-        out__contian_window_title = false;
     }
 };
 

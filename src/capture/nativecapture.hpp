@@ -247,9 +247,8 @@ public:
         this->recorder.timestamp(now);
     }
 
-    void session_update(const timeval & now, const char * message,
-            bool & out__contian_window_title) override {
-        this->recorder.session_update(now, message, out__contian_window_title);
+    void session_update(const timeval & now, const char * message) override {
+        this->recorder.session_update(now, message);
     }
 };
 

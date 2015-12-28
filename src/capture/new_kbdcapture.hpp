@@ -388,8 +388,8 @@ public:
         this->data.rewind();
     }
 
-    virtual void session_update(const timeval & now, const char * message,
-            bool & out__contian_window_title) override {
+    virtual void session_update(const timeval & now, const char * message)
+            override {
         if (!this->session_data.get_offset()) return;
 
         const char * separator = ::strchr(message, '=');

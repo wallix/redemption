@@ -704,9 +704,7 @@ public:
                         message);
                 }
 
-                bool contian_window_title = false;
-                this->front.session_update(session_probe_message.c_str(),
-                    contian_window_title);
+                this->front.session_update(session_probe_message.c_str());
             }
             else {
                 message_format_invalid = true;
