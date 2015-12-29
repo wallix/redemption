@@ -23,24 +23,22 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdp
+#define BOOST_TEST_MODULE TestRDPQt
 #include <boost/test/auto_unit_test.hpp>
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+//#define LOGPRINTlibboost_unit_test
 #include "config.hpp"
 #include "socket_transport.hpp"
 #include "test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
-
 #include "../src/front/front_Qt.hpp"
 
 
-
-BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
+BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
     int argc(0);
     char chartab[] = "myprog";
@@ -48,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     QApplication app(argc, argv);
 
     ClientInfo info;
-    info.keylayout = 0x04C;
+    info.keylayout = 0x040C;// 0x40C , 0x409 USA
     info.console_session = 0;
     info.brush_cache_code = 0;
     info.bpp = 24;
@@ -114,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
     mod_api * mod = &mod_;
-    front.setCallback(mod);
+    
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
@@ -122,8 +120,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQtDrawablePNGLike)
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
-    //QTimerParent qTimerParent(&front, 100, 0, mod);
-    
+    front.setCallback_And_StartListening(mod);
     
     app.exec();
     
