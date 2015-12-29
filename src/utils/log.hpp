@@ -73,47 +73,49 @@ namespace { namespace compiler_aux_ {
 #  define LOG_SESSION LOGSYSLOG__REDEMPTION__SESSION__INTERNAL
 
 #elif defined(LOGPRINT)
-#  define LOG(priority, ...)                                                    \
-    LOGCHECK__REDEMPTION__INTERNAL((                                            \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                                          \
-        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__), \
-        1                                                                       \
+#  define LOG(priority, ...)                                                     \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__),  \
+        1                                                                        \
     ))
-#  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id,       \
-        user, device, service, account, priority, ...)                          \
-    LOGCHECK__REDEMPTION__INTERNAL((                                            \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                                          \
-        LOGNULL__REDEMPTION__SESSION__INTERNAL(                                 \
-            duplicate_with_pid,                                                 \
-            session_type,                                                       \
-            type,                                                               \
-            session_id,                                                         \
-            user,                                                               \
-            device,                                                             \
-            service,                                                            \
-            account                                                             \
-        ),                                                                      \
-        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__), \
-        1                                                                       \
+#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
+        user, device, service, account, priority, ...)                           \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGNULL__REDEMPTION__SESSION__INTERNAL(                                  \
+            normal_log,                                                          \
+            session_log,                                                         \
+            session_type,                                                        \
+            type,                                                                \
+            session_id,                                                          \
+            user,                                                                \
+            device,                                                              \
+            service,                                                             \
+            account                                                              \
+        ),                                                                       \
+        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__),  \
+        1                                                                        \
     ))
 
 #elif defined(LOGNULL)
 #  define LOG(priority, ...) LOG_FORMAT_CHECK(__VA_ARGS__)
-#  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
-        user, device, service, account, priority, ...)                    \
-    LOGCHECK__REDEMPTION__INTERNAL((                                      \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                                    \
-        LOGNULL__REDEMPTION__SESSION__INTERNAL(                           \
-            duplicate_with_pid,                                           \
-            session_type,                                                 \
-            type,                                                         \
-            session_id,                                                   \
-            user,                                                         \
-            device,                                                       \
-            service,                                                      \
-            account                                                       \
-        ),                                                                \
-        1                                                                 \
+#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
+        user, device, service, account, priority, ...)                           \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGNULL__REDEMPTION__SESSION__INTERNAL(                                  \
+            normal_log,                                                          \
+            session_log,                                                         \
+            session_type,                                                        \
+            type,                                                                \
+            session_id,                                                          \
+            user,                                                                \
+            device,                                                              \
+            service,                                                             \
+            account                                                              \
+        ),                                                                       \
+        1                                                                        \
     ))
 
 #else
@@ -123,26 +125,28 @@ namespace { namespace compiler_aux_ {
         LOGSYSLOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__), \
         1                                                                        \
     ))
-#  define LOG_SESSION(duplicate_with_pid, session_type, type, session_id, \
-        user, device, service, account, priority, format, ...             \
-    )                                                                     \
-    LOGCHECK__REDEMPTION__INTERNAL((                                      \
-        LOG_FORMAT_CHECK(format, __VA_ARGS__),                            \
-        LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                         \
-            duplicate_with_pid, session_type, type, session_id,           \
-            user, device, service, account, priority,                     \
-            "%s (%d/%d) -- type='%s'%s" format,                           \
-            "[%s Session] "                                               \
-                "type='%s' "                                              \
-                "session_id='%s' "                                        \
-                "user='%s' "                                              \
-                "device='%s' "                                            \
-                "service='%s' "                                           \
-                "account='%s'%s"                                          \
-                format,                                                   \
-            ((*format) ? " " : ""),                                       \
-            __VA_ARGS__                                                   \
-        ), 1)                                                             \
+#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
+        user, device, service, account, priority, format, ...                    \
+    )                                                                            \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(format, __VA_ARGS__),                                   \
+        LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                                \
+            normal_log,                                                          \
+            session_log,                                                         \
+            session_type, type, session_id,                                      \
+            user, device, service, account, priority,                            \
+            "%s (%d/%d) -- type='%s'%s" format,                                  \
+            "[%s Session] "                                                      \
+                "type='%s' "                                                     \
+                "session_id='%s' "                                               \
+                "user='%s' "                                                     \
+                "device='%s' "                                                   \
+                "service='%s' "                                                  \
+                "account='%s'%s"                                                 \
+                format,                                                          \
+            ((*format) ? " " : ""),                                              \
+            __VA_ARGS__                                                          \
+        ), 1)                                                                    \
     )
 #endif
 
@@ -201,7 +205,8 @@ namespace {
 
     template<class... Ts>
     void LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(
-        bool duplicate_with_pid,
+        bool normal_log,
+        bool session_log,
 
         const char * session_type,
         const char * type,
@@ -220,31 +225,34 @@ namespace {
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         #endif
-        if (duplicate_with_pid) {
+        if (normal_log) {
             syslog(
                 priority, format_with_pid,
                 prioritynames[priority], getpid(), getpid(),
                 type, args...
             );
         }
-        syslog(
-            priority, format2,
-            session_type,
-            type,
-            session_id,
-            user,
-            device,
-            service,
-            account,
-            args...
-         );
+        if (session_log) {
+            syslog(
+                priority, format2,
+                session_type,
+                type,
+                session_id,
+                user,
+                device,
+                service,
+                account,
+                args...
+             );
+        }
         #ifdef __GNUG__
             #pragma GCC diagnostic pop
         #endif
     }
 
     inline void LOGNULL__REDEMPTION__SESSION__INTERNAL(
-        bool duplicate_with_pid,
+        bool normal_log,
+        bool session_log,
         char const * session_type,
         char const * type,
         char const * session_id,
@@ -253,7 +261,8 @@ namespace {
         char const * service,
         char const * account
     ) {
-        (void)duplicate_with_pid;
+        (void)normal_log;
+        (void)session_log;
         (void)session_type;
         (void)type;
         (void)session_id;

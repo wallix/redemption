@@ -1159,6 +1159,14 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+
+        struct enable_session_log {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
     };
 
     struct internal_mod {
@@ -1943,6 +1951,7 @@ struct globals
 , cfg::globals::enable_osd_display_remote_target
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
+, cfg::globals::enable_session_log
 { static constexpr bool is_section = true; };
 
 struct internal_mod

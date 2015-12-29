@@ -404,7 +404,9 @@ public:
         if (!separator) return;
 
         std::string order(message, separator - message);
-        if (order.compare("ForegroundWindowChanged")) return;
+        if (order.compare("ForegroundWindowChanged") &&
+            order.compare("CompletedProcess") &&
+            order.compare("NewProcess")) return;
 
         this->send_session_data();
     }
