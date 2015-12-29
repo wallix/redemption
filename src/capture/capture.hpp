@@ -55,7 +55,9 @@ private:
     const configs::TraceType trace_type;
     CryptoContext cctx;
 
+public:
     OutFilenameSequenceTransport * png_trans;
+private:
     Transport * wrm_trans;
 // for extension
 // end extension
