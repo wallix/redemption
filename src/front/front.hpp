@@ -664,30 +664,9 @@ public:
             LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
         }
 
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, "redemption"); // default value actual one should come from movie_path
-        strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(), path,
-                                        sizeof(path), basename, sizeof(basename), extension,
-                                        sizeof(extension));
-        if (!res) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
-        this->capture = new Capture( now, width, height, this->capture_bpp, this->capture_bpp
-                                   , ini.get<cfg::video::record_path>()
-                                   , ini.get<cfg::video::record_tmp_path>()
-                                   , ini.get<cfg::video::hash_path>(), basename
-                                   , true
-                                   , false
-                                   , authentifier
-                                   , ini
-                                   , this->gen
-                                   );
+        this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
+                                   , true, false, authentifier, ini, this->gen);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }

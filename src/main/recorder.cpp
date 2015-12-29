@@ -49,15 +49,14 @@ int main(int argc, char** argv)
     struct CaptureMaker {
         Capture capture;
 
-        CaptureMaker( const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
-                    , const char * path, const char * basename, const char * /*extension*/
+        CaptureMaker(const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
                     , Inifile & ini, Random & rnd, bool /*clear*/, uint32_t /*verbose*/)
         : capture( now, width, height, order_bpp
                  , capture_bpp
-                 , path, path, ini.get<cfg::video::hash_path>(), basename
                  , false, false, nullptr, ini, rnd, true)
         {}
     };
+    
     app_recorder<CaptureMaker>(
         argc, argv
       , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
