@@ -75,7 +75,7 @@
 #include <QtGui/QKeyEvent>
 #include <QtGui/QWheelEvent>
 #include <QtCore/QSocketNotifier>
-
+#include <QtGui/QPushButton>
 
 
 class Front_Qt : public QWidget, public FrontAPI
@@ -112,7 +112,7 @@ public:
     StaticOutStream<256>           _decoded_data;
     uint8_t                        _keyboardMods;
     int                            _timer;
-    
+    QPushButton                    _button;
     
     enum {
           CTRL_MOD     = 0x08
@@ -576,7 +576,8 @@ public:
     , _keymap() 
     , _ctrl_alt_delete(false)
     , _keyboardMods(0) 
-    , _timer(0){
+    , _timer(0)
+    , _button("CTRL + ALT + DELETE", this) {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
@@ -584,7 +585,7 @@ public:
         _keymap.init_layout(info.keylayout);
         this->_layout = &(this->_keymap.keylayout_WORK->noMod);
             
-        this->setFixedSize(_width, _height);
+        this->setFixedSize(this->_width, this->_height+20);
             
         QSize size(sizeHint());
         QDesktopWidget* desktop = QApplication::desktop();
@@ -596,11 +597,19 @@ public:
         this->_label.installEventFilter(this);
             
         this->_painter.setRenderHint(QPainter::Antialiasing);
-        this->_painter.fillRect(0, 0, this->_width, this->_height, Qt::white);
         this->_pen.setWidth(1);
         this->_painter.setPen(this->_pen);
             
         this->setAttribute(Qt::WA_NoSystemBackground);
+        
+        this->_painter.fillRect(0, 0, this->_width, this->_height, Qt::white);
+        //this->_painter.fillRect(0, this->_height, this->_width, 2, Qt::red);
+        
+        _button.setToolTip("CTRL + ALT + DELETE"); 
+        _button.setGeometry(QRect(QPoint(0, this->_height+1),QSize(this->_width, 20)));
+        QObject::connect(&_button, SIGNAL (pressed()),  this, SLOT (CtrlAltDelOn()));
+        QObject::connect(&_button, SIGNAL (released()), this, SLOT (CtrlAltDelOut()));
+        _button.show();
 
 
         // -------- Start of system wide SSL_Ctx option ------------------------------
@@ -674,7 +683,7 @@ public:
         
         if (keyCode != 0) {
             
-            if (keyCode < 256 && keyCode > 0 && keyCode != Qt::Key_section /*&& keyCode != Qt::Key_Slash*/ || keyCode == 338) {
+            if (keyCode < 256 && keyCode > 0 || keyCode == 338) {
                 
                 const Keylayout::KeyLayout_t &layout = *(this->_layout);
                 
@@ -722,32 +731,34 @@ public:
                     //-------------------
                     //    Characters
                     //-------------------
-                    if (       keyCode == Qt::Key_Eacute)   { //  é
-                        keyCode = 0xE9;  
-                    } else if (keyCode == Qt::Key_Ccedilla) { //  ç
-                        keyCode = 0xE7;  
-                    } else if (keyCode == Qt::Key_Agrave)   { //  à
-                        keyCode = 0xE0;
-                    } else if (keyCode == Qt::Key_Ugrave)   { //  ù
-                        keyCode = 0xF9; 
-                    } else if (keyCode == 338           )   { //  œ / square
-                        keyCode = 0xB2; 
-                    } else if (keyCode == Qt::Key_Egrave)   { //  è
-                        keyCode = 0x00; // TODO
-                    } else {
-                        keyCode = e->text().toStdString()[0];
+                    switch (keyCode) { 
+                        case Qt::Key_Eacute   : keyCode = 0xE9; break; //  é
+                        case Qt::Key_Ccedilla : keyCode = 0xE7; break; //  ç
+                        case Qt::Key_Agrave   : keyCode = 0xE0; break; //  à
+                        case Qt::Key_Ugrave   : keyCode = 0xF9; break; //  ù
+                        case 338              : keyCode = 0xB2; break; //  œ / square
+                        case Qt::Key_Egrave   : keyCode = 0xE8; break; //  è
+                        case Qt::Key_section  : keyCode = 0xA7; break; //  §
+                        case Qt::Key_Slash    :
+                            if (this->_keyboardMods == 0) {
+                                keyCode = 0x21;
+                                keyboardFlag = Keymap2::KBDFLAGS_EXTENDED;
+                            }
+                            break;
+                            
+                        default: keyCode = e->text().toStdString()[0]; break;
                     }
                 }
-    
-    
-                // to reverse start
+                
+
+                // to reverse 
                 int i(0);
                 if (this->_layout != nullptr) {
                     const Keylayout::KeyLayout_t & layout = *(this->_layout);
-                    for (; i < 128 && layout[i] != keyCode; i++) {};
+                    for (; i < 128 && layout[i] != keyCode; i++) {}
                 }
                 keyCode = i;
-                // to reverse end
+                // 
                 
                 
                 if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
@@ -819,16 +830,6 @@ public:
                     case Qt::Key_Return     : keyCode = 0x1C; break; //  ENTER
                     case Qt::Key_Backspace  : keyCode = 0x0E; break; //  BKSP
                     case Qt::Key_Escape     : keyCode = 0x01; break; //  ESCAPE
-                    case Qt::Key_NumLock    : keyCode = 0x45; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  NUMLOCK
-                    case Qt::Key_Insert     : keyCode = 0x52; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  INSERT
-                    case Qt::Key_Delete     : keyCode = 0x53; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  DELETE               
-                    case Qt::Key_End        : keyCode = 0x4F; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  END
-                    case Qt::Key_PageDown   : keyCode = 0x51; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  PG DN
-                    case Qt::Key_PageUp     : keyCode = 0x49; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  PG UP
-                    case Qt::Key_Up         : keyCode = 0x48; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  U ARROW
-                    case Qt::Key_Left       : keyCode = 0x4B; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  L ARROW
-                    case Qt::Key_Down       : keyCode = 0x50; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  D ARROW
-                    case Qt::Key_Right      : keyCode = 0x4D; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  R ARROW
                     case Qt::Key_F1         : keyCode = 0x3B; break; //  F1
                     case Qt::Key_F2         : keyCode = 0x3C; break; //  F2
                     case Qt::Key_F3         : keyCode = 0x3D; break; //  F3
@@ -844,23 +845,31 @@ public:
                     case Qt::Key_ScrollLock : keyCode = 0x46; break; //  SCROLL 
                     case Qt::Key_Pause      : keyCode = 0xE1; break; //  PAUSE
                     case Qt::Key_Tab        : keyCode = 0x0F; break; //  TAB
-                    case Qt::Key_section    : keyCode = 0x35; break; //  § 
-                    //case Qt::Key_Slash      : keyCode = 0x62; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  DIVIDE KP keyboardFlag = Keymap2::KBDFLAGS_EXTENDED;
+                     
+                    case Qt::Key_Home       : keyCode = 0x47; break; //  HOME
                     
                     // DeadKeys
                     case Qt::Key_Dead_Circumflex: keyCode = 0x1a; break; //  ^ ¨
                     case Qt::Key_Dead_Grave     : keyCode = 0x08; break; //  ` grave accent
                     
+                    // Extended keyboard
+                    case Qt::Key_NumLock    : keyCode = 0x45; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  NUMLOCK
+                    case Qt::Key_Insert     : keyCode = 0x52; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  INSERT
+                    case Qt::Key_Delete     : keyCode = 0x53; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  DELETE               
+                    case Qt::Key_End        : keyCode = 0x4F; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  END
+                    case Qt::Key_PageDown   : keyCode = 0x51; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  PG DN
+                    case Qt::Key_PageUp     : keyCode = 0x49; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  PG UP
+                    case Qt::Key_Up         : keyCode = 0x48; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  U ARROW
+                    case Qt::Key_Left       : keyCode = 0x4B; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  L ARROW
+                    case Qt::Key_Down       : keyCode = 0x50; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  D ARROW
+                    case Qt::Key_Right      : keyCode = 0x4D; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  R ARROW
+                    case Qt::Key_Meta       : keyCode = 0x5c; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  R WINDOW
+                    case Qt::Key_Menu       : keyCode = 0x5D; keyboardFlag = Keymap2::KBDFLAGS_EXTENDED; break; //  MENU APPS
                     
-                    
-                    //case 36 : scanCode = 0xE0; break; //  HOME
-                    //case 0  : keyCode = 0xE0; break; //  PRNT_SCRN
-                    //case 16777232 : keyCode = 0x00; break; // arrow between insert and up pg        
+                    //case 0  : keyCode = 0xE0; break; //  PRNT_SCRN  
                     //case 0  : keyCode = 0xE0; break; //  R GUI
-                    //case 0  : keyCode = 0xE0; break; //  APPS
                     //case 0  : keyCode = 0xE0; break; //  L GUI
-                    //case 16777301 : keyCOde = 0x00; break; // key beside R CTRL
-                    //case 16777250 : keyCOde = 0x00; break; // R window
+                    //case 0  : keyCode = 0xE0; break; //  L WINDOW
                     
                     default: 
                         unrecognised = true;
@@ -872,8 +881,8 @@ public:
                     this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
                     this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap)); 
             }
-            
             std::cout << "keyPressed " << e->key() << " " << keyCode << std::endl;
+            
         }
     }
     
@@ -901,7 +910,7 @@ public:
     }
     
     void keyPressEvent(QKeyEvent *e) { 
-        this->keyQtEvent(0x0000, e);
+        this->keyQtEvent(0x0000,      e);
     }
     
     void keyReleaseEvent(QKeyEvent *e) {
@@ -923,14 +932,49 @@ public:
     }
     
     
+public Q_SLOTS:
+    void CtrlAltDelOn() {
+        int keyboardFlag  = Keymap2::KBDFLAGS_EXTENDED;
+        int keyStatusFlag = 0;
+        
+        int keyCode = 0x38;  // ALT
+        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
+        
+        keyCode     = 0x1D;  // CTRL
+        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
+        
+        keyCode     = 0x53;  // DELETE
+        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
+                    
+    }
+    
+    void CtrlAltDelOut() {
+        int keyboardFlag  = Keymap2::KBDFLAGS_EXTENDED;
+        int keyStatusFlag = KBD_FLAG_UP;
+        
+        int keyCode = 0x38;  // ALT
+        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
+        
+        keyCode     = 0x1D;  // CTRL
+        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
+        
+        keyCode     = 0x53;  // DELETE
+        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
+    }
+    
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //-----------------------------------------
     //    SOCKET EVENTS LISTENING FUNCTIONS
     //-----------------------------------------
-    
-public Q_SLOTS:
+     
     void readSck_And_ShowView() {
         if (this->_callback != nullptr) {
             this->reInitView();
