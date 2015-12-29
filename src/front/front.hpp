@@ -2055,6 +2055,16 @@ public:
                                 }
                                 this->has_activity = true;
                             }
+
+                            if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                                    SlowPath::PTRFLAGS_BUTTON2 |
+                                                    SlowPath::PTRFLAGS_BUTTON3)) &&
+                                !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                                if (  this->capture
+                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                    this->capture->possible_active_window_change();
+                                }
+                            }
                         }
                         break;
 
@@ -3346,6 +3356,16 @@ private:
                                 }
                                 this->has_activity = true;
                             }
+
+                            if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                                    SlowPath::PTRFLAGS_BUTTON2 |
+                                                    SlowPath::PTRFLAGS_BUTTON3)) &&
+                                !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                                if (  this->capture
+                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                    this->capture->possible_active_window_change();
+                                }
+                            }
                         }
                         break;
 
@@ -4605,6 +4625,13 @@ private:
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }
                 this->has_activity = true;
+            }
+        }
+
+        if (this->keymap.is_application_switching_shortcut_pressed) {
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->possible_active_window_change();
             }
         }
     }
