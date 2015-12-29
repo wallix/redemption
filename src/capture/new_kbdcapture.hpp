@@ -33,7 +33,7 @@ struct NewKbdCapture : public RDPCaptureDevice
 private:
     StaticOutStream<49152> unlogged_data;
     StaticOutStream<24576> data;
-    StaticOutStream<16384> session_data;
+    StaticOutStream<64> session_data;
 
     timeval last_snapshot;
 
@@ -306,6 +306,7 @@ public:
         this->last_snapshot = now;
     }
 
+private:
     template<int N, class LogMgr>
     void log_input_data(LogMgr log_mgr, uint8_t const * data, size_t data_len) {
         const char prefix[] = "data=\"";
@@ -318,20 +319,20 @@ public:
             data,
             suffix);
         if (this->keyboard_input_mask_enabled) {
-            ::memset(&extra[0] + sizeof(prefix) - 1, '*',
-                this->unlogged_data.get_offset());
+            ::memset(&extra[0] + sizeof(prefix) - 1, '*', data_len);
         }
 
         log_mgr(extra);
     }
 
+public:
     void flush() {
         const uint8_t * unlogged_data_p      = this->unlogged_data.get_data();
         const size_t    unlogged_data_length = this->unlogged_data.get_offset();
 
         if (unlogged_data_length) {
             if (this->verbose) {
-                log_input_data<this->unlogged_data.original_capacity()>(
+                this->log_input_data<this->unlogged_data.original_capacity()>(
                           [] (char const * data) {
                               LOG(LOG_INFO, "type=\"KBD input\" %s", data);
                           }
@@ -345,26 +346,14 @@ public:
                     unlogged_data_length);
             }
 
-            if (this->is_driven_by_ocr) {
-                size_t stream_tail_room = this->session_data.tailroom();
-                if (stream_tail_room < unlogged_data_length) {
-                    this->send_session_data();
-                    stream_tail_room = this->session_data.tailroom();
-                }
-                if (stream_tail_room >= unlogged_data_length) {
-                    this->session_data.out_copy_bytes(unlogged_data_p,
-                        unlogged_data_length);
-                }
+            size_t stream_tail_room = this->session_data.tailroom();
+            if (stream_tail_room < unlogged_data_length) {
+                this->send_session_data();
+                stream_tail_room = this->session_data.tailroom();
             }
-            else if (this->authentifier) {
-                log_input_data<this->unlogged_data.original_capacity()>(
-                          [this] (char const * data) {
-                              this->authentifier->log4(false,
-                                  "KBD input", data);
-                          }
-                        , unlogged_data_p
-                        , unlogged_data_length
-                    );
+            if (stream_tail_room >= unlogged_data_length) {
+                this->session_data.out_copy_bytes(unlogged_data_p,
+                    unlogged_data_length);
             }
 
             this->unlogged_data.rewind();
@@ -389,7 +378,7 @@ public:
         if (!this->session_data.get_offset()) return;
 
         if (this->authentifier) {
-            log_input_data<this->session_data.original_capacity()>(
+            this->log_input_data<this->session_data.original_capacity()>(
                       [this] (char const * data) {
                           this->authentifier->log4(false,
                               "KBD input", data);
@@ -416,6 +405,12 @@ public:
 
         std::string order(message, separator - message);
         if (order.compare("ForegroundWindowChanged")) return;
+
+        this->send_session_data();
+    }
+
+    void possible_active_window_change() override {
+        if (this->is_driven_by_ocr) return;
 
         this->send_session_data();
     }
