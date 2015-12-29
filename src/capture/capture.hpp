@@ -707,6 +707,12 @@ public:
             this->pkc->session_update(now, message);
         }
     }
+
+    void possible_active_window_change() override {
+        if (this->pkc) {
+            this->pkc->possible_active_window_change();
+        }
+    }
 };
 
 #endif
