@@ -204,6 +204,8 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StaticPath<1024>>(), "persistent_path", set(MACRO(PERSISTENT_PATH)));
         W.sep();
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
+        W.sep();
+        W.member(H, type_<bool>(), "enable_session_log", set(true));
     });
 
     W.section("client", [&]

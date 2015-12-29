@@ -406,7 +406,12 @@ public:
         this->ask_acl();
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) const override {
+    void log4(bool duplicate_with_pid, const char * type,
+            const char * extra = nullptr) const override {
+        const bool session_log =
+            this->ini.get<cfg::globals::enable_session_log>();
+        if (!duplicate_with_pid && !session_log) return;
+
         const char * session_type = "Neutral";
 
         if (!this->ini.get<cfg::context::module>().compare("RDP") ||
@@ -414,6 +419,7 @@ public:
             session_type = this->ini.get<cfg::context::module>().c_str();
 
         LOG_SESSION( duplicate_with_pid
+                   , session_log
 
                    , session_type
                    , type
