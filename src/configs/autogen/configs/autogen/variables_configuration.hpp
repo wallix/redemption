@@ -1159,14 +1159,6 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-
-        struct enable_session_log {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::none;
-            }
-            using type = bool;
-            type value{1};
-        };
     };
 
     struct internal_mod {
@@ -1605,6 +1597,27 @@ namespace cfg {
         };
     };
 
+    struct session_log {
+        struct enable_session_log {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
+
+        //   0: keyboard input are not masked
+        //   1: only passwords are masked
+        //   2: passwords and unidentified texts are masked (default)
+        struct keyboard_input_masking_level {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = ::configs::KeyboardInputMaskingLevel;
+            type value{static_cast< ::configs::KeyboardInputMaskingLevel>(2)};
+        };
+    };
+
     struct translation {
         // AUTHID_TRANSLATION_LANGUAGE
         struct language {
@@ -1951,7 +1964,6 @@ struct globals
 , cfg::globals::enable_osd_display_remote_target
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
-, cfg::globals::enable_session_log
 { static constexpr bool is_section = true; };
 
 struct internal_mod
@@ -2008,6 +2020,11 @@ struct mod_vnc
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
 { static constexpr bool is_section = true; };
 
+struct session_log
+: cfg::session_log::enable_session_log
+, cfg::session_log::keyboard_input_masking_level
+{ static constexpr bool is_section = true; };
+
 struct translation
 : cfg::translation::language
 , cfg::translation::password_en
@@ -2048,6 +2065,7 @@ struct VariablesConfiguration
 , cfg_section::mod_rdp
 , cfg_section::mod_replay
 , cfg_section::mod_vnc
+, cfg_section::session_log
 , cfg_section::translation
 , cfg_section::video
 , cfg::theme

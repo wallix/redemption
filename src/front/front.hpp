@@ -4658,10 +4658,20 @@ private:
     }
 
     void update_keyboard_input_mask_state() {
+        const ::configs::KeyboardInputMaskingLevel keyboard_input_masking_level =
+            this->ini.get<cfg::session_log::keyboard_input_masking_level>();
+
+        if (keyboard_input_masking_level == ::configs::KeyboardInputMaskingLevel::unmasked) return;
+
+        const bool mask_unidentified_data =
+            ((keyboard_input_masking_level ==
+                  ::configs::KeyboardInputMaskingLevel::password_and_unidentified) ?
+             (!this->session_probe_started_) : false);
+
         if (this->capture) {
             this->capture->enable_keyboard_input_mask(
                     this->focus_on_password_textbox ||
-                    this->consent_ui_is_visible || !this->session_probe_started_
+                    this->consent_ui_is_visible || mask_unidentified_data
                 );
         }
     }

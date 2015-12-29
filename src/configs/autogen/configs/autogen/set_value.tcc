@@ -224,9 +224,6 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "disable_proxy_opt")) {
             ::configs::parse(static_cast<cfg::globals::disable_proxy_opt&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "enable_session_log")) {
-            ::configs::parse(static_cast<cfg::globals::enable_session_log&>(this->variables).value, value);
-        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -356,6 +353,16 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         }
         else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
             ::configs::parse(static_cast<cfg::mod_vnc::bogus_clipboard_infinite_loop&>(this->variables).value, value);
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "session_log")) {
+        if (0) {}
+        else if (0 == strcmp(key, "keyboard_input_masking_level")) {
+            ::configs::parse(static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value, value);
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {

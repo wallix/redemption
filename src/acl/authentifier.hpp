@@ -409,7 +409,7 @@ public:
     void log4(bool duplicate_with_pid, const char * type,
             const char * extra = nullptr) const override {
         const bool session_log =
-            this->ini.get<cfg::globals::enable_session_log>();
+            this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
 
         const char * session_type = "Neutral";
