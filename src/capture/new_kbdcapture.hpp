@@ -336,7 +336,7 @@ public:
         const size_t    unlogged_data_length = this->unlogged_data.get_offset();
 
         if (unlogged_data_length) {
-            if (this->verbose) {
+            if (this->enable_keyboard_log_syslog) {
                 this->log_input_data<this->unlogged_data.original_capacity()>(
                           [] (char const * data) {
                               LOG(LOG_INFO, "type=\"KBD input\" %s", data);

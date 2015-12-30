@@ -34,6 +34,8 @@
 
 #include "wait_obj.hpp"
 
+#include "utils/pattutils.hpp"
+
 // for extension
 // end extension
 
@@ -122,9 +124,9 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(), 
-                                        path, sizeof(path), 
-                                        basename, sizeof(basename), 
+        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(),
+                                        path, sizeof(path),
+                                        basename, sizeof(basename),
                                         extension, sizeof(extension));
         if (!res) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
@@ -168,7 +170,7 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-                 
+
             this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false
                                               , BmpCache::CacheOption(600, 768, false)
                                               , BmpCache::CacheOption(300, 3072, false)
@@ -202,7 +204,10 @@ public:
                                          , NativeCapture::SendInput::YES);
         }
 
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
+            ini.get<cfg::session_log::enable_session_log>() ||
+            ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
+            ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())) {
             const bool is_kc_driven_by_ocr = false;
             this->pkc = new NewKbdCapture(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(),
                     ini.get<cfg::context::pattern_notify>().c_str(),
