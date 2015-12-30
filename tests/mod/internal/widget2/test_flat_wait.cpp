@@ -16,7 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -80,8 +80,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
     //     "Otherwise, you can either return to selector or exit.";
 
 
+    WidgetFlatButton * extra_button = nullptr;
     FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Invalid Target",
-                         text_invalid, 0, font, colors, Translation::EN);
+                         text_invalid, 0, extra_button, font, colors, Translation::EN);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",

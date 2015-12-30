@@ -16,7 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_DIALOG_HPP)
@@ -31,6 +31,7 @@
 #include "edit.hpp"
 #include "password.hpp"
 #include "theme.hpp"
+#include "flat_button.hpp"
 
 enum ChallengeOpt {
     NO_CHALLENGE = 0x00,
@@ -58,6 +59,7 @@ public:
     FlatDialog(mod_api& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
+               WidgetFlatButton * extra_button,
                Theme const & theme, Font const & font, const char * ok_text = "Ok",
                const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
@@ -125,7 +127,14 @@ public:
             total_height += this->challenge->cy() + 10;
             y += this->challenge->cy() + 10;
             this->set_widget_focus(this->challenge, focus_reason_tabkey);
+
+            if (extra_button) {
+                this->add_widget(extra_button);
+                extra_button->set_button_x(60);
+                extra_button->set_button_y(total_height + 250);
+            }
         }
+
 
         this->add_widget(&this->ok);
         y += 5;
@@ -150,6 +159,7 @@ public:
 
         if (!has_challenge)
             this->set_widget_focus(&this->ok, focus_reason_tabkey);
+
     }
 
     ~FlatDialog() override {
