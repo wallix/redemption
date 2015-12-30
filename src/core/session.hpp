@@ -273,11 +273,26 @@ public:
                                                              is_set(*secondary_event, nullptr, rfds));
                         if (is_set(mm.mod->get_event(), mm.mod_transport, rfds) ||
                             secondary_event_is_set) {
-                            mm.mod->draw_event(now);
+                            try
+                            {
+                                mm.mod->draw_event(now);
 
-                            if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
-                                signal = mm.mod->get_event().signal;
-                                mm.mod->get_event().reset();
+                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
+                                    signal = mm.mod->get_event().signal;
+                                    mm.mod->get_event().reset();
+                                }
+                            }
+                            catch (Error const & e) {
+                                if ((e.id == ERR_SESSION_PROBE_LAUNCH) &&
+                                    this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure_fallback>()) {
+                                    this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
+
+                                    signal = BACK_EVENT_RETRY_WITHOUT_PROBE;
+                                    mm.mod->get_event().reset();
+                                }
+                                else {
+                                    throw;
+                                }
                             }
                         }
                         if (this->front->capture && is_set(this->front->capture->capture_event, nullptr, rfds)) {

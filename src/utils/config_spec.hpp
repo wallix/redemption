@@ -313,6 +313,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
         W.member(A, type_<bool>(), "session_probe_on_launch_failure_disconnect_user", set(true), r);
+        W.member(A, type_<bool>(), "session_probe_on_launch_failure_fallback", set(false), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set("cmd /k"));
 
