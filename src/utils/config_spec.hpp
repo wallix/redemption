@@ -208,7 +208,7 @@ void config_spec_definition(Writer && W)
 
     W.section("session_log", [&]
     {
-        W.member(type_<bool>(), "enable_session_log", set(true));
+        W.member(V, type_<bool>(), "enable_session_log", set(true));
         W.sep();
         W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
             "  0: keyboard input are not masked\n"

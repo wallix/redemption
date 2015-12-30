@@ -361,6 +361,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
     }
     else if (0 == strcmp(context, "session_log")) {
         if (0) {}
+        else if (0 == strcmp(key, "enable_session_log")) {
+            ::configs::parse(static_cast<cfg::session_log::enable_session_log&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "keyboard_input_masking_level")) {
             ::configs::parse(static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value, value);
         }
