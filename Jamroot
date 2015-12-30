@@ -31,6 +31,12 @@ rule setvar ( env : default * )
     }
 }
 
+constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
+# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
+constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
+constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
+
+
 constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
@@ -316,6 +322,32 @@ install install-etc-themes
     : <location>$(INSTALLDIR)/etc/rdpproxy/themes
     ;
 
+actions gen_redcryptofile {
+    cp "$(>)" "$(<)"
+    cp "$(<)" tools/redcryptofile/redcryptofile.so
+}
+
+lib pycryptofile : 
+        tools/redcryptofile/pycrypto.cpp 
+        cryptofile 
+        snappy 
+        python2 
+        crypto 
+    :
+        <define>REDPYTHON_BINDING 
+        <include>$(PYTHON_INCLUDE) 
+#        <cxxflags>-fPIC 
+        <link>shared
+    ;
+
+
+make redcryptofile.so 
+    : 
+        pycryptofile
+    : 
+        @gen_redcryptofile 
+    ;
+
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
 lib openssl : : <name>ssl <link>shared ;
 # lib X11 : : <name>X11 <link>shared ;
@@ -326,11 +358,13 @@ lib openssl : : <name>ssl <link>shared ;
 lib krb5 : : <name>krb5 <link>shared ;
 lib gssglue : : <name>gssglue <link>shared ;
 
-lib crypto : : <name>crypto <link>static ;
+lib crypto : : <name>crypto <link>shared ;
 lib z : : <name>z <link>static ;
 lib snappy : : <name>snappy <link>shared ;
 # lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
+lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+
 
 # lib lcms : : <name>lcms <link>shared ;
 
@@ -347,8 +381,10 @@ alias png : libpng z ;
 
 obj mainloop : src/core/mainloop.cpp ;
 obj d3des : src/utils/d3des.cpp ;
-obj cryptofile : src/transport/cryptofile.cpp ;
-obj ccryptofile : src/transport/ccryptofile.cpp ;
+obj cryptofile : src/transport/cryptofile.cpp 
+    : 
+#        <cxxflags>-fPIC 
+    ;
 
 
 obj bitmap : src/utils/bitmap_data_allocator.cpp ;
@@ -468,7 +504,6 @@ exe redver
         program_options
 
         cryptofile
-        ccryptofile
 
         openssl
         crypto
@@ -584,6 +619,25 @@ explicit make_cpp_config ;
 #
 
 import testing ;
+
+import type ;
+type.register PYTHON : py ;
+
+actions run-python-test {
+    rm -f $(<)
+    python $(>[1]) && touch $(<)
+}
+
+make test_trace.py.unittest 
+    : 
+        tools/redcryptofile/test_trace.py 
+        redcryptofile.so 
+    : 
+        run-python-test 
+    : 
+    ;
+
+explicit test_trace.py.unittest ;
 
 
 ## Test facility functions or classes
@@ -912,7 +966,7 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_verifier : tests/test_verifier.cpp cryptofile program_options libboost_unit_test openssl crypto ccryptofile snappy dl z :  $(TEST_DEPENDENCIES) ;
+unit-test test_verifier : tests/test_verifier.cpp cryptofile program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
 explicit test_rdp_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
 
