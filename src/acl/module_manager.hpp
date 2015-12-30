@@ -178,7 +178,6 @@ public:
         LOG(LOG_INFO, "----------> ACL next_module <--------");
         auto & module_cstr = this->ini.get<cfg::context::module>();
 
-/*
         if (this->connected &&
             (module_cstr == STRMODULE_RDP ||
              module_cstr == STRMODULE_VNC)) {
@@ -188,7 +187,6 @@ public:
             }
             return MODULE_INTERNAL_CLOSE;
         }
-*/
         if (module_cstr == STRMODULE_LOGIN) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET2_LOGIN;

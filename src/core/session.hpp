@@ -361,14 +361,9 @@ public:
                         }
                     }
                 } catch (Error & e) {
-                    if (e.id == ERR_SESSION_PROBE_LAUNCH) {
-                        this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
-                    }
-                    else {
-                        LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
-                        time_t now = time(nullptr);
-                        mm.invoke_close_box(e.errmsg(), signal, now);
-                    }
+                    LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+                    time_t now = time(nullptr);
+                    mm.invoke_close_box(e.errmsg(), signal, now);
                 };
             }
             if (mm.mod) {
