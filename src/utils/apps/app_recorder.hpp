@@ -913,9 +913,11 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             ini.set<cfg::globals::movie_path>(&output_filename[0]);
             CaptureMaker capmake(
                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
-                    , player.screen_rect.cx, player.screen_rect.cy
-                    , player.info_bpp, capture_bpp
-                    , ini, rnd, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
+                    , player.screen_rect.cx
+                    , player.screen_rect.cy
+                    , player.info_bpp
+                    , capture_bpp
+                    , ini, rnd, clear, std::forward<ExtraArguments>(extra_argument)...);
             auto & capture = capmake.capture;
 
             if (capture.capture_png) {

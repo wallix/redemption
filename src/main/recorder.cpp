@@ -50,10 +50,8 @@ int main(int argc, char** argv)
         Capture capture;
 
         CaptureMaker(const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
-                    , Inifile & ini, Random & rnd, bool /*clear*/, uint32_t /*verbose*/)
-        : capture( now, width, height, order_bpp
-                 , capture_bpp
-                 , false, false, nullptr, ini, rnd, true)
+                    , Inifile & ini, Random & rnd, bool /*clear*/)
+        : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, true)
         {}
     };
     
