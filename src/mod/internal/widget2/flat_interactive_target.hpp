@@ -16,6 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2014
  *   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
+ *              Jennifer Inthavong
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_INTERACTIVE_TARGET_HPP)
@@ -66,7 +67,8 @@ public:
                           const char * text_login,
                           const char * login_str,
                           const char * text_password,
-                          Font const & font)
+                          Font const & font,
+                          WidgetFlatButton * extra_button)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , caption_label(drawable, 0, 0, *this, nullptr, caption, true, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
@@ -190,6 +192,12 @@ public:
         this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
         this->login_label.rect.y += (login_show->cy() - this->login_label.cy()) / 2;
         this->device_label.rect.y += (device_show->cy() - this->login_label.cy()) / 2;
+
+        if (extra_button) {
+           this->add_widget(extra_button);
+           extra_button->set_button_x(60);
+           extra_button->set_button_y(height - 60);
+        }
     }
 
     ~FlatInteractiveTarget() override {

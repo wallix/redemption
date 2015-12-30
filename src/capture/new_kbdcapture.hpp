@@ -46,7 +46,8 @@ private:
 
     bool enable_keyboard_log_syslog;
 
-    bool is_driven_by_ocr = false;
+    bool is_driven_by_ocr         = false;
+    bool is_probe_enabled_session = false;
 
     bool keyboard_input_mask_enabled = false;
 
@@ -285,7 +286,11 @@ public:
     }   // bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz)
 
     void enable_keyboard_input_mask(bool enable) {
-        this->keyboard_input_mask_enabled = enable;
+        if (this->keyboard_input_mask_enabled != enable) {
+            this->flush();
+
+            this->keyboard_input_mask_enabled = enable;
+        }
     }
 
     virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
@@ -308,7 +313,7 @@ public:
 
 private:
     template<int N, class LogMgr>
-    void log_input_data(LogMgr log_mgr, uint8_t const * data, size_t data_len) {
+    void log_input_data(LogMgr log_mgr, bool enable_mask, uint8_t const * data, size_t data_len) {
         const char prefix[] = "data=\"";
         const char suffix[] = "\"";
 
@@ -318,7 +323,7 @@ private:
             (unsigned)data_len,
             data,
             suffix);
-        if (this->keyboard_input_mask_enabled) {
+        if (enable_mask) {
             ::memset(&extra[0] + sizeof(prefix) - 1, '*', data_len);
         }
 
@@ -336,6 +341,7 @@ public:
                           [] (char const * data) {
                               LOG(LOG_INFO, "type=\"KBD input\" %s", data);
                           }
+                        , this->keyboard_input_mask_enabled
                         , unlogged_data_p
                         , unlogged_data_length
                     );
@@ -352,8 +358,17 @@ public:
                 stream_tail_room = this->session_data.tailroom();
             }
             if (stream_tail_room >= unlogged_data_length) {
-                this->session_data.out_copy_bytes(unlogged_data_p,
-                    unlogged_data_length);
+                if (this->keyboard_input_mask_enabled) {
+                    if (this->is_probe_enabled_session) {
+                        ::memset(this->session_data.get_current(), '*',
+                            unlogged_data_length);
+                        this->session_data.out_skip_bytes(unlogged_data_length);
+                    }
+                }
+                else {
+                    this->session_data.out_copy_bytes(unlogged_data_p,
+                        unlogged_data_length);
+                }
             }
 
             this->unlogged_data.rewind();
@@ -383,6 +398,7 @@ public:
                           this->authentifier->log4(false,
                               "KBD input", data);
                       }
+                    , false
                     , this->session_data.get_data()
                     , this->session_data.get_offset()
                 );
@@ -396,17 +412,10 @@ public:
 
     virtual void session_update(const timeval & now, const char * message)
             override {
-        this->is_driven_by_ocr = true;
+        this->is_driven_by_ocr          = true;
+        this->is_probe_enabled_session  = true;
 
         if (!this->session_data.get_offset()) return;
-
-        const char * separator = ::strchr(message, '=');
-        if (!separator) return;
-
-        std::string order(message, separator - message);
-        if (order.compare("ForegroundWindowChanged") &&
-            order.compare("CompletedProcess") &&
-            order.compare("NewProcess")) return;
 
         this->send_session_data();
     }

@@ -204,8 +204,17 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StaticPath<1024>>(), "persistent_path", set(MACRO(PERSISTENT_PATH)));
         W.sep();
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
+    });
+
+    W.section("session_log", [&]
+    {
+        W.member(V, type_<bool>(), "enable_session_log", set(true));
         W.sep();
-        W.member(H, type_<bool>(), "enable_session_log", set(true));
+        W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
+            "  0: keyboard input are not masked\n"
+            "  1: only passwords are masked\n"
+            "  2: passwords and unidentified texts are masked (default)"
+        }, set(KeyboardInputMaskingLevel::password_and_unidentified));
     });
 
     W.section("client", [&]
