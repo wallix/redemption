@@ -46,7 +46,8 @@ private:
 
     bool enable_keyboard_log_syslog;
 
-    bool is_driven_by_ocr = false;
+    bool is_driven_by_ocr         = false;
+    bool is_probe_enabled_session = false;
 
     bool keyboard_input_mask_enabled = false;
 
@@ -358,9 +359,11 @@ public:
             }
             if (stream_tail_room >= unlogged_data_length) {
                 if (this->keyboard_input_mask_enabled) {
-                    ::memset(this->session_data.get_current(), '*',
-                        unlogged_data_length);
-                    this->session_data.out_skip_bytes(unlogged_data_length);
+                    if (this->is_probe_enabled_session) {
+                        ::memset(this->session_data.get_current(), '*',
+                            unlogged_data_length);
+                        this->session_data.out_skip_bytes(unlogged_data_length);
+                    }
                 }
                 else {
                     this->session_data.out_copy_bytes(unlogged_data_p,
@@ -409,17 +412,10 @@ public:
 
     virtual void session_update(const timeval & now, const char * message)
             override {
-        this->is_driven_by_ocr = true;
+        this->is_driven_by_ocr          = true;
+        this->is_probe_enabled_session  = true;
 
         if (!this->session_data.get_offset()) return;
-
-        const char * separator = ::strchr(message, '=');
-        if (!separator) return;
-
-        std::string order(message, separator - message);
-        if (order.compare("ForegroundWindowChanged") &&
-            order.compare("CompletedProcess") &&
-            order.compare("NewProcess")) return;
 
         this->send_session_data();
     }

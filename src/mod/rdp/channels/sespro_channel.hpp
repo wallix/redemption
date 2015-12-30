@@ -516,6 +516,13 @@ public:
             }
             this->session_probe_keep_alive_received = true;
         }
+        else if (!session_probe_message.compare("Self.Status=Closing")) {
+            this->param_acl->log4(
+                (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                "Self.Status", "status=Closing");
+
+            this->session_probe_close_pending = true;
+        }
         else {
             const char * message   = session_probe_message.c_str();
             this->front.session_update(message);
@@ -545,15 +552,6 @@ public:
 
                     this->front.set_consent_ui_visible(
                         !parameters.compare("yes"));
-                }
-                else if (!order.compare("Self.Status")) {
-                    std::string info("status=\"" + parameters + "\"");
-                    this->param_acl->log4(
-                        (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                        order.c_str(), info.c_str());
-
-                    this->session_probe_close_pending =
-                        (parameters.compare("Closing") == 0);
                 }
                 else if (!order.compare("InputLanguage")) {
                     const char * subitems          = parameters.c_str();
