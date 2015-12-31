@@ -55,10 +55,11 @@ struct ModRDPParams {
     bool disable_file_system_log_syslog;
     bool disable_file_system_log_wrm;
 
-    unsigned     session_probe_launch_timeout;
-    bool         session_probe_on_launch_failure_disconnect_user;
-    unsigned     session_probe_keepalive_timeout;
-    const char * session_probe_alternate_shell;
+    unsigned                              session_probe_launch_timeout;
+    configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
+    unsigned                              session_probe_keepalive_timeout;
+    bool                                  session_probe_end_disconnected_session;
+    const char *                          session_probe_alternate_shell;
 
     bool         enable_transparent_mode;
     const char * output_filename;
@@ -154,8 +155,9 @@ struct ModRDPParams {
         , disable_file_system_log_wrm(false)
 
         , session_probe_launch_timeout(0)
-        , session_probe_on_launch_failure_disconnect_user(true)
+        , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
+        , session_probe_end_disconnected_session(true)
         , session_probe_alternate_shell("")
 
         , enable_transparent_mode(false)
@@ -262,10 +264,12 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_timeout=%u",        this->session_probe_launch_timeout);
         LOG(LOG_INFO,
-            "ModRDPParams session_probe_on_launch_failure_disconnect_user=%s",
-                                                                   (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
+            "ModRDPParams session_probe_on_launch_failure=%d",     static_cast<int>(this->session_probe_on_launch_failure));
         LOG(LOG_INFO,
             "ModRDPParams session_probe_keepalive_timeout=%u",     this->session_probe_keepalive_timeout);
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_end_disconnected_session=%s",
+                                                                   (this->session_probe_end_disconnected_session ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");
@@ -322,17 +326,17 @@ struct ModRDPParams {
             "ModRDPParams open_session_timeout=%d",                this->open_session_timeout);
 
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_check=%d",                   static_cast<unsigned>(this->server_cert_check));
+            "ModRDPParams server_cert_check=%u",                   static_cast<unsigned>(this->server_cert_check));
         LOG(LOG_INFO,
-            "ModRDPParams server_access_allowed_message=%d",       static_cast<unsigned>(this->server_access_allowed_message));
+            "ModRDPParams server_access_allowed_message=%d",       static_cast<int>(this->server_access_allowed_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_create_message=%d",          static_cast<unsigned>(this->server_cert_create_message));
+            "ModRDPParams server_cert_create_message=%d",          static_cast<int>(this->server_cert_create_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_success_message=%d",         static_cast<unsigned>(this->server_cert_success_message));
+            "ModRDPParams server_cert_success_message=%d",         static_cast<int>(this->server_cert_success_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_failure_message=%d",         static_cast<unsigned>(this->server_cert_failure_message));
+            "ModRDPParams server_cert_failure_message=%d",         static_cast<int>(this->server_cert_failure_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_error_message=%d",           static_cast<unsigned>(this->server_cert_error_message));
+            "ModRDPParams server_cert_error_message=%d",           static_cast<int>(this->server_cert_error_message));
 
         LOG(LOG_INFO, "ModRDPParams extra_orders=%s",              (this->extra_orders ? this->extra_orders : "<none>"));
 

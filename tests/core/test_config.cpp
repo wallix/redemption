@@ -178,7 +178,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
@@ -412,7 +413,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -650,7 +652,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
@@ -889,7 +892,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::clipboard_up>());
@@ -1105,7 +1109,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -1154,7 +1159,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "proxy_managed_drives=*\n"
                           "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
                           "enable_session_probe=\n"
-                          "session_probe_on_launch_failure_disconnect_user=no\n"
+                          "session_probe_on_launch_failure=2\n"
                           "[mod_replay]\n"
                           "on_end_of_data=0\n"
                           "[video]\n"
@@ -1293,7 +1298,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -1487,7 +1493,8 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -1656,7 +1663,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -1690,7 +1698,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "persist_bitmap_cache_on_disk=yes\n"
                            "proxy_managed_drives=docs,apps\n"
                            "session_probe_launch_timeout=4000\n"
-                           "session_probe_on_launch_failure_disconnect_user=false\n"
+                           "session_probe_on_launch_failure=0\n"
                            "session_probe_keepalive_timeout=7000\n"
                            "[mod_vnc]\n"
                            "bogus_clipboard_infinite_loop=0\n"
@@ -1825,7 +1833,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::ignore_and_continue,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -1982,7 +1991,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());
@@ -2138,7 +2148,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user>());
+    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::disconnect_user,
+                                                        ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>().c_str());

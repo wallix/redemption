@@ -260,7 +260,7 @@ public:
                 this->ask_acl();
             }
         }
-        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_WITHOUT_PROBE)) {
+        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_CURRENT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
@@ -272,12 +272,12 @@ public:
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_WITHOUT_PROBE)) {
+            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_CURRENT)) {
                 if (signal == BACK_EVENT_NEXT) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
                 else {
-                    REDASSERT(signal == BACK_EVENT_RETRY_WITHOUT_PROBE);
+                    REDASSERT(signal == BACK_EVENT_RETRY_CURRENT);
 
                     LOG(LOG_INFO, "===========> MODULE_RDP_WITHOUT_PROBE");
                 }

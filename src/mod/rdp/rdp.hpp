@@ -386,10 +386,11 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool disable_file_system_log_wrm;
     const int  rdp_compression;
 
-    const unsigned    session_probe_launch_timeout;
-    const bool        session_probe_on_launch_failure_disconnect_user;
-    const unsigned    session_probe_keepalive_timeout;
-          std::string session_probe_alternate_shell;
+    const unsigned                               session_probe_launch_timeout;
+    const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+    const unsigned                               session_probe_keepalive_timeout;
+    const bool                                   session_probe_end_disconnected_session;
+          std::string                            session_probe_alternate_shell;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
@@ -685,8 +686,9 @@ public:
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
-        , session_probe_on_launch_failure_disconnect_user(mod_rdp_params.session_probe_on_launch_failure_disconnect_user)
+        , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+        , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , auth_user(mod_rdp_params.auth_user)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
@@ -978,22 +980,12 @@ public:
 
         if (this->verbose & 1) {
 //            LOG(LOG_INFO,
-//                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure_disconnect_user=%s",
+//                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure=%d",
 //                (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
-//                (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
+//                static_cast<int>(this->session_probe_on_launch_failure));
             LOG(LOG_INFO, "enable_session_probe=%s",
                 (this->enable_session_probe ? "yes" : "no"));
         }
-//        if (this->enable_session_probe) {
-//            this->session_probe_event.object_and_time = true;
-//
-//            if (this->session_probe_launch_timeout > 0) {
-//                if (this->verbose & 1) {
-//                    LOG(LOG_INFO, "Enable Session Probe launch timer");
-//                }
-//                this->session_probe_event.set(this->session_probe_launch_timeout * 1000);
-//            }
-//        }
         if (this->enable_session_probe) {
             SessionProbeVirtualChannel& channel =
                 this->get_session_probe_virtual_channel();
@@ -1181,39 +1173,42 @@ protected:
         SessionProbeVirtualChannel::Params
             session_probe_virtual_channel_params;
 
-        session_probe_virtual_channel_params.session_probe_loading_mask_enabled              =
+        session_probe_virtual_channel_params.session_probe_loading_mask_enabled     =
             this->enable_session_probe_loading_mask;
 
-        session_probe_virtual_channel_params.session_probe_launch_timeout                    =
+        session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
-        session_probe_virtual_channel_params.session_probe_keepalive_timeout                 =
+        session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
             this->session_probe_keepalive_timeout;
 
-        session_probe_virtual_channel_params.session_probe_on_launch_failure_disconnect_user =
-            this->session_probe_on_launch_failure_disconnect_user;
+        session_probe_virtual_channel_params.session_probe_on_launch_failure        =
+            this->session_probe_on_launch_failure;
 
-        session_probe_virtual_channel_params.auth_user                                       =
+        session_probe_virtual_channel_params.session_probe_end_disconnected_session =
+            this->session_probe_end_disconnected_session;
+
+        session_probe_virtual_channel_params.auth_user                              =
             this->auth_user.c_str();
 
-        session_probe_virtual_channel_params.front_width                                     =
+        session_probe_virtual_channel_params.front_width                            =
             this->front_width;
-        session_probe_virtual_channel_params.front_height                                    =
+        session_probe_virtual_channel_params.front_height                           =
             this->front_height;
 
-        session_probe_virtual_channel_params.real_alternate_shell                            =
+        session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();
-        session_probe_virtual_channel_params.real_working_dir                                =
+        session_probe_virtual_channel_params.real_working_dir                       =
             this->real_working_dir.c_str();
 
-        session_probe_virtual_channel_params.outbound_connection_notifying_rules             =
+        session_probe_virtual_channel_params.outbound_connection_notifying_rules    =
             "";
-        session_probe_virtual_channel_params.outbound_connection_killing_rules               =
+        session_probe_virtual_channel_params.outbound_connection_killing_rules      =
             this->outbound_connection_killing_rules.c_str();
 
-        session_probe_virtual_channel_params.lang                                            =
+        session_probe_virtual_channel_params.lang                                   =
             this->lang;
 
-        session_probe_virtual_channel_params.acl                                             =
+        session_probe_virtual_channel_params.acl                                    =
             this->acl;
 
         return session_probe_virtual_channel_params;
