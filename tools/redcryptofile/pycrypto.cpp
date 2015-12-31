@@ -193,30 +193,30 @@ unsigned char iv[32] = {0}; //  not used for reading
 
 static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 {
-    char *path = NULL;
-    char *omode = NULL;
+    char *path = nullptr;
+    char *omode = nullptr;
     if (!PyArg_ParseTuple(args, "ss", &path, &omode))
-        return NULL;
+        return nullptr;
     unsigned char derivator[DERIVATOR_LENGTH];
     get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
     if (compute_hmac(trace_key, get_cctx()->crypto_key, derivator) == -1){
-        return NULL;
+        return nullptr;
     }
 
-    struct crypto_file * result = NULL;
+    struct crypto_file * result = nullptr;
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
         if (system_fd == -1){
             printf("failed opening=%s\n", path);
-            return NULL;
+            return nullptr;
         }
 
         result = crypto_open_read(system_fd, trace_key, get_cctx());
 
         if (!result) {
             close(system_fd);
-            return NULL;
+            return nullptr;
         }
     } else if (omode[0] == 'w') {
         unsigned i = 0;
@@ -225,22 +225,22 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         int system_fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
         if (system_fd == -1){
             printf("failed opening=%s\n", path);
-            return NULL;
+            return nullptr;
         }
 
         result = crypto_open_write(system_fd, trace_key, get_cctx(), iv);
         if (!result) {
             close(system_fd);
-            return NULL;
+            return nullptr;
         }
 
     } else {
-        return NULL;
+        return nullptr;
     }
 
     int fd = 0;
     for (; fd < gl_nb_files ; fd++){
-        if (gl_file_store[fd] == NULL){
+        if (gl_file_store[fd] == nullptr){
             break;
         }
     }
@@ -255,10 +255,10 @@ static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
 {
     int fd = 0;
     if (!PyArg_ParseTuple(args, "i", &fd)){
-        return NULL;
+        return nullptr;
     }
     if (fd >= gl_nb_files){
-        return NULL;
+        return nullptr;
     }
     int result = crypto_flush(gl_file_store[fd]);
     return Py_BuildValue("i", result);
@@ -271,19 +271,19 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
     char hash_digest[(MD_HASH_LENGTH*4)+1];
 
     if (!PyArg_ParseTuple(args, "i", &fd))
-        return NULL;
+        return nullptr;
 
     if (fd >= gl_nb_files){
-        return NULL;
+        return nullptr;
     }
 
     if (!gl_file_store[fd]){
-        return NULL;
+        return nullptr;
     }
 
     int result = crypto_close(gl_file_store[fd], hash, get_cctx()->hmac_key);
 
-    gl_file_store[fd] = NULL;
+    gl_file_store[fd] = nullptr;
     if (fd + 1 == gl_nb_files){
         gl_nb_files--;
     }
@@ -312,14 +312,14 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     char *buf;
 
     if (!PyArg_ParseTuple(args, "iS", &fd, &python_buf))
-        return NULL;
+        return nullptr;
     buf_len = PyString_Size(python_buf);
     if (buf_len > 2147483647 || buf_len < 0)
         return Py_BuildValue("i", -1);
     buf = PyString_AsString(python_buf);
 
     if (fd >= gl_nb_files){
-        return NULL;
+        return nullptr;
     }
     int result = crypto_write(gl_file_store[fd], buf, buf_len);
 
@@ -332,13 +332,13 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
     int buf_len;
 
     if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len))
-        return NULL;
+        return nullptr;
     if (buf_len > 2147483647 || buf_len <= 0)
         return Py_BuildValue("i", -1);
 
 
     if (fd >= gl_nb_files){
-        return NULL;
+        return nullptr;
     }
 
 //    char buf[buf_len];
@@ -358,7 +358,7 @@ static PyMethodDef redcryptoFileMethods[] = {
     {"close", python_redcryptofile_close, METH_VARARGS, ""},
     {"write", python_redcryptofile_write, METH_VARARGS, ""},
     {"read", python_redcryptofile_read, METH_VARARGS, ""},
-    {NULL, NULL, 0, NULL}
+    {nullptr, nullptr, 0, nullptr}
 };
 
 PyMODINIT_FUNC initredcryptofile(void)

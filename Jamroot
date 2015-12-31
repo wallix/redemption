@@ -279,6 +279,7 @@ project redemption
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 
     <cxxflags>-fpie
+    <cxxflags>-fPIC 
 
 
     <define>_FILE_OFFSET_BITS=64
@@ -336,7 +337,8 @@ lib pycryptofile :
     :
         <define>REDPYTHON_BINDING 
         <include>$(PYTHON_INCLUDE) 
-#        <cxxflags>-fPIC 
+        <cxxflags>-fPIC 
+        <cflags>-fPIC 
         <link>shared
     ;
 
