@@ -233,12 +233,6 @@ static inline int get_crypto_key(char * crypto_key)
     return 0;
 }
 
-static inline int derivate_crypto_key(const char * crypto_key, char * hmac_key)
-{
-    const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-    return compute_hmac((unsigned char *)hmac_key, (const unsigned char *)crypto_key, HASH_DERIVATOR);
-}
-
 #ifdef __cplusplus
 # if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop
@@ -284,7 +278,7 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
     unsigned char derivator[DERIVATOR_LENGTH];
     get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (compute_hmac(trace_key, get_cctx()->crypto_key, derivator) == -1){
+    if (get_cctx()->compute_hmac(trace_key, get_cctx()->crypto_key, derivator) == -1){
         return nullptr;
     }
 
@@ -461,7 +455,10 @@ PyMODINIT_FUNC initredcryptofile(void)
     if (-1 == get_crypto_key((char *)get_cctx()->crypto_key)){
         //TODO: we should LOG something here
     }
-    if (-1 == derivate_crypto_key((char *)get_cctx()->crypto_key, (char *)get_cctx()->hmac_key)){
+    
+    const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
+
+    if (-1 == get_cctx()->compute_hmac(get_cctx()->hmac_key, get_cctx()->crypto_key, HASH_DERIVATOR)){
         //TODO: we should LOG something here
     }
     OpenSSL_add_all_digests();
