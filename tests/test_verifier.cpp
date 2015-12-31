@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-    BOOST_CHECK(0 == compute_hmac(hmac_key, crypto_key, HASH_DERIVATOR));
+    BOOST_CHECK(0 == cctx.compute_hmac(hmac_key, cctx.crypto_key, HASH_DERIVATOR));
     OpenSSL_add_all_digests();
 
     // Any iv key would do, we are checking round trip
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char derivator[DERIVATOR_LENGTH];
     cctx.get_derivator(test_file_name, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (compute_hmac(trace_key, crypto_key, derivator) == -1){
+    if (cctx.compute_hmac(trace_key, cctx.crypto_key, derivator) == -1){
         BOOST_CHECK(false);
     }
 

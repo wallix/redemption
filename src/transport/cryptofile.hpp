@@ -87,68 +87,59 @@ struct CryptoContext {
     {
         this->gen.random(dest, size);
     }
+
+    size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
+    {
+        const unsigned char _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        unsigned int bits = 0;
+        int nbits = 0;
+        char base64tbl[256];
+        char v;
+        size_t nbytes = 0;
+
+        memset(base64tbl, -1, sizeof base64tbl);
+
+        for (unsigned i = 0; _base64chars[i]; i++) {
+            base64tbl[_base64chars[i]] = i;
+        }
+
+        base64tbl['.'] = 62;
+        base64tbl['-'] = 62;
+        base64tbl['_'] = 63;
+
+        while (*txt) {
+            if ((v = base64tbl[(unsigned char)*txt]) >= 0) {
+                bits <<= 6;
+                bits += v;
+                nbits += 6;
+                if (nbits >= 8) {
+                    if (nbytes < bufsiz)
+                        *buffer++ = (bits >> (nbits - 8));
+                    nbytes++;
+                    nbits -= 8;
+                }
+            }
+            txt++;
+        }
+
+        return nbytes;
+    }
+
+    int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned char * derivator)
+    {
+        unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+        unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+
+        memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+        memcpy(tmp_derivation + DERIVATOR_LENGTH, key, CRYPTO_KEY_LENGTH);
+        if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == nullptr){
+            std::printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
+            return -1;
+        }
+        memcpy(hmac, derivated, HMAC_KEY_LENGTH);
+        return 0;
+    }
 };
 
-
-/*****************************************************************************************************
- *                               Shared memory accessor procedures                                   *
- *****************************************************************************************************/
-/* Standard unbase64, store result in buffer. Returns written bytes
- */
-static inline size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
-{
-    const unsigned char _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    unsigned int bits = 0;
-    int nbits = 0;
-    char base64tbl[256];
-    char v;
-    size_t nbytes = 0;
-
-    memset(base64tbl, -1, sizeof base64tbl);
-
-    for (unsigned i = 0; _base64chars[i]; i++) {
-        base64tbl[_base64chars[i]] = i;
-    }
-
-    base64tbl['.'] = 62;
-    base64tbl['-'] = 62;
-    base64tbl['_'] = 63;
-
-    while (*txt) {
-        if ((v = base64tbl[(unsigned char)*txt]) >= 0) {
-            bits <<= 6;
-            bits += v;
-            nbits += 6;
-            if (nbits >= 8) {
-                if (nbytes < bufsiz)
-                    *buffer++ = (bits >> (nbits - 8));
-                nbytes++;
-                nbits -= 8;
-            }
-        }
-        txt++;
-    }
-
-    return nbytes;
-}
-
-/**********************************************
- *                Public API                  *
- **********************************************/
-
-static inline int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned char * derivator)
-{
-    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-
-    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation + DERIVATOR_LENGTH, key, CRYPTO_KEY_LENGTH);
-    if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == nullptr){
-        std::printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
-        return -1;
-    }
-    memcpy(hmac, derivated, HMAC_KEY_LENGTH);
-    return 0;
-}
 
 #endif

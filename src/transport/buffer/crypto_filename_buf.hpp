@@ -32,7 +32,7 @@ namespace transbuf {
         {
             unsigned char derivator[DERIVATOR_LENGTH];
             cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == compute_hmac(trace_key, cctx->crypto_key, derivator)) {
+            if (-1 == cctx->compute_hmac(trace_key, cctx->crypto_key, derivator)) {
                 return -1;
             }
 
