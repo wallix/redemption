@@ -210,19 +210,14 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     LCGRandom rnd(0);
 
     CryptoContext cctx(rnd);
-    uint8_t crypto_key[sizeof(CryptoContext::crypto_key)] = {
-         0,  1,  2,  3,  4,  5,  6,  7,
-         8,  9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29, 30, 31
-    };
-    uint8_t hmac_key[sizeof(CryptoContext::hmac_key)] = {};
-    memcpy(cctx.crypto_key, crypto_key, sizeof(CryptoContext::crypto_key));
-    memcpy(cctx.hmac_key, hmac_key, sizeof(CryptoContext::hmac_key));
-
+    uint8_t hmac_key[32] = {};
+    cctx.set_crypto_key(
+        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    );
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-    BOOST_CHECK(0 == cctx.compute_hmac(hmac_key, cctx.crypto_key, HASH_DERIVATOR));
+    BOOST_CHECK(0 == cctx.compute_hmac(hmac_key, HASH_DERIVATOR));
     OpenSSL_add_all_digests();
 
     // Any iv key would do, we are checking round trip
@@ -236,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char derivator[DERIVATOR_LENGTH];
     cctx.get_derivator(test_file_name, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (cctx.compute_hmac(trace_key, cctx.crypto_key, derivator) == -1){
+    if (cctx.compute_hmac(trace_key, derivator) == -1){
         BOOST_CHECK(false);
     }
 

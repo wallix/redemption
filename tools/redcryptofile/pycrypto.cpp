@@ -279,7 +279,7 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
     unsigned char derivator[DERIVATOR_LENGTH];
     get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (get_cctx()->compute_hmac(trace_key, get_cctx()->crypto_key, derivator) == -1){
+    if (get_cctx()->compute_hmac(trace_key, derivator) == -1){
         return nullptr;
     }
 
@@ -444,22 +444,9 @@ PyMODINIT_FUNC initredcryptofile(void)
 {
     Py_InitModule("redcryptofile", redcryptoFileMethods);
 
-    //TODO: this one is default key if shm reading fails
-    // Add a way to add this key from outside (for tests)
-    memcpy(get_cctx()->crypto_key,
-        "\x01\x02\x03\x04\x05\x06\x07\x08"
-        "\x01\x02\x03\x04\x05\x06\x07\x08"
-        "\x01\x02\x03\x04\x05\x06\x07\x08"
-        "\x01\x02\x03\x04\x05\x06\x07\x08",
-        CRYPTO_KEY_LENGTH);
-
-    if (-1 == get_crypto_key((char *)get_cctx()->crypto_key)){
-        //TODO: we should LOG something here
-    }
-    
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
 
-    if (-1 == get_cctx()->compute_hmac(get_cctx()->hmac_key, get_cctx()->crypto_key, HASH_DERIVATOR)){
+    if (-1 == get_cctx()->compute_hmac(get_cctx()->hmac_key, HASH_DERIVATOR)){
         //TODO: we should LOG something here
     }
     OpenSSL_add_all_digests();

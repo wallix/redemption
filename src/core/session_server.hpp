@@ -76,9 +76,6 @@ public:
                 ini.set<cfg::debug::config>(this->debug_config);
                 { ConfigurationLoader cfg_loader(ini, this->config_filename.c_str()); }
 
-                char local_host[] = "127.0.0.1";
-                bool get_crypto_key_enable_log = strncmp(source_ip, local_host, sizeof(local_host));
-
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
                 }

@@ -161,8 +161,8 @@ public:
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
-            memcpy(this->cctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(this->cctx.crypto_key));
-            memcpy(this->cctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(this->cctx.hmac_key  ));
+            this->cctx.set_crypto_key(ini.get<cfg::crypto::key0>());
+            this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
 
             TODO("there should only be one outmeta, not two."
                  " Capture code should not really care if file is encrypted or not."

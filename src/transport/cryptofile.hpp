@@ -25,6 +25,10 @@
 #include <string.h>
 #include <cstdio>
 #include <unistd.h>
+#include <stdio.h>
+#include <sys/shm.h>
+#include <unistd.h>
+#include <errno.h>
 
 #include "utils/genrandom.hpp"
 #include "openssl_crypto.hpp"
@@ -58,13 +62,22 @@ enum {
 #define CRYPTO_KEY_LENGTH 32
 #define HMAC_KEY_LENGTH   CRYPTO_KEY_LENGTH
 
-struct CryptoContext {
-    Random & gen;
-
-    CryptoContext(Random & gen) : gen(gen) {}
-
-    unsigned char hmac_key[HMAC_KEY_LENGTH];
+class CryptoContext {
+    private:
+    bool crypto_key_loaded;
     unsigned char crypto_key[CRYPTO_KEY_LENGTH];
+
+    public:
+    Random & gen;
+    unsigned char hmac_key[HMAC_KEY_LENGTH];
+
+    CryptoContext(Random & gen) 
+        : crypto_key_loaded(false)
+        , crypto_key{}
+        , gen(gen)
+        , hmac_key{}
+        {
+        }
 
     void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
     {
@@ -125,13 +138,83 @@ struct CryptoContext {
         return nbytes;
     }
 
-    int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned char * derivator)
+    int get_crypto_key_from_shm(char tmp_buf[])
+    {
+        int shmid = shmget(2242, 512, 0600);
+        if (shmid == -1){
+            printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmget! error=%s\n", getpid(), strerror(errno));
+            return 1;
+        }
+        char *shm = (char*)shmat(shmid, 0, 0);
+        if (shm == (char *)-1){
+            printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmat! error=%s\n", getpid(), strerror(errno));
+            return 1;
+        }
+        this->unbase64(tmp_buf, 512, shm);
+        if (shmdt(shm) == -1){
+            printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmdt! error=%s\n", getpid(), strerror(errno));
+            return 1;
+        }
+
+        /* Extract the effective master key component, and check its control signature.
+         * Returns 0 on success, -1 on error.
+         */
+        char sha256_computed[SHA256_DIGEST_LENGTH];
+
+        if (SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
+            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == 0)
+        {
+            printf("[CRYPTO_ERROR][%d]: Could not check crypto key, SHA256!\n", getpid());
+            return 1;
+        }
+
+        if (strncmp(tmp_buf + 1, sha256_computed, SHA256_DIGEST_LENGTH)){
+            printf("[CRYPTO_ERROR][%d]: Crypto key integrity check failed!\n", getpid());
+            return 1;
+        }
+        return 0;
+    }
+
+    void set_crypto_key(const char * key)
+    {
+        memcpy(this->crypto_key, key, sizeof(this->crypto_key));
+        this->crypto_key_loaded = true;
+    }
+
+    void set_hmac_key(const char * key)
+    {
+        memcpy(this->hmac_key, key, sizeof(this->hmac_key));
+    }
+
+    const unsigned char * get_crypto_key()
+    {
+        if (not this->crypto_key_loaded)
+        {
+            char tmp_buf[512] = {0};
+            if (0 == this->get_crypto_key_from_shm(&tmp_buf[0])){
+                memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
+            }
+            else {
+                LOG(LOG_ERR, "Failed to get cryptographic key\n");
+                memcpy(this->crypto_key,
+                    "\x01\x02\x03\x04\x05\x06\x07\x08"
+                    "\x01\x02\x03\x04\x05\x06\x07\x08"
+                    "\x01\x02\x03\x04\x05\x06\x07\x08"
+                    "\x01\x02\x03\x04\x05\x06\x07\x08",
+                    CRYPTO_KEY_LENGTH);
+            }
+            this->crypto_key_loaded = true;
+        }
+        return &(this->crypto_key[0]);
+    }
+
+    int compute_hmac(unsigned char * hmac, const unsigned char * derivator)
     {
         unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
         unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
 
         memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-        memcpy(tmp_derivation + DERIVATOR_LENGTH, key, CRYPTO_KEY_LENGTH);
+        memcpy(tmp_derivation + DERIVATOR_LENGTH, this->get_crypto_key(), CRYPTO_KEY_LENGTH);
         if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == nullptr){
             std::printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
             return -1;
