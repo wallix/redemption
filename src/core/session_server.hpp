@@ -24,7 +24,6 @@
 #include "config.hpp"
 #include "server.hpp"
 #include "session.hpp"
-#include "parameters_holder.hpp"
 #include "parse_ip_conntrack.hpp"
 
 class SessionServer : public Server
@@ -34,16 +33,13 @@ class SessionServer : public Server
     unsigned gid;
     bool debug_config;
 
-    parameters_holder & parametersHldr;
-
     std::string config_filename;
 
 public:
-    SessionServer(unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename, bool debug_config = true)
+    SessionServer(unsigned uid, unsigned gid, std::string config_filename, bool debug_config = true)
         : uid(uid)
         , gid(gid)
         , debug_config(debug_config)
-        , parametersHldr(parametersHldr)
         , config_filename(config_filename)
     {
     }
@@ -82,13 +78,6 @@ public:
 
                 char local_host[] = "127.0.0.1";
                 bool get_crypto_key_enable_log = strncmp(source_ip, local_host, sizeof(local_host));
-
-                ini.get_ref<cfg::crypto::key0>().setmem(
-                        this->parametersHldr.get_crypto_key_0(get_crypto_key_enable_log)
-                    );
-                ini.get_ref<cfg::crypto::key1>().setmem(
-                        this->parametersHldr.get_crypto_key_1(get_crypto_key_enable_log)
-                    );
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

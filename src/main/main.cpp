@@ -24,8 +24,6 @@
 
 #include "version.hpp"
 
-#include "parameters_holder.hpp"
-
 #include "apps/app_proxy.hpp"
 
 #include "program_options/program_options.hpp"
@@ -36,7 +34,7 @@ namespace po = program_options;
 
 int main(int argc, char** argv)
 {
-    return app_proxy<parameters_holder>(
+    return app_proxy(
         argc, argv
       , "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
         "Copyright (C) Wallix 2010-2015.\n"

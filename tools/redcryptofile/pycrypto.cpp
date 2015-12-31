@@ -174,6 +174,11 @@ extern "C" {
 #include <unistd.h>
 #include <errno.h>
 
+extern "C" {
+    UdevRandom * get_rnd();
+    CryptoContext * get_cctx();
+}
+
 /* File format V1:  ([...] represent an uint32_t)
  *
  * Header:
@@ -206,7 +211,7 @@ static inline int get_crypto_key(char * crypto_key)
         printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmat! error=%s\n", getpid(), strerror(errno));
         return -1;
     }
-    unbase64(tmp_buf, 512, shm);
+    get_cctx()->unbase64(tmp_buf, 512, shm);
     if (shmdt(shm) == -1){
         printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmdt! error=%s\n", getpid(), strerror(errno));
         return -1;
@@ -240,10 +245,6 @@ static inline int get_crypto_key(char * crypto_key)
 } //extern "C"
 #endif
 
-extern "C" {
-    UdevRandom * get_rnd();
-    CryptoContext * get_cctx();
-}
 
 UdevRandom * get_rnd(){
     static UdevRandom * rnd = nullptr;
