@@ -111,6 +111,7 @@ public:
     uint8_t                        _keyboardMods;    
     int                            _timer;
     QPushButton                    _buttonCtrlAltDel;
+    QPushButton                    _buttonRefresh;
     Qt_RDP_KeyMap                  _qtRDPKeymap;
     
     
@@ -562,6 +563,7 @@ public:
     , _keyboardMods(0) 
     , _timer(0)
     , _buttonCtrlAltDel("CTRL + ALT + DELETE", this) 
+    , _buttonRefresh("Refresh", this)
     , _qtRDPKeymap(info.keylayout+0x80000000) 
     {
         if (this->mod_bpp == 8) {
@@ -588,16 +590,24 @@ public:
         this->setAttribute(Qt::WA_NoSystemBackground);
         
         this->_painter.fillRect(0, 0, this->_width, this->_height, Qt::white);
-        //this->_painter.fillRect(0, this->_height, this->_width, 2, Qt::red);
         
         this->_buttonCtrlAltDel.setToolTip("CTRL + ALT + DELETE"); 
-        this->_buttonCtrlAltDel.setGeometry(QRect(QPoint(0, this->_height+1),QSize(this->_width, 20)));
+        this->_buttonCtrlAltDel.setGeometry(QRect(QPoint(0, this->_height+1),QSize(this->_width/2, 20)));
         QObject::connect(&(this->_buttonCtrlAltDel), SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
         QObject::connect(&(this->_buttonCtrlAltDel), SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
         this->_buttonCtrlAltDel.show();
         
+        this->_buttonRefresh.setToolTip("Refresh");
+        this->_buttonRefresh.setGeometry(QRect(QPoint(this->_width/2, this->_height+1),QSize(this->_width/2, 20)));
+        QObject::connect(&(this->_buttonRefresh), SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
+        QObject::connect(&(this->_buttonRefresh), SIGNAL (released()), this, SLOT (RefreshReleased()));
+        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
+        this->_buttonRefresh.show();
         
-        
+ 
+        this->setFocusPolicy(Qt::StrongFocus);
+
         this->setFocusPolicy(Qt::ClickFocus);
 
 
@@ -694,6 +704,14 @@ public:
     
     
 public Q_SLOTS:
+    void RefreshPressed() {
+        this->refresh();
+    }
+    
+    void RefreshReleased() {
+        this->setFocusPolicy(Qt::ClickFocus);
+    }
+    
     void CtrlAltDelPressed() {
         int flag = Keymap2::KBDFLAGS_EXTENDED;
 
