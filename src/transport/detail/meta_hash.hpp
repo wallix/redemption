@@ -24,7 +24,7 @@
 
 #include <cstdio>
 
-#include "cryptofile.h"
+#include "cryptofile.hpp"
 #include "meta_opener.hpp"
 #include "meta_writer.hpp"
 #include "fileutils.hpp"

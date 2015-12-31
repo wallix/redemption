@@ -34,7 +34,7 @@
 
 #include <memory>
 
-#include "cryptofile.h"
+#include "cryptofile.hpp"
 
 #define HASH_LEN (MD_HASH_LENGTH << 1)
 

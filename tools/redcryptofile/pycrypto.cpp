@@ -20,7 +20,7 @@
 #include "fdbuf.hpp"
 #include "filter/crypto_filter.hpp"
 
-#include "cryptofile.h"
+#include "cryptofile.hpp"
 
 struct crypto_file;
 

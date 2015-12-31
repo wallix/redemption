@@ -330,7 +330,6 @@ actions gen_redcryptofile {
 
 lib pycryptofile : 
         tools/redcryptofile/pycrypto.cpp 
-        cryptofile 
         snappy 
         python2 
         crypto 
@@ -383,12 +382,6 @@ alias png : libpng z ;
 
 obj mainloop : src/core/mainloop.cpp ;
 obj d3des : src/utils/d3des.cpp ;
-obj cryptofile : src/transport/cryptofile.cpp 
-    : 
-#        <cxxflags>-fPIC 
-    ;
-
-
 obj bitmap : src/utils/bitmap_data_allocator.cpp ;
 obj program_options : modules/program_options/src/program_options.cpp ;
 
@@ -439,8 +432,6 @@ exe rdpproxy
         bitmap
         program_options
 
-        cryptofile
-
         mainloop
 
         d3des
@@ -467,8 +458,6 @@ exe redrec
         bitmap
         program_options
 
-        cryptofile
-
         openssl
         crypto
         png
@@ -487,8 +476,6 @@ exe reddec
         src/main/decrypter.cpp
         program_options
 
-        cryptofile
-
         openssl
         crypto
         z
@@ -504,8 +491,6 @@ exe redver
     :
         src/main/verifier.cpp
         program_options
-
-        cryptofile
 
         openssl
         crypto
@@ -523,8 +508,6 @@ exe rdptproxy
         src/main/transparent.cpp
         bitmap
         program_options
-
-        cryptofile
 
         openssl
         crypto
@@ -547,8 +530,6 @@ exe rdptanalyzer
         src/main/tanalyzer.cpp
         program_options
 
-        cryptofile
-
         openssl
         crypto
         png
@@ -568,7 +549,6 @@ exe rdpclient
     : src/main/rdp_client.cpp
         program_options
         bitmap
-        cryptofile
         openssl
         crypto
         png
@@ -589,14 +569,14 @@ exe rdpclient
 
 exe tls_test_client
     :
-        src/ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy
+        src/ftests/tls_test_client.cpp openssl crypto png z dl snappy
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
  ;
 exe tls_test_server
     :
-        src/ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy
+        src/ftests/tls_test_server.cpp openssl crypto png z dl snappy
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
@@ -681,7 +661,7 @@ unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : 
 unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
 unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
 unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_capture : tests/capture/test_capture.cpp bitmap crypto dl png z snappy cryptofile libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_capture : tests/capture/test_capture.cpp bitmap crypto dl png z snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp bitmap png z crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -763,7 +743,7 @@ unit-test test_server : tests/core/test_server.cpp libboost_unit_test : $(TEST_D
 unit-test test_session : tests/core/test_session.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_front : tests/front/test_front.cpp bitmap cryptofile openssl snappy d3des krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_front : tests/front/test_front.cpp bitmap openssl snappy d3des krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_osd : tests/mod/test_mod_osd.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -802,9 +782,9 @@ unit-test test_test_transport : tests/transport/test_test_transport.cpp libboost
 unit-test test_count_transport : tests/transport/test_count_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp openssl crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_file_transport : tests/transport/test_file_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta_sequence_transport.cpp cryptofile crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta_sequence_transport.cpp crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_filename_transport : tests/transport/test_filename_transport.cpp z dl cryptofile snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_filename_transport : tests/transport/test_filename_transport.cpp z dl snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -849,14 +829,14 @@ unit-test test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_Alternat
 
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 #unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_rdp : tests/mod/rdp/test_rdp.cpp bitmap cryptofile krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp bitmap krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp bitmap z png crypto dl openssl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp bitmap krb5 gssglue png crypto d3des z dl openssl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp bitmap krb5 gssglue png crypto d3des z openssl dl krb5 gssglue libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp bitmap krb5 gssglue png crypto d3des z dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp bitmap png z cryptofile openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp bitmap png z cryptofile openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk.cpp bitmap png z cryptofile openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp bitmap png z openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp bitmap png z openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk.cpp bitmap png z openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -968,7 +948,7 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_verifier : tests/test_verifier.cpp cryptofile program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
+unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
 explicit test_rdp_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
 
@@ -986,7 +966,6 @@ exe test_rdp_Qt :
     krb5 
     openssl 
     crypto 
-    cryptofile
     gssglue 
     png 
     d3des 
