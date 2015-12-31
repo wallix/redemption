@@ -1030,8 +1030,7 @@ public:
     void record(auth_api * acl) override {
         if (this->ini.get<cfg::globals::movie>() ||
             !bool(this->ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
-//            !this->ini.get<cfg::context::pattern_kill>().empty() ||
-//            !this->ini.get<cfg::context::pattern_notify>().empty()
+            this->ini.get<cfg::session_log::enable_session_log>() ||
             ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str()) ||
             ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str())
            ) {

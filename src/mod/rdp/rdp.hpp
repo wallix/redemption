@@ -3389,85 +3389,9 @@ public:
         if (this->session_probe_virtual_channel_p) {
             this->session_probe_virtual_channel_p->process_event();
         }
-/*
-        if (this->session_probe_event.set_state && this->session_probe_event.waked_up_by_time) {
-            REDASSERT(this->enable_session_probe);
-
-            this->session_probe_event.reset();
-            this->session_probe_event.waked_up_by_time = false;
-
-            if (this->session_probe_launch_timeout && !this->session_probe_is_ready) {
-                LOG((this->session_probe_on_launch_failure_disconnect_user ? LOG_ERR : LOG_WARNING), "Session Probe is not ready yet!");
-
-                const bool need_full_screen_update =
-                    (this->enable_session_probe_loading_mask ?
-                     this->front.disable_input_event_and_graphics_update(false) :
-                     false);
-
-                if (!this->session_probe_on_launch_failure_disconnect_user) {
-                    if (need_full_screen_update) {
-                        LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->front_width, this->front_height);
-                        this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
-                    }
-                }
-                else {
-                    throw Error(ERR_SESSION_PROBE_LAUNCH);
-                }
-            }
-
-            if (this->session_probe_is_ready && this->session_probe_keepalive_timeout) {
-                if (!this->session_probe_keep_alive_received) {
-                    if (this->enable_session_probe_loading_mask) {
-                        this->front.disable_input_event_and_graphics_update(false);
-                    }
-
-                    LOG(LOG_ERR, "No keep alive received from Session Probe!");
-
-                    if (this->session_probe_close_pending) {
-                        throw Error(ERR_SESSION_PROBE_CLOSE_PENDING);
-                    }
-
-                    throw Error(ERR_SESSION_PROBE_KEEPALIVE);
-                }
-                else {
-                    if (this->verbose & 0x10000) {
-                        LOG(LOG_INFO, "Session Probe keep alive requested");
-                    }
-                    this->session_probe_keep_alive_received = false;
-
-                    StaticOutStream<1024> out_s;
-
-                    const size_t message_length_offset = out_s.get_offset();
-                    out_s.out_clear_bytes(sizeof(uint16_t));
-
-                    {
-                        char string[] = "Request=Keep-Alive";
-                        out_s.out_copy_bytes(string, sizeof(string)-1u);
-                    }
-                    out_s.out_clear_bytes(1);   // Null character
-
-                    out_s.set_out_uint16_le(
-                        out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                        message_length_offset);
-
-                    InStream in_s(out_s.get_data(), out_s.get_offset());
-                    this->send_to_mod_channel(
-                        "sespro", in_s, in_s.get_capacity(),
-                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                    );
-
-                    this->session_probe_event.set(this->session_probe_keepalive_timeout * 1000);
-                }
-            }
-        }
-*/
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
-//        if (this->session_probe_event.set_state) {
-//            return &this->session_probe_event;
-//        }
         if (this->session_probe_virtual_channel_p) {
             return session_probe_virtual_channel_p->get_event();
         }
