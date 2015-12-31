@@ -40,7 +40,7 @@ class TestCryptoTrace(unittest.TestCase):
                 pass
 
     def test_decrypttextfile(self):
-        t2 = CryptoTrace("./redcryptofile/fixtures/text.txt.trc", "r")
+        t2 = CryptoTrace("./tools/redcryptofile/fixtures/text.txt.trc", "r")
         with open("text.txt.roundtrip", 'w') as f:
             while True:
                 data = t2.read(1024)
@@ -55,7 +55,7 @@ class TestCryptoTrace(unittest.TestCase):
 
 
     def test_decryptlongfile(self):
-        t2 = CryptoTrace("./redcryptofile/fixtures/long.bin.trc", "r")
+        t2 = CryptoTrace("./tools/redcryptofile/fixtures/long.bin.trc", "r")
         with open("long.bin.roundtrip", 'w') as f:
             while True:
                 data = t2.read(1024)
@@ -70,7 +70,7 @@ class TestCryptoTrace(unittest.TestCase):
 
     def test_crypttextfile(self):
         t = CryptoTrace("./text.txt.crypted.trc", "w")
-        with open("./redcryptofile/fixtures/text.txt", 'r') as f:
+        with open("./tools/redcryptofile/fixtures/text.txt", 'r') as f:
             for l in f:
                 t.write(l)
         t.flush()
@@ -93,7 +93,7 @@ class TestCryptoTrace(unittest.TestCase):
 
     def test_cryptlongfile(self):
         t = CryptoTrace("./long.bin.crypted.trc", "w")
-        with open("./redcryptofile/fixtures/long.bin", 'r') as f:
+        with open("./tools/redcryptofile/fixtures/long.bin", 'r') as f:
             for l in f:
                 t.write(l)
             t.close()
@@ -115,7 +115,7 @@ class TestCryptoTrace(unittest.TestCase):
 
     def test_flattextfile(self):
         t = open("./text.txt.clear.trc", "w")
-        with open("./redcryptofile/fixtures/text.txt", 'r') as f:
+        with open("./tools/redcryptofile/fixtures/text.txt", 'r') as f:
             for l in f:
                 t.write(l)
             t.close()
@@ -136,7 +136,7 @@ class TestCryptoTrace(unittest.TestCase):
 
     def test_flatlongfile(self):
         t = open("./long.bin.clear.trc", "w")
-        with open("./redcryptofile/fixtures/long.bin", 'r') as f:
+        with open("./tools/redcryptofile/fixtures/long.bin", 'r') as f:
             for l in f:
                 t.write(l)
             t.close()
