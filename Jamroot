@@ -240,6 +240,7 @@ project redemption
     <include>src/acl
     <include>src/capture
     <include>src/keyboard
+    <include>src/keyboard/reversed_keymaps
     <include>src/transport
     <include>src/regex
     <include>src/headers
