@@ -41,9 +41,12 @@ private:
     const unsigned param_session_probe_launch_timeout;
     const unsigned param_session_probe_keepalive_timeout;
 
-    const bool     param_session_probe_on_launch_failure_disconnect_user;
+    const ::configs::SessionProbeOnLaunchFailure
+                   param_session_probe_on_launch_failure;
 
-    std::string param_auth_user;
+    const bool     param_session_probe_end_disconnected_session;
+
+    std::string    param_auth_user;
 
     const uint16_t param_front_width;
     const uint16_t param_front_height;
@@ -74,7 +77,9 @@ public:
         unsigned session_probe_launch_timeout;
         unsigned session_probe_keepalive_timeout;
 
-        bool session_probe_on_launch_failure_disconnect_user;
+        ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+
+        bool session_probe_end_disconnected_session;
 
         const char* auth_user;
 
@@ -108,8 +113,10 @@ public:
           params.session_probe_launch_timeout)
     , param_session_probe_keepalive_timeout(
           params.session_probe_keepalive_timeout)
-    , param_session_probe_on_launch_failure_disconnect_user(
-          params.session_probe_on_launch_failure_disconnect_user)
+    , param_session_probe_on_launch_failure(
+          params.session_probe_on_launch_failure)
+    , param_session_probe_end_disconnected_session(
+          params.session_probe_end_disconnected_session)
     , param_auth_user(params.auth_user)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
@@ -129,10 +136,9 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                    "timeout=%u on_launch_failure_disconnect_user=%s",
+                    "timeout=%u on_launch_failure=%d",
                 this->param_session_probe_launch_timeout,
-                (this->param_session_probe_on_launch_failure_disconnect_user ?
-                 "yes" : "no"));
+                static_cast<int>(this->param_session_probe_on_launch_failure));
         }
 
         this->session_probe_event.object_and_time = true;
@@ -188,7 +194,8 @@ public:
 
         if (this->param_session_probe_launch_timeout &&
             !this->session_probe_ready) {
-            LOG((this->param_session_probe_on_launch_failure_disconnect_user ?
+            LOG(((this->param_session_probe_on_launch_failure ==
+                  ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?
                  LOG_ERR : LOG_WARNING),
                 "SessionProbeVirtualChannel::process_event: "
                     "Session Probe is not ready yet!");
@@ -198,7 +205,8 @@ public:
                  this->front.disable_input_event_and_graphics_update(false) :
                  false);
 
-            if (!this->param_session_probe_on_launch_failure_disconnect_user) {
+            if (this->param_session_probe_on_launch_failure ==
+                ::configs::SessionProbeOnLaunchFailure::ignore_and_continue) {
                 if (need_full_screen_update) {
                     if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                         LOG(LOG_INFO,
@@ -516,6 +524,13 @@ public:
             }
             this->session_probe_keep_alive_received = true;
         }
+        else if (!session_probe_message.compare("Self.Status=Closing")) {
+            this->param_acl->log4(
+                (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                "Self.Status", "status=Closing");
+
+            this->session_probe_close_pending = true;
+        }
         else {
             const char * message   = session_probe_message.c_str();
             this->front.session_update(message);
@@ -545,15 +560,6 @@ public:
 
                     this->front.set_consent_ui_visible(
                         !parameters.compare("yes"));
-                }
-                else if (!order.compare("Self.Status")) {
-                    std::string info("status=\"" + parameters + "\"");
-                    this->param_acl->log4(
-                        (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                        order.c_str(), info.c_str());
-
-                    this->session_probe_close_pending =
-                        (parameters.compare("Closing") == 0);
                 }
                 else if (!order.compare("InputLanguage")) {
                     const char * subitems          = parameters.c_str();

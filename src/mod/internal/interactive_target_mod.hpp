@@ -16,7 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_INTERACTIVE_TARGET_MOD_HPP
@@ -29,7 +29,7 @@
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "config_access.hpp"
-
+#include "widget2/language_button.hpp"
 
 using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_user,     vcfg::wait | vcfg::write | vcfg::read>,
@@ -39,7 +39,8 @@ using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::context::display_message, vcfg::write>,
     vcfg::var<cfg::translation::language>,
     vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::theme>,
+    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>
 >;
 
 class InteractiveTargetMod : public InternalMod, public NotifyApi
@@ -48,6 +49,7 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
     bool ask_login;
     bool ask_password;
 
+    LanguageButton language_button;
     FlatInteractiveTarget challenge;
 
     InteractiveTargetModVariables vars;
@@ -58,6 +60,7 @@ public:
         , ask_device(vars.is_asked<cfg::context::target_host>())
         , ask_login(vars.is_asked<cfg::globals::target_user>())
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, *this, front, this->font(), this->theme())
         , challenge(*this, width, height, this->screen, this, 0,
                     this->ask_device, this->ask_login, this->ask_password,
                     vars.get<cfg::theme>(),
@@ -67,7 +70,8 @@ public:
                     TR("login", language(vars)),
                     vars.get<cfg::globals::target_user>().c_str(),
                     TR("password", language(vars)),
-                    vars.get<cfg::font>())
+                    vars.get<cfg::font>(),
+                    &this->language_button)
         , vars(vars)
     {
         this->screen.add_widget(&this->challenge);

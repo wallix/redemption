@@ -386,10 +386,11 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool disable_file_system_log_wrm;
     const int  rdp_compression;
 
-    const unsigned    session_probe_launch_timeout;
-    const bool        session_probe_on_launch_failure_disconnect_user;
-    const unsigned    session_probe_keepalive_timeout;
-          std::string session_probe_alternate_shell;
+    const unsigned                               session_probe_launch_timeout;
+    const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+    const unsigned                               session_probe_keepalive_timeout;
+    const bool                                   session_probe_end_disconnected_session;
+          std::string                            session_probe_alternate_shell;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
@@ -685,8 +686,9 @@ public:
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
-        , session_probe_on_launch_failure_disconnect_user(mod_rdp_params.session_probe_on_launch_failure_disconnect_user)
+        , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+        , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , auth_user(mod_rdp_params.auth_user)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
@@ -978,22 +980,12 @@ public:
 
         if (this->verbose & 1) {
 //            LOG(LOG_INFO,
-//                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure_disconnect_user=%s",
+//                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure=%d",
 //                (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
-//                (this->session_probe_on_launch_failure_disconnect_user ? "yes" : "no"));
+//                static_cast<int>(this->session_probe_on_launch_failure));
             LOG(LOG_INFO, "enable_session_probe=%s",
                 (this->enable_session_probe ? "yes" : "no"));
         }
-//        if (this->enable_session_probe) {
-//            this->session_probe_event.object_and_time = true;
-//
-//            if (this->session_probe_launch_timeout > 0) {
-//                if (this->verbose & 1) {
-//                    LOG(LOG_INFO, "Enable Session Probe launch timer");
-//                }
-//                this->session_probe_event.set(this->session_probe_launch_timeout * 1000);
-//            }
-//        }
         if (this->enable_session_probe) {
             SessionProbeVirtualChannel& channel =
                 this->get_session_probe_virtual_channel();
@@ -1181,39 +1173,42 @@ protected:
         SessionProbeVirtualChannel::Params
             session_probe_virtual_channel_params;
 
-        session_probe_virtual_channel_params.session_probe_loading_mask_enabled              =
+        session_probe_virtual_channel_params.session_probe_loading_mask_enabled     =
             this->enable_session_probe_loading_mask;
 
-        session_probe_virtual_channel_params.session_probe_launch_timeout                    =
+        session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
-        session_probe_virtual_channel_params.session_probe_keepalive_timeout                 =
+        session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
             this->session_probe_keepalive_timeout;
 
-        session_probe_virtual_channel_params.session_probe_on_launch_failure_disconnect_user =
-            this->session_probe_on_launch_failure_disconnect_user;
+        session_probe_virtual_channel_params.session_probe_on_launch_failure        =
+            this->session_probe_on_launch_failure;
 
-        session_probe_virtual_channel_params.auth_user                                       =
+        session_probe_virtual_channel_params.session_probe_end_disconnected_session =
+            this->session_probe_end_disconnected_session;
+
+        session_probe_virtual_channel_params.auth_user                              =
             this->auth_user.c_str();
 
-        session_probe_virtual_channel_params.front_width                                     =
+        session_probe_virtual_channel_params.front_width                            =
             this->front_width;
-        session_probe_virtual_channel_params.front_height                                    =
+        session_probe_virtual_channel_params.front_height                           =
             this->front_height;
 
-        session_probe_virtual_channel_params.real_alternate_shell                            =
+        session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();
-        session_probe_virtual_channel_params.real_working_dir                                =
+        session_probe_virtual_channel_params.real_working_dir                       =
             this->real_working_dir.c_str();
 
-        session_probe_virtual_channel_params.outbound_connection_notifying_rules             =
+        session_probe_virtual_channel_params.outbound_connection_notifying_rules    =
             "";
-        session_probe_virtual_channel_params.outbound_connection_killing_rules               =
+        session_probe_virtual_channel_params.outbound_connection_killing_rules      =
             this->outbound_connection_killing_rules.c_str();
 
-        session_probe_virtual_channel_params.lang                                            =
+        session_probe_virtual_channel_params.lang                                   =
             this->lang;
 
-        session_probe_virtual_channel_params.acl                                             =
+        session_probe_virtual_channel_params.acl                                    =
             this->acl;
 
         return session_probe_virtual_channel_params;
@@ -3389,85 +3384,9 @@ public:
         if (this->session_probe_virtual_channel_p) {
             this->session_probe_virtual_channel_p->process_event();
         }
-/*
-        if (this->session_probe_event.set_state && this->session_probe_event.waked_up_by_time) {
-            REDASSERT(this->enable_session_probe);
-
-            this->session_probe_event.reset();
-            this->session_probe_event.waked_up_by_time = false;
-
-            if (this->session_probe_launch_timeout && !this->session_probe_is_ready) {
-                LOG((this->session_probe_on_launch_failure_disconnect_user ? LOG_ERR : LOG_WARNING), "Session Probe is not ready yet!");
-
-                const bool need_full_screen_update =
-                    (this->enable_session_probe_loading_mask ?
-                     this->front.disable_input_event_and_graphics_update(false) :
-                     false);
-
-                if (!this->session_probe_on_launch_failure_disconnect_user) {
-                    if (need_full_screen_update) {
-                        LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->front_width, this->front_height);
-                        this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
-                    }
-                }
-                else {
-                    throw Error(ERR_SESSION_PROBE_LAUNCH);
-                }
-            }
-
-            if (this->session_probe_is_ready && this->session_probe_keepalive_timeout) {
-                if (!this->session_probe_keep_alive_received) {
-                    if (this->enable_session_probe_loading_mask) {
-                        this->front.disable_input_event_and_graphics_update(false);
-                    }
-
-                    LOG(LOG_ERR, "No keep alive received from Session Probe!");
-
-                    if (this->session_probe_close_pending) {
-                        throw Error(ERR_SESSION_PROBE_CLOSE_PENDING);
-                    }
-
-                    throw Error(ERR_SESSION_PROBE_KEEPALIVE);
-                }
-                else {
-                    if (this->verbose & 0x10000) {
-                        LOG(LOG_INFO, "Session Probe keep alive requested");
-                    }
-                    this->session_probe_keep_alive_received = false;
-
-                    StaticOutStream<1024> out_s;
-
-                    const size_t message_length_offset = out_s.get_offset();
-                    out_s.out_clear_bytes(sizeof(uint16_t));
-
-                    {
-                        char string[] = "Request=Keep-Alive";
-                        out_s.out_copy_bytes(string, sizeof(string)-1u);
-                    }
-                    out_s.out_clear_bytes(1);   // Null character
-
-                    out_s.set_out_uint16_le(
-                        out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                        message_length_offset);
-
-                    InStream in_s(out_s.get_data(), out_s.get_offset());
-                    this->send_to_mod_channel(
-                        "sespro", in_s, in_s.get_capacity(),
-                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                    );
-
-                    this->session_probe_event.set(this->session_probe_keepalive_timeout * 1000);
-                }
-            }
-        }
-*/
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
-//        if (this->session_probe_event.set_state) {
-//            return &this->session_probe_event;
-//        }
         if (this->session_probe_virtual_channel_p) {
             return session_probe_virtual_channel_p->get_event();
         }
@@ -6390,328 +6309,6 @@ public:
             out_asynchronous_task);
 
         REDASSERT(!out_asynchronous_task);
-/*
-        REDASSERT(stream.in_remain() == chunk_size);
-
-        uint16_t message_length = stream.in_uint16_le();
-        REDASSERT(message_length == stream.in_remain());
-        (void)message_length; // disable -Wunused-variable if REDASSERT is disable
-        std::string session_probe_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
-
-        while (session_probe_channel_message.back() == '\0') session_probe_channel_message.pop_back();
-
-        const char request_outbound_connection_monitoring_rule[] = "Request=Get outbound connection monitoring rule\x01";
-
-        if (!session_probe_channel_message.compare("Request=Get startup application")) {
-            if (this->verbose & 1) {
-                LOG(LOG_INFO, "Session Probe channel data=\"%s\"", session_probe_channel_message.c_str());
-            }
-
-            if (this->verbose & 1) {
-                LOG(LOG_INFO, "Session Probe is ready.");
-            }
-
-            this->front.session_probe_started();
-
-            if (this->enable_session_probe_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
-                if (this->verbose & 1) {
-                    LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
-                        this->front_width, this->front_height);
-                }
-                this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
-            }
-
-            this->session_probe_is_ready = true;
-
-            FileSystemVirtualChannel& file_system_virtual_channel =
-                this->get_file_system_virtual_channel();
-
-            this->file_system_drive_manager.DisableSessionProbeDrive(
-                file_system_virtual_channel.to_server_sender,
-                this->verbose);
-
-            {
-                StaticOutStream<32768> out_s;
-
-                const size_t message_length_offset = out_s.get_offset();
-                out_s.out_clear_bytes(sizeof(uint16_t));
-
-                {
-                    char cstr[] = "StartupApplication=";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
-                }
-
-                if (this->real_alternate_shell.empty()) {
-                    char cstr[] = "[Windows Explorer]";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
-                }
-                else {
-                    if (!this->real_working_dir.empty()) {
-                        out_s.out_copy_bytes(this->real_working_dir.data(), this->real_working_dir.size());
-                    }
-                    out_s.out_uint8('\x01');
-                    out_s.out_copy_bytes(this->real_alternate_shell.data(), this->real_alternate_shell.size());
-                }
-                out_s.out_clear_bytes(1);   // Null character
-
-                out_s.set_out_uint16_le(
-                    out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                    message_length_offset);
-
-                this->send_to_channel(
-                    session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
-                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                );
-            }
-
-
-            this->session_probe_event.reset();
-
-            if (this->session_probe_keepalive_timeout > 0) {
-                {
-                    StaticOutStream<1024> out_s;
-
-                    const size_t message_length_offset = out_s.get_offset();
-                    out_s.out_clear_bytes(sizeof(uint16_t));
-
-                    {
-                        char cstr[] = "Request=Keep-Alive";
-                        out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
-                    }
-                    out_s.out_clear_bytes(1);   // Null character
-
-                    out_s.set_out_uint16_le(
-                        out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                        message_length_offset);
-
-                    this->send_to_channel(
-                        session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
-                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                    );
-                }
-
-                this->session_probe_event.set(this->session_probe_keepalive_timeout * 1000);
-            }
-        }
-        else if (!session_probe_channel_message.compare(
-                     0,
-                     sizeof(request_outbound_connection_monitoring_rule) - 1,
-                     request_outbound_connection_monitoring_rule)) {
-            const char * remaining_data =
-                (session_probe_channel_message.c_str() +
-                 sizeof(request_outbound_connection_monitoring_rule) - 1);
-
-            const unsigned int rule_index = ::strtoul(remaining_data, nullptr, 10);
-
-            // OutboundConnectionMonitoringRule=RuleIndex\x01ErrorCode[\x01RuleType\x01HostAddrOrSubnet\x01Port]
-            // RuleType  : 0 - notify, 1 - kill.
-            // ErrorCode : 0 on success. -1 if an error occurred.
-
-            StaticOutStream<32768> out_s;
-
-            const size_t message_length_offset = out_s.get_offset();
-            out_s.out_clear_bytes(sizeof(uint16_t));
-
-            {
-                const char cstr[] = "OutboundConnectionMonitoringRule=";
-                out_s.out_copy_bytes(cstr, sizeof(cstr) / sizeof(cstr[0]) - 1);
-            }
-
-            unsigned int type = 0;
-            std::string  host_address_or_subnet;
-            unsigned int port = 0;
-
-            bool result = this->outbound_connection_monitor_rules.get(
-                rule_index, type, host_address_or_subnet, port);
-
-            {
-                const int error_code = (result ? 0 : -1);
-                char cstr[128];
-                snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d" "\x01", rule_index, error_code);
-                out_s.out_copy_bytes(cstr, strlen(cstr));
-            }
-
-            if (result)
-            {
-                char cstr[1024];
-                snprintf(cstr, sizeof(cstr), "%u\x01%s\x01%u", type, host_address_or_subnet.c_str(), port);
-                out_s.out_copy_bytes(cstr, strlen(cstr));
-            }
-
-            out_s.out_clear_bytes(1);   // Null character
-
-            out_s.set_out_uint16_le(
-                out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                message_length_offset);
-
-            this->send_to_channel(
-                session_probe_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-            );
-        }
-        else if (!session_probe_channel_message.compare("KeepAlive=OK")) {
-            if (this->verbose & 0x10000) {
-                LOG(LOG_INFO, "Recevied Keep-Alive from Session Probe.");
-            }
-            this->session_probe_keep_alive_received = true;
-        }
-        else {
-            const char * message   = session_probe_channel_message.c_str();
-            const char * separator = ::strchr(message, '=');
-
-            bool message_format_invalid = false;
-
-            if (separator) {
-                std::string order(message, separator - message);
-                std::string parameters(separator + 1);
-
-                if (!order.compare("PasswordTextBox.SetFocus")) {
-                    std::string info("status=\"" + parameters + "\"");
-                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-
-                    this->front.set_focus_on_password_textbox(!parameters.compare("yes"));
-                }
-                else if (!order.compare("ConsentUI.IsVisible")) {
-                    std::string info("status=\"" + parameters + "\"");
-                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-
-                    this->front.set_consent_ui_visible(!parameters.compare("yes"));
-                }
-                else if (!order.compare("Self.Status")) {
-                    std::string info("status=\"" + parameters + "\"");
-                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-
-                    this->session_probe_close_pending = (parameters.compare("Closing") == 0);
-                }
-                else if (!order.compare("InputLanguage")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator = ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string code(subitems, subitem_separator - subitems);
-                        std::string display_name(subitem_separator + 1);
-
-                        std::string info("code=\"" + code + "\" name=\"" + display_name + "\"");
-                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-
-                        this->front.set_keylayout(::strtol(code.c_str(), nullptr, 16));
-                    }
-                    else {
-                        message_format_invalid = true;
-                    }
-                }
-                else if (!order.compare("NewProcess") ||
-                         !order.compare("CompletedProcess")) {
-                    std::string info("command_line=\"" + parameters + "\"");
-                    this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-                }
-                else if (!order.compare("OutboundConnectionBlocked")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator = ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string rule(subitems, subitem_separator - subitems);
-                        std::string application_name(subitem_separator + 1);
-
-                        std::string info("rule=\"" + rule + "\" application_name=\"" + application_name + "\"");
-                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-
-                        char message[4096];
-#ifdef __GNUG__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-                        snprintf(message, sizeof(message),
-                            TR("process_interrupted_security_policies", this->lang),
-                            application_name.c_str());
-#ifdef __GNUG__
-    #pragma GCC diagnostic pop
-# endif
-
-                        std::string string_message = message;
-                        this->display_osd_message(string_message);
-                    }
-                    else {
-                        message_format_invalid = true;
-                    }
-                }
-                else if (!order.compare("ForegroundWindowChanged")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator = ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string text(subitems, subitem_separator - subitems);
-                        std::string remaining(subitem_separator + 1);
-
-                        subitems          = remaining.c_str();
-                        subitem_separator = ::strchr(subitems, '\x01');
-
-                        if (subitem_separator) {
-                            std::string window_class(subitems, subitem_separator - subitems);
-                            std::string command_line(subitem_separator + 1);
-
-                            std::string info("text=\"" + text + "\" class=\"" + window_class + "\" command_line=\"" + command_line + "\"");
-                            this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-                        }
-                        else {
-                            message_format_invalid = true;
-                        }
-                    }
-                    else {
-                        message_format_invalid = true;
-                    }
-                }
-                else if (!order.compare("Button.Clicked")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator = ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string window(subitems, subitem_separator - subitems);
-                        std::string button(subitem_separator + 1);
-
-                        std::string info("window=\"" + window + "\" button=\"" + button + "\"");
-                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-                    }
-                    else {
-                        message_format_invalid = true;
-                    }
-                }
-                else if (!order.compare("Edit.Changed")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator = ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string window(subitems, subitem_separator - subitems);
-                        std::string edit(subitem_separator + 1);
-
-                        std::string info("window=\"" + window + "\" edit=\"" + edit + "\"");
-                        this->acl->log4((this->verbose & 1), order.c_str(), info.c_str());
-                    }
-                    else {
-                        message_format_invalid = true;
-                    }
-                }
-                else {
-                    LOG(LOG_WARNING,
-                        "mod_rdp::process_session_probe_event: Unexpected order. Session Probe channel data=\"%s\"",
-                        message);
-                }
-
-                bool contian_window_title = false;
-                this->front.session_update(session_probe_channel_message.c_str(),
-                    contian_window_title);
-            }
-            else {
-                message_format_invalid = true;
-            }
-
-            if (message_format_invalid) {
-                LOG(LOG_WARNING,
-                    "mod_rdp::process_session_probe_event: Invalid message format. Session Probe channel data=\"%s\"",
-                    message);
-            }
-        }
-*/
     }
 
     void process_cliprdr_event(

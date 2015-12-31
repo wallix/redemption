@@ -1159,14 +1159,6 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-
-        struct enable_session_log {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::none;
-            }
-            using type = bool;
-            type value{1};
-        };
     };
 
     struct internal_mod {
@@ -1405,14 +1397,18 @@ namespace cfg {
             using type = unsigned;
             type value{20000};
         };
-        // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE_DISCONNECT_USER
-        struct session_probe_on_launch_failure_disconnect_user {
+        // Behavior on failure to launch Session Probe.
+        //   0: ignore failure and continue.
+        //   1: disconnect user.
+        //   2: reconnect without Session Probe.
+        // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
+        struct session_probe_on_launch_failure {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 24; }
-            using type = bool;
-            type value{1};
+            using type = ::configs::SessionProbeOnLaunchFailure;
+            type value{static_cast< ::configs::SessionProbeOnLaunchFailure>(1)};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         struct session_probe_keepalive_timeout {
@@ -1422,6 +1418,14 @@ namespace cfg {
             static constexpr unsigned index() { return 25; }
             using type = unsigned;
             type value{5000};
+        };
+        // End automatically a disconnected session
+        struct session_probe_end_disconnected_session {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
         };
         struct session_probe_alternate_shell {
             static constexpr ::configs::VariableProperties properties() {
@@ -1602,6 +1606,27 @@ namespace cfg {
             static constexpr unsigned index() { return 36; }
             using type = ::configs::Range<unsigned, 0, 2, 0>;
             type value{0};
+        };
+    };
+
+    struct session_log {
+        struct enable_session_log {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
+
+        //   0: keyboard input are not masked
+        //   1: only passwords are masked
+        //   2: passwords and unidentified texts are masked
+        struct keyboard_input_masking_level {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = ::configs::KeyboardInputMaskingLevel;
+            type value{static_cast< ::configs::KeyboardInputMaskingLevel>(2)};
         };
     };
 
@@ -1951,7 +1976,6 @@ struct globals
 , cfg::globals::enable_osd_display_remote_target
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
-, cfg::globals::enable_session_log
 { static constexpr bool is_section = true; };
 
 struct internal_mod
@@ -1983,8 +2007,9 @@ struct mod_rdp
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
 , cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user
+, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_alternate_shell
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
@@ -2006,6 +2031,11 @@ struct mod_vnc
 , cfg::mod_vnc::allow_authentification_retries
 , cfg::mod_vnc::server_clipboard_encoding_type
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
+{ static constexpr bool is_section = true; };
+
+struct session_log
+: cfg::session_log::enable_session_log
+, cfg::session_log::keyboard_input_masking_level
 { static constexpr bool is_section = true; };
 
 struct translation
@@ -2048,6 +2078,7 @@ struct VariablesConfiguration
 , cfg_section::mod_rdp
 , cfg_section::mod_replay
 , cfg_section::mod_vnc
+, cfg_section::session_log
 , cfg_section::translation
 , cfg_section::video
 , cfg::theme
@@ -2083,7 +2114,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
 , cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user
+, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check

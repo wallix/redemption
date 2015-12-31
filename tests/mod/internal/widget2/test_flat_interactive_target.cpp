@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Jonathan Poelen, Meng Tan, Raphael Zhou
+ *   Author(s): Christophe Grosjean, Jonathan Poelen, Meng Tan, Raphael Zhou,
+ *              Jennifer Inthavong
  *
  */
 
@@ -57,10 +58,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
+        WidgetFlatButton * extra_button = nullptr;
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, true, true, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password", font);
+                                          "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -86,10 +88,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
+        WidgetFlatButton * extra_button = nullptr;
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, true, false, false, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password", font);
+                                          "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -115,10 +118,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
+        WidgetFlatButton * extra_button = nullptr;
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, false, false, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
-                                          "Password", font);
+                                          "Password", font, extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -144,10 +148,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
+        WidgetFlatButton * extra_button = nullptr;
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, false, true, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
-                                          "Password", font);
+                                          "Password", font, extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 
@@ -173,10 +178,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
+        WidgetFlatButton * extra_button = nullptr;
         FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
                                           0, true, false, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
-                                          "user1", "Password", font);
+                                          "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.rect);
 

@@ -34,7 +34,161 @@
 #include "ssl_calls.hpp"
 #include "utils/apps/app_verifier.hpp"
 
-#include "ccryptofile.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <algorithm>
+#include <unistd.h>
+#include <genrandom.hpp>
+
+#include <new>
+
+#include "fdbuf.hpp"
+#include "filter/crypto_filter.hpp"
+
+#include "cryptofile.h"
+
+extern "C" {
+
+struct crypto_file;
+
+/**********************************************
+ *                Public API                  *
+ **********************************************/
+
+enum Priv_crypto_type {
+    CRYPTO_DECRYPT_TYPE,
+    CRYPTO_ENCRYPT_TYPE
+};
+
+class Priv_crypto_type_base
+{
+    Priv_crypto_type type;
+
+public:
+    Priv_crypto_type_base(Priv_crypto_type t)
+    : type(t)
+    {}
+
+    bool is_encrypt() const
+    { return CRYPTO_ENCRYPT_TYPE == type; }
+
+    bool is_decrypt() const
+    { return CRYPTO_DECRYPT_TYPE == type; }
+};
+
+struct Priv_crypto_file_decrypt
+: Priv_crypto_type_base
+{
+  transfil::decrypt_filter decrypt;
+  io::posix::fdbuf file;
+
+  Priv_crypto_file_decrypt(int fd)
+  : Priv_crypto_type_base(CRYPTO_DECRYPT_TYPE)
+  , file(fd)
+  {}
+};
+
+struct Priv_crypto_file_encrypt
+: Priv_crypto_type_base
+{
+  transfil::encrypt_filter encrypt;
+  io::posix::fdbuf file;
+
+  Priv_crypto_file_encrypt(int fd)
+  : Priv_crypto_type_base(CRYPTO_ENCRYPT_TYPE)
+  , file(fd)
+  {}
+};
+
+
+crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx)
+{
+    (void)cctx;
+    Priv_crypto_file_decrypt * cf_struct = new (std::nothrow) Priv_crypto_file_decrypt(systemfd);
+
+    if (!cf_struct) {
+        return nullptr;
+    }
+
+    if (-1 == cf_struct->decrypt.open(cf_struct->file, trace_key)) {
+        delete cf_struct;
+        return nullptr;
+    }
+
+    return reinterpret_cast<crypto_file*>(cf_struct);
+}
+
+crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
+{
+    Priv_crypto_file_encrypt * cf_struct = new (std::nothrow) Priv_crypto_file_encrypt(systemfd);
+
+    if (!cf_struct) {
+        return nullptr;
+    }
+
+    if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
+        delete cf_struct;
+        return nullptr;
+    }
+
+    return reinterpret_cast<crypto_file*>(cf_struct);
+}
+
+/* Flush procedure (compression, encryption, effective file writing)
+ * Return 0 on success, -1 on error
+ */
+int crypto_flush(crypto_file * cf)
+{
+    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
+        return -1;
+    }
+    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
+    return cf_struct->encrypt.flush(cf_struct->file);
+}
+
+/* The actual read method. Read chunks until we reach requested size.
+ * Return the actual size read into buf, -1 on error
+ */
+int crypto_read(crypto_file * cf, char * buf, unsigned int buf_size)
+{
+    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
+        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
+        return cf_struct->decrypt.read(cf_struct->file, buf, buf_size);
+    }
+    return -1;
+}
+
+/* Actually appends data to crypto_file buffer, flush if buffer gets full
+ * Return the written size, -1 on error
+ */
+int crypto_write(crypto_file *cf, const char * buf, unsigned int size)
+{
+    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
+        return -1;
+    }
+    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
+    return cf_struct->encrypt.write(cf_struct->file, buf, size);
+}
+
+int crypto_close(crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
+{
+    int nResult = 0;
+
+    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
+        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
+        delete cf_struct;
+    }
+    else {
+        Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
+        nResult = cf_struct->encrypt.close(cf_struct->file, hash, hmac_key);
+        delete cf_struct;
+    }
+
+    return nResult;
+}
+
+} // extern "C"
 
 #ifdef HASH_LEN
 #undef HASH_LEN
@@ -80,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     };
 
     unsigned char derivator[DERIVATOR_LENGTH];
-    get_derivator(test_file_name, derivator, DERIVATOR_LENGTH);
+    cctx.get_derivator(test_file_name, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
     if (compute_hmac(trace_key, crypto_key, derivator) == -1){
         BOOST_CHECK(false);

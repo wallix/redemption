@@ -29,7 +29,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+#define LOGPRINT
 
 #include "capture.hpp"
 #include "check_sig.hpp"
@@ -60,8 +60,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
         ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
 
+        ini.set_value("video", "record_tmp_path", "./");
+        ini.set_value("video", "record_path", "./");
+        ini.set_value("video", "hash_path", "/tmp");
+        ini.set_value("globals", "movie_path", "capture");
+
         Capture capture(
-            now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini, rnd
+            now, scr.cx, scr.cy, 24, 24, false, false, nullptr, ini, rnd
         );
 
         bool ignore_frame_in_timeval = false;
@@ -212,7 +217,13 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::png);
         ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
-        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini, rnd);
+
+        ini.set_value("video", "record_tmp_path", "./");
+        ini.set_value("video", "record_path", "./");
+        ini.set_value("video", "hash_path", "/tmp");
+        ini.set_value("globals", "movie_path", "capture");
+
+        Capture capture(now, scr.cx, scr.cy, 16, 16, false, false, nullptr, ini, rnd);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.server_set_pointer(pointer1);

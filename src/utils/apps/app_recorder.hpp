@@ -906,10 +906,18 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 //        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
 
         {
-            CaptureMaker capmake( ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
-                                , player.screen_rect.cx, player.screen_rect.cy
-                                , player.info_bpp, capture_bpp, outfile_path, outfile_basename, outfile_extension
-                                , ini, rnd, clear, verbose, std::forward<ExtraArguments>(extra_argument)...);
+            ini.set_value("video","hash_path", outfile_path);
+            ini.set_value("video","record_tmp_path", outfile_path);
+            ini.set_value("video","record_path", outfile_path);
+            
+            ini.set<cfg::globals::movie_path>(&output_filename[0]);
+            CaptureMaker capmake(
+                    ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                    , player.screen_rect.cx
+                    , player.screen_rect.cy
+                    , player.info_bpp
+                    , capture_bpp
+                    , ini, rnd, clear, std::forward<ExtraArguments>(extra_argument)...);
             auto & capture = capmake.capture;
 
             if (capture.capture_png) {

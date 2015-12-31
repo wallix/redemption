@@ -90,17 +90,5 @@ int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned
     return 0;
 }
 
-void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
-{
-     // generate key derivator as SHA256(basename)
-    char * file = strdupa(const_file);
-    char * file_basename = basename(file);
-    char tmp_derivated[SHA256_DIGEST_LENGTH];
-    if (SHA256((unsigned char *)file_basename, strlen(file_basename), (unsigned char *)tmp_derivated) == nullptr){
-        std::printf("[CRYPTO_ERROR][%d]: Could not derivate trace crypto key, SHA256 from=%s!\n", getpid(), file_basename);
-        return;
-    }
-    memcpy(derivator, tmp_derivated, MIN(derivator_len, SHA256_DIGEST_LENGTH));
-}
 
 } // extern "C"

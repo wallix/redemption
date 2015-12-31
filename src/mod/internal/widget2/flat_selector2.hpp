@@ -16,7 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  *
  */
 
@@ -104,6 +104,7 @@ public:
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,
                         const char * filter_protocol,
+                        WidgetFlatButton * extra_button,
                         Font const & font, Theme const & theme, Translation::language_t lang)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
@@ -194,6 +195,12 @@ public:
         this->add_widget(&this->last_page);
         this->add_widget(&this->logout);
         this->add_widget(&this->connect);
+
+        if (extra_button) {
+            this->add_widget(extra_button);
+            extra_button->set_button_x(60);
+            extra_button->set_button_y(height - 60);
+        }
 
         this->rearrange();
     }
@@ -315,6 +322,8 @@ public:
             this->connect.set_button_x(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
             this->logout.set_button_x(this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
         }
+
+
     }
 
     void ask_for_connection() {

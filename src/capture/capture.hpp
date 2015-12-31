@@ -34,6 +34,8 @@
 
 #include "wait_obj.hpp"
 
+#include "utils/pattutils.hpp"
+
 // for extension
 // end extension
 
@@ -82,11 +84,11 @@ private:
 
     const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
+    const Inifile & ini;
     // TODO: why so many uninitialized constants ?
 public:
-    Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
-           , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini
+    Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, const Inifile & ini
            , Random & rnd, bool externally_generated_breakpoint = false)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
@@ -108,21 +110,42 @@ public:
     , last_y(height / 2)
     , order_bpp(order_bpp)
     , capture_bpp(capture_bpp)
+    , ini(ini)
     {
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_png;
+        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>();
+        const char * record_path = ini.get<cfg::video::record_path>();
+        const char * hash_path = ini.get<cfg::video::hash_path>();
+
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(basename, "redemption"); // default value actual one should come from movie_path
+        strcpy(extension, "");          // extension is currently ignored
+        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(),
+                                        path, sizeof(path),
+                                        basename, sizeof(basename),
+                                        extension, sizeof(extension));
+        if (!res) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+
 
         if (capture_drawable) {
             this->drawable = new RDPDrawable(width, height, capture_bpp);
         }
 
         if (this->capture_png) {
-            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG,
+            if (recursive_create_directory(record_tmp_path, S_IRWXU|S_IRWXG,
                         groupid) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_tmp_path);
             }
-            this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_path
-                                                              , basename, ".png", groupid, authentifier);
+            this->png_trans = new OutFilenameSequenceTransport(
+                                FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+                                record_tmp_path, basename, ".png", groupid, authentifier);
             this->psc = new StaticCapture(now, *this->png_trans,
                                           this->png_trans->seqgen(),
                                           width, height, clear_png, ini,
@@ -130,15 +153,11 @@ public:
         }
 
         if (this->capture_wrm) {
-            if (recursive_create_directory(wrm_path,
-                    S_IRWXU | S_IRGRP | S_IXGRP,
-                    groupid) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
+            if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
             }
 
-            if (recursive_create_directory(hash_path,
-                        S_IRWXU | S_IRGRP | S_IXGRP,
-                        groupid) != 0) {
+            if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
@@ -151,7 +170,7 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-                 
+
             this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false
                                               , BmpCache::CacheOption(600, 768, false)
                                               , BmpCache::CacheOption(300, 3072, false)
@@ -163,19 +182,19 @@ public:
 
             if (this->trace_type == configs::TraceType::cryptofile) {
                 auto * trans = new CryptoOutMetaSequenceTransport(
-                    &this->cctx, wrm_path, hash_path, basename, now
+                    &this->cctx, record_path, hash_path, basename, now
                   , width, height, groupid, authentifier);
                 this->wrm_trans = trans;
             }
             else if (this->trace_type == configs::TraceType::localfile_hashed) {
                 auto * trans = new OutMetaSequenceTransportWithSum(
-                    &this->cctx, wrm_path, hash_path, basename, now
-                  , width, height, groupid, authentifier);
+                    &this->cctx, record_path, hash_path, basename,
+                    now, width, height, groupid, authentifier);
                 this->wrm_trans = trans;
             }
             else {
                 auto * trans = new OutMetaSequenceTransport(
-                    wrm_path, hash_path, basename, now,
+                    record_path, hash_path, basename, now,
                     width, height, groupid, authentifier);
                 this->wrm_trans = trans;
             }
@@ -185,7 +204,10 @@ public:
                                          , NativeCapture::SendInput::YES);
         }
 
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
+            ini.get<cfg::session_log::enable_session_log>() ||
+            ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
+            ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())) {
             const bool is_kc_driven_by_ocr = false;
             this->pkc = new NewKbdCapture(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(),
                     ini.get<cfg::context::pattern_notify>().c_str(),
