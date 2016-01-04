@@ -11,13 +11,14 @@
 #include <memory>
 
 // this is to silent warning as Python.h will redefine this constant
+#undef _XOPEN_SOURCE
+// this is to silent warning as Python.h will redefine this constant
 #undef _POSIX_C_SOURCE
 #include "Python.h"
 
 #include <algorithm>
 #include <unistd.h>
 #include <genrandom.hpp>
-
 #include <new>
 
 #include "fdbuf.hpp"
@@ -25,71 +26,83 @@
 
 #include "cryptofile.hpp"
 
-struct crypto_file;
+struct crypto_file_read
+{
+  transfil::decrypt_filter decrypt;
+  io::posix::fdbuf file;
+  crypto_file_read(int fd) : file(fd) {}
+};
 
-/**********************************************
- *                Public API                  *
- **********************************************/
+struct crypto_file_write
+{
+  transfil::encrypt_filter encrypt;
+  io::posix::fdbuf file;
+  crypto_file_write(int fd) : file(fd) {}
+};
 
-enum Priv_crypto_type {
+enum crypto_type {
     CRYPTO_DECRYPT_TYPE,
     CRYPTO_ENCRYPT_TYPE
 };
 
-class Priv_crypto_type_base
-{
-    Priv_crypto_type type;
+extern "C" {
 
-public:
-    Priv_crypto_type_base(Priv_crypto_type t)
+int gl_read_nb_files = 0;
+struct crypto_file_read * gl_file_store_read[1024];
+int gl_write_nb_files = 0;
+struct crypto_file_write * gl_file_store_write[1024];
+
+unsigned char iv[32] = {0}; //  not used for reading
+}
+
+
+struct crypto_file
+{
+    enum crypto_type type;
+    int idx;
+    crypto_file(): type(CRYPTO_DECRYPT_TYPE), idx(-1) {}
+
+
+    crypto_file(crypto_type t, int fd)
     : type(t)
-    {}
-
-    bool is_encrypt() const
-    { return CRYPTO_ENCRYPT_TYPE == type; }
-
-    bool is_decrypt() const
-    { return CRYPTO_DECRYPT_TYPE == type; }
-};
-
-struct Priv_crypto_file_decrypt
-: Priv_crypto_type_base
-{
-  transfil::decrypt_filter decrypt;
-  io::posix::fdbuf file;
-
-  Priv_crypto_file_decrypt(int fd)
-  : Priv_crypto_type_base(CRYPTO_DECRYPT_TYPE)
-  , file(fd)
-  {}
-};
-
-struct Priv_crypto_file_encrypt
-: Priv_crypto_type_base
-{
-  transfil::encrypt_filter encrypt;
-  io::posix::fdbuf file;
-
-  Priv_crypto_file_encrypt(int fd)
-  : Priv_crypto_type_base(CRYPTO_ENCRYPT_TYPE)
-  , file(fd)
-  {}
-};
-
-crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
-{
-    Priv_crypto_file_encrypt * cf_struct = new (std::nothrow) Priv_crypto_file_encrypt(systemfd);
-
-    if (!cf_struct) {
-        return nullptr;
+    , idx(-1)
+    {
+        switch (t){
+        case CRYPTO_DECRYPT_TYPE:
+        {
+            auto cf = new crypto_file_read(fd);
+            int idx = 0;
+            for (; idx < gl_read_nb_files ; idx++){
+                if (gl_file_store_read[idx] == nullptr){
+                    break;
+                }
+            }
+            gl_read_nb_files += 1;
+            gl_file_store_read[idx] = cf;
+            this->idx = idx;
+        }
+        break;
+        case CRYPTO_ENCRYPT_TYPE:
+        {
+            auto cf = new crypto_file_write(fd);
+            int idx = 0;
+            for (; idx < gl_write_nb_files ; idx++){
+                if (gl_file_store_write[idx] == nullptr){
+                    break;
+                }
+            }
+            gl_write_nb_files += 1;
+            gl_file_store_write[idx] = cf;
+            this->idx = idx;
+        }
+        break;
+        }
     }
+};
 
-    if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
-        delete cf_struct;
-        return nullptr;
-    }
-
-    return reinterpret_cast<crypto_file*>(cf_struct);
+extern "C" {
+int gl_nb_files = 0;
+struct crypto_file gl_file_store[1024];
 }
 
 /* Flush procedure (compression, encryption, effective file writing)
@@ -97,11 +110,11 @@ crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoC
  */
 int crypto_flush(crypto_file * cf)
 {
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
+    if (cf->type != CRYPTO_ENCRYPT_TYPE){
         return -1;
     }
-    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-    return cf_struct->encrypt.flush(cf_struct->file);
+    return gl_file_store_write[cf->idx]->encrypt.flush(
+        gl_file_store_write[cf->idx]->file);
 }
 
 /* The actual read method. Read chunks until we reach requested size.
@@ -109,49 +122,49 @@ int crypto_flush(crypto_file * cf)
  */
 int crypto_read(crypto_file * cf, char * buf, unsigned int buf_size)
 {
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
-        return cf_struct->decrypt.read(cf_struct->file, buf, buf_size);
+    if (cf->type != CRYPTO_DECRYPT_TYPE){
+        return -1;
     }
-    return -1;
+    return gl_file_store_read[cf->idx]->decrypt.read(
+        gl_file_store_read[cf->idx]->file, buf, buf_size);
 }
 
 /* Actually appends data to crypto_file buffer, flush if buffer gets full
  * Return the written size, -1 on error
  */
-int crypto_write(crypto_file *cf, const char * buf, unsigned int size)
+int crypto_write(crypto_file *cf, const char * buf, unsigned int buf_size)
 {
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
+    if (cf->type != CRYPTO_ENCRYPT_TYPE){
         return -1;
     }
-    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-    return cf_struct->encrypt.write(cf_struct->file, buf, size);
+    return gl_file_store_write[cf->idx]->encrypt.write(
+        gl_file_store_write[cf->idx]->file, buf, buf_size);
 }
 
 int crypto_close(crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
 {
     int nResult = 0;
-
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
-        delete cf_struct;
+    switch (cf->type){
+    case CRYPTO_DECRYPT_TYPE:
+    {
+        auto cfr = gl_file_store_read[cf->idx];
+        gl_file_store_read[cf->idx] = nullptr;
+        gl_read_nb_files--;
+        delete cfr;
     }
-    else {
-        Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-        nResult = cf_struct->encrypt.close(cf_struct->file, hash, hmac_key);
-        delete cf_struct;
+    break;
+    case CRYPTO_ENCRYPT_TYPE:
+    {
+        auto cfw = gl_file_store_write[cf->idx];
+        gl_file_store_write[cf->idx] = nullptr;
+        gl_write_nb_files--;
+        nResult = cfw->encrypt.close(cfw->file, hash, hmac_key);
+        delete cfw;
     }
-
+    break;
+    }
     return nResult;
 }
-
-#ifdef __cplusplus
-extern "C" {
-# if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-# endif
-#endif
 
 
 extern "C" {
@@ -171,19 +184,6 @@ extern "C" {
  *  [WABCRYPTOFILE_EOF_MAGIC][raw_file_size]
  *
  */
-
-/*****************************************************************************************************
- *                             WAB shared memory accessor procedures                                 *
- *****************************************************************************************************/
-/* Attach, read and detach wab shared memory. Returns 0 on success, -1 on error.
- */
-
-#ifdef __cplusplus
-# if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-# endif
-} //extern "C"
-#endif
 
 
 UdevRandom * get_rnd(){
@@ -212,11 +212,8 @@ CryptoContext * get_cctx()
     return cctx;
 }
 
-extern "C" {
 
-int gl_nb_files = 0;
-struct crypto_file * gl_file_store[1024];
-unsigned char iv[32] = {0}; //  not used for reading
+extern "C" {
 
 static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 {
@@ -231,24 +228,27 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    struct crypto_file * result = nullptr;
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
         if (system_fd == -1){
             printf("failed opening=%s\n", path);
             return nullptr;
         }
-        Priv_crypto_file_decrypt * result = new (std::nothrow)Priv_crypto_file_decrypt(system_fd);
-        if (!result) {
-            close(system_fd);
-            return nullptr;
-        }
 
-        if (-1 == result->decrypt.open(result->file, trace_key)) {
-            delete result;
-            close(system_fd);
-            return nullptr;
+        auto result = crypto_file(CRYPTO_DECRYPT_TYPE, system_fd);
+        auto cfr = gl_file_store_read[result.idx];
+        cfr->decrypt.open(cfr->file, trace_key);
+
+        int fd = 0;
+        for (; fd < gl_nb_files ; fd++){
+            if (gl_file_store[fd].idx == -1){
+                break;
+            }
         }
+        gl_nb_files += 1;
+        gl_file_store[fd] = result;
+        return Py_BuildValue("i", fd);
+
     } else if (omode[0] == 'w') {
         unsigned i = 0;
         for (i = 0; i < sizeof(iv) ; i++){ iv[i] = i; }
@@ -259,27 +259,24 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
             return nullptr;
         }
 
-        result = crypto_open_write(system_fd, trace_key, get_cctx(), iv);
-        if (!result) {
-            close(system_fd);
-            return nullptr;
-        }
+        auto result = crypto_file(CRYPTO_ENCRYPT_TYPE, system_fd);
+        auto cfw = gl_file_store_write[result.idx];
+        cfw->encrypt.open(cfw->file, trace_key, get_cctx(), iv);
 
+        int fd = 0;
+        for (; fd < gl_nb_files ; fd++){
+            if (gl_file_store[fd].idx == -1){
+                break;
+            }
+        }
+        gl_nb_files += 1;
+        gl_file_store[fd] = result;
+        return Py_BuildValue("i", fd);
     } else {
         return nullptr;
     }
 
-    int fd = 0;
-    for (; fd < gl_nb_files ; fd++){
-        if (gl_file_store[fd] == nullptr){
-            break;
-        }
-    }
-    if (fd == gl_nb_files){
-        gl_nb_files += 1;
-    }
-    gl_file_store[fd] = result;
-    return Py_BuildValue("i", fd);
+    return Py_BuildValue("i", -1);
 }
 
 static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
@@ -291,7 +288,7 @@ static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
     if (fd >= gl_nb_files){
         return nullptr;
     }
-    int result = crypto_flush(gl_file_store[fd]);
+    int result = crypto_flush(&gl_file_store[fd]);
     return Py_BuildValue("i", result);
 }
 
@@ -304,20 +301,18 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "i", &fd))
         return nullptr;
 
-    if (fd >= gl_nb_files){
+    if (fd >= static_cast<int>(sizeof(gl_file_store)/sizeof(gl_file_store[0]))){
         return nullptr;
     }
 
-    if (!gl_file_store[fd]){
+    if (gl_file_store[fd].idx == -1){
         return nullptr;
     }
 
-    int result = crypto_close(gl_file_store[fd], hash, get_cctx()->hmac_key);
+    int result = crypto_close(&gl_file_store[fd], hash, get_cctx()->hmac_key);
 
-    gl_file_store[fd] = nullptr;
-    if (fd + 1 == gl_nb_files){
-        gl_nb_files--;
-    }
+    gl_file_store[fd].idx = -1;
+    gl_nb_files--;
 
     // Crazy API: return error as integer or HASH as string... change that
     if (result){
@@ -352,7 +347,8 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     if (fd >= gl_nb_files){
         return nullptr;
     }
-    int result = crypto_write(gl_file_store[fd], buf, buf_len);
+    
+    int result = crypto_write(&gl_file_store[fd], buf, buf_len);
 
     return Py_BuildValue("i", result);
 }
@@ -372,12 +368,15 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-//    char buf[buf_len];
     std::unique_ptr<char[]> buf(new char[buf_len]);
-//    int result = crypto_read(gl_file_store[fd], buf, buf_len);
-    int result = crypto_read(gl_file_store[fd], buf.get(), buf_len);
+
+    int result = -1;
+    if (gl_file_store[fd].type ==  CRYPTO_DECRYPT_TYPE) {
+        int idx = gl_file_store[fd].idx;
+        result = gl_file_store_read[idx]->decrypt.read(
+            gl_file_store_read[idx]->file, buf.get(), buf_len);
+    }
     if (result >= 0){
-//        return PyString_FromStringAndSize(buf, result);
         return PyString_FromStringAndSize(buf.get(), result);
     }
     return Py_BuildValue("i", -1);
@@ -402,6 +401,21 @@ PyMODINIT_FUNC initredcryptofile(void)
         //TODO: we should LOG something here
     }
     OpenSSL_add_all_digests();
+    size_t idx = 0;
+    for (; idx < sizeof(gl_file_store)/sizeof(gl_file_store[0]);idx++)
+    {
+        gl_file_store[idx].idx = -1;
+    }
+    size_t idxr = 0;
+    for (; idxr < sizeof(gl_file_store_read)/sizeof(gl_file_store_read[0]);idxr++)
+    {
+        gl_file_store_read[idxr] = nullptr;
+    }
+    size_t idxw = 0;
+    for (; idxw < sizeof(gl_file_store_write)/sizeof(gl_file_store_write[0]);idxw++)
+    {
+        gl_file_store_write[idxw] = nullptr;
+    }
 }
 
 }
