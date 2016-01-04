@@ -32,17 +32,17 @@
 BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
     unsigned sec_start = 1352304810;
+    Inifile ini;
+    ini.set_value("crypto", "key0", 
+                  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+    ini.set_value("crypto", "key1", "12345678901234567890123456789012");
 
     LCGRandom rnd(0);
-    CryptoContext cctx(rnd);
-    memset(&cctx, 0, sizeof(cctx));
-    memcpy(cctx.hmac_key,
-       "1234567890"
-       "1234567890"
-       "1234567890"
-       "12",
-       sizeof(cctx.hmac_key)
-    );
+    CryptoContext cctx(rnd, ini);
+    cctx.set_crypto_key("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+    cctx.set_hmac_key("12345678901234567890123456789012");
 
     {
         timeval now;

@@ -19,7 +19,7 @@ int main(int argc, char ** argv)
     { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd);
+    CryptoContext cctx(rnd, ini);
 
     TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
     cctx.set_crypto_key(ini.get<cfg::crypto::key0>());

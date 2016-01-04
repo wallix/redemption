@@ -74,7 +74,7 @@ struct Priv_crypto_file_encrypt
 };
 
 
-crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx)
+crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key, CryptoContext * cctx)
 {
     (void)cctx;
     Priv_crypto_file_decrypt * cf_struct = new (std::nothrow) Priv_crypto_file_decrypt(systemfd);
@@ -197,46 +197,6 @@ extern "C" {
  *****************************************************************************************************/
 /* Attach, read and detach wab shared memory. Returns 0 on success, -1 on error.
  */
-static inline int get_crypto_key(char * crypto_key)
-{
-    char tmp_buf[512] = {0};
-
-    int shmid = shmget(2242, 512, 0600);
-    if (shmid == -1){
-        printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmget! error=%s\n", getpid(), strerror(errno));
-        return -1;
-    }
-    char *shm = (char*)shmat(shmid, 0, 0);
-    if (shm == (char *)-1){
-        printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmat! error=%s\n", getpid(), strerror(errno));
-        return -1;
-    }
-    get_cctx()->unbase64(tmp_buf, 512, shm);
-    if (shmdt(shm) == -1){
-        printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmdt! error=%s\n", getpid(), strerror(errno));
-        return -1;
-    }
-
-    /* Extract the effective master key component, and check its control signature.
-     * Returns 0 on success, -1 on error.
-     */
-    char sha256_computed[SHA256_DIGEST_LENGTH];
-
-    if (SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
-        MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == 0)
-    {
-        printf("[CRYPTO_ERROR][%d]: Could not check crypto key, SHA256!\n", getpid());
-        return -1;
-    }
-
-    if (strncmp(tmp_buf + 1, sha256_computed, SHA256_DIGEST_LENGTH)){
-        printf("[CRYPTO_ERROR][%d]: Crypto key integrity check failed!\n", getpid());
-        return -1;
-    }
-
-    memcpy(crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
-    return 0;
-}
 
 #ifdef __cplusplus
 # if defined(__GNUC__) && !defined(__clang__)
@@ -254,12 +214,20 @@ UdevRandom * get_rnd(){
     return rnd;
 }
 
+Inifile * get_ini(){
+    static Inifile * ini = nullptr;
+    if (ini == nullptr){
+        ini = new Inifile;
+    }
+    return ini;
+}
+
 
 CryptoContext * get_cctx()
 {
     static CryptoContext * cctx = nullptr;
     if (cctx == nullptr){
-        cctx = new CryptoContext(*get_rnd());
+        cctx = new CryptoContext(*get_rnd(), *get_ini());
     }
     return cctx;
 }

@@ -33,6 +33,7 @@
 #include "utils/genrandom.hpp"
 #include "openssl_crypto.hpp"
 #include "openssl_evp.hpp"
+#include "core/config.hpp"
 
 enum crypto_file_state {
     CF_EOF = 1
@@ -71,7 +72,7 @@ class CryptoContext {
     Random & gen;
     unsigned char hmac_key[HMAC_KEY_LENGTH];
 
-    CryptoContext(Random & gen) 
+    CryptoContext(Random & gen, const Inifile & ini) 
         : crypto_key_loaded(false)
         , crypto_key{}
         , gen(gen)

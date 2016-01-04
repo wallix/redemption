@@ -96,7 +96,7 @@ public:
     , pkc(nullptr)
     , capture_event{}
     , trace_type(ini.get<cfg::globals::trace_type>())
-    , cctx(rnd)
+    , cctx(rnd, ini)
     , png_trans(nullptr)
     , wrm_trans(nullptr)
     , pnc_bmp_cache(nullptr)
