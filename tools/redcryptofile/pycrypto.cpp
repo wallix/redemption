@@ -1,6 +1,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/shm.h>
+#include <unistd.h>
+#include <errno.h>
+#include <stdint.h>
 
 #include <memory>
 
@@ -8,9 +14,6 @@
 #undef _POSIX_C_SOURCE
 #include "Python.h"
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdint.h>
 #include <algorithm>
 #include <unistd.h>
 #include <genrandom.hpp>
@@ -72,24 +75,6 @@ struct Priv_crypto_file_encrypt
   , file(fd)
   {}
 };
-
-
-crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key, CryptoContext * cctx)
-{
-    (void)cctx;
-    Priv_crypto_file_decrypt * cf_struct = new (std::nothrow) Priv_crypto_file_decrypt(systemfd);
-
-    if (!cf_struct) {
-        return nullptr;
-    }
-
-    if (-1 == cf_struct->decrypt.open(cf_struct->file, trace_key)) {
-        delete cf_struct;
-        return nullptr;
-    }
-
-    return reinterpret_cast<crypto_file*>(cf_struct);
-}
 
 crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
 {
@@ -168,11 +153,6 @@ extern "C" {
 # endif
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/shm.h>
-#include <unistd.h>
-#include <errno.h>
 
 extern "C" {
     UdevRandom * get_rnd();
@@ -258,10 +238,14 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
             printf("failed opening=%s\n", path);
             return nullptr;
         }
-
-        result = crypto_open_read(system_fd, trace_key, get_cctx());
-
+        Priv_crypto_file_decrypt * result = new (std::nothrow)Priv_crypto_file_decrypt(system_fd);
         if (!result) {
+            close(system_fd);
+            return nullptr;
+        }
+
+        if (-1 == result->decrypt.open(result->file, trace_key)) {
+            delete result;
             close(system_fd);
             return nullptr;
         }
