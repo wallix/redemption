@@ -158,20 +158,21 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 {
     char *path = nullptr;
     char *omode = nullptr;
-    if (!PyArg_ParseTuple(args, "ss", &path, &omode))
-        return nullptr;
+    if (!PyArg_ParseTuple(args, "ss", &path, &omode)){
+        Py_RETURN_NONE;
+    }
     unsigned char derivator[DERIVATOR_LENGTH];
     get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
     if (get_cctx()->compute_hmac(trace_key, derivator) == -1){
-        return nullptr;
+        Py_RETURN_NONE;
     }
 
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
         if (system_fd == -1){
             printf("failed opening=%s\n", path);
-            return nullptr;
+            Py_RETURN_NONE;
         }
 
         auto result = crypto_file(CRYPTO_DECRYPT_TYPE, system_fd);
@@ -195,7 +196,7 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         int system_fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
         if (system_fd == -1){
             printf("failed opening=%s\n", path);
-            return nullptr;
+            Py_RETURN_NONE;
         }
 
         auto result = crypto_file(CRYPTO_ENCRYPT_TYPE, system_fd);
@@ -212,7 +213,7 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         gl_file_store[fd] = result;
         return Py_BuildValue("i", fd);
     } else {
-        return nullptr;
+        Py_RETURN_NONE;
     }
 
     return Py_BuildValue("i", -1);
@@ -222,10 +223,10 @@ static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
 {
     int fd = 0;
     if (!PyArg_ParseTuple(args, "i", &fd)){
-        return nullptr;
+        Py_RETURN_NONE;
     }
     if (fd >= gl_nb_files){
-        return nullptr;
+        Py_RETURN_NONE;
     }
     auto & cf = gl_file_store[fd];
     int result = -1;
@@ -243,15 +244,15 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
     char hash_digest[(MD_HASH_LENGTH*4)+1];
 
     if (!PyArg_ParseTuple(args, "i", &fd))
-        return nullptr;
+        Py_RETURN_NONE;
 
     if (fd >= static_cast<int>(sizeof(gl_file_store)/sizeof(gl_file_store[0]))){
-        return nullptr;
+        Py_RETURN_NONE;
     }
 
     auto & cf = gl_file_store[fd];
     if (cf.idx == -1){
-        return nullptr;
+        Py_RETURN_NONE;
     }
 
     int result = 0;
@@ -299,7 +300,7 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     int fd;
     PyObject *python_buf;
     if (!PyArg_ParseTuple(args, "iS", &fd, &python_buf)){
-        return nullptr;
+        Py_RETURN_NONE;
     }
 
     int buf_len = PyString_Size(python_buf);
@@ -309,7 +310,7 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     char *buf = PyString_AsString(python_buf);
 
     if (fd >= gl_nb_files){
-        return nullptr;
+        Py_RETURN_NONE;
     }
 
     auto & cf = gl_file_store[fd];
@@ -334,7 +335,7 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
     }
 
     if (fd >= gl_nb_files){
-        return nullptr;
+        Py_RETURN_NONE;
     }
 
     std::unique_ptr<char[]> buf(new char[buf_len]);
@@ -346,7 +347,7 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
         result = cfr->decrypt.read(cfr->file, buf.get(), buf_len);
     }
     if (result < 0){
-        return nullptr;
+        Py_RETURN_NONE;
     }
     return PyString_FromStringAndSize(buf.get(), result);
 }
