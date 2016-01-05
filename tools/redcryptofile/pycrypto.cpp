@@ -105,18 +105,6 @@ int gl_nb_files = 0;
 struct crypto_file gl_file_store[1024];
 }
 
-/* Flush procedure (compression, encryption, effective file writing)
- * Return 0 on success, -1 on error
- */
-int crypto_flush(crypto_file * cf)
-{
-    if (cf->type != CRYPTO_ENCRYPT_TYPE){
-        return -1;
-    }
-    return gl_file_store_write[cf->idx]->encrypt.flush(
-        gl_file_store_write[cf->idx]->file);
-}
-
 /* The actual read method. Read chunks until we reach requested size.
  * Return the actual size read into buf, -1 on error
  */
@@ -263,7 +251,12 @@ static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
     if (fd >= gl_nb_files){
         return nullptr;
     }
-    int result = crypto_flush(&gl_file_store[fd]);
+    auto & cf = gl_file_store[fd];
+    int result = -1;
+    if (cf.type == CRYPTO_ENCRYPT_TYPE){
+        auto & cfw = gl_file_store_write[cf.idx];
+        result = cfw->encrypt.flush(cfw->file);
+    }
     return Py_BuildValue("i", result);
 }
 
