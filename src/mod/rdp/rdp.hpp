@@ -627,8 +627,6 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     } server_notifier;
 
-//    bool session_probe_close_pending = false;
-
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -744,7 +742,6 @@ public:
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
-                LOG(LOG_INFO, "Creation of new mod 'RDP'");
                 LOG(LOG_INFO, "Creation of new mod 'RDP'");
             }
             else {
@@ -1172,6 +1169,13 @@ protected:
     {
         SessionProbeVirtualChannel::Params
             session_probe_virtual_channel_params;
+
+        session_probe_virtual_channel_params.authentifier                           =
+            this->acl;
+        session_probe_virtual_channel_params.exchanged_data_limit                   =
+            (data_size_type)-1;
+        session_probe_virtual_channel_params.verbose                                =
+            this->verbose;
 
         session_probe_virtual_channel_params.session_probe_loading_mask_enabled     =
             this->enable_session_probe_loading_mask;
@@ -3314,6 +3318,12 @@ public:
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     throw;
                 }
+
+                if (this->session_probe_virtual_channel_p &&
+                    this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                    throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
+                }
+
                 if (this->acl &&
                     (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
                 {

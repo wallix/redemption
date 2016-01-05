@@ -817,10 +817,6 @@ public:
 
     ~FileSystemVirtualChannel() override
     {
-#ifndef NDEBUG
-        bool make_boom_in_debug_mode = false;
-#endif  // #ifndef NDEBUG
-
         if (!this->device_io_request_info_inventory.empty())
         {
             for (device_io_request_info_inventory_type::iterator iter =
@@ -843,10 +839,6 @@ public:
                     (std::get<5>(*iter) ?
                      std::get<5>(*iter)->c_str() :
                      ""));
-
-#ifndef NDEBUG
-                make_boom_in_debug_mode = true;
-#endif  // #ifndef NDEBUG
             }
         }
 
@@ -867,14 +859,8 @@ public:
                     (std::get<2>(*iter) ? std::get<2>(*iter)->c_str() : ""),
                     (std::get<3>(*iter) ? "yes" : "no"),
                     (std::get<4>(*iter) ? "yes" : "no"));
-
-#ifndef NDEBUG
-                make_boom_in_debug_mode = true;
-#endif  // #ifndef NDEBUG
             }
         }
-
-        REDASSERT(!make_boom_in_debug_mode);
     }
 
 protected:
