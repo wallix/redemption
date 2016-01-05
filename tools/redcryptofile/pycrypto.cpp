@@ -348,9 +348,9 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
 
     if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len))
         return nullptr;
-    if (buf_len > 2147483647 || buf_len <= 0)
+    if (buf_len > 2147483647 || buf_len <= 0){
         return Py_BuildValue("i", -1);
-
+    }
 
     if (fd >= gl_nb_files){
         return nullptr;
@@ -358,16 +358,16 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
 
     std::unique_ptr<char[]> buf(new char[buf_len]);
 
+    auto & cf = gl_file_store[fd];
     int result = -1;
-    if (gl_file_store[fd].type ==  CRYPTO_DECRYPT_TYPE) {
-        int idx = gl_file_store[fd].idx;
-        result = gl_file_store_read[idx]->decrypt.read(
-            gl_file_store_read[idx]->file, buf.get(), buf_len);
+    if (cf.type ==  CRYPTO_DECRYPT_TYPE) {
+        auto & cfr = gl_file_store_read[cf.idx];
+        result = cfr->decrypt.read(cfr->file, buf.get(), buf_len);
     }
-    if (result >= 0){
-        return PyString_FromStringAndSize(buf.get(), result);
+    if (result < 0){
+        return nullptr;
     }
-    return Py_BuildValue("i", -1);
+    return PyString_FromStringAndSize(buf.get(), result);
 }
 
 static PyMethodDef redcryptoFileMethods[] = {
