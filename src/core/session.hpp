@@ -291,6 +291,10 @@ public:
                                     signal = BACK_EVENT_RETRY_CURRENT;
                                     mm.mod->get_event().reset();
                                 }
+                                else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    mm.mod->get_event().reset();
+                                }
                                 else {
                                     throw;
                                 }

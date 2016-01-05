@@ -32,7 +32,7 @@
 class SessionProbeVirtualChannel : public BaseVirtualChannel
 {
 private:
-    bool session_probe_close_pending       = false;
+    bool session_probe_ending_in_progress  = false;
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
 
@@ -69,6 +69,8 @@ private:
     wait_obj session_probe_event;
 
     OutboundConnectionMonitorRules outbound_connection_monitor_rules;
+
+    bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -177,9 +179,8 @@ public:
             this->session_probe_event.waked_up_by_time);
     }
 
-    bool is_session_probe_close_pending() const
-    {
-        return this->session_probe_close_pending;
+    bool is_disconnection_reconnection_required() {
+        return this->disconnection_reconnection_required;
     }
 
     void process_event()
@@ -235,11 +236,13 @@ public:
                     "SessionProbeVirtualChannel::process_event: "
                         "No keep alive received from Session Probe!");
 
-                if (this->session_probe_close_pending) {
-                    throw Error(ERR_SESSION_PROBE_CLOSE_PENDING);
-                }
+                if (!this->disconnection_reconnection_required) {
+                    if (this->session_probe_ending_in_progress) {
+                        throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
+                    }
 
-                throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                    throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                }
             }
             else {
                 this->session_probe_keep_alive_received = false;
@@ -325,73 +328,50 @@ public:
         const char request_outbound_connection_monitoring_rule[] =
             "Request=Get outbound connection monitoring rule\x01";
 
+        const char self_status_eq[] = "Self.Status=";
+
+        const char request_hello[] = "Request=Hello";
+
         if (!session_probe_message.compare(
-                "Request=Get startup application")) {
+                0,
+                sizeof(request_hello) - 1,
+                request_hello)) {
+            REDASSERT(!this->session_probe_ready);
+
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe is ready.");
             }
 
+            this->session_probe_ready = true;
+
             this->front.session_probe_started();
 
-            if (this->param_session_probe_loading_mask_enabled &&
-                this->front.disable_input_event_and_graphics_update(false)) {
-                if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
-                    LOG(LOG_INFO,
-                        "SessionProbeVirtualChannel::process_server_message: "
-                            "Force full screen update. Rect=(0, 0, %u, %u)",
-                        this->param_front_width, this->param_front_height);
-                }
-                this->mod.rdp_input_invalidate(Rect(0, 0,
-                    this->param_front_width, this->param_front_height));
-            }
+            const char * remaining_data =
+                (session_probe_message.c_str() +
+                 sizeof(request_hello) - 1);
 
-            this->session_probe_ready = true;
+            const bool enable_loading_mask =
+                !strcasecmp(remaining_data, "\x01EnableLoadingMask");
+            // Enable loading mask == Disable input event and graphics update
+            if (enable_loading_mask ||
+                this->param_session_probe_loading_mask_enabled) {
+                if (this->front.disable_input_event_and_graphics_update(enable_loading_mask)) {
+                    if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_server_message: "
+                                "Force full screen update. Rect=(0, 0, %u, %u)",
+                            this->param_front_width, this->param_front_height);
+                    }
+                    this->mod.rdp_input_invalidate(Rect(0, 0,
+                        this->param_front_width, this->param_front_height));
+                }
+            }
 
             this->file_system_drive_manager.DisableSessionProbeDrive(
                 file_system_virtual_channel_to_server_sender,
                 this->verbose);
-
-            {
-                StaticOutStream<8192> out_s;
-
-                const size_t message_length_offset = out_s.get_offset();
-                out_s.out_skip_bytes(sizeof(uint16_t));
-
-                {
-                    const char cstr[] = "StartupApplication=";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                }
-
-                if (this->param_real_alternate_shell.empty()) {
-                    const char cstr[] = "[Windows Explorer]";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                }
-                else {
-                    if (!this->param_real_working_dir.empty()) {
-                        out_s.out_copy_bytes(
-                            this->param_real_working_dir.data(),
-                            this->param_real_working_dir.size());
-                    }
-                    out_s.out_uint8('\x01');
-
-                    out_s.out_copy_bytes(
-                        this->param_real_alternate_shell.data(),
-                        this->param_real_alternate_shell.size());
-                }
-
-                out_s.out_clear_bytes(1);   // Null-terminator.
-
-                out_s.set_out_uint16_le(
-                    out_s.get_offset() - message_length_offset -
-                        sizeof(uint16_t),
-                    message_length_offset);
-
-                this->send_message_to_server(out_s.get_offset(),
-                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                    out_s.get_data(), out_s.get_offset());
-            }
 
             this->session_probe_event.reset();
 
@@ -436,12 +416,132 @@ public:
                 out_s.out_skip_bytes(sizeof(uint16_t));
 
                 {
-                    const char cstr[] = "AuthUser=";
+                    const char cstr[] = "AutomaticallyEndDisconnectedSession=";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                 }
 
-                out_s.out_copy_bytes(this->param_auth_user.data(),
-                    this->param_auth_user.size());
+                if (this->param_session_probe_end_disconnected_session) {
+                    const char cstr[] = "Yes";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+                else {
+                    const char cstr[] = "No";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+        }
+        else if (!session_probe_message.compare(
+                     "Request=Disable loading mask")) {
+            if (this->param_session_probe_loading_mask_enabled) {
+                if (this->front.disable_input_event_and_graphics_update(false)) {
+                    if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_server_message: "
+                                "Force full screen update. Rect=(0, 0, %u, %u)",
+                            this->param_front_width, this->param_front_height);
+                    }
+                    this->mod.rdp_input_invalidate(Rect(0, 0,
+                        this->param_front_width, this->param_front_height));
+                }
+            }
+        }
+        else if (!session_probe_message.compare(
+                     "Request=Get authenticated user")) {
+            StaticOutStream<1024> out_s;
+
+            const size_t message_length_offset = out_s.get_offset();
+            out_s.out_skip_bytes(sizeof(uint16_t));
+
+            {
+                const char cstr[] = "AuthenticatedUser=";
+                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+            }
+
+            out_s.out_copy_bytes(this->param_auth_user.data(),
+                this->param_auth_user.size());
+
+            out_s.out_clear_bytes(1);   // Null-terminator.
+
+            out_s.set_out_uint16_le(
+                out_s.get_offset() - message_length_offset -
+                    sizeof(uint16_t),
+                message_length_offset);
+
+            this->send_message_to_server(out_s.get_offset(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                out_s.get_data(), out_s.get_offset());
+        }
+        else if (!session_probe_message.compare(
+                    "Request=Get startup application")) {
+            StaticOutStream<8192> out_s;
+
+            const size_t message_length_offset = out_s.get_offset();
+            out_s.out_skip_bytes(sizeof(uint16_t));
+
+            {
+                const char cstr[] = "StartupApplication=";
+                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+            }
+
+            if (this->param_real_alternate_shell.empty()) {
+                const char cstr[] = "[Windows Explorer]";
+                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+            }
+            else {
+                if (!this->param_real_working_dir.empty()) {
+                    out_s.out_copy_bytes(
+                        this->param_real_working_dir.data(),
+                        this->param_real_working_dir.size());
+                }
+                out_s.out_uint8('\x01');
+
+                out_s.out_copy_bytes(
+                    this->param_real_alternate_shell.data(),
+                    this->param_real_alternate_shell.size());
+            }
+
+            out_s.out_clear_bytes(1);   // Null-terminator.
+
+            out_s.set_out_uint16_le(
+                out_s.get_offset() - message_length_offset -
+                    sizeof(uint16_t),
+                message_length_offset);
+
+            this->send_message_to_server(out_s.get_offset(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                out_s.get_data(), out_s.get_offset());
+        }
+        else if (!session_probe_message.compare(
+                     "Request=Disconnection-Reconnection")) {
+            if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                LOG(LOG_INFO,
+                    "SessionProbeVirtualChannel::process_server_message: "
+                        "Disconnection-Reconnection required.");
+            }
+
+            this->disconnection_reconnection_required = true;
+
+            {
+                StaticOutStream<512> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "Confirm=Disconnection-Reconnection";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
 
                 out_s.out_clear_bytes(1);   // Null-terminator.
 
@@ -524,12 +624,26 @@ public:
             }
             this->session_probe_keep_alive_received = true;
         }
-        else if (!session_probe_message.compare("Self.Status=Closing")) {
+        else if (!session_probe_message.compare(0, std::string::npos,
+                                                self_status_eq,
+                                                sizeof(self_status_eq) - 1)) {
+            std::string parameters(session_probe_message,
+                sizeof(self_status_eq) - 1, std::string::npos);
+
+            if (parameters.compare("EndingInProgress")) {
+                this->param_acl->log4(
+                    (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                    "Self.Status", "status=EndingInProgress");
+
+                this->session_probe_ending_in_progress = true;
+            }
+        }
+        else if (!session_probe_message.compare("Self.Status=EndingInProgress")) {
             this->param_acl->log4(
                 (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                "Self.Status", "status=Closing");
+                "Self.Status", "status=EndingInProgress");
 
-            this->session_probe_close_pending = true;
+            this->session_probe_ending_in_progress = true;
         }
         else {
             const char * message   = session_probe_message.c_str();
