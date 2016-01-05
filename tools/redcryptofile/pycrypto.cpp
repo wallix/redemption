@@ -105,30 +105,6 @@ int gl_nb_files = 0;
 struct crypto_file gl_file_store[1024];
 }
 
-/* The actual read method. Read chunks until we reach requested size.
- * Return the actual size read into buf, -1 on error
- */
-int crypto_read(crypto_file * cf, char * buf, unsigned int buf_size)
-{
-    if (cf->type != CRYPTO_DECRYPT_TYPE){
-        return -1;
-    }
-    return gl_file_store_read[cf->idx]->decrypt.read(
-        gl_file_store_read[cf->idx]->file, buf, buf_size);
-}
-
-/* Actually appends data to crypto_file buffer, flush if buffer gets full
- * Return the written size, -1 on error
- */
-int crypto_write(crypto_file *cf, const char * buf, unsigned int buf_size)
-{
-    if (cf->type != CRYPTO_ENCRYPT_TYPE){
-        return -1;
-    }
-    return gl_file_store_write[cf->idx]->encrypt.write(
-        gl_file_store_write[cf->idx]->file, buf, buf_size);
-}
-
 
 extern "C" {
     UdevRandom * get_rnd();
@@ -322,21 +298,26 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
 {
     int fd;
     PyObject *python_buf;
-    int buf_len;
-    char *buf;
-
-    if (!PyArg_ParseTuple(args, "iS", &fd, &python_buf))
+    if (!PyArg_ParseTuple(args, "iS", &fd, &python_buf)){
         return nullptr;
-    buf_len = PyString_Size(python_buf);
-    if (buf_len > 2147483647 || buf_len < 0)
+    }
+
+    int buf_len = PyString_Size(python_buf);
+    if (buf_len > 2147483647 || buf_len < 0){
         return Py_BuildValue("i", -1);
-    buf = PyString_AsString(python_buf);
+    }
+    char *buf = PyString_AsString(python_buf);
 
     if (fd >= gl_nb_files){
         return nullptr;
     }
-    
-    int result = crypto_write(&gl_file_store[fd], buf, buf_len);
+
+    auto & cf = gl_file_store[fd];
+    int result = -1;
+    if (cf.type == CRYPTO_ENCRYPT_TYPE){
+        auto & cfw = gl_file_store_write[cf.idx];
+        cfw->encrypt.write(cfw->file, buf, buf_len);
+    }
 
     return Py_BuildValue("i", result);
 }
