@@ -316,7 +316,7 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     int result = -1;
     if (cf.type == CRYPTO_ENCRYPT_TYPE){
         auto & cfw = gl_file_store_write[cf.idx];
-        cfw->encrypt.write(cfw->file, buf, buf_len);
+        result = cfw->encrypt.write(cfw->file, buf, buf_len);
     }
 
     return Py_BuildValue("i", result);
