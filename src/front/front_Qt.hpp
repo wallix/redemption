@@ -554,7 +554,7 @@ public:
     , _label(this)
     , _picture()
     , _width(info.width)
-    , _height(info.height)
+    , _height(info.height)  
     , _pen() 
     , _painter()
     , _sckRead(client_sck, QSocketNotifier::Read, this)
@@ -564,13 +564,20 @@ public:
     , _timer(0)
     , _buttonCtrlAltDel("CTRL + ALT + DELETE", this) 
     , _buttonRefresh("Refresh", this)
-    , _qtRDPKeymap(info.keylayout+0x80000000) 
+    , _qtRDPKeymap(info.keylayout+0x80000000, verbose) 
     {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
         
-        _keymap.init_layout(info.keylayout);
+        int customKeys[1][2]
+        { 
+            { 338, 0xB2 }, //œ or square
+        };
+        
+        this->_qtRDPKeymap.setCustomNoExtendedKeylayoutApplied(customKeys);
+        
+        this->_keymap.init_layout(info.keylayout);
         
         this->setFixedSize(this->_width, this->_height+20);
             
@@ -608,7 +615,7 @@ public:
  
         this->setFocusPolicy(Qt::StrongFocus);
 
-        this->setFocusPolicy(Qt::ClickFocus);
+        //this->setFocusPolicy(Qt::ClickFocus);
 
 
         // -------- Start of system wide SSL_Ctx option ------------------------------
@@ -708,9 +715,7 @@ public Q_SLOTS:
         this->refresh();
     }
     
-    void RefreshReleased() {
-        this->setFocusPolicy(Qt::ClickFocus);
-    }
+    void RefreshReleased() {}
     
     void CtrlAltDelPressed() {
         int flag = Keymap2::KBDFLAGS_EXTENDED;
@@ -726,8 +731,6 @@ public Q_SLOTS:
         this->send_rdp_scanCode(0x38, flag);  // ALT
         this->send_rdp_scanCode(0x1D, flag);  // CTRL
         this->send_rdp_scanCode(0x53, flag);  // DELETE  
-        
-        this->setFocusPolicy(Qt::ClickFocus);
     }
     
 
