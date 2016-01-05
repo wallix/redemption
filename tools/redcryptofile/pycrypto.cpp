@@ -280,12 +280,12 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    if (gl_file_store[fd].idx == -1){
+    auto & cf = gl_file_store[fd];
+    if (cf.idx == -1){
         return nullptr;
     }
 
     int result = 0;
-    auto cf = gl_file_store[fd];
     switch (cf.type){
     case CRYPTO_DECRYPT_TYPE:
     {
@@ -306,7 +306,7 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
     break;
     }
 
-    gl_file_store[fd].idx = -1;
+    cf.idx = -1;
     gl_nb_files--;
 
     // Crazy API: return error as integer or HASH as string... change that
