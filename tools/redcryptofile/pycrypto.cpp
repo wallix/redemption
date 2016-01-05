@@ -141,31 +141,6 @@ int crypto_write(crypto_file *cf, const char * buf, unsigned int buf_size)
         gl_file_store_write[cf->idx]->file, buf, buf_size);
 }
 
-int crypto_close(crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
-{
-    int nResult = 0;
-    switch (cf->type){
-    case CRYPTO_DECRYPT_TYPE:
-    {
-        auto cfr = gl_file_store_read[cf->idx];
-        gl_file_store_read[cf->idx] = nullptr;
-        gl_read_nb_files--;
-        delete cfr;
-    }
-    break;
-    case CRYPTO_ENCRYPT_TYPE:
-    {
-        auto cfw = gl_file_store_write[cf->idx];
-        gl_file_store_write[cf->idx] = nullptr;
-        gl_write_nb_files--;
-        nResult = cfw->encrypt.close(cfw->file, hash, hmac_key);
-        delete cfw;
-    }
-    break;
-    }
-    return nResult;
-}
-
 
 extern "C" {
     UdevRandom * get_rnd();
@@ -309,7 +284,27 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    int result = crypto_close(&gl_file_store[fd], hash, get_cctx()->hmac_key);
+    int result = 0;
+    auto cf = gl_file_store[fd];
+    switch (cf.type){
+    case CRYPTO_DECRYPT_TYPE:
+    {
+        auto cfr = gl_file_store_read[cf.idx];
+        gl_file_store_read[cf.idx] = nullptr;
+        gl_read_nb_files--;
+        delete cfr;
+    }
+    break;
+    case CRYPTO_ENCRYPT_TYPE:
+    {
+        auto cfw = gl_file_store_write[cf.idx];
+        gl_file_store_write[cf.idx] = nullptr;
+        gl_write_nb_files--;
+        result = cfw->encrypt.close(cfw->file, hash, get_cctx()->hmac_key);
+        delete cfw;
+    }
+    break;
+    }
 
     gl_file_store[fd].idx = -1;
     gl_nb_files--;
