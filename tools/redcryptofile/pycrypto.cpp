@@ -15,7 +15,8 @@
 // this is to silent warning as Python.h will redefine this constant
 #undef _POSIX_C_SOURCE
 #include "Python.h"
-
+#include <structmember.h>
+typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include <algorithm>
 #include <unistd.h>
 #include <genrandom.hpp>
@@ -151,8 +152,134 @@ CryptoContext * get_cctx()
     return cctx;
 }
 
-
 extern "C" {
+
+typedef struct {
+    PyObject_HEAD
+    /* Type-specific fields go here. */
+} redcryptofile_NoddyObject;
+
+// This union is work around for 
+typedef union {
+    PyTypeObject pto;
+    PyObject po;
+} t_PyTyOb;
+
+
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+t_PyTyOb redcryptofile_NoddyType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                         /*ob_size*/
+    "redcryptofile.Noddy",     /*tp_name*/
+    sizeof(redcryptofile_NoddyObject), /*tp_basicsize*/
+    0,                         /*tp_itemsize*/
+    0,                         /*tp_dealloc*/
+    0,                         /*tp_print*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare*/
+    0,                         /*tp_repr*/
+    0,                         /*tp_as_number*/
+    0,                         /*tp_as_sequence*/
+    0,                         /*tp_as_mapping*/
+    0,                         /*tp_hash */
+    0,                         /*tp_call*/
+    0,                         /*tp_str*/
+    0,                         /*tp_getattro*/
+    0,                         /*tp_setattro*/
+    0,                         /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+    "Noddy objects",           /* tp_doc */
+};
+#pragma GCC diagnostic pop
+
+typedef struct {
+    PyObject_HEAD
+    /* Type-specific fields go here. */
+    UdevRandom * rnd;
+} redcryptofile_RandomObject;
+
+static void Random_dealloc(redcryptofile_RandomObject* self) {
+    self->ob_type->tp_free((PyObject*)self);
+}
+
+static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    redcryptofile_RandomObject *self = (redcryptofile_RandomObject *)type->tp_alloc(type, 0);
+    if (self != NULL) {
+        self->rnd = new UdevRandom;
+    }
+    return (PyObject *)self;
+}
+
+static int Random_init(redcryptofile_RandomObject *self, PyObject *args, PyObject *kwds)
+{
+    return 0;
+}
+
+static PyObject *
+Random_name(redcryptofile_RandomObject* self)
+{
+    PyObject *result = PyString_FromString("Hellow, World"); 
+    return result;
+}
+
+static PyMemberDef Random_members[] = {
+    {nullptr, 0, 0, 0, nullptr}
+};
+
+
+static PyMethodDef Random_methods[] = {
+    {"name", (PyCFunction)Random_name, METH_NOARGS, "Return Hello World"},
+    {nullptr, nullptr, 0, nullptr}
+  /* Sentinel */
+};
+
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+t_PyTyOb redcryptofile_RandomType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                         /*ob_size*/
+    "redcryptofile.Random",    /*tp_name*/
+    sizeof(redcryptofile_RandomObject), /*tp_basicsize*/
+    0,                         /*tp_itemsize*/
+    (destructor)Random_dealloc,/*tp_dealloc*/
+    0,                         /*tp_print*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare*/
+    0,                         /*tp_repr*/
+    0,                         /*tp_as_number*/
+    0,                         /*tp_as_sequence*/
+    0,                         /*tp_as_mapping*/
+    0,                         /*tp_hash */
+    0,                         /*tp_call*/
+    0,                         /*tp_str*/
+    0,                         /*tp_getattro*/
+    0,                         /*tp_setattro*/
+    0,                         /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT| Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    "Random objects",          /* tp_doc */
+    0,                         /* tp_traverse */
+    0,                         /* tp_clear */
+    0,                         /* tp_richcompare */
+    0,                         /* tp_weaklistoffset */
+    0,                         /* tp_iter */
+    0,                         /* tp_iternext */
+    Random_methods,             /* tp_methods */
+    Random_members,             /* tp_members */
+    0,                         /* tp_getset */
+    0,                         /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    (initproc)Random_init,      /* tp_init */
+    0,                         /* tp_alloc */
+    Random_new,                 /* tp_new */
+};
+#pragma GCC diagnostic pop
 
 static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 {
@@ -361,9 +488,11 @@ static PyMethodDef redcryptoFileMethods[] = {
     {nullptr, nullptr, 0, nullptr}
 };
 
-PyMODINIT_FUNC initredcryptofile(void)
+PyMODINIT_FUNC 
+initredcryptofile(void)
 {
-    Py_InitModule("redcryptofile", redcryptoFileMethods);
+    PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
+                           "redcryptofile module");
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
 
@@ -386,6 +515,19 @@ PyMODINIT_FUNC initredcryptofile(void)
     {
         gl_file_store_write[idxw] = nullptr;
     }
+
+    redcryptofile_NoddyType.pto.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&redcryptofile_NoddyType.pto) == 0){
+        Py_INCREF(&redcryptofile_NoddyType.po);
+        PyModule_AddObject(module, "Noddy", &redcryptofile_NoddyType.po);
+    }
+
+    redcryptofile_RandomType.pto.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&redcryptofile_RandomType.pto) == 0){
+        Py_INCREF(&redcryptofile_RandomType.po);
+        PyModule_AddObject(module, "Random", &redcryptofile_RandomType.po);
+    }
+
 }
 
 }
