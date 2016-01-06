@@ -329,7 +329,7 @@ actions gen_redcryptofile {
     cp "$(<)" tools/redcryptofile/redcryptofile.so
 }
 
-explicit pycryptofile ;
+explicit pycryptofile redcryptofile.so ;
 
 lib pycryptofile : 
         tools/redcryptofile/pycrypto.cpp 
