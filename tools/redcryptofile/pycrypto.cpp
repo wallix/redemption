@@ -319,20 +319,29 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
     char *path = nullptr;
     char *omode = nullptr;
     if (!PyArg_ParseTuple(args, "ss", &path, &omode)){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
     unsigned char derivator[DERIVATOR_LENGTH];
     get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
     if (get_cctx()->compute_hmac(trace_key, derivator) == -1){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
 
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
         if (system_fd == -1){
             printf("failed opening=%s\n", path);
-            Py_RETURN_NONE;
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+        Py_RETURN_NONE;
+#pragma GCC diagnostic pop
         }
 
         auto result = crypto_file(CRYPTO_DECRYPT_TYPE, system_fd);
@@ -356,7 +365,10 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         int system_fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
         if (system_fd == -1){
             printf("failed opening=%s\n", path);
-            Py_RETURN_NONE;
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+        Py_RETURN_NONE;
+#pragma GCC diagnostic pop
         }
 
         auto result = crypto_file(CRYPTO_ENCRYPT_TYPE, system_fd);
@@ -373,7 +385,10 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         gl_file_store[fd] = result;
         return Py_BuildValue("i", fd);
     } else {
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
 
     return Py_BuildValue("i", -1);
@@ -383,10 +398,16 @@ static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
 {
     int fd = 0;
     if (!PyArg_ParseTuple(args, "i", &fd)){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
     if (fd >= gl_nb_files){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
     auto & cf = gl_file_store[fd];
     int result = -1;
@@ -403,16 +424,26 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
     unsigned char hash[MD_HASH_LENGTH<<1];
     char hash_digest[(MD_HASH_LENGTH*4)+1];
 
-    if (!PyArg_ParseTuple(args, "i", &fd))
+    if (!PyArg_ParseTuple(args, "i", &fd)){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
+    }
 
     if (fd >= static_cast<int>(sizeof(gl_file_store)/sizeof(gl_file_store[0]))){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
 
     auto & cf = gl_file_store[fd];
     if (cf.idx == -1){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
 
     int result = 0;
@@ -460,7 +491,10 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     int fd;
     PyObject *python_buf;
     if (!PyArg_ParseTuple(args, "iS", &fd, &python_buf)){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
 
     int buf_len = PyString_Size(python_buf);
@@ -470,7 +504,10 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     char *buf = PyString_AsString(python_buf);
 
     if (fd >= gl_nb_files){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
 
     auto & cf = gl_file_store[fd];
@@ -495,7 +532,10 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
     }
 
     if (fd >= gl_nb_files){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
 
     std::unique_ptr<char[]> buf(new char[buf_len]);
@@ -507,7 +547,10 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
         result = cfr->decrypt.read(cfr->file, buf.get(), buf_len);
     }
     if (result < 0){
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
+#pragma GCC diagnostic pop
     }
     return PyString_FromStringAndSize(buf.get(), result);
 }
@@ -549,6 +592,8 @@ initredcryptofile(void)
         gl_file_store_write[idxw] = nullptr;
     }
 
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wuseless-cast"
     redcryptofile_NoddyType.pto.tp_new = PyType_GenericNew;
     if (PyType_Ready(&redcryptofile_NoddyType.pto) == 0){
         Py_INCREF(&redcryptofile_NoddyType.po);
@@ -560,7 +605,7 @@ initredcryptofile(void)
         Py_INCREF(&redcryptofile_RandomType.po);
         PyModule_AddObject(module, "Random", &redcryptofile_RandomType.po);
     }
-
+#pragma GCC diagnostic pop
 }
 
 }
