@@ -312,8 +312,14 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
         W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
-        W.member(A, type_<bool>(), "session_probe_on_launch_failure_disconnect_user", set(true), r);
+        W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
+            "Behavior on failure to launch Session Probe.\n"
+            "  0: ignore failure and continue.\n"
+            "  1: disconnect user.\n"
+            "  2: reconnect without Session Probe."
+        }, set(SessionProbeOnLaunchFailure::disconnect_user), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
+        W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(true));
         W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set("cmd /k"));
 
         //@{

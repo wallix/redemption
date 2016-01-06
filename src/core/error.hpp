@@ -306,7 +306,8 @@ enum error_type {
 
     ERR_SESSION_PROBE_LAUNCH = 24200,
     ERR_SESSION_PROBE_KEEPALIVE,
-    ERR_SESSION_PROBE_CLOSE_PENDING,
+    ERR_SESSION_PROBE_ENDING_IN_PROGRESS,
+    ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION,
 
     ERR_SSL_CALL_FAILED = 25000,
     ERR_SSL_CALL_HMAC_INIT_FAILED,
@@ -359,7 +360,7 @@ public:
             return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
             return "Composite Widget Destroyed without child list not empty.";
-        case ERR_SESSION_PROBE_CLOSE_PENDING:
+        case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
         default:
             {

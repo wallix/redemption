@@ -1,8 +1,6 @@
-project(test_rdp_Qt)
+project(reverseKeylayoutGenerator)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 cmake_minimum_required(VERSION 2.4.0)
-find_package(Qt4 REQUIRED)
-include(${QT_USE_FILE})
 include(FindBoost)
 
 include_directories(${CMAKE_SOURCE_DIR}/src/utils)
@@ -24,15 +22,10 @@ include_directories(/usr/include)
 include_directories(${CMAKE_SOURCE_DIR}/tests)
 
 set(spreadsheet_SRCS
-    tests/mod/rdp/test_rdp_Qt.cpp
-    src/utils/bitmap_data_allocator.cpp
+    tools/reverseKeylayoutGenerator.cpp
 )
 set(spreadsheet_MOC_SRCS
-    #src/core/RDP/RDPQtDrawable.hpp
-    src/front/front_Qt.hpp
-    #tests/front/fake_front_Qt.hpp
-    #src/core/RDP/RDPQWidget.hpp
-    #tests/mod/rdp/QTimerParent.hpp
+
 )
 set(spreadsheet_UIS
 
@@ -41,10 +34,7 @@ set(spreadsheet_RCCS
 
 )
 
-qt4_wrap_cpp(spreadsheet_MOCS ${spreadsheet_MOC_SRCS})
-qt4_wrap_ui(spreadsheet_UIS_H ${spreadsheet_UIS})
-qt4_wrap_cpp(spreadsheet_MOC_UI ${spreadsheet_UIS_H})
-qt4_add_resources(spreadsheet_RCC_SRCS ${spreadsheet_RCCS})
+
 
 set(FIXTURES_PATH "./tests/fixtures")
 set(INSTALLDIR)
@@ -77,7 +67,7 @@ add_definitions(-DDRIVE_REDIRECTION_PATH='\"${DRIVE_REDIRECTION_PATH}\"')
 
 add_definitions(-DQT_NO_KEYWORDS)
 add_definitions(-DQT_NO_DEBUG)
-add_executable(test_rdp_Qt
+add_executable(reverseKeylayoutGenerator
     ${spreadsheet_SRCS}
     ${spreadsheet_MOCS}
     ${spreadsheet_MOC_UI}
@@ -86,4 +76,4 @@ add_executable(test_rdp_Qt
 #link_directories(${BOOST_LIBRARYDIR})
 #include_directories(SYSTEM ${BOOST_INCLUDEDIR})
 
-target_link_libraries(test_rdp_Qt ${QT_LIBRARIES} pthread png krb5 gssglue png z dl crypto boost_unit_test_framework ssl)
+target_link_libraries( reverseKeylayoutGenerator pthread krb5 gssglue z dl )
