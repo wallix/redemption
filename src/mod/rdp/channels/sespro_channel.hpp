@@ -332,10 +332,7 @@ public:
 
         const char request_hello[] = "Request=Hello";
 
-        if (!session_probe_message.compare(
-                0,
-                sizeof(request_hello) - 1,
-                request_hello)) {
+        if (!session_probe_message.compare(request_hello)) {
             REDASSERT(!this->session_probe_ready);
 
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
@@ -348,25 +345,16 @@ public:
 
             this->front.session_probe_started();
 
-            const char * remaining_data =
-                (session_probe_message.c_str() +
-                 sizeof(request_hello) - 1);
-
-            const bool enable_loading_mask =
-                !strcasecmp(remaining_data, "\x01EnableLoadingMask");
-            // Enable loading mask == Disable input event and graphics update
-            if (enable_loading_mask ||
-                this->param_session_probe_loading_mask_enabled) {
-                if (this->front.disable_input_event_and_graphics_update(enable_loading_mask)) {
-                    if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
-                        LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_server_message: "
-                                "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->param_front_width, this->param_front_height);
-                    }
-                    this->mod.rdp_input_invalidate(Rect(0, 0,
-                        this->param_front_width, this->param_front_height));
+            if (this->param_session_probe_loading_mask_enabled &&
+                this->front.disable_input_event_and_graphics_update(false)) {
+                if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                    LOG(LOG_INFO,
+                        "SessionProbeVirtualChannel::process_server_message: "
+                            "Force full screen update. Rect=(0, 0, %u, %u)",
+                        this->param_front_width, this->param_front_height);
                 }
+                this->mod.rdp_input_invalidate(Rect(0, 0,
+                    this->param_front_width, this->param_front_height));
             }
 
             this->file_system_drive_manager.DisableSessionProbeDrive(
@@ -439,21 +427,6 @@ public:
                 this->send_message_to_server(out_s.get_offset(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                     out_s.get_data(), out_s.get_offset());
-            }
-        }
-        else if (!session_probe_message.compare(
-                     "Request=Disable loading mask")) {
-            if (this->param_session_probe_loading_mask_enabled) {
-                if (this->front.disable_input_event_and_graphics_update(false)) {
-                    if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
-                        LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_server_message: "
-                                "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->param_front_width, this->param_front_height);
-                    }
-                    this->mod.rdp_input_invalidate(Rect(0, 0,
-                        this->param_front_width, this->param_front_height));
-                }
             }
         }
         else if (!session_probe_message.compare(
