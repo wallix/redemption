@@ -329,6 +329,8 @@ actions gen_redcryptofile {
     cp "$(<)" tools/redcryptofile/redcryptofile.so
 }
 
+explicit pycryptofile ;
+
 lib pycryptofile : 
         tools/redcryptofile/pycrypto.cpp 
         snappy 
