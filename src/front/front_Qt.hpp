@@ -17,7 +17,6 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Clément Moroldo
 
-   Fake Front class for Unit Testing
 */
 
 #ifndef FRONT_QT_HPP
@@ -61,6 +60,7 @@
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "Qt_RDP_KeyMap.hpp"
+#include "keymap2.hpp"
 
 
 #include <QtGui/QWidget>
@@ -106,20 +106,13 @@ public:
     
     // Controllers members
     Keymap2                        _keymap;
-    const Keylayout::KeyLayout_t * _layout;
     bool                           _ctrl_alt_delete; // currently not used and always false
     StaticOutStream<256>           _decoded_data;    // currently not initialised
     uint8_t                        _keyboardMods;    
     int                            _timer;
-    QPushButton                    _button;
+    QPushButton                    _buttonCtrlAltDel;
+    QPushButton                    _buttonRefresh;
     Qt_RDP_KeyMap                  _qtRDPKeymap;
-    
-    enum {
-          CTRL_MOD     = 0x08
-        , CAPSLOCK_MOD = 0x04
-        , ALT_MOD      = 0x02
-        , SHIFT_MOD    = 0x01
-    };
     
     
     QColor u32_to_qcolor(uint32_t color){
@@ -143,11 +136,6 @@ public:
         this->_painter.end();
         this->_label.setPicture(this->_picture);
         this->show();
-    }
-    
-    void refresh() {
-        Rect rect(0, 0, this->_width, this->_height);
-        this->_callback->rdp_input_invalidate(rect);
     }
     
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
@@ -526,17 +514,12 @@ public:
         const uint8_t * row = bmp.data();
         
         QImage::Format format; //bpp
-        if (bmp.bpp() == 16){
-            format = QImage::Format_RGB16;
-        }
-        if (bmp.bpp() == 24){
-            format = QImage::Format_RGB888;
-        }
-        if (bmp.bpp() == 32){
-            format = QImage::Format_RGB32;
-        }
-        if (bmp.bpp() == 15){
-            format = QImage::Format_RGB555;
+        switch (bmp.bpp()) {
+            case 15: format = QImage::Format_RGB555; break;
+            case 16: format = QImage::Format_RGB16;  break;
+            case 24: format = QImage::Format_RGB888; break;
+            case 32: format = QImage::Format_RGB32;  break;
+            default : break;
         }
         
         for (size_t k = 0 ; k < bitmap_data.height; k++) {
@@ -558,7 +541,9 @@ public:
     //      CONSTRUCTOR
     //------------------------
  
-    Front_Qt(ClientInfo & info, uint32_t verbose, int client_sck)
+    Front_Qt(ClientInfo & info, 
+             uint32_t verbose, 
+             int client_sck)
     : QWidget(), FrontAPI(false, false)
     , verbose(verbose)
     , info(info)
@@ -569,7 +554,7 @@ public:
     , _label(this)
     , _picture()
     , _width(info.width)
-    , _height(info.height)
+    , _height(info.height)  
     , _pen() 
     , _painter()
     , _sckRead(client_sck, QSocketNotifier::Read, this)
@@ -577,14 +562,22 @@ public:
     , _ctrl_alt_delete(false)
     , _keyboardMods(0) 
     , _timer(0)
-    , _button("CTRL + ALT + DELETE", this) 
-    , _qtRDPKeymap(&_keymap) {
+    , _buttonCtrlAltDel("CTRL + ALT + DELETE", this) 
+    , _buttonRefresh("Refresh", this)
+    , _qtRDPKeymap(info.keylayout+0x80000000, verbose) 
+    {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
         
-        _keymap.init_layout(info.keylayout);
-        this->_layout = &(this->_keymap.keylayout_WORK->noMod);
+        int customKeys[1][2]
+        { 
+            { 338, 0xB2 }, //œ or square
+        };
+        
+        this->_qtRDPKeymap.setCustomNoExtendedKeylayoutApplied(customKeys);
+        
+        this->_keymap.init_layout(info.keylayout);
         
         this->setFixedSize(this->_width, this->_height+20);
             
@@ -604,13 +597,25 @@ public:
         this->setAttribute(Qt::WA_NoSystemBackground);
         
         this->_painter.fillRect(0, 0, this->_width, this->_height, Qt::white);
-        //this->_painter.fillRect(0, this->_height, this->_width, 2, Qt::red);
         
-        _button.setToolTip("CTRL + ALT + DELETE"); 
-        _button.setGeometry(QRect(QPoint(0, this->_height+1),QSize(this->_width, 20)));
-        QObject::connect(&_button, SIGNAL (pressed()),  this, SLOT (CtrlAltDelOn()));
-        QObject::connect(&_button, SIGNAL (released()), this, SLOT (CtrlAltDelOut()));
-        _button.show();
+        this->_buttonCtrlAltDel.setToolTip("CTRL + ALT + DELETE"); 
+        this->_buttonCtrlAltDel.setGeometry(QRect(QPoint(0, this->_height+1),QSize(this->_width/2, 20)));
+        QObject::connect(&(this->_buttonCtrlAltDel), SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
+        QObject::connect(&(this->_buttonCtrlAltDel), SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
+        this->_buttonCtrlAltDel.show();
+        
+        this->_buttonRefresh.setToolTip("Refresh");
+        this->_buttonRefresh.setGeometry(QRect(QPoint(this->_width/2, this->_height+1),QSize(this->_width/2, 20)));
+        QObject::connect(&(this->_buttonRefresh), SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
+        QObject::connect(&(this->_buttonRefresh), SIGNAL (released()), this, SLOT (RefreshReleased()));
+        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
+        this->_buttonRefresh.show();
+        
+ 
+        this->setFocusPolicy(Qt::StrongFocus);
+
+        //this->setFocusPolicy(Qt::ClickFocus);
 
 
         // -------- Start of system wide SSL_Ctx option ------------------------------
@@ -671,27 +676,22 @@ public:
             case 4: flag = MOUSE_FLAG_BUTTON4; break; 
             default: break;
         }
-        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
-        //this->refresh(); 
+        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
     }
     
     void keyPressEvent(QKeyEvent *e) { 
         this->_qtRDPKeymap.keyQtEvent(0x0000,      e);
-        int flag    = _qtRDPKeymap.flag;
-        int keyCode = _qtRDPKeymap.keyCode;
+        int keyCode = this->_qtRDPKeymap.keyCode;
         if (keyCode != 0) {
-            this->_keymap.event(flag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-            this->_callback->rdp_input_scancode(keyCode, 0, flag, _timer, &(this->_keymap));
+            this->send_rdp_scanCode(keyCode, this->_qtRDPKeymap.flag);
         }
     }
     
     void keyReleaseEvent(QKeyEvent *e) {
         this->_qtRDPKeymap.keyQtEvent(KBD_FLAG_UP, e);
-        int flag    = _qtRDPKeymap.flag;
-        int keyCode = _qtRDPKeymap.keyCode;
+        int keyCode = this->_qtRDPKeymap.keyCode;
         if (keyCode != 0) {
-            this->_keymap.event(flag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-            this->_callback->rdp_input_scancode(keyCode, 0, flag, _timer, &(this->_keymap));
+            this->send_rdp_scanCode(keyCode, this->_qtRDPKeymap.flag);
         }
     }
     
@@ -711,47 +711,35 @@ public:
     
     
 public Q_SLOTS:
-    void CtrlAltDelOn() {
-        int keyboardFlag  = Keymap2::KBDFLAGS_EXTENDED;
-        int keyStatusFlag = 0;
-        
-        int keyCode = 0x38;  // ALT
-        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
-        
-        keyCode     = 0x1D;  // CTRL
-        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
-        
-        keyCode     = 0x53;  // DELETE
-        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
-                    
+    void RefreshPressed() {
+        this->refresh();
     }
     
-    void CtrlAltDelOut() {
-        int keyboardFlag  = Keymap2::KBDFLAGS_EXTENDED;
-        int keyStatusFlag = KBD_FLAG_UP;
+    void RefreshReleased() {}
+    
+    void CtrlAltDelPressed() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED;
+
+        this->send_rdp_scanCode(0x38, flag);  // ALT
+        this->send_rdp_scanCode(0x1D, flag);  // CTRL
+        this->send_rdp_scanCode(0x53, flag);  // DELETE       
+    }
+    
+    void CtrlAltDelReleased() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
         
-        int keyCode = 0x38;  // ALT
-        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
-        
-        keyCode     = 0x1D;  // CTRL
-        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
-        
-        keyCode     = 0x53;  // DELETE
-        this->_keymap.event(keyStatusFlag | keyboardFlag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        this->_callback->rdp_input_scancode(keyCode, 0, keyStatusFlag | keyboardFlag, _timer, &(this->_keymap));
+        this->send_rdp_scanCode(0x38, flag);  // ALT
+        this->send_rdp_scanCode(0x1D, flag);  // CTRL
+        this->send_rdp_scanCode(0x53, flag);  // DELETE  
     }
     
 
+    
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
-    //-----------------------------------------
-    //    SOCKET EVENTS LISTENING FUNCTIONS
-    //-----------------------------------------
+    //--------------------------------
+    //    SOCKET EVENTS FUNCTIONS
+    //--------------------------------
      
     void readSck_And_ShowView() {
         if (this->_callback != nullptr) {
@@ -763,6 +751,16 @@ public Q_SLOTS:
     
     
 public:
+    void refresh() {
+        Rect rect(0, 0, this->_width, this->_height);
+        this->_callback->rdp_input_invalidate(rect);
+    }
+    
+    void send_rdp_scanCode(int keyCode, int flag) {
+        this->_keymap.event(flag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+        this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap));
+    }
+    
     void setCallback_And_StartListening(mod_api* callback) {
         this->_callback = callback;
         QObject::connect(&(this->_sckRead), SIGNAL(activated(int)), this, SLOT(readSck_And_ShowView()));

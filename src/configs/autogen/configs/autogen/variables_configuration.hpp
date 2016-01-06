@@ -1397,14 +1397,18 @@ namespace cfg {
             using type = unsigned;
             type value{20000};
         };
-        // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE_DISCONNECT_USER
-        struct session_probe_on_launch_failure_disconnect_user {
+        // Behavior on failure to launch Session Probe.
+        //   0: ignore failure and continue.
+        //   1: disconnect user.
+        //   2: reconnect without Session Probe.
+        // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
+        struct session_probe_on_launch_failure {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 24; }
-            using type = bool;
-            type value{1};
+            using type = ::configs::SessionProbeOnLaunchFailure;
+            type value{static_cast< ::configs::SessionProbeOnLaunchFailure>(1)};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         struct session_probe_keepalive_timeout {
@@ -1414,6 +1418,14 @@ namespace cfg {
             static constexpr unsigned index() { return 25; }
             using type = unsigned;
             type value{5000};
+        };
+        // End automatically a disconnected session
+        struct session_probe_end_disconnected_session {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
         };
         struct session_probe_alternate_shell {
             static constexpr ::configs::VariableProperties properties() {
@@ -1995,8 +2007,9 @@ struct mod_rdp
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
 , cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user
+, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_alternate_shell
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
@@ -2101,7 +2114,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
 , cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure_disconnect_user
+, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check

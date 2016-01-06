@@ -406,6 +406,15 @@ enum class KeyboardInputMaskingLevel : unsigned {
 MK_ENUM_FIELD(::configs::KeyboardInputMaskingLevel, "0", "1", "2")
 
 
+enum class SessionProbeOnLaunchFailure {
+    ignore_and_continue,
+    disconnect_user,
+    retry_without_session_probe,
+    NB
+};
+MK_ENUM_FIELD(::configs::SessionProbeOnLaunchFailure, "0", "1", "2")
+
+
 #include "mk_enum_undef.hpp"
 
 }
