@@ -148,7 +148,7 @@ public:
             this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
                                    , this->ini, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
 
-            ModuleManager mm(*this->front, this->ini);
+            ModuleManager mm(*this->front, this->ini, this->gen);
             BackEvent_t signal = BACK_EVENT_NONE;
 
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
@@ -273,11 +273,31 @@ public:
                                                              is_set(*secondary_event, nullptr, rfds));
                         if (is_set(mm.mod->get_event(), mm.mod_transport, rfds) ||
                             secondary_event_is_set) {
-                            mm.mod->draw_event(now);
+                            try
+                            {
+                                mm.mod->draw_event(now);
 
-                            if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
-                                signal = mm.mod->get_event().signal;
-                                mm.mod->get_event().reset();
+                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
+                                    signal = mm.mod->get_event().signal;
+                                    mm.mod->get_event().reset();
+                                }
+                            }
+                            catch (Error const & e) {
+                                if ((e.id == ERR_SESSION_PROBE_LAUNCH) &&
+                                    (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
+                                     ::configs::SessionProbeOnLaunchFailure::retry_without_session_probe)) {
+                                    this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
+
+                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    mm.mod->get_event().reset();
+                                }
+                                else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    mm.mod->get_event().reset();
+                                }
+                                else {
+                                    throw;
+                                }
                             }
                         }
                         if (this->front->capture && is_set(this->front->capture->capture_event, nullptr, rfds)) {

@@ -63,6 +63,8 @@ enum error_type {
     ERR_TRANSPORT_TLS_CONNECT_FAILED = 1600,
     ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED,
     ERR_TRANSPORT_TLS_CERTIFICATE_MISSED,
+    ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED,
+    ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE,
 
     ERR_ACL_UNEXPECTED_IN_ITEM_OUT = 1700,
     ERR_ACL_MESSAGE_TOO_BIG,
@@ -304,6 +306,8 @@ enum error_type {
 
     ERR_SESSION_PROBE_LAUNCH = 24200,
     ERR_SESSION_PROBE_KEEPALIVE,
+    ERR_SESSION_PROBE_ENDING_IN_PROGRESS,
+    ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION,
 
     ERR_SSL_CALL_FAILED = 25000,
     ERR_SSL_CALL_HMAC_INIT_FAILED,
@@ -346,10 +350,18 @@ public:
             return "Open file failed";
         case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
             return "TLS certificate changed";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+            return "TLS certificate missed";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+            return "TLS certificate corrupted";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+            return "TLS certificate is inaccessible";
         case ERR_VNC_CONNECTION_ERROR:
             return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
             return "Composite Widget Destroyed without child list not empty.";
+        case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
+            return "Session logoff in progress";
         default:
             {
                 int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);

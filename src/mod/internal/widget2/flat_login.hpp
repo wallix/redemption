@@ -15,7 +15,7 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Meng Tan
+ *   Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_LOGIN_HPP)
@@ -63,7 +63,7 @@ private:
     // WidgetHScrollBar hbar;
 
 public:
-    FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
+    FlatLogin(mod_api& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
               const char * login, const char * password,

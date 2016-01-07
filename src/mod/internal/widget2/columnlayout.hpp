@@ -27,7 +27,7 @@
 #include "layout.hpp"
 
 struct WidgetColumnLayout : public WidgetLayout {
-    WidgetColumnLayout(DrawApi & drawable, int x, int y, Widget2 & parent,
+    WidgetColumnLayout(mod_api & drawable, int x, int y, Widget2 & parent,
                        NotifyApi * notifier, int group_id = 0)
         : WidgetLayout(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
     {
@@ -57,7 +57,7 @@ struct WidgetColumnLayout : public WidgetLayout {
 //     Widget2 * items[COLUMN_SIZE_MAX];
 //     size_t    nb_items;
 
-//     WidgetColumnLayout(DrawApi & drawable, int x, int y, Widget2 & parent,
+//     WidgetColumnLayout(mod_api & drawable, int x, int y, Widget2 & parent,
 //                        NotifyApi * notifier, int group_id = 0)
 //         : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
 //         , nb_items(0)

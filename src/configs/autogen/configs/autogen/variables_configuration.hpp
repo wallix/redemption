@@ -669,6 +669,16 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
+
+        // AUTHID_CONTEXT_CRYPTO_KEY
+        struct crypto_key {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 94; }
+            using type = ::configs::StaticKeyString<32>;
+            type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
+        };
     };
 
     struct crypto {
@@ -1387,17 +1397,18 @@ namespace cfg {
             using type = unsigned;
             type value{20000};
         };
-        // Specifies the action to be performed is the launch of session probe fails.
-        //   0: disconnects session
-        //   1: remains connected
+        // Behavior on failure to launch Session Probe.
+        //   0: ignore failure and continue.
+        //   1: disconnect user.
+        //   2: reconnect without Session Probe.
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
         struct session_probe_on_launch_failure {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 24; }
-            using type = ::configs::Range<unsigned, 0, 1, 0>;
-            type value{0};
+            using type = ::configs::SessionProbeOnLaunchFailure;
+            type value{static_cast< ::configs::SessionProbeOnLaunchFailure>(1)};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         struct session_probe_keepalive_timeout {
@@ -1408,12 +1419,20 @@ namespace cfg {
             using type = unsigned;
             type value{5000};
         };
+        // End automatically a disconnected session
+        struct session_probe_end_disconnected_session {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
         struct session_probe_alternate_shell {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::StaticString<512>;
-            type value{""};
+            type value{"cmd /k"};
         };
         // Keep known server certificates on WAB
         // AUTHID_MOD_RDP_SERVER_CERT_STORE
@@ -1590,6 +1609,27 @@ namespace cfg {
         };
     };
 
+    struct session_log {
+        struct enable_session_log {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
+
+        //   0: keyboard input are not masked
+        //   1: only passwords are masked
+        //   2: passwords and unidentified texts are masked
+        struct keyboard_input_masking_level {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = ::configs::KeyboardInputMaskingLevel;
+            type value{static_cast< ::configs::KeyboardInputMaskingLevel>(2)};
+        };
+    };
+
     struct translation {
         // AUTHID_TRANSLATION_LANGUAGE
         struct language {
@@ -1728,7 +1768,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 37; }
             using type = ::configs::KeyboardLogFlags;
-            type value{};
+            type value{static_cast< ::configs::KeyboardLogFlags>(1)};
         };
 
         // Disable clipboard log:
@@ -1741,7 +1781,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 38; }
             using type = ::configs::ClipboardLogFlags;
-            type value{};
+            type value{static_cast< ::configs::ClipboardLogFlags>(1)};
         };
 
         // Disable (redirected) file system log:
@@ -1754,7 +1794,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 39; }
             using type = ::configs::FileSystemLogFlags;
-            type value{};
+            type value{static_cast< ::configs::FileSystemLogFlags>(1)};
         };
 
         // AUTHID_VIDEO_RT_DISPLAY
@@ -1866,6 +1906,7 @@ struct context
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::crypto_key
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -1968,6 +2009,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_alternate_shell
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
@@ -1989,6 +2031,11 @@ struct mod_vnc
 , cfg::mod_vnc::allow_authentification_retries
 , cfg::mod_vnc::server_clipboard_encoding_type
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
+{ static constexpr bool is_section = true; };
+
+struct session_log
+: cfg::session_log::enable_session_log
+, cfg::session_log::keyboard_input_masking_level
 { static constexpr bool is_section = true; };
 
 struct translation
@@ -2031,6 +2078,7 @@ struct VariablesConfiguration
 , cfg_section::mod_rdp
 , cfg_section::mod_replay
 , cfg_section::mod_vnc
+, cfg_section::session_log
 , cfg_section::translation
 , cfg_section::video
 , cfg::theme
@@ -2136,5 +2184,6 @@ using VariablesAclPack = Pack<
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::crypto_key
 >;
 }

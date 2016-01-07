@@ -16,7 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAIT_HPP)
@@ -31,6 +31,7 @@
 #include "group_box.hpp"
 #include "flat_form.hpp"
 #include "translation.hpp"
+#include "flat_button.hpp"
 
 class FlatWait : public WidgetParent
 {
@@ -46,9 +47,10 @@ public:
     bool hasform;
     CompositeArray composite_array;
 
-    FlatWait(DrawApi& drawable, int16_t width, int16_t height,
+    FlatWait(mod_api& drawable, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
+             WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
              bool showform = false, int required = FlatForm::NONE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
@@ -106,6 +108,12 @@ public:
         this->groupbox.rect.cy = y;
         this->groupbox.move_xy(0, (height - y) / 2);
         this->add_widget(&this->groupbox);
+
+        if (extra_button) {
+            this->add_widget(extra_button);
+            extra_button->set_button_x(60);
+            extra_button->set_button_y(height - 60);
+        }
     }
 
     ~FlatWait() override {

@@ -316,6 +316,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "session_probe_keepalive_timeout")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "session_probe_end_disconnected_session")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::session_probe_end_disconnected_session&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "session_probe_alternate_shell")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_alternate_shell&>(this->variables).value, value);
         }
@@ -353,6 +356,19 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         }
         else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
             ::configs::parse(static_cast<cfg::mod_vnc::bogus_clipboard_infinite_loop&>(this->variables).value, value);
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "session_log")) {
+        if (0) {}
+        else if (0 == strcmp(key, "enable_session_log")) {
+            ::configs::parse(static_cast<cfg::session_log::enable_session_log&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "keyboard_input_masking_level")) {
+            ::configs::parse(static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value, value);
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {

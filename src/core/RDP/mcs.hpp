@@ -47,7 +47,7 @@ namespace MCS
         RN_CHANNEL_PURGED      = 4
     };
 
-    const char * get_reason(t_reasons reason)
+    inline const char * get_reason(t_reasons reason)
     {
         const char * reasons[5] = {
             "RN_DOMAIN_DISCONNECTED",
@@ -152,7 +152,7 @@ namespace MCS
         "rt-user-rejected"
     };
 
-    int peekPerEncodedMCSType(const InStream & stream) {
+    inline int peekPerEncodedMCSType(const InStream & stream) {
         if (!stream.in_check_rem(1)){
             throw Error(ERR_MCS);
         }

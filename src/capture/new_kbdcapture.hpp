@@ -33,6 +33,7 @@ struct NewKbdCapture : public RDPCaptureDevice
 private:
     StaticOutStream<49152> unlogged_data;
     StaticOutStream<24576> data;
+    StaticOutStream<64> session_data;
 
     timeval last_snapshot;
 
@@ -44,6 +45,13 @@ private:
     utils::MatchFinder::NamedRegexArray regexes_filter_notify;
 
     bool enable_keyboard_log_syslog;
+
+    bool is_driven_by_ocr         = false;
+    bool is_probe_enabled_session = false;
+
+    bool keyboard_input_mask_enabled = false;
+
+    uint32_t verbose;
 
     class Utf8KbdData {
         uint8_t kbd_data[128] = { 0, 0 };
@@ -107,11 +115,14 @@ public:
                  , char const * const filters_kill
                  , char const * const filters_notify
                  , bool enable_keyboard_log_syslog
+                 , bool is_driven_by_ocr
                  , int verbose = 0)
     : last_snapshot(now)
     , wait_until_next_snapshot(false)
     , authentifier(authentifier)
-    , enable_keyboard_log_syslog(enable_keyboard_log_syslog) {
+    , enable_keyboard_log_syslog(enable_keyboard_log_syslog)
+    , is_driven_by_ocr(is_driven_by_ocr)
+    , verbose(verbose) {
         if (filters_kill) {
             utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                 filters_kill, this->regexes_filter_kill, verbose);
@@ -123,8 +134,12 @@ public:
         }
     }
 
+    ~NewKbdCapture() {
+        this->send_session_data();
+    }
+
 public:
-    virtual bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override
+    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override
     {
         bool can_be_sent_to_server = true;
 
@@ -268,6 +283,14 @@ public:
         }
 
         return can_be_sent_to_server;
+    }   // bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz)
+
+    void enable_keyboard_input_mask(bool enable) {
+        if (this->keyboard_input_mask_enabled != enable) {
+            this->flush();
+
+            this->keyboard_input_mask_enabled = enable;
+        }
     }
 
     virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
@@ -288,20 +311,64 @@ public:
         this->last_snapshot = now;
     }
 
+private:
+    template<int N, class LogMgr>
+    void log_input_data(LogMgr log_mgr, bool enable_mask, uint8_t const * data, size_t data_len) {
+        const char prefix[] = "data=\"";
+        const char suffix[] = "\"";
+
+        char extra[N + sizeof(prefix) + sizeof(suffix) + 1];
+        ::snprintf(extra, sizeof(extra), "%s%.*s%s",
+            prefix,
+            (unsigned)data_len,
+            data,
+            suffix);
+        if (enable_mask) {
+            ::memset(&extra[0] + sizeof(prefix) - 1, '*', data_len);
+        }
+
+        log_mgr(extra);
+    }
+
+public:
     void flush() {
-        if (this->unlogged_data.get_offset()) {
-            if (this->authentifier) {
-                char extra[65536];
-                snprintf(extra, sizeof(extra), "data=\"%.*s\"",
-                    (unsigned)this->unlogged_data.get_offset(),
-                    this->unlogged_data.get_data());
-                this->authentifier->log4(this->enable_keyboard_log_syslog,
-                    "KBD input", extra);
+        const uint8_t * unlogged_data_p      = this->unlogged_data.get_data();
+        const size_t    unlogged_data_length = this->unlogged_data.get_offset();
+
+        if (unlogged_data_length) {
+            if (this->enable_keyboard_log_syslog) {
+                this->log_input_data<this->unlogged_data.original_capacity()>(
+                          [] (char const * data) {
+                              LOG(LOG_INFO, "type=\"KBD input\" %s", data);
+                          }
+                        , this->keyboard_input_mask_enabled
+                        , unlogged_data_p
+                        , unlogged_data_length
+                    );
             }
 
-            if (this->data.has_room(this->unlogged_data.get_offset())) {
-                this->data.out_copy_bytes(this->unlogged_data.get_data(),
-                    this->unlogged_data.get_offset());
+            if (this->data.has_room(unlogged_data_length)) {
+                this->data.out_copy_bytes(unlogged_data_p,
+                    unlogged_data_length);
+            }
+
+            size_t stream_tail_room = this->session_data.tailroom();
+            if (stream_tail_room < unlogged_data_length) {
+                this->send_session_data();
+                stream_tail_room = this->session_data.tailroom();
+            }
+            if (stream_tail_room >= unlogged_data_length) {
+                if (this->keyboard_input_mask_enabled) {
+                    if (this->is_probe_enabled_session) {
+                        ::memset(this->session_data.get_current(), '*',
+                            unlogged_data_length);
+                        this->session_data.out_skip_bytes(unlogged_data_length);
+                    }
+                }
+                else {
+                    this->session_data.out_copy_bytes(unlogged_data_p,
+                        unlogged_data_length);
+                }
             }
 
             this->unlogged_data.rewind();
@@ -322,8 +389,41 @@ public:
         this->data.rewind();
     }
 
+    void send_session_data() {
+        if (!this->session_data.get_offset()) return;
+
+        if (this->authentifier) {
+            this->log_input_data<this->session_data.original_capacity()>(
+                      [this] (char const * data) {
+                          this->authentifier->log4(false,
+                              "KBD input", data);
+                      }
+                    , false
+                    , this->session_data.get_data()
+                    , this->session_data.get_offset()
+                );
+        }
+        this->session_data.rewind();
+    }
+
     void reset_data() {
         this->data.rewind();
+    }
+
+    virtual void session_update(const timeval & now, const char * message)
+            override {
+        this->is_driven_by_ocr          = true;
+        this->is_probe_enabled_session  = true;
+
+        if (!this->session_data.get_offset()) return;
+
+        this->send_session_data();
+    }
+
+    void possible_active_window_change() override {
+        if (this->is_driven_by_ocr) return;
+
+        this->send_session_data();
     }
 };
 

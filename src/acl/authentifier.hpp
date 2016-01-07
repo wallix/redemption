@@ -260,7 +260,7 @@ public:
                 this->ask_acl();
             }
         }
-        else if (this->remote_answer) {
+        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_CURRENT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
@@ -272,9 +272,17 @@ public:
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if (signal == BACK_EVENT_NEXT) {
-                LOG(LOG_INFO, "===========> MODULE_NEXT");
-                int next_state = mm.next_module();
+            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_CURRENT)) {
+                if (signal == BACK_EVENT_NEXT) {
+                    LOG(LOG_INFO, "===========> MODULE_NEXT");
+                }
+                else {
+                    REDASSERT(signal == BACK_EVENT_RETRY_CURRENT);
+
+                    LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
+                }
+
+                int next_state = ((signal == BACK_EVENT_NEXT) ? mm.next_module() : MODULE_RDP);
 
                 if (next_state == MODULE_TRANSITORY) {
                     this->remote_answer = false;
@@ -406,7 +414,12 @@ public:
         this->ask_acl();
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) const override {
+    void log4(bool duplicate_with_pid, const char * type,
+            const char * extra = nullptr) const override {
+        const bool session_log =
+            this->ini.get<cfg::session_log::enable_session_log>();
+        if (!duplicate_with_pid && !session_log) return;
+
         const char * session_type = "Neutral";
 
         if (!this->ini.get<cfg::context::module>().compare("RDP") ||
@@ -414,6 +427,7 @@ public:
             session_type = this->ini.get<cfg::context::module>().c_str();
 
         LOG_SESSION( duplicate_with_pid
+                   , session_log
 
                    , session_type
                    , type

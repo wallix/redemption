@@ -107,7 +107,7 @@
 #include <memory>
 
 
-class Front final : public FrontAPI, public ActivityChecker{
+class Front : public FrontAPI, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -334,7 +334,7 @@ private:
 public:
     Keymap2 keymap;
 
-private:
+protected:
     CHANNELS::ChannelDefArray channel_list;
 
 public:
@@ -422,7 +422,7 @@ private:
     bool session_probe_started_ = false;
 
 public:
-    Front ( Transport & trans
+    Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random & gen
           , Inifile & ini
@@ -619,19 +619,13 @@ public:
         }
     }
 
-    void text_metrics(Font const & font, const char * text, int & width, int & height) override {
-        REDASSERT(false);
-    }
-
-    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
-                                  uint32_t bgcolor, const Rect & clip) override {
-        REDASSERT(false);
-    }
-
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
+        LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
+        TODO("simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types")
+
         if (!ini.get<cfg::globals::movie>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) &&
 //            ini.get<cfg::context::pattern_kill>().empty() &&
@@ -639,12 +633,14 @@ public:
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
            ) {
+            LOG(LOG_INFO, "No Capture 1");
             return;
         }
 
         if (this->capture) {
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
 
+            LOG(LOG_INFO, "No Capture 2");
             return;
         }
 
@@ -668,34 +664,16 @@ public:
             LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
         }
 
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, "redemption"); // default value actual one should come from movie_path
-        strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(), path,
-                                        sizeof(path), basename, sizeof(basename), extension,
-                                        sizeof(extension));
-        if (!res) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
-        this->capture = new Capture( now, width, height, this->capture_bpp, this->capture_bpp
-                                   , ini.get<cfg::video::record_path>()
-                                   , ini.get<cfg::video::record_tmp_path>()
-                                   , ini.get<cfg::video::hash_path>(), basename
-                                   , true
-                                   , false
-                                   , authentifier
-                                   , ini
-                                   );
+        this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
+                                   , true, false, authentifier, ini, this->gen);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
         this->capture->capture_event.set();
         this->capture_state = CAPTURE_STATE_STARTED;
+
+        this->update_keyboard_input_mask_state();
 
         this->authentifier = authentifier;
     }
@@ -743,6 +721,7 @@ public:
 
     void periodic_snapshot()
     {
+        //LOG(LOG_INFO, "periodic snapshot");
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
@@ -2076,6 +2055,16 @@ public:
                                 }
                                 this->has_activity = true;
                             }
+
+                            if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                                    SlowPath::PTRFLAGS_BUTTON2 |
+                                                    SlowPath::PTRFLAGS_BUTTON3)) &&
+                                !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                                if (  this->capture
+                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                    this->capture->possible_active_window_change();
+                                }
+                            }
                         }
                         break;
 
@@ -2441,6 +2430,8 @@ private:
 
     void session_probe_started() override {
         this->session_probe_started_ = true;
+
+        this->update_keyboard_input_mask_state();
     }
 
     void set_keylayout(int LCID) override {
@@ -2453,24 +2444,23 @@ private:
 
     void set_focus_on_password_textbox(bool set) override {
         this->focus_on_password_textbox = set;
+
+        this->update_keyboard_input_mask_state();
     }
 
     void set_consent_ui_visible(bool set) override {
         this->consent_ui_is_visible = set;
+
+        this->update_keyboard_input_mask_state();
     }
 
-    void session_update(const char * message, bool & out__contian_window_title) override {
+    void session_update(const char * message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
 
-            this->capture->session_update(now, message,
-                out__contian_window_title);
-
-            return;
+            this->capture->session_update(now, message);
         }
-
-        out__contian_window_title = false;
     }
 
     bool disable_input_event_and_graphics_update(bool disable) override {
@@ -3365,6 +3355,16 @@ private:
                                     cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 }
                                 this->has_activity = true;
+                            }
+
+                            if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                                    SlowPath::PTRFLAGS_BUTTON2 |
+                                                    SlowPath::PTRFLAGS_BUTTON3)) &&
+                                !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                                if (  this->capture
+                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                    this->capture->possible_active_window_change();
+                                }
                             }
                         }
                         break;
@@ -4612,14 +4612,6 @@ private:
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
             && decoded_data.get_offset()) {
-            if (this->focus_on_password_textbox || this->consent_ui_is_visible || !this->session_probe_started_) {
-                unsigned char_count = decoded_data.get_offset() / sizeof(uint32_t);
-                decoded_data.rewind();
-                for (; char_count > 0; char_count--) {
-                    decoded_data.out_uint32_le('*');
-                }
-            }
-
             send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.get_offset());
         }
 
@@ -4634,6 +4626,32 @@ private:
                 }
                 this->has_activity = true;
             }
+        }
+
+        if (this->keymap.is_application_switching_shortcut_pressed) {
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->possible_active_window_change();
+            }
+        }
+    }
+
+    void update_keyboard_input_mask_state() {
+        const ::configs::KeyboardInputMaskingLevel keyboard_input_masking_level =
+            this->ini.get<cfg::session_log::keyboard_input_masking_level>();
+
+        if (keyboard_input_masking_level == ::configs::KeyboardInputMaskingLevel::unmasked) return;
+
+        const bool mask_unidentified_data =
+            ((keyboard_input_masking_level ==
+                  ::configs::KeyboardInputMaskingLevel::password_and_unidentified) ?
+             (!this->session_probe_started_) : false);
+
+        if (this->capture) {
+            this->capture->enable_keyboard_input_mask(
+                    this->focus_on_password_textbox ||
+                    this->consent_ui_is_visible || mask_unidentified_data
+                );
         }
     }
 };

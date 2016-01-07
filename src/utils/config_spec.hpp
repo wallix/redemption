@@ -206,6 +206,17 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
     });
 
+    W.section("session_log", [&]
+    {
+        W.member(V, type_<bool>(), "enable_session_log", set(true));
+        W.sep();
+        W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
+            "  0: keyboard input are not masked\n"
+            "  1: only passwords are masked\n"
+            "  2: passwords and unidentified texts are masked"
+        }, set(KeyboardInputMaskingLevel::password_and_unidentified));
+    });
+
     W.section("client", [&]
     {
         W.member(type_<unsigned>(), "keyboard_layout", set(0), w);
@@ -301,13 +312,15 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
         W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
-        W.member(A, type_<Range<unsigned, 0, 1>>(), "session_probe_on_launch_failure", set(0), desc{
-            "Specifies the action to be performed is the launch of session probe fails.\n"
-            "  0: disconnects session\n"
-            "  1: remains connected"
-        }, r);
+        W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
+            "Behavior on failure to launch Session Probe.\n"
+            "  0: ignore failure and continue.\n"
+            "  1: disconnect user.\n"
+            "  2: reconnect without Session Probe."
+        }, set(SessionProbeOnLaunchFailure::disconnect_user), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
-        W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set(""));
+        W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(true));
+        W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set("cmd /k"));
 
         //@{
         // ConnectionPolicy
@@ -408,19 +421,19 @@ void config_spec_definition(Writer && W)
             "Disable keyboard log:\n"
             "  1: disable keyboard log in syslog\n"
             "  2: disable keyboard log in recorded sessions"
-        }, r);
+        }, set(KeyboardLogFlags::syslog), r);
         W.sep();
         W.member(V, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{
             "Disable clipboard log:\n"
             "  1: disable clipboard log in syslog\n"
             "  2: disable clipboard log in recorded sessions"
-        }, r);
+        }, set(ClipboardLogFlags::syslog), r);
         W.sep();
         W.member(V, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{
             "Disable (redirected) file system log:\n"
             "  1: disable (redirected) file system log in syslog\n"
             "  2: disable (redirected) file system log in recorded sessions"
-        }, r);
+        }, set(FileSystemLogFlags::syslog), r);
         W.sep();
         W.member(H, type_<unsigned>(), "rt_display", set(0), r);
         W.sep();
@@ -574,6 +587,13 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "opt_message", r);
         W.sep();
         W.member(type_<std::string>(), "outbound_connection_blocking_rules", r);
+        W.sep();
+        W.member(type_<StaticKeyString<32>>(), "crypto_key", set(
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+        ), r);
     });
 
     W.section("", [&]

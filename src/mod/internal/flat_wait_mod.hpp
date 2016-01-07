@@ -16,7 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2014
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
@@ -24,6 +24,7 @@
 
 #include "front_api.hpp"
 #include "config.hpp"
+#include "widget2/language_button.hpp"
 #include "widget2/flat_wait.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
@@ -34,6 +35,7 @@
 
 
 using FlatWaitModVariables = vcfg::variables<
+    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>,
     vcfg::var<cfg::context::comment,        vcfg::write>,
     vcfg::var<cfg::context::duration,       vcfg::write>,
     vcfg::var<cfg::context::ticket,         vcfg::write>,
@@ -45,10 +47,11 @@ using FlatWaitModVariables = vcfg::variables<
 
 class FlatWaitMod : public InternalMod, public NotifyApi
 {
+    LanguageButton language_button;
     FlatWait wait_widget;
 
     FlatWaitModVariables vars;
-    TimeoutT<time_t>   timeout;
+    Timeout timeout;
 
     CopyPaste copy_paste;
 
@@ -57,7 +60,9 @@ public:
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, *this, front, this->font(), this->theme())
         , wait_widget(*this, width, height, this->screen, this, caption, message, 0,
+                      &this->language_button,
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),
                       language(vars),
@@ -121,10 +126,10 @@ private:
 public:
     void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->refused();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
         default:

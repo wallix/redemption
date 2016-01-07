@@ -16,7 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
@@ -25,14 +25,17 @@
 #include "translation.hpp"
 #include "front_api.hpp"
 #include "config.hpp"
+#include "widget2/language_button.hpp"
 #include "widget2/flat_dialog.hpp"
 #include "widget2/screen.hpp"
+#include "config_access.hpp"
 #include "internal_mod.hpp"
 #include "timeout.hpp"
-#include "config_access.hpp"
+
 
 
 using FlatDialogModVariables = vcfg::variables<
+    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>,
     vcfg::var<cfg::context::accept_message,     vcfg::write>,
     vcfg::var<cfg::context::display_message,    vcfg::write>,
     vcfg::var<cfg::context::password,           vcfg::write>,
@@ -44,18 +47,21 @@ using FlatDialogModVariables = vcfg::variables<
 
 class FlatDialogMod : public InternalMod, public NotifyApi
 {
+    LanguageButton language_button;
     FlatDialog dialog_widget;
 
     FlatDialogModVariables vars;
-    TimeoutT<time_t>   timeout;
+    Timeout   timeout;
 
 public:
     FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
                   const char * caption, const char * message, const char * cancel_text,
                   time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , dialog_widget(*this, width, height, this->screen, this, caption, message,
-                        0, vars.get<cfg::theme>(), vars.get<cfg::font>(),
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget, *this, front, this->font(), this->theme())
+        , dialog_widget(*this, width, height, this->screen, this, caption, message, 0,
+                        &this->language_button,
+                        vars.get<cfg::theme>(), vars.get<cfg::font>(),
                         TR("OK", language(vars)),
                         cancel_text, has_challenge)
         , vars(vars)
@@ -119,10 +125,10 @@ private:
 public:
     void draw_event(time_t now) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->accepted();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
         default:

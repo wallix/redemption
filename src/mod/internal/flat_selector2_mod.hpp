@@ -15,7 +15,7 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan, Jennifer Inthavong
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR2_MOD_HPP
@@ -27,6 +27,7 @@
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
 #include "config_access.hpp"
+#include "widget2/language_button.hpp"
 
 
 using FlatSelector2ModVariables = vcfg::variables<
@@ -42,6 +43,7 @@ using FlatSelector2ModVariables = vcfg::variables<
     vcfg::var<cfg::context::selector_group_filter,      vcfg::read | vcfg::write>,
     vcfg::var<cfg::context::selector_lines_per_page,    vcfg::read | vcfg::write>,
     vcfg::var<cfg::context::selector_proto_filter,      vcfg::read | vcfg::write>,
+    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>,
     vcfg::var<cfg::globals::host>,
     vcfg::var<cfg::translation::language>,
     vcfg::var<cfg::font>,
@@ -50,7 +52,9 @@ using FlatSelector2ModVariables = vcfg::variables<
 
 class FlatSelector2Mod : public InternalMod, public NotifyApi
 {
+    LanguageButton language_button;
     WidgetSelectorFlat2 selector;
+
 
     int current_page;
     int number_page;
@@ -76,6 +80,7 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
 public:
     FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->selector, *this, front, this->font(), this->theme())
         , selector(*this, temporary_login(vars).buffer, width, height, this->screen, this,
                     vars.is_asked<cfg::context::selector_current_page>()
                         ? "" : configs::make_c_str_buf(vars.get<cfg::context::selector_current_page>()).get(),
@@ -84,6 +89,7 @@ public:
                    vars.get<cfg::context::selector_group_filter>().c_str(),
                    vars.get<cfg::context::selector_device_filter>().c_str(),
                    vars.get<cfg::context::selector_proto_filter>().c_str(),
+                   &this->language_button,
                    vars.get<cfg::font>(),
                    vars.get<cfg::theme>(),
                    language(vars))

@@ -1186,9 +1186,8 @@ public:
 
                     for (size_t i = 0; i < this->nbconsumers; i++){
                         if (this->consumers[i].capture_device) {
-                            bool contian_window_title = false;
                             this->consumers[i].capture_device->session_update(
-                                this->record_now, message, contian_window_title);
+                                this->record_now, message);
                         }
                     }
                 }

@@ -30,9 +30,9 @@
 
 BOOST_AUTO_TEST_CASE(TestNtlmContext)
 {
+    LCGRandom rand(0);
 
-
-    NTLMContext context;
+    NTLMContext context(rand);
     // context.init();
     context.NTLMv2 = true;
     context.confidentiality = true;
@@ -186,7 +186,9 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
 }
 BOOST_AUTO_TEST_CASE(TestNTOWFv2)
 {
-    NTLMContext context;
+    LCGRandom rand(0);
+
+    NTLMContext context(rand);
     uint8_t buff[16];
 
     uint8_t password[] = "Password";
@@ -213,7 +215,9 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
 
 BOOST_AUTO_TEST_CASE(TestSetters)
 {
-    NTLMContext context;
+    LCGRandom rand(0);
+
+    NTLMContext context(rand);
     // context.init();
 
     uint8_t work[] = "Carpe Diem";
@@ -298,9 +302,10 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
 
 BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 {
+    LCGRandom rand(0);
 
-    NTLMContext client_context;
-    NTLMContext server_context;
+    NTLMContext client_context(rand);
+    NTLMContext server_context(rand);
     client_context.verbose = 0x400;
     server_context.verbose = 0x400;
     const uint8_t password[] = {
@@ -480,9 +485,10 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 
 BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 {
+    LCGRandom rand(0);
 
-    NTLMContext client_context;
-    NTLMContext server_context;
+    NTLMContext client_context(rand);
+    NTLMContext server_context(rand);
 
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
@@ -641,10 +647,12 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 
 BOOST_AUTO_TEST_CASE(TestWrittersReaders)
 {
-    NTLMContext context_write;
+    LCGRandom rand(0);
+
+    NTLMContext context_write(rand);
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-    NTLMContext context_read;
+    NTLMContext context_read(rand);
     context_read.verbose = 0x400;
     context_write.verbose = 0x400;
     context_read.server = true;

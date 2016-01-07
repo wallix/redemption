@@ -19,11 +19,11 @@ try:
     from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
         APPROVAL_PENDING, APPROVAL_NONE
     from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
-    from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEYS
+    from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEY
     from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY
     from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
-        SUPPORTED_AUTHENTICATION_METHODS
+        PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
     from wabengine.common.const import AM_IL_DOMAIN
     from wabx509 import AuthX509
 except Exception, e:
@@ -199,6 +199,12 @@ class Engine(object):
             import traceback
             Logger().info("Engine get_trace_type failed: configuration file section 'wabengine', key 'trace', (((%s)))" % traceback.format_exc(e))
         return u'localfile_hashed'
+
+    def get_trace_encryption_key(self, path, old_scheme=False):
+        return self.wabengine.get_trace_sign_key(path, old_scheme)
+
+    def get_trace_sign_key(self):
+        return self.wabengine.get_trace_sign_key()
 
     def password_expiration_date(self):
         try:
@@ -665,6 +671,18 @@ class Engine(object):
             Logger().info("Engine get_app_params failed: (((%s)))" % (traceback.format_exc(e)))
         return None
 
+    def get_primary_password(self, target_device):
+        Logger().info("Engine get_primary_password ...")
+        try:
+            password = self.wabengine.get_primary_password(target_device)
+            Logger().info("Engine get_primary_password done")
+            return password
+        except Exception, e:
+            import traceback
+            Logger().info("Engine get_primary_password failed")
+            Logger().debug("Engine get_primary_password failed: (((%s)))" % (traceback.format_exc(e)))
+        return None
+
     def get_target_credentials(self, target_device):
         if self.target_credentials.get(target_device) is None:
             Logger().debug("get_target_credentials")
@@ -703,7 +721,7 @@ class Engine(object):
             target_credentials = self.get_target_credentials(target_device)
             privkeys = [ (cred.data.get(CRED_DATA_PRIVATE_KEY),
                           cred.data.get("passphrase", None)) \
-                         for cred in target_credentials.get(CRED_TYPE_SSH_KEYS, []) ]
+                         for cred in target_credentials.get(CRED_TYPE_SSH_KEY, []) ]
             Logger().info("Engine get_target_privkeys done")
             return privkeys
         except AccountLocked:

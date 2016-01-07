@@ -27,25 +27,34 @@
 
 #include "capture.hpp"
 
-#include "apps/app_recorder.hpp"
+#include "utils/apps/app_recorder.hpp"
 #include "program_options/program_options.hpp"
 
 namespace po = program_options;
 
 int main(int argc, char** argv)
 {
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+    Inifile ini;
+    { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
+
+    UdevRandom rnd;
+    CryptoContext cctx(rnd);
+
+    TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
+    cctx.set_crypto_key(ini.get<cfg::crypto::key0>());
+    cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+
+
     struct CaptureMaker {
         Capture capture;
 
-        CaptureMaker( const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
-                    , const char * path, const char * basename, const char * /*extension*/
-                    , Inifile & ini, bool /*clear*/, uint32_t /*verbose*/)
-        : capture( now, width, height, order_bpp
-                 , capture_bpp
-                 , path, path, ini.get<cfg::video::hash_path>(), basename
-                 , false, false, nullptr, ini, true)
+        CaptureMaker(const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
+                    , Inifile & ini, Random & rnd, bool /*clear*/)
+        : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, true)
         {}
     };
+    
     app_recorder<CaptureMaker>(
         argc, argv
       , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
@@ -65,7 +74,8 @@ int main(int argc, char** argv)
             }
             return 0;
       }
-      , [](cfg::crypto::key0::type const &, cfg::crypto::key1::type const &) { return 0; }
+      // TODO: now that we have cctx the lambda is useless
+      , config_filename, ini, cctx, rnd
       , [](Inifile const &) { return false; }/*has_extra_capture*/
     );
 }

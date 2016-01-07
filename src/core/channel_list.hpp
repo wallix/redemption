@@ -84,6 +84,11 @@ namespace CHANNELS {
     public:
         ChannelDefArray() : channelCount(0) {}
 
+        void clear_channels()
+        {
+            this->channelCount = 0;
+        }
+
         const ChannelDef & operator[](size_t index) const {
             return this->items[index];
         }

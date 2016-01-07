@@ -26,8 +26,6 @@
 #include "crypto_out_meta_sequence_transport.hpp"
 #include "out_filename_sequence_transport.hpp"
 
-#include "RDP/caches/pointercache.hpp"
-
 #include "nativecapture.hpp"
 #include "staticcapture.hpp"
 #include "new_kbdcapture.hpp"
@@ -47,47 +45,47 @@
 #include "gdi/session_update_api.hpp"
 #include "gdi/update_config.hpp"
 #include "gdi/external_event.hpp"
+#include "utils/pattutils.hpp"
 
 class Capture final : public RDPGraphicDevice, public RDPCaptureDevice {
 public:
     const bool capture_wrm;
-    const bool capture_drawable;
     const bool capture_png;
+// for extension
+// end extension
 
-    const configs::TraceType trace_type;
-
-    OutFilenameSequenceTransport * png_trans;
-    StaticCapture                * psc;
-
+    StaticCapture * psc;
     NewKbdCapture * pkc;
+// for extension
+// end extension
 
+    wait_obj capture_event;
+
+private:
+    const configs::TraceType trace_type;
+    CryptoContext cctx;
+
+public:
+    OutFilenameSequenceTransport * png_trans;
 private:
     Transport * wrm_trans;
+// for extension
+// end extension
 
-private:
     BmpCache      * pnc_bmp_cache;
     GlyphCache    * pnc_gly_cache;
     PointerCache  * pnc_ptr_cache;
     NativeCapture * pnc;
 
     RDPDrawable * drawable;
-
-public:
-    wait_obj capture_event;
-
-private:
-    FilenameGenerator const * wrm_filename_generator;
-
-    CryptoContext crypto_ctx;
-
-private:
     RDPGraphicDevice * gd;
+
+// for extension
+// end extension
 
     timeval last_now;
     int     last_x;
     int     last_y;
-
-    bool    clear_png;
 
     uint8_t order_bpp;
     uint8_t capture_bpp;
@@ -474,17 +472,20 @@ private:
     NewExternalEvent * external_event_api = nullptr;
 
 
+    const Inifile & ini;
+    // TODO: why so many uninitialized constants ?
 public:
-    Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
-           , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
+    Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, const Inifile & ini
+           , Random & rnd, bool externally_generated_breakpoint = false)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
-    , capture_drawable(this->capture_wrm || (ini.get<cfg::video::png_limit>() > 0))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
-    , trace_type(ini.get<cfg::globals::trace_type>())
-    , png_trans(nullptr)
     , psc(nullptr)
     , pkc(nullptr)
+    , capture_event{}
+    , trace_type(ini.get<cfg::globals::trace_type>())
+    , cctx(rnd)
+    , png_trans(nullptr)
     , wrm_trans(nullptr)
     , pnc_bmp_cache(nullptr)
     , pnc_gly_cache(nullptr)
@@ -495,11 +496,33 @@ public:
     , last_now(now)
     , last_x(width / 2)
     , last_y(height / 2)
-    , clear_png(clear_png)
     , order_bpp(order_bpp)
     , capture_bpp(capture_bpp)
+    , ini(ini)
     {
-        if (this->capture_drawable) {
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const bool capture_drawable = this->capture_wrm || this->capture_png;
+        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>();
+        const char * record_path = ini.get<cfg::video::record_path>();
+        const char * hash_path = ini.get<cfg::video::hash_path>();
+
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(basename, "redemption"); // default value actual one should come from movie_path
+        strcpy(extension, "");          // extension is currently ignored
+        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(),
+                                        path, sizeof(path),
+                                        basename, sizeof(basename),
+                                        extension, sizeof(extension));
+        if (!res) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+
+
+        if (capture_drawable) {
             this->drawable = new RDPDrawable(width, height, capture_bpp);
 
             this->gd_api = this->compile_color_enc_dec();
@@ -507,37 +530,38 @@ public:
         }
 
         if (this->capture_png) {
-            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.get<cfg::video::capture_groupid>()) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
+            if (recursive_create_directory(record_tmp_path, S_IRWXU|S_IRWXG,
+                        groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_tmp_path);
             }
-
-//            this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, png_path
-            this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_path
-                                                              , basename, ".png", ini.get<cfg::video::capture_groupid>(), authentifier);
-            this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
-                                         , clear_png, ini, this->drawable->impl());
+            this->png_trans = new OutFilenameSequenceTransport(
+                                FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+                                record_tmp_path, basename, ".png", groupid, authentifier);
+            this->psc = new StaticCapture(now, *this->png_trans,
+                                          this->png_trans->seqgen(),
+                                          width, height, clear_png, ini,
+                                          this->drawable->impl());
         }
 
         if (this->capture_wrm) {
-            if (recursive_create_directory( wrm_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
+            if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
             }
 
-            if (recursive_create_directory( hash_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
+            if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
-            memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
-            memcpy(this->crypto_ctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(this->crypto_ctx.crypto_key));
-            memcpy(this->crypto_ctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(this->crypto_ctx.hmac_key  ));
+            this->cctx.set_crypto_key(ini.get<cfg::crypto::key0>());
+            this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
 
-            TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
+            TODO("there should only be one outmeta, not two."
+                 " Capture code should not really care if file is encrypted or not."
                  "Here is not the right level to manage anything related to encryption.")
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
+
             this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false
                                               , BmpCache::CacheOption(600, 768, false)
                                               , BmpCache::CacheOption(300, 3072, false)
@@ -549,24 +573,21 @@ public:
 
             if (this->trace_type == configs::TraceType::cryptofile) {
                 auto * trans = new CryptoOutMetaSequenceTransport(
-                    &this->crypto_ctx, wrm_path, hash_path, basename, now
-                  , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
+                    &this->cctx, record_path, hash_path, basename, now
+                  , width, height, groupid, authentifier);
                 this->wrm_trans = trans;
-                this->wrm_filename_generator = trans->seqgen();
             }
             else if (this->trace_type == configs::TraceType::localfile_hashed) {
                 auto * trans = new OutMetaSequenceTransportWithSum(
-                    &this->crypto_ctx, wrm_path, hash_path, basename, now
-                  , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
+                    &this->cctx, record_path, hash_path, basename,
+                    now, width, height, groupid, authentifier);
                 this->wrm_trans = trans;
-                this->wrm_filename_generator = trans->seqgen();
             }
             else {
                 auto * trans = new OutMetaSequenceTransport(
-                    wrm_path, hash_path, basename, now,
-                    width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
+                    record_path, hash_path, basename, now,
+                    width, height, groupid, authentifier);
                 this->wrm_trans = trans;
-                this->wrm_filename_generator = trans->seqgen();
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
                                          , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
@@ -574,16 +595,23 @@ public:
                                          , NativeCapture::SendInput::YES);
         }
 
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
-            this->pkc = new NewKbdCapture(now, authentifier, nullptr, nullptr,
-                    !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
+            ini.get<cfg::session_log::enable_session_log>() ||
+            ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
+            ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())) {
+            const bool is_kc_driven_by_ocr = false;
+            this->pkc = new NewKbdCapture(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(),
+                    ini.get<cfg::context::pattern_notify>().c_str(),
+                    !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
+                    is_kc_driven_by_ocr,
+                    ini.get<cfg::debug::capture>()
                 );
         }
 
         if (this->capture_wrm) {
             this->gd = this->pnc;
         }
-        else if (this->capture_drawable) {
+        else if (this->drawable) {
             this->gd = this->drawable;
         }
 
@@ -630,17 +658,6 @@ public:
         delete this->pnc_gly_cache;
         delete this->pnc_ptr_cache;
         delete this->drawable;
-
-        if (this->clear_png && this->wrm_trans) {
-            auto i = this->wrm_trans->get_seqno();
-            while (i > 0) {
-                auto filename = this->wrm_filename_generator->get(--i);
-                if (::unlink(filename) < 0) {
-                    LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", filename, errno, strerror(errno));
-                }
-            }
-        }
-
         delete this->wrm_trans;
 
         delete this->gd_api;
@@ -684,7 +701,7 @@ public:
     }
 
     void set_row(size_t rownum, const uint8_t * data) override {
-        if (this->capture_drawable){
+        if (this->drawable){
             this->drawable->set_row(rownum, data);
         }
     }
@@ -692,6 +709,29 @@ public:
     void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
                           bool const & requested_to_stop) override {
         this->snapshot_api->snapshot(now, x, y, ignore_frame_in_timeval, this->capture_event);
+        this->capture_event.reset();
+
+//         if (this->drawable) {
+//             this->drawable->set_mouse_cursor_pos(x, y);
+//         }
+//
+//         this->last_now = now;
+//         this->last_x   = x;
+//         this->last_y   = y;
+//
+//         if (this->capture_png) {
+//             this->psc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
+//             this->capture_event.update(this->psc->time_to_wait);
+//         }
+//         if (this->capture_wrm) {
+//             this->pnc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
+//             this->capture_event.update(this->pnc->time_to_wait);
+//         }
+//
+//         if (this->pkc) {
+//             this->pkc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
+//             this->capture_event.update(this->pkc->time_to_wait);
+//         }
     }
 
     void flush() override {
@@ -702,6 +742,27 @@ public:
 
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
         return this->input_kbd_api->input_kbd(now, input_data_32, data_sz);
+//         if (this->capture_wrm) {
+//             this->pnc->input(now, input_data_32, data_sz);
+//         }
+//
+//         bool send_to_mod = true;
+//
+//         if (this->pkc) {
+//             send_to_mod = this->pkc->input(now, input_data_32, data_sz);
+//         }
+//
+//         return send_to_mod;
+    }
+
+    void enable_keyboard_input_mask(bool enable) {
+        if (this->capture_wrm) {
+            this->pnc->enable_keyboard_input_mask(enable);
+        }
+
+        if (this->pkc) {
+            this->pkc->enable_keyboard_input_mask(enable);
+        }
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {
@@ -862,10 +923,13 @@ public:
         if (this->capture_drawable) {
             this->set_palette_api->set_mod_palette(palette);
         }
+//         if (this->drawable) {
+//             this->drawable->set_mod_palette(palette);
+//         }
     }
 
     void set_pointer_display() override {
-        if (this->capture_drawable) {
+        if (this->drawable) {
             this->drawable->show_mouse_cursor(false);
         }
     }
@@ -883,16 +947,20 @@ public:
         }
     }
 
-    void session_update(const timeval & now, const char * message,
-            bool & out__contian_window_title) override {
+    void session_update(const timeval & now, const char * message) override {
         if (this->capture_wrm) {
-            this->pnc->session_update(now, message,
-                out__contian_window_title);
-
-            return;
+            this->pnc->session_update(now, message);
         }
 
-        out__contian_window_title = false;
+        if (this->pkc) {
+            this->pkc->session_update(now, message);
+        }
+    }
+
+    void possible_active_window_change() override {
+        if (this->pkc) {
+            this->pkc->possible_active_window_change();
+        }
     }
 };
 

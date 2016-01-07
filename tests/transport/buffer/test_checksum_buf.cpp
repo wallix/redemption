@@ -38,14 +38,15 @@ using checksum_buf_base = transbuf::ochecksum_buf<transbuf::null_buf>;
 
 struct checksum_buf : CryptoContext, checksum_buf_base {
     template<std::size_t N>
-    checksum_buf(char const (&crypto_key)[N])
-    : checksum_buf_base([&]{
-        auto & hmac_key = this->CryptoContext::hmac_key;
-        static_assert(N-1 <= sizeof(hmac_key), "");
-        memcpy(hmac_key, crypto_key, N-1);
-        memset(hmac_key + N - 1, 0, sizeof(hmac_key) - (N - 1));
-        return std::ref(hmac_key);
-    }())
+    checksum_buf(char const (&crypto_key)[N], Random & rnd)
+    : CryptoContext(rnd)
+    , checksum_buf_base([&]{
+            auto & hmac_key = this->CryptoContext::hmac_key;
+            static_assert(N-1 <= sizeof(hmac_key), "");
+            memcpy(hmac_key, crypto_key, N-1);
+            memset(hmac_key + N - 1, 0, sizeof(hmac_key) - (N - 1));
+            return std::ref(hmac_key);
+        }())
     {
         this->open();
     }
@@ -53,7 +54,8 @@ struct checksum_buf : CryptoContext, checksum_buf_base {
 
 BOOST_AUTO_TEST_CASE(TestOSumBuf)
 {
-    checksum_buf buf("12345678901234567890123456789012");
+    LCGRandom rnd(0);
+    checksum_buf buf("12345678901234567890123456789012", rnd);
     BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
     BOOST_CHECK_EQUAL(write(buf, "cde"), 3);
 

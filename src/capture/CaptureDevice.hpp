@@ -43,8 +43,9 @@ struct RDPCaptureDevice : noncopyable {
 
     virtual void external_time(const timeval & now) {}
 
-    virtual void session_update(const timeval & now, const char * message,
-        bool & out__contian_window_title) {}
+    virtual void session_update(const timeval & now, const char * message) {}
+
+    virtual void possible_active_window_change() {}
 
 protected:
     // this to avoid calling constructor of base abstract class

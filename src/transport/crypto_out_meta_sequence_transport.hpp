@@ -23,7 +23,7 @@
 
 #include "out_meta_sequence_transport_with_sum.hpp"
 #include "buffer/crypto_filename_buf.hpp"
-#include "urandom_read.hpp"
+#include "utils/genrandom.hpp"
 #include "fileutils.hpp"
 
 namespace detail
@@ -38,18 +38,13 @@ namespace detail
         int open(Buf & buf, CryptoContext & cctx, char const * filename) {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
-            get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == compute_hmac(trace_key, cctx.crypto_key, derivator)) {
+            cctx.get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            if (-1 == cctx.compute_hmac(trace_key, derivator)) {
                 return -1;
             }
 
             unsigned char iv[32];
-            if (-1 == urandom_read(iv, 32)) {
-                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
-                buf.close();
-                return -1;
-            }
-
+            cctx.random(iv, 32);
             return transfil::encrypt_filter::open(buf, trace_key, &cctx, iv);
         }
     };

@@ -159,6 +159,8 @@ struct Keymap2
 
     uint32_t verbose;
 
+    bool is_application_switching_shortcut_pressed = false;
+
 
     // Constructor
     //==============================================================================
@@ -246,6 +248,11 @@ struct Keymap2
             (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
             (this->keys_down[LEFT_SHIFT] || this->keys_down[RIGHT_SHIFT]) &&    // Shift
             this->keys_down[0x01];                                              // Escape
+
+        this->is_application_switching_shortcut_pressed =
+            (!this->keys_down[LEFT_CTRL] && !this->keys_down[RIGHT_CTRL] &&
+             this->keys_down[LEFT_ALT] && !this->keys_down[RIGHT_ALT] &&
+             this->keys_down[0x0F]);                                            // Tab
 
         if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){

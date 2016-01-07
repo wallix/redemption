@@ -35,6 +35,8 @@ struct ModRDPParams {
     const char * target_host;
     const char * client_address;
 
+    const char * auth_user;
+
     const char * client_name;
 
     bool enable_tls;
@@ -53,10 +55,11 @@ struct ModRDPParams {
     bool disable_file_system_log_syslog;
     bool disable_file_system_log_wrm;
 
-    unsigned     session_probe_launch_timeout;
-    unsigned     session_probe_on_launch_failure;
-    unsigned     session_probe_keepalive_timeout;
-    const char * session_probe_alternate_shell;
+    unsigned                              session_probe_launch_timeout;
+    configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
+    unsigned                              session_probe_keepalive_timeout;
+    bool                                  session_probe_end_disconnected_session;
+    const char *                          session_probe_alternate_shell;
 
     bool         enable_transparent_mode;
     const char * output_filename;
@@ -83,7 +86,8 @@ struct ModRDPParams {
     bool          disconnect_on_logon_user_change;
     uint32_t      open_session_timeout;
 
-    configs::ServerCertCheck server_cert_check;
+    bool                        server_cert_store;
+    configs::ServerCertCheck    server_cert_check;
     configs::ServerNotification server_access_allowed_message;
     configs::ServerNotification server_cert_create_message;
     configs::ServerNotification server_cert_success_message;
@@ -129,6 +133,8 @@ struct ModRDPParams {
         , target_host(target_host)
         , client_address(client_address)
 
+        , auth_user("")
+
         , client_name(nullptr)
 
         , enable_tls(true)
@@ -149,8 +155,9 @@ struct ModRDPParams {
         , disable_file_system_log_wrm(false)
 
         , session_probe_launch_timeout(0)
-        , session_probe_on_launch_failure(0)
+        , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
+        , session_probe_end_disconnected_session(true)
         , session_probe_alternate_shell("")
 
         , enable_transparent_mode(false)
@@ -162,7 +169,7 @@ struct ModRDPParams {
 
         , acl(nullptr)
 
-        , outbound_connection_blocking_rules(nullptr)
+        , outbound_connection_blocking_rules("")
 
         , ignore_auth_channel(false)
         , auth_channel("")
@@ -228,6 +235,9 @@ struct ModRDPParams {
             "ModRDPParams client_address=\"%s\"",                  this->client_address);
 
         LOG(LOG_INFO,
+            "ModRDPParams auth_user=\"%s\"",                       (this->auth_user ? this->auth_user : "<null>"));
+
+        LOG(LOG_INFO,
             "ModRDPParams client_name=\"%s\"",                     (this->client_name ? this->client_name : "<null>"));
 
         LOG(LOG_INFO,
@@ -254,9 +264,12 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_timeout=%u",        this->session_probe_launch_timeout);
         LOG(LOG_INFO,
-            "ModRDPParams session_probe_on_launch_failure=%u",     this->session_probe_on_launch_failure);
+            "ModRDPParams session_probe_on_launch_failure=%d",     static_cast<int>(this->session_probe_on_launch_failure));
         LOG(LOG_INFO,
             "ModRDPParams session_probe_keepalive_timeout=%u",     this->session_probe_keepalive_timeout);
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_end_disconnected_session=%s",
+                                                                   (this->session_probe_end_disconnected_session ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");
@@ -313,17 +326,17 @@ struct ModRDPParams {
             "ModRDPParams open_session_timeout=%d",                this->open_session_timeout);
 
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_check=%d",                   static_cast<unsigned>(this->server_cert_check));
+            "ModRDPParams server_cert_check=%u",                   static_cast<unsigned>(this->server_cert_check));
         LOG(LOG_INFO,
-            "ModRDPParams server_access_allowed_message=%d",       static_cast<unsigned>(this->server_access_allowed_message));
+            "ModRDPParams server_access_allowed_message=%d",       static_cast<int>(this->server_access_allowed_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_create_message=%d",          static_cast<unsigned>(this->server_cert_create_message));
+            "ModRDPParams server_cert_create_message=%d",          static_cast<int>(this->server_cert_create_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_success_message=%d",         static_cast<unsigned>(this->server_cert_success_message));
+            "ModRDPParams server_cert_success_message=%d",         static_cast<int>(this->server_cert_success_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_failure_message=%d",         static_cast<unsigned>(this->server_cert_failure_message));
+            "ModRDPParams server_cert_failure_message=%d",         static_cast<int>(this->server_cert_failure_message));
         LOG(LOG_INFO,
-            "ModRDPParams server_cert_error_message=%d",           static_cast<unsigned>(this->server_cert_error_message));
+            "ModRDPParams server_cert_error_message=%d",           static_cast<int>(this->server_cert_error_message));
 
         LOG(LOG_INFO, "ModRDPParams extra_orders=%s",              (this->extra_orders ? this->extra_orders : "<none>"));
 

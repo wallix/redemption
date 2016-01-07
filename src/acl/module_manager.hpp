@@ -98,6 +98,40 @@ enum {
     MODULE_CLI
 };
 
+const char * get_module_name(int module_id) {
+    switch (module_id) {
+        case MODULE_EXIT:                               return "MODULE_EXIT";
+        case MODULE_WAITING:                            return "MODULE_WAITING";
+        case MODULE_RUNNING:                            return "MODULE_RUNNING";
+        case MODULE_REFRESH:                            return "MODULE_REFRESH";
+        case MODULE_VNC:                                return "MODULE_VNC";
+        case MODULE_RDP:                                return "MODULE_RDP";
+        case MODULE_XUP:                                return "MODULE_XUP";
+        case MODULE_INTERNAL:                           return "MODULE_INTERNAL";
+        case MODULE_INTERNAL_CLOSE:                     return "MODULE_INTERNAL_CLOSE";
+        case MODULE_INTERNAL_WIDGET2_DIALOG:            return "MODULE_INTERNAL_WIDGET2_DIALOG";
+        case MODULE_INTERNAL_WIDGET2_MESSAGE:           return "MODULE_INTERNAL_WIDGET2_MESSAGE";
+        case MODULE_INTERNAL_WIDGET2_LOGIN:             return "MODULE_INTERNAL_WIDGET2_LOGIN";
+        case MODULE_INTERNAL_CARD:                      return "MODULE_INTERNAL_CARD";
+        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:    return "MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE";
+        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:      return "MODULE_INTERNAL_DIALOG_VALID_MESSAGE";
+        case MODULE_INTERNAL_DIALOG_CHALLENGE:          return "MODULE_INTERNAL_DIALOG_CHALLENGE";
+        case MODULE_INTERNAL_TARGET:                    return "MODULE_INTERNAL_TARGET";
+        case MODULE_INTERNAL_BOUNCER2:                  return "MODULE_INTERNAL_BOUNCER2";
+        case MODULE_INTERNAL_TEST:                      return "MODULE_INTERNAL_TEST";
+        case MODULE_INTERNAL_WIDGET2_SELECTOR:          return "MODULE_INTERNAL_WIDGET2_SELECTOR";
+        case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:   return "MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY";
+        case MODULE_INTERNAL_WIDGETTEST:                return "MODULE_INTERNAL_WIDGETTEST";
+        case MODULE_INTERNAL_WAIT_INFO:                 return "MODULE_INTERNAL_WAIT_INFO";
+        case MODULE_EXIT_INTERNAL_CLOSE:                return "MODULE_EXIT_INTERNAL_CLOSE";
+        case MODULE_TRANSITORY:                         return "MODULE_TRANSITORY";
+        case MODULE_AUTH:                               return "MODULE_AUTH";
+        case MODULE_CLI:                                return "MODULE_CLI";
+    }
+
+    return "<unknown>";
+}
+
 class MMIni : public MMApi {
 public:
     Inifile & ini;
@@ -121,7 +155,8 @@ public:
     };
 
     void invoke_close_box(const char * auth_error_message,
-                                  BackEvent_t & signal, time_t now) override {
+                          BackEvent_t & signal, time_t now) override {
+        LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
         this->last_module = true;
         if (auth_error_message) {
             this->ini.set<cfg::context::auth_error_message>(auth_error_message);
@@ -189,7 +224,7 @@ public:
             return MODULE_TRANSITORY;
         }
         else if (module_cstr == STRMODULE_CLOSE) {
-            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE");
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
             return MODULE_INTERNAL_CLOSE;
         }
         else if (module_cstr == STRMODULE_RDP) {
@@ -377,7 +412,6 @@ class ModuleManager : public MMIni
             }
         }
 
-    protected:
         void display_osd_message(std::string & message) override {
             this->mm.osd_message(message, false);
         }
@@ -446,12 +480,15 @@ public:
 
     Front & front;
     null_mod no_mod;
-    SocketTransport * mod_transport = nullptr;
+    SocketTransport * mod_transport;
+    Random & gen;
 
-    ModuleManager(Front & front, Inifile & ini)
+    ModuleManager(Front & front, Inifile & ini, Random & gen)
         : MMIni(ini)
         , front(front)
         , no_mod(this->front)
+        , mod_transport(nullptr)
+        , gen(gen)
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -472,7 +509,8 @@ public:
     }
 
     void new_mod(int target_module, time_t now, auth_api * acl) override {
-        LOG(LOG_INFO, "target_module=%u", target_module);
+        LOG(LOG_INFO, "----------> ACL new_mod <--------");
+        LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
         if (this->last_module) this->front.stop_capture();
         switch (target_module)
         {
@@ -797,6 +835,8 @@ public:
                                            );
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
+                mod_rdp_params.auth_user                           = this->ini.get<cfg::globals::auth_user>().c_str();
+
                 mod_rdp_params.client_name                         = this->front.client_info.hostname;
 
                 //mod_rdp_params.enable_tls                          = true;
@@ -812,12 +852,16 @@ public:
                 mod_rdp_params.enable_bitmap_update                = this->ini.get<cfg::globals::enable_bitmap_update>();
                 //mod_rdp_params.enable_new_pointer                  = true;
                 mod_rdp_params.enable_glyph_cache                  = this->ini.get<cfg::globals::glyph_cache>();
+
                 mod_rdp_params.enable_session_probe                = this->ini.get<cfg::mod_rdp::enable_session_probe>();
                 mod_rdp_params.enable_session_probe_loading_mask   = this->ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>();
                 mod_rdp_params.session_probe_launch_timeout        = this->ini.get<cfg::mod_rdp::session_probe_launch_timeout>();
                 mod_rdp_params.session_probe_on_launch_failure     = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
+                mod_rdp_params.session_probe_end_disconnected_session
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
                 mod_rdp_params.session_probe_alternate_shell       = this->ini.get<cfg::mod_rdp::session_probe_alternate_shell>();
+
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
                 mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::wrm);
                 mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
@@ -836,6 +880,7 @@ public:
                 mod_rdp_params.disconnect_on_logon_user_change     = this->ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
                 mod_rdp_params.open_session_timeout                = this->ini.get<cfg::mod_rdp::open_session_timeout>();
 
+                mod_rdp_params.server_cert_store                   = this->ini.get<cfg::mod_rdp::server_cert_store>();
                 mod_rdp_params.server_cert_check                   = this->ini.get<cfg::mod_rdp::server_cert_check>();
                 mod_rdp_params.server_access_allowed_message       = this->ini.get<cfg::mod_rdp::server_access_allowed_message>();
                 mod_rdp_params.server_cert_create_message          = this->ini.get<cfg::mod_rdp::server_cert_create_message>();
@@ -865,8 +910,6 @@ public:
 
                 mod_rdp_params.lang                                = language(this->ini);
 
-                UdevRandom gen;
-
                 if (acl) {
                     acl->log4(false, "CREATE_SESSION");
                 }
@@ -882,7 +925,7 @@ public:
                                                           , this->front
                                                           , client_info
                                                           , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                          , gen
+                                                          , this->gen
                                                           , mod_rdp_params
                                                           );
                 }
@@ -991,8 +1034,7 @@ public:
     void record(auth_api * acl) override {
         if (this->ini.get<cfg::globals::movie>() ||
             !bool(this->ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
-//            !this->ini.get<cfg::context::pattern_kill>().empty() ||
-//            !this->ini.get<cfg::context::pattern_notify>().empty()
+            this->ini.get<cfg::session_log::enable_session_log>() ||
             ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str()) ||
             ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str())
            ) {

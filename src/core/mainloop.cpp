@@ -36,7 +36,6 @@
 #include "parse_ip_conntrack.hpp"
 
 #include "config.hpp"
-#include "parameters_holder.hpp"
 
 /*****************************************************************************/
 #ifndef IN_IDE_PARSER
@@ -235,11 +234,11 @@ void redemption_new_session(char const * config_filename)
 
 }
 
-void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename)
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string config_filename)
 {
     init_signals();
 
-    SessionServer ss(uid, gid, parametersHldr, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
+    SessionServer ss(uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>());
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }

@@ -354,13 +354,8 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
     return 0;
 }
 
-template<class F>
-int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto_context_initializer) {
-    static_assert(
-        std::is_same<int, decltype(crypto_context_initializer(std::declval<CryptoContext&>()))>::value
-      , "crypto_context_initializer result type may be 'int'"
-    );
-
+int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx) 
+{
     openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
 
     Inifile ini;
@@ -463,18 +458,10 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, F crypto
         exit(-1);
     }
 
-    CryptoContext cctx;
-    memset(&cctx, 0, sizeof(cctx));
     if (infile_is_encrypted) {
-        if (int status = crypto_context_initializer(cctx)) {
-            return status;
-        }
-
         OpenSSL_add_all_digests();
-    }
-
-    if (infile_is_encrypted) {
-        return check_encrypted_or_checksumed_file<transbuf::icrypto_filename_buf>(
+ 
+       return check_encrypted_or_checksumed_file<transbuf::icrypto_filename_buf>(
             input_filename, hash_path, fullfilename, quick_check, verbose,
             &cctx);
     }

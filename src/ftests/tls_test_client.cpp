@@ -55,7 +55,9 @@ static void rdp_request(SocketTransport & sockettransport)
 
     NullServerNotifier null_server_notifier;
 
+    const bool server_cert_store = true;
     sockettransport.enable_client_tls(
+            server_cert_store,
             configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know,
             null_server_notifier,
             CERTIF_PATH
