@@ -24,6 +24,8 @@
 #define BOOST_TEST_MODULE TestOutmetaTransportWithSum
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
 #define LOGNULL
 #include "out_meta_sequence_transport_with_sum.hpp"
 #include "fileutils.hpp"
