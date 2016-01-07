@@ -33,6 +33,7 @@
 #include "utils/genrandom.hpp"
 #include "openssl_crypto.hpp"
 #include "openssl_evp.hpp"
+#include "core/config.hpp"
 
 enum crypto_file_state {
     CF_EOF = 1
@@ -71,7 +72,7 @@ class CryptoContext {
     Random & gen;
     unsigned char hmac_key[HMAC_KEY_LENGTH];
 
-    CryptoContext(Random & gen) 
+    CryptoContext(Random & gen, const Inifile & ini) 
         : crypto_key_loaded(false)
         , crypto_key{}
         , gen(gen)
@@ -145,7 +146,7 @@ class CryptoContext {
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmget! error=%s\n", getpid(), strerror(errno));
             return 1;
         }
-        char *shm = (char*)shmat(shmid, 0, 0);
+        char *shm = (char*)shmat(shmid, nullptr, 0);
         if (shm == (char *)-1){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmat! error=%s\n", getpid(), strerror(errno));
             return 1;
@@ -162,7 +163,7 @@ class CryptoContext {
         char sha256_computed[SHA256_DIGEST_LENGTH];
 
         if (SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
-            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == 0)
+            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == nullptr)
         {
             printf("[CRYPTO_ERROR][%d]: Could not check crypto key, SHA256!\n", getpid());
             return 1;
@@ -223,6 +224,5 @@ class CryptoContext {
         return 0;
     }
 };
-
 
 #endif
