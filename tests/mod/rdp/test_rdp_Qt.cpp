@@ -31,39 +31,31 @@
 #define LOGNULL
 //#define LOGPRINTlibboost_unit_test
 #include "config.hpp"
-#include "socket_transport.hpp"
-#include "test_transport.hpp"
-#include "client_info.hpp"
-#include "rdp/rdp.hpp"
-#include "../src/front/front_Qt.hpp"
+//#include "socket_transport.hpp"
+//#include "test_transport.hpp"
+
+//#include "rdp/rdp.hpp"
+#include "../src/front/front_Qt_cmpl.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
     int argc(0);
-    char chartab[] = "myprog";
+    char chartab[] = " -name QA\\administrateur -pwd S3cur3!1nux -ip 10.10.46.88 -p 3389";
     char *argv[] {chartab};
     QApplication app(argc, argv);
-
-    ClientInfo info;
-    info.keylayout = 0x040C;// 0x40C , 0x409 USA
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname,sizeof(info.hostname),"test");
+/*
+    snprintf(info.hostname,sizeof(info.hostname),"test");*/
     int verbose = 511;
 
     //const char * name = "RDP W2008 Target";
-    const char * name = "QA\\administrateur";
+   /* const char * name = "QA\\administrateur";
 
-    int client_sck = ip_connect("10.10.46.88", 3389, 3, 1000, verbose);
+    int client_sck = ip_connect("10.10.46.88", 3389, 3, 1000, verbose);*/
     
-    Front_Qt front(info, verbose, client_sck);
+    Front_Qt front(argv, verbose);
     
-    std::string error_message;
+    /*std::string error_message;
     SocketTransport t( name
                      , client_sck
                      , "10.10.46.88"
@@ -111,16 +103,16 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     LCGRandom gen(0);
     
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
-    mod_api * mod = &mod_;
+    mod_api * mod = &mod_;*/
     
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    /*BOOST_CHECK(t.get_status());
     BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);*/
 
-    front.setCallback_And_StartListening(mod);
+    //front.setCallback_And_StartListening(mod);
     
     app.exec();
     

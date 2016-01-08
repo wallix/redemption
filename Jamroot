@@ -980,7 +980,7 @@ obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt : 
     src/front/front_Qt.hpp
-    src/keyboard/Qt_RDP_KeyMap.hpp
+    src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
     test_rdp_Qt.o 
     bitmap_data_allocator.o 
     /qt//QtGui 

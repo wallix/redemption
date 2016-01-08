@@ -37,7 +37,7 @@
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp" 
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -50,18 +50,17 @@
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/orders/AlternateSecondaryWindowing.hpp"
 
-#include "log.hpp"
-#include "core/front_api.hpp"
+#include "front_api.hpp"
 #include "channel_list.hpp"
-#include "client_info.hpp"
 #include "mod_api.hpp"
 #include "bitmap.hpp"
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
-#include "Qt_RDP_KeyMap.hpp"
 #include "keymap2.hpp"
-
+#include "client_info.hpp"
+#include "callback.hpp"
+#include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
 #include <QtGui/QWidget>
 #include <QtGui/QPicture>
@@ -77,32 +76,33 @@
 #include <QtGui/QPushButton>
 
 
+
+class SocketTransport;
+
 class Front_Qt : public QWidget, public FrontAPI
 {
     
-Q_OBJECT
-    
+Q_OBJECT 
     
 public:
     uint32_t                    verbose;
-    ClientInfo                & info;
+    ClientInfo                  info;
     CHANNELS::ChannelDefArray   cl;
     
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
-    bool                  notimestamp;
-    bool                  nomouse;
+    //bool                  notimestamp;
+   // bool                  nomouse;
     QLabel               _label;
     QPicture             _picture;
-    int                  _width;
-    int                  _height;
     QPen                 _pen;
     QPainter             _painter;
     
     // Connexion socket members
-    QSocketNotifier      _sckRead;
-    mod_api*             _callback;
+    QSocketNotifier    * _sckRead;
+    mod_api            * _callback;
+    SocketTransport    * _sck;
     
     // Controllers members
     Keymap2                        _keymap;
@@ -112,7 +112,10 @@ public:
     int                            _timer;
     QPushButton                    _buttonCtrlAltDel;
     QPushButton                    _buttonRefresh;
-    Qt_RDP_KeyMap                  _qtRDPKeymap;
+    //QPushButton                    _buttonConnexion;
+    //QPushButton                    _buttonDisconnexion;
+    Qt_ScanCode_KeyMap             _qtRDPKeymap;
+    
     
     
     QColor u32_to_qcolor(uint32_t color){
@@ -124,7 +127,7 @@ public:
     
     void reInitView() {
         this->_painter.begin(&(this->_picture));
-        this->_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
+        this->_painter.fillRect(0, 0, this->info.width, this->info.height, QColor(0, 0, 0, 0));
     }
     
     virtual void flush() override {
@@ -498,10 +501,10 @@ public:
         const QRect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top, 
                              (bitmap_data.dest_right - bitmap_data.dest_left + 1), 
                              (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
-        const QRect clipRect(0, 0, this->_width, this->_height);
+        const QRect clipRect(0, 0, this->info.width, this->info.height);
         const QRect rect = rectBmp.intersected(clipRect);
             
-        const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->_width - rect.x(), rect.width()));
+        const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->info.width - rect.x(), rect.width()));
         const int16_t mincy = 1;
 
         if (mincx <= 0 || mincy <= 0) {
@@ -511,9 +514,9 @@ public:
         int rowYCoord(rect.y() + rect.height()-1);
         int rowsize(bmp.line_size()); //Bpp
       
-        const uint8_t * row = bmp.data();
+        const unsigned char * row = bmp.data();
         
-        QImage::Format format; //bpp
+        QImage::Format format(QImage::Format_RGB16); //bpp
         switch (bmp.bpp()) {
             case 15: format = QImage::Format_RGB555; break;
             case 16: format = QImage::Format_RGB16;  break;
@@ -524,7 +527,7 @@ public:
         
         for (size_t k = 0 ; k < bitmap_data.height; k++) {
             
-            QImage qbitmap(const_cast<unsigned char*>(row), mincx, mincy, format);
+            QImage qbitmap((row), mincx, mincy, format);
             const QRect trect(rect.x(), rowYCoord, mincx, mincy);
             this->_painter.drawImage(trect, qbitmap);
 
@@ -540,112 +543,8 @@ public:
     //------------------------
     //      CONSTRUCTOR
     //------------------------
- 
-    Front_Qt(ClientInfo & info, 
-             uint32_t verbose, 
-             int client_sck)
-    : QWidget(), FrontAPI(false, false)
-    , verbose(verbose)
-    , info(info)
-    , mod_bpp(info.bpp)
-    , mod_palette(BGRPalette::no_init())
-    , notimestamp(true)
-    , nomouse(true) 
-    , _label(this)
-    , _picture()
-    , _width(info.width)
-    , _height(info.height)  
-    , _pen() 
-    , _painter()
-    , _sckRead(client_sck, QSocketNotifier::Read, this)
-    , _keymap() 
-    , _ctrl_alt_delete(false)
-    , _keyboardMods(0) 
-    , _timer(0)
-    , _buttonCtrlAltDel("CTRL + ALT + DELETE", this) 
-    , _buttonRefresh("Refresh", this)
-    , _qtRDPKeymap(info.keylayout+0x80000000, verbose) 
-    {
-        if (this->mod_bpp == 8) {
-            this->mod_palette = BGRPalette::classic_332();
-        }
-        
-        int customKeys[1][2]
-        { 
-            { 338, 0xB2 }, //œ or square
-        };
-        
-        this->_qtRDPKeymap.setCustomNoExtendedKeylayoutApplied(customKeys);
-        
-        this->_keymap.init_layout(info.keylayout);
-        
-        this->setFixedSize(this->_width, this->_height+20);
-            
-        QSize size(sizeHint());
-        QDesktopWidget* desktop = QApplication::desktop();
-        int centerW = (desktop->width()/2)  - (size.width()/2);
-        int centerH = (desktop->height()/2) - (size.height()/2);
-        this->move(centerW, centerH);
-            
-        this->_label.setMouseTracking(true);
-        this->_label.installEventFilter(this);
-            
-        this->_painter.setRenderHint(QPainter::Antialiasing);
-        this->_pen.setWidth(1);
-        this->_painter.setPen(this->_pen);
-            
-        this->setAttribute(Qt::WA_NoSystemBackground);
-        
-        this->_painter.fillRect(0, 0, this->_width, this->_height, Qt::white);
-        
-        this->_buttonCtrlAltDel.setToolTip("CTRL + ALT + DELETE"); 
-        this->_buttonCtrlAltDel.setGeometry(QRect(QPoint(0, this->_height+1),QSize(this->_width/2, 20)));
-        QObject::connect(&(this->_buttonCtrlAltDel), SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
-        QObject::connect(&(this->_buttonCtrlAltDel), SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
-        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
-        this->_buttonCtrlAltDel.show();
-        
-        this->_buttonRefresh.setToolTip("Refresh");
-        this->_buttonRefresh.setGeometry(QRect(QPoint(this->_width/2, this->_height+1),QSize(this->_width/2, 20)));
-        QObject::connect(&(this->_buttonRefresh), SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
-        QObject::connect(&(this->_buttonRefresh), SIGNAL (released()), this, SLOT (RefreshReleased()));
-        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
-        this->_buttonRefresh.show();
-        
- 
-        this->setFocusPolicy(Qt::StrongFocus);
-
-        //this->setFocusPolicy(Qt::ClickFocus);
-
-
-        // -------- Start of system wide SSL_Ctx option ------------------------------
-
-        // ERR_load_crypto_strings() registers the error strings for all libcrypto
-        // functions. SSL_load_error_strings() does the same, but also registers the
-        // libssl error strings.
-
-        // One of these functions should be called before generating textual error
-        // messages. However, this is not required when memory usage is an issue.
-
-        // ERR_free_strings() frees all previously loaded error strings.
-
-        //SSL_load_error_strings();
-
-        // SSL_library_init() registers the available SSL/TLS ciphers and digests.
-        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
-        // for SSL_library_init().
-
-        // - SSL_library_init() must be called before any other action takes place.
-        // - SSL_library_init() is not reentrant.
-        // - SSL_library_init() always returns "1", so it is safe to discard the return
-        // value.
-
-        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
-        // SSL_library_init(). Applications which need to use SHA2 in earlier versions
-        // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
-
-        //SSL_library_init();
-    }
+    
+    Front_Qt(char* argv[], uint32_t verbose);
     
     ~Front_Qt() {}
     
@@ -681,17 +580,15 @@ public:
     
     void keyPressEvent(QKeyEvent *e) { 
         this->_qtRDPKeymap.keyQtEvent(0x0000,      e);
-        int keyCode = this->_qtRDPKeymap.keyCode;
-        if (keyCode != 0) {
-            this->send_rdp_scanCode(keyCode, this->_qtRDPKeymap.flag);
+        if (this->_qtRDPKeymap.scanCode != 0) {
+            this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
         }
     }
     
     void keyReleaseEvent(QKeyEvent *e) {
         this->_qtRDPKeymap.keyQtEvent(KBD_FLAG_UP, e);
-        int keyCode = this->_qtRDPKeymap.keyCode;
-        if (keyCode != 0) {
-            this->send_rdp_scanCode(keyCode, this->_qtRDPKeymap.flag);
+        if (this->_qtRDPKeymap.scanCode != 0) {
+            this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
         }
     }
     
@@ -732,15 +629,19 @@ public Q_SLOTS:
         this->send_rdp_scanCode(0x1D, flag);  // CTRL
         this->send_rdp_scanCode(0x53, flag);  // DELETE  
     }
+    /*
+    void disconnexionPressed() {
+        this->disconnect();
+    }
     
-
-    
+    void disconnexionRelease(){}
+    */
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //--------------------------------
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
-     
+       
     void readSck_And_ShowView() {
         if (this->_callback != nullptr) {
             this->reInitView();
@@ -752,7 +653,7 @@ public Q_SLOTS:
     
 public:
     void refresh() {
-        Rect rect(0, 0, this->_width, this->_height);
+        Rect rect(0, 0, this->info.width, this->info.height);
         this->_callback->rdp_input_invalidate(rect);
     }
     
@@ -761,11 +662,14 @@ public:
         this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap));
     }
     
+    void connect(const char * name, const char * pwd, const char * localIP, const char * targetIP, int port, int nbTry, int retryDelay);
+    void disconnect() {}
+    /*
     void setCallback_And_StartListening(mod_api* callback) {
         this->_callback = callback;
         QObject::connect(&(this->_sckRead), SIGNAL(activated(int)), this, SLOT(readSck_And_ShowView()));
-    }
+    }*/
 };
-
+  
 
 #endif
