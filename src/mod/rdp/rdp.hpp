@@ -898,17 +898,22 @@ public:
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
-            char pid_str[16];
-            snprintf(pid_str, sizeof(pid_str), "%d", ::getpid());
-            const size_t pid_str_len = ::strlen(pid_str);
+            char var_str[16];
+            if (mod_rdp_params.session_probe_customize_executable_name) {
+                ::snprintf(var_str, sizeof(var_str), "-%d", ::getpid());
+            }
+            else {
+                ::memset(var_str, 0, sizeof(var_str));
+            }
+            const size_t var_str_len = ::strlen(var_str);
 
-            const char * pid_tag ="{PID}";
-            const size_t pid_tag_len = ::strlen(pid_tag);
+            const char * var_tag ="${VAR}";
+            const size_t var_tag_len = ::strlen(var_tag);
 
             size_t pos = 0;
-            while ((pos = this->session_probe_alternate_shell.find(pid_tag, pos)) != std::string::npos) {
-                this->session_probe_alternate_shell.replace(pos, pid_tag_len, pid_str);
-                pos += pid_str_len;
+            while ((pos = this->session_probe_alternate_shell.find(var_tag, pos)) != std::string::npos) {
+                this->session_probe_alternate_shell.replace(pos, var_tag_len, var_str);
+                pos += var_str_len;
             }
 
             strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);

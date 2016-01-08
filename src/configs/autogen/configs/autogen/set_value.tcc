@@ -319,6 +319,9 @@ inline void Inifile::set_value(const char * context, const char * key, const cha
         else if (0 == strcmp(key, "session_probe_end_disconnected_session")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_end_disconnected_session&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "session_probe_customize_executable_name")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::session_probe_customize_executable_name&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "session_probe_alternate_shell")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_alternate_shell&>(this->variables).value, value);
         }

@@ -859,6 +859,8 @@ public:
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
                 mod_rdp_params.session_probe_end_disconnected_session
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
+                mod_rdp_params.session_probe_customize_executable_name
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_customize_executable_name>();
                 mod_rdp_params.session_probe_alternate_shell       = this->ini.get<cfg::mod_rdp::session_probe_alternate_shell>();
 
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
