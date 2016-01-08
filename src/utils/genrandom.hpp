@@ -39,6 +39,13 @@ class Random : noncopyable
     public:
     virtual ~Random() {}
     virtual void random(void * dest, size_t size) = 0;
+    virtual uint32_t rand32() = 0;
+    uint64_t rand64()
+    {
+        uint64_t p1 = this->rand32();
+        uint64_t p2 = this->rand32();
+        return (p1 << 32) | p2;
+    }
 };
 
 class LCGRandom : public Random
@@ -56,7 +63,7 @@ class LCGRandom : public Random
         }
     }
 
-    uint32_t rand32()
+    virtual uint32_t rand32()
     {
         return this->seed = 999331UL * this->seed + 200560490131ULL;
     }
@@ -79,7 +86,7 @@ class LCGRand : public Random
         }
     }
 
-    uint32_t rand32()
+    virtual uint32_t rand32()
     {
         return this->seed = 999331UL * this->seed + 7913UL;
     }
@@ -116,6 +123,15 @@ class UdevRandom : public Random
             }
             memset(dest, 0x44, size);
         }
+    }
+    
+    virtual uint32_t rand32()
+    {
+        uint32_t result = 0;
+        char buffer[sizeof(result)];
+        this->random(buffer, sizeof(result));
+        memcpy(&result, buffer, sizeof(result));
+        return result;
     }
 };
 

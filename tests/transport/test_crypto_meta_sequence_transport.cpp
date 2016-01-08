@@ -3,6 +3,8 @@
 #define BOOST_TEST_MODULE TestCryptoMetaTransport
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
 #define LOGNULL
 
 #include "crypto_in_meta_sequence_transport.hpp"
