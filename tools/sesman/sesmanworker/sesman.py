@@ -1116,8 +1116,14 @@ class Sesman():
 
                 Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
                 # Add connection to the observer
-                kv[u'session_id'] = self.engine.start_session(selected_target, self.pid,
-                                                              self.effective_login)
+                session_id = self.engine.start_session(selected_target, self.pid,
+                                                       self.effective_login)
+                if session_id is None:
+                    _status, _error = False, TR(u"account_locked")
+                    self.send_data({u'rejected': TR(u'account_locked')})
+
+            if _status:
+                kv[u'session_id'] = session_id
                 _status, _error = self.engine.write_trace(self.full_path)
                 _error = TR(_error)
                 if not _status:

@@ -771,9 +771,19 @@ class Engine(object):
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         if auth.account.login == MAGIC_AM and not effective_login:
             effective_login = self.get_username()
-        self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
-                                                       effective_login=effective_login,
-                                                       **kwargs)
+        Logger().debug("**** CALL wabengine START SESSION ")
+        try:
+            self.session_id = self.wabengine.start_session(
+                auth, self.get_pidhandler(pid), effective_login=effective_login,
+                **kwargs)
+        except AccountLocked:
+            self.session_id = None
+            Logger().info("Engine start_session failed: account locked")
+        except Exception, e:
+            import traceback
+            self.session_id = None
+            Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
+        Logger().debug("**** END wabengine START SESSION ")
         return self.session_id
 
     def update_session(self, physical_target, **kwargs):
