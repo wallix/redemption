@@ -37,6 +37,15 @@ public:
     timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
+    struct BasicDumpPng24 : gdi::DumpPng24Api  {
+        RDPDrawable & drawable;
+
+        BasicDumpPng24(RDPDrawable & drawable) : drawable(drawable) {}
+
+        virtual void dump_png24(Transport& trans, bool bgr) const {
+            this->drawable.dump_png24(trans, bgr);
+        }
+    } dump_png24_api;
     GraphicToFile recorder;
     uint32_t nb_file;
     uint64_t time_to_wait;
@@ -52,7 +61,8 @@ public:
     NativeCapture( const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache
                  , GlyphCache & gly_cache, PointerCache & ptr_cache, RDPDrawable & drawable, const Inifile & ini
                  , bool externally_generated_breakpoint = false, SendInput send_input = SendInput::NO)
-    : recorder( now, &trans, width, height, capture_bpp, bmp_cache, gly_cache, ptr_cache, drawable, ini, send_input
+    : dump_png24_api{drawable}
+    , recorder( now, &trans, width, height, capture_bpp, bmp_cache, gly_cache, ptr_cache, this->dump_png24_api, ini, send_input
               , ini.get<cfg::debug::capture>())
     , nb_file(0)
     , time_to_wait(0)
@@ -155,6 +165,102 @@ public:
     void session_update(const timeval & now, const char * message) override {
         this->recorder.session_update(now, message);
     }
+
+
+    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
+        this->recorder.draw(cmd, clip, bmp);
+    }
+
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
+        this->recorder.draw(cmd, clip, bmp);
+    }
+
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPLineTo & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
+        this->recorder.draw(cmd, clip, gly_cache);
+    }
+
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+            size_t size, const Bitmap & bmp) override {
+        this->recorder.draw(bitmap_data, data, size, bmp);
+    }
+
+    void draw(const RDP::FrameMarker & order) override {
+        this->recorder.draw(order);
+    }
+
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPPolyline & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
+        this->recorder.draw(cmd, clip);
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
+        this->recorder.draw(order);
+    }
+
+    void draw(const RDP::RAIL::WindowIcon & order) override {
+        this->recorder.draw(order);
+    }
+
+    void draw(const RDP::RAIL::CachedIcon & order) override {
+        this->recorder.draw(order);
+    }
+
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
+        this->recorder.draw(order);
+    }
+
+    using RDPGraphicDevice::draw;
 };
 
 #endif

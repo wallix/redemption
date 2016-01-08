@@ -104,7 +104,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     uint16_t mouse_x;
     uint16_t mouse_y;
     const bool send_input;
-    gdi::DumpPng24Api & dump_png24;
+    gdi::DumpPng24Api & dump_png24_api;
 
 
     uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
@@ -147,7 +147,7 @@ public:
     , mouse_x(0)
     , mouse_y(0)
     , send_input(send_input == SendInput::YES)
-    , dump_png24(dump_png24)
+    , dump_png24_api(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , ini(ini)
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
@@ -167,7 +167,7 @@ public:
     }
 
     void dump_png24(Transport & trans, bool bgr) const {
-        this->dump_png24.dump_png24(trans, bgr);
+        this->dump_png24_api.dump_png24(trans, bgr);
     }
 
     REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event");
@@ -243,7 +243,7 @@ public:
     void send_image_chunk(void)
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
-        this->dump_png24.dump_png24(png_trans, false);
+        this->dump_png24_api.dump_png24(png_trans, false);
     }
 
     void send_reset_chunk()
@@ -523,7 +523,7 @@ public:
 
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
 
-        this->dump_png24.dump_png24(png_trans, true);
+        this->dump_png24_api.dump_png24(png_trans, true);
 
         this->send_caches_chunk();
     }
