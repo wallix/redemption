@@ -117,9 +117,11 @@ def parse_auth(username):
 
 class Engine(object):
     def __init__(self):
+        self.wabengine_conf = Config("wabengine")
+
         self.wabengine = None
         self.wabuser = None
-        self.client = SynClient('localhost', 'tcp:8803')
+        self.client = SynClient('localhost', self.wabengine_conf.get('port', 'unix:/var/run/wabengine.sock'))
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
@@ -192,8 +194,7 @@ class Engine(object):
 
     def get_trace_type(self):
         try:
-            conf = Config("wabengine")
-            self._trace_type = conf['trace'] if conf['trace'] else u'localfile_hashed'
+            self._trace_type = self.wabengine_conf.get('trace', u'localfile_hashed')
             return self._trace_type
         except Exception, e:
             import traceback
