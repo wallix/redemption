@@ -59,6 +59,7 @@ struct ModRDPParams {
     configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
     unsigned                              session_probe_keepalive_timeout;
     bool                                  session_probe_end_disconnected_session;
+    bool                                  session_probe_customize_executable_name;
     const char *                          session_probe_alternate_shell;
 
     bool         enable_transparent_mode;
@@ -157,7 +158,8 @@ struct ModRDPParams {
         , session_probe_launch_timeout(0)
         , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
-        , session_probe_end_disconnected_session(true)
+        , session_probe_end_disconnected_session(false)
+        , session_probe_customize_executable_name(false)
         , session_probe_alternate_shell("")
 
         , enable_transparent_mode(false)
@@ -270,6 +272,9 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams session_probe_end_disconnected_session=%s",
                                                                    (this->session_probe_end_disconnected_session ? "yes" : "no"));
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_customize_executable_name=%s",
+                                                                   (this->session_probe_customize_executable_name ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");
