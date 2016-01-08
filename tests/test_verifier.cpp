@@ -25,6 +25,9 @@
 #define BOOST_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGPRINT
 
 #include <fcntl.h>
