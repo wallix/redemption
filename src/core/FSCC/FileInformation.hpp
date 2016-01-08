@@ -25,8 +25,8 @@
 
 #include "core/error.hpp"
 
-#include "src/utils/cast.hpp"
-#include "src/utils/stream.hpp"
+#include "utils/cast.hpp"
+#include "utils/stream.hpp"
 
 namespace fscc {
 
@@ -732,35 +732,27 @@ public:
 
         uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
                     maximum_length_of_FileName_in_bytes));
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
             maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
 
         stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
-        const size_t maximum_length_of_ShortName_in_bytes = (this->short_name.length() + 1) * 2;
 
-        uint8_t * const ShortName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_ShortName_in_bytes));
+
+
+
+        uint8_t ShortName_unicode_data[24]; // ShortName(24)
+
         size_t size_of_ShortName_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->short_name.c_str()), ShortName_unicode_data,
-            maximum_length_of_ShortName_in_bytes);
-        if (size_of_ShortName_unicode_data > 0) {
-            // Writes null terminator.
-            ShortName_unicode_data[size_of_ShortName_unicode_data    ] =
-            ShortName_unicode_data[size_of_ShortName_unicode_data + 1] = 0;
-            size_of_ShortName_unicode_data += 2;
+            sizeof(ShortName_unicode_data));
 
-            REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
-        }
+        REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
 
-        stream.out_sint8(size_of_ShortName_unicode_data);   // ShortNameLength(1)
+        stream.out_sint8(size_of_ShortName_unicode_data);  // ShortNameLength(1)
 
         // Reserved(1), MUST NOT be transmitted.
 
@@ -864,10 +856,6 @@ public:
         size_t size_of_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
             maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
 
         return size + size_of_unicode_data;
     }

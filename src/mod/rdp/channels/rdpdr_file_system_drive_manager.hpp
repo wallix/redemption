@@ -1105,11 +1105,7 @@ public:
 
                     out_stream.out_uint32_le(file_both_directory_information.size());   // Length(4)
 
-auto stream_p = out_stream.get_current();
                     file_both_directory_information.emit(out_stream);
-
-LOG(LOG_INFO, "FileBothDirectoryInformation: size=%u", out_stream.get_current() - stream_p);
-hexdump(stream_p, out_stream.get_current() - stream_p);
                 }
                 break;
 
