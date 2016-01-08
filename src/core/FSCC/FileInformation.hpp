@@ -23,9 +23,10 @@
 
 #include <cinttypes>
 
-#include "stream.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 
+#include "src/utils/cast.hpp"
+#include "src/utils/stream.hpp"
 
 namespace fscc {
 

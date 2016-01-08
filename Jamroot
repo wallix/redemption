@@ -280,7 +280,7 @@ project redemption
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 
     <cxxflags>-fpie
-    <cxxflags>-fPIC 
+    <cxxflags>-fPIC
 
 
     <define>_FILE_OFFSET_BITS=64
@@ -331,25 +331,25 @@ actions gen_redcryptofile {
 
 explicit pycryptofile redcryptofile.so ;
 
-lib pycryptofile : 
-        tools/redcryptofile/pycrypto.cpp 
-        snappy 
-        python2 
-        crypto 
+lib pycryptofile :
+        tools/redcryptofile/pycrypto.cpp
+        snappy
+        python2
+        crypto
     :
-        <define>REDPYTHON_BINDING 
-        <include>$(PYTHON_INCLUDE) 
-        <cxxflags>-fPIC 
-        <cflags>-fPIC 
+        <define>REDPYTHON_BINDING
+        <include>$(PYTHON_INCLUDE)
+        <cxxflags>-fPIC
+        <cflags>-fPIC
         <link>shared
     ;
 
 
-make redcryptofile.so 
-    : 
+make redcryptofile.so
+    :
         pycryptofile
-    : 
-        @gen_redcryptofile 
+    :
+        @gen_redcryptofile
     ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
@@ -613,13 +613,13 @@ actions run-python-test {
     python $(>[1]) && touch $(<)
 }
 
-make test_trace.py.unittest 
-    : 
-        tools/redcryptofile/test_trace.py 
-        redcryptofile.so 
-    : 
-        run-python-test 
-    : 
+make test_trace.py.unittest
+    :
+        tools/redcryptofile/test_trace.py
+        redcryptofile.so
+    :
+        run-python-test
+    :
     ;
 
 explicit test_trace.py.unittest ;
@@ -660,6 +660,8 @@ unit-test test_lic : tests/core/RDP/test_lic.cpp crypto libboost_unit_test : $(T
 unit-test test_share : tests/core/RDP/test_share.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+unit-test test_FileInformation : tests/core/FSCC/test_FileInformation.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
 unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
@@ -960,21 +962,21 @@ using qt : /usr ;
 obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
-exe test_rdp_Qt : 
+exe test_rdp_Qt :
     src/front/front_Qt.hpp
     src/keyboard/Qt_RDP_KeyMap.hpp
-    test_rdp_Qt.o 
-    bitmap_data_allocator.o 
-    /qt//QtGui 
-    krb5 
-    openssl 
-    crypto 
-    gssglue 
-    png 
-    d3des 
-    z 
-    dl 
-    libboost_unit_test 
+    test_rdp_Qt.o
+    bitmap_data_allocator.o
+    /qt//QtGui
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    libboost_unit_test
     :
     <include>/usr/include/qt4
     ;
