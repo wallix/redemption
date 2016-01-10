@@ -70,12 +70,16 @@ class CryptoContext {
 
     public:
     Random & gen;
+    const Inifile & ini;
+    int key_source; // 0: key from shm, 1: key from Ini file, 2: key in place
     unsigned char hmac_key[HMAC_KEY_LENGTH];
 
-    CryptoContext(Random & gen, const Inifile & ini) 
+    CryptoContext(Random & gen, const Inifile & ini, int key_source) 
         : crypto_key_loaded(false)
         , crypto_key{}
         , gen(gen)
+        , ini(ini)
+        , key_source(key_source)
         , hmac_key{}
         {
         }
@@ -139,8 +143,9 @@ class CryptoContext {
         return nbytes;
     }
 
-    int get_crypto_key_from_shm(char tmp_buf[])
+    int get_crypto_key_from_shm()
     {
+        char tmp_buf[512] = {0};
         int shmid = shmget(2242, 512, 0600);
         if (shmid == -1){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmget! error=%s\n", getpid(), strerror(errno));
@@ -173,13 +178,21 @@ class CryptoContext {
             printf("[CRYPTO_ERROR][%d]: Crypto key integrity check failed!\n", getpid());
             return 1;
         }
+        memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
+        this->crypto_key_loaded = true;
+        return 0;
+    }
+
+    int get_crypto_key_from_ini()
+    {
+        memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
+//        memcpy(this->hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->hmac_key));
         return 0;
     }
 
     void set_crypto_key(const char * key)
     {
         memcpy(this->crypto_key, key, sizeof(this->crypto_key));
-        this->crypto_key_loaded = true;
     }
 
     void set_hmac_key(const char * key)
@@ -191,11 +204,20 @@ class CryptoContext {
     {
         if (not this->crypto_key_loaded)
         {
-            char tmp_buf[512] = {0};
-            if (0 == this->get_crypto_key_from_shm(&tmp_buf[0])){
-                memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
-            }
-            else {
+            switch (key_source){
+            case 0:
+                this->get_crypto_key_from_shm();
+            break;
+            case 1:
+                this->get_crypto_key_from_ini();
+            break;
+            case 2:
+                memcpy(this->crypto_key,
+                        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
+                        CRYPTO_KEY_LENGTH);
+            default:
+            {
                 LOG(LOG_ERR, "Failed to get cryptographic key\n");
                 memcpy(this->crypto_key,
                     "\x01\x02\x03\x04\x05\x06\x07\x08"
@@ -203,6 +225,7 @@ class CryptoContext {
                     "\x01\x02\x03\x04\x05\x06\x07\x08"
                     "\x01\x02\x03\x04\x05\x06\x07\x08",
                     CRYPTO_KEY_LENGTH);
+            }
             }
             this->crypto_key_loaded = true;
         }

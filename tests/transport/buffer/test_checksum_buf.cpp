@@ -42,7 +42,7 @@ using checksum_buf_base = transbuf::ochecksum_buf<transbuf::null_buf>;
 struct checksum_buf : CryptoContext, checksum_buf_base {
     template<std::size_t N>
     checksum_buf(char const (&crypto_key)[N], Random & rnd, Inifile & ini)
-    : CryptoContext(rnd, ini)
+    : CryptoContext(rnd, ini, 1)
     , checksum_buf_base([&]{
             auto & hmac_key = this->CryptoContext::hmac_key;
             static_assert(N-1 <= sizeof(hmac_key), "");

@@ -665,8 +665,9 @@ public:
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
+        CryptoContext cctx(this->gen, ini, 1);
         this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
-                                   , true, false, authentifier, ini, this->gen);
+                                   , true, false, authentifier, ini, this->gen, cctx);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }

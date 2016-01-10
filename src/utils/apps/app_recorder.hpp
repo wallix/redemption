@@ -61,7 +61,8 @@ template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
-                    , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument);
@@ -525,7 +526,8 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                 ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
                   , do_record<CaptureMaker>(
                       trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, capture_bpp, wrm_compression_algorithm_, ini, rnd
+                    , output_filename, capture_bpp, wrm_compression_algorithm_
+                    , ini, rnd, cctx
                     , file_count, order_count, clear, zoom
                     , png_width, png_height
                     , show_file_metadata, show_statistics, verbose
@@ -839,7 +841,8 @@ template<class CaptureMaker, class... ExtraArguments>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
-                    , Inifile & ini, Random & rnd, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , ExtraArguments && ... extra_argument) {
@@ -917,7 +920,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , player.screen_rect.cy
                     , player.info_bpp
                     , capture_bpp
-                    , ini, rnd, clear, std::forward<ExtraArguments>(extra_argument)...);
+                    , ini, rnd, cctx, clear, std::forward<ExtraArguments>(extra_argument)...);
             auto & capture = capmake.capture;
 
             if (capture.capture_png) {

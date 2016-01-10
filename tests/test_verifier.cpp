@@ -219,12 +219,10 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     ini.set_value("crypto", "key1", "12345678901234567890123456789012");
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(rnd, ini, 2);
+    cctx.get_crypto_key();
+
     uint8_t hmac_key[32] = {};
-    cctx.set_crypto_key(
-        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    );
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
     BOOST_CHECK(0 == cctx.compute_hmac(hmac_key, HASH_DERIVATOR));
