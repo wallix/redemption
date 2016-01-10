@@ -38,13 +38,10 @@ long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]
 }
 
 struct checksum_buf : transbuf::ochecksum_buf<transbuf::null_buf> {
-    template<std::size_t N>
-    checksum_buf(CryptoContext & cctx, char const (&crypto_key)[N], Random & rnd, Inifile & ini)
+    checksum_buf(CryptoContext & cctx, char const (&crypto_key)[33], Random & rnd, Inifile & ini)
     : transbuf::ochecksum_buf<transbuf::null_buf>([&]{
-            auto & hmac_key = cctx.hmac_key;
-            memcpy(hmac_key, crypto_key, N-1);
-            memset(hmac_key + N - 1, 0, sizeof(hmac_key) - (N - 1));
-            return std::ref(hmac_key);
+            memcpy(cctx.hmac_key, crypto_key, 32);
+            return std::ref(cctx.hmac_key);
         }())
     {
         this->open();
