@@ -37,17 +37,6 @@ long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]
     return buf.write(s, N-1);
 }
 
-struct checksum_buf : transbuf::ochecksum_buf<transbuf::null_buf> {
-    checksum_buf(CryptoContext & cctx, char const (&crypto_key)[33], Random & rnd, Inifile & ini)
-    : transbuf::ochecksum_buf<transbuf::null_buf>([&]{
-            memcpy(cctx.hmac_key, crypto_key, 32);
-            return std::ref(cctx.hmac_key);
-        }())
-    {
-        this->open();
-    }
-};
-
 BOOST_AUTO_TEST_CASE(TestOSumBuf)
 {
     Inifile ini;
@@ -60,7 +49,9 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
 
     LCGRandom rnd(0);
     CryptoContext cctx(rnd, ini, 1);
-    checksum_buf buf(cctx, "12345678901234567890123456789012", rnd, ini);
+    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
+    transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.hmac_key);
+    buf.open();
     BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
     BOOST_CHECK_EQUAL(write(buf, "cde"), 3);
 
