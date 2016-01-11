@@ -84,3 +84,55 @@ BOOST_AUTO_TEST_CASE(TestDeviceCreateRequest2)
     BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
+
+BOOST_AUTO_TEST_CASE(ClientNameRequest1)
+{
+    const char in_data[] =
+            "\x01\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x72\x00\x7a\x00" // ............r.z.
+            "\x68\x00\x00\x00\x00\x00"                                         // h...
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::ClientNameRequest client_name_request;
+
+    client_name_request.receive(in_stream);
+
+    //client_name_request.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    client_name_request.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(ClientNameRequest2)
+{
+    const char in_data[] =
+            "\x4d\x62\x16\x2d\x00\x00\x00\x00\x12\x00\x00\x00\x52\x00\x44\x00" // Mb.-........R.D.
+            "\x50\x00\x2d\x00\x54\x00\x45\x00\x53\x00\x54\x00\x00\x00"         // P.-.T.E.S.T...
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::ClientNameRequest client_name_request;
+
+    client_name_request.receive(in_stream);
+
+    //client_name_request.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    client_name_request.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}

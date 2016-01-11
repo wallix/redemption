@@ -1735,7 +1735,14 @@ public:
 
                     rdpdr::ClientNameRequest client_name_request;
 
+                    //auto chunk_p = chunk.get_current();
+
                     client_name_request.receive(chunk);
+
+                    //LOG(LOG_INFO, "ClientNameRequest: size=%u",
+                    //    (unsigned int)(chunk.get_current() - chunk_p));
+                    //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
                     client_name_request.log(LOG_INFO);
                 }
             break;

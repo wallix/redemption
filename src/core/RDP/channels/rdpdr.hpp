@@ -2012,25 +2012,22 @@ public:
         stream.out_uint32_le(this->UnicodeFlag);
         stream.out_uint32_le(this->CodePage);
 
-        if (this->UnicodeFlag !=
-            0x00000000 /* ComputerName is in ASCII characters. */) {
+        if (this->UnicodeFlag & 0x00000001) {
+            // ComputerName is in Unicode characters.
+
             // The null-terminator is included.
-            const size_t maximum_length_of_ComputerName_in_bytes =
-                (this->computer_name.length() + 1) * 2;
-
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                maximum_length_of_ComputerName_in_bytes));
-            size_t size_of_unicode_data = ::UTF8toUTF16(
+            uint8_t ComputerName_unicode_data[65536];
+            size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
                 reinterpret_cast<const uint8_t *>(this->computer_name.c_str()),
-                unicode_data, maximum_length_of_ComputerName_in_bytes);
+                ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
             // Writes null terminator.
-            unicode_data[size_of_unicode_data    ] =
-            unicode_data[size_of_unicode_data + 1] = 0;
-            size_of_unicode_data += 2;
+            ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
+            ComputerName_unicode_data[size_of_ComputerName_unicode_data + 1] = 0;
+            size_of_ComputerName_unicode_data += 2;
 
-            stream.out_uint32_le(size_of_unicode_data);
+            stream.out_uint32_le(size_of_ComputerName_unicode_data);
 
-            stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+            stream.out_copy_bytes(ComputerName_unicode_data, size_of_ComputerName_unicode_data);
         }
         else {
             // The null-terminator is included.
@@ -2059,7 +2056,6 @@ public:
         this->CodePage    = stream.in_uint32_le();
 
         const uint32_t ComputerNameLen = stream.in_uint32_le();
-
         if (ComputerNameLen) {
             {
                 const unsigned expected = ComputerNameLen;  // ComputerName(variable)
@@ -2075,25 +2071,19 @@ public:
             // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
             //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
             //  contains inconsistent data.
-            if (this->UnicodeFlag !=
-                0x00000000 /* ComputerName is in ASCII characters. */) {
-                uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
+            if (this->UnicodeFlag & 0x00000001) {
+                // ComputerName is in Unicode characters.
 
-                stream.in_copy_bytes(unicode_data, ComputerNameLen);
+                uint8_t const * const ComputerName_unicode_data = stream.get_current();
+                uint8_t ComputerName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-                const size_t size_of_utf8_string =
-                            ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
-                ::UTF16toUTF8(unicode_data, ComputerNameLen / 2, utf8_string, size_of_utf8_string);
+                ::UTF16toUTF8(ComputerName_unicode_data, ComputerNameLen / 2, ComputerName_utf8_string, sizeof(ComputerName_utf8_string));
                 // The null-terminator is included.
-                this->computer_name = ::char_ptr_cast(utf8_string);
+                this->computer_name = ::char_ptr_cast(ComputerName_utf8_string);
+
+                stream.in_skip_bytes(ComputerNameLen);
             } else {
-                uint8_t * const ascii_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
-
-                stream.in_copy_bytes(ascii_data, ComputerNameLen);
-
-                this->computer_name = ::char_ptr_cast(ascii_data);
+                this->computer_name.assign(::char_ptr_cast(stream.get_current()), ComputerNameLen);
             }
         }
         else {
