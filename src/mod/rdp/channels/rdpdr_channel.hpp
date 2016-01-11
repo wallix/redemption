@@ -1032,6 +1032,42 @@ public:
         uint32_t FsInformationClass)
     {
         switch (FsInformationClass) {
+            case rdpdr::FileFullDirectoryInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                                "FileFullDirectoryInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
+/*                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR)*/ {
+                        fscc::FileFullDirectoryInformation
+                            file_full_directory_information;
+
+                        auto chunk_p = chunk.get_current();
+
+                        file_full_directory_information.receive(chunk);
+
+                        LOG(LOG_INFO, "FileFullDirectoryInformation: size=%u",
+                            (unsigned int)(chunk.get_current() - chunk_p));
+                        hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_full_directory_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
             case rdpdr::FileBothDirectoryInformation:
             {
                 {
@@ -1047,7 +1083,7 @@ public:
                     }
                 }
 
-                uint32_t Length = chunk.in_uint32_le();
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
                 if (Length) {
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
@@ -1068,6 +1104,42 @@ public:
             }
             break;
 
+            case rdpdr::FileNamesInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                                "FileNamesInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
+/*                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR)*/ {
+                        fscc::FileNamesInformation
+                            file_names_information;
+
+                        auto chunk_p = chunk.get_current();
+
+                        file_names_information.receive(chunk);
+
+                        LOG(LOG_INFO, "FileNamesInformation: size=%u",
+                            (unsigned int)(chunk.get_current() - chunk_p));
+                        hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_names_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
             default:
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_WARNING,
@@ -1081,7 +1153,7 @@ public:
         }
 
         return true;
-    }
+    }   // process_client_drive_directory_control_response
 
     bool process_client_drive_query_information_response(
         uint32_t total_length, uint32_t flags, InStream& chunk,
@@ -1102,13 +1174,16 @@ public:
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
                 }
-                chunk.in_skip_bytes(4); // Length(4)
 
-                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    fscc::FileBasicInformation file_basic_information;
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
-                    file_basic_information.receive(chunk);
-                    file_basic_information.log(LOG_INFO);
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileBasicInformation file_basic_information;
+
+                        file_basic_information.receive(chunk);
+                        file_basic_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -1127,13 +1202,16 @@ public:
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
                 }
-                chunk.in_skip_bytes(4); // Length(4)
 
-                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    fscc::FileStandardInformation file_standard_information;
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
-                    file_standard_information.receive(chunk);
-                    file_standard_information.log(LOG_INFO);
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileStandardInformation file_standard_information;
+
+                        file_standard_information.receive(chunk);
+                        file_standard_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -1151,13 +1229,49 @@ public:
         }
 
         return true;
-    }
+    }   // process_client_drive_query_information_response
 
     bool process_client_drive_query_volume_information_response(
         uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
         switch (FsInformationClass) {
+            case rdpdr::FileFsVolumeInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
+                                "Truncated DR_DRIVE_QUERY_VOLUME_INFORMATION_RSP - "
+                                "FileFsVolumeInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileFsVolumeInformation
+                            file_fs_volume_information;
+
+                        //auto chunk_p = chunk.get_current();
+
+                        file_fs_volume_information.receive(chunk);
+
+                        //LOG(LOG_INFO, "FileFsVolumeInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_fs_volume_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
             case rdpdr::FileFsAttributeInformation:
             {
                 {
@@ -1172,14 +1286,24 @@ public:
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
                 }
-                chunk.in_skip_bytes(4); // Length(4)
 
-                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    fscc::FileFsAttributeInformation
-                        file_fs_Attribute_information;
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
-                    file_fs_Attribute_information.receive(chunk);
-                    file_fs_Attribute_information.log(LOG_INFO);
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileFsAttributeInformation
+                            file_fs_Attribute_information;
+
+                        //auto chunk_p = chunk.get_current();
+
+                        file_fs_Attribute_information.receive(chunk);
+
+                        //LOG(LOG_INFO, "FileFsAttributeInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_fs_Attribute_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -1227,7 +1351,7 @@ public:
                 device_io_response.DeviceId(),
                 device_io_response.CompletionId());
 
-            REDASSERT(false);
+//            REDASSERT(false);
 
             return true;
         }

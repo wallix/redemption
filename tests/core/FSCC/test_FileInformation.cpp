@@ -45,6 +45,8 @@ BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation)
 
     file_both_directory_information.receive(in_stream);
 
+    //file_both_directory_information.log(LOG_INFO);
+
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_both_directory_information.size());
 
     char out_data[sizeof(in_data)];
@@ -52,11 +54,11 @@ BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation)
     OutStream out_stream(out_data, sizeof(out_data));
 
     file_both_directory_information.emit(out_stream);
-    LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    hexdump(out_stream.get_data(), out_stream.get_offset());
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
 
     BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data)));
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
 BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation1)
@@ -78,6 +80,8 @@ BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation1)
 
     file_both_directory_information.receive(in_stream);
 
+    //file_both_directory_information.log(LOG_INFO);
+
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_both_directory_information.size());
 
     char out_data[sizeof(in_data)];
@@ -85,8 +89,92 @@ BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation1)
     OutStream out_stream(out_data, sizeof(out_data));
 
     file_both_directory_information.emit(out_stream);
-    LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    hexdump(out_stream.get_data(), out_stream.get_offset());
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileFsAttributeInformation)
+{
+    const char in_data[] =
+            "\x07\x00\x00\x00\xff\x00\x00\x00\x0a\x00\x00\x00\x46\x00\x41\x00" // ............F.A.
+            "\x54\x00\x33\x00\x32\x00"                                         // T.3.2.
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileFsAttributeInformation file_fs_attribute_information;
+
+    file_fs_attribute_information.receive(in_stream);
+
+    //file_fs_attribute_information.log(LOG_INFO);
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_fs_attribute_information.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    file_fs_attribute_information.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileFsAttributeInformation1)
+{
+    const char in_data[] =
+            "\xff\x00\x07\x00\xff\x00\x00\x00\x08\x00\x00\x00\x4e\x00\x54\x00" // ............N.T.
+            "\x46\x00\x53\x00"                                     // F.S.
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileFsAttributeInformation file_fs_attribute_information;
+
+    file_fs_attribute_information.receive(in_stream);
+
+    //file_fs_attribute_information.log(LOG_INFO);
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_fs_attribute_information.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    file_fs_attribute_information.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileFsVolumeInformation1)
+{
+    const char in_data[] =
+            "\x80\xc3\x0f\x2f\x72\x4c\xd1\x01\xc6\x8c\x17\x36\x0e\x00\x00\x00" // .../rL.....6....
+            "\x00\x46\x00\x52\x00\x45\x00\x45\x00\x52\x00\x44\x00\x50\x00"     // .F.R.E.E.R.D.P.
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileFsVolumeInformation file_fs_volume_information;
+
+    file_fs_volume_information.receive(in_stream);
+
+    //file_fs_volume_information.log(LOG_INFO);
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_fs_volume_information.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    file_fs_volume_information.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
 
     BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
