@@ -367,7 +367,7 @@ int app_proxy(
     }
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
 
     OpenSSL_add_all_digests();
 

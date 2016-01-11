@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 {
     // test we can read from a file (and not only from a stream)
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, "/rdpproxy.ini");
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), "/rdpproxy.ini");
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 {
     // default config
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini);
+    ConfigurationLoader cfg_loader(ini.configuration_holder());
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -513,7 +513,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     // test we can read a config file with a global section
     std::stringstream   oss;
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, oss);
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -760,7 +760,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, oss);
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::movie>());
@@ -979,7 +979,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, oss);
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -1170,7 +1170,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, oss);
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -1366,7 +1366,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     ini.set<cfg::mod_rdp::shell_working_directory>("C:\\");
 
-    ConfigurationLoader cfg_loader(ini, oss);
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -1536,7 +1536,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini, oss);
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -1707,7 +1707,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "compression=0x3\n"
                            "cache=0\n"
                            );
-    cfg_loader.cparse(ini, oss2);
+    cfg_loader.cparse(ini.configuration_holder(), oss2);
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::movie>());
@@ -1860,7 +1860,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     // - unrecognized lines are ignored
     // - every characters following # are ignored until end of line (comments)
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini);
+    ConfigurationLoader cfg_loader(ini.configuration_holder());
     char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
@@ -2021,7 +2021,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
                            "bitmap_compression=no\n"
                            );
 
-    cfg_loader.cparse(ini, ifs2);
+    cfg_loader.cparse(ini.configuration_holder(), ifs2);
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::movie>());
@@ -2201,7 +2201,7 @@ BOOST_AUTO_TEST_CASE(TestConfigTools)
 BOOST_AUTO_TEST_CASE(TestContextSetValue)
 {
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini);
+    ConfigurationLoader cfg_loader(ini.configuration_holder());
 
     // bitrate, framerate, qscale
     ini.get_acl_field(AUTHID_CONTEXT_OPT_BITRATE).set(           "80000");
@@ -2534,7 +2534,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
 BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 {
 //     Inifile             ini;
-//     ConfigurationLoader cfg_loader(ini);
+//     ConfigurationLoader cfg_loader(ini.configuration_holder());
     /*
     // nothing has been changed initialy
     //    BOOST_CHECK(!ini.check());
@@ -2578,7 +2578,7 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 // BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)
 // {
 //     Inifile             ini;
-//     ConfigurationLoader cfg_loader(ini);
+//     ConfigurationLoader cfg_loader(ini.configuration_holder());
 //     // Test get_value()
 //
 //     ini.ask<cfg::globals::target_user>());

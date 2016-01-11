@@ -244,7 +244,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
     }
 
-    { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
     int wrm_compression_algorithm_;
 
@@ -909,10 +909,10 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 //        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
 
         {
-            ini.set_value("video","hash_path", outfile_path);
-            ini.set_value("video","record_tmp_path", outfile_path);
-            ini.set_value("video","record_path", outfile_path);
-            
+            ini.set<cfg::video::hash_path>(outfile_path);
+            ini.set<cfg::video::record_tmp_path>(outfile_path);
+            ini.set<cfg::video::record_path>(outfile_path);
+
             ini.set<cfg::globals::movie_path>(&output_filename[0]);
             CaptureMaker capmake(
                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)

@@ -60,10 +60,10 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
         ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
 
-        ini.set_value("video", "record_tmp_path", "./");
-        ini.set_value("video", "record_path", "./");
-        ini.set_value("video", "hash_path", "/tmp");
-        ini.set_value("globals", "movie_path", "capture");
+        ini.set<cfg::video::record_tmp_path>("./");
+        ini.set<cfg::video::record_path>("./");
+        ini.set<cfg::video::hash_path>("/tmp");
+        ini.set<cfg::globals::movie_path>("capture");
 
         CryptoContext cctx(rnd, ini, 1);
 
@@ -219,10 +219,10 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::png);
         ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
 
-        ini.set_value("video", "record_tmp_path", "./");
-        ini.set_value("video", "record_path", "./");
-        ini.set_value("video", "hash_path", "/tmp");
-        ini.set_value("globals", "movie_path", "capture");
+        ini.set<cfg::video::record_tmp_path>("./");
+        ini.set<cfg::video::record_path>("./");
+        ini.set<cfg::video::hash_path>("/tmp");
+        ini.set<cfg::globals::movie_path>("capture");
 
         CryptoContext cctx(rnd, ini, 1);
 

@@ -15,7 +15,7 @@ int main(int argc, char ** argv) {
 
     std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
     Inifile ini;
-    { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
     UdevRandom rnd;
     CryptoContext cctx(rnd, ini, 1);
