@@ -662,6 +662,7 @@ unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp crypto libboost_unit_
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_FileInformation : tests/core/FSCC/test_FileInformation.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
 unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
@@ -673,7 +674,6 @@ unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp bitmap png z
 unit-test test_nativecapture : tests/capture/test_nativecapture.cpp bitmap png z crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_rdpdr : tests/channels/rdpdr/test_rdpdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_sound : tests/channels/sound/test_sound.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_callback : tests/core/test_callback.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_channel_list : tests/core/test_channel_list.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;

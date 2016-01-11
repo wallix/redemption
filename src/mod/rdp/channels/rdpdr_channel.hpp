@@ -2025,7 +2025,13 @@ public:
     {
         rdpdr::DeviceCreateRequest device_create_request;
 
+        //auto chunk_p = chunk.get_current();
+
         device_create_request.receive(chunk);
+
+        //LOG(LOG_INFO, "DeviceCreateRequest: size=%u",
+        //    (unsigned int)(chunk.get_current() - chunk_p));
+        //hexdump(chunk_p, chunk.get_current() - chunk_p);
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             device_create_request.log(LOG_INFO);
