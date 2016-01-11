@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestGCC
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "src/core/FSCC/FileInformation.hpp"
 
@@ -89,5 +89,5 @@ BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation1)
     hexdump(out_stream.get_data(), out_stream.get_offset());
 
     BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data)));
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
