@@ -1027,6 +1027,62 @@ public:
         return false;
     }
 
+    bool process_client_drive_directory_control_response(
+        uint32_t total_length, uint32_t flags, InStream& chunk,
+        uint32_t FsInformationClass)
+    {
+        switch (FsInformationClass) {
+            case rdpdr::FileBothDirectoryInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                                "FileBothDirectoryInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le();
+
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileBothDirectoryInformation
+                            file_both_directory_information;
+
+                        //auto chunk_p = chunk.get_current();
+
+                        file_both_directory_information.receive(chunk);
+
+                        //LOG(LOG_INFO, "FileBothDirectoryInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_both_directory_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
+            default:
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_WARNING,
+                        "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                            "Undecoded FsInformationClass - %s(0x%X)",
+                        rdpdr::ServerDriveQueryDirectoryRequest::get_FsInformationClass_name(
+                            FsInformationClass),
+                        FsInformationClass);
+                }
+            break;
+        }
+
+        return true;
+    }
+
     bool process_client_drive_query_information_response(
         uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
@@ -1472,6 +1528,12 @@ public:
 
             case rdpdr::IRP_MJ_QUERY_INFORMATION:
                 this->process_client_drive_query_information_response(
+                    total_length, flags, chunk,
+                    /* FsInformationClass = */extra_data);
+            break;
+
+            case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
+                this->process_client_drive_directory_control_response(
                     total_length, flags, chunk,
                     /* FsInformationClass = */extra_data);
             break;

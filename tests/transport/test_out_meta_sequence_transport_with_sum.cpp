@@ -41,9 +41,9 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     ini.set_value("crypto", "key1", "12345678901234567890123456789012");
 
     LCGRandom rnd(0);
-    CryptoContext cctx(rnd, ini);
-    cctx.set_crypto_key("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+
+    CryptoContext cctx(rnd, ini, 1);
+    cctx.get_crypto_key();
     cctx.set_hmac_key("12345678901234567890123456789012");
 
     {

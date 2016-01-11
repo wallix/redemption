@@ -223,30 +223,41 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go here. */
     UdevRandom * rnd;
-} redcryptofile_RandomObject;
+} PyORandom;
 
-static void Random_dealloc(redcryptofile_RandomObject* self) {
+static void Random_dealloc(PyORandom* self) {
+    printf("Random dealloc\n");
+    delete self->rnd;
     self->ob_type->tp_free((PyObject*)self);
 }
 
 static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    redcryptofile_RandomObject *self = (redcryptofile_RandomObject *)type->tp_alloc(type, 0);
+    printf("Random new\n");
+    PyORandom *self = (PyORandom *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->rnd = new UdevRandom;
     }
     return (PyObject *)self;
 }
 
-static int Random_init(redcryptofile_RandomObject *self, PyObject *args, PyObject *kwds)
+static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
 {
+    printf("Random init\n");
+    if (self != nullptr) {
+        if (self->rnd == nullptr){
+            self->rnd = new UdevRandom;
+        }
+    }
     return 0;
 }
 
 static PyObject *
-Random_name(redcryptofile_RandomObject* self)
+Random_rand(PyORandom* self)
 {
-    PyObject *result = PyString_FromString("Hellow, World"); 
+    printf("Random rand\n");
+    long val = (long)self->rnd->rand64();
+    PyObject * result = PyInt_FromLong(val);
     return result;
 }
 
@@ -256,18 +267,18 @@ static PyMemberDef Random_members[] = {
 
 
 static PyMethodDef Random_methods[] = {
-    {"name", (PyCFunction)Random_name, METH_NOARGS, "Return Hello World"},
+    {"rand", (PyCFunction)Random_rand, METH_NOARGS, "Return a new random int"},
     {nullptr, nullptr, 0, nullptr}
   /* Sentinel */
 };
 
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-t_PyTyOb redcryptofile_RandomType = {
+t_PyTyOb PyTyRandom = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
     "redcryptofile.Random",    /*tp_name*/
-    sizeof(redcryptofile_RandomObject), /*tp_basicsize*/
+    sizeof(PyORandom), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)Random_dealloc,/*tp_dealloc*/
     nullptr,                   /*tp_print*/
@@ -600,10 +611,10 @@ initredcryptofile(void)
         PyModule_AddObject(module, "Noddy", &redcryptofile_NoddyType.po);
     }
 
-    redcryptofile_RandomType.pto.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&redcryptofile_RandomType.pto) == 0){
-        Py_INCREF(&redcryptofile_RandomType.po);
-        PyModule_AddObject(module, "Random", &redcryptofile_RandomType.po);
+//    PyTyRandom.pto.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&PyTyRandom.pto) == 0){
+        Py_INCREF(&PyTyRandom.po);
+        PyModule_AddObject(module, "Random", &PyTyRandom.po);
     }
 #pragma GCC diagnostic pop
 }

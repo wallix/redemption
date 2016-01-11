@@ -39,19 +39,18 @@ int main(int argc, char** argv)
     { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(rnd, ini, 1);
+    cctx.get_crypto_key();
 
     TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
-    cctx.set_crypto_key(ini.get<cfg::crypto::key0>());
     cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-
 
     struct CaptureMaker {
         Capture capture;
 
         CaptureMaker(const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
-                    , Inifile & ini, Random & rnd, bool /*clear*/)
-        : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, true)
+                    , Inifile & ini, Random & rnd, CryptoContext & cctx, bool /*clear*/)
+        : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, cctx, true)
         {}
     };
     
