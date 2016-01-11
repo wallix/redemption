@@ -65,9 +65,10 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set_value("video", "hash_path", "/tmp");
         ini.set_value("globals", "movie_path", "capture");
 
+        CryptoContext cctx(rnd, ini, 1);
+
         Capture capture(
-            now, scr.cx, scr.cy, 24, 24, false, false, nullptr, ini, rnd
-        );
+            now, scr.cx, scr.cy, 24, 24, false, false, nullptr, ini, rnd, cctx);
 
         bool ignore_frame_in_timeval = false;
         bool requested_to_stop       = false;
@@ -223,7 +224,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.set_value("video", "hash_path", "/tmp");
         ini.set_value("globals", "movie_path", "capture");
 
-        Capture capture(now, scr.cx, scr.cy, 16, 16, false, false, nullptr, ini, rnd);
+        CryptoContext cctx(rnd, ini, 1);
+
+        Capture capture(now, scr.cx, scr.cy, 16, 16, false, false, nullptr, ini, rnd, cctx);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.server_set_pointer(pointer1);

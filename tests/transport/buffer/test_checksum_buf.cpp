@@ -37,24 +37,6 @@ long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]
     return buf.write(s, N-1);
 }
 
-using checksum_buf_base = transbuf::ochecksum_buf<transbuf::null_buf>;
-
-struct checksum_buf : CryptoContext, checksum_buf_base {
-    template<std::size_t N>
-    checksum_buf(char const (&crypto_key)[N], Random & rnd, Inifile & ini)
-    : CryptoContext(rnd, ini)
-    , checksum_buf_base([&]{
-            auto & hmac_key = this->CryptoContext::hmac_key;
-            static_assert(N-1 <= sizeof(hmac_key), "");
-            memcpy(hmac_key, crypto_key, N-1);
-            memset(hmac_key + N - 1, 0, sizeof(hmac_key) - (N - 1));
-            return std::ref(hmac_key);
-        }())
-    {
-        this->open();
-    }
-};
-
 BOOST_AUTO_TEST_CASE(TestOSumBuf)
 {
     Inifile ini;
@@ -62,11 +44,20 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
                   "\x00\x01\x02\x03\x04\x05\x06\x07"
                   "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
                   "\x10\x11\x12\x13\x14\x15\x16\x17"
-                  "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+                  "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    );
     ini.set_value("crypto", "key1", "12345678901234567890123456789012");
 
+    memcpy(const_cast<char *>(&ini.get<cfg::crypto::key1>()[0]), "12345678901234567890123456789012", 32);
+
+//    hexdump_c(ini.get<cfg::crypto::key1>(), 32);
+
     LCGRandom rnd(0);
-    checksum_buf buf("12345678901234567890123456789012", rnd, ini);
+    CryptoContext cctx(rnd, ini, 1);
+    cctx.get_crypto_key();
+//    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
+    transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.hmac_key);
+    buf.open();
     BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
     BOOST_CHECK_EQUAL(write(buf, "cde"), 3);
 
