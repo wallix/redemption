@@ -354,12 +354,12 @@ int check_encrypted_or_checksumed_file(std::string const & input_filename,
     return 0;
 }
 
-int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx) 
+int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
 {
     openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
 
     Inifile ini;
-    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+    ConfigurationLoader cfg_loader(ini.configuration_holder(), CFG_PATH "/" RDPPROXY_INI);
 
     std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
     std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
@@ -460,7 +460,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoCo
 
     if (infile_is_encrypted) {
         OpenSSL_add_all_digests();
- 
+
        return check_encrypted_or_checksumed_file<transbuf::icrypto_filename_buf>(
             input_filename, hash_path, fullfilename, quick_check, verbose,
             &cctx);

@@ -24,6 +24,7 @@
 #include "parser.hpp"
 #include "fileutils.hpp"
 #include "underlying_cast.hpp"
+#include "array_view.hpp"
 
 #include "configs/variant/capture_flags.hpp"
 #include "configs/variant/keyboard_log_flags.hpp"
@@ -33,6 +34,7 @@
 #include <type_traits>
 
 #include <cstddef>
+#include <cassert>
 
 namespace configs {
 
@@ -84,6 +86,16 @@ public:
         return this->str;
     }
 
+    char operator[](std::size_t i) const noexcept {
+        assert(i < N);
+        return this->str[i];
+    }
+
+    char & operator[](std::size_t i) noexcept {
+        assert(i < N);
+        return this->str[i];
+    }
+
     constexpr std::size_t max_size() const noexcept {
         return N - 1;
     }
@@ -126,17 +138,28 @@ using StaticString = StaticStringBase<N, StringCopier>;
 template<std::size_t N>
 struct StaticKeyString : StaticStringBase<N+1, null_fill, true>
 {
-    explicit StaticKeyString(const char * s) {
-        this->setmem(s);
+    StaticKeyString()
+    : StaticStringBase<N+1, null_fill, true>(null_fill())
+    {}
+
+    StaticKeyString(StaticKeyString const &) = default;
+
+    explicit StaticKeyString(const char (&key)[33]) {
+        // 32 = 33 - null terminal
+        this->setmem({key, 32});
         this->str[N] = 0;
     }
 
-    void setmem(const char * s, std::size_t n) {
-        memcpy(this->str, s, n);
+    StaticKeyString & operator=(array_view<const char> const & key) {
+        this->setmem(key);
+        return *this;
     }
 
-    void setmem(const char * s) {
-        this->setmem(s, N);
+private:
+    void setmem(array_view<const char> const & key) {
+        assert(key.size() <= N);
+        memcpy(this->str, key.data(), key.size());
+        memset(this->str + key.size(), 0, N - key.size());
     }
 };
 

@@ -35,10 +35,10 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
     unsigned sec_start = 1352304810;
     Inifile ini;
-    ini.set_value("crypto", "key0", 
-                  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
-    ini.set_value("crypto", "key1", "12345678901234567890123456789012");
+    ini.configuration_holder().set_value("crypto", "key0",
+                                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+    ini.configuration_holder().set_value("crypto", "key1", "12345678901234567890123456789012");
 
     LCGRandom rnd(0);
 

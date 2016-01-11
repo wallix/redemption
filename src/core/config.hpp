@@ -102,7 +102,7 @@ namespace configs {
 
 #include "configs/parse.hpp"
 
-class Inifile : public ConfigurationHolder
+class Inifile
 {
     using properties_t = configs::VariableProperties;
 
@@ -201,7 +201,23 @@ private:
     };
 
 public:
-    void set_value(const char * context, const char * key, const char * value) override;
+    struct ConfigurationHolder : ::ConfigurationHolder
+    {
+        void set_value(const char * context, const char * key, const char * value) override;
+
+    private:
+        friend class Inifile;
+
+        ConfigurationHolder(configs::VariablesConfiguration & variables)
+        : variables(variables)
+        {}
+
+        configs::VariablesConfiguration & variables;
+    };
+
+    ConfigurationHolder & configuration_holder() {
+        return this->conf_holder;
+    }
 
     static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
@@ -285,6 +301,7 @@ private:
     configs::VariablesConfiguration variables;
     configs::PointerPackArray<FieldBase, Field, configs::VariablesAclPack> fields;
     Buffers buffers;
+    ConfigurationHolder conf_holder = variables;
     bool new_from_acl = false;
 
     void initialize() {

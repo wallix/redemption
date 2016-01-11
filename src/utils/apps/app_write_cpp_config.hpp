@@ -396,7 +396,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
 template<class ConfigCppWriter>
 void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writer) {
     out_set_value <<
-        "inline void Inifile::set_value(const char * context, const char * key, const char * value) {\n"
+        "inline void Inifile::ConfigurationHolder::set_value(const char * context, const char * key, const char * value) {\n"
         "    if (0) {}\n"
     ;
     for (auto & body : writer.sections_parser) {
