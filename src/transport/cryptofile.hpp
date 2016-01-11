@@ -186,7 +186,7 @@ class CryptoContext {
     int get_crypto_key_from_ini()
     {
         memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
-//        memcpy(this->hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->hmac_key));
+        memcpy(this->hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->hmac_key));
         return 0;
     }
 
@@ -206,6 +206,12 @@ class CryptoContext {
         {
             switch (key_source){
             case 0:
+                memcpy(this->crypto_key,
+                    "\x01\x02\x03\x04\x05\x06\x07\x08"
+                    "\x01\x02\x03\x04\x05\x06\x07\x08"
+                    "\x01\x02\x03\x04\x05\x06\x07\x08"
+                    "\x01\x02\x03\x04\x05\x06\x07\x08",
+                    CRYPTO_KEY_LENGTH);
                 this->get_crypto_key_from_shm();
             break;
             case 1:
@@ -216,6 +222,7 @@ class CryptoContext {
                         "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
                         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
                         CRYPTO_KEY_LENGTH);
+            break;
             default:
             {
                 LOG(LOG_ERR, "Failed to get cryptographic key\n");
