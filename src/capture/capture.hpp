@@ -638,7 +638,7 @@ public:
             this->snapshot_api = new NewSnapshot(*this);
             this->external_event_api = new NewExternalEvent;
             if (this->pnc) {
-                this->gd_api->gds.push_back(this->pnc);
+                if (this->pnc != this->gd) this->gd_api->gds.push_back(this->pnc);
                 this->set_pointer_api->gds.push_back(this->pnc);
                 this->flush_api->gds.push_back(this->pnc);
                 this->session_update_api->cds.push_back(this->pnc);
@@ -650,8 +650,8 @@ public:
             this->possible_active_window_change_api.cds.push_back(this->pkc);
         }
 
-        if (this->psc) this->update_config_api.gds.push_back(this->psc);
-        if (this->pnc) this->update_config_api.gds.push_back(this->pnc);
+        //if (this->psc) this->update_config_api.gds.push_back(this->psc);
+        //if (this->pnc) this->update_config_api.gds.push_back(this->pnc);
 
         this->frame_marker_api = new NewFrameMarker(*this);
         this->input_kbd_api = new NewInputKbd(
@@ -922,13 +922,13 @@ public:
     // toggles externally genareted breakpoint.
     void external_breakpoint() override {
         if (this->capture_wrm) {
-            this->pnc->external_breakpoint();
+            this->external_event_api->external_breakpoint();
         }
     }
 
     void external_time(const timeval & now) override {
         if (this->capture_wrm) {
-            this->pnc->external_time(now);
+            this->external_event_api->external_time(now);
         }
     }
 
