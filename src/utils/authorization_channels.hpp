@@ -32,15 +32,11 @@
 
 #include "RDP/channels/rdpdr.hpp"
 
+#include "utils/algostring.hpp"
+
 class AuthorizationChannels
 : public movable_noncopyable
 {
-    struct is_blanck_fn
-    {
-        bool operator()(char c) const noexcept
-        { return c == ' ' || c == '\t'; }
-    };
-
 public:
     AuthorizationChannels() = default;
 
@@ -48,12 +44,12 @@ public:
     : allow_(std::move(allow))
     , deny_(std::move(deny))
     {
-        auto start_with_star = [](rng::range<std::string::iterator> const & r) {
-            auto first = std::find_if_not(begin(r), end(r), is_blanck_fn{});
+        auto start_with_star = [](range<std::string::iterator> const & r) {
+            auto first = ltrim(begin(r), end(r));
             return first != end(r) && *first == '*';
         };
 
-        for (auto & r : get_split(this->allow_, ',')) {
+        for (auto && r : get_split(this->allow_, ',')) {
             if (start_with_star(r)) {
                 this->all_allow_ = true;
                 this->rdpdr_restriction_.fill(true);
@@ -63,7 +59,7 @@ public:
             }
         }
 
-        for (auto & r : get_split(this->deny_, ',')) {
+        for (auto && r : get_split(this->deny_, ',')) {
             if (start_with_star(r)) {
                 this->all_deny_ = true;
                 if (this->all_allow_) {
@@ -258,10 +254,10 @@ private:
     }
 
     static bool contains(std::string const & s, const char * search) noexcept {
-        for (auto & r : get_split(s, ',')) {
-            using reverse_iterator = std::reverse_iterator<std::string::const_iterator>;
-            auto first = std::find_if_not(begin(r), end(r), is_blanck_fn{});
-            auto last = std::find_if_not(reverse_iterator(end(r)), reverse_iterator(first), is_blanck_fn{}).base();
+        for (auto && r : get_split(s, ',')) {
+            auto const trimmed_range = trim(r);
+            auto first = begin(trimmed_range);
+            auto last = end(trimmed_range);
 
             char const * s2 = search;
             while (*s2 == *first && *s2 && first != last) {

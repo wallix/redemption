@@ -1092,19 +1092,17 @@ public:
         stream.out_uint32_le(this->fileSizeLow);
 
         // The null-terminator is included.
-        const size_t maximum_length_of_fileName_in_bytes =
-            (this->file_name.length() + 1) * 2;
+        uint8_t fileName_unicode_data[520]; // fileName(520)
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_fileName_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
+        size_t size_of_fileName_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            unicode_data, maximum_length_of_fileName_in_bytes);
+            fileName_unicode_data, sizeof(fileName_unicode_data));
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.out_copy_bytes(fileName_unicode_data,
+            size_of_fileName_unicode_data);
 
         stream.out_clear_bytes(520 /* fileName(520) */ -
-            size_of_unicode_data);
+            size_of_fileName_unicode_data);
     }
 
     void receive(InStream & stream) {
@@ -1137,15 +1135,12 @@ public:
         this->fileSizeHigh  = stream.in_uint32_le();
         this->fileSizeLow   = stream.in_uint32_le();
 
-        const size_t size_of_utf8_string =
-            520 /* fileName(520) */ / 2 * maximum_length_of_utf8_character_in_bytes;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            stream.get_current(), 520 /* fileName(520) */ / 2, utf8_string,
-            size_of_utf8_string);
-        this->file_name.assign(::char_ptr_cast(utf8_string),
-            length_of_utf8_string);
+        uint8_t const * const fileName_unicode_data = stream.get_current();
+        uint8_t fileName_utf8_string[520 /* fileName(520) */ / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+        ::UTF16toUTF8(fileName_unicode_data, 520 /* fileName(520) */ / 2,
+            fileName_utf8_string, sizeof(fileName_utf8_string));
+        // The null-terminator is included.
+        this->file_name = ::char_ptr_cast(fileName_utf8_string);
 
         stream.in_skip_bytes(520);  // fileName(520)
     }

@@ -187,6 +187,7 @@ struct ModRDPParams {
         , disconnect_on_logon_user_change(false)
         , open_session_timeout(0)
 
+        , server_cert_store(true)
         , server_cert_check(configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know)
         , server_access_allowed_message(configs::ServerNotification::syslog)
         , server_cert_create_message(configs::ServerNotification::syslog)
@@ -330,6 +331,8 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams open_session_timeout=%d",                this->open_session_timeout);
 
+        LOG(LOG_INFO,
+            "ModRDPParams server_cert_store=%s",                   (this->server_cert_store ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams server_cert_check=%u",                   static_cast<unsigned>(this->server_cert_check));
         LOG(LOG_INFO,

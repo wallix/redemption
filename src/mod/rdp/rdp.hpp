@@ -90,7 +90,8 @@
 #include "channels/rdpdr_file_system_drive_manager.hpp"
 #include "channels/sespro_channel.hpp"
 
-#include "apply_for_delim.hpp"
+#include "utils/splitter.hpp"
+#include "utils/algostring.hpp"
 
 #include <cstdlib>
 
@@ -1314,18 +1315,20 @@ public:
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
-        const bool complete_item_extraction = true;
-        apply_for_delim(proxy_managed_drives,
-                        ',',
-                        [this](const char * drive) {
-                                if (verbose) {
-                                    LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
-                                }
-                                this->file_system_drive_manager.EnableDrive(drive, this->verbose);
-                            },
-                        is_blanck_fn(),
-                        complete_item_extraction
-                       );
+        std::string drive;
+        for (auto & r : get_line(proxy_managed_drives, ',')) {
+            auto trimmed_range = trim(r);
+
+            if (trimmed_range.empty()) continue;
+
+            drive.assign(begin(trimmed_range), end(trimmed_range));
+
+            if (verbose) {
+                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
+            }
+            this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
+        }
+
     }   // configure_proxy_managed_drives
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time

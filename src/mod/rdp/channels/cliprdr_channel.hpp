@@ -337,8 +337,8 @@ private:
 
         //LOG(LOG_INFO,
         //    "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
-        //    "requestedFormatId=%u server_file_list_format_id=%u",
-        //    this->requestedFormatId, this->server_file_list_format_id);
+        //    "requestedFormatId=%u client_file_list_format_id=%u",
+        //    this->requestedFormatId, this->client_file_list_format_id);
 
         if (this->client_file_list_format_id &&
             (this->requestedFormatId == this->client_file_list_format_id)) {
@@ -424,7 +424,16 @@ private:
             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
                 RDPECLIP::FileDescriptor fd;
 
-                fd.receive(chunk);
+                //{
+                //    auto chunk_p_ = chunk.get_current();
+
+                    fd.receive(chunk);
+
+                //    LOG(LOG_INFO, "FileDescriptor: size=%u",
+                //        (unsigned int)(chunk.get_current() - chunk_p_));
+                //    hexdump(chunk_p_, chunk.get_current() - chunk_p_);
+                //}
+
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     fd.log(LOG_INFO);
                 }
@@ -569,7 +578,7 @@ private:
                         + 32    // formatName(32)
                     ;
 
-                if ((sizeof(FILE_LIST_FORMAT_NAME) == length_of_utf8_string) &&
+                if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
                     !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
                     this->client_file_list_format_id = formatId;
                 }
@@ -633,7 +642,7 @@ private:
                         + format_name_length * 2 /* wszFormatName(variable) */
                     ;
 
-                if ((sizeof(FILE_LIST_FORMAT_NAME) == length_of_utf8_string) &&
+                if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
                     !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
                     this->client_file_list_format_id = formatId;
                 }
@@ -1020,7 +1029,7 @@ public:
                     info += "\"";
 
                     this->param_acl->log4(
-                        this->param_dont_log_data_into_syslog,
+                        !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                         info.c_str());
                 }
@@ -1116,7 +1125,7 @@ public:
                         + 32    // formatName(32)
                     ;
 
-                if ((sizeof(FILE_LIST_FORMAT_NAME) == length_of_utf8_string) &&
+                if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
                     !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
                     this->server_file_list_format_id = formatId;
                 }
@@ -1167,7 +1176,7 @@ public:
                         + format_name_length * 2 /* wszFormatName(variable) */
                     ;
 
-                if ((sizeof(FILE_LIST_FORMAT_NAME) == length_of_utf8_string) &&
+                if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
                     !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
                     this->server_file_list_format_id = formatId;
                 }

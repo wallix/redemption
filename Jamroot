@@ -229,6 +229,7 @@ variant strict : :
 
 variant asan : debug :
     <cxxflags>-fsanitize=address
+    <cxxflags>-fno-omit-frame-pointer
     <linkflags>-lasan
     <define>CXX_ENABLE_ASAN
 ;
@@ -630,6 +631,7 @@ explicit test_trace.py.unittest ;
 unit-test test_iter : tests/utils/test_iter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_noncopyable : tests/utils/test_noncopyable.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_splitter : tests/utils/test_splitter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_algostring : tests/utils/test_algostring.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_make_unique : tests/utils/test_make_unique.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
@@ -660,6 +662,8 @@ unit-test test_lic : tests/core/RDP/test_lic.cpp crypto libboost_unit_test : $(T
 unit-test test_share : tests/core/RDP/test_share.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+unit-test test_clipboard : tests/core/RDP/test_clipboard.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_FileInformation : tests/core/FSCC/test_FileInformation.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -956,7 +960,6 @@ unit-test test_strutils : tests/utils/test_strutils.cpp libboost_unit_test : $(T
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
