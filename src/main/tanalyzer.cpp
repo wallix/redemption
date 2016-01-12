@@ -152,7 +152,7 @@ public:
     void begin_update() override { REDASSERT(false); }
     void end_update() override { REDASSERT(false); }
 
-    
+
 
     // FrontAPI
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -546,17 +546,17 @@ int main(int argc, char * argv[]) {
         std::cout << copyright_notice;
         std::cout << "Usage: rdptanalyzer [options]\n\n";
         std::cout << desc << std::endl;
-        exit(-1);
+        return 1;
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice;
-        exit(-1);
+        return 1;
     }
 
     if (input_filename.empty()) {
         std::cout << "Use -i filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     int fd = open(input_filename.c_str(), O_RDONLY);
@@ -577,7 +577,7 @@ int main(int argc, char * argv[]) {
     }
     else {
         std::cout << "Failed to open input file: " << input_filename << "\n\n";
-        exit(-1);
+        return 1;
     }
 
     return 0;

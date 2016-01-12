@@ -169,7 +169,7 @@ public:
         return this->public_key_length;
     }
 
-    void enable_server_tls(const char * certificate_password) throw (Error) override {
+    void enable_server_tls(const char * certificate_password) override {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS");
             return;
@@ -453,7 +453,7 @@ public:
                 configs::ServerCertCheck server_cert_check,
                 ServerNotifier & server_notifier,
                 const char * certif_path
-            ) throw (Error) override {
+            ) override {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS");
             return;
