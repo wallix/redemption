@@ -170,7 +170,7 @@ void redemption_new_session(char const * config_filename)
     int sock_len = sizeof(u);
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini, config_filename); }
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename); }
 
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", unsigned(getpid()));

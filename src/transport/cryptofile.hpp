@@ -33,6 +33,7 @@
 #include "utils/genrandom.hpp"
 #include "openssl_crypto.hpp"
 #include "openssl_evp.hpp"
+#include "core/config.hpp"
 
 enum crypto_file_state {
     CF_EOF = 1
@@ -69,14 +70,43 @@ class CryptoContext {
 
     public:
     Random & gen;
+    const Inifile & ini;
+    int key_source; // 0: key from shm, 1: key from Ini file, 2: key in place
+    private:
     unsigned char hmac_key[HMAC_KEY_LENGTH];
+    public:
 
-    CryptoContext(Random & gen) 
+    auto get_hmac_key() -> unsigned char (&)[HMAC_KEY_LENGTH]
+    {
+        return hmac_key;
+    }
+
+    void reset_mode(int key_source)
+    {
+        this->key_source = key_source;
+        this->crypto_key_loaded = false;
+    }
+
+    CryptoContext(Random & gen, const Inifile & ini, int key_source) 
         : crypto_key_loaded(false)
         , crypto_key{}
         , gen(gen)
+        , ini(ini)
+        , key_source(key_source)
         , hmac_key{}
         {
+            memcpy(this->crypto_key,
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08",
+                CRYPTO_KEY_LENGTH);
+            memcpy(this->hmac_key,
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08",
+                HMAC_KEY_LENGTH);
         }
 
     void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
@@ -138,14 +168,15 @@ class CryptoContext {
         return nbytes;
     }
 
-    int get_crypto_key_from_shm(char tmp_buf[])
+    int get_crypto_key_from_shm()
     {
+        char tmp_buf[512] = {0};
         int shmid = shmget(2242, 512, 0600);
         if (shmid == -1){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmget! error=%s\n", getpid(), strerror(errno));
             return 1;
         }
-        char *shm = (char*)shmat(shmid, 0, 0);
+        char *shm = (char*)shmat(shmid, nullptr, 0);
         if (shm == (char *)-1){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmat! error=%s\n", getpid(), strerror(errno));
             return 1;
@@ -162,7 +193,7 @@ class CryptoContext {
         char sha256_computed[SHA256_DIGEST_LENGTH];
 
         if (SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
-            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == 0)
+            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == nullptr)
         {
             printf("[CRYPTO_ERROR][%d]: Could not check crypto key, SHA256!\n", getpid());
             return 1;
@@ -172,13 +203,21 @@ class CryptoContext {
             printf("[CRYPTO_ERROR][%d]: Crypto key integrity check failed!\n", getpid());
             return 1;
         }
+        memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
+        this->crypto_key_loaded = true;
+        return 0;
+    }
+
+    int get_crypto_key_from_ini()
+    {
+        memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
+        memcpy(this->hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->hmac_key));
         return 0;
     }
 
     void set_crypto_key(const char * key)
     {
         memcpy(this->crypto_key, key, sizeof(this->crypto_key));
-        this->crypto_key_loaded = true;
     }
 
     void set_hmac_key(const char * key)
@@ -190,18 +229,25 @@ class CryptoContext {
     {
         if (not this->crypto_key_loaded)
         {
-            char tmp_buf[512] = {0};
-            if (0 == this->get_crypto_key_from_shm(&tmp_buf[0])){
-                memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
+            switch (key_source){
+            case 0:
+            {
+                this->get_crypto_key_from_shm();
+                const unsigned char HASH_DERIVATOR[] = {
+                     0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
+                };                
+                this->compute_hmac(this->hmac_key, HASH_DERIVATOR);
             }
-            else {
-                LOG(LOG_ERR, "Failed to get cryptographic key\n");
-                memcpy(this->crypto_key,
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08",
-                    CRYPTO_KEY_LENGTH);
+            break;
+            case 1:
+                this->get_crypto_key_from_ini();
+            break;
+            default:
+            {
+                LOG(LOG_ERR, "Failed to get cryptographic key, using default key\n");
+//                "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+//                "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
+            }
             }
             this->crypto_key_loaded = true;
         }
@@ -223,6 +269,5 @@ class CryptoContext {
         return 0;
     }
 };
-
 
 #endif

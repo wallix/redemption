@@ -36,25 +36,34 @@ int main(int argc, char** argv)
 {
     std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
     Inifile ini;
-    { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd);
-
-    TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
-    cctx.set_crypto_key(ini.get<cfg::crypto::key0>());
-    cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-
+    CryptoContext cctx(rnd, ini, 1);
 
     struct CaptureMaker {
         Capture capture;
 
-        CaptureMaker(const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
-                    , Inifile & ini, Random & rnd, bool /*clear*/)
-        : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, true)
+        CaptureMaker(
+                    const timeval & now, 
+                    uint16_t width, 
+                    uint16_t height, 
+                    int order_bpp, 
+                    int capture_bpp,
+                     //bool clear_png,
+                     // bool no_timestamp,
+                     // auth_api * authentifier,                   
+                    Inifile & ini, 
+                    Random & rnd, 
+                    CryptoContext & cctx, 
+                    // bool externally_generated_breakpoint = false
+                    uint32_t clear, 
+                    bool full_video,
+                    bool extract_meta_data)
+        : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, cctx, true)
         {}
     };
-    
+
     app_recorder<CaptureMaker>(
         argc, argv
       , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
@@ -77,5 +86,7 @@ int main(int argc, char** argv)
       // TODO: now that we have cctx the lambda is useless
       , config_filename, ini, cctx, rnd
       , [](Inifile const &) { return false; }/*has_extra_capture*/
+      , false // full_video
+      , false // extract_meta_data
     );
 }

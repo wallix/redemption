@@ -22,6 +22,10 @@
 #define REDEMPTION_UTILS_GET_S_HPP
 
 #include <iterator>
+#include <cstring>
+
+#include "utils/range.hpp"
+
 
 template<class ForwardIterator, class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
 class splitter
@@ -32,32 +36,7 @@ class splitter
     using value_type = ValueT;
     value_type sep_;
 
-    struct range
-    {
-        ForwardIterator first_;
-        ForwardIterator last_;
-
-        std::size_t size() const
-        { return this->last_ - this->first_; }
-
-        const value_type & front() const
-        { return *(this->first_); }
-
-        value_type & front()
-        { return *(this->first_); }
-
-        const value_type & back() const
-        { return *(this->last_-1); }
-
-        value_type & back()
-        { return *(this->last_-1); }
-
-        ForwardIterator begin() const
-        { return this->first_; }
-
-        ForwardIterator end() const
-        { return this->last_; }
-    };
+    using range = range<ForwardIterator>;
 
 public:
     splitter(ForwardIterator first, ForwardIterator last, value_type sep)
@@ -134,26 +113,26 @@ public:
 
 
 template<class ForwardIterator, class T>
-splitter<ForwardIterator> get_split(ForwardIterator first, ForwardIterator last, T sep = T()) {
+splitter<ForwardIterator> get_split(ForwardIterator first, ForwardIterator last, T sep) {
     return {first, last, std::move(sep)};
 }
 
 template<class Cont, class T>
-splitter<typename Cont::iterator> get_split(Cont & cont, T sep = T()) {
+splitter<typename Cont::iterator> get_split(Cont & cont, T sep) {
     using std::begin;
     using std::end;
     return {begin(cont), end(cont), std::move(sep)};
 }
 
 template<class Cont, class T>
-splitter<typename Cont::const_iterator> get_split(const Cont & cont, T sep = T()) {
+splitter<typename Cont::const_iterator> get_split(const Cont & cont, T sep) {
     using std::begin;
     using std::end;
     return {begin(cont), end(cont), std::move(sep)};
 }
 
 template<class Cont, class T>
-splitter<typename Cont::iterator> get_split(Cont && cont, T sep = T()) {
+splitter<typename Cont::iterator> get_split(Cont && cont, T sep) {
     using std::begin;
     using std::end;
     return {begin(cont), end(cont), std::move(sep)};

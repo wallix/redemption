@@ -74,7 +74,7 @@ public:
 
                 Inifile ini;
                 ini.set<cfg::debug::config>(this->debug_config);
-                { ConfigurationLoader cfg_loader(ini, this->config_filename.c_str()); }
+                { ConfigurationLoader cfg_loader(ini.configuration_holder(), this->config_filename.c_str()); }
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

@@ -23,8 +23,10 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_LANGUAGE_BUTTON_HPP
 
 
-#include "apply_for_delim.hpp"
+#include "splitter.hpp"
 #include "flat_button.hpp"
+
+#include "utils/algostring.hpp"
 
 class LanguageButton : public WidgetFlatButton
 {
@@ -70,11 +72,11 @@ class LanguageButton : public WidgetFlatButton
                 }
             }
 
-            apply_for_delim(enable_locales.c_str(), ',', [&](char const * & cstr) {
-                char const * cend = cstr;
-                while (*cend && *cend != ' ' && *cend != '\t' && *cend != ',') {
-                    ++cend;
-                }
+
+            for (auto && r : get_split(enable_locales, ',')) {
+                auto const trimmed_range = trim(r);
+                auto cstr = begin(trimmed_range).base();
+                auto cend = end(trimmed_range).base();
 
                 auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
                     return strncmp(k->locale_name, cstr, cend-cstr) == 0;
@@ -89,7 +91,7 @@ class LanguageButton : public WidgetFlatButton
                 }
 
                 cstr = cend;
-            });
+            }
 
             this->label.set_text(this->locales[0].locale_name);
             this->set_button_cx(this->label.rect.cx);

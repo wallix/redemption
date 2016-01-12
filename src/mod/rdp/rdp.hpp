@@ -25,8 +25,6 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_HPP_
 
-#include <queue>
-
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -91,6 +89,11 @@
 #include "channels/rdpdr_channel.hpp"
 #include "channels/rdpdr_file_system_drive_manager.hpp"
 #include "channels/sespro_channel.hpp"
+
+#include "utils/splitter.hpp"
+#include "utils/algostring.hpp"
+
+#include <cstdlib>
 
 class RDPChannelManagerMod : public mod_api
 {
@@ -898,17 +901,22 @@ public:
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = mod_rdp_params.shell_working_directory;
 
-            char pid_str[16];
-            snprintf(pid_str, sizeof(pid_str), "%d", ::getpid());
-            const size_t pid_str_len = ::strlen(pid_str);
+            char var_str[16];
+            if (mod_rdp_params.session_probe_customize_executable_name) {
+                ::snprintf(var_str, sizeof(var_str), "-%d", ::getpid());
+            }
+            else {
+                ::memset(var_str, 0, sizeof(var_str));
+            }
+            const size_t var_str_len = ::strlen(var_str);
 
-            const char * pid_tag ="{PID}";
-            const size_t pid_tag_len = ::strlen(pid_tag);
+            const char * var_tag ="${VAR}";
+            const size_t var_tag_len = ::strlen(var_tag);
 
             size_t pos = 0;
-            while ((pos = this->session_probe_alternate_shell.find(pid_tag, pos)) != std::string::npos) {
-                this->session_probe_alternate_shell.replace(pos, pid_tag_len, pid_str);
-                pos += pid_str_len;
+            while ((pos = this->session_probe_alternate_shell.find(var_tag, pos)) != std::string::npos) {
+                this->session_probe_alternate_shell.replace(pos, var_tag_len, var_str);
+                pos += var_str_len;
             }
 
             strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
@@ -1224,8 +1232,12 @@ public:
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
         }
 
-        apply_for_delim(extra_orders, ',', [this](const char * order) {
-            int const order_number = long_from_cstr(order);
+        char * end;
+        char const * p = extra_orders;
+        for (int order_number = std::strtol(p, &end, 0);
+            p != end;
+            order_number = std::strtol(p, &end, 0))
+        {
             if (verbose) {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
@@ -1290,7 +1302,12 @@ public:
                 }
                 break;
             }
-        }, [](char c) { return c == ' ' || c == '\t' || c == ','; });
+
+            p = end;
+            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
+                ++p;
+            }
+        }
     }   // configure_extra_orders
 
     void configure_proxy_managed_drives(const char * proxy_managed_drives) {
@@ -1298,18 +1315,20 @@ public:
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
-        const bool complete_item_extraction = true;
-        apply_for_delim(proxy_managed_drives,
-                        ',',
-                        [this](const char * drive) {
-                                if (verbose) {
-                                    LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
-                                }
-                                this->file_system_drive_manager.EnableDrive(drive, this->verbose);
-                            },
-                        is_blanck_fn(),
-                        complete_item_extraction
-                       );
+        std::string drive;
+        for (auto & r : get_line(proxy_managed_drives, ',')) {
+            auto trimmed_range = trim(r);
+
+            if (trimmed_range.empty()) continue;
+
+            drive.assign(begin(trimmed_range), end(trimmed_range));
+
+            if (verbose) {
+                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
+            }
+            this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
+        }
+
     }   // configure_proxy_managed_drives
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time

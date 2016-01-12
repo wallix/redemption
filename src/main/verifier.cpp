@@ -15,14 +15,10 @@ int main(int argc, char ** argv) {
 
     std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
     Inifile ini;
-    { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd);
-
-    TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
-    cctx.set_crypto_key(ini.get<cfg::crypto::key0>());
-    cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+    CryptoContext cctx(rnd, ini, 1);
 
     return app_verifier(
         argc, argv

@@ -37,7 +37,7 @@
 #include <vector>
 #include <string>
 
-template<class CaptureMaker, class... ExtraArguments>
+template<class CaptureMaker>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , int capture_bpp, int wrm_compression_algorithm_
                         , Inifile & ini, bool remove_input_file
@@ -47,7 +47,9 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                         , unsigned png_width, unsigned png_height
                         , bool show_file_metadata, bool show_statistics
                         , bool force_record, uint32_t verbose
-                        , ExtraArguments&&... extra_argument);
+                        , bool full_video
+                        , bool extract_meta_data
+                        );
 
 template<typename InWrmTrans>
 unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
@@ -57,14 +59,16 @@ template<typename InWrmTrans>
 void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
                 , const char * infile_basename, const char * infile_extension, bool is_encrypted);
 
-template<class CaptureMaker, class... ExtraArguments>
+template<class CaptureMaker>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
-                    , Inifile & ini, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
-                    , ExtraArguments && ... extra_argument);
+                    , bool full_video
+                    , bool extract_meta_data);
 
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
                         , int wrm_compression_algorithm_
@@ -109,12 +113,14 @@ void init_signals(void)
 
 template<
     class CaptureMaker, class AddProgramOtion, class ParseFormat
-  , class HasExtraCapture, class... ExtraArguments>
+  , class HasExtraCapture>
 int app_recorder( int argc, char ** argv, const char * copyright_notice
                 , AddProgramOtion add_prog_option, ParseFormat parse_format
                 , std::string & config_filename, Inifile & ini
                 , CryptoContext & cctx, Random & rnd, HasExtraCapture has_extra_capture
-                , ExtraArguments&&... extra_argument)
+                , bool full_video
+                , bool extract_meta_data
+                )
 {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
@@ -243,7 +249,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
     }
 
-    { ConfigurationLoader cfg_loader_full(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
     int wrm_compression_algorithm_;
 
@@ -392,7 +398,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
       , show_file_metadata, show_statistics
       , has_extra_capture(ini)
       , verbose
-      , std::forward<ExtraArguments>(extra_argument)...);
+      , full_video
+      , extract_meta_data);
 }
 
 
@@ -419,7 +426,7 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 }
 
 
-template<class CaptureMaker, class... ExtraArguments>
+template<class CaptureMaker>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , int capture_bpp, int wrm_compression_algorithm_
                         , Inifile & ini, bool remove_input_file
@@ -429,7 +436,9 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                         , unsigned png_width, unsigned png_height
                         , bool show_file_metadata, bool show_statistics
                         , bool force_record, uint32_t verbose
-                        , ExtraArguments&&... extra_argument)
+                        , bool full_video
+                        , bool extract_meta_data
+                        )
 {
 /*
     char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
@@ -507,7 +516,7 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
         return -1;
     };
 
-    auto run = [&](Transport && trans, ExtraArguments&&... extra_argument) {
+    auto run = [&](Transport && trans) {
         timeval begin_capture = {0, 0};
         timeval end_capture = {0, 0};
 
@@ -525,11 +534,13 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                 ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
                   , do_record<CaptureMaker>(
                       trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, capture_bpp, wrm_compression_algorithm_, ini, rnd
+                    , output_filename, capture_bpp, wrm_compression_algorithm_
+                    , ini, rnd, cctx
                     , file_count, order_count, clear, zoom
                     , png_width, png_height
                     , show_file_metadata, show_statistics, verbose
-                    , std::forward<ExtraArguments>(extra_argument)...
+                    , full_video
+                    , extract_meta_data
                     )
                 )
                 : ((verbose ? void(std::cout << "[B]"<< std::endl) : void())
@@ -563,10 +574,8 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
     };
 
     return infile_is_encrypted
-        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str())
-             , std::forward<ExtraArguments>(extra_argument)...)
-        : run( InMetaSequenceTransport(infile_prefix, infile_extension.c_str())
-             , std::forward<ExtraArguments>(extra_argument)...);
+        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str()))
+        : run( InMetaSequenceTransport(infile_prefix, infile_extension.c_str()));
 }
 
 template<typename InWrmTrans>
@@ -835,14 +844,16 @@ static void raise_error(std::string const & output_filename, int code, const cha
     update_progress_data.raise_error(code, message);
 }
 
-template<class CaptureMaker, class... ExtraArguments>
+template<class CaptureMaker>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
-                    , Inifile & ini, Random & rnd, unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
-                    , ExtraArguments && ... extra_argument) {
+                    , bool full_video
+                    , bool extract_meta_data) {
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
@@ -906,10 +917,10 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 //        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
 
         {
-            ini.set_value("video","hash_path", outfile_path);
-            ini.set_value("video","record_tmp_path", outfile_path);
-            ini.set_value("video","record_path", outfile_path);
-            
+            ini.set<cfg::video::hash_path>(outfile_path);
+            ini.set<cfg::video::record_tmp_path>(outfile_path);
+            ini.set<cfg::video::record_path>(outfile_path);
+
             ini.set<cfg::globals::movie_path>(&output_filename[0]);
             CaptureMaker capmake(
                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
@@ -917,7 +928,12 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , player.screen_rect.cy
                     , player.info_bpp
                     , capture_bpp
-                    , ini, rnd, clear, std::forward<ExtraArguments>(extra_argument)...);
+                    , ini
+                    , rnd
+                    , cctx
+                    , clear
+                    , full_video
+                    , extract_meta_data);
             auto & capture = capmake.capture;
 
             if (capture.capture_png) {

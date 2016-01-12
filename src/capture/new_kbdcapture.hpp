@@ -337,8 +337,8 @@ public:
 
         if (unlogged_data_length) {
             if (this->enable_keyboard_log_syslog) {
-                using data_type = decltype(this->unlogged_data);
-                this->log_input_data<data_type::original_capacity()>(
+                using Buffer = decltype(this->unlogged_data);
+                this->log_input_data<Buffer::original_capacity()>(
                           [] (char const * data) {
                               LOG(LOG_INFO, "type=\"KBD input\" %s", data);
                           }
@@ -394,8 +394,8 @@ public:
         if (!this->session_data.get_offset()) return;
 
         if (this->authentifier) {
-            using data_type = decltype(this->session_data);
-            this->log_input_data<data_type::original_capacity()>(
+            using Buffer = decltype(this->session_data);
+            this->log_input_data<Buffer::original_capacity()>(
                       [this] (char const * data) {
                           this->authentifier->log4(false,
                               "KBD input", data);

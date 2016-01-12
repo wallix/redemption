@@ -64,7 +64,7 @@ public:
 
 private:
     const configs::TraceType trace_type;
-    CryptoContext cctx;
+    CryptoContext & cctx;
 
 public:
     OutFilenameSequenceTransport * png_trans;
@@ -486,16 +486,26 @@ private:
     const Inifile & ini;
     // TODO: why so many uninitialized constants ?
 public:
-    Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, const Inifile & ini
-           , Random & rnd, bool externally_generated_breakpoint = false)
+    Capture(
+        const timeval & now,
+        int width,
+        int height,
+        int order_bpp,
+        int capture_bpp,
+        bool clear_png,
+        bool no_timestamp,
+        auth_api * authentifier,
+        const Inifile & ini,
+        Random & rnd,
+        CryptoContext & cctx,
+        bool externally_generated_breakpoint = false)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , psc(nullptr)
     , pkc(nullptr)
     , capture_event{}
     , trace_type(ini.get<cfg::globals::trace_type>())
-    , cctx(rnd)
+    , cctx(cctx)
     , png_trans(nullptr)
     , wrm_trans(nullptr)
     , pnc_bmp_cache(nullptr)
@@ -562,9 +572,6 @@ public:
             if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
-
-            this->cctx.set_crypto_key(ini.get<cfg::crypto::key0>());
-            this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
 
             TODO("there should only be one outmeta, not two."
                  " Capture code should not really care if file is encrypted or not."

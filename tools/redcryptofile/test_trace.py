@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 #
 
+import os
+PATH = os.path.dirname(os.path.realpath(__file__))
+
 from redcryptotrace import CryptoTrace, Trace
 
 import hashlib
 
-import os
-PATH = os.path.dirname(os.path.realpath(__file__))
-print PATH
 
 def hashfile(fname):
     blocksize = 65536

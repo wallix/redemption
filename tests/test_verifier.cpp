@@ -25,6 +25,9 @@
 #define BOOST_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGPRINT
 
 #include <fcntl.h>
@@ -207,14 +210,19 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     /************************
     * Manage encryption key *
     ************************/
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd);
+    CryptoContext cctx(rnd, ini, 1);
+
     uint8_t hmac_key[32] = {};
-    cctx.set_crypto_key(
-        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    );
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
     BOOST_CHECK(0 == cctx.compute_hmac(hmac_key, HASH_DERIVATOR));
@@ -261,13 +269,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         BOOST_CHECK_EQUAL(data_len, res);
     }
 
-    res = crypto_close(cf_struct, hash, cctx.hmac_key);
+    res = crypto_close(cf_struct, hash, cctx.get_hmac_key());
 
     BOOST_CHECK_EQUAL(0, res);
 
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash, HASH_LEN / 2, 4096));
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash + (HASH_LEN / 2), HASH_LEN / 2, 0));
 
     unlink(test_file_name);

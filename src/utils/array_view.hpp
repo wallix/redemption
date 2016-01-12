@@ -26,34 +26,107 @@
 template<class T>
 struct array_view
 {
+    using type = T;
+
     constexpr array_view() = default;
 
-    constexpr array_view(T * p, std::size_t sz)
+    constexpr array_view(type * p, std::size_t sz)
     : p(p)
     , sz(sz)
     {}
 
     template<std::size_t N>
-    constexpr array_view(T (&a)[N])
+    constexpr array_view(type (&a)[N])
     : p(a)
     , sz(N)
     {}
 
-    explicit operator bool () const noexcept { return this->p; }
+    constexpr explicit operator bool () const noexcept { return this->p; }
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
-    T * data() noexcept { return this->p; }
-    constexpr T const * data() const noexcept { return this->p; }
+    type * data() noexcept { return this->p; }
+    constexpr type const * data() const noexcept { return this->p; }
 
-    T * begin() { return this->p; }
-    T * end() { return this->p + this->sz; }
-    constexpr T const * begin() const { return this->p; }
-    constexpr T const * end() const { return this->p + this->sz; }
+    type * begin() { return this->p; }
+    type * end() { return this->p + this->sz; }
+    constexpr type const * begin() const { return this->p; }
+    constexpr type const * end() const { return this->p + this->sz; }
 
 private:
-    T * p;
+    type * p;
     std::size_t sz;
 };
+
+template<class T>
+struct array_view<T const>
+{
+    using type = T const;
+
+    constexpr array_view() = default;
+
+    constexpr array_view(type * p, std::size_t sz)
+    : p(p)
+    , sz(sz)
+    {}
+
+    template<std::size_t N>
+    constexpr array_view(type (&a)[N])
+    : p(a)
+    , sz(N)
+    {}
+
+    constexpr array_view(array_view const &) = default;
+    constexpr array_view(array_view<T> const & other)
+    : array_view(other.data(), other.size())
+    {}
+
+    array_view & operator=(array_view const &) = default;
+    array_view & operator=(array_view<T> const & other) {
+        this->p = other.data();
+        this->sz = other.size();
+        return *this;
+    }
+
+    constexpr explicit operator bool () const noexcept { return this->p; }
+
+    constexpr std::size_t size() const noexcept { return this->sz; }
+
+    constexpr type * data() const noexcept { return this->p; }
+
+    constexpr type * begin() const { return this->p; }
+    constexpr type * end() const { return this->p + this->sz; }
+
+private:
+    type * p;
+    std::size_t sz;
+};
+
+
+template<class T>
+array_view<T> make_array_view(T * x, std::size_t n)
+{ return {x, n}; }
+
+template<class T, std::size_t N>
+array_view<T> make_array_view(T (&arr)[N])
+{ return {arr, N}; }
+
+
+template<class T>
+array_view<T const> make_const_array_view(T const * x, std::size_t n)
+{ return {x, n}; }
+
+template<class T, std::size_t N>
+array_view<T const> make_const_array_view(T const (&arr)[N])
+{ return {arr, N}; }
+
+
+template<std::size_t N>
+array_view<char const> cstr_array_view(char const (&str)[N])
+{ return {str, N-1}; }
+
+template<std::size_t N>
+array_view<char> cstr_array_view(char (&str)[N])
+{ return {str, N-1}; }
 
 #endif

@@ -24,6 +24,8 @@
 #define BOOST_TEST_MODULE TestOutmetaTransportWithSum
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
 #define LOGNULL
 #include "out_meta_sequence_transport_with_sum.hpp"
 #include "fileutils.hpp"
@@ -32,17 +34,17 @@
 BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
     unsigned sec_start = 1352304810;
+    Inifile ini;
+    ini.configuration_holder().set_value("crypto", "key0",
+                                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+    ini.configuration_holder().set_value("crypto", "key1", "12345678901234567890123456789012");
 
     LCGRandom rnd(0);
-    CryptoContext cctx(rnd);
-    memset(&cctx, 0, sizeof(cctx));
-    memcpy(cctx.hmac_key,
-       "1234567890"
-       "1234567890"
-       "1234567890"
-       "12",
-       sizeof(cctx.hmac_key)
-    );
+
+    CryptoContext cctx(rnd, ini, 1);
+    cctx.get_crypto_key();
+    cctx.set_hmac_key("12345678901234567890123456789012");
 
     {
         timeval now;

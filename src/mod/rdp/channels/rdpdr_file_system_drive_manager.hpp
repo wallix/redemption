@@ -412,7 +412,7 @@ public:
                         0                                                                   // ReparseTag
                     );
 
-                if (verbose) {
+                if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                     LOG(LOG_INFO,
                         "ManagedFileSystemObject::ProcessServerDriveQueryInformationRequest");
                     file_attribute_tag_information.log(LOG_INFO);
@@ -519,7 +519,6 @@ public:
                         EndOfFile);
                 }
 
-//                (void)::posix_fallocate(this->fd, 0, EndOfFile);
                 int truncate_result = ::ftruncate(this->fd, EndOfFile);
                 (void)truncate_result;
 
@@ -537,7 +536,7 @@ public:
             case rdpdr::FileDispositionInformation:
                 this->delete_pending = true;
 
-                if (verbose) {
+                if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                     LOG(LOG_INFO,
                         "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest: "
                             "DeletePending=yes");
@@ -557,7 +556,13 @@ public:
             {
                 rdpdr::RDPFileRenameInformation rdp_file_rename_information;
 
+                //auto in_stream_p = in_stream.get_current();
+
                 rdp_file_rename_information.receive(in_stream);
+
+                //LOG(LOG_INFO, "FileRenameInformation: size=%u",
+                //    (unsigned int)(in_stream.get_current() - in_stream_p));
+                //hexdump(in_stream_p, in_stream.get_current() - in_stream_p);
 
                 if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                     LOG(LOG_INFO, "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest");
@@ -1074,7 +1079,11 @@ public:
 
                     out_stream.out_uint32_le(file_full_directory_information.size());   // Length(4)
 
+auto out_stream_p = out_stream.get_current();
                     file_full_directory_information.emit(out_stream);
+LOG(LOG_INFO, "FileFullDirectoryInformation: size=%u",
+    (unsigned int)(out_stream.get_current() - out_stream_p));
+hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
                 }
                 break;
 
@@ -1127,7 +1136,11 @@ public:
 
                     out_stream.out_uint32_le(file_name_information.size()); // Length(4)
 
+auto out_stream_p = out_stream.get_current();
                     file_name_information.emit(out_stream);
+LOG(LOG_INFO, "FileNamesInformation: size=%u",
+    (unsigned int)(out_stream.get_current() - out_stream_p));
+hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
                 }
                 break;
 
@@ -1465,18 +1478,24 @@ public:
 
             in_stream.in_skip_bytes(20);  // Padding(20)
 
-            LOG(LOG_INFO,
-                "ManagedFile::ProcessServerDriveWriteRequest(): "
-                    "Length=%u Offset=%" PRIu64,
-                Length, Offset);
+            if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
+                LOG(LOG_INFO,
+                    "ManagedFile::ProcessServerDriveWriteRequest(): "
+                        "Length=%u Offset=%" PRIu64,
+                    Length, Offset);
+            }
         }
 
         REDASSERT(remaining_number_of_bytes_to_write >= in_stream.in_remain());
 
-        LOG(LOG_INFO,
-            "ManagedFile::ProcessServerDriveWriteRequest(): "
-                "CurrentOffset=%" PRIu32 " InRemain=%zu RemainingNumberOfBytesToWrite=%" PRIu32,
-            current_offset, in_stream.in_remain(), remaining_number_of_bytes_to_write);
+        if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
+            LOG(LOG_INFO,
+                "ManagedFile::ProcessServerDriveWriteRequest(): "
+                    "CurrentOffset=%" PRIu32
+                    " InRemain=%zu RemainingNumberOfBytesToWrite=%" PRIu32,
+                current_offset, in_stream.in_remain(),
+                remaining_number_of_bytes_to_write);
+        }
 
         off64_t seek_result = ::lseek64(this->fd, current_offset, SEEK_SET);
         (void)seek_result;
@@ -1668,12 +1687,19 @@ public:
             return false;
         }
 
-        const unsigned   relative_directory_path_length =
-            ::strlen(relative_directory_path);
-        char           * drive_name                     =
-            reinterpret_cast<char *>(::alloca(relative_directory_path_length + 1));
+        char drive_name[1024 * 16];
+        int result = snprintf(drive_name, sizeof(drive_name), "%s",
+            relative_directory_path);
+        if ((result < 0) || (result >= static_cast<int>(sizeof(drive_name)))) {
+            LOG(LOG_ERR,
+                "FileSystemDriveManager::EnableDrive: "
+                    "Failed to duplicate relative directory path. result=%d",
+                result);
 
-        ::strcpy(drive_name, relative_directory_path);
+            return false;
+        }
+
+        const unsigned relative_directory_path_length = (unsigned)result;
         for (unsigned i = 0; i < relative_directory_path_length; i++) {
             if ((drive_name[i] >= 0x61) && (drive_name[i] <= 0x7A)) {
                 drive_name[i] -= 0x20;
@@ -1996,8 +2022,17 @@ public:
                             rdpdr::ServerDriveQueryDirectoryRequest
                                 server_drive_query_directory_request;
 
+                            //auto in_stream_p = in_stream.get_current();
+
                             server_drive_query_directory_request.receive(
                                 in_stream);
+
+                            //LOG(LOG_INFO,
+                            //    "ServerDriveQueryDirectoryRequest: size=%u",
+                            //    (unsigned int)(in_stream.get_current() - in_stream_p));
+                            //hexdump(in_stream_p,
+                            //    in_stream.get_current() - in_stream_p);
+
                             if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                                 server_drive_query_directory_request.log(
                                     LOG_INFO);
