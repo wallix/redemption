@@ -3396,7 +3396,7 @@ public:
             }
 
             uint8_t const * const Path_unicode_data = stream.get_current();
-            uint8_t Path_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
+            uint8_t Path_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
             ::UTF16toUTF8(Path_unicode_data, PathLength / 2, Path_utf8_string,
                 sizeof(Path_utf8_string));
             // The null-terminator is included.
