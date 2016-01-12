@@ -859,13 +859,12 @@ public:
         Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
         size_of_Path_unicode_data += 2;
 
-        TODO("No need to reinterpret_cast, just write two bytes to get the desired character. This is premature optimisation and makes code endianness dependent");
-        uint16_t * temp_p = reinterpret_cast<uint16_t *>(Path_unicode_data);
-        for (size_t i = 0, c = size_of_Path_unicode_data / 2; i < c; i++) {
-            if ('/' == *temp_p) {
-                *temp_p = '\\';
+        uint8_t * temp_p = Path_unicode_data;
+        for (size_t i = 0, c = size_of_Path_unicode_data ; i < c; i+=2) {
+            if ('/' == temp_p[0] && 0 == temp_p[1]) {
+                temp_p[0] = '\\';
             }
-            temp_p++;
+            temp_p+=2;
         }
 
         stream.out_uint32_le(size_of_Path_unicode_data);
