@@ -83,7 +83,7 @@ namespace detail
 
     public:
         ochecksum_filter(CryptoContext & cctx)
-        : sum_buf(cctx.hmac_key)
+        : sum_buf(cctx.get_hmac_key())
         {}
 
         template<class Buf>
@@ -114,7 +114,7 @@ namespace detail
     : transbuf::ochecksum_buf<transbuf::ofile_buf>
     {
         cctx_ochecksum_file(CryptoContext & cctx)
-        : transbuf::ochecksum_buf<transbuf::ofile_buf>(cctx.hmac_key)
+        : transbuf::ochecksum_buf<transbuf::ofile_buf>(cctx.get_hmac_key())
         {}
     };
 }

@@ -40,10 +40,6 @@ int main(int argc, char** argv)
 
     UdevRandom rnd;
     CryptoContext cctx(rnd, ini, 1);
-    cctx.get_crypto_key();
-
-    TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
-    cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
 
     struct CaptureMaker {
         Capture capture;

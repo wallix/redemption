@@ -220,8 +220,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 2);
-    cctx.get_crypto_key();
+    CryptoContext cctx(rnd, ini, 1);
 
     uint8_t hmac_key[32] = {};
 
@@ -270,13 +269,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         BOOST_CHECK_EQUAL(data_len, res);
     }
 
-    res = crypto_close(cf_struct, hash, cctx.hmac_key);
+    res = crypto_close(cf_struct, hash, cctx.get_hmac_key());
 
     BOOST_CHECK_EQUAL(0, res);
 
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash, HASH_LEN / 2, 4096));
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash + (HASH_LEN / 2), HASH_LEN / 2, 0));
 
     unlink(test_file_name);

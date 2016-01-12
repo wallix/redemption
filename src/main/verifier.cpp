@@ -20,10 +20,6 @@ int main(int argc, char ** argv) {
     UdevRandom rnd;
     CryptoContext cctx(rnd, ini, 1);
 
-    TODO("We don't know yet if we need the keys, we should replace that init with some internal code inside CryptoContext")
-    cctx.get_crypto_key();
-    cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-
     return app_verifier(
         argc, argv
       , "ReDemPtion VERifier " VERSION ".\n"

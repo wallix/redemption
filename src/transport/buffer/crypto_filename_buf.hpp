@@ -120,7 +120,7 @@ namespace transbuf {
 
         int close(unsigned char hash[MD_HASH_LENGTH << 1])
         {
-            const int res1 = this->encrypt.close(this->file, hash, this->cctx->hmac_key);
+            const int res1 = this->encrypt.close(this->file, hash, this->cctx->get_hmac_key());
             const int res2 = this->file.close();
             return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
         }

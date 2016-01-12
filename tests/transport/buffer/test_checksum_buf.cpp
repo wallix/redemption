@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
     CryptoContext cctx(rnd, ini, 1);
     cctx.get_crypto_key();
 //    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
-    transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.hmac_key);
+    transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.get_hmac_key());
     buf.open();
     BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
     BOOST_CHECK_EQUAL(write(buf, "cde"), 3);
