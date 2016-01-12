@@ -38,3 +38,23 @@ BOOST_AUTO_TEST_CASE(TestSplitter)
     }
     BOOST_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
 }
+
+BOOST_AUTO_TEST_CASE(TestSplitter2)
+{
+    const char * drives = " export ,, , \t share \t ,";
+
+    using reverse_iterator = std::reverse_iterator<const char *>;
+
+    std::string s;
+    for (auto r : get_line(drives, ',')) {
+        auto first = std::find_if_not(r.begin(), r.end(), is_blanck_fn{});
+        auto last = std::find_if_not(reverse_iterator(r.end()),
+                                     reverse_iterator(first),
+                                     is_blanck_fn{}).base();
+
+        if (first == last) continue;
+
+        s.append(first, last) += ',';
+    }
+    BOOST_CHECK_EQUAL(s, "export,share,");
+}

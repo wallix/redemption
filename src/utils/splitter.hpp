@@ -23,6 +23,12 @@
 
 #include <iterator>
 
+struct is_blanck_fn
+{
+    bool operator()(char c) const noexcept
+    { return c == ' ' || c == '\t'; }
+};
+
 namespace rng {
     template<class ForwardIterator>
     struct range
