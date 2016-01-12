@@ -89,6 +89,18 @@ class CryptoContext {
         , key_source(key_source)
         , hmac_key{}
         {
+            memcpy(this->crypto_key,
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08",
+                CRYPTO_KEY_LENGTH);
+            memcpy(this->hmac_key,
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08",
+                HMAC_KEY_LENGTH);
         }
 
     void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
@@ -213,32 +225,22 @@ class CryptoContext {
         {
             switch (key_source){
             case 0:
-                memcpy(this->crypto_key,
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08",
-                    CRYPTO_KEY_LENGTH);
+            {
                 this->get_crypto_key_from_shm();
+                const unsigned char HASH_DERIVATOR[] = {
+                     0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
+                };                
+                this->compute_hmac(this->hmac_key, HASH_DERIVATOR);
+            }
             break;
             case 1:
                 this->get_crypto_key_from_ini();
             break;
-            case 2:
-                memcpy(this->crypto_key,
-                        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
-                        CRYPTO_KEY_LENGTH);
-            break;
             default:
             {
-                LOG(LOG_ERR, "Failed to get cryptographic key\n");
-                memcpy(this->crypto_key,
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08"
-                    "\x01\x02\x03\x04\x05\x06\x07\x08",
-                    CRYPTO_KEY_LENGTH);
+                LOG(LOG_ERR, "Failed to get cryptographic key, using default key\n");
+//                "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+//                "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
             }
             }
             this->crypto_key_loaded = true;

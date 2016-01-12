@@ -220,8 +220,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 2);
-    cctx.get_crypto_key();
+    CryptoContext cctx(rnd, ini, 1);
 
     uint8_t hmac_key[32] = {};
 
