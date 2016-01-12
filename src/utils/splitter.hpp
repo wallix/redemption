@@ -23,22 +23,26 @@
 
 #include <iterator>
 
-template<class ForwardIterator, class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
-class splitter
+struct is_blanck_fn
 {
-    ForwardIterator first_;
-    ForwardIterator last_;
-    ForwardIterator cur_;
-    using value_type = ValueT;
-    value_type sep_;
+    bool operator()(char c) const noexcept
+    { return c == ' ' || c == '\t'; }
+};
 
+namespace rng {
+    template<class ForwardIterator>
     struct range
     {
         ForwardIterator first_;
         ForwardIterator last_;
 
+        using value_type = typename std::iterator_traits<ForwardIterator>::value_type;
+
         std::size_t size() const
         { return this->last_ - this->first_; }
+
+        bool empty() const
+        { return this->last_ == this->first_; }
 
         const value_type & front() const
         { return *(this->first_); }
@@ -58,6 +62,18 @@ class splitter
         ForwardIterator end() const
         { return this->last_; }
     };
+}
+
+template<class ForwardIterator, class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
+class splitter
+{
+    ForwardIterator first_;
+    ForwardIterator last_;
+    ForwardIterator cur_;
+    using value_type = ValueT;
+    value_type sep_;
+
+    using range = rng::range<ForwardIterator>;
 
 public:
     splitter(ForwardIterator first, ForwardIterator last, value_type sep)

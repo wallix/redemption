@@ -662,6 +662,7 @@ unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp crypto libboost_unit_
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_FileInformation : tests/core/FSCC/test_FileInformation.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
 unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
@@ -673,14 +674,12 @@ unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp bitmap png z
 unit-test test_nativecapture : tests/capture/test_nativecapture.cpp bitmap png z crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_rdpdr : tests/channels/rdpdr/test_rdpdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_sound : tests/channels/sound/test_sound.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_callback : tests/core/test_callback.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_channel_list : tests/core/test_channel_list.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_check_files : tests/core/test_check_files.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_cipher : tests/core/test_cipher.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_config : tests/core/test_config.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_theme : tests/utils/test_theme.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_error : tests/core/test_error.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -695,6 +694,12 @@ unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp libboost_u
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_redirection_info : tests/utils/test_redirection_info.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+## Capabilities tests
+## @{
+unit-test test_config : tests/core/test_config.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_config_assign : tests/core/test_config_assign.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+## }
 
 ## Capabilities tests
 ## @{
@@ -951,7 +956,6 @@ unit-test test_strutils : tests/utils/test_strutils.cpp libboost_unit_test : $(T
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 

@@ -102,7 +102,7 @@ namespace configs {
 
 #include "configs/parse.hpp"
 
-class Inifile : public ConfigurationHolder
+class Inifile
 {
     using properties_t = configs::VariableProperties;
 
@@ -135,10 +135,25 @@ public:
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
     }
 
+    template<class T, class U, class... O>
+    void set(U && param1, O && ... other_params) {
+        static_assert(!bool(T::properties() & properties_t::write), "T is writable, used set_acl<T>().");
+        static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
+        this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+    }
+
     template<class T, class U>
     void set_acl(U && new_value) {
         static_assert(bool(T::properties() & properties_t::write), "T isn't writable, used set<T>().");
         static_cast<T&>(this->variables).value = std::forward<U>(new_value);
+        this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::write)>());
+        this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+    }
+
+    template<class T, class U, class... O>
+    void set_acl(U && param1, O && ... other_params) {
+        static_assert(bool(T::properties() & properties_t::write), "T isn't writable, used set<T>().");
+        static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
         this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::write)>());
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
     }
@@ -201,7 +216,23 @@ private:
     };
 
 public:
-    void set_value(const char * context, const char * key, const char * value) override;
+    struct ConfigurationHolder : ::ConfigurationHolder
+    {
+        void set_value(const char * context, const char * key, const char * value) override;
+
+    private:
+        friend class Inifile;
+
+        ConfigurationHolder(configs::VariablesConfiguration & variables)
+        : variables(variables)
+        {}
+
+        configs::VariablesConfiguration & variables;
+    };
+
+    ConfigurationHolder & configuration_holder() {
+        return this->conf_holder;
+    }
 
     static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
@@ -285,6 +316,7 @@ private:
     configs::VariablesConfiguration variables;
     configs::PointerPackArray<FieldBase, Field, configs::VariablesAclPack> fields;
     Buffers buffers;
+    ConfigurationHolder conf_holder = variables;
     bool new_from_acl = false;
 
     void initialize() {

@@ -850,22 +850,26 @@ public:
         stream.out_uint32_le(this->CreateDisposition_);
         stream.out_uint32_le(this->CreateOptions_);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_Path_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
-            maximum_length_of_Path_in_bytes);
+        uint8_t Path_unicode_data[65536];
+        size_t size_of_Path_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->path.c_str()),
+            Path_unicode_data, sizeof(Path_unicode_data));
         // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+        Path_unicode_data[size_of_Path_unicode_data    ] =
+        Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
+        size_of_Path_unicode_data += 2;
 
-        stream.out_uint32_le(size_of_unicode_data);
+        uint8_t * temp_p = Path_unicode_data;
+        for (size_t i = 0; i < size_of_Path_unicode_data; i += 2) {
+            if (('/' == temp_p[0]) && (0 == temp_p[1])) {
+                temp_p[0] = '\\';
+            }
+            temp_p += 2;
+        }
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.out_uint32_le(size_of_Path_unicode_data);
+
+        stream.out_copy_bytes(Path_unicode_data, size_of_Path_unicode_data);
     }
 
     void receive(InStream & stream) {
@@ -904,18 +908,16 @@ public:
                 }
             }
 
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
+            uint8_t const * const Path_unicode_data = stream.get_current();
+            uint8_t Path_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-            stream.in_copy_bytes(unicode_data, PathLength);
+            ::UTF16toUTF8(Path_unicode_data, PathLength / 2, Path_utf8_string,
+                sizeof(Path_utf8_string));
+            // The null-terminator is included.
+            this->path = ::char_ptr_cast(Path_utf8_string);
 
-            const size_t size_of_utf8_string =
-                PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            const size_t length_of_utf8_string = ::UTF16toUTF8(
-                unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
-            this->path.assign(::char_ptr_cast(utf8_string),
-                length_of_utf8_string);
+            stream.in_skip_bytes(PathLength);
+
             std::replace(this->path.begin(), this->path.end(), '\\', '/');
         }
         else {
@@ -2009,25 +2011,22 @@ public:
         stream.out_uint32_le(this->UnicodeFlag);
         stream.out_uint32_le(this->CodePage);
 
-        if (this->UnicodeFlag !=
-            0x00000000 /* ComputerName is in ASCII characters. */) {
+        if (this->UnicodeFlag & 0x00000001) {
+            // ComputerName is in Unicode characters.
+
             // The null-terminator is included.
-            const size_t maximum_length_of_ComputerName_in_bytes =
-                (this->computer_name.length() + 1) * 2;
-
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                maximum_length_of_ComputerName_in_bytes));
-            size_t size_of_unicode_data = ::UTF8toUTF16(
+            uint8_t ComputerName_unicode_data[65536];
+            size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
                 reinterpret_cast<const uint8_t *>(this->computer_name.c_str()),
-                unicode_data, maximum_length_of_ComputerName_in_bytes);
+                ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
             // Writes null terminator.
-            unicode_data[size_of_unicode_data    ] =
-            unicode_data[size_of_unicode_data + 1] = 0;
-            size_of_unicode_data += 2;
+            ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
+            ComputerName_unicode_data[size_of_ComputerName_unicode_data + 1] = 0;
+            size_of_ComputerName_unicode_data += 2;
 
-            stream.out_uint32_le(size_of_unicode_data);
+            stream.out_uint32_le(size_of_ComputerName_unicode_data);
 
-            stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+            stream.out_copy_bytes(ComputerName_unicode_data, size_of_ComputerName_unicode_data);
         }
         else {
             // The null-terminator is included.
@@ -2056,7 +2055,6 @@ public:
         this->CodePage    = stream.in_uint32_le();
 
         const uint32_t ComputerNameLen = stream.in_uint32_le();
-
         if (ComputerNameLen) {
             {
                 const unsigned expected = ComputerNameLen;  // ComputerName(variable)
@@ -2072,25 +2070,20 @@ public:
             // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
             //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
             //  contains inconsistent data.
-            if (this->UnicodeFlag !=
-                0x00000000 /* ComputerName is in ASCII characters. */) {
-                uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
+            if (this->UnicodeFlag & 0x00000001) {
+                // ComputerName is in Unicode characters.
 
-                stream.in_copy_bytes(unicode_data, ComputerNameLen);
+                uint8_t const * const ComputerName_unicode_data = stream.get_current();
+                uint8_t ComputerName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-                const size_t size_of_utf8_string =
-                            ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
-                ::UTF16toUTF8(unicode_data, ComputerNameLen / 2, utf8_string, size_of_utf8_string);
+                ::UTF16toUTF8(ComputerName_unicode_data, ComputerNameLen / 2, ComputerName_utf8_string, sizeof(ComputerName_utf8_string));
                 // The null-terminator is included.
-                this->computer_name = ::char_ptr_cast(utf8_string);
+                this->computer_name = ::char_ptr_cast(ComputerName_utf8_string);
+
+                stream.in_skip_bytes(ComputerNameLen);
             } else {
-                uint8_t * const ascii_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
-
-                stream.in_copy_bytes(ascii_data, ComputerNameLen);
-
-                this->computer_name = ::char_ptr_cast(ascii_data);
+                // The null-terminator is included.
+                this->computer_name = ::char_ptr_cast(stream.get_current());
             }
         }
         else {
@@ -3144,22 +3137,23 @@ public:
         stream.out_uint8(this->replace_if_exists_ ? static_cast<uint8_t>(-1) : static_cast<uint8_t>(0));
         stream.out_uint8(this->RootDirectory_);
 
-        const size_t maximum_length_of_FileName_in_bytes =
-            (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_FileName_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
+        uint8_t FileName_unicode_data[65536];
+        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            unicode_data, maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
-        stream.out_uint32_le(size_of_unicode_data); // FileNameLength(4)
+        uint8_t * temp_p = FileName_unicode_data;
+        for (size_t i = 0; i < size_of_FileName_unicode_data; i += 2) {
+            if (('/' == temp_p[0]) && (0 == temp_p[1])) {
+                temp_p[0] = '\\';
+            }
+            temp_p += 2;
+        }
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);  // FileName(variable)
+        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
+
+        stream.out_copy_bytes(FileName_unicode_data,    // FileName(variable)
+            size_of_FileName_unicode_data);
     }
 
     void receive(InStream & stream) {
@@ -3192,17 +3186,16 @@ public:
                 }
             }
 
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
+            uint8_t const * const FileName_unicode_data = stream.get_current();
+            uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+            const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+                FileName_unicode_data, FileNameLength / 2,
+                FileName_utf8_string, sizeof(FileName_utf8_string));
+            this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
+                length_of_FileName_utf8_string);
 
-            stream.in_copy_bytes(unicode_data, FileNameLength);
+            stream.in_skip_bytes(FileNameLength);
 
-            const size_t size_of_utf8_string =
-                FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            ::UTF16toUTF8(unicode_data, FileNameLength / 2, utf8_string, size_of_utf8_string);
-            // The null-terminator is included.
-            this->file_name = ::char_ptr_cast(utf8_string);
             std::replace(this->file_name.begin(), this->file_name.end(), '\\', '/');
         }
         else {
@@ -3345,23 +3338,28 @@ public:
         stream.out_uint8(this->InitialQuery_);
 
         // The null-terminator is included.
-        const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_Path_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
-            maximum_length_of_Path_in_bytes);
+        uint8_t Path_unicode_data[65536];
+        size_t size_of_Path_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->path.c_str()),
+            Path_unicode_data, sizeof(Path_unicode_data));
         // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+        Path_unicode_data[size_of_Path_unicode_data    ] =
+        Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
+        size_of_Path_unicode_data += 2;
 
-        stream.out_uint32_le(size_of_unicode_data);
+        uint8_t * temp_p = Path_unicode_data;
+        for (size_t i = 0; i < size_of_Path_unicode_data; i += 2) {
+            if (('/' == temp_p[0]) && (0 == temp_p[1])) {
+                temp_p[0] = '\\';
+            }
+            temp_p += 2;
+        }
+
+        stream.out_uint32_le(size_of_Path_unicode_data);
 
         stream.out_clear_bytes(23); // Padding(23)
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.out_copy_bytes(Path_unicode_data, size_of_Path_unicode_data);
     }
 
     void receive(InStream & stream) {
@@ -3397,17 +3395,15 @@ public:
                 }
             }
 
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
-
-            stream.in_copy_bytes(unicode_data, PathLength);
-
-            const size_t size_of_utf8_string =
-                        PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            ::UTF16toUTF8(unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
+            uint8_t const * const Path_unicode_data = stream.get_current();
+            uint8_t Path_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
+            ::UTF16toUTF8(Path_unicode_data, PathLength / 2, Path_utf8_string,
+                sizeof(Path_utf8_string));
             // The null-terminator is included.
-            this->path = ::char_ptr_cast(utf8_string);
+            this->path = ::char_ptr_cast(Path_utf8_string);
+
+            stream.in_skip_bytes(PathLength);
+
             std::replace(this->path.begin(), this->path.end(), '\\', '/');
         }
         else {

@@ -30,7 +30,6 @@
 #include "translation.hpp"
 #include "copy_paste.hpp"
 #include "config_access.hpp"
-#include "apply_for_delim.hpp"
 #include "widget2/language_button.hpp"
 
 using FlatLoginModVariables = vcfg::variables<

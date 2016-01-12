@@ -170,7 +170,7 @@ int main(int argc, char * argv[]) {
     listener.run();
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char *>(&nodelay)

@@ -727,28 +727,19 @@ public:
 
         stream.out_uint32_le(this->FileAttributes);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t FileName_unicode_data[65536];
         const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
         stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
-
-
-
-
         uint8_t ShortName_unicode_data[24]; // ShortName(24)
-
         size_t size_of_ShortName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->short_name.c_str()), ShortName_unicode_data,
-            sizeof(ShortName_unicode_data));
+            reinterpret_cast<const uint8_t *>(this->short_name.c_str()),
+            ShortName_unicode_data, sizeof(ShortName_unicode_data));
 
         REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
 
@@ -799,18 +790,15 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        uint8_t ShortName[24];
-
-        stream.in_copy_bytes(ShortName, sizeof(ShortName));
-
-        const size_t size_of_ShortName_utf8_string =
-            ShortNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const ShortName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_ShortName_utf8_string));
+        uint8_t const * const ShortName = stream.get_current();
+        uint8_t ShortName_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_ShortName_utf8_string = ::UTF16toUTF8(
-            ShortName, ShortNameLength / 2, ShortName_utf8_string, size_of_ShortName_utf8_string);
+            ShortName, ShortNameLength / 2, ShortName_utf8_string,
+            sizeof(ShortName_utf8_string));
         this->short_name.assign(::char_ptr_cast(ShortName_utf8_string),
             length_of_ShortName_utf8_string);
+
+        stream.in_skip_bytes(24);   // ShortName(24)
 
         {
             const unsigned expected = FileNameLength;   // FileName(variable)
@@ -823,18 +811,15 @@ public:
             }
         }
 
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
-
-        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
-
-        const size_t size_of_FileName_utf8_string =
-            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_FileName_utf8_string));
+        uint8_t const * const FileName_unicode_data = stream.get_current();
+        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string, size_of_FileName_utf8_string);
+            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+            sizeof(FileName_utf8_string));
         this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
             length_of_FileName_utf8_string);
+
+        stream.in_skip_bytes(FileNameLength);
     }
 
     inline size_t size() const {
@@ -848,14 +833,10 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
-            maximum_length_of_FileName_in_bytes);
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -1142,24 +1123,17 @@ public:
 
         stream.out_uint32_le(this->FileAttributes);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
+        uint8_t FileName_unicode_data[65536];
+        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
         stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
-        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
+        stream.out_copy_bytes(FileName_unicode_data,
+            size_of_FileName_unicode_data);
     }
 
     inline void receive(InStream & stream) {
@@ -1203,18 +1177,15 @@ public:
             }
         }
 
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
-
-        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
-
-        const size_t size_of_FileName_utf8_string =
-            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_FileName_utf8_string));
+        uint8_t const * const FileName_unicode_data = stream.get_current();
+        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string, size_of_FileName_utf8_string);
+            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+            sizeof(FileName_utf8_string));
         this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
             length_of_FileName_utf8_string);
+
+        stream.in_skip_bytes(FileNameLength);
     }
 
     inline size_t size() const {
@@ -1225,18 +1196,10 @@ public:
                             //     FileAttributes(4) + FileNameLength(4) +
                             //     EaSize(4)
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -1244,7 +1207,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "FileBothDirectoryInformation: NextEntryOffset=%u FileIndex=%u CreationTime=%" PRIu64
+            "FileFullDirectoryInformation: NextEntryOffset=%u FileIndex=%u CreationTime=%" PRIu64
                 " LastAccessTime=%" PRIu64 " LastWriteTime=%" PRIu64 " ChangeTime=%" PRIu64
                 " EndOfFile=%" PRId64 " AllocationSize=%" PRId64 " FileAttributes=0x%X "
                 "EaSize=%u FileName=\"%s\"",
@@ -1349,18 +1312,10 @@ public:
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t FileName_unicode_data[65536];
         size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
         stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
@@ -1394,36 +1349,24 @@ public:
             }
         }
 
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
-
-        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
-
-        const size_t size_of_FileName_utf8_string =
-            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_FileName_utf8_string));
+        uint8_t const * const FileName_unicode_data = stream.get_current();
+        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
             FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
-            size_of_FileName_utf8_string);
+            sizeof(FileName_utf8_string));
         this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
             length_of_FileName_utf8_string);
+
+        stream.in_skip_bytes(FileNameLength);
     }
 
     inline size_t size() const {
         size_t size = 12;    // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -1817,13 +1760,10 @@ public:
         stream.out_uint32_le(this->FileSystemAttributes_);
         stream.out_sint32_le(this->MaximumComponentNameLength);
 
-        const size_t maximum_length_of_FileSystemName_in_bytes = this->file_system_name.length() * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileSystemName_in_bytes));
+        uint8_t unicode_data[65536];
         const size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()), unicode_data,
-            maximum_length_of_FileSystemName_in_bytes);
+            reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         stream.out_uint32_le(size_of_unicode_data); // FileSystemNameLength(4)
 
@@ -1858,32 +1798,26 @@ public:
             }
         }
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileSystemNameLength));
+        uint8_t const * const FileSystemName = stream.get_current();
+        uint8_t FileSystemName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-        stream.in_copy_bytes(unicode_data, FileSystemNameLength);
+        const size_t length_of_FileSystemName_utf8_string = ::UTF16toUTF8(
+            FileSystemName, FileSystemNameLength / 2, FileSystemName_utf8_string,
+            sizeof(FileSystemName_utf8_string));
+        this->file_system_name.assign(::char_ptr_cast(FileSystemName_utf8_string),
+            length_of_FileSystemName_utf8_string);
 
-        const size_t size_of_utf8_string =
-            FileSystemNameLength / 2 * maximum_length_of_utf8_character_in_bytes;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            unicode_data, FileSystemNameLength / 2, utf8_string, size_of_utf8_string);
-        this->file_system_name.assign(::char_ptr_cast(utf8_string),
-            length_of_utf8_string);
+        stream.in_skip_bytes(FileSystemNameLength);
     }
 
     inline size_t size() const {
         const size_t size = 12; // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                 //     FileSystemNameLength(4)
 
-        const size_t maximum_length_of_FileSystemName_in_bytes =
-            this->file_system_name.length() * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileSystemName_in_bytes));
+        uint8_t unicode_data[65536];
         const size_t size_of_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()),
-            unicode_data, maximum_length_of_FileSystemName_in_bytes);
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -2271,26 +2205,19 @@ public:
         stream.out_uint64_le(this->VolumeCreationTime);
         stream.out_uint32_le(this->VolumeSerialNumber);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_VolumeLabel_in_bytes = (this->volume_label.length() + 1) * 2;
+        uint8_t VolumeLabel_unicode_data[65536];
+        size_t size_of_VolumeLabel_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()),
+            VolumeLabel_unicode_data, sizeof(VolumeLabel_unicode_data));
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_VolumeLabel_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()), unicode_data,
-            maximum_length_of_VolumeLabel_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
-
-        stream.out_uint32_le(size_of_unicode_data); // VolumeLabelLength(4)
+        stream.out_uint32_le(size_of_VolumeLabel_unicode_data); // VolumeLabelLength(4)
 
         stream.out_uint8(this->SupportsObjects);
 
         // Reserved(1), MUST NOT be transmitted.
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.out_copy_bytes(VolumeLabel_unicode_data,
+            size_of_VolumeLabel_unicode_data);
     }
 
     inline void receive(InStream & stream) {
@@ -2325,23 +2252,22 @@ public:
             }
         }
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(VolumeLabelLength));
+        uint8_t const * const VolumeLabel_unicode_data = stream.get_current();
+        uint8_t VolumeLabel_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-        stream.in_copy_bytes(unicode_data, VolumeLabelLength);
+        const size_t length_of_VolumeLabel_utf8_string = ::UTF16toUTF8(
+            VolumeLabel_unicode_data, VolumeLabelLength / 2,
+            VolumeLabel_utf8_string, sizeof(VolumeLabel_utf8_string));
 
-        const size_t size_of_utf8_string =
-            VolumeLabelLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            unicode_data, VolumeLabelLength / 2, utf8_string, size_of_utf8_string);
+        stream.in_skip_bytes(VolumeLabelLength);
 
-        for (uint8_t * c = utf8_string + length_of_utf8_string - 1;
-             (c >= utf8_string) && ((*c) == ' '); c--) {
+        for (uint8_t * c =
+                 VolumeLabel_utf8_string + length_of_VolumeLabel_utf8_string - 1;
+             (c >= VolumeLabel_utf8_string) && ((*c) == ' '); c--) {
             *c = '\0';
         }
 
-        this->volume_label = ::char_ptr_cast(utf8_string);
+        this->volume_label = ::char_ptr_cast(VolumeLabel_utf8_string);
     }
 
     inline size_t size() const {
@@ -2350,18 +2276,10 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_VolumeLabel_in_bytes = (this->volume_label.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_VolumeLabel_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()), unicode_data,
-            maximum_length_of_VolumeLabel_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }

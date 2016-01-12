@@ -25,8 +25,6 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_HPP_
 
-#include <queue>
-
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -91,6 +89,10 @@
 #include "channels/rdpdr_channel.hpp"
 #include "channels/rdpdr_file_system_drive_manager.hpp"
 #include "channels/sespro_channel.hpp"
+
+#include "utils/splitter.hpp"
+
+#include <cstdlib>
 
 class RDPChannelManagerMod : public mod_api
 {
@@ -1229,8 +1231,12 @@ public:
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
         }
 
-        apply_for_delim(extra_orders, ',', [this](const char * order) {
-            int const order_number = long_from_cstr(order);
+        char * end;
+        char const * p = extra_orders;
+        for (int order_number = std::strtol(p, &end, 0);
+            p != end;
+            order_number = std::strtol(p, &end, 0))
+        {
             if (verbose) {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
@@ -1295,7 +1301,12 @@ public:
                 }
                 break;
             }
-        }, [](char c) { return c == ' ' || c == '\t' || c == ','; });
+
+            p = end;
+            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
+                ++p;
+            }
+        }
     }   // configure_extra_orders
 
     void configure_proxy_managed_drives(const char * proxy_managed_drives) {
@@ -1303,18 +1314,22 @@ public:
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
-        const bool complete_item_extraction = true;
-        apply_for_delim(proxy_managed_drives,
-                        ',',
-                        [this](const char * drive) {
-                                if (verbose) {
-                                    LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
-                                }
-                                this->file_system_drive_manager.EnableDrive(drive, this->verbose);
-                            },
-                        is_blanck_fn(),
-                        complete_item_extraction
-                       );
+        using reverse_iterator = std::reverse_iterator<const char *>;
+
+        for (auto & r : get_line(proxy_managed_drives, ',')) {
+            auto first = std::find_if_not(r.begin(), r.end(), is_blanck_fn{});
+            auto last = std::find_if_not(reverse_iterator(r.end()), reverse_iterator(first), is_blanck_fn{}).base();
+
+            if (first == last) continue;
+
+            std::string drive(first, last);
+
+            if (verbose) {
+                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
+            }
+            this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
+        }
+
     }   // configure_proxy_managed_drives
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time
