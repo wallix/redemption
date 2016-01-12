@@ -1,9 +1,14 @@
 capture/capture 100 100
 capture/chunked_image_transport 100 100
+capture/ChunkToFile 100 100
+capture/FileToChunk
 capture/FileToGraphic 100 100
 capture/GraphicToFile 100 100
 capture/image_capture 100 100
 capture/nativecapture 100 100
+capture/new_kbdcapture 100 100
+capture/send_wrm_chunk 100 100
+capture/new_kbdcapture 100 100
 capture/staticcapture 100 100
 core/callback 100 100
 core/channel_list 100 100
@@ -14,6 +19,7 @@ core/error 100 100
 core/font 100 100
 core/listen 100 100
 core/mainloop 100 100
+core/FSCC/FileInformation 100 100
 core/RDP/bitmapupdate 100 100
 core/RDP/caches/bmpcache 100 100
 core/RDP/caches/bmpcachepersister 100 100
@@ -49,6 +55,7 @@ core/RDP/capabilities/pointer 100 100
 core/RDP/capabilities/surfacecommands 100 100
 core/RDP/capabilities/virchan 100 100
 core/RDP/capabilities/window 100 100
+core/RDP/channels/rdpdr 100 100
 core/RDP/fastpath 100 100
 core/RDP/gcc 100 100
 core/RDP/GraphicUpdatePDU 100 100

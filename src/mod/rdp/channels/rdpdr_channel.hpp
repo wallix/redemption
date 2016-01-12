@@ -23,7 +23,6 @@
 
 #include <deque>
 
-#include "apply_for_delim.hpp"
 #include "base_channel.hpp"
 #include "front_api.hpp"
 #include "rdpdr_file_system_drive_manager.hpp"

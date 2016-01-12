@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestGCC
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "src/core/RDP/channels/rdpdr.hpp"
 
@@ -130,6 +130,89 @@ BOOST_AUTO_TEST_CASE(ClientNameRequest2)
     OutStream out_stream(out_data, sizeof(out_data));
 
     client_name_request.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(FileRenameInformation1)
+{
+    const char in_data[] =
+            "\x00\x00\x24\x00\x00\x00\x5c\x00\x57\x00\x41\x00\x42\x00\x41\x00" // ..&.....W.A.B.A.
+            "\x67\x00\x65\x00\x6e\x00\x74\x00\x20\x00\x2d\x00\x20\x00\x43\x00" // g.e.n.t. .-. .C.
+            "\x6f\x00\x2e\x00\x65\x00\x78\x00\x65\x00"                         // o...e.x.e.
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::RDPFileRenameInformation file_rename_information;
+
+    file_rename_information.receive(in_stream);
+
+    //file_rename_information.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    file_rename_information.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest1)
+{
+    const char in_data[] =
+            "\x03\x00\x00\x00\x01\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+            "\x5c\x00\x42\x00\x49\x00\x4e\x00\x00\x00"                         // ..B.I.N...
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::ServerDriveQueryDirectoryRequest server_drive_query_directory_request;
+
+    server_drive_query_directory_request.receive(in_stream);
+
+    //server_drive_query_directory_request.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    server_drive_query_directory_request.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
+{
+    const char in_data[] =
+            "\x03\x00\x00\x00\x01\x2a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // .....*..........
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+            "\x5c\x00\x53\x00\x70\x00\x79\x00\x5c\x00\x73\x00\x70\x00\x79\x00" // ..S.p.y...s.p.y.
+            "\x78\x00\x78\x00\x5f\x00\x61\x00\x6d\x00\x64\x00\x36\x00\x34\x00" // x.x._.a.m.d.6.4.
+            "\x2e\x00\x65\x00\x78\x00\x65\x00\x00\x00"                         // ..e.x.e...
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::ServerDriveQueryDirectoryRequest server_drive_query_directory_request;
+
+    server_drive_query_directory_request.receive(in_stream);
+
+    //server_drive_query_directory_request.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump(out_stream.get_data(), out_stream.get_offset());
 
