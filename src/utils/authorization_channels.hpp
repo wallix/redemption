@@ -22,7 +22,7 @@
 #define REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 
 #include "movable_noncopyable.hpp"
-#include "apply_for_delim.hpp"
+#include "splitter.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -32,36 +32,48 @@
 
 #include "RDP/channels/rdpdr.hpp"
 
-struct AuthorizationChannels
+class AuthorizationChannels
 : public movable_noncopyable
 {
+    struct is_blanck_fn
+    {
+        bool operator()(char c) const noexcept
+        { return c == ' ' || c == '\t'; }
+    };
+
+public:
     AuthorizationChannels() = default;
 
     AuthorizationChannels(std::string allow, std::string deny)
     : allow_(std::move(allow))
     , deny_(std::move(deny))
     {
-        apply_for_delim(this->allow_.c_str(), ',', [this](char const * & s) {
-            if (*s == '*') {
+        auto start_with_star = [](rng::range<std::string::iterator> const & r) {
+            auto first = std::find_if_not(begin(r), end(r), is_blanck_fn{});
+            return first != end(r) && *first == '*';
+        };
+
+        for (auto & r : get_split(this->allow_, ',')) {
+            if (start_with_star(r)) {
                 this->all_allow_ = true;
                 this->rdpdr_restriction_.fill(true);
                 this->cliprdr_restriction_.fill(true);
                 this->rdpsnd_restriction_.fill(true);
-                s = "";
+                break;
             }
-        });
+        }
 
-        apply_for_delim(this->deny_.c_str(), ',', [this](char const * & s) {
-            if (*s == '*') {
+        for (auto & r : get_split(this->deny_, ',')) {
+            if (start_with_star(r)) {
                 this->all_deny_ = true;
                 if (this->all_allow_) {
                     this->rdpdr_restriction_.fill(false);
                     this->cliprdr_restriction_.fill(false);
                     this->rdpsnd_restriction_.fill(false);
                 }
-                s = "";
+                break;
             }
-        });
+        }
 
         this->normalize(this->allow_);
         this->normalize(this->deny_);
@@ -246,19 +258,21 @@ private:
     }
 
     static bool contains(std::string const & s, const char * search) noexcept {
-        bool ret = false;
-        apply_for_delim(s.c_str(), ',', [&ret, search](const char * & s) {
+        for (auto & r : get_split(s, ',')) {
+            using reverse_iterator = std::reverse_iterator<std::string::const_iterator>;
+            auto first = std::find_if_not(begin(r), end(r), is_blanck_fn{});
+            auto last = std::find_if_not(reverse_iterator(end(r)), reverse_iterator(first), is_blanck_fn{}).base();
+
             char const * s2 = search;
-            while (*s2 == *s && *s2) {
-                ++s;
+            while (*s2 == *first && *s2 && first != last) {
+                ++first;
                 ++s2;
             }
-            if (!*s2 && (!*s || *s == ',' || is_blanck_fn()(*s))) {
-                ret = true;
-                s = "";
+            if (!*s2 && first == last) {
+                return true;
             }
-        });
-        return ret;
+        }
+        return false;
     }
 
     std::string allow_;
