@@ -957,7 +957,6 @@ unit-test test_strutils : tests/utils/test_strutils.cpp libboost_unit_test : $(T
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_apply_for_delim : tests/utils/test_apply_for_delim.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 

@@ -35,12 +35,6 @@
 class AuthorizationChannels
 : public movable_noncopyable
 {
-    struct is_blanck_fn
-    {
-        bool operator()(char c) const noexcept
-        { return c == ' ' || c == '\t'; }
-    };
-
 public:
     AuthorizationChannels() = default;
 

@@ -44,8 +44,22 @@ int main(int argc, char** argv)
     struct CaptureMaker {
         Capture capture;
 
-        CaptureMaker(const timeval & now, uint16_t width, uint16_t height, int order_bpp, int capture_bpp
-                    , Inifile & ini, Random & rnd, CryptoContext & cctx, bool /*clear*/)
+        CaptureMaker(
+                    const timeval & now, 
+                    uint16_t width, 
+                    uint16_t height, 
+                    int order_bpp, 
+                    int capture_bpp,
+                     //bool clear_png,
+                     // bool no_timestamp,
+                     // auth_api * authentifier,                   
+                    Inifile & ini, 
+                    Random & rnd, 
+                    CryptoContext & cctx, 
+                    // bool externally_generated_breakpoint = false
+                    uint32_t clear, 
+                    bool full_video,
+                    bool extract_meta_data)
         : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, cctx, true)
         {}
     };
@@ -72,5 +86,7 @@ int main(int argc, char** argv)
       // TODO: now that we have cctx the lambda is useless
       , config_filename, ini, cctx, rnd
       , [](Inifile const &) { return false; }/*has_extra_capture*/
+      , false // full_video
+      , false // extract_meta_data
     );
 }
