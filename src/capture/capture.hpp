@@ -161,10 +161,6 @@ public:
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
-            this->cctx.get_crypto_key();
-            memcpy(this->cctx.hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->cctx.hmac_key));
-
-
             TODO("there should only be one outmeta, not two."
                  " Capture code should not really care if file is encrypted or not."
                  "Here is not the right level to manage anything related to encryption.")

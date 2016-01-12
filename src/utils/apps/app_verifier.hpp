@@ -123,8 +123,8 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
         detail::MetaLine const & meta_line, size_t len_to_check,
         CryptoContext * cctx) {
     const bool is_checksumed = true;
-    return check_file(file_path, is_checksumed, cctx->hmac_key,
-        sizeof(cctx->hmac_key), len_to_check, is_status_enabled, meta_line);
+    return check_file(file_path, is_checksumed, cctx->get_hmac_key(),
+        sizeof(cctx->get_hmac_key()), len_to_check, is_status_enabled, meta_line);
 }
 
 static inline bool check_file(const char * file_path, bool is_status_enabled,
