@@ -661,6 +661,8 @@ unit-test test_share : tests/core/RDP/test_share.cpp libboost_unit_test : $(TEST
 unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
+unit-test test_clipboard : tests/core/RDP/test_clipboard.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
 unit-test test_FileInformation : tests/core/FSCC/test_FileInformation.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
