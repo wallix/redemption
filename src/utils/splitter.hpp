@@ -36,7 +36,7 @@ class splitter
     using value_type = ValueT;
     value_type sep_;
 
-    using range = range<ForwardIterator>;
+    using range = ::range<ForwardIterator>;
 
 public:
     splitter(ForwardIterator first, ForwardIterator last, value_type sep)
