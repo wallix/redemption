@@ -1107,6 +1107,10 @@ class Sesman():
                 kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
+            if not self.engine.checkout_target(selected_target):
+                _status, _error = False, TR(u"account_locked")
+                self.send_data({u'rejected': TR(u'account_locked')})
+
             if _status:
                 kv['password'] = 'pass'
 
@@ -1178,6 +1182,11 @@ class Sesman():
                     if not _status:
                         physical_target = None
                         break
+
+                    if not self.engine.checkout_target(physical_target):
+                        try_next = True
+                        Logger().info("Account locked on jump server, try another one.")
+                        continue
 
                     application = self.engine.get_application(selected_target)
                     conn_opts = self.engine.get_target_conn_options(physical_target)
@@ -1447,9 +1456,9 @@ class Sesman():
                             release_reason = u"RDP/VNC connection terminated by client"
                             break;
                     finally:
-                        self.engine.release_target_credentials(physical_target)
+                        self.engine.release_target(physical_target)
 
-            self.engine.release_all_target_credentials()
+            self.engine.release_all_target()
             Logger().info(u"Stop session ...")
             # Notify WabEngine to stop connection if it has been launched successfully
             self.engine.stop_session(title=u"End session")
