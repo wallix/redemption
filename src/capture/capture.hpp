@@ -87,9 +87,19 @@ private:
     const Inifile & ini;
     // TODO: why so many uninitialized constants ?
 public:
-    Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, const Inifile & ini
-           , Random & rnd, CryptoContext & cctx, bool externally_generated_breakpoint = false)
+    Capture(
+        const timeval & now,
+        int width,
+        int height,
+        int order_bpp,
+        int capture_bpp,
+        bool clear_png,
+        bool no_timestamp,
+        auth_api * authentifier,
+        const Inifile & ini,
+        Random & rnd,
+        CryptoContext & cctx,
+        bool externally_generated_breakpoint = false)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , psc(nullptr)
