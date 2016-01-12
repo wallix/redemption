@@ -85,42 +85,42 @@ int main(int argc, char * argv[]) {
         std::cout << copyright_notice;
         std::cout << "Usage: rdptproxy [options]\n\n";
         std::cout << desc << endl;
-        exit(0);
+        return 0;
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice;
-        exit(0);
+        return 0;
     }
 
     if (   target_device.empty()
         && play_filename.empty()) {
         std::cerr << "Missing target device or play file name: use -t target or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !target_device.empty()
         && !play_filename.empty()) {
         std::cerr << "Use -t target or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !output_filename.empty()
         && !play_filename.empty()) {
         std::cerr << "Use -o filename or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !record_filename.empty()
         && !play_filename.empty()) {
         std::cerr << "Use -r filename or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !input_filename.empty()
         && !output_filename.empty()) {
         std::cerr << "Use -i filename or -o filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (!target_device.empty()) {
@@ -132,7 +132,7 @@ int main(int argc, char * argv[]) {
 
         if (username.c_str()[0] == 0) {
             std::cerr << "Missing username : use -u username\n\n";
-            exit(-1);
+            return 1;
         }
     }
 

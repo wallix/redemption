@@ -26,6 +26,8 @@
 #include "splitter.hpp"
 #include "flat_button.hpp"
 
+#include "utils/algostring.hpp"
+
 class LanguageButton : public WidgetFlatButton
 {
         static constexpr size_t locale_name_len = 5;
@@ -72,11 +74,9 @@ class LanguageButton : public WidgetFlatButton
 
 
             for (auto && r : get_split(enable_locales, ',')) {
-                auto is_blanck = [](char c) { return c == ' ' || c == '\t'; };
-                char const * first = begin(r).base();
-                char const * last = end(r).base();
-                auto cstr = std::find_if_not(first, last, is_blanck);
-                auto cend = std::find_if(cstr, last, is_blanck);
+                auto const trimmed_range = trim(r);
+                auto cstr = begin(trimmed_range).base();
+                auto cend = end(trimmed_range).base();
 
                 auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
                     return strncmp(k->locale_name, cstr, cend-cstr) == 0;

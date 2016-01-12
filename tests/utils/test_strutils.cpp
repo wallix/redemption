@@ -66,6 +66,16 @@ BOOST_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
     }
 
     {
+        char s[] = "to\r\nto\r\n!";
+        BOOST_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "to\nto\n!"));
+    }
+
+    {
+        char s[] = "\r\nto\r\nto\r\n!";
+        BOOST_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "\nto\nto\n!"));
+    }
+
+    {
         char s[] = "\r\n\r\nto\r\n\r\nto\r\n\r\n";
         BOOST_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "\n\nto\n\nto\n\n"));
     }
