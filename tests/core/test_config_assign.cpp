@@ -23,8 +23,10 @@
 #define BOOST_TEST_MODULE TestStrings
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
 #include "config.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIniAssign)
