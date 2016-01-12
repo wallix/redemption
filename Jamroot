@@ -229,6 +229,7 @@ variant strict : :
 
 variant asan : debug :
     <cxxflags>-fsanitize=address
+    <cxxflags>-fno-omit-frame-pointer
     <linkflags>-lasan
     <define>CXX_ENABLE_ASAN
 ;
@@ -630,6 +631,7 @@ explicit test_trace.py.unittest ;
 unit-test test_iter : tests/utils/test_iter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_noncopyable : tests/utils/test_noncopyable.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_splitter : tests/utils/test_splitter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_algostring : tests/utils/test_algostring.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_make_unique : tests/utils/test_make_unique.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 

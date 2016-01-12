@@ -91,6 +91,7 @@
 #include "channels/sespro_channel.hpp"
 
 #include "utils/splitter.hpp"
+#include "utils/algostring.hpp"
 
 #include <cstdlib>
 
@@ -1314,15 +1315,13 @@ public:
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
-        using reverse_iterator = std::reverse_iterator<const char *>;
-
+        std::string drive;
         for (auto & r : get_line(proxy_managed_drives, ',')) {
-            auto first = std::find_if_not(r.begin(), r.end(), is_blanck_fn{});
-            auto last = std::find_if_not(reverse_iterator(r.end()), reverse_iterator(first), is_blanck_fn{}).base();
+            auto trimmed_range = trim(r);
 
-            if (first == last) continue;
+            if (trimmed_range.empty()) continue;
 
-            std::string drive(first, last);
+            drive.assign(begin(trimmed_range), end(trimmed_range));
 
             if (verbose) {
                 LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
