@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(ClientNameRequest1)
 {
     const char in_data[] =
             "\x01\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x72\x00\x7a\x00" // ............r.z.
-            "\x68\x00\x00\x00\x00\x00"                                         // h...
+            "\x68\x00\x00\x00"                                                 // h...
         ;
     InStream in_stream(in_data, sizeof(in_data) - 1);
 
