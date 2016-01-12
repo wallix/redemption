@@ -680,7 +680,6 @@ unit-test test_channel_list : tests/core/test_channel_list.cpp libboost_unit_tes
 unit-test test_check_files : tests/core/test_check_files.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_cipher : tests/core/test_cipher.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_config : tests/core/test_config.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_theme : tests/utils/test_theme.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_error : tests/core/test_error.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -695,6 +694,12 @@ unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp libboost_u
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_redirection_info : tests/utils/test_redirection_info.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+## Capabilities tests
+## @{
+unit-test test_config : tests/core/test_config.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_config_assign : tests/core/test_config_assign.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+## }
 
 ## Capabilities tests
 ## @{

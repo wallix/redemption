@@ -81,6 +81,12 @@ class CryptoContext {
         return hmac_key;
     }
 
+    void reset_mode(int key_source)
+    {
+        this->key_source = key_source;
+        this->crypto_key_loaded = false;
+    }
+
     CryptoContext(Random & gen, const Inifile & ini, int key_source) 
         : crypto_key_loaded(false)
         , crypto_key{}
