@@ -162,7 +162,7 @@ public:
             }
 
             this->cctx.get_crypto_key();
-            memcpy(this->cctx.hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->cctx.hmac_key));
+            memcpy(this->cctx.get_hmac_key(), ini.get<cfg::crypto::key1>(), sizeof(this->cctx.get_hmac_key()));
 
 
             TODO("there should only be one outmeta, not two."

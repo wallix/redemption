@@ -72,7 +72,14 @@ class CryptoContext {
     Random & gen;
     const Inifile & ini;
     int key_source; // 0: key from shm, 1: key from Ini file, 2: key in place
+    private:
     unsigned char hmac_key[HMAC_KEY_LENGTH];
+    public:
+
+    auto get_hmac_key() -> unsigned char (&)[HMAC_KEY_LENGTH]
+    {
+        return hmac_key;
+    }
 
     CryptoContext(Random & gen, const Inifile & ini, int key_source) 
         : crypto_key_loaded(false)
