@@ -38,7 +38,7 @@
 
 namespace configs {
 
-struct null_fill { null_fill() {}; };
+struct null_fill { null_fill() {} };
 
 struct StringCopier
 {
@@ -51,15 +51,13 @@ struct StringCopier
     }
 };
 
-template<std::size_t N, class Copier, bool NullableString = false>
+template<std::size_t N, class Copier>
 class StaticStringBase
 {
-    struct disable_ctor { };
-
     StaticStringBase(StaticStringBase const &) = delete;
 
 public:
-    explicit StaticStringBase(typename std::conditional<NullableString, null_fill, disable_ctor>::type) noexcept
+    explicit StaticStringBase(null_fill) noexcept
     : str{}
     {}
 
@@ -71,6 +69,11 @@ public:
 
     StaticStringBase& operator=(const char * s) {
         Copier::copy(this->str, s, N);
+        return *this;
+    }
+
+    StaticStringBase& operator=(std::string const & s) {
+        Copier::copy(this->str, s.data(), N);
         return *this;
     }
 
@@ -113,21 +116,21 @@ protected:
 };
 
 
-template<std::size_t N, class Copier, bool NullableString>
+template<std::size_t N, class Copier>
 char const * c_str(
-    CStrBuf<StaticStringBase<N, Copier, NullableString>>&,
-    StaticStringBase<N, Copier, NullableString> const & x
+    CStrBuf<StaticStringBase<N, Copier>>&,
+    StaticStringBase<N, Copier> const & x
 ) {
     return x.c_str();
 }
 
-template<std::size_t N, class Copier, bool NullableString>
-void parse(StaticStringBase<N, Copier, NullableString> & x, char const * value) {
+template<std::size_t N, class Copier>
+void parse(StaticStringBase<N, Copier> & x, char const * value) {
     x = value;
 }
 
-template<std::size_t N, class Copier, bool NullableString>
-int copy_val(StaticStringBase<N, Copier, NullableString> const & x, char * buff, std::size_t n) {
+template<std::size_t N, class Copier>
+int copy_val(StaticStringBase<N, Copier> const & x, char * buff, std::size_t n) {
     return snprintf(buff, n, "%s", x.c_str());
 }
 
@@ -136,31 +139,73 @@ template<std::size_t N>
 using StaticString = StaticStringBase<N, StringCopier>;
 
 template<std::size_t N>
-struct StaticKeyString : StaticStringBase<N+1, null_fill, true>
+struct StaticKeyString
 {
-    StaticKeyString()
-    : StaticStringBase<N+1, null_fill, true>(null_fill())
+    explicit StaticKeyString(null_fill = {}) noexcept
+    : str{}
     {}
-
-    StaticKeyString(StaticKeyString const &) = default;
 
     explicit StaticKeyString(const char (&key)[33]) {
         // 32 = 33 - null terminal
-        this->setmem({key, 32});
+        memcpy(this->str, key, 32);
         this->str[N] = 0;
     }
 
-    StaticKeyString & operator=(array_view<const char> const & key) {
-        this->setmem(key);
+    StaticKeyString(StaticKeyString const &) = default;
+
+    StaticKeyString & operator=(char (&key)[32]) {
+        memcpy(this->str, key, 32);
         return *this;
     }
 
-private:
-    void setmem(array_view<const char> const & key) {
+    StaticKeyString & operator=(array_view<unsigned char const> const & key) {
         assert(key.size() <= N);
         memcpy(this->str, key.data(), key.size());
         memset(this->str + key.size(), 0, N - key.size());
+        return *this;
     }
+
+    StaticKeyString & operator=(array_view<char const> const & key) {
+        return *this = {reinterpret_cast<unsigned char const *>(key.data()), key.size()};
+    }
+
+    using array_key_type = unsigned char const (&)[32];
+    constexpr operator array_key_type () const noexcept {
+        return reinterpret_cast<array_key_type>(*this->str);
+    }
+
+    unsigned char operator[](std::size_t i) const noexcept {
+        assert(i < N);
+        return this->str[i];
+    }
+
+    unsigned char & operator[](std::size_t i) noexcept {
+        assert(i < N);
+        return this->str[i];
+    }
+
+    constexpr std::size_t max_size() const noexcept {
+        return N - 1;
+    }
+
+    constexpr std::size_t size() const noexcept {
+        return N - 1;
+    }
+
+    unsigned char const * data() const noexcept {
+        return this->str;
+    }
+
+    unsigned char * data() noexcept {
+        return this->str;
+    }
+
+protected:
+    unsigned char str[N+1];
+
+    // disable deleted constructor
+    friend class Inifile;
+    StaticKeyString(StaticKeyString &&);
 };
 
 template<std::size_t N>
@@ -185,10 +230,9 @@ void parse(StaticKeyString<N> & key, char const * value) {
     if (strlen(value) >= N * 2) {
         char   hexval[3] = { 0 };
         char * end;
-        for (std::size_t i = 0; i < sizeof(key); i++) {
+        for (std::size_t i = 0; i < N; i++) {
             memcpy(hexval, value + i * 2, 2);
-
-            key.data()[i] = strtol(hexval, &end, 16);
+            key[i] = strtol(hexval, &end, 16);
         }
     }
 }
@@ -196,8 +240,8 @@ void parse(StaticKeyString<N> & key, char const * value) {
 template<std::size_t N>
 int copy_val(StaticKeyString<N> const & key, char * buff, std::size_t n) {
     if (N * 2 <= n) {
-        auto first = key.c_str();
-        auto last = key.c_str() + N;
+        auto first = key.data();
+        auto last = key.data() + N;
         for (; first != last; ++buff, ++first) {
             auto x = (unsigned(*first) & 0xf0) >> 4;
             *buff = x < 10 ? ('0' + x) : ('A' + x - 10);
