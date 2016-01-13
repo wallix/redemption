@@ -1,7 +1,7 @@
 capture/capture 100 100
 capture/chunked_image_transport 100 100
 capture/ChunkToFile 100 100
-capture/FileToChunk
+capture/FileToChunk 100 100
 capture/FileToGraphic 100 100
 capture/GraphicToFile 100 100
 capture/image_capture 100 100
