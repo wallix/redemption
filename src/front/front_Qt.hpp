@@ -132,6 +132,7 @@ public:
     QLineEdit            _PWDField;
     QLineEdit            _portField;
     Qt_ScanCode_KeyMap   _qtRDPKeymap;
+    int                  _mouseFlag;
     
     
     enum {
@@ -618,10 +619,11 @@ public:
                 case 1: flag = MOUSE_FLAG_BUTTON1; break;
                 case 2: flag = MOUSE_FLAG_BUTTON2; break; 
                 case 4: flag = MOUSE_FLAG_BUTTON4; break;
-                default: break;
+                default: break; 
             }
             std::cout << "mousePressed" << std::endl;
-            this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &(this->_keymap));
+            this->_mouseFlag = MOUSE_FLAG_DOWN;
+            this->_callback->rdp_input_mouse(flag | this->_mouseFlag, e->x(), e->y(), &(this->_keymap));
         } 
     }
     
@@ -635,6 +637,7 @@ public:
                 default: break;
             }
             std::cout << "mouseRelease" << std::endl;
+            this->_mouseFlag = 0;
             this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
         }
     }
@@ -666,7 +669,7 @@ public:
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
             if (this->_callback != nullptr) {
-                this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
+                this->_callback->rdp_input_mouse((MOUSE_FLAG_MOVE | this->_mouseFlag), mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
             }
         }
         return false;
