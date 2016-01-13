@@ -74,7 +74,9 @@
 #include <QtGui/QWheelEvent>
 #include <QtCore/QSocketNotifier>
 #include <QtGui/QPushButton>
-
+#include <QtGui/QLineEdit>
+#include <QtGui/QFormLayout>
+#include <QtGui/QDockWidget>
 
 
 class SocketTransport;
@@ -92,30 +94,53 @@ public:
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
-    //bool                  notimestamp;
-   // bool                  nomouse;
     QLabel               _label;
     QPicture             _picture;
     QPen                 _pen;
     QPainter             _painter;
+    QWidget              _widget;
+    QLabel               _userNameLabel;           
+    QLabel               _IPLabel;  
+    QLabel               _PWDLabel;  
+    QLabel               _portLabel;
+    QFormLayout          _formLayout;
     
     // Connexion socket members
     QSocketNotifier    * _sckRead;
     mod_api            * _callback;
     SocketTransport    * _sck;
+    std::string          _userName;        //         = "QA\\administrateur";
+    std::string          _pwd;        //          = "S3cur3!1nux";
+    std::string          _targetIP;        //     = "10.10.46.88";
+    int                  _port;         //        = 3389; 
+    std::string          _localIPtmp2;
+    int                  _nbTry;
+    int                  _retryDelay;
     
     // Controllers members
-    Keymap2                        _keymap;
-    bool                           _ctrl_alt_delete; // currently not used and always false
-    StaticOutStream<256>           _decoded_data;    // currently not initialised
-    uint8_t                        _keyboardMods;    
-    int                            _timer;
-    QPushButton                    _buttonCtrlAltDel;
-    QPushButton                    _buttonRefresh;
-    //QPushButton                    _buttonConnexion;
-    //QPushButton                    _buttonDisconnexion;
-    Qt_ScanCode_KeyMap             _qtRDPKeymap;
+    Keymap2              _keymap;
+    bool                 _ctrl_alt_delete; // currently not used and always false
+    StaticOutStream<256> _decoded_data;    // currently not initialised
+    uint8_t              _keyboardMods;    
+    int                  _timer;
+    QPushButton          _buttonCtrlAltDel;
+    QPushButton          _buttonRefresh;
+    QPushButton          _buttonConnexion;
+    QPushButton          _buttonDisconnexion;
+    QLineEdit            _userNameField;
+    QLineEdit            _IPField;
+    QLineEdit            _PWDField;
+    QLineEdit            _portField;
+    Qt_ScanCode_KeyMap   _qtRDPKeymap;
     
+    
+    enum {
+        COMMAND_VALID = 15
+      , NAME_GOTTEN   = 1
+      , PWD_GOTTEN    = 2
+      , IP_GOTTEN     = 4
+      , PORT_GOTTEN   = 8
+    };
     
     
     QColor u32_to_qcolor(uint32_t color){
@@ -544,9 +569,39 @@ public:
     //      CONSTRUCTOR
     //------------------------
     
-    Front_Qt(char* argv[], uint32_t verbose);
+    Front_Qt(char* argv[], int argc, uint32_t verbose);
     
-    ~Front_Qt() {}
+    // -------- Start of system wide SSL_Ctx option ------------------------------
+
+    // ERR_load_crypto_strings() registers the error strings for all libcrypto
+    // functions. SSL_load_error_strings() does the same, but also registers the
+    // libssl error strings.
+
+    // One of these functions should be called before generating textual error
+    // messages. However, this is not required when memory usage is an issue.
+
+    // ERR_free_strings() frees all previously loaded error strings.
+
+    //SSL_load_error_strings();
+
+    // SSL_library_init() registers the available SSL/TLS ciphers and digests.
+    // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
+    // for SSL_library_init().
+
+    // - SSL_library_init() must be called before any other action takes place.
+    // - SSL_library_init() is not reentrant.
+    // - SSL_library_init() always returns "1", so it is safe to discard the return
+    // value.
+
+    // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
+    // SSL_library_init(). Applications which need to use SHA2 in earlier versions
+    // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
+
+    //SSL_library_init();
+    
+    void initButton(QPushButton & button, const char * str, QRect & rect);
+
+    ~Front_Qt();
     
     
     
@@ -557,25 +612,31 @@ public:
     //------------------------
     
     void mousePressEvent(QMouseEvent *e) {
-        int flag(0); 
-        switch (e->button()) {
-            case 1: flag = MOUSE_FLAG_BUTTON1; break;
-            case 2: flag = MOUSE_FLAG_BUTTON2; break; 
-            case 4: flag = MOUSE_FLAG_BUTTON4; break;
-            default: break;
-        }
-        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &(this->_keymap));
+        if (this->_callback != nullptr) {
+            int flag(0); 
+            switch (e->button()) {
+                case 1: flag = MOUSE_FLAG_BUTTON1; break;
+                case 2: flag = MOUSE_FLAG_BUTTON2; break; 
+                case 4: flag = MOUSE_FLAG_BUTTON4; break;
+                default: break;
+            }
+            std::cout << "mousePressed" << std::endl;
+            this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &(this->_keymap));
+        } 
     }
     
     void mouseReleaseEvent(QMouseEvent *e) {
-        int flag(0); 
-        switch (e->button()) {
-            case 1: flag = MOUSE_FLAG_BUTTON1; break; 
-            case 2: flag = MOUSE_FLAG_BUTTON2; break; 
-            case 4: flag = MOUSE_FLAG_BUTTON4; break; 
-            default: break;
+        if (this->_callback != nullptr) {
+            int flag(0); 
+            switch (e->button()) {
+                case 1: flag = MOUSE_FLAG_BUTTON1; break; 
+                case 2: flag = MOUSE_FLAG_BUTTON2; break; 
+                case 4: flag = MOUSE_FLAG_BUTTON4; break; 
+                default: break;
+            }
+            std::cout << "mouseRelease" << std::endl;
+            this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
         }
-        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
     }
     
     void keyPressEvent(QKeyEvent *e) { 
@@ -594,6 +655,9 @@ public:
     
     void wheelEvent(QWheelEvent *e) {
         std::cout << "wheel " << " delta=" << e->delta() << std::endl;
+        if (this->_callback != nullptr) {
+            //this->_callback->rdp_input_mouse(KBD_FLAG_SCROLL, e->x(), e->y(), &(this->_keymap));
+        }
     }
     
     bool eventFilter(QObject *obj, QEvent *e)
@@ -601,7 +665,9 @@ public:
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
-            this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
+            if (this->_callback != nullptr) {
+                this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
+            }
         }
         return false;
     }
@@ -629,20 +695,35 @@ public Q_SLOTS:
         this->send_rdp_scanCode(0x1D, flag);  // CTRL
         this->send_rdp_scanCode(0x53, flag);  // DELETE  
     }
-    /*
-    void disconnexionPressed() {
+    
+    void disconnexionPressed() {}
+    
+    void disconnexionRelease(){
+        this->setCursor(Qt::WaitCursor);
         this->disconnect();
     }
     
-    void disconnexionRelease(){}
-    */
+    void connexionPressed() {}
+    
+    void connexionRelease(){
+        this->setCursor(Qt::WaitCursor);
+        this->_userName = this->_userNameField.text().toStdString();
+        this->_pwd      = this->_PWDField.text().toStdString();
+        this->_targetIP = this->_IPField.text().toStdString();
+        this->_port     = this->_portField.text().toInt();
+        this->connect();
+    }
+    
+    
+    
+    
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //--------------------------------
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
        
-    void readSck_And_ShowView() {
+    void call_Draw() {
         if (this->_callback != nullptr) {
             this->reInitView();
             this->_callback->draw_event(time(nullptr));
@@ -659,16 +740,15 @@ public:
     
     void send_rdp_scanCode(int keyCode, int flag) {
         this->_keymap.event(flag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap));
+        if (this->_callback != nullptr) {
+            this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap)); 
+        }
     }
     
-    void connect(const char * name, const char * pwd, const char * localIP, const char * targetIP, int port, int nbTry, int retryDelay);
-    void disconnect() {}
-    /*
-    void setCallback_And_StartListening(mod_api* callback) {
-        this->_callback = callback;
-        QObject::connect(&(this->_sckRead), SIGNAL(activated(int)), this, SLOT(readSck_And_ShowView()));
-    }*/
+    void connect();
+    
+    void disconnect();
+
 };
   
 

@@ -41,7 +41,7 @@
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
     int argc(0);
-    char chartab[] = " -name QA\\administrateur -pwd S3cur3!1nux -ip 10.10.46.88 -p 3389";
+    //char chartab[] = " -name QA\\administrateur -pwd S3cur3!1nux -ip 10.10.46.88 -p 3389";
     char *argv[] {chartab};
     QApplication app(argc, argv);
 /*
