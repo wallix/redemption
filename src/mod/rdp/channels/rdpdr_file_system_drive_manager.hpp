@@ -1009,21 +1009,24 @@ public:
                 this->full_path.c_str(), this->pattern.c_str());
         }
 
-        struct dirent * ent = nullptr;
+        long     name_max = pathconf(this->full_path.c_str(), _PC_NAME_MAX);
+        size_t   len      = offsetof(struct dirent, d_name) + name_max + 1;
+        auto     uptr     = std::make_unique<char[]>(len);
+        dirent * entry    = reinterpret_cast<dirent *>(uptr.get());
+        dirent * result   = nullptr;
 
         do {
-            TODO("Non reentrant function 'readdir' called. For threadsafe applications it is recommended to use the reentrant replacement function 'readdir_r'");
-            ent = ::readdir(this->dir);
-            if (!ent) { break; }
+            if (::readdir_r(this->dir, entry, &result) || !result) { break; }
 
-            if (::FilePatternMatchA(ent->d_name, this->pattern.c_str()))
+            if (::FilePatternMatchA(result->d_name, this->pattern.c_str())) {
                 break;
+            }
         }
-        while (ent);
+        while (true);
 
         StaticOutStream<65536> out_stream;
 
-        if (!ent) {
+        if (!result) {
             this->MakeClientDriveIoResponse(
                 out_stream,
                 device_io_request,
@@ -1036,10 +1039,10 @@ public:
         }
         else {
             std::string file_full_path = this->full_path;
-            if ((file_full_path.back() != '/') && (ent->d_name[0] != '/')) {
+            if ((file_full_path.back() != '/') && (result->d_name[0] != '/')) {
                 file_full_path += '/';
             }
-            file_full_path += ent->d_name;
+            file_full_path += result->d_name;
             if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                 LOG(LOG_INFO,
                     "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
@@ -1069,7 +1072,7 @@ public:
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
                         (S_ISDIR(sb.st_mode) ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |
                             ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
-                        ent->d_name
+                        result->d_name
                         );
                     if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                         LOG(LOG_INFO,
@@ -1104,7 +1107,7 @@ hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
                         (S_ISDIR(sb.st_mode) ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |
                             ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
-                        ent->d_name
+                        result->d_name
                         );
                     if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                         LOG(LOG_INFO,
@@ -1127,7 +1130,7 @@ hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
                         0x00000000, // STATUS_SUCCESS
                         verbose);
 
-                    const fscc::FileNamesInformation file_name_information(ent->d_name);
+                    const fscc::FileNamesInformation file_name_information(result->d_name);
                     if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                         LOG(LOG_INFO,
                             "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
