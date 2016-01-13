@@ -183,6 +183,8 @@ int main(int argc, char * argv[]) {
 
     LCGRandom gen(0);
 
+    CryptoContext cctx(gen, ini, 1);
+
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
 
@@ -201,7 +203,7 @@ int main(int argc, char * argv[]) {
 
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
-    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini,
+    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini, cctx,
         fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 

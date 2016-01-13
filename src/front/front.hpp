@@ -360,6 +360,7 @@ private:
 
 private:
     Inifile & ini;
+    CryptoContext & cctx;
     uint32_t verbose;
 
     Font font;
@@ -426,6 +427,7 @@ public:
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random & gen
           , Inifile & ini
+          , CryptoContext & cctx
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , const char * server_capabilities_filename = ""
@@ -441,6 +443,7 @@ public:
     , userid(0)
     , order_level(0)
     , ini(ini)
+    , cctx(cctx)
     , verbose(this->ini.get<cfg::debug::front>())
     , font(default_font_name)
     , mod_bpp(0)
@@ -665,9 +668,8 @@ public:
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
-        CryptoContext cctx(this->gen, ini, 1);
         this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
-                                   , true, false, authentifier, ini, this->gen, cctx);
+                                   , true, false, authentifier, ini, this->gen, this->cctx);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }

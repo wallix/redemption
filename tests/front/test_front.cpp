@@ -109,6 +109,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         LCGRandom gen1(0);
 
+        CryptoContext cctx(gen1, ini, 1);
+
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client.hpp"
 
@@ -136,6 +138,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
                    , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
                    , Random & gen
                    , Inifile & ini
+                   , CryptoContext & cctx
                    , bool fp_support // If true, fast-path must be supported
                    , bool mem3blt_support
                    , const char * server_capabilities_filename = ""
@@ -145,6 +148,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
                    , default_font_name
                    , gen
                    , ini
+                   , cctx
                    , fp_support
                    , mem3blt_support
                    , server_capabilities_filename
@@ -175,8 +179,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
                 }
         };
 
-        MyFront front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
-                   , fastpath_support, mem3blt_support);
+        MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
+                     , cctx, fastpath_support, mem3blt_support);
         null_mod no_mod(front);
 
         while (front.up_and_running == 0) {
