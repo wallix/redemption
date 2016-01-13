@@ -636,6 +636,8 @@ public:
         this->session_update_api = new NewSessionUpdate;
         if (this->gd_api) {
             this->gd_api->gds.push_back(this->gd);
+            if (this->pnc && this->pnc != this->gd) this->gd_api->gds.push_back(this->pnc);
+            if (this->drawable && this->drawable != this->gd) this->gd_api->gds.push_back(this->drawable);
             this->cache_api = new NewCache(this->gd);
             this->set_pointer_api = new NewSetPointer;
             this->set_pointer_api->gds.push_back(this->gd);
@@ -645,7 +647,6 @@ public:
             this->snapshot_api = new NewSnapshot(*this);
             this->external_event_api = new NewExternalEvent;
             if (this->pnc) {
-                if (this->pnc != this->gd) this->gd_api->gds.push_back(this->pnc);
                 this->set_pointer_api->gds.push_back(this->pnc);
                 this->flush_api->gds.push_back(this->pnc);
                 this->session_update_api->cds.push_back(this->pnc);
