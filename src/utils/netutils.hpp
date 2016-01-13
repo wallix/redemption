@@ -176,7 +176,7 @@ static inline int ip_connect(const char* ip, int port,
     if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
         return -1;
     }
-
+    
     union
     {
       sockaddr s;
