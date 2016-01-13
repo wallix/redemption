@@ -24,7 +24,7 @@
 
 #include <cstdio>
 
-#include "cryptofile.h"
+#include "cryptofile.hpp"
 #include "meta_opener.hpp"
 #include "meta_writer.hpp"
 #include "fileutils.hpp"
@@ -117,7 +117,7 @@ public:
         if (this->buf().is_open()) {
             hash_type hash;
             {
-                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.hmac_key);
+                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
                 const int res2 = this->buf().close();
                 if (res1) {
                     return res1;

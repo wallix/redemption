@@ -224,8 +224,8 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         this->out() << "')\n";
     }
 
-    template<std::size_t N, class Copier, bool NullableString, class T>
-    void write_type(type_<StaticStringBase<N, Copier, NullableString>>, T const & x) {
+    template<std::size_t N, class Copier, class T>
+    void write_type(type_<StaticStringBase<N, Copier>>, T const & x) {
         this->out() << "string(max=" << N-1 <<  ", default='" << this->inherit().get_value(x) << "')\n";
     }
 

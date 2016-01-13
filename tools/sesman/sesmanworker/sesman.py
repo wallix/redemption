@@ -820,7 +820,7 @@ class Sesman():
                         data_to_send[u"trace_type"] = u'1'
 
                     sign_key = self.engine.get_trace_sign_key()
-                    data_to_send[u"crypto_key"] = "".join("{:02x}".format(ord(c)) for c in sign_key)
+                    #data_to_send[u"crypto_key"] = "".join("{:02x}".format(ord(c)) for c in sign_key)
 
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
                     data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
@@ -1107,6 +1107,10 @@ class Sesman():
                 kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
+            if not self.engine.checkout_target(selected_target):
+                _status, _error = False, TR(u"account_locked")
+                self.send_data({u'rejected': TR(u'account_locked')})
+
             if _status:
                 kv['password'] = 'pass'
 
@@ -1116,8 +1120,14 @@ class Sesman():
 
                 Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
                 # Add connection to the observer
-                kv[u'session_id'] = self.engine.start_session(selected_target, self.pid,
-                                                              self.effective_login)
+                session_id = self.engine.start_session(selected_target, self.pid,
+                                                       self.effective_login)
+                if session_id is None:
+                    _status, _error = False, TR(u"account_locked")
+                    self.send_data({u'rejected': TR(u'account_locked')})
+
+            if _status:
+                kv[u'session_id'] = session_id
                 _status, _error = self.engine.write_trace(self.full_path)
                 _error = TR(_error)
                 if not _status:
@@ -1172,6 +1182,11 @@ class Sesman():
                     if not _status:
                         physical_target = None
                         break
+
+                    if not self.engine.checkout_target(physical_target):
+                        try_next = True
+                        Logger().info("Account locked on jump server, try another one.")
+                        continue
 
                     application = self.engine.get_application(selected_target)
                     conn_opts = self.engine.get_target_conn_options(physical_target)
@@ -1441,9 +1456,9 @@ class Sesman():
                             release_reason = u"RDP/VNC connection terminated by client"
                             break;
                     finally:
-                        self.engine.release_target_credentials(physical_target)
+                        self.engine.release_target(physical_target)
 
-            self.engine.release_all_target_credentials()
+            self.engine.release_all_target()
             Logger().info(u"Stop session ...")
             # Notify WabEngine to stop connection if it has been launched successfully
             self.engine.stop_session(title=u"End session")

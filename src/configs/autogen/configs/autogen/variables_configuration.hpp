@@ -1425,7 +1425,14 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = bool;
-            type value{1};
+            type value{0};
+        };
+        struct session_probe_customize_executable_name {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{0};
         };
         struct session_probe_alternate_shell {
             static constexpr ::configs::VariableProperties properties() {
@@ -2010,6 +2017,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
+, cfg::mod_rdp::session_probe_customize_executable_name
 , cfg::mod_rdp::session_probe_alternate_shell
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check

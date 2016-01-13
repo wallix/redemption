@@ -279,7 +279,7 @@ public:
                 else {
                     REDASSERT(signal == BACK_EVENT_RETRY_CURRENT);
 
-                    LOG(LOG_INFO, "===========> MODULE_RDP_WITHOUT_PROBE");
+                    LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
                 int next_state = ((signal == BACK_EVENT_NEXT) ? mm.next_module() : MODULE_RDP);

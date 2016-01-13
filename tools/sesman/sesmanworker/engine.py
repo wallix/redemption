@@ -41,8 +41,6 @@ except Exception, e:
 import time
 import socket
 
-MAGIC_AM = u"__WAB_AM__"
-
 def tounicode(item):
     if not item:
         return u""
@@ -117,9 +115,11 @@ def parse_auth(username):
 
 class Engine(object):
     def __init__(self):
+        self.wabengine_conf = Config("wabengine")
+
         self.wabengine = None
         self.wabuser = None
-        self.client = SynClient('localhost', 'tcp:8803')
+        self.client = SynClient('localhost', self.wabengine_conf.get('port', 'unix:/var/run/wabengine.sock'))
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
@@ -192,8 +192,7 @@ class Engine(object):
 
     def get_trace_type(self):
         try:
-            conf = Config("wabengine")
-            self._trace_type = conf['trace'] if conf['trace'] else u'localfile_hashed'
+            self._trace_type = self.wabengine_conf.get('trace', u'localfile_hashed')
             return self._trace_type
         except Exception, e:
             import traceback
@@ -492,7 +491,7 @@ class Engine(object):
         self.proxy_rights = None
         self.rights = None
         self.target_right = None
-        self.release_all_target_credentials()
+        self.release_all_target()
 
     def valid_device_name(self, protocols, target_device):
         # Logger().info("VALID DEVICE NAME target_device = '%s'" % target_device)
@@ -604,8 +603,6 @@ class Engine(object):
         right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
                               check_timeframes=False)
-        if target_login == MAGIC_AM:
-            target_login = self.get_username()
         try:
             results = self.targetsdom.get((target_login, target_device), [])
             if not results:
@@ -683,29 +680,45 @@ class Engine(object):
             Logger().debug("Engine get_primary_password failed: (((%s)))" % (traceback.format_exc(e)))
         return None
 
-    def get_target_credentials(self, target_device):
-        if self.target_credentials.get(target_device) is None:
-            Logger().debug("get_target_credentials")
-            self.target_credentials[target_device] = self.wabengine.get_target_credentials(target_device)
-            Logger().debug("get_target_credentials done")
-            # Logger().info("GET_TARGET_CREDENTIALS = '%s'" % self.target_credentials)
-        target_credentials = self.target_credentials.get(target_device, {})
-        return target_credentials
+    def checkout_target(self, target):
+        if self.target_credentials.get(target) is None:
+            Logger().debug("checkout_target")
+            try:
+                try:
+                    creds = self.wabengine.checkout_target(target)
+                except AccountLocked:
+                    Logger().info("Engine checkout_target failed: account locked")
+                    return False
+                except Exception, e:
+                    Logger().info(">>> Engine checkout_target does not exist")
+                    creds = self.wabengine.get_target_credentials(target)
+                self.target_credentials[target] = creds
+            except AccountLocked:
+                Logger().info("Engine checkout_target failed: account locked")
+                return False
+            Logger().debug("checkout_target done")
+        else:
+            Logger().info("checkout_target: target already checked out")
+        return True
+
+    # def get_target_credentials(self, target_device):
+    #     if self.target_credentials.get(target_device) is None:
+    #         Logger().debug("get_target_credentials")
+    #         self.target_credentials[target_device] = self.wabengine.get_target_credentials(target_device)
+    #         Logger().debug("get_target_credentials done")
+    #         # Logger().info("GET_TARGET_CREDENTIALS = '%s'" % self.target_credentials)
+    #     target_credentials = self.target_credentials.get(target_device, {})
+    #     return target_credentials
 
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
-        if target_device.account.login == MAGIC_AM and self.primary_password:
-            Logger().info("Account mapping: get primary password ...")
-            return [ self.primary_password ]
         try:
-            target_credentials = self.get_target_credentials(target_device)
+            target_credentials = self.target_credentials.get(target_device, {})
             passwords = [ cred.data.get(CRED_DATA_PASSWORD) \
                           for cred in target_credentials.get(CRED_TYPE_PASSWORD, []) \
                           if cred.data.get(CRED_DATA_PASSWORD) ]
             Logger().info("Engine get_target_passwords done")
             return passwords
-        except AccountLocked:
-            Logger().info("Engine get_target_passwords failed: account locked")
         except Exception, e:
             import traceback
             Logger().debug("Engine get_target_passwords failed: (((%s)))" % (traceback.format_exc(e)))
@@ -718,43 +731,49 @@ class Engine(object):
     def get_target_privkeys(self, target_device):
         Logger().info("Engine get_target_privkeys ...")
         try:
-            target_credentials = self.get_target_credentials(target_device)
+            target_credentials = self.target_credentials.get(target_device, {})
             privkeys = [ (cred.data.get(CRED_DATA_PRIVATE_KEY),
                           cred.data.get("passphrase", None)) \
                          for cred in target_credentials.get(CRED_TYPE_SSH_KEY, []) ]
             Logger().info("Engine get_target_privkeys done")
             return privkeys
-        except AccountLocked:
-            Logger().info("Engine get_target_privkeys failed: account locked")
         except Exception, e:
             import traceback
             Logger().debug("Engine get_target_privkey failed: (((%s)))" % (traceback.format_exc(e)))
         return []
 
-    def release_target_credentials(self, target_device):
+    def release_target(self, target_device):
         res = False
         if target_device in self.target_credentials:
             try:
-                Logger().debug("Engine release_target_credentials")
-                res = self.wabengine.release_target_credentials(target_device)
+                Logger().debug("Engine release_target")
+                try:
+                    res = self.wabengine.release_target(target_device)
+                except Exception, e:
+                    Logger().info(">>> Engine release_target does not exist: try release_target_credentials")
+                    res = self.wabengine.release_target_credentials(target_device)
                 self.target_credentials.pop(target_device, None)
-                Logger().debug("Engine release_target_credentials done")
+                Logger().debug("Engine release_target done")
             except Exception, e:
                 import traceback
-                Logger().debug("Engine release_target_credentials failed: (((%s)))" % (traceback.format_exc(e)))
+                Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
         return res
 
-    def release_all_target_credentials(self):
-        # Logger().debug("Engine release_all_target_credentials %s" % list(self.checkout_target_creds))
-        Logger().debug("Engine release_all_target_credentials")
+    def release_all_target(self):
+        # Logger().debug("Engine release_all_target %s" % list(self.checkout_target_creds))
+        Logger().debug("Engine release_all_target")
         for target_device in self.target_credentials:
             try:
-                res = self.wabengine.release_target_credentials(target_device)
-                Logger().debug("Engine release_target_credentials res = %s" % res)
+                try:
+                    res = self.wabengine.release_target(target_device)
+                except Exception, e:
+                    Logger().info(">>> Engine release_target does not exist: try release_target_credentials")
+                    res = self.wabengine.release_target_credentials(target_device)
+                Logger().debug("Engine release_target res = %s" % res)
             except Exception, e:
                 import traceback
-                Logger().debug("Engine release_target_credentials failed: (((%s)))" % (traceback.format_exc(e)))
-        Logger().debug("Engine release_all_target_credentials done")
+                Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
+        Logger().debug("Engine release_all_target done")
         self.target_credentials.clear()
 
     def get_pidhandler(self, pid):
@@ -768,11 +787,19 @@ class Engine(object):
         return self.pidhandler
 
     def start_session(self, auth, pid, effective_login=None, **kwargs):
-        if auth.account.login == MAGIC_AM and not effective_login:
-            effective_login = self.get_username()
-        self.session_id = self.wabengine.start_session(auth, self.get_pidhandler(pid),
-                                                       effective_login=effective_login,
-                                                       **kwargs)
+        Logger().debug("**** CALL wabengine START SESSION ")
+        try:
+            self.session_id = self.wabengine.start_session(
+                auth, self.get_pidhandler(pid), effective_login=effective_login,
+                **kwargs)
+        except AccountLocked:
+            self.session_id = None
+            Logger().info("Engine start_session failed: account locked")
+        except Exception, e:
+            import traceback
+            self.session_id = None
+            Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
+        Logger().debug("**** END wabengine START SESSION ")
         return self.session_id
 
     def update_session(self, physical_target, **kwargs):

@@ -95,36 +95,17 @@ struct FontChar
         return align4(nbbytes(this->width) * this->height);
     }
 
-    /* compare the two font items returns 1 if they match */
+    /* compare the two font items returns true if they match */
     //==============================================================================
-    int item_compare(FontChar const & glyph, bool ignore_incby = true) noexcept
+    bool item_compare(FontChar const & glyph) const noexcept
     //==============================================================================
     {
-        REDASSERT(ignore_incby);
-        bool result =
-               glyph
+        return glyph
             && (this->offset == glyph.offset)
             && (this->baseline == glyph.baseline)
             && (this->width == glyph.width)
             && (this->height == glyph.height)
-            && (ignore_incby || (this->incby == glyph.incby))
             && (0 == memcmp(this->data.get(), glyph.data.get(), glyph.datasize()));
-
-/*
-        if (result && ignore_incby)
-        {
-            if ((this->incby < 0) && (glyph.incby >= 0))
-            {
-                this->incby = glyph.incby;
-            }
-            else if ((this->incby >= 0) && (glyph.incby < 0))
-            {
-                glyph.incby = this->incby;
-            }
-        }
-*/
-
-        return result;
     }
 
     //void show() {

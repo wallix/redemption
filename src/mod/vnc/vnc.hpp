@@ -41,9 +41,10 @@
 #include "update_lock.hpp"
 #include "socket_transport.hpp"
 #include "channel_names.hpp"
-#include "apply_for_delim.hpp"
 #include "strutils.hpp"
 #include "utf.hpp"
+
+#include <cstdlib>
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -589,15 +590,26 @@ protected:
         if (verbose) {
             LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
         }
-        number_of_encodings = 0;
-        apply_for_delim(encodings, ',', [verbose, &number_of_encodings, &stream](const char * s) {
-            const int32_t encoding_type = long_from_cstr(s);
+
+        auto stream_offset = stream.get_offset();
+
+        char * end;
+        char const * p = encodings;
+        for (int32_t encoding_type = std::strtol(p, &end, 0);
+            p != end;
+            encoding_type = std::strtol(p, &end, 10))
+        {
             if (verbose) {
                 LOG(LOG_INFO, "VNC Encoding type=0x%08X", encoding_type);
             }
             stream.out_uint32_be(encoding_type);
-            ++number_of_encodings;
-        });
+
+            p = end;
+            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
+                ++p;
+            }
+        }
+        number_of_encodings = (stream.get_offset() - stream_offset) / 4;
     }
 
 public:
@@ -1630,7 +1642,7 @@ private:
         }
     }
     //==============================================================================================================
-    void lib_framebuffer_update() throw (Error) {
+    void lib_framebuffer_update() {
     //==============================================================================================================
         uint8_t data_rec[256];
         InStream stream_rec(data_rec);

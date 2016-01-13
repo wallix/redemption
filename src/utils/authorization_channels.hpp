@@ -22,7 +22,7 @@
 #define REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 
 #include "movable_noncopyable.hpp"
-#include "apply_for_delim.hpp"
+#include "splitter.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -32,36 +32,44 @@
 
 #include "RDP/channels/rdpdr.hpp"
 
-struct AuthorizationChannels
+#include "utils/algostring.hpp"
+
+class AuthorizationChannels
 : public movable_noncopyable
 {
+public:
     AuthorizationChannels() = default;
 
     AuthorizationChannels(std::string allow, std::string deny)
     : allow_(std::move(allow))
     , deny_(std::move(deny))
     {
-        apply_for_delim(this->allow_.c_str(), ',', [this](char const * & s) {
-            if (*s == '*') {
+        auto start_with_star = [](range<std::string::iterator> const & r) {
+            auto first = ltrim(begin(r), end(r));
+            return first != end(r) && *first == '*';
+        };
+
+        for (auto && r : get_split(this->allow_, ',')) {
+            if (start_with_star(r)) {
                 this->all_allow_ = true;
                 this->rdpdr_restriction_.fill(true);
                 this->cliprdr_restriction_.fill(true);
                 this->rdpsnd_restriction_.fill(true);
-                s = "";
+                break;
             }
-        });
+        }
 
-        apply_for_delim(this->deny_.c_str(), ',', [this](char const * & s) {
-            if (*s == '*') {
+        for (auto && r : get_split(this->deny_, ',')) {
+            if (start_with_star(r)) {
                 this->all_deny_ = true;
                 if (this->all_allow_) {
                     this->rdpdr_restriction_.fill(false);
                     this->cliprdr_restriction_.fill(false);
                     this->rdpsnd_restriction_.fill(false);
                 }
-                s = "";
+                break;
             }
-        });
+        }
 
         this->normalize(this->allow_);
         this->normalize(this->deny_);
@@ -246,19 +254,21 @@ private:
     }
 
     static bool contains(std::string const & s, const char * search) noexcept {
-        bool ret = false;
-        apply_for_delim(s.c_str(), ',', [&ret, search](const char * & s) {
+        for (auto && r : get_split(s, ',')) {
+            auto const trimmed_range = trim(r);
+            auto first = begin(trimmed_range);
+            auto last = end(trimmed_range);
+
             char const * s2 = search;
-            while (*s2 == *s && *s2) {
-                ++s;
+            while (*s2 == *first && *s2 && first != last) {
+                ++first;
                 ++s2;
             }
-            if (!*s2 && (!*s || *s == ',' || is_blanck_fn()(*s))) {
-                ret = true;
-                s = "";
+            if (!*s2 && first == last) {
+                return true;
             }
-        });
-        return ret;
+        }
+        return false;
     }
 
     std::string allow_;

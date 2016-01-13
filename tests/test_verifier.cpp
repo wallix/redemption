@@ -25,6 +25,9 @@
 #define BOOST_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #define LOGPRINT
 
 #include <fcntl.h>
@@ -46,7 +49,7 @@
 #include "fdbuf.hpp"
 #include "filter/crypto_filter.hpp"
 
-#include "cryptofile.h"
+#include "cryptofile.hpp"
 
 extern "C" {
 
@@ -207,22 +210,22 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     /************************
     * Manage encryption key *
     ************************/
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd);
-    uint8_t crypto_key[sizeof(CryptoContext::crypto_key)] = {
-         0,  1,  2,  3,  4,  5,  6,  7,
-         8,  9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29, 30, 31
-    };
-    uint8_t hmac_key[sizeof(CryptoContext::hmac_key)] = {};
-    memcpy(cctx.crypto_key, crypto_key, sizeof(CryptoContext::crypto_key));
-    memcpy(cctx.hmac_key, hmac_key, sizeof(CryptoContext::hmac_key));
+    CryptoContext cctx(rnd, ini, 1);
 
+    uint8_t hmac_key[32] = {};
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-    BOOST_CHECK(0 == compute_hmac(hmac_key, crypto_key, HASH_DERIVATOR));
+    BOOST_CHECK(0 == cctx.compute_hmac(hmac_key, HASH_DERIVATOR));
     OpenSSL_add_all_digests();
 
     // Any iv key would do, we are checking round trip
@@ -236,7 +239,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char derivator[DERIVATOR_LENGTH];
     cctx.get_derivator(test_file_name, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (compute_hmac(trace_key, crypto_key, derivator) == -1){
+    if (cctx.compute_hmac(trace_key, derivator) == -1){
         BOOST_CHECK(false);
     }
 
@@ -266,13 +269,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         BOOST_CHECK_EQUAL(data_len, res);
     }
 
-    res = crypto_close(cf_struct, hash, cctx.hmac_key);
+    res = crypto_close(cf_struct, hash, cctx.get_hmac_key());
 
     BOOST_CHECK_EQUAL(0, res);
 
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash, HASH_LEN / 2, 4096));
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.hmac_key, sizeof(cctx.hmac_key),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash + (HASH_LEN / 2), HASH_LEN / 2, 0));
 
     unlink(test_file_name);

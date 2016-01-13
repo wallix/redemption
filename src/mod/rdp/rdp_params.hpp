@@ -59,6 +59,7 @@ struct ModRDPParams {
     configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
     unsigned                              session_probe_keepalive_timeout;
     bool                                  session_probe_end_disconnected_session;
+    bool                                  session_probe_customize_executable_name;
     const char *                          session_probe_alternate_shell;
 
     bool         enable_transparent_mode;
@@ -157,7 +158,8 @@ struct ModRDPParams {
         , session_probe_launch_timeout(0)
         , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
-        , session_probe_end_disconnected_session(true)
+        , session_probe_end_disconnected_session(false)
+        , session_probe_customize_executable_name(false)
         , session_probe_alternate_shell("")
 
         , enable_transparent_mode(false)
@@ -185,6 +187,7 @@ struct ModRDPParams {
         , disconnect_on_logon_user_change(false)
         , open_session_timeout(0)
 
+        , server_cert_store(true)
         , server_cert_check(configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know)
         , server_access_allowed_message(configs::ServerNotification::syslog)
         , server_cert_create_message(configs::ServerNotification::syslog)
@@ -270,6 +273,9 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams session_probe_end_disconnected_session=%s",
                                                                    (this->session_probe_end_disconnected_session ? "yes" : "no"));
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_customize_executable_name=%s",
+                                                                   (this->session_probe_customize_executable_name ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");
@@ -325,6 +331,8 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams open_session_timeout=%d",                this->open_session_timeout);
 
+        LOG(LOG_INFO,
+            "ModRDPParams server_cert_store=%s",                   (this->server_cert_store ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams server_cert_check=%u",                   static_cast<unsigned>(this->server_cert_check));
         LOG(LOG_INFO,

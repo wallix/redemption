@@ -1,3 +1,4 @@
+
 /*
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -35,8 +36,8 @@
 #undef RECORD_TMP_PATH
 #define RECORD_TMP_PATH "/tmp/tmp"
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "config.hpp"
 //#include "socket_transport.hpp"
@@ -81,15 +82,18 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
         ini.set<cfg::video::wrm_compression_algorithm>(0);
 
-        ini.set_value("crypto", "key0", "\x00\x01\x02\x03\x04\x05\x06\x07"
-                                        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                                        "\x10\x11\x12\x13\x14\x15\x16\x17"
-                                        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
-
-        ini.set_value("crypto", "key1", "\x00\x01\x02\x03\x04\x05\x06\x07"
-                                        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                                        "\x10\x11\x12\x13\x14\x15\x16\x17"
-                                        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+        ini.set<cfg::crypto::key0>(cstr_array_view(
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+        ));
+        ini.set<cfg::crypto::key1>(cstr_array_view(
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+        ));
 
 
         // Uncomment the code block below to generate testing data.
@@ -100,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //}
         //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
         //                           , ini.get<cfg::debug::front,>() 0);
-        
+
         time_t now = 1450864840;
 
         LCGRandom gen1(0);

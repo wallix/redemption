@@ -21,17 +21,6 @@
 #ifndef REDEMPTION_TRANSPORT_DETAIL_META_WRITER_HPP
 #define REDEMPTION_TRANSPORT_DETAIL_META_WRITER_HPP
 
-#include "../buffer/file_buf.hpp"
-#include "sequence_generator.hpp"
-#include "no_param.hpp"
-#include "error.hpp"
-#include "log.hpp"
-#include "auth_api.hpp"
-#include "fileutils.hpp"
-#include "iter.hpp"
-
-#include "cryptofile.h" // MD_HASH_LENGTH
-
 #include <limits>
 #include <cerrno>
 #include <ctime>
@@ -41,6 +30,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#include "../buffer/file_buf.hpp"
+#include "sequence_generator.hpp"
+#include "no_param.hpp"
+#include "error.hpp"
+#include "log.hpp"
+#include "auth_api.hpp"
+#include "fileutils.hpp"
+#include "iter.hpp"
+
+#include "cryptofile.hpp" // MD_HASH_LENGTH
 
 namespace detail
 {
