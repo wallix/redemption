@@ -28,6 +28,8 @@
 
 class SessionServer : public Server
 {
+    CryptoContext & cctx;
+
     // Used for enable transparent proxying on accepted socket (ini.get<cfg::globals::enable_ip_transparent>() = true).
     unsigned uid;
     unsigned gid;
@@ -36,8 +38,9 @@ class SessionServer : public Server
     std::string config_filename;
 
 public:
-    SessionServer(unsigned uid, unsigned gid, std::string config_filename, bool debug_config = true)
-        : uid(uid)
+    SessionServer(CryptoContext & cctx, unsigned uid, unsigned gid, std::string config_filename, bool debug_config = true)
+        : cctx(cctx)
+        , uid(uid)
         , gid(gid)
         , debug_config(debug_config)
         , config_filename(config_filename)
@@ -164,7 +167,7 @@ public:
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
-                    Session session(sck, ini);
+                    Session session(sck, ini, this->cctx);
 
                     // Suppress session file
                     unlink(session_file);

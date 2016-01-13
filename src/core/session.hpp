@@ -128,7 +128,7 @@ class Session {
     static const time_t select_timeout_tv_sec = 3;
 
 public:
-    Session(int sck, Inifile & ini)
+    Session(int sck, Inifile & ini, CryptoContext & cctx)
             : ini(ini)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
@@ -146,7 +146,7 @@ public:
             const bool mem3blt_support = true;
 
             this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
-                                   , this->ini, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
+                                   , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
 
             ModuleManager mm(*this->front, this->ini, this->gen);
             BackEvent_t signal = BACK_EVENT_NONE;
