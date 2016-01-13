@@ -42,7 +42,7 @@ public:
 
         BasicDumpPng24(RDPDrawable & drawable) : drawable(drawable) {}
 
-        virtual void dump_png24(Transport& trans, bool bgr) const {
+        void dump_png24(Transport& trans, bool bgr) const override {
             this->drawable.dump_png24(trans, bgr);
         }
     } dump_png24_api;

@@ -416,7 +416,16 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    struct BasicDumpPng24 : gdi::DumpPng24Api  {
+        RDPDrawable & drawable;
+
+        BasicDumpPng24(RDPDrawable & drawable) : drawable(drawable) {}
+
+        void dump_png24(Transport& trans, bool bgr) const override {
+            this->drawable.dump_png24(trans, bgr);
+        }
+    } dump_png24_api;
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, ini);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);

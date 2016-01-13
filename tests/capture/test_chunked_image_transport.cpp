@@ -37,6 +37,15 @@
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
 
+struct BasicDumpPng24 : gdi::DumpPng24Api  {
+    RDPDrawable & drawable;
+
+    BasicDumpPng24(RDPDrawable & drawable) : drawable(drawable) {}
+
+    void dump_png24(Transport& trans, bool bgr) const override {
+        this->drawable.dump_png24(trans, bgr);
+    }
+};
 
 BOOST_AUTO_TEST_CASE(TestImageChunk)
 {
@@ -91,7 +100,8 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         PointerCache ptr_cache;
         GlyphCache gly_cache;
         RDPDrawable drawable(scr.cx, scr.cy, 24);
-        GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+        BasicDumpPng24 dump_png_api(drawable);
+        GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
         consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
         consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -167,7 +177,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    BasicDumpPng24 dump_png_api(drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -253,7 +264,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    BasicDumpPng24 dump_png_api(drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
