@@ -967,24 +967,25 @@ explicit test_rdp_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
 
 using qt : /usr ;
 
-obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
+obj test_rdp_Qt.o : src/main/qt_client.cpp : <include>/usr/include/qt4 ;
+#obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt :
     src/front/front_Qt.hpp
-    src/keyboard/Qt_RDP_KeyMap.hpp
-    test_rdp_Qt.o
-    bitmap_data_allocator.o
-    /qt//QtGui
-    krb5
-    openssl
-    crypto
-    gssglue
-    png
-    d3des
-    z
-    dl
-    libboost_unit_test
+    src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
+    test_rdp_Qt.o 
+    bitmap_data_allocator.o 
+    /qt//QtGui 
+    krb5 
+    openssl 
+    crypto 
+    gssglue 
+    png 
+    d3des 
+    z 
+    dl 
+    libboost_unit_test 
     :
     <include>/usr/include/qt4
     ;

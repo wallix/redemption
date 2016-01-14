@@ -115,6 +115,7 @@ class SesmanConfig(object):
             , u'no_match_subnet %s %s'  : u"%s n'appartient pas au sous-réseau %s."
             , u'error %s'               : u'Erreur: %s'
             , u'authentication_failed' : u"Echec d'authentification."
+            , u'account_locked' : u"Compte verrouillé."
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -197,6 +198,7 @@ class SesmanConfig(object):
             , u'no_match_subnet %s %s'  : u"%s not in %s subnet."
             , u'error %s'               : u'Error: %s'
             , u'authentication_failed' : u'Authentication failed.'
+            , u'account_locked' : u"Account locked."
             }
         }
 
@@ -212,4 +214,3 @@ class SesmanConfig(object):
 # END CLASS - sesmanConfigUnicode
 
 SESMANCONF = SesmanConfig()
-

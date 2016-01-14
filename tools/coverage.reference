@@ -2,7 +2,7 @@ acl/acl_serializer 100 100
 acl/authentifier 100 100
 acl/module_manager 100 100
 capture/ChunkToFile 100 100
-capture/FileToChunk
+capture/FileToChunk 100 100
 capture/FileToGraphic 100 100
 capture/GraphicToFile 100 100
 capture/capture 100 100

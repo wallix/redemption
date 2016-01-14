@@ -99,6 +99,8 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     LCGRandom gen(0);
 
+    CryptoContext cctx(gen, ini, 1);
+
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_mstsc_client.hpp"
 
@@ -115,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
-    Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini
+    Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini, cctx
                , fastpath_support, mem3blt_support);
     null_mod no_mod(front);
 
