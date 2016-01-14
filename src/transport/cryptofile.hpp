@@ -218,6 +218,7 @@ class CryptoContext {
     int get_crypto_key_from_ini_derivated_hmac()
     {
         memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
+        this->crypto_key_loaded = true;
         const unsigned char HASH_DERIVATOR[] = {
              0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
         };                
