@@ -41,30 +41,7 @@ int main(int argc, char** argv)
     UdevRandom rnd;
     CryptoContext cctx(rnd, ini, 1);
 
-    struct CaptureMaker {
-        Capture capture;
-
-        CaptureMaker(
-                    const timeval & now, 
-                    uint16_t width, 
-                    uint16_t height, 
-                    int order_bpp, 
-                    int capture_bpp,
-                     //bool clear_png,
-                     // bool no_timestamp,
-                     // auth_api * authentifier,                   
-                    Inifile & ini, 
-                    Random & rnd, 
-                    CryptoContext & cctx, 
-                    // bool externally_generated_breakpoint = false
-                    uint32_t clear, 
-                    bool full_video,
-                    bool extract_meta_data)
-        : capture(now, width, height, order_bpp, capture_bpp, false, false, nullptr, ini, rnd, cctx, true)
-        {}
-    };
-
-    app_recorder<CaptureMaker>(
+    app_recorder<Capture>(
         argc, argv
       , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
         "Copyright (C) Wallix 2010-2015.\n"

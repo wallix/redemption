@@ -23,6 +23,10 @@
 
 #include <signal.h>
 
+#include <iostream>
+#include <vector>
+#include <string>
+
 #include "FileToChunk.hpp"
 #include "ChunkToFile.hpp"
 #include "out_meta_sequence_transport.hpp"
@@ -32,16 +36,19 @@
 #include "iter.hpp"
 #include "crypto_in_meta_sequence_transport.hpp"
 #include "program_options/program_options.hpp"
+#include "auth_api.hpp" 
 
-#include <iostream>
-#include <vector>
-#include <string>
 
 template<class CaptureMaker>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , int capture_bpp, int wrm_compression_algorithm_
                         , Inifile & ini, bool remove_input_file
-                        , CryptoContext & cctx, Random & rnd, bool infile_is_encrypted
+                        , bool clear_png
+                        , bool no_timestamp
+                        , auth_api * authentifier
+                        , CryptoContext & cctx
+                        , bool externally_generated_breakpoint
+                        , Random & rnd, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
                         , unsigned png_width, unsigned png_height
@@ -63,7 +70,11 @@ template<class CaptureMaker>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
+                    , bool clear_png
+                    , bool no_timestamp
+                    , auth_api * authentifier
                     , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , bool externally_generated_breakpoint
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
@@ -111,11 +122,10 @@ void init_signals(void)
 }
 
 
-template<
-    class CaptureMaker, class AddProgramOtion, class ParseFormat
+template<class CaptureMaker, class AddProgramOption, class ParseFormat
   , class HasExtraCapture>
 int app_recorder( int argc, char ** argv, const char * copyright_notice
-                , AddProgramOtion add_prog_option, ParseFormat parse_format
+                , AddProgramOption add_prog_option, ParseFormat parse_format
                 , std::string & config_filename, Inifile & ini
                 , CryptoContext & cctx, Random & rnd, HasExtraCapture has_extra_capture
                 , bool full_video
@@ -131,6 +141,11 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     std::string input_filename;
     std::string output_filename;
+
+    bool clear_png = false;
+    bool no_timestamp = false;
+    auth_api * authentifier = nullptr;
+    bool externally_generated_breakpoint = false;
 
     uint32_t    verbose            = 0;
     uint32_t    clear              = 1; // default on
@@ -392,7 +407,12 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     return recompress_or_record<CaptureMaker>(
         input_filename, output_filename, capture_bpp, wrm_compression_algorithm_, ini
       , remove_input_file
-      , cctx, rnd, infile_is_encrypted, auto_output_file
+      , clear_png
+      , no_timestamp
+      , authentifier
+      , cctx
+      , externally_generated_breakpoint
+      , rnd, infile_is_encrypted, auto_output_file
       , begin_cap, end_cap, order_count, clear, zoom
       , png_width, png_height
       , show_file_metadata, show_statistics
@@ -430,7 +450,12 @@ template<class CaptureMaker>
 int recompress_or_record( std::string const & input_filename, std::string & output_filename
                         , int capture_bpp, int wrm_compression_algorithm_
                         , Inifile & ini, bool remove_input_file
-                        , CryptoContext & cctx, Random & rnd, bool infile_is_encrypted
+                        , bool clear_png
+                        , bool no_timestamp
+                        , auth_api * authentifier
+                        , CryptoContext & cctx
+                        , bool externally_generated_breakpoint
+                        , Random & rnd, bool infile_is_encrypted
                         , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
                         , uint32_t order_count, uint32_t clear, unsigned zoom
                         , unsigned png_width, unsigned png_height
@@ -534,8 +559,15 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
                 ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
                   , do_record<CaptureMaker>(
                       trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, capture_bpp, wrm_compression_algorithm_
+                    , output_filename, capture_bpp
+                    , wrm_compression_algorithm_
+
+                    , clear_png
+                    , no_timestamp
+                    , authentifier
                     , ini, rnd, cctx
+                    , externally_generated_breakpoint
+                    
                     , file_count, order_count, clear, zoom
                     , png_width, png_height
                     , show_file_metadata, show_statistics, verbose
@@ -848,7 +880,13 @@ template<class CaptureMaker>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
+
+                    , bool clear_png
+                    , bool no_timestamp
+                    , auth_api * authentifier
                     , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , bool externally_generated_breakpoint
+                    
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
@@ -922,19 +960,19 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             ini.set<cfg::video::record_path>(outfile_path);
 
             ini.set<cfg::globals::movie_path>(&output_filename[0]);
-            CaptureMaker capmake(
+            CaptureMaker capture(
                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                     , player.screen_rect.cx
                     , player.screen_rect.cy
                     , player.info_bpp
                     , capture_bpp
+                    , clear_png
+                    , no_timestamp
+                    , authentifier
                     , ini
                     , rnd
                     , cctx
-                    , clear
-                    , full_video
-                    , extract_meta_data);
-            auto & capture = capmake.capture;
+                    , externally_generated_breakpoint);
 
             if (capture.capture_png) {
                 if (png_width && png_height) {
