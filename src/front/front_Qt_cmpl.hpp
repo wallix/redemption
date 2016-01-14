@@ -73,7 +73,7 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     , _IPField("", this)
     , _PWDField("", this)
     , _portField("", this)
-    , _qtRDPKeymap(0x040C+0x80000000) 
+    , _qtRDPKeymap(Qt_ScanCode_KeyMap::FR_FR) 
     , _mouseFlag(0)
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,8 +182,9 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->_formLayout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
         this->_formLayout.addRow(&(this->_portLabel)    , &(this->_portField));
         this->_form.setLayout(&(this->_formLayout));
-            
+
         this->setFocusPolicy(Qt::StrongFocus);
+        this->reInitView();
    
         if (commandIsValid == Front_Qt::COMMAND_VALID) {
             
@@ -299,7 +300,6 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
             // set view  
             this->_form.hide(); 
             this->_buttonConnexion.hide();
-            this->_label.sizeHint();
             this->setFixedSize(this->info.width, this->info.height+20);
             this->setAttribute(Qt::WA_NoSystemBackground, true);
             this->reInitView();
