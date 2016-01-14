@@ -52,12 +52,12 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     , _picture() 
     , _pen() 
     , _painter()
-    , _widget(this)
-    , _userNameLabel(QString("User name : "), &(this->_widget))         
-    , _IPLabel(QString      ("IP serveur :"), &(this->_widget))   
-    , _PWDLabel(QString  ("Password :  "), &(this->_widget))   
-    , _portLabel(QString    ("Port :      "), &(this->_widget))  
-    , _formLayout(&(this->_widget))
+    , _form(this)
+    , _userNameLabel(QString("User name : "), &(this->_form))         
+    , _IPLabel(QString      ("IP serveur :"), &(this->_form))   
+    , _PWDLabel(QString  ("Password :  "), &(this->_form))   
+    , _portLabel(QString    ("Port :      "), &(this->_form))  
+    , _formLayout(&(this->_form))
     , _sckRead(nullptr)
     , _callback(nullptr)
     , _sck(nullptr)      
@@ -150,6 +150,9 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->_pen.setWidth(1);
         this->_painter.setPen(this->_pen);
         this->_painter.fillRect(0, 0, this->info.width, this->info.height, Qt::white);
+        this->_label.setMouseTracking(true);
+        this->_label.installEventFilter(this);
+        this->setAttribute(Qt::WA_NoSystemBackground, true);
         
         QRect rectCtrlAltDel(QPoint(0, this->info.height+1),QSize(this->info.width/3, 20));
         this->initButton(this->_buttonCtrlAltDel, "CTRL + ALT + DELETE", rectCtrlAltDel);
@@ -173,12 +176,12 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         
         this->_PWDField.setEchoMode(QLineEdit::Password);
         this->_PWDField.setInputMethodHints(Qt::ImhHiddenText| Qt::ImhNoPredictiveText|Qt::ImhNoAutoUppercase);
-        this->_widget.setFixedSize(400, 200);
+        this->_form.setFixedSize(400, 200);
         this->_formLayout.addRow(&(this->_IPLabel)      , &(this->_IPField));
         this->_formLayout.addRow(&(this->_userNameLabel), &(this->_userNameField));
         this->_formLayout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
         this->_formLayout.addRow(&(this->_portLabel)    , &(this->_portField));
-        this->_widget.setLayout(&(this->_formLayout));
+        this->_form.setLayout(&(this->_formLayout));
             
         this->setFocusPolicy(Qt::StrongFocus);
    
@@ -203,6 +206,8 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
                 std::cout << "-p [port] ";
             }
             std::cout << std::endl;
+            
+            this->disconnect();
         }
     }
     
@@ -257,9 +262,11 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
                 
             } catch (const std::exception & e) {
                 std::cout << "Can not connect to [" << targetIP <<  "]." << std::endl;
+                this->disconnect();
             }
         } else {
             std::cout << "Can not connect to [" << targetIP <<  "]." << std::endl;
+            this->disconnect();
         }
         
         if (changeView) {
@@ -290,11 +297,14 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
             mod_rdp_params.server_redirection_support        = true;
                 
             // set view  
-            this->_widget.hide(); 
+            this->_form.hide(); 
             this->_buttonConnexion.hide();
-            
+            this->_label.sizeHint();
             this->setFixedSize(this->info.width, this->info.height+20);
             this->setAttribute(Qt::WA_NoSystemBackground, true);
+            this->reInitView();
+            this->_painter.fillRect(0, 0, this->info.width, this->info.height, Qt::white);
+            this->flush();
             this->_buttonCtrlAltDel.show();
             this->_buttonRefresh.show();
             this->_buttonDisconnexion.show();
@@ -303,8 +313,6 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
             this->_callback = new mod_rdp(*(this->_sck), *(this), info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             this->_sckRead = new QSocketNotifier(client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead, SIGNAL(activated(int)), this, SLOT(call_Draw()));
-            this->_label.setMouseTracking(true);
-
         }    
         
         this->setCursor(Qt::ArrowCursor);
@@ -325,14 +333,11 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
             delete (this->_sck);
             this->_sck = nullptr;
         }
-        this->_painter.fillRect(0, 0, this->info.width, this->info.height, Qt::white);
-        this->flush();
-        this->_label.setMouseTracking(false); 
+        
         this->setFixedSize(400, 300);
-        this->setAttribute(Qt::WA_NoSystemBackground, false);
         this->_painter.fillRect(0, 0, 400, 300, Qt::white);
         this->flush();
-        this->show();
+        this->setAttribute(Qt::WA_NoSystemBackground, false);
         
         this->_userNameField.clear();
         this->_IPField.clear();
@@ -342,13 +347,12 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->_IPField.insert(QString(this->_targetIP.c_str()));
         this->_PWDField.insert(QString(this->_pwd.c_str()));
         this->_portField.insert(QString(std::to_string(this->_port).c_str() ));
-        this->_widget.show();
         
+        this->_form.show();
         this->_buttonCtrlAltDel.hide();
         this->_buttonRefresh.hide();
         this->_buttonDisconnexion.hide();
         this->_buttonConnexion.show();
-        
         
         this->setCursor(Qt::ArrowCursor);
     }

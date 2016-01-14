@@ -77,6 +77,7 @@
 #include <QtGui/QLineEdit>
 #include <QtGui/QFormLayout>
 #include <QtGui/QDockWidget>
+#include <QtCore/QDebug>
 
 
 class SocketTransport;
@@ -98,7 +99,7 @@ public:
     QPicture             _picture;
     QPen                 _pen;
     QPainter             _painter;
-    QWidget              _widget;
+    QWidget              _form;
     QLabel               _userNameLabel;           
     QLabel               _IPLabel;  
     QLabel               _PWDLabel;  
@@ -668,6 +669,7 @@ public:
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
+            //std::cout << "MouseMove " <<  mouseEvent->x() << " " <<  mouseEvent->y()<< std::endl;
             if (this->_callback != nullptr) {
                 this->_callback->rdp_input_mouse((MOUSE_FLAG_MOVE | this->_mouseFlag), mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
             }
