@@ -113,7 +113,8 @@ private:
         , MIN_NON_CHAR_QT_KEY_VALUE = 0x00FFFFFF       
         , MIN_DEAD_QT_KEY_VALUE     = 0x01001249
         , MAX_DEAD_QT_KEY_VALUE     = 0x01001263
-        , MASK_ALT                  = 0x0F
+        , MASK_ALT                  = 0x0F 
+        , REVERSED                  = 0x80000000
     };
     
     enum {
@@ -291,26 +292,25 @@ private:
         //---------------------------------------------
         //    Not mod neither char keys NO Extended
         //---------------------------------------------
-            case Qt::Key_Return     : this->scanCode = 0x1C; break; //  ENTER
-            case Qt::Key_Backspace  : this->scanCode = 0x0E; break; //  BKSP
-            case Qt::Key_Escape     : this->scanCode = 0x01; break; //  ESCAPE
-            case Qt::Key_F1         : this->scanCode = 0x3B; break; //  F1
-            case Qt::Key_F2         : this->scanCode = 0x3C; break; //  F2
-            case Qt::Key_F3         : this->scanCode = 0x3D; break; //  F3
-            case Qt::Key_F4         : this->scanCode = 0x3E; break; //  F4
-            case Qt::Key_F5         : this->scanCode = 0x3F; break; //  F5
-            case Qt::Key_F6         : this->scanCode = 0x40; break; //  F6
-            case Qt::Key_F7         : this->scanCode = 0x41; break; //  F7
-            case Qt::Key_F8         : this->scanCode = 0x42; break; //  F8
-            case Qt::Key_F9         : this->scanCode = 0x43; break; //  F9
-            case Qt::Key_F10        : this->scanCode = 0x44; break; //  F10
-            case Qt::Key_F11        : this->scanCode = 0x57; break; //  F11
-            case Qt::Key_F12        : this->scanCode = 0x58; break; //  F12
-            case Qt::Key_ScrollLock : this->scanCode = 0x46; break; //  SCROLL 
-            case Qt::Key_Pause      : this->scanCode = 0xE1; break; //  PAUSE
-            case Qt::Key_Tab        : this->scanCode = 0x0F; break; //  TAB
-            case Qt::Key_Home       : this->scanCode = 0x47; break; //  HOME
-            
+            case Qt::Key_Return               : this->scanCode = 0x1C; break; //  ENTER
+            case Qt::Key_Backspace            : this->scanCode = 0x0E; break; //  BKSP
+            case Qt::Key_Escape               : this->scanCode = 0x01; break; //  ESCAPE
+            case Qt::Key_F1                   : this->scanCode = 0x3B; break; //  F1
+            case Qt::Key_F2                   : this->scanCode = 0x3C; break; //  F2
+            case Qt::Key_F3                   : this->scanCode = 0x3D; break; //  F3
+            case Qt::Key_F4                   : this->scanCode = 0x3E; break; //  F4
+            case Qt::Key_F5                   : this->scanCode = 0x3F; break; //  F5
+            case Qt::Key_F6                   : this->scanCode = 0x40; break; //  F6
+            case Qt::Key_F7                   : this->scanCode = 0x41; break; //  F7
+            case Qt::Key_F8                   : this->scanCode = 0x42; break; //  F8
+            case Qt::Key_F9                   : this->scanCode = 0x43; break; //  F9
+            case Qt::Key_F10                  : this->scanCode = 0x44; break; //  F10
+            case Qt::Key_F11                  : this->scanCode = 0x57; break; //  F11
+            case Qt::Key_F12                  : this->scanCode = 0x58; break; //  F12
+            case Qt::Key_ScrollLock           : this->scanCode = 0x46; break; //  SCROLL 
+            case Qt::Key_Pause                : this->scanCode = 0xE1; break; //  PAUSE
+            case Qt::Key_Tab                  : this->scanCode = 0x0F; break; //  TAB
+            case Qt::Key_Home                 : this->scanCode = 0x47; break; //  HOME
             case Qt::Key_MediaStop            : this->scanCode = 0x24; break; //
             case Qt::Key_MediaPrevious        : this->scanCode = 0x10; break; //
             case Qt::Key_MediaNext            : this->scanCode = 0x19; break; //
@@ -526,6 +526,15 @@ public:
     
     
     ~Qt_ScanCode_KeyMap() {}
+    
+    
+    static int reverse_map(int LCID) {
+        if (LCID < REVERSED) {
+            return LCID + REVERSED;
+        } else {
+            return LCID - REVERSED;
+        }
+    }
     
     
     void setLayoutLanguage(int LCID) {

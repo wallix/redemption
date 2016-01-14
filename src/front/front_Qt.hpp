@@ -82,6 +82,8 @@
 
 class SocketTransport;
 
+
+
 class Front_Qt : public QWidget, public FrontAPI
 {
     
@@ -601,7 +603,6 @@ public:
 
     //SSL_library_init();
     
-    void initButton(QPushButton & button, const char * str, QRect & rect);
 
     ~Front_Qt();
     

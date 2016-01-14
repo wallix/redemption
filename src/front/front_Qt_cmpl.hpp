@@ -42,6 +42,111 @@
 #include "../src/front/front_Qt.hpp"
 
 
+void initButton(QPushButton & button, const char * str, QRect & rect) {
+        button.setToolTip(QString(str));
+        button.setGeometry(rect);
+        button.setCursor(Qt::PointingHandCursor);
+        button.setFocusPolicy(Qt::NoFocus);
+}
+    
+    
+    
+class Form_Qt : public QWidget
+{
+    
+Q_OBJECT    
+    
+public:
+    QFormLayout          _formLayout;
+    QLineEdit            _userNameField;
+    QLineEdit            _IPField;
+    QLineEdit            _PWDField;
+    QLineEdit            _portField;
+    QPushButton          _buttonConnexion;
+    QLabel               _userNameLabel;           
+    QLabel               _IPLabel;  
+    QLabel               _PWDLabel;  
+    QLabel               _portLabel;
+    
+    Form_Qt(Front_Qt * front)
+    
+        : QWidget()
+        , _formLayout(this)
+        , _userNameField("", this)
+        , _IPField("", this)
+        , _PWDField("", this)
+        , _portField("", this)
+        , _buttonConnexion("Connexion", this)
+        , _userNameLabel(QString("User name : "), this)         
+        , _IPLabel(QString      ("IP serveur :"), this)   
+        , _PWDLabel(QString  ("Password :  "), this)   
+        , _portLabel(QString    ("Port :      "), this) 
+    {
+        this->_PWDField.setEchoMode(QLineEdit::Password);
+        this->_PWDField.setInputMethodHints(Qt::ImhHiddenText| Qt::ImhNoPredictiveText|Qt::ImhNoAutoUppercase);
+        this->setFixedSize(400, 300);
+        this->_formLayout.addRow(&(this->_IPLabel)      , &(this->_IPField));
+        this->_formLayout.addRow(&(this->_userNameLabel), &(this->_userNameField));
+        this->_formLayout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
+        this->_formLayout.addRow(&(this->_portLabel)    , &(this->_portField));
+        this->setLayout(&(this->_formLayout));
+        
+        QRect rectConnexion(QPoint(280, 256), QSize(110, 24)); 
+        initButton(this->_buttonConnexion, "Connexion", rectConnexion);
+        this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (pressed()),  this, SLOT (Front_Qt::connexionPressed()));
+        this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (released()), this, SLOT (Front_Qt::connexionRelease()));
+    }
+    
+    void set_IPField(std::string str) {
+        this->_IPField.clear();
+        this->_IPField.insert(QString(str.c_str()));
+    }
+    
+    void set_userNameField(std::string str) {
+        this->_userNameField.clear();
+        this->_userNameField.insert(QString(str.c_str()));
+    }
+    
+    void set_PWDField(std::string str) {
+        this->_PWDField.clear();
+        this->_PWDField.insert(QString(str.c_str()));
+    }
+    
+    void set_portField(int str) {
+        this->_portField.clear();
+        this->_portField.insert(QString(str));
+    }
+    
+    std::string get_IPField() {
+        return this->_IPField.text().toStdString();
+    }
+    
+    std::string get_userNameField() {
+        return this->_userNameField.text().toStdString();
+    }
+    
+    std::string get_PWDField() {
+        return this->_PWDField.text().toStdString();
+    }
+    
+    int get_portField() {
+        return this->_portField.text().toInt();
+    }
+    
+private Q_SLOTS:
+    void connexionPressed() {
+        front->connexionPressed();
+    }
+    
+    void connexionRelease() {
+        front->connexionRelease();
+    }
+    
+};
+
+
+
+
 Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     : QWidget(), FrontAPI(false, false)
     , verbose(verbose)
@@ -73,7 +178,7 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     , _IPField("", this)
     , _PWDField("", this)
     , _portField("", this)
-    , _qtRDPKeymap(Qt_ScanCode_KeyMap::FR_FR) 
+    , _qtRDPKeymap() 
     , _mouseFlag(0)
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,6 +190,8 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         info.height = 600;
         info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        this->_qtRDPKeymap.setLayoutLanguage(Qt_ScanCode_KeyMap::reverse_map(info.keylayout));
         
         char * localIPtmp = "10.10.43.46";
         /*union
@@ -155,22 +262,22 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->setAttribute(Qt::WA_NoSystemBackground, true);
         
         QRect rectCtrlAltDel(QPoint(0, this->info.height+1),QSize(this->info.width/3, 20));
-        this->initButton(this->_buttonCtrlAltDel, "CTRL + ALT + DELETE", rectCtrlAltDel);
+        initButton(this->_buttonCtrlAltDel, "CTRL + ALT + DELETE", rectCtrlAltDel);
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
 
         QRect rectRefresh(QPoint(this->info.width/3, this->info.height+1),QSize(this->info.width/3, 20));
-        this->initButton(this->_buttonRefresh, "Refresh", rectRefresh);
+        initButton(this->_buttonRefresh, "Refresh", rectRefresh);
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
         
         QRect rectDisconnexion(QPoint(((this->info.width/3)*2), this->info.height+1),QSize(this->info.width-((this->info.width/3)*2), 20));
-        this->initButton(this->_buttonDisconnexion, "Disconnexion", rectDisconnexion);
+        initButton(this->_buttonDisconnexion, "Disconnexion", rectDisconnexion);
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         
         QRect rectConnexion(QPoint(280, 256), QSize(110, 24)); 
-        this->initButton(this->_buttonConnexion, "Connexion", rectConnexion);
+        initButton(this->_buttonConnexion, "Connexion", rectConnexion);
         this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (pressed()),  this, SLOT (connexionPressed()));
         this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (released()), this, SLOT (connexionRelease()));
         
@@ -223,14 +330,6 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         if (this->_sck != nullptr) {
             delete (this->_sck);
         }
-    }
-    
-    
-    void Front_Qt::initButton(QPushButton & button, const char * str, QRect & rect) {
-        button.setToolTip(QString(str));
-        button.setGeometry(rect);
-        button.setCursor(Qt::PointingHandCursor);
-        button.setFocusPolicy(Qt::NoFocus);
     }
     
     

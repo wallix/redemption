@@ -184,8 +184,3 @@ void tabToReversedMap(const Keylayout::KeyLayout_t & read, std::ofstream & fichi
     fichier << std::endl << std::endl;
 }
 
-
-
-void printDeadKeys(int send[]){
-    
-}
