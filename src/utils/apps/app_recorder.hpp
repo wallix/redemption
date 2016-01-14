@@ -38,25 +38,13 @@
 #include "program_options/program_options.hpp"
 #include "auth_api.hpp" 
 
+enum {
+    USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
+};
 
-template<class CaptureMaker>
-int recompress_or_record( std::string const & input_filename, std::string & output_filename
-                        , int capture_bpp, int wrm_compression_algorithm_
-                        , Inifile & ini, bool remove_input_file
-                        , bool clear_png
-                        , bool no_timestamp
-                        , auth_api * authentifier
-                        , CryptoContext & cctx
-                        , bool externally_generated_breakpoint
-                        , Random & rnd, bool infile_is_encrypted
-                        , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
-                        , uint32_t order_count, uint32_t clear, unsigned zoom
-                        , unsigned png_width, unsigned png_height
-                        , bool show_file_metadata, bool show_statistics
-                        , bool force_record, uint32_t verbose
-                        , bool full_video
-                        , bool extract_meta_data
-                        );
+enum {
+    USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
+};
 
 template<typename InWrmTrans>
 unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
@@ -66,39 +54,64 @@ template<typename InWrmTrans>
 void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
                 , const char * infile_basename, const char * infile_extension, bool is_encrypted);
 
-template<class CaptureMaker>
-static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
-                    , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
-                    , int capture_bpp, int wrm_compression_algorithm_
-                    , bool clear_png
-                    , bool no_timestamp
-                    , auth_api * authentifier
-                    , Inifile & ini, Random & rnd, CryptoContext & cctx
-                    , bool externally_generated_breakpoint
-                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                    , unsigned png_width, unsigned png_height
-                    , bool show_file_metadata, bool show_statistics, uint32_t verbose
-                    , bool full_video
-                    , bool extract_meta_data);
+inline
+static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose) {
+    if (!output_filename.length()) {
+        return;
+    }
 
-static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
-                        , int wrm_compression_algorithm_
-                        , std::string const & output_filename, Inifile & ini, uint32_t verbose);
+    char outfile_pid[32];
+    snprintf(outfile_pid, sizeof(outfile_pid), "%06u", unsigned(getpid()));
 
+    char outfile_path     [1024] = {};
+    char outfile_basename [1024] = {};
+    char outfile_extension[1024] = {};
 
-static void show_statistics(FileToGraphic::Statistics const & statistics);
+    canonical_path( output_filename.c_str()
+                  , outfile_path
+                  , sizeof(outfile_path)
+                  , outfile_basename
+                  , sizeof(outfile_basename)
+                  , outfile_extension
+                  , sizeof(outfile_extension)
+                  , verbose
+                  );
 
-static void show_metadata(FileToGraphic const & player);
+    char progress_filename[4096];
+    snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
+            , outfile_path, outfile_basename, outfile_pid);
 
-static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose);
+    UpdateProgressData update_progress_data(progress_filename, 0, 0, 0, 0);
 
-int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted);
+    update_progress_data.raise_error(code, message);
+}
 
+inline
+static void show_metadata(FileToGraphic const & player) {
+    std::cout
+    << "\nWRM file version      : " << player.info_version
+    << "\nWidth                 : " << player.info_width
+    << "\nHeight                : " << player.info_height
+    << "\nBpp                   : " << player.info_bpp
+    << "\nCache 0 entries       : " << player.info_cache_0_entries
+    << "\nCache 0 size          : " << player.info_cache_0_size
+    << "\nCache 1 entries       : " << player.info_cache_1_entries
+    << "\nCache 1 size          : " << player.info_cache_1_size
+    << "\nCache 2 entries       : " << player.info_cache_2_entries
+    << "\nCache 2 size          : " << player.info_cache_2_size
+    << '\n';
 
-static const signed USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF;
-static const signed USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF;
+    if (player.info_version > 3) {
+        //cout << "Cache 3 entries       : " << player.info_cache_3_entries                         << endl;
+        //cout << "Cache 3 size          : " << player.info_cache_3_size                            << endl;
+        //cout << "Cache 4 entries       : " << player.info_cache_4_entries                         << endl;
+        //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
+        std::cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << '\n';
+    }
+    std::cout.flush();
+}
 
-
+TODO("Signals related code should not be here, all globals if any should be in main")
 bool program_requested_to_shutdown = false;
 
 void shutdown(int sig)
@@ -120,6 +133,489 @@ void init_signals(void)
     sa.sa_handler = shutdown;
     sigaction(SIGTERM, &sa, nullptr);
 }
+
+
+inline
+static void show_statistics(FileToGraphic::Statistics const & statistics) {
+    std::cout
+    << "\nDstBlt                : " << statistics.DstBlt
+    << "\nMultiDstBlt           : " << statistics.MultiDstBlt
+    << "\nPatBlt                : " << statistics.PatBlt
+    << "\nMultiPatBlt           : " << statistics.MultiPatBlt
+    << "\nOpaqueRect            : " << statistics.OpaqueRect
+    << "\nMultiOpaqueRect       : " << statistics.MultiOpaqueRect
+    << "\nScrBlt                : " << statistics.ScrBlt
+    << "\nMultiScrBlt           : " << statistics.MultiScrBlt
+    << "\nMemBlt                : " << statistics.MemBlt
+    << "\nMem3Blt               : " << statistics.Mem3Blt
+    << "\nLineTo                : " << statistics.LineTo
+    << "\nGlyphIndex            : " << statistics.GlyphIndex
+    << "\nPolyline              : " << statistics.Polyline
+
+    << "\nCacheBitmap           : " << statistics.CacheBitmap
+    << "\nCacheColorTable       : " << statistics.CacheColorTable
+    << "\nCacheGlyph            : " << statistics.CacheGlyph
+
+    << "\nFrameMarker           : " << statistics.FrameMarker
+
+    << "\nBitmapUpdate          : " << statistics.BitmapUpdate
+
+    << "\nCachePointer          : " << statistics.CachePointer
+    << "\nPointerIndex          : " << statistics.PointerIndex
+
+    << "\ngraphics_update_chunk : " << statistics.graphics_update_chunk
+    << "\nbitmap_update_chunk   : " << statistics.bitmap_update_chunk
+    << "\ntimestamp_chunk       : " << statistics.timestamp_chunk
+    << std::endl;
+}
+
+template<class CaptureMaker>
+static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
+                    , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
+                    , int capture_bpp, int wrm_compression_algorithm_
+
+                    , bool clear_png
+                    , bool no_timestamp
+                    , auth_api * authentifier
+                    , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , bool externally_generated_breakpoint
+                    
+                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
+                    , unsigned png_width, unsigned png_height
+                    , bool show_file_metadata, bool show_statistics, uint32_t verbose
+                    , bool full_video
+                    , bool extract_meta_data) {
+    for (unsigned i = 1; i < file_count ; i++) {
+        in_wrm_trans.next();
+    }
+
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
+
+    if (show_file_metadata) {
+        show_metadata(player);
+        std::cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << std::endl;
+        if (!show_statistics && !output_filename.length()) {
+            return 0;
+        }
+    }
+
+    player.max_order_count = order_count;
+
+    int return_code = 0;
+
+    if (output_filename.length()) {
+//        char outfile_pid[32];
+//        snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+
+        char outfile_path     [1024] = {};
+        char outfile_basename [1024] = {};
+        char outfile_extension[1024] = {};
+
+        canonical_path( output_filename.c_str()
+                      , outfile_path
+                      , sizeof(outfile_path)
+                      , outfile_basename
+                      , sizeof(outfile_basename)
+                      , outfile_extension
+                      , sizeof(outfile_extension)
+                      , verbose
+                      );
+
+        if (verbose) {
+//            std::cout << "Output file path: " << outfile_path << outfile_basename << '-' << outfile_pid << outfile_extension <<
+            std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
+                '\n' << std::endl;
+        }
+
+        if (clear == 1) {
+            clear_files_flv_meta_png(outfile_path, outfile_basename);
+        }
+
+//        if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+//            ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
+//        }
+        ini.set<cfg::video::wrm_compression_algorithm>(
+            ((wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM)) ?
+             player.info_compression_algorithm :
+             wrm_compression_algorithm_));
+
+//        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
+//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
+//        }
+        if (capture_bpp == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
+            capture_bpp = player.info_bpp;
+        }
+//        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
+
+        {
+            ini.set<cfg::video::hash_path>(outfile_path);
+            ini.set<cfg::video::record_tmp_path>(outfile_path);
+            ini.set<cfg::video::record_path>(outfile_path);
+
+            ini.set<cfg::globals::movie_path>(&output_filename[0]);
+            CaptureMaker capture(
+                    ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                    , player.screen_rect.cx
+                    , player.screen_rect.cy
+                    , player.info_bpp
+                    , capture_bpp
+                    , clear_png
+                    , no_timestamp
+                    , authentifier
+                    , ini
+                    , rnd
+                    , cctx
+                    , externally_generated_breakpoint);
+
+            if (capture.capture_png) {
+                if (png_width && png_height) {
+                    auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
+                        return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
+                    };
+                    zoom = std::max<unsigned>(
+                            get_percent(png_width, player.screen_rect.cx),
+                            get_percent(png_height, player.screen_rect.cy)
+                        );
+                    //std::cout << "zoom: " << zoom << '%' << std::endl;
+                }
+
+                capture.psc->zoom(zoom);
+            }
+            player.add_consumer(&capture, &capture);
+
+            char progress_filename[4096];
+            snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+                    , outfile_path, outfile_basename);
+
+            UpdateProgressData update_progress_data(
+                progress_filename, begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
+            );
+
+            if (update_progress_data.is_valid()) {
+                try {
+                    player.play(std::ref(update_progress_data), program_requested_to_shutdown);
+
+                    if (program_requested_to_shutdown) {
+                        update_progress_data.raise_error(65537, "Program requested to shutdown");
+                    }
+                }
+                catch (Error const & e) {
+                    const bool msg_with_error_id = false;
+                    update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
+
+                    return_code = -1;
+                }
+                catch (...) {
+                    update_progress_data.raise_error(65536, "Unknown error");
+
+                    return_code = -1;
+                }
+            }
+            else {
+                return_code = -1;
+            }
+        }
+
+        if (!return_code && program_requested_to_shutdown) {
+            clear_files_flv_meta_png(outfile_path, outfile_basename, verbose);
+        }
+    }
+    else {
+        try {
+            player.play(program_requested_to_shutdown);
+        }
+        catch (Error const &) {
+            return_code = -1;
+        }
+    }
+
+    if (show_statistics && return_code == 0) {
+      ::show_statistics(player.statistics);
+    }
+
+    return return_code;
+}   // do_record
+
+inline
+static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
+                        , int wrm_compression_algorithm_
+                        , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
+    FileToChunk player(&in_wrm_trans, 0);
+
+/*
+    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
+    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
+    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
+
+    canonical_path( output_filename.c_str()
+                  , outfile_path
+                  , sizeof(outfile_path)
+                  , outfile_basename
+                  , sizeof(outfile_basename)
+                  , outfile_extension
+                  , sizeof(outfile_extension)
+                  , verbose
+                  );
+*/
+    std::string outfile_path;
+    std::string outfile_basename;
+    std::string outfile_extension;
+    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
+
+    if (verbose) {
+        std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
+    }
+
+    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
+        std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
+    }
+
+//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
+//    }
+    ini.set<cfg::video::wrm_compression_algorithm>(
+        ((wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM)) ?
+         player.info_compression_algorithm :
+         wrm_compression_algorithm_));
+
+    int return_code = 0;
+    try {
+        auto run = [&](Transport && trans) {
+            {
+                ChunkToFile recorder( &trans
+
+                                    , player.info_width
+                                    , player.info_height
+                                    , player.info_bpp
+                                    , player.info_cache_0_entries
+                                    , player.info_cache_0_size
+                                    , player.info_cache_1_entries
+                                    , player.info_cache_1_size
+                                    , player.info_cache_2_entries
+                                    , player.info_cache_2_size
+
+                                    , player.info_number_of_cache
+                                    , player.info_use_waiting_list
+
+                                    , player.info_cache_0_persistent
+                                    , player.info_cache_1_persistent
+                                    , player.info_cache_2_persistent
+
+                                    , player.info_cache_3_entries
+                                    , player.info_cache_3_size
+                                    , player.info_cache_3_persistent
+                                    , player.info_cache_4_entries
+                                    , player.info_cache_4_size
+                                    , player.info_cache_4_persistent
+
+                                    , ini);
+
+                player.add_consumer(&recorder);
+
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
+        };
+
+        if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
+            run(CryptoOutMetaSequenceTransport(
+                &cctx,
+                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
+                begin_record, player.info_width, player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            ));
+        }
+        else {
+            run(OutMetaSequenceTransport(
+                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
+                begin_record, player.info_width, player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            ));
+        }
+    }
+    catch (...) {
+        return_code = -1;
+    }
+
+    return return_code;
+}   // do_recompress
+
+
+template<class CaptureMaker>
+int recompress_or_record( std::string const & input_filename, std::string & output_filename
+                        , int capture_bpp, int wrm_compression_algorithm_
+                        , Inifile & ini, bool remove_input_file
+                        , bool clear_png
+                        , bool no_timestamp
+                        , auth_api * authentifier
+                        , CryptoContext & cctx
+                        , bool externally_generated_breakpoint
+                        , Random & rnd, bool infile_is_encrypted
+                        , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
+                        , uint32_t order_count, uint32_t clear, unsigned zoom
+                        , unsigned png_width, unsigned png_height
+                        , bool show_file_metadata, bool show_statistics
+                        , bool force_record, uint32_t verbose
+                        , bool full_video
+                        , bool extract_meta_data
+                        )
+{
+/*
+    char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
+    char infile_basename [1024] = "redrec_input";   // default value, actual one should come from output_filename
+    char infile_extension[ 128] = ".mwrm"       ;
+
+    canonical_path( input_filename.c_str()
+                  , infile_path
+                  , sizeof(infile_path)
+                  , infile_basename
+                  , sizeof(infile_basename)
+                  , infile_extension
+                  , sizeof(infile_extension)
+                  , verbose
+                  );
+    if (verbose) {
+        std::cout << "\nInput file path: " << infile_path << infile_basename << infile_extension << std::endl;
+    }
+*/
+    std::string infile_path;
+    std::string infile_basename;
+    std::string infile_extension;
+    ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
+
+    char infile_prefix[4096];
+    snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
+
+    if (auto_output_file) {
+        output_filename =  infile_path;
+        output_filename += infile_basename;
+        output_filename += "-redrec";
+        output_filename += infile_extension;
+
+        std::cout << "\nOutput file is \"" << output_filename << "\" (autogenerated)." << std::endl;
+    }
+    else if (output_filename.size()) {
+        [&output_filename] () {
+            std::string directory = PNG_PATH "/"; // default value, actual one should come from output_filename
+            std::string filename                ;
+            std::string extension = ".mwrm"     ;
+
+            ParsePath(output_filename.c_str(), directory, filename, extension);
+            MakePath(output_filename, directory.c_str(), filename.c_str(), extension.c_str());
+        } ();
+        std::cout << "Output file is \"" << output_filename << "\".\n";
+    }
+
+    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
+
+    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
+    TODO("if start and stop time are outside wrm, users should also be warned")
+
+    timeval  begin_record = { 0, 0 };
+    timeval  end_record   = { 0, 0 };
+    unsigned file_count   = 0;
+    try {
+        if (infile_is_encrypted == false) {
+            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
+            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
+        }
+        else {
+            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
+            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
+        }
+    }
+    catch (const Error & e) {
+        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+            std::cerr << "Asked time not found in mwrm file\n";
+        }
+        else {
+            std::cerr << "Exception code: " << e.id << std::endl;
+        }
+        const bool msg_with_error_id = false;
+        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
+        return -1;
+    };
+
+    auto run = [&](Transport && trans) {
+        timeval begin_capture = {0, 0};
+        timeval end_capture = {0, 0};
+
+        int result = -1;
+        try {
+            result = (
+                force_record
+             || bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png)
+//             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
+             || capture_bpp != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+             || show_file_metadata
+             || show_statistics
+             || file_count > 1
+             || order_count)
+                ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
+                  , do_record<CaptureMaker>(
+                      trans, begin_record, end_record, begin_capture, end_capture
+                    , output_filename, capture_bpp
+                    , wrm_compression_algorithm_
+
+                    , clear_png
+                    , no_timestamp
+                    , authentifier
+                    , ini, rnd, cctx
+                    , externally_generated_breakpoint
+                    
+                    , file_count, order_count, clear, zoom
+                    , png_width, png_height
+                    , show_file_metadata, show_statistics, verbose
+                    , full_video
+                    , extract_meta_data
+                    )
+                )
+                : ((verbose ? void(std::cout << "[B]"<< std::endl) : void())
+                  , do_recompress(cctx, trans, begin_record, wrm_compression_algorithm_, output_filename, ini, verbose)
+                )
+            ;
+        }
+        catch (const Error & e) {
+            const bool msg_with_error_id = false;
+            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
+        }
+
+        if (!result && remove_input_file) {
+            if (infile_is_encrypted == false) {
+                InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
+                remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
+                           , infile_basename.c_str(), infile_extension.c_str()
+                           , infile_is_encrypted);
+            }
+            else {
+                CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
+                remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
+                           , infile_basename.c_str(), infile_extension.c_str()
+                           , infile_is_encrypted);
+            }
+        }
+
+        std::cout << std::endl;
+
+        return result;
+    };
+
+    return infile_is_encrypted
+        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str()))
+        : run( InMetaSequenceTransport(infile_prefix, infile_extension.c_str()));
+}
+
+
+
+
+int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted);
+
+
+
+
 
 
 template<class CaptureMaker, class AddProgramOption, class ParseFormat
@@ -283,7 +779,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
         else if (wrm_compression_algorithm == "original") {
 //            ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
-            wrm_compression_algorithm_ = USE_ORIGINAL_COMPRESSION_ALGORITHM;
+            wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
@@ -292,7 +788,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
     else {
 //        ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
-        wrm_compression_algorithm_ = USE_ORIGINAL_COMPRESSION_ALGORITHM;
+        wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
     }
 
     int capture_bpp = 16;
@@ -308,7 +804,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         }
         else if (wrm_color_depth == "original") {
 //            ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
-            capture_bpp = USE_ORIGINAL_COLOR_DEPTH;
+            capture_bpp = static_cast<int>(USE_ORIGINAL_COLOR_DEPTH);
         }
         else {
             std::cerr << "Unknown wrm color depth\n\n";
@@ -317,7 +813,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
     else {
 //        ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
-        capture_bpp = USE_ORIGINAL_COLOR_DEPTH;
+        capture_bpp = static_cast<int>(USE_ORIGINAL_COLOR_DEPTH);
     }
 
     ini.set<cfg::video::png_limit>(png_limit);
@@ -446,169 +942,6 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 }
 
 
-template<class CaptureMaker>
-int recompress_or_record( std::string const & input_filename, std::string & output_filename
-                        , int capture_bpp, int wrm_compression_algorithm_
-                        , Inifile & ini, bool remove_input_file
-                        , bool clear_png
-                        , bool no_timestamp
-                        , auth_api * authentifier
-                        , CryptoContext & cctx
-                        , bool externally_generated_breakpoint
-                        , Random & rnd, bool infile_is_encrypted
-                        , bool auto_output_file, uint32_t begin_cap, uint32_t end_cap
-                        , uint32_t order_count, uint32_t clear, unsigned zoom
-                        , unsigned png_width, unsigned png_height
-                        , bool show_file_metadata, bool show_statistics
-                        , bool force_record, uint32_t verbose
-                        , bool full_video
-                        , bool extract_meta_data
-                        )
-{
-/*
-    char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
-    char infile_basename [1024] = "redrec_input";   // default value, actual one should come from output_filename
-    char infile_extension[ 128] = ".mwrm"       ;
-
-    canonical_path( input_filename.c_str()
-                  , infile_path
-                  , sizeof(infile_path)
-                  , infile_basename
-                  , sizeof(infile_basename)
-                  , infile_extension
-                  , sizeof(infile_extension)
-                  , verbose
-                  );
-    if (verbose) {
-        std::cout << "\nInput file path: " << infile_path << infile_basename << infile_extension << std::endl;
-    }
-*/
-    std::string infile_path;
-    std::string infile_basename;
-    std::string infile_extension;
-    ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
-
-    char infile_prefix[4096];
-    snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
-
-    if (auto_output_file) {
-        output_filename =  infile_path;
-        output_filename += infile_basename;
-        output_filename += "-redrec";
-        output_filename += infile_extension;
-
-        std::cout << "\nOutput file is \"" << output_filename << "\" (autogenerated)." << std::endl;
-    }
-    else if (output_filename.size()) {
-        [&output_filename] () {
-            std::string directory = PNG_PATH "/"; // default value, actual one should come from output_filename
-            std::string filename                ;
-            std::string extension = ".mwrm"     ;
-
-            ParsePath(output_filename.c_str(), directory, filename, extension);
-            MakePath(output_filename, directory.c_str(), filename.c_str(), extension.c_str());
-        } ();
-        std::cout << "Output file is \"" << output_filename << "\".\n";
-    }
-
-    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
-
-    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
-    TODO("if start and stop time are outside wrm, users should also be warned")
-
-    timeval  begin_record = { 0, 0 };
-    timeval  end_record   = { 0, 0 };
-    unsigned file_count   = 0;
-    try {
-        if (infile_is_encrypted == false) {
-            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
-            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
-        }
-        else {
-            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
-            file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
-        }
-    }
-    catch (const Error & e) {
-        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
-            std::cerr << "Asked time not found in mwrm file\n";
-        }
-        else {
-            std::cerr << "Exception code: " << e.id << std::endl;
-        }
-        const bool msg_with_error_id = false;
-        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
-        return -1;
-    };
-
-    auto run = [&](Transport && trans) {
-        timeval begin_capture = {0, 0};
-        timeval end_capture = {0, 0};
-
-        int result = -1;
-        try {
-            result = (
-                force_record
-             || bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png)
-//             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
-             || capture_bpp != USE_ORIGINAL_COLOR_DEPTH
-             || show_file_metadata
-             || show_statistics
-             || file_count > 1
-             || order_count)
-                ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
-                  , do_record<CaptureMaker>(
-                      trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, capture_bpp
-                    , wrm_compression_algorithm_
-
-                    , clear_png
-                    , no_timestamp
-                    , authentifier
-                    , ini, rnd, cctx
-                    , externally_generated_breakpoint
-                    
-                    , file_count, order_count, clear, zoom
-                    , png_width, png_height
-                    , show_file_metadata, show_statistics, verbose
-                    , full_video
-                    , extract_meta_data
-                    )
-                )
-                : ((verbose ? void(std::cout << "[B]"<< std::endl) : void())
-                  , do_recompress(cctx, trans, begin_record, wrm_compression_algorithm_, output_filename, ini, verbose)
-                )
-            ;
-        }
-        catch (const Error & e) {
-            const bool msg_with_error_id = false;
-            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
-        }
-
-        if (!result && remove_input_file) {
-            if (infile_is_encrypted == false) {
-                InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
-                remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
-                           , infile_basename.c_str(), infile_extension.c_str()
-                           , infile_is_encrypted);
-            }
-            else {
-                CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
-                remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
-                           , infile_basename.c_str(), infile_extension.c_str()
-                           , infile_is_encrypted);
-            }
-        }
-
-        std::cout << std::endl;
-
-        return result;
-    };
-
-    return infile_is_encrypted
-        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str()))
-        : run( InMetaSequenceTransport(infile_prefix, infile_extension.c_str()));
-}
 
 template<typename InWrmTrans>
 unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
@@ -678,369 +1011,9 @@ void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char 
     }
 }
 
-inline
-static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
-                        , int wrm_compression_algorithm_
-                        , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
-    FileToChunk player(&in_wrm_trans, 0);
 
-/*
-    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
-    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
-    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
 
-    canonical_path( output_filename.c_str()
-                  , outfile_path
-                  , sizeof(outfile_path)
-                  , outfile_basename
-                  , sizeof(outfile_basename)
-                  , outfile_extension
-                  , sizeof(outfile_extension)
-                  , verbose
-                  );
-*/
-    std::string outfile_path;
-    std::string outfile_basename;
-    std::string outfile_extension;
-    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
 
-    if (verbose) {
-        std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
-    }
 
-    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
-        std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
-    }
-
-//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
-//    }
-    ini.set<cfg::video::wrm_compression_algorithm>(
-        ((wrm_compression_algorithm_ == USE_ORIGINAL_COMPRESSION_ALGORITHM) ?
-         player.info_compression_algorithm :
-         wrm_compression_algorithm_));
-
-    int return_code = 0;
-    try {
-        auto run = [&](Transport && trans) {
-            {
-                ChunkToFile recorder( &trans
-
-                                    , player.info_width
-                                    , player.info_height
-                                    , player.info_bpp
-                                    , player.info_cache_0_entries
-                                    , player.info_cache_0_size
-                                    , player.info_cache_1_entries
-                                    , player.info_cache_1_size
-                                    , player.info_cache_2_entries
-                                    , player.info_cache_2_size
-
-                                    , player.info_number_of_cache
-                                    , player.info_use_waiting_list
-
-                                    , player.info_cache_0_persistent
-                                    , player.info_cache_1_persistent
-                                    , player.info_cache_2_persistent
-
-                                    , player.info_cache_3_entries
-                                    , player.info_cache_3_size
-                                    , player.info_cache_3_persistent
-                                    , player.info_cache_4_entries
-                                    , player.info_cache_4_size
-                                    , player.info_cache_4_persistent
-
-                                    , ini);
-
-                player.add_consumer(&recorder);
-
-                player.play(program_requested_to_shutdown);
-            }
-
-            if (program_requested_to_shutdown) {
-                trans.request_full_cleaning();
-            }
-        };
-
-        if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
-            run(CryptoOutMetaSequenceTransport(
-                &cctx,
-                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
-                begin_record, player.info_width, player.info_height,
-                ini.get<cfg::video::capture_groupid>()
-            ));
-        }
-        else {
-            run(OutMetaSequenceTransport(
-                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
-                begin_record, player.info_width, player.info_height,
-                ini.get<cfg::video::capture_groupid>()
-            ));
-        }
-    }
-    catch (...) {
-        return_code = -1;
-    }
-
-    return return_code;
-}   // do_recompress
-
-inline
-static void show_statistics(FileToGraphic::Statistics const & statistics) {
-    std::cout
-    << "\nDstBlt                : " << statistics.DstBlt
-    << "\nMultiDstBlt           : " << statistics.MultiDstBlt
-    << "\nPatBlt                : " << statistics.PatBlt
-    << "\nMultiPatBlt           : " << statistics.MultiPatBlt
-    << "\nOpaqueRect            : " << statistics.OpaqueRect
-    << "\nMultiOpaqueRect       : " << statistics.MultiOpaqueRect
-    << "\nScrBlt                : " << statistics.ScrBlt
-    << "\nMultiScrBlt           : " << statistics.MultiScrBlt
-    << "\nMemBlt                : " << statistics.MemBlt
-    << "\nMem3Blt               : " << statistics.Mem3Blt
-    << "\nLineTo                : " << statistics.LineTo
-    << "\nGlyphIndex            : " << statistics.GlyphIndex
-    << "\nPolyline              : " << statistics.Polyline
-
-    << "\nCacheBitmap           : " << statistics.CacheBitmap
-    << "\nCacheColorTable       : " << statistics.CacheColorTable
-    << "\nCacheGlyph            : " << statistics.CacheGlyph
-
-    << "\nFrameMarker           : " << statistics.FrameMarker
-
-    << "\nBitmapUpdate          : " << statistics.BitmapUpdate
-
-    << "\nCachePointer          : " << statistics.CachePointer
-    << "\nPointerIndex          : " << statistics.PointerIndex
-
-    << "\ngraphics_update_chunk : " << statistics.graphics_update_chunk
-    << "\nbitmap_update_chunk   : " << statistics.bitmap_update_chunk
-    << "\ntimestamp_chunk       : " << statistics.timestamp_chunk
-    << std::endl;
-}
-
-inline
-static void show_metadata(FileToGraphic const & player) {
-    std::cout
-    << "\nWRM file version      : " << player.info_version
-    << "\nWidth                 : " << player.info_width
-    << "\nHeight                : " << player.info_height
-    << "\nBpp                   : " << player.info_bpp
-    << "\nCache 0 entries       : " << player.info_cache_0_entries
-    << "\nCache 0 size          : " << player.info_cache_0_size
-    << "\nCache 1 entries       : " << player.info_cache_1_entries
-    << "\nCache 1 size          : " << player.info_cache_1_size
-    << "\nCache 2 entries       : " << player.info_cache_2_entries
-    << "\nCache 2 size          : " << player.info_cache_2_size
-    << '\n';
-
-    if (player.info_version > 3) {
-        //cout << "Cache 3 entries       : " << player.info_cache_3_entries                         << endl;
-        //cout << "Cache 3 size          : " << player.info_cache_3_size                            << endl;
-        //cout << "Cache 4 entries       : " << player.info_cache_4_entries                         << endl;
-        //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
-        std::cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << '\n';
-    }
-    std::cout.flush();
-}
-
-inline
-static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose) {
-    if (!output_filename.length()) {
-        return;
-    }
-
-    char outfile_pid[32];
-    snprintf(outfile_pid, sizeof(outfile_pid), "%06u", unsigned(getpid()));
-
-    char outfile_path     [1024] = {};
-    char outfile_basename [1024] = {};
-    char outfile_extension[1024] = {};
-
-    canonical_path( output_filename.c_str()
-                  , outfile_path
-                  , sizeof(outfile_path)
-                  , outfile_basename
-                  , sizeof(outfile_basename)
-                  , outfile_extension
-                  , sizeof(outfile_extension)
-                  , verbose
-                  );
-
-    char progress_filename[4096];
-    snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
-            , outfile_path, outfile_basename, outfile_pid);
-
-    UpdateProgressData update_progress_data(progress_filename, 0, 0, 0, 0);
-
-    update_progress_data.raise_error(code, message);
-}
-
-template<class CaptureMaker>
-static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
-                    , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
-                    , int capture_bpp, int wrm_compression_algorithm_
-
-                    , bool clear_png
-                    , bool no_timestamp
-                    , auth_api * authentifier
-                    , Inifile & ini, Random & rnd, CryptoContext & cctx
-                    , bool externally_generated_breakpoint
-                    
-                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                    , unsigned png_width, unsigned png_height
-                    , bool show_file_metadata, bool show_statistics, uint32_t verbose
-                    , bool full_video
-                    , bool extract_meta_data) {
-    for (unsigned i = 1; i < file_count ; i++) {
-        in_wrm_trans.next();
-    }
-
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
-
-    if (show_file_metadata) {
-        show_metadata(player);
-        std::cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << std::endl;
-        if (!show_statistics && !output_filename.length()) {
-            return 0;
-        }
-    }
-
-    player.max_order_count = order_count;
-
-    int return_code = 0;
-
-    if (output_filename.length()) {
-//        char outfile_pid[32];
-//        snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
-
-        char outfile_path     [1024] = {};
-        char outfile_basename [1024] = {};
-        char outfile_extension[1024] = {};
-
-        canonical_path( output_filename.c_str()
-                      , outfile_path
-                      , sizeof(outfile_path)
-                      , outfile_basename
-                      , sizeof(outfile_basename)
-                      , outfile_extension
-                      , sizeof(outfile_extension)
-                      , verbose
-                      );
-
-        if (verbose) {
-//            std::cout << "Output file path: " << outfile_path << outfile_basename << '-' << outfile_pid << outfile_extension <<
-            std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
-                '\n' << std::endl;
-        }
-
-        if (clear == 1) {
-            clear_files_flv_meta_png(outfile_path, outfile_basename);
-        }
-
-//        if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-//            ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
-//        }
-        ini.set<cfg::video::wrm_compression_algorithm>(
-            ((wrm_compression_algorithm_ == USE_ORIGINAL_COMPRESSION_ALGORITHM) ?
-             player.info_compression_algorithm :
-             wrm_compression_algorithm_));
-
-//        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
-//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
-//        }
-        if (capture_bpp == USE_ORIGINAL_COLOR_DEPTH) {
-            capture_bpp = player.info_bpp;
-        }
-//        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
-
-        {
-            ini.set<cfg::video::hash_path>(outfile_path);
-            ini.set<cfg::video::record_tmp_path>(outfile_path);
-            ini.set<cfg::video::record_path>(outfile_path);
-
-            ini.set<cfg::globals::movie_path>(&output_filename[0]);
-            CaptureMaker capture(
-                    ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
-                    , player.screen_rect.cx
-                    , player.screen_rect.cy
-                    , player.info_bpp
-                    , capture_bpp
-                    , clear_png
-                    , no_timestamp
-                    , authentifier
-                    , ini
-                    , rnd
-                    , cctx
-                    , externally_generated_breakpoint);
-
-            if (capture.capture_png) {
-                if (png_width && png_height) {
-                    auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
-                        return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
-                    };
-                    zoom = std::max<unsigned>(
-                            get_percent(png_width, player.screen_rect.cx),
-                            get_percent(png_height, player.screen_rect.cy)
-                        );
-                    //std::cout << "zoom: " << zoom << '%' << std::endl;
-                }
-
-                capture.psc->zoom(zoom);
-            }
-            player.add_consumer(&capture, &capture);
-
-            char progress_filename[4096];
-            snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                    , outfile_path, outfile_basename);
-
-            UpdateProgressData update_progress_data(
-                progress_filename, begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
-            );
-
-            if (update_progress_data.is_valid()) {
-                try {
-                    player.play(std::ref(update_progress_data), program_requested_to_shutdown);
-
-                    if (program_requested_to_shutdown) {
-                        update_progress_data.raise_error(65537, "Program requested to shutdown");
-                    }
-                }
-                catch (Error const & e) {
-                    const bool msg_with_error_id = false;
-                    update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
-
-                    return_code = -1;
-                }
-                catch (...) {
-                    update_progress_data.raise_error(65536, "Unknown error");
-
-                    return_code = -1;
-                }
-            }
-            else {
-                return_code = -1;
-            }
-        }
-
-        if (!return_code && program_requested_to_shutdown) {
-            clear_files_flv_meta_png(outfile_path, outfile_basename, verbose);
-        }
-    }
-    else {
-        try {
-            player.play(program_requested_to_shutdown);
-        }
-        catch (Error const &) {
-            return_code = -1;
-        }
-    }
-
-    if (show_statistics && return_code == 0) {
-      ::show_statistics(player.statistics);
-    }
-
-    return return_code;
-}   // do_record
 
 #endif
