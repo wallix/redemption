@@ -359,9 +359,15 @@ public:
         case ERR_VNC_CONNECTION_ERROR:
             return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
-            return "Composite Widget Destroyed without child list not empty.";
+            return "Composite Widget Destroyed without child list not empty";
+
+        case ERR_SESSION_PROBE_LAUNCH:
+            return "Could not launch Session Probe";
+        case ERR_SESSION_PROBE_KEEPALIVE:
+            return "Keep alive has been missed, connection may be dead or slow";
         case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
+
         default:
             {
                 int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);

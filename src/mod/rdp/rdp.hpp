@@ -390,6 +390,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const int  rdp_compression;
 
     const unsigned                               session_probe_launch_timeout;
+    const unsigned                               session_probe_launch_fallback_timeout;
     const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
     const unsigned                               session_probe_keepalive_timeout;
     const bool                                   session_probe_end_disconnected_session;
@@ -687,6 +688,7 @@ public:
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
+        , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
         , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
@@ -984,10 +986,6 @@ public:
         }
 
         if (this->verbose & 1) {
-//            LOG(LOG_INFO,
-//                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure=%d",
-//                (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
-//                static_cast<int>(this->session_probe_on_launch_failure));
             LOG(LOG_INFO, "enable_session_probe=%s",
                 (this->enable_session_probe ? "yes" : "no"));
         }
@@ -1190,6 +1188,8 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
+        session_probe_virtual_channel_params.session_probe_launch_fallback_timeout  =
+            this->session_probe_launch_fallback_timeout;
         session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
             this->session_probe_keepalive_timeout;
 
