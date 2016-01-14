@@ -44,7 +44,7 @@ import engine
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
-from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
+from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE
 from engine import TargetContext
 from engine import parse_auth
 
@@ -1275,8 +1275,7 @@ class Sesman():
                             target_passwords = self.engine.get_target_passwords(physical_target)
                             target_password = u'\x01'.join(target_passwords)
 
-                        if (not target_password and
-                            PASSWORD_MAPPING in auth_policy_methods):
+                        if not target_password:
                             target_password = \
                                 self.engine.get_primary_password(physical_target) or ''
 
