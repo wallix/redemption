@@ -48,7 +48,37 @@ enum {
 
 template<typename InWrmTrans>
 unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
-                       , timeval & end_record);
+                       , timeval & end_record) {
+    in_wrm_trans.next();
+    begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
+    TODO("a negative time should be a time relative to end of movie")
+    REDOC("less than 1 year means we are given a time relatve to beginning of movie")
+    if (begin_cap && (begin_cap < 31536000)) {  // less than 1 year, it is relative not absolute timestamp
+        // begin_capture.tv_usec is 0
+        begin_cap += in_wrm_trans.begin_chunk_time();
+    }
+    if (end_cap && (end_cap < 31536000)) { // less than 1 year, it is relative not absolute timestamp
+        // begin_capture.tv_usec is 0
+        end_cap += in_wrm_trans.begin_chunk_time();
+    }
+    while (begin_cap >= in_wrm_trans.end_chunk_time()) {
+        in_wrm_trans.next();
+    }
+    unsigned result = in_wrm_trans.get_seqno();
+    try {
+        do {
+            end_record.tv_sec = in_wrm_trans.end_chunk_time();
+            in_wrm_trans.next();
+        }
+        while (true);
+    }
+    catch (const Error & e) {
+        if (e.id != static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+            throw;
+        }
+    };
+    return result;
+}
 
 template<typename InWrmTrans>
 void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
@@ -943,39 +973,6 @@ int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
 
 
 
-template<typename InWrmTrans>
-unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
-                       , timeval & end_record) {
-    in_wrm_trans.next();
-    begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
-    TODO("a negative time should be a time relative to end of movie")
-    REDOC("less than 1 year means we are given a time relatve to beginning of movie")
-    if (begin_cap && (begin_cap < 31536000)) {  // less than 1 year, it is relative not absolute timestamp
-        // begin_capture.tv_usec is 0
-        begin_cap += in_wrm_trans.begin_chunk_time();
-    }
-    if (end_cap && (end_cap < 31536000)) { // less than 1 year, it is relative not absolute timestamp
-        // begin_capture.tv_usec is 0
-        end_cap += in_wrm_trans.begin_chunk_time();
-    }
-    while (begin_cap >= in_wrm_trans.end_chunk_time()) {
-        in_wrm_trans.next();
-    }
-    unsigned result = in_wrm_trans.get_seqno();
-    try {
-        do {
-            end_record.tv_sec = in_wrm_trans.end_chunk_time();
-            in_wrm_trans.next();
-        }
-        while (true);
-    }
-    catch (const Error & e) {
-        if (e.id != static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
-            throw;
-        }
-    };
-    return result;
-}
 
 
 template<typename InWrmTrans>
