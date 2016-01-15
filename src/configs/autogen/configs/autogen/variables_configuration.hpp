@@ -1388,26 +1388,6 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
-        // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
-        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
-        struct session_probe_launch_timeout {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 23; }
-            using type = unsigned;
-            type value{20000};
-        };
-        // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
-        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT
-        struct session_probe_launch_fallback_timeout {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 24; }
-            using type = unsigned;
-            type value{7000};
-        };
         // Behavior on failure to launch Session Probe.
         //   0: ignore failure and continue.
         //   1: disconnect user.
@@ -1417,9 +1397,31 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 25; }
+            static constexpr unsigned index() { return 23; }
             using type = ::configs::SessionProbeOnLaunchFailure;
             type value{static_cast< ::configs::SessionProbeOnLaunchFailure>(2)};
+        };
+        // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
+        // In milliseconds, 0 to disable timeout.
+        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
+        struct session_probe_launch_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 24; }
+            using type = unsigned;
+            type value{20000};
+        };
+        // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+        // In milliseconds, 0 to disable timeout.
+        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT
+        struct session_probe_launch_fallback_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 25; }
+            using type = unsigned;
+            type value{7000};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         struct session_probe_keepalive_timeout {
@@ -2024,9 +2026,9 @@ struct mod_rdp
 , cfg::mod_rdp::shell_working_directory
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
+, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
@@ -2133,9 +2135,9 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::shell_working_directory
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
+, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
-, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check

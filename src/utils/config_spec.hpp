@@ -311,18 +311,20 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
         W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
-        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", desc{
-            "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user)."
-        }, set(20000), r);
-        W.member(A, type_<unsigned>(), "session_probe_launch_fallback_timeout", desc{
-            "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe)."
-        }, set(7000), r);
         W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
             "Behavior on failure to launch Session Probe.\n"
             "  0: ignore failure and continue.\n"
             "  1: disconnect user.\n"
             "  2: reconnect without Session Probe."
         }, set(SessionProbeOnLaunchFailure::retry_without_session_probe), r);
+        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", desc{
+            "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
+            "In milliseconds, 0 to disable timeout."
+        }, set(20000), r);
+        W.member(A, type_<unsigned>(), "session_probe_launch_fallback_timeout", desc{
+            "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
+            "In milliseconds, 0 to disable timeout."
+        }, set(7000), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
