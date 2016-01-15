@@ -442,7 +442,6 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         auto run = [&](Transport && trans) {
             {
                 ChunkToFile recorder( &trans
-
                                     , player.info_width
                                     , player.info_height
                                     , player.info_bpp
@@ -480,19 +479,31 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         };
 
         if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
-            run(CryptoOutMetaSequenceTransport(
-                &cctx,
-                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
-                begin_record, player.info_width, player.info_height,
-                ini.get<cfg::video::capture_groupid>()
-            ));
+            run(
+                CryptoOutMetaSequenceTransport(
+                    &cctx,
+                    outfile_path.c_str(),
+                    ini.get<cfg::video::hash_path>(),
+                    outfile_basename.c_str(),
+                    begin_record,
+                    player.info_width,
+                    player.info_height,
+                    ini.get<cfg::video::capture_groupid>()
+                    )
+                );
         }
         else {
-            run(OutMetaSequenceTransport(
-                outfile_path.c_str(), ini.get<cfg::video::hash_path>(), outfile_basename.c_str(),
-                begin_record, player.info_width, player.info_height,
-                ini.get<cfg::video::capture_groupid>()
-            ));
+            run(
+                OutMetaSequenceTransport(
+                    &cctx,
+                    outfile_path.c_str(), 
+                    ini.get<cfg::video::hash_path>(), 
+                    outfile_basename.c_str(),
+                    begin_record, 
+                    player.info_width, 
+                    player.info_height,
+                    ini.get<cfg::video::capture_groupid>()
+                ));
         }
     }
     catch (...) {
@@ -867,11 +878,17 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     unsigned file_count   = 0;
     try {
         if (infile_is_encrypted == false) {
-            InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
+            InMetaSequenceTransport in_wrm_trans_tmp(
+                &cctx,
+                infile_prefix, 
+                infile_extension.c_str());
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
         else {
-            CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
+            CryptoInMetaSequenceTransport in_wrm_trans_tmp(
+                &cctx, 
+                infile_prefix, 
+                infile_extension.c_str());
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
     }
@@ -893,7 +910,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
         int result = -1;
         try {
-            result = (
+            bool test = (
                 force_record
              || bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png)
 //             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
@@ -901,30 +918,39 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
              || show_file_metadata
              || show_statistics
              || file_count > 1
-             || order_count)
-                ? ((verbose ? void(std::cout << "[A]"<< std::endl) : void())
-                  , do_record<CaptureMaker>(
-                      trans, begin_record, end_record, begin_capture, end_capture
-                    , output_filename, capture_bpp
-                    , wrm_compression_algorithm_
-
-                    , clear_png
-                    , no_timestamp
-                    , authentifier
-                    , ini, rnd, cctx
-                    , externally_generated_breakpoint
-                    
-                    , file_count, order_count, clear, zoom
-                    , png_width, png_height
-                    , show_file_metadata, show_statistics, verbose
-                    , full_video
-                    , extract_meta_data
-                    )
-                )
-                : ((verbose ? void(std::cout << "[B]"<< std::endl) : void())
-                  , do_recompress(cctx, trans, begin_record, wrm_compression_algorithm_, output_filename, ini, verbose)
-                )
-            ;
+             || order_count);
+             
+            if (test){
+                std::cout << "[A]" << std::endl;
+                
+                result = do_record<CaptureMaker>(trans
+                            , begin_record, end_record
+                            , begin_capture, end_capture
+                            , output_filename, capture_bpp
+                            , wrm_compression_algorithm_
+                            , clear_png
+                            , no_timestamp
+                            , authentifier
+                            , ini, rnd, cctx
+                            , externally_generated_breakpoint
+                            , file_count, order_count, clear, zoom
+                            , png_width, png_height
+                            , show_file_metadata, show_statistics, verbose
+                            , full_video
+                            , extract_meta_data
+                            );
+            }
+            else {
+                std::cout << "[B]" << std::endl;
+                result = do_recompress(
+                    cctx,
+                    trans,
+                    begin_record,
+                    wrm_compression_algorithm_,
+                    output_filename,
+                    ini,
+                    verbose);
+            }
         }
         catch (const Error & e) {
             const bool msg_with_error_id = false;
@@ -933,13 +959,20 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
         if (!result && remove_input_file) {
             if (infile_is_encrypted == false) {
-                InMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension.c_str());
+                InMetaSequenceTransport in_wrm_trans_tmp(
+                    &cctx,
+                    infile_prefix, 
+                    infile_extension.c_str());
+                    
                 remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
             }
             else {
-                CryptoInMetaSequenceTransport in_wrm_trans_tmp(&cctx, infile_prefix, infile_extension.c_str());
+                CryptoInMetaSequenceTransport in_wrm_trans_tmp(
+                    &cctx, 
+                    infile_prefix, 
+                    infile_extension.c_str());
                 remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
@@ -953,7 +986,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
 
     return infile_is_encrypted
         ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str()))
-        : run( InMetaSequenceTransport(infile_prefix, infile_extension.c_str()));
+        : run( InMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str()));
 }
 
 #endif

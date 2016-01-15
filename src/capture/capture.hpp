@@ -201,6 +201,7 @@ public:
             }
             else {
                 auto * trans = new OutMetaSequenceTransport(
+                    &this->cctx,
                     record_path, hash_path, basename, now,
                     width, height, groupid, authentifier);
                 this->wrm_trans = trans;

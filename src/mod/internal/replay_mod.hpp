@@ -78,7 +78,9 @@ public:
         }
         snprintf(prefix,  sizeof(prefix), "%s%s", path, basename);
 
-        this->in_trans = new InMetaSequenceTransport(prefix, extension);
+        this->in_trans = new InMetaSequenceTransport(static_cast<CryptoContext*>(nullptr), prefix, extension);
+        
+        
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
         this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true, debug_capture);
