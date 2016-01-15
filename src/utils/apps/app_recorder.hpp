@@ -81,8 +81,37 @@ unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32
 }
 
 template<typename InWrmTrans>
-void remove_file(InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
-                , const char * infile_basename, const char * infile_extension, bool is_encrypted);
+void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
+                , const char * infile_basename, const char * infile_extension, bool is_encrypted) {
+    std::vector<std::string> files;
+
+    char infile_fullpath[2048];
+    if (is_encrypted) {
+        snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, infile_basename, infile_extension);
+        files.push_back(infile_fullpath);
+    }
+    snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, infile_basename, infile_extension);
+    files.push_back(infile_fullpath);
+
+    try {
+        do {
+            in_wrm_trans.next();
+            files.push_back(in_wrm_trans.path());
+        }
+        while (true);
+    }
+    catch (const Error & e) {
+        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+            throw;
+        }
+    };
+
+    std::cout << std::endl;
+    for (auto & s : iter(files.rbegin(), files.rend())) {
+        unlink(s.c_str());
+        std::cout << "Removed : " << s << std::endl;
+    }
+}
 
 inline
 static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose) {
@@ -639,9 +668,26 @@ int recompress_or_record( std::string const & input_filename, std::string & outp
 }
 
 
+inline int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
+{
+    infile_is_encrypted = false;
+    const int fd_test = open(input_filename, O_RDONLY);
+    if (fd_test != -1) {
+        uint32_t magic_test;
+        TODO("Not portable code endianess, use byte array instead")
+        ssize_t res_test = read(fd_test, &magic_test, sizeof(magic_test));
+        if ((res_test == sizeof(magic_test)) &&
+            (magic_test == WABCRYPTOFILE_MAGIC)) {
+            infile_is_encrypted = true;
+            std::cout << "Input file is encrypted.\n";
+        }
+        close(fd_test);
 
+        return 0;
+    }
 
-int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted);
+    return -1;
+}
 
 
 
@@ -947,70 +993,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
       , full_video
       , extract_meta_data);
 }
-
-
-inline
-int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
-{
-    infile_is_encrypted = false;
-    const int fd_test = open(input_filename, O_RDONLY);
-    if (fd_test != -1) {
-        uint32_t magic_test;
-        TODO("Not portable code endianess, use byte array instead")
-        ssize_t res_test = read(fd_test, &magic_test, sizeof(magic_test));
-        if ((res_test == sizeof(magic_test)) &&
-            (magic_test == WABCRYPTOFILE_MAGIC)) {
-            infile_is_encrypted = true;
-            std::cout << "Input file is encrypted.\n";
-        }
-        close(fd_test);
-
-        return 0;
-    }
-
-    return -1;
-}
-
-
-
-
-
-template<typename InWrmTrans>
-void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
-                , const char * infile_basename, const char * infile_extension, bool is_encrypted) {
-    std::vector<std::string> files;
-
-    char infile_fullpath[2048];
-    if (is_encrypted) {
-        snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, infile_basename, infile_extension);
-        files.push_back(infile_fullpath);
-    }
-    snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, infile_basename, infile_extension);
-    files.push_back(infile_fullpath);
-
-    try {
-        do {
-            in_wrm_trans.next();
-            files.push_back(in_wrm_trans.path());
-        }
-        while (true);
-    }
-    catch (const Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            throw;
-        }
-    };
-
-    std::cout << std::endl;
-    for (auto & s : iter(files.rbegin(), files.rend())) {
-        unlink(s.c_str());
-        std::cout << "Removed : " << s << std::endl;
-    }
-}
-
-
-
-
 
 
 #endif
