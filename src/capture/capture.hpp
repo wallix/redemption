@@ -36,7 +36,6 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/cache_api.hpp"
-#include "gdi/frame_marker_api.hpp"
 #include "gdi/server_set_pointer_api.hpp"
 #include "gdi/set_mod_palette_api.hpp"
 #include "gdi/flush_api.hpp"
@@ -94,15 +93,42 @@ private:
     const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
 
     struct NewGraphicDevice : gdi::GraphicApi {
+        NewGraphicDevice(Capture & cap) : cap(cap) {}
         std::vector<RDPGraphicDevice *> gds;
+        std::vector<gdi::CaptureApi*> snapshoters;
+        Capture & cap;
     };
 
     struct NewGraphicDeviceProxy {
         template<class... Ts>
-        void operator()(NewGraphicDevice & ngd, Ts && ... args) {
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(std::forward<Ts>(args)...);
+        void operator()(NewGraphicDevice & ngd, Ts const & ... args) {
+            this->dispatch(ngd, args...);
+        }
+
+        void operator()(NewGraphicDevice & ngd, RDP::FrameMarker const & cmd) {
+            this->dispatch(ngd, cmd);
+
+            if (cmd.action == RDP::FrameMarker::FrameEnd) {
+                for (gdi::CaptureApi * cap : ngd.snapshoters) {
+                    cap->snapshot(ngd.cap.last_now, ngd.cap.last_x, ngd.cap.last_y, false);
+                }
             }
+        }
+
+        template<class... Ts>
+        void dispatch(NewGraphicDevice & ngd, Ts const & ... args) {
+            for (RDPGraphicDevice * pgd : ngd.gds) {
+                this->adaptor(pgd, args...);
+            }
+        }
+
+        template<class... Ts>
+        void adaptor(RDPGraphicDevice * pgd, Ts const & ... args) {
+            pgd->draw(args...);
+        }
+
+        void adaptor(RDPGraphicDevice * pgd, const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
+            pgd->draw(cmd, clip, &gly_cache);
         }
     };
 
@@ -115,6 +141,7 @@ private:
         , cap(cap)
         {}
 
+        // TODO
         Capture & cap;
 
         template<class... Ts>
@@ -122,6 +149,7 @@ private:
             NewGraphicDeviceProxy()(ngd, std::forward<Ts>(args)...);
         }
 
+        // TODO
         void operator()(NewGraphicDevice & ngd, const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
             if (this->cap.capture_wrm) {
                 if (bmp.bpp() > this->cap.capture_bpp) {
@@ -164,116 +192,96 @@ private:
         void operator()(NewGraphicDevice & ngd, const RDPMultiOpaqueRect & cmd, const Rect & clip) {
             RDPMultiOpaqueRect capture_cmd = cmd;
             capture_cmd._Color = this->color(cmd._Color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
             RDP::RDPMultiPatBlt capture_cmd = cmd;
             capture_cmd.BackColor = this->color(cmd.BackColor);
             capture_cmd.ForeColor = this->color(cmd.ForeColor);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPPatBlt & cmd, const Rect &clip) {
             RDPPatBlt capture_cmd = cmd;
             capture_cmd.back_color = this->color(cmd.back_color);
             capture_cmd.fore_color = this->color(cmd.fore_color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
             RDPMem3Blt capture_cmd = cmd;
             capture_cmd.back_color = this->color(cmd.back_color);
             capture_cmd.fore_color = this->color(cmd.fore_color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip, bmp);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip, bmp);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPOpaqueRect & cmd, const Rect & clip) {
             RDPOpaqueRect capture_cmd = cmd;
             capture_cmd.color = this->color(cmd.color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPLineTo & cmd, const Rect & clip) {
             RDPLineTo capture_cmd = cmd;
             capture_cmd.back_color = this->color(cmd.back_color);
             capture_cmd.pen.color = this->color(cmd.pen.color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
             RDPGlyphIndex capture_cmd = cmd;
             capture_cmd.back_color = this->color(cmd.back_color);
             capture_cmd.fore_color = this->color(cmd.fore_color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip, &gly_cache);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip, gly_cache);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPPolygonSC & cmd, const Rect & clip) {
             RDPPolygonSC capture_cmd = cmd;
             capture_cmd.BrushColor = this->color(cmd.BrushColor);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPPolygonCB & cmd, const Rect & clip) {
             RDPPolygonCB capture_cmd = cmd;
             capture_cmd.foreColor = this->color(cmd.foreColor);
             capture_cmd.backColor = this->color(cmd.backColor);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPPolyline & cmd, const Rect & clip) {
             RDPPolyline capture_cmd = cmd;
             capture_cmd.PenColor = this->color(cmd.PenColor);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPEllipseSC & cmd, const Rect & clip) {
             RDPEllipseSC capture_cmd = cmd;
             capture_cmd.color = this->color(cmd.color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPEllipseCB & cmd, const Rect & clip) {
             RDPEllipseCB capture_cmd = cmd;
             capture_cmd.back_color = this->color(cmd.back_color);
             capture_cmd.fore_color = this->color(cmd.fore_color);
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(capture_cmd, clip);
-            }
+            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
         }
     };
 
     template<class Enc, class Dec>
     NewGraphicDevice * gd_enc_dec(Enc const & enc, Dec const & dec) {
         using EncoderProxy = NewGraphicDeviceEncoderProxy<Enc, Dec>;
-        return new gdi::GraphicDelegate<EncoderProxy, NewGraphicDevice>(enc, dec, *this);
+        return new gdi::GraphicDelegate<EncoderProxy, NewGraphicDevice>(
+            EncoderProxy{enc, dec, *this}, *this
+        );
     }
 
     template<class Enc>
     NewGraphicDevice * gd_enc_dec(Enc const &, Enc const &) {
-        return new gdi::GraphicDelegate<NewGraphicDeviceProxy, NewGraphicDevice>();
+        return new gdi::GraphicDelegate<NewGraphicDeviceProxy, NewGraphicDevice>(
+            NewGraphicDeviceProxy{}, *this
+        );
     }
 
     NewGraphicDevice * compile_color_enc_dec() {
@@ -342,26 +350,6 @@ private:
     };
 
     NewCache * cache_api = nullptr;
-
-    struct NewFrameMarker : gdi::FrameMarkerApi {
-        NewFrameMarker(Capture & cap) : cap(cap) {}
-
-        void marker(RDP::FrameMarker const & order) override {
-            if (this->cap.gd) {
-                this->cap.gd->draw(order);
-            }
-
-            if (order.action == RDP::FrameMarker::FrameEnd) {
-                if (this->cap.capture_png) {
-                    this->cap.psc->snapshot(this->cap.last_now, this->cap.last_x, this->cap.last_y, false);
-                }
-            }
-        }
-
-        Capture & cap;
-    };
-
-    NewFrameMarker * frame_marker_api = nullptr;
 
     struct NewSetPointer : gdi::ServerSetPointerApi {
         void server_set_pointer(const Pointer& cursor) override {
@@ -645,31 +633,29 @@ public:
                 );
         }
 
-        if (this->capture_wrm) {
-            this->gd = this->pnc;
-        }
-        else if (this->drawable) {
-            this->gd = this->drawable;
-        }
-
         this->session_update_api = new NewSessionUpdate;
         if (this->gd_api) {
-            this->gd_api->gds.push_back(this->gd);
-            if (this->pnc && this->pnc != this->gd) this->gd_api->gds.push_back(this->pnc);
-            if (this->drawable && this->drawable != this->gd) this->gd_api->gds.push_back(this->drawable);
-            this->cache_api = new NewCache(this->gd);
             this->set_pointer_api = new NewSetPointer;
-            this->set_pointer_api->gds.push_back(this->gd);
             this->set_palette_api = new NewSetModePalette;
-            this->set_palette_api->gds.push_back(this->drawable);
+            this->cache_api = new NewCache(this->gd);
             this->flush_api = new NewFlush;
             this->snapshot_api = new NewSnapshot(*this);
             this->external_event_api = new NewExternalEvent;
             if (this->pnc) {
+                this->gd_api->gds.push_back(this->pnc);
                 this->set_pointer_api->gds.push_back(this->pnc);
                 this->flush_api->gds.push_back(this->pnc);
                 this->session_update_api->cds.push_back(this->pnc);
                 this->external_event_api->cds.push_back(this->pnc);
+            }
+            if (this->psc) {
+                this->capture_api.caps.push_back(this->psc);
+                this->gd_api->snapshoters.push_back(this->psc);
+            }
+            if (this->drawable) {
+                this->gd_api->gds.push_back(this->drawable);
+                this->set_pointer_api->gds.push_back(this->drawable);
+                this->set_palette_api->gds.push_back(this->drawable);
             }
         }
         if (this->pkc) {
@@ -677,13 +663,8 @@ public:
             this->possible_active_window_change_api.cds.push_back(this->pkc);
             this->input_kbd_api.kbds.push_back(this->pkc);
         }
-
-        if (this->psc) {
-            this->capture_api.caps.push_back(this->psc);
-        }
         //if (this->pnc) this->update_config_api.gds.push_back(this->pnc);
 
-        this->frame_marker_api = new NewFrameMarker(*this);
         if (this->pnc && !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
             this->input_kbd_api.kbds.push_back(this->pnc);
         }
@@ -709,7 +690,6 @@ public:
 
         delete this->gd_api;
         delete this->cache_api;
-        delete this->frame_marker_api;
         delete this->set_pointer_api;
         delete this->set_palette_api;
         delete this->flush_api;
@@ -782,155 +762,157 @@ public:
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip, bmp);
         }
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip, bmp);
         }
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPBrushCache & cmd) override {
-        if (this->gd) {
+        if (this->cache_api) {
             this->cache_api->cache(cmd);
         }
     }
 
     void draw(const RDPColCache & cmd) override {
-        if (this->gd) {
+        if (this->cache_api) {
             this->cache_api->cache(cmd);
         }
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip, *gly_cache);
         }
     }
 
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(bitmap_data, bmp);
         }
     }
 
-    void draw(const RDP::FrameMarker & order) override {
-        this->frame_marker_api->marker(order);
+    void draw(const RDP::FrameMarker & cmd) override {
+        if (this->gd_api) {
+            this->gd_api->draw(cmd);
+        }
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd_api->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd->draw(order);
         }
     }
 
     void draw(const RDP::RAIL::WindowIcon & order) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd->draw(order);
         }
     }
 
     void draw(const RDP::RAIL::CachedIcon & order) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd->draw(order);
         }
     }
 
     void draw(const RDP::RAIL::DeletedWindow & order) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->gd->draw(order);
         }
     }
 
     void server_set_pointer(const Pointer & cursor) override {
-        if (this->gd) {
+        if (this->gd_api) {
             this->set_pointer_api->server_set_pointer(cursor);
         }
     }

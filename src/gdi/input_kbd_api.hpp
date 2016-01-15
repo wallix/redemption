@@ -32,7 +32,7 @@ struct InputKbdApi : private noncopyable
 {
     virtual ~InputKbdApi() = default;
 
-    virtual bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) = 0;
+    virtual bool input_kbd(const timeval & now, array_const_u8 const & input_data_32) = 0;
 };
 
 }

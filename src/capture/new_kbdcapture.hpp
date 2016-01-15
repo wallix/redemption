@@ -141,7 +141,7 @@ public:
     }
 
 public:
-    bool input_kbd(const timeval& now, const array_view< const uint8_t >& input_data_32) override {
+    bool input_kbd(const timeval& now, array_const_u8 const & input_data_32) override {
         return this->input(now, input_data_32.data(), input_data_32.size());
     }
 

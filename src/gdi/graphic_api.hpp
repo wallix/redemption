@@ -60,6 +60,7 @@ class GlyphCache;
 namespace RDP {
     class RDPMultiPatBlt;
     class RDPMultiScrBlt;
+    class FrameMarker;
 }
 
 
@@ -69,6 +70,7 @@ struct GraphicApi : private noncopyable
 {
     virtual ~GraphicApi() = default;
 
+    virtual void draw(RDP::FrameMarker    const & cmd) = 0;
     virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) = 0;
     virtual void draw(RDPPatBlt           const & cmd, Rect const & clip) = 0;
@@ -89,23 +91,6 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
 };
 
-using GraphicApiDeleterBase = utils::virtual_deleter_base<GraphicApi>;
-using GraphicApiPtr = utils::unique_ptr_with_virtual_deleter<GraphicApi>;
-
-using utils::default_delete;
-using utils::no_delete;
-
-template<class Gd, class... Args>
-GraphicApiPtr make_gd_ptr(Args && ... args) {
-    return GraphicApiPtr(new Gd(std::forward<Args>(args)...), default_delete);
-}
-
-template<class Gd>
-GraphicApiPtr make_gd_ref(Gd & gd) {
-    return GraphicApiPtr(&gd, no_delete);
-}
-
-
 struct GraphicProxy
 {
     template<class Api, class... Ts>
@@ -114,13 +99,12 @@ struct GraphicProxy
     }
 };
 
-
 template<class Proxy, class InterfaceBase = GraphicApi>
 struct GraphicDelegate : ProxyBase<Proxy, InterfaceBase>
 {
-    static_assert(std::is_base_of<GraphicApi, InterfaceBase>::value, "InterfaceBase isn't a GraphicApi");
-
     using ProxyBase<Proxy, InterfaceBase>::ProxyBase;
+
+    void draw(RDP::FrameMarker    const & cmd) override { this->prox()(*this, cmd); }
 
     void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }

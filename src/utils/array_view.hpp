@@ -137,4 +137,23 @@ template<std::size_t N>
 array_view<char> cstr_array_view(char (&str)[N])
 { return {str, N-1}; }
 
+
+using array_u8 = array_view<uint8_t>;
+using array_u16 = array_view<uint16_t>;
+using array_u32 = array_view<uint32_t>;
+using array_u64 = array_view<uint64_t>;
+using array_const_u8 = array_view<uint8_t const>;
+using array_const_u16 = array_view<uint16_t const>;
+using array_const_u32 = array_view<uint32_t const>;
+using array_const_u64 = array_view<uint64_t const>;
+
+using array_s8 = array_view<int8_t>;
+using array_s16 = array_view<int16_t>;
+using array_s32 = array_view<int32_t>;
+using array_s64 = array_view<int64_t>;
+using array_const_s8 = array_view<int8_t const>;
+using array_const_s16 = array_view<int16_t const>;
+using array_const_s32 = array_view<int32_t const>;
+using array_const_s64 = array_view<int64_t const>;
+
 #endif

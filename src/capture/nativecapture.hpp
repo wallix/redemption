@@ -26,6 +26,7 @@
 #include "difftimeval.hpp"
 #include "GraphicToFile.hpp"
 #include "gdi/input_kbd_api.hpp"
+#include "gdi/frame_marker_api.hpp"
 
 class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice, public gdi::InputKbdApi
 {
@@ -124,11 +125,12 @@ public:
         this->recorder.flush();
     }
 
-    bool input_kbd(const timeval& now, const array_view< const uint8_t >& input_data_32) override {
+    bool input_kbd(const timeval& now, array_const_u8 const & input_data_32) override {
         return this->input(now, input_data_32.data(), input_data_32.size());
     }
 
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
+        // TODO useless disable_keyboard_log_wrm (see capture::input_kbd::kbds)
         if (!this->disable_keyboard_log_wrm) {
             if (this->keyboard_input_mask_enabled) {
                 StaticOutStream<256> decoded_data;
