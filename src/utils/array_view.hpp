@@ -30,6 +30,10 @@ struct array_view
 
     constexpr array_view() = default;
 
+    constexpr array_view(std::nullptr_t)
+    : array_view(nullptr, 0)
+    {}
+
     constexpr array_view(type * p, std::size_t sz)
     : p(p)
     , sz(sz)
@@ -64,6 +68,10 @@ struct array_view<T const>
     using type = T const;
 
     constexpr array_view() = default;
+
+    constexpr array_view(std::nullptr_t)
+    : array_view(nullptr, 0)
+    {}
 
     constexpr array_view(type * p, std::size_t sz)
     : p(p)

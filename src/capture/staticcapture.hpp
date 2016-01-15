@@ -28,12 +28,14 @@
 #include "sequence_generator.hpp"
 #include "CaptureDevice.hpp"
 
+#include "gdi/capture_api.hpp"
+
 struct StaticCaptureConfig {
     uint64_t png_interval;
     unsigned png_limit = 3;
 };
 
-class StaticCapture : public ImageCapture, public RDPCaptureDevice {
+class StaticCapture : public ImageCapture, public gdi::CaptureApi {
 public:
     bool clear_png;
     SequenceGenerator const * seq;
@@ -107,12 +109,12 @@ public:
         }
     }
 
-    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
-                          bool const & requested_to_stop) override {
+    std::chrono::microseconds snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) override {
+        using std::chrono::microseconds;
         if (!this->rt_display) {
             this->time_to_wait = 0;
             this->start_static_capture = now;
-            return;
+            return microseconds{this->time_to_wait};
         }
         unsigned diff_time_val = static_cast<unsigned>(difftimeval(now, this->start_static_capture));
         if (diff_time_val >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
@@ -130,10 +132,18 @@ public:
                 }
                 // Wait 0,3 x inter_frame_interval_static_capture.
                 this->time_to_wait = this->inter_frame_interval_static_capture / 3;
-                return;
+                return microseconds{this->time_to_wait};
             }
         }
         this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
+        return microseconds{this->time_to_wait};
+    }
+
+    void pause_capture(timeval const & now) override {
+        this->pause_snapshot(now);
+    }
+
+    void resume_capture(timeval const &) override {
     }
 
 private:

@@ -21,8 +21,7 @@
 #ifndef REDEMPTION_GDI_PROXY_HPP
 #define REDEMPTION_GDI_PROXY_HPP
 
-#include "graphic_api.hpp"
-
+#include <utility>
 #include <type_traits>
 
 
@@ -59,6 +58,7 @@ struct ProxyBase : InterfaceBase, private Proxy
 
 protected:
     proxy_type & prox() noexcept { return static_cast<proxy_type&>(*this); }
+    InterfaceBase & base() noexcept { return static_cast<InterfaceBase&>(*this); }
 };
 
 

@@ -101,7 +101,7 @@ private:
         template<class... Ts>
         void operator()(NewGraphicDevice & ngd, Ts && ... args) {
             for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(args...);
+                pgd->draw(std::forward<Ts>(args)...);
             }
         }
     };
@@ -119,9 +119,7 @@ private:
 
         template<class... Ts>
         void operator()(NewGraphicDevice & ngd, Ts && ... args) {
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                pgd->draw(args...);
-            }
+            NewGraphicDeviceProxy()(ngd, std::forward<Ts>(args)...);
         }
 
         void operator()(NewGraphicDevice & ngd, const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
@@ -303,6 +301,35 @@ private:
 
     NewGraphicDevice * gd_api = nullptr;
 
+    struct NewCaptureDevice : gdi::CaptureApi {
+        std::vector<gdi::CaptureApi *> caps;
+    };
+
+    struct NewCaptureProxy {
+        template<class Tag, class... Ts>
+        void operator()(Tag tag, NewCaptureDevice & api, Ts && ... args) {
+            gdi::CaptureProxy prox;
+            for (gdi::CaptureApi * pcap : api.caps) {
+                prox(tag, *pcap, std::forward<Ts>(args)...);
+            }
+        }
+
+        template<class... Ts>
+        std::chrono::microseconds operator()(
+            gdi::CaptureProxy::snapshot_tag, NewCaptureDevice & api, Ts && ... args
+        ) {
+            std::chrono::microseconds ret;
+            for (gdi::CaptureApi * pcap : api.caps) {
+                ret = std::min(ret, pcap->snapshot(std::forward<Ts>(args)...));
+            }
+            return ret;
+        }
+    };
+
+    using NewCapture = gdi::CaptureDelegate<NewCaptureProxy, NewCaptureDevice>;
+
+    NewCapture capture_api;
+
     struct NewCache : gdi::CacheApi {
         NewCache(RDPGraphicDevice * gd) : gd(gd) {}
 
@@ -326,8 +353,7 @@ private:
 
             if (order.action == RDP::FrameMarker::FrameEnd) {
                 if (this->cap.capture_png) {
-                    bool requested_to_stop = false;
-                    this->cap.psc->snapshot(this->cap.last_now, this->cap.last_x, this->cap.last_y, false, requested_to_stop);
+                    this->cap.psc->snapshot(this->cap.last_now, this->cap.last_x, this->cap.last_y, false);
                 }
             }
         }
@@ -390,8 +416,8 @@ private:
             bool const requested_to_stop = false;
 
             if (cap.capture_png) {
-                cap.psc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
-                capture_event.update(cap.psc->time_to_wait);
+                auto time = cap.psc->snapshot(now, x, y, ignore_frame_in_timeval);
+                capture_event.update(time.count());
             }
             if (cap.capture_wrm) {
                 cap.pnc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
@@ -410,25 +436,18 @@ private:
     NewSnapshot * snapshot_api = nullptr;
 
     struct NewInputKbd : gdi::InputKbdApi {
-        NewInputKbd(NativeCapture * nc, NewKbdCapture * kc) : nc(nc), kc(kc) {}
-
-        bool input_kbd(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
-            if (this->nc) {
-                this->nc->input(now, input_data_32, data_sz);
+        bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
+            bool ret = true;
+            for (gdi::InputKbdApi * pkpd : this->kbds) {
+                ret &= pkpd->input_kbd(now, input_data_32);
             }
-
-            if (this->kc) {
-                this->kc->input(now, input_data_32, data_sz);
-            }
-
-            return true;
+            return ret;
         }
 
-        NativeCapture * nc;
-        NewKbdCapture * kc;
+        std::vector<gdi::InputKbdApi *> kbds;
     };
 
-    NewInputKbd * input_kbd_api = nullptr;
+    NewInputKbd input_kbd_api;
 
     struct NewSessionUpdate : gdi::SessionUpdateApi {
         void session_update(const timeval& now, const array_view< const char >& message) override {
@@ -656,18 +675,18 @@ public:
         if (this->pkc) {
             this->session_update_api->cds.push_back(this->pkc);
             this->possible_active_window_change_api.cds.push_back(this->pkc);
+            this->input_kbd_api.kbds.push_back(this->pkc);
         }
 
-        //if (this->psc) this->update_config_api.gds.push_back(this->psc);
+        if (this->psc) {
+            this->capture_api.caps.push_back(this->psc);
+        }
         //if (this->pnc) this->update_config_api.gds.push_back(this->pnc);
 
         this->frame_marker_api = new NewFrameMarker(*this);
-        this->input_kbd_api = new NewInputKbd(
-            this->pnc && !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)
-                ? this->pnc
-                : nullptr,
-            this->pkc
-        );
+        if (this->pnc && !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
+            this->input_kbd_api.kbds.push_back(this->pnc);
+        }
     }
 
     ~Capture() override {
@@ -695,7 +714,6 @@ public:
         delete this->set_palette_api;
         delete this->flush_api;
         delete this->snapshot_api;
-        delete this->input_kbd_api;
     }
 
     void request_full_cleaning()
@@ -706,7 +724,7 @@ public:
     void pause() {
         if (this->capture_png) {
             timeval now = tvtime();
-            this->psc->pause_snapshot(now);
+            this->capture_api.pause_capture(now);
         }
     }
 
@@ -716,6 +734,8 @@ public:
             timeval now = tvtime();
             this->pnc->recorder.timestamp(now);
             this->pnc->recorder.send_timestamp_chunk(true);
+
+            this->capture_api.resume_capture(now);
         }
     }
 
@@ -747,7 +767,7 @@ public:
     }
 
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
-        return this->input_kbd_api->input_kbd(now, input_data_32, data_sz);
+        return this->input_kbd_api.input_kbd(now, {input_data_32, data_sz});
     }
 
     // TODO is not virtual

@@ -26,9 +26,11 @@
 #include "stream.hpp"
 #include "cast.hpp"
 
+#include "gdi/input_kbd_api.hpp"
+
 #include <ctime>
 
-struct NewKbdCapture : public RDPCaptureDevice
+struct NewKbdCapture : public RDPCaptureDevice, public gdi::InputKbdApi
 {
 private:
     StaticOutStream<49152> unlogged_data;
@@ -139,6 +141,10 @@ public:
     }
 
 public:
+    bool input_kbd(const timeval& now, const array_view< const uint8_t >& input_data_32) override {
+        return this->input(now, input_data_32.data(), input_data_32.size());
+    }
+
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override
     {
         bool can_be_sent_to_server = true;

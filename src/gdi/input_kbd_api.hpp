@@ -23,7 +23,8 @@
 
 #include "utils/virtual_deleter.hpp"
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
+#include "utils/array_view.hpp"
 
 namespace gdi {
 
@@ -31,24 +32,8 @@ struct InputKbdApi : private noncopyable
 {
     virtual ~InputKbdApi() = default;
 
-    virtual bool input_kbd(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) = 0;
+    virtual bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) = 0;
 };
-
-using InputKbdApiDeleterBase = utils::virtual_deleter_base<InputKbdApi>;
-using InputKbdApiPtr = utils::unique_ptr_with_virtual_deleter<InputKbdApi>;
-
-using utils::default_delete;
-using utils::no_delete;
-
-template<class InputKbd, class... Args>
-InputKbdApiPtr make_input_kbd_ptr(Args && ... args) {
-    return InputKbdApiPtr(new InputKbd(std::forward<Args>(args)...), default_delete);
-}
-
-template<class InputKbd>
-InputKbdApiPtr make_input_kbd_ref(InputKbd & gd) {
-    return InputKbdApiPtr(&gd, no_delete);
-}
 
 }
 
