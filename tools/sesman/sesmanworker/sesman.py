@@ -44,7 +44,7 @@ import engine
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
-from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
+from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE
 from engine import TargetContext
 from engine import parse_auth
 
@@ -1197,11 +1197,12 @@ class Sesman():
 
                         session_probe_section = conn_opts.get('session_probe')
                         if session_probe_section is not None:
-                            connectionpolicy_kv[u'session_probe']                     = session_probe_section.get('enable_session_probe')
-                            connectionpolicy_kv[u'enable_session_probe_loading_mask'] = session_probe_section.get('enable_loading_mask')
-                            connectionpolicy_kv[u'session_probe_on_launch_failure']   = session_probe_section.get('on_launch_failure')
-                            connectionpolicy_kv[u'session_probe_launch_timeout']      = session_probe_section.get('launch_timeout')
-                            connectionpolicy_kv[u'session_probe_keepalive_timeout']   = session_probe_section.get('keepalive_timeout')
+                            connectionpolicy_kv[u'session_probe']                         = session_probe_section.get('enable_session_probe')
+                            connectionpolicy_kv[u'enable_session_probe_loading_mask']     = session_probe_section.get('enable_loading_mask')
+                            connectionpolicy_kv[u'session_probe_on_launch_failure']       = session_probe_section.get('on_launch_failure')
+                            connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')
+                            connectionpolicy_kv[u'session_probe_launch_fallback_timeout'] = session_probe_section.get('launch_fallback_timeout')
+                            connectionpolicy_kv[u'session_probe_keepalive_timeout']       = session_probe_section.get('keepalive_timeout')
 
                             connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
 
@@ -1275,8 +1276,7 @@ class Sesman():
                             target_passwords = self.engine.get_target_passwords(physical_target)
                             target_password = u'\x01'.join(target_passwords)
 
-                        if (not target_password and
-                            PASSWORD_MAPPING in auth_policy_methods):
+                        if not target_password:
                             target_password = \
                                 self.engine.get_primary_password(physical_target) or ''
 
