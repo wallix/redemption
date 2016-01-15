@@ -215,6 +215,17 @@ class CryptoContext {
         return 0;
     }
 
+    int get_crypto_key_from_ini_derivated_hmac()
+    {
+        memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
+        this->crypto_key_loaded = true;
+        const unsigned char HASH_DERIVATOR[] = {
+             0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
+        };                
+        this->compute_hmac(this->hmac_key, HASH_DERIVATOR);
+        return 0;
+    }
+
     void set_crypto_key(const char * key)
     {
         memcpy(this->crypto_key, key, sizeof(this->crypto_key));
@@ -241,6 +252,9 @@ class CryptoContext {
             break;
             case 1:
                 this->get_crypto_key_from_ini();
+            break;
+            case 2:
+                this->get_crypto_key_from_ini_derivated_hmac();
             break;
             default:
             {

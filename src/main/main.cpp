@@ -30,10 +30,19 @@
 
 #include "write_python_spec.hpp"
 
+#include "transport/cryptofile.hpp"
+
 namespace po = program_options;
 
 int main(int argc, char** argv)
 {
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+    Inifile ini;
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
+
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini, 1);
+
     return app_proxy(
         argc, argv
       , "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
@@ -41,6 +50,7 @@ int main(int argc, char** argv)
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."
+      , cctx
       , extra_option_list{{"print-config-spec", "Configuration file spec for rdpproxy.ini"}}
       , [argv](po::variables_map const & options, bool * quit) {
             if (options.count("print-config-spec")) {
