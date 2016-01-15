@@ -36,6 +36,7 @@ struct ModRDPParams {
     const char * client_address;
 
     const char * auth_user;
+    const char * target_application;
 
     const char * client_name;
 
@@ -136,6 +137,7 @@ struct ModRDPParams {
         , client_address(client_address)
 
         , auth_user("")
+        , target_application("")
 
         , client_name(nullptr)
 
@@ -241,6 +243,8 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams auth_user=\"%s\"",                       (this->auth_user ? this->auth_user : "<null>"));
+        LOG(LOG_INFO,
+            "ModRDPParams target_application=\"%s\"",              (this->target_application ? this->target_application : "<null>"));
 
         LOG(LOG_INFO,
             "ModRDPParams client_name=\"%s\"",                     (this->client_name ? this->client_name : "<null>"));
