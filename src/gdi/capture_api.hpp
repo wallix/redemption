@@ -95,11 +95,11 @@ struct CaptureProxy
 };
 
 template<class Proxy, class InterfaceBase = CaptureApi>
-struct CaptureDelegate : ProxyBase<Proxy, InterfaceBase>
+struct CaptureAdaptor : AdaptorBase<Proxy, InterfaceBase>
 {
     static_assert(std::is_base_of<CaptureApi, InterfaceBase>::value, "InterfaceBase isn't a CaptureApi");
 
-    using ProxyBase<Proxy, InterfaceBase>::ProxyBase;
+    using AdaptorBase<Proxy, InterfaceBase>::AdaptorBase;
 
     std::chrono::microseconds snapshot(
         timeval const & now,
@@ -107,21 +107,21 @@ struct CaptureDelegate : ProxyBase<Proxy, InterfaceBase>
         bool ignore_frame_in_timeval
     ) override {
         return this->prox()(
-            CaptureProxy::snapshot_tag{}, this->base(),
+            CaptureProxy::snapshot_tag{}, *this,
             now, cursor_x, cursor_y, ignore_frame_in_timeval
         );
     }
 
     void update_config(Inifile const & ini) {
-        this->prox()(CaptureProxy::update_config_tag{}, this->base(), ini);
+        this->prox()(CaptureProxy::update_config_tag{}, *this, ini);
     }
 
     void pause_capture (timeval const & now) {
-        this->prox()(CaptureProxy::pause_capture_tag{}, this->base(), now);
+        this->prox()(CaptureProxy::pause_capture_tag{}, *this, now);
     }
 
     void resume_capture(timeval const & now) {
-        this->prox()(CaptureProxy::resume_capture_tag{}, this->base(), now);
+        this->prox()(CaptureProxy::resume_capture_tag{}, *this, now);
     }
 };
 

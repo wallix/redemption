@@ -26,7 +26,6 @@
 #include "difftimeval.hpp"
 #include "GraphicToFile.hpp"
 #include "gdi/input_kbd_api.hpp"
-#include "gdi/frame_marker_api.hpp"
 
 class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice, public gdi::InputKbdApi
 {

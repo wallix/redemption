@@ -36,8 +36,6 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/cache_api.hpp"
-#include "gdi/server_set_pointer_api.hpp"
-#include "gdi/set_mod_palette_api.hpp"
 #include "gdi/flush_api.hpp"
 #include "gdi/snapshot_api.hpp"
 #include "gdi/input_kbd_api.hpp"
@@ -118,17 +116,25 @@ private:
         template<class... Ts>
         void dispatch(NewGraphicDevice & ngd, Ts const & ... args) {
             for (RDPGraphicDevice * pgd : ngd.gds) {
-                this->adaptor(pgd, args...);
+                this->adapt(pgd, args...);
             }
         }
 
         template<class... Ts>
-        void adaptor(RDPGraphicDevice * pgd, Ts const & ... args) {
+        void adapt(RDPGraphicDevice * pgd, Ts const & ... args) {
             pgd->draw(args...);
         }
 
-        void adaptor(RDPGraphicDevice * pgd, const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
+        void adapt(RDPGraphicDevice * pgd, const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
             pgd->draw(cmd, clip, &gly_cache);
+        }
+
+        void adapt(RDPGraphicDevice * pgd, BGRPalette const & palette) {
+            pgd->set_mod_palette(palette);
+        }
+
+        void adapt(RDPGraphicDevice * pgd, Pointer const & pointer) {
+            pgd->server_set_pointer(pointer);
         }
     };
 
@@ -272,14 +278,14 @@ private:
     template<class Enc, class Dec>
     NewGraphicDevice * gd_enc_dec(Enc const & enc, Dec const & dec) {
         using EncoderProxy = NewGraphicDeviceEncoderProxy<Enc, Dec>;
-        return new gdi::GraphicDelegate<EncoderProxy, NewGraphicDevice>(
+        return new gdi::GraphicAdaptor<EncoderProxy, NewGraphicDevice>(
             EncoderProxy{enc, dec, *this}, *this
         );
     }
 
     template<class Enc>
     NewGraphicDevice * gd_enc_dec(Enc const &, Enc const &) {
-        return new gdi::GraphicDelegate<NewGraphicDeviceProxy, NewGraphicDevice>(
+        return new gdi::GraphicAdaptor<NewGraphicDeviceProxy, NewGraphicDevice>(
             NewGraphicDeviceProxy{}, *this
         );
     }
@@ -334,7 +340,7 @@ private:
         }
     };
 
-    using NewCapture = gdi::CaptureDelegate<NewCaptureProxy, NewCaptureDevice>;
+    using NewCapture = gdi::CaptureAdaptor<NewCaptureProxy, NewCaptureDevice>;
 
     NewCapture capture_api;
 
@@ -350,30 +356,6 @@ private:
     };
 
     NewCache * cache_api = nullptr;
-
-    struct NewSetPointer : gdi::ServerSetPointerApi {
-        void server_set_pointer(const Pointer& cursor) override {
-            for (RDPGraphicDevice * pgd : gds) {
-                pgd->server_set_pointer(cursor);
-            }
-        }
-
-        std::vector<RDPGraphicDevice *> gds;
-    };
-
-    NewSetPointer * set_pointer_api = nullptr;
-
-    struct NewSetModePalette : gdi::SetModPaletteApi {
-        void set_mod_palette(const BGRPalette& palette) override {
-            for (RDPGraphicDevice * pgd : gds) {
-                pgd->set_mod_palette(palette);
-            }
-        }
-
-        std::vector<RDPGraphicDevice *> gds;
-    };
-
-    NewSetModePalette * set_palette_api = nullptr;
 
     struct NewFlush : gdi::FlushApi {
         void flush() override {
@@ -635,15 +617,12 @@ public:
 
         this->session_update_api = new NewSessionUpdate;
         if (this->gd_api) {
-            this->set_pointer_api = new NewSetPointer;
-            this->set_palette_api = new NewSetModePalette;
             this->cache_api = new NewCache(this->gd);
             this->flush_api = new NewFlush;
             this->snapshot_api = new NewSnapshot(*this);
             this->external_event_api = new NewExternalEvent;
             if (this->pnc) {
                 this->gd_api->gds.push_back(this->pnc);
-                this->set_pointer_api->gds.push_back(this->pnc);
                 this->flush_api->gds.push_back(this->pnc);
                 this->session_update_api->cds.push_back(this->pnc);
                 this->external_event_api->cds.push_back(this->pnc);
@@ -654,8 +633,6 @@ public:
             }
             if (this->drawable) {
                 this->gd_api->gds.push_back(this->drawable);
-                this->set_pointer_api->gds.push_back(this->drawable);
-                this->set_palette_api->gds.push_back(this->drawable);
             }
         }
         if (this->pkc) {
@@ -690,8 +667,6 @@ public:
 
         delete this->gd_api;
         delete this->cache_api;
-        delete this->set_pointer_api;
-        delete this->set_palette_api;
         delete this->flush_api;
         delete this->snapshot_api;
     }
@@ -913,13 +888,13 @@ public:
 
     void server_set_pointer(const Pointer & cursor) override {
         if (this->gd_api) {
-            this->set_pointer_api->server_set_pointer(cursor);
+            this->gd_api->draw(cursor);
         }
     }
 
     void set_mod_palette(const BGRPalette & palette) override {
         if (this->drawable) {
-            this->set_palette_api->set_mod_palette(palette);
+            this->gd_api->draw(palette);
         }
     }
 

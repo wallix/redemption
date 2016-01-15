@@ -71,11 +71,11 @@ struct CacheProxy
 
 
 template<class Proxy, class InterfaceBase = CacheApi>
-struct CacheDelegate : ProxyBase<Proxy, InterfaceBase>
+struct CacheDelegate : AdaptorBase<Proxy, InterfaceBase>
 {
     static_assert(std::is_base_of<CacheApi, InterfaceBase>::value, "InterfaceBase isn't a CacheApi");
 
-    using ProxyBase<Proxy, InterfaceBase>::ProxyBase;
+    using AdaptorBase<Proxy, InterfaceBase>::AdaptorBase;
 
     void cache(RDPColCache   const & cmd) override { this->prox()(*this, cmd); }
     void cache(RDPBrushCache const & cmd) override { this->prox()(*this, cmd); }

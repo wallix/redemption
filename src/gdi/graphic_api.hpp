@@ -70,7 +70,9 @@ struct GraphicApi : private noncopyable
 {
     virtual ~GraphicApi() = default;
 
-    virtual void draw(RDP::FrameMarker    const & cmd) = 0;
+    virtual void draw(RDP::FrameMarker    const & order) = 0;
+    virtual void draw(Pointer             const & cursor) = 0;
+    virtual void draw(BGRPalette          const & palette) = 0;
     virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) = 0;
     virtual void draw(RDPPatBlt           const & cmd, Rect const & clip) = 0;
@@ -100,11 +102,15 @@ struct GraphicProxy
 };
 
 template<class Proxy, class InterfaceBase = GraphicApi>
-struct GraphicDelegate : ProxyBase<Proxy, InterfaceBase>
+struct GraphicAdaptor : AdaptorBase<Proxy, InterfaceBase>
 {
-    using ProxyBase<Proxy, InterfaceBase>::ProxyBase;
+    static_assert(std::is_base_of<GraphicApi, InterfaceBase>::value, "InterfaceBase isn't a GraphicApi");
 
-    void draw(RDP::FrameMarker    const & cmd) override { this->prox()(*this, cmd); }
+    using AdaptorBase<Proxy, InterfaceBase>::AdaptorBase;
+
+    void draw(RDP::FrameMarker    const & order) override { this->prox()(*this, order); }
+    void draw(Pointer             const & cursor) override { this->prox()(*this, cursor); }
+    void draw(BGRPalette          const & palette) override { this->prox()(*this, palette); }
 
     void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
