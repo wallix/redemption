@@ -59,7 +59,6 @@
 #include "RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "client_info.hpp"
-#include "callback.hpp"
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
 #include <QtGui/QWidget>
@@ -76,66 +75,92 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QLineEdit>
 #include <QtGui/QFormLayout>
-#include <QtGui/QDockWidget>
 #include <QtCore/QDebug>
 
 
-class SocketTransport;
+class Form_Qt;
+class Screen_Qt;
+class Connector_Qt;
 
 
-
-class Front_Qt : public QWidget, public FrontAPI
+class Front_Qt_API : public FrontAPI
 {
+public:
+    uint32_t          verbose;
+    ClientInfo  info;
+    std::string       _userName;     //     = "QA\\administrateur";
+    std::string       _pwd;          //     = "S3cur3!1nux";
+    std::string       _targetIP;     //     = "10.10.46.88";
+    int               _port;         //     = 3389; 
+    std::string       _localIP;
+    int               _nbTry;
+    int               _retryDelay;
+    mod_api         * _callback;
     
-Q_OBJECT 
+    
+    Front_Qt_API( bool param1
+                , bool param2
+                , int verb)
+    : FrontAPI(param1, param2)
+    , verbose(verb)
+    , info()
+    , _port(0)
+    , _callback(nullptr)
+    {}
+    
+    virtual void connexionPressed() = 0;
+    virtual void connexionRelease() = 0;
+    virtual void closeFromForm() = 0;
+    virtual void closeFromScreen() = 0;
+    virtual void RefreshPressed() = 0;
+    virtual void RefreshReleased() = 0;
+    virtual void CtrlAltDelPressed() = 0;
+    virtual void CtrlAltDelReleased() = 0;
+    virtual void disconnexionPressed() = 0;
+    virtual void disconnexionRelease() = 0;
+    virtual void mousePressEvent(QMouseEvent *e) = 0;
+    virtual void mouseReleaseEvent(QMouseEvent *e) = 0;
+    virtual void keyPressEvent(QKeyEvent *e) = 0;
+    virtual void keyReleaseEvent(QKeyEvent *e) = 0;
+    virtual void wheelEvent(QWheelEvent *e) = 0;
+    virtual bool eventFilter(QObject *obj, QEvent *e) = 0;
+    virtual void call_Draw() = 0;
+    virtual void disconnect() = 0;
+    
+    void initButton(QPushButton & button, const char * str, QRect & rect) {
+        button.setToolTip(QString(str));
+        button.setGeometry(rect);
+        button.setCursor(Qt::PointingHandCursor);
+        button.setFocusPolicy(Qt::NoFocus);
+    }
+};
+
+
+
+class Front_Qt : public Front_Qt_API
+{    
     
 public:
-    uint32_t                    verbose;
-    ClientInfo                  info;
     CHANNELS::ChannelDefArray   cl;
     
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
-    QLabel               _label;
-    QPicture             _picture;
-    QPen                 _pen;
-    QPainter             _painter;
-    QWidget              _form;
-    QLabel               _userNameLabel;           
-    QLabel               _IPLabel;  
-    QLabel               _PWDLabel;  
-    QLabel               _portLabel;
-    QFormLayout          _formLayout;
+    Form_Qt            * _form;
+    Screen_Qt          * _screen;
     
     // Connexion socket members
-    QSocketNotifier    * _sckRead;
-    mod_api            * _callback;
-    SocketTransport    * _sck;
-    std::string          _userName;        //         = "QA\\administrateur";
-    std::string          _pwd;        //          = "S3cur3!1nux";
-    std::string          _targetIP;        //     = "10.10.46.88";
-    int                  _port;         //        = 3389; 
-    std::string          _localIPtmp2;
-    int                  _nbTry;
-    int                  _retryDelay;
     
-    // Controllers members
+    Connector_Qt       * _connector;
+    int                  _timer;
+
+    
+    // Keyboard Controllers members
     Keymap2              _keymap;
     bool                 _ctrl_alt_delete; // currently not used and always false
     StaticOutStream<256> _decoded_data;    // currently not initialised
     uint8_t              _keyboardMods;    
-    int                  _timer;
-    QPushButton          _buttonCtrlAltDel;
-    QPushButton          _buttonRefresh;
-    QPushButton          _buttonConnexion;
-    QPushButton          _buttonDisconnexion;
-    QLineEdit            _userNameField;
-    QLineEdit            _IPField;
-    QLineEdit            _PWDField;
-    QLineEdit            _portField;
     Qt_ScanCode_KeyMap   _qtRDPKeymap;
-    int                  _mouseFlag;
     
     
     enum {
@@ -146,6 +171,10 @@ public:
       , PORT_GOTTEN   = 8
     };
     
+    enum {
+        REVERSE       = 0x80000000
+    };
+    
     
     QColor u32_to_qcolor(uint32_t color){
         uint8_t b(color >> 16);
@@ -154,21 +183,9 @@ public:
         return {r, g, b};
     }
     
-    void reInitView() {
-        this->_painter.begin(&(this->_picture));
-        this->_painter.fillRect(0, 0, this->info.width, this->info.height, QColor(0, 0, 0, 0));
-    }
+    void reInitView();
     
-    virtual void flush() override {
-        if (this->verbose > 10) {
-             LOG(LOG_INFO, "--------- FRONT ------------------------");
-             LOG(LOG_INFO, "flush()");
-             LOG(LOG_INFO, "========================================\n");
-        }
-        this->_painter.end();
-        this->_label.setPicture(this->_picture);
-        this->show();
-    }
+    virtual void flush() override;
     
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
 
@@ -242,21 +259,7 @@ public:
     //      DRAWING FUNCTIONS 
     //------------------------------
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        //std::cout << "RDPOpaqueRect" << std::endl;
-
-        RDPOpaqueRect new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
-        
-        Rect rect(new_cmd24.rect.intersect(clip));
-        this->_painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
-    }
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
@@ -353,24 +356,7 @@ public:
         std::cout << "RDPMem3Blt" << std::endl;
     }
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "RDPLineTo" << std::endl;
-        
-        RDPLineTo new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.pen.color  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette);
-
-        
-        // TO DO clipping
-        this->_pen.setBrush(this->u32_to_qcolor(new_cmd24.back_color));
-        this->_painter.drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
-    }
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->verbose > 10) {
@@ -515,55 +501,7 @@ public:
     
     
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            bitmap_data.log(LOG_INFO, "FakeFront");
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        //std::cout << "RDPBitmapData" << std::endl;
-        if (!bmp.is_valid()){
-            return;
-        }
-
-        const QRect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top, 
-                             (bitmap_data.dest_right - bitmap_data.dest_left + 1), 
-                             (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
-        const QRect clipRect(0, 0, this->info.width, this->info.height);
-        const QRect rect = rectBmp.intersected(clipRect);
-            
-        const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->info.width - rect.x(), rect.width()));
-        const int16_t mincy = 1;
-
-        if (mincx <= 0 || mincy <= 0) {
-            return;
-        }        
-        
-        int rowYCoord(rect.y() + rect.height()-1);
-        int rowsize(bmp.line_size()); //Bpp
-      
-        const unsigned char * row = bmp.data();
-        
-        QImage::Format format(QImage::Format_RGB16); //bpp
-        switch (bmp.bpp()) {
-            case 15: format = QImage::Format_RGB555; break;
-            case 16: format = QImage::Format_RGB16;  break;
-            case 24: format = QImage::Format_RGB888; break;
-            case 32: format = QImage::Format_RGB32;  break;
-            default : break;
-        }
-        
-        for (size_t k = 0 ; k < bitmap_data.height; k++) {
-            
-            QImage qbitmap((row), mincx, mincy, format);
-            const QRect trect(rect.x(), rowYCoord, mincx, mincy);
-            this->_painter.drawImage(trect, qbitmap);
-
-            row += rowsize;
-            rowYCoord--;
-        }
-    }
+        size_t size, const Bitmap & bmp) override;
     
     
     
@@ -604,7 +542,10 @@ public:
     //SSL_library_init();
     
 
-    ~Front_Qt();
+    ~Front_Qt() {    
+        this->closeFromForm();
+        this->closeFromScreen();
+    }
     
     
     
@@ -623,9 +564,8 @@ public:
                 case 4: flag = MOUSE_FLAG_BUTTON4; break;
                 default: break; 
             }
-            std::cout << "mousePressed" << std::endl;
-            this->_mouseFlag = MOUSE_FLAG_DOWN;
-            this->_callback->rdp_input_mouse(flag | this->_mouseFlag, e->x(), e->y(), &(this->_keymap));
+            //std::cout << "mousePressed" << std::endl;
+            this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &(this->_keymap));
         } 
     }
     
@@ -638,8 +578,7 @@ public:
                 case 4: flag = MOUSE_FLAG_BUTTON4; break; 
                 default: break;
             }
-            std::cout << "mouseRelease" << std::endl;
-            this->_mouseFlag = 0;
+            //std::cout << "mouseRelease" << std::endl;
             this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
         }
     }
@@ -672,14 +611,17 @@ public:
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
             //std::cout << "MouseMove " <<  mouseEvent->x() << " " <<  mouseEvent->y()<< std::endl;
             if (this->_callback != nullptr) {
-                this->_callback->rdp_input_mouse((MOUSE_FLAG_MOVE | this->_mouseFlag), mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
+                this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
             }
         }
         return false;
     }
     
+    void connexionPressed() {}
     
-public Q_SLOTS:
+    void connexionRelease();
+    
+
     void RefreshPressed() {
         this->refresh();
     }
@@ -704,41 +646,8 @@ public Q_SLOTS:
     
     void disconnexionPressed() {}
     
-    void disconnexionRelease(){
-        this->setCursor(Qt::WaitCursor);
-        this->disconnect();
-    }
-    
-    void connexionPressed() {}
-    
-    void connexionRelease(){
-        this->setCursor(Qt::WaitCursor);
-        this->_userName = this->_userNameField.text().toStdString();
-        this->_pwd      = this->_PWDField.text().toStdString();
-        this->_targetIP = this->_IPField.text().toStdString();
-        this->_port     = this->_portField.text().toInt();
-        this->connect();
-    }
-    
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
-    //--------------------------------
-    //    SOCKET EVENTS FUNCTIONS
-    //--------------------------------
-       
-    void call_Draw() {
-        if (this->_callback != nullptr) {
-            this->reInitView();
-            this->_callback->draw_event(time(nullptr));
-            this->flush();
-        }
-    }
-    
-    
-public:
+    void disconnexionRelease();
+ 
     void refresh() {
         Rect rect(0, 0, this->info.width, this->info.height);
         this->_callback->rdp_input_invalidate(rect);
@@ -754,8 +663,32 @@ public:
     void connect();
     
     void disconnect();
+    
+    void closeFromScreen();
+
+    void closeFromForm();
+    
+    
+    
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+    //--------------------------------
+    //    SOCKET EVENTS FUNCTIONS
+    //--------------------------------
+    
+    void call_Draw() {
+        if (this->_callback != nullptr) {
+            this->reInitView();
+            this->_callback->draw_event(time(nullptr));
+            this->flush();
+        }
+    }
+    
 
 };
+
+
   
 
 #endif

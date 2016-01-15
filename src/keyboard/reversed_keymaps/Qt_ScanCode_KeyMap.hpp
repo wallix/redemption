@@ -114,7 +114,6 @@ private:
         , MIN_DEAD_QT_KEY_VALUE     = 0x01001249
         , MAX_DEAD_QT_KEY_VALUE     = 0x01001263
         , MASK_ALT                  = 0x0F 
-        , REVERSED                  = 0x80000000
     };
     
     enum {
@@ -427,7 +426,7 @@ private:
             //case Qt::Key_Dead_Cedilla          : this->scanCode = '¸'; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Ogonek           : this->scanCode = '˛'; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Iota             : this->scanCode = 'ι'; this->_deadKeys = true; break;
-            //ase Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
+            //Case Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Semivoiced_Sound : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Belowdot         : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Hook             : this->scanCode = ' ̡'; this->_deadKeys = true; break;
@@ -526,17 +525,7 @@ public:
     
     
     ~Qt_ScanCode_KeyMap() {}
-    
-    
-    static int reverse_map(int LCID) {
-        if (LCID < REVERSED) {
-            return LCID + REVERSED;
-        } else {
-            return LCID - REVERSED;
-        }
-    }
-    
-    
+
     void setLayoutLanguage(int LCID) {
         bool found = false;
         for (uint8_t i = 0 ; i < sizeof(keylayoutsList)/sizeof(keylayoutsList[0]); i++) {

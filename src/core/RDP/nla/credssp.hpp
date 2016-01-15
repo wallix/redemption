@@ -69,13 +69,13 @@
 
 namespace CredSSP {
 
-    int sizeof_nego_token(int length) {
+    inline int sizeof_nego_token(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
 
-    int sizeof_nego_tokens(int length) {
+    inline int sizeof_nego_tokens(int length) {
         length = sizeof_nego_token(length);
         length += BER::sizeof_sequence_tag(length);
         length += BER::sizeof_sequence_tag(length);
@@ -83,13 +83,13 @@ namespace CredSSP {
         return length;
     }
 
-    int sizeof_pub_key_auth(int length) {
+    inline int sizeof_pub_key_auth(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
 
-    int sizeof_auth_info(int length) {
+    inline int sizeof_auth_info(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
         return length;

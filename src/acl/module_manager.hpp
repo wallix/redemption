@@ -819,9 +819,9 @@ public:
 
                 // BEGIN READ PROXY_OPT
                 if (!this->ini.get<cfg::globals::disable_proxy_opt>()) {
-                    update_authorized_channels(this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
-                                               this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
-                                               this->ini.get<cfg::context::proxy_opt>());
+                    AuthorizationChannels::update_authorized_channels(this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
+                                                                      this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
+                                                                      this->ini.get<cfg::context::proxy_opt>());
                 }
                 // END READ PROXY_OPT
 

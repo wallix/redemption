@@ -26,18 +26,19 @@
 
 // TODO: constants below are still globals, 
 // better to move them in the scope of functions/objects using them
-
-const char* NTLM_PACKAGE_NAME = "NTLM";
-const char Ntlm_Name[] = "NTLM";
-const char Ntlm_Comment[] = "NTLM Security Package";
-const SecPkgInfo NTLM_SecPkgInfo = {
-    0x00082B37,             // fCapabilities
-    1,                      // wVersion
-    0x000A,                 // wRPCID
-    0x00000B48,             // cbMaxToken
-    Ntlm_Name,              // Name
-    Ntlm_Comment            // Comment
-};
+namespace {
+    const char* NTLM_PACKAGE_NAME = "NTLM";
+    const char Ntlm_Name[] = "NTLM";
+    const char Ntlm_Comment[] = "NTLM Security Package";
+    const SecPkgInfo NTLM_SecPkgInfo = {
+        0x00082B37,             // fCapabilities
+        1,                      // wVersion
+        0x000A,                 // wRPCID
+        0x00000B48,             // cbMaxToken
+        Ntlm_Name,              // Name
+        Ntlm_Comment            // Comment
+    };
+}
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
