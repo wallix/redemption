@@ -40,19 +40,14 @@ long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]
 BOOST_AUTO_TEST_CASE(TestOSumBuf)
 {
     Inifile ini;
-//     ini.set_value("crypto", "key0",
-//                   "\x00\x01\x02\x03\x04\x05\x06\x07"
-//                   "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-//                   "\x10\x11\x12\x13\x14\x15\x16\x17"
-//                   "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-//     );
-//     ini.set_value("crypto", "key1", "12345678901234567890123456789012");
 
-    memcpy(&ini.get_ref<cfg::crypto::key1>()[0], "12345678901234567890123456789012", 32);
-
-//     ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
-
-//    hexdump_c(ini.get<cfg::crypto::key1>(), 32);
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
 
     LCGRandom rnd(0);
     CryptoContext cctx(rnd, ini, 1);
