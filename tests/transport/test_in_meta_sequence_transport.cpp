@@ -33,7 +33,7 @@
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
     // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport wrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2sum)
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
     // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport wrm_trans("./tests/fixtures/sample_v2", ".mwrm");
+    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample_v2", ".mwrm");
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 
     // This is what we are actually testing, chaining of several files content
     try {
-        InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InMetaSequenceTransport mwrm_trans("./tests/fixtures/moved_sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/moved_sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans("./tests/fixtures/moved_sample", ".mwrm");
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/moved_sample", ".mwrm");
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 

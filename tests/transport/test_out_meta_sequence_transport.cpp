@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
+        OutMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
