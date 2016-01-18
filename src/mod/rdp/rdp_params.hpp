@@ -115,8 +115,6 @@ struct ModRDPParams {
 
     bool bogus_sc_net_size;
 
-    unsigned client_device_announce_timeout;
-
     const char * proxy_managed_drives;
 
     Translation::language_t lang;
@@ -215,8 +213,6 @@ struct ModRDPParams {
         , server_redirection_support(false)
 
         , bogus_sc_net_size(true)
-
-        , client_device_announce_timeout(1000)
 
         , proxy_managed_drives("")
 
@@ -380,9 +376,6 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
-
-        LOG(LOG_INFO,
-            "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
 
         LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
 

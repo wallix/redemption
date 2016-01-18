@@ -299,8 +299,6 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, str_authid{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
-        W.member(A, type_<unsigned>(), "client_device_announce_timeout", set(1000), r);
-        W.sep();
         W.member(A, type_<StringList>(), "proxy_managed_drives", r);
         W.sep();
         W.member(H, type_<bool>(), "ignore_auth_channel", set(false), r);
