@@ -137,7 +137,6 @@ public:
             TRANSLATIONCONF.set_ini(&ini);
 
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.get<cfg::debug::front>());
-            wait_obj front_event;
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
 
@@ -145,8 +144,11 @@ public:
 
             const bool mem3blt_support = true;
 
+            time_t now = time(nullptr);
+
             this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
-                                   , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
+                                   , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support
+                                   , now);
 
             ModuleManager mm(*this->front, this->ini, this->gen);
             BackEvent_t signal = BACK_EVENT_NONE;
@@ -182,7 +184,7 @@ public:
                 FD_ZERO(&wfds);
                 timeval timeout = time_mark;
 
-                add_to_fd_set(front_event, &front_trans, rfds, max, timeout);
+                add_to_fd_set(this->front->get_event(), &front_trans, rfds, max, timeout);
                 if (this->front->capture) {
                     add_to_fd_set(this->front->capture->capture_event, nullptr, rfds, max, timeout);
                 }
@@ -222,16 +224,17 @@ public:
                     continue;
                 }
 
-                time_t now = time(nullptr);
+                now = time(nullptr);
                 if (this->ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now);
                 }
 
-                if (is_set(front_event, &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.allocated_ssl))) {
+                if (is_set(this->front->get_event(), &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.allocated_ssl))) {
                     try {
-                        this->front->incoming(*mm.mod);
+                        this->front->incoming(*mm.mod, now);
                     } catch (Error & e) {
-                        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                        if ((e.id != ERR_TRANSPORT_NO_MORE_DATA) &&
+                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT)) {
                             // Can be caused by wabwatchdog.
                             LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                         }

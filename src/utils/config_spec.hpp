@@ -172,8 +172,10 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<Level>(), "encryptionLevel", rdp_level_desc, set(Level::low));
         W.member(A, type_<std::string>(), "authfile", set("/var/run/redemption-sesman-sock"));
         W.sep();
+        W.member(V, type_<unsigned>(), "handshake_timeout", desc{"Time out during RDP handshake stage (in seconds)."}, set(10));
         W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
+        W.member(A, type_<unsigned>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
 

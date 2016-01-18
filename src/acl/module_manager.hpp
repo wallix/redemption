@@ -723,7 +723,8 @@ public:
                                          accounts.password,
                                          this->front,
                                          this->front.client_info.width,
-                                         this->front.client_info.height
+                                         this->front.client_info.height,
+                                         now
             );
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;

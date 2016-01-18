@@ -173,11 +173,17 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "authfile")) {
             ::configs::parse(static_cast<cfg::globals::authfile&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "handshake_timeout")) {
+            ::configs::parse(static_cast<cfg::globals::handshake_timeout&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "session_timeout")) {
             ::configs::parse(static_cast<cfg::globals::session_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "keepalive_grace_delay")) {
             ::configs::parse(static_cast<cfg::globals::keepalive_grace_delay&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "authentication_timeout")) {
+            ::configs::parse(static_cast<cfg::globals::authentication_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "close_timeout")) {
             ::configs::parse(static_cast<cfg::globals::close_timeout&>(this->variables).value, value);
