@@ -98,7 +98,10 @@ public:
         auth_api * authentifier,
         const Inifile & ini,
         Random & rnd,
-        CryptoContext & cctx)
+        CryptoContext & cctx,
+        bool full_video,
+        bool extract_meta_data
+        )
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , psc(nullptr)
@@ -121,6 +124,10 @@ public:
     , capture_bpp(capture_bpp)
     , ini(ini)
     {
+        TODO("Remove that after change of capture interface")
+        (void)full_video;
+        TODO("Remove that after change of capture interface")
+        (void)extract_meta_data;
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_png;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>();

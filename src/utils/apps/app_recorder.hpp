@@ -322,7 +322,9 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , authentifier
                     , ini
                     , rnd
-                    , cctx);
+                    , cctx
+                    , full_video
+                    , extract_meta_data);
 
             if (capture.capture_png) {
                 if (png_width && png_height) {

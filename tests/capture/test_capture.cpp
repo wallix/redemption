@@ -67,8 +67,22 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         CryptoContext cctx(rnd, ini, 1);
 
+        TODO("remove this after unifying capture interface");
+        bool full_video = false;
+        TODO("remove this after unifying capture interface");
+        bool extract_meta_data = false;
+        TODO("remove this after unifying capture interface");
+        bool clear_png = false;
+        TODO("remove this after unifying capture interface");
+        bool no_timestamp = false;
+        TODO("remove this after unifying capture interface");
+        auth_api * authentifier = nullptr;
+
         Capture capture(
-            now, scr.cx, scr.cy, 24, 24, false, false, nullptr, ini, rnd, cctx);
+            now, scr.cx, scr.cy, 24, 24
+            , clear_png, no_timestamp, authentifier
+            , ini, rnd, cctx
+            , full_video, extract_meta_data);
 
         bool ignore_frame_in_timeval = false;
         bool requested_to_stop       = false;
@@ -226,8 +240,21 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         CryptoContext cctx(rnd, ini, 1);
 
-        Capture capture(now, scr.cx, scr.cy, 16, 16, false, false, nullptr
-                        , ini, rnd, cctx);
+        TODO("remove this after unifying capture interface");
+        bool full_video = false;
+        TODO("remove this after unifying capture interface");
+        bool extract_meta_data = false;
+        TODO("remove this after unifying capture interface");
+        bool clear_png = false;
+        TODO("remove this after unifying capture interface");
+        bool no_timestamp = false;
+        TODO("remove this after unifying capture interface");
+        auth_api * authentifier = nullptr;
+
+        Capture capture(now, scr.cx, scr.cy, 16, 16
+                        , clear_png, no_timestamp, authentifier
+                        , ini, rnd, cctx
+                        , full_video, extract_meta_data);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.server_set_pointer(pointer1);
