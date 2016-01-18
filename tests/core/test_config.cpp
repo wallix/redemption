@@ -86,9 +86,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -322,9 +323,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -562,9 +564,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -697,8 +700,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "enable_close_box=false\n"
                           "enable_osd=false\n"
                           "enable_osd_display_remote_target=false\n"
-                          "authentication_timeout=900\n"
+                          "authentication_timeout=150\n"
                           "close_timeout=900\n"
+                          "handshake_timeout=5\n"
                           "\n"
                           "[client]\n"
                           "ignore_logon_password=yes\n"
@@ -805,9 +809,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(5,                                ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(150,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -1024,9 +1029,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -1222,9 +1228,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -1338,6 +1345,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
                           "close_timeout=300\n"
+                          "handshake_timeout=7\n"
                           "[client]\t\n"
                           "tls_support=yes\n"
                           "bogus_user_id=yes\n"
@@ -1418,9 +1426,10 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(7,                                ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(300,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -1590,9 +1599,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -1761,9 +1771,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -1919,9 +1930,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::authentication_timeout>());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>().c_str());
@@ -2078,6 +2090,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::video::wrm_compression_algorithm>());
 
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
     BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
     BOOST_CHECK_EQUAL(300,                              ini.get<cfg::globals::authentication_timeout>());

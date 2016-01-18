@@ -1045,7 +1045,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = unsigned;
-            type value{600};
+            type value{120};
         };
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
         struct close_timeout {
