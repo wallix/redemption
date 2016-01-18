@@ -140,6 +140,7 @@ constant CXXFLAGS-COMMON :
     <toolset>clang:<cxxflags>-Wno-char-subscripts
     <toolset>clang:<cxxflags>-Wno-unused-variable
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
+    <toolset>clang:<cxxflags>-Woverlength-strings
 ;
 
 
@@ -955,7 +956,8 @@ unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z c
 ## @}
 
 ## GDI
-unit-test test_gdi_drawable : tests/gdi/test_drawable.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+# TODO
+# unit-test test_gdi_drawable : tests/gdi/test_drawable.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
