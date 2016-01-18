@@ -543,7 +543,8 @@ template<class CaptureMaker, class AddProgramOption, class ParseFormat
 int app_recorder( int argc, char ** argv, const char * copyright_notice
                 , AddProgramOption add_prog_option, ParseFormat parse_format
                 , std::string & config_filename, Inifile & ini
-                , CryptoContext & cctx, Random & rnd, HasExtraCapture has_extra_capture
+                , CryptoContext & cctx, Random & rnd
+                , HasExtraCapture has_extra_capture
                 , bool full_video
                 , bool extract_meta_data
                 )
