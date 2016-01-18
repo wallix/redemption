@@ -98,8 +98,7 @@ public:
         auth_api * authentifier,
         const Inifile & ini,
         Random & rnd,
-        CryptoContext & cctx,
-        bool externally_generated_breakpoint = false)
+        CryptoContext & cctx)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , psc(nullptr)
@@ -208,7 +207,7 @@ public:
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
                                          , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
-                                         , *this->drawable, ini, externally_generated_breakpoint
+                                         , *this->drawable, ini
                                          , NativeCapture::SendInput::YES);
         }
 

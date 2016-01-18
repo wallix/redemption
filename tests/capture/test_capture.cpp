@@ -226,7 +226,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         CryptoContext cctx(rnd, ini, 1);
 
-        Capture capture(now, scr.cx, scr.cy, 16, 16, false, false, nullptr, ini, rnd, cctx);
+        Capture capture(now, scr.cx, scr.cy, 16, 16, false, false, nullptr
+                        , ini, rnd, cctx);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.server_set_pointer(pointer1);

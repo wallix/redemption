@@ -669,7 +669,8 @@ public:
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
         this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
-                                   , true, false, authentifier, ini, this->gen, this->cctx);
+                                   , true, false, authentifier
+                                   , ini, this->gen, this->cctx);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }

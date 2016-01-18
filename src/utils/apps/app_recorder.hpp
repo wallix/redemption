@@ -237,7 +237,6 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , bool no_timestamp
                     , auth_api * authentifier
                     , Inifile & ini, Random & rnd, CryptoContext & cctx
-                    , bool externally_generated_breakpoint
                     
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
@@ -323,8 +322,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , authentifier
                     , ini
                     , rnd
-                    , cctx
-                    , externally_generated_breakpoint);
+                    , cctx);
 
             if (capture.capture_png) {
                 if (png_width && png_height) {
@@ -561,7 +559,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     bool clear_png = false;
     bool no_timestamp = false;
     auth_api * authentifier = nullptr;
-    bool externally_generated_breakpoint = false;
 
     uint32_t    verbose            = 0;
     uint32_t    clear              = 1; // default on
@@ -932,7 +929,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                             , no_timestamp
                             , authentifier
                             , ini, rnd, cctx
-                            , externally_generated_breakpoint
                             , file_count, order_count, clear, zoom
                             , png_width, png_height
                             , show_file_metadata, show_statistics, verbose
