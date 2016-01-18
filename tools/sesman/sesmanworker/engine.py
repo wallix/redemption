@@ -23,7 +23,7 @@ try:
     from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY
     from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
-        SUPPORTED_AUTHENTICATION_METHODS
+        PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
     from wabengine.common.const import AM_IL_DOMAIN
     from wabx509 import AuthX509
 except Exception, e:
