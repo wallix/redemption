@@ -40,6 +40,8 @@
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
 
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+
 const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
            "\x03\x00\x20\x03\x58\x02\x18\x00" // WRM version = 3, width = 800, height=600, bpp=24
@@ -187,7 +189,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
 
@@ -364,7 +367,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
@@ -416,15 +420,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    struct BasicDumpPng24 : gdi::DumpPng24Api  {
-        RDPDrawable & drawable;
-
-        BasicDumpPng24(RDPDrawable & drawable) : drawable(drawable) {}
-
-        void dump_png24(Transport& trans, bool bgr) const override {
-            this->drawable.dump_png24(trans, bgr);
-        }
-    } dump_png24_api;
+    DumpPng24FromRDPDrawableAdapter dump_png24_api(drawable);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, ini);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);

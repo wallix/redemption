@@ -324,27 +324,26 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
     bool ignore_frame_in_timeval = false;
-    bool requested_to_stop       = false;
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
     BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));

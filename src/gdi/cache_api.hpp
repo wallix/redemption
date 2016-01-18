@@ -29,8 +29,6 @@
 
 class RDPColCache;
 class RDPBrushCache;
-class RDPMemBlt;
-class RDPMem3Blt;
 
 namespace gdi {
 
@@ -40,26 +38,7 @@ struct CacheApi : private noncopyable
 
     virtual void cache(RDPColCache   const & cmd) = 0;
     virtual void cache(RDPBrushCache const & cmd) = 0;
-    virtual void cache(RDPMemBlt     const & cmd) = 0;
-    virtual void cache(RDPMem3Blt    const & cmd) = 0;
 };
-
-using CacheApiDeleterBase = utils::virtual_deleter_base<CacheApi>;
-using CacheApiPtr = utils::unique_ptr_with_virtual_deleter<CacheApi>;
-
-using utils::default_delete;
-using utils::no_delete;
-
-template<class Cache, class... Args>
-CacheApiPtr make_cache_ptr(Args && ... args) {
-    return CacheApiPtr(new Cache(std::forward<Args>(args)...), default_delete);
-}
-
-template<class Cache>
-CacheApiPtr make_cache_ref(Cache & gd) {
-    return CacheApiPtr(&gd, no_delete);
-}
-
 
 struct CacheProxy
 {
@@ -71,7 +50,7 @@ struct CacheProxy
 
 
 template<class Proxy, class InterfaceBase = CacheApi>
-struct CacheDelegate : AdaptorBase<Proxy, InterfaceBase>
+struct CacheAdaptor : AdaptorBase<Proxy, InterfaceBase>
 {
     static_assert(std::is_base_of<CacheApi, InterfaceBase>::value, "InterfaceBase isn't a CacheApi");
 
@@ -79,8 +58,6 @@ struct CacheDelegate : AdaptorBase<Proxy, InterfaceBase>
 
     void cache(RDPColCache   const & cmd) override { this->prox()(*this, cmd); }
     void cache(RDPBrushCache const & cmd) override { this->prox()(*this, cmd); }
-    void cache(RDPMemBlt     const & cmd) override { this->prox()(*this, cmd); }
-    void cache(RDPMem3Blt    const & cmd) override { this->prox()(*this, cmd); }
 };
 
 }

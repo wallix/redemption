@@ -37,6 +37,8 @@
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
 
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+
 const char expected_Red_on_Blue_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
            "\x03\x00\x64\x00\x64\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
@@ -95,7 +97,8 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
@@ -239,7 +242,8 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);

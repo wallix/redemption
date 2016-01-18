@@ -23,6 +23,7 @@
 #define CAPTURE_NEW_KBDCAPTURE_HPP
 
 #include "utils/match_finder.hpp"
+#include "CaptureDevice.hpp"
 #include "stream.hpp"
 #include "cast.hpp"
 

@@ -26,8 +26,10 @@
 #include "difftimeval.hpp"
 #include "GraphicToFile.hpp"
 #include "gdi/input_kbd_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
-class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice, public gdi::InputKbdApi
+class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice, public gdi::InputKbdApi, public gdi::CaptureApi
 {
 public:
     uint64_t frame_interval;
@@ -38,15 +40,7 @@ public:
     timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
-    struct BasicDumpPng24 : gdi::DumpPng24Api  {
-        RDPDrawable & drawable;
-
-        BasicDumpPng24(RDPDrawable & drawable) : drawable(drawable) {}
-
-        void dump_png24(Transport& trans, bool bgr) const override {
-            this->drawable.dump_png24(trans, bgr);
-        }
-    } dump_png24_api;
+    DumpPng24FromRDPDrawableAdapter dump_png24_api;
     GraphicToFile recorder;
     uint32_t nb_file;
     uint64_t time_to_wait;
@@ -98,6 +92,15 @@ public:
             this->break_interval = ini.get<cfg::video::break_interval>(); // break interval is in s, default value 1 break every 10 minutes
             this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
         }
+    }
+
+    virtual void pause_capture(const timeval& now) {}
+    virtual void resume_capture(const timeval& now) {}
+
+    std::chrono::microseconds snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) override {
+        bool requested_to_stop;
+        this->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
+        return std::chrono::microseconds{this->time_to_wait};
     }
 
     void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,

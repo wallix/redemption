@@ -29,7 +29,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "test_transport.hpp"
 #include "out_filename_sequence_transport.hpp"
@@ -37,15 +37,7 @@
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
 
-struct BasicDumpPng24 : gdi::DumpPng24Api  {
-    RDPDrawable & drawable;
-
-    BasicDumpPng24(RDPDrawable & drawable) : drawable(drawable) {}
-
-    void dump_png24(Transport& trans, bool bgr) const override {
-        this->drawable.dump_png24(trans, bgr);
-    }
-};
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
 BOOST_AUTO_TEST_CASE(TestImageChunk)
 {
@@ -100,10 +92,13 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         PointerCache ptr_cache;
         GlyphCache gly_cache;
         RDPDrawable drawable(scr.cx, scr.cy, 24);
-        BasicDumpPng24 dump_png_api(drawable);
+        DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
         GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+        drawable.draw(RDPOpaqueRect(scr, RED), scr);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
+        drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
         consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+        drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
         consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
         consumer.flush();
         consumer.send_image_chunk();
@@ -177,10 +172,13 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    BasicDumpPng24 dump_png_api(drawable);
+    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.flush();
 
@@ -264,10 +262,13 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    BasicDumpPng24 dump_png_api(drawable);
+    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.flush();
 

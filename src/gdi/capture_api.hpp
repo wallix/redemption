@@ -47,13 +47,8 @@ struct CaptureApi : private noncopyable
         bool ignore_frame_in_timeval
     ) = 0;
 
-
     // TODO for rt_display in StaticCapture ... enable_realtime(bool)
     virtual void update_config(Inifile const & ini) = 0;
-
-    // TODO event ?
-    //virtual void possible_active_window_change() = 0;
-    //virtual void session_update(const timeval & now, array_view<const char> const & message) = 0;
 
     virtual void pause_capture(timeval const & now) = 0;
     virtual void resume_capture(timeval const & now) = 0;

@@ -107,6 +107,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder, &wrm_recorder);
+    player.add_consumer(&drawable, nullptr);
 
     bool requested_to_stop = false;
 

@@ -67,6 +67,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     bool ignore_frame_in_timeval = false;
     bool requested_to_stop       = false;
 
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
     now.tv_sec += 6;

@@ -18,45 +18,24 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_SNAPSHOT_API_HPP
-#define REDEMPTION_GDI_SNAPSHOT_API_HPP
-
-#include "utils/virtual_deleter.hpp"
+#ifndef REDEMPTION_GDI_CAPTURE_PROBE_API_HPP
+#define REDEMPTION_GDI_CAPTURE_PROBE_API_HPP
 
 #include "noncopyable.hpp"
+#include "array_view.hpp"
 
 struct timeval;
-class wait_obj;
 
 namespace gdi {
 
-struct SnapshotApi : private noncopyable
+struct CaptureProbeApi : private noncopyable
 {
-    virtual ~SnapshotApi() = default;
+    virtual ~CaptureProbeApi() = default;
 
-    virtual void snapshot(
-        const timeval & now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval,
-        wait_obj & capture_event
-    ) = 0;
+    // const timeval & now, category_string const &, array_view<const char> const & message
+    virtual void session_update(const timeval & now, array_view<const char> const & message) = 0;
+    virtual void possible_active_window_change() = 0;
 };
-
-using SnapshotApiDeleterBase = utils::virtual_deleter_base<SnapshotApi>;
-using SnapshotApiPtr = utils::unique_ptr_with_virtual_deleter<SnapshotApi>;
-
-using utils::default_delete;
-using utils::no_delete;
-
-template<class Snapshot, class... Args>
-SnapshotApiPtr make_snapshot_ptr(Args && ... args) {
-    return SnapshotApiPtr(new Snapshot(std::forward<Args>(args)...), default_delete);
-}
-
-template<class Snapshot>
-SnapshotApiPtr make_snapshot_ref(Snapshot & gd) {
-    return SnapshotApiPtr(&gd, no_delete);
-}
 
 }
 

@@ -36,13 +36,13 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/cache_api.hpp"
-#include "gdi/flush_api.hpp"
-#include "gdi/snapshot_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_device_api.hpp"
 #include "gdi/input_kbd_api.hpp"
-#include "gdi/session_update_api.hpp"
-#include "gdi/update_config.hpp"
+#include "gdi/capture_probe_api.hpp"
+
 #include "gdi/external_event.hpp"
-#include "gdi/possible_active_window_change_api.hpp"
+
 #include "utils/pattutils.hpp"
 
 class Capture final : public RDPGraphicDevice, public RDPCaptureDevice {
@@ -315,32 +315,62 @@ private:
 
     NewGraphicDevice * gd_api = nullptr;
 
-    struct NewCaptureDevice : gdi::CaptureApi {
+    struct NewCaptureBase : gdi::CaptureApi {
         std::vector<gdi::CaptureApi *> caps;
+        StaticCapture * psc;
+        NativeCapture * pnc;
+        Capture & cap;
+
+        NewCaptureBase(Capture & cap) : cap(cap) {}
     };
 
     struct NewCaptureProxy {
         template<class Tag, class... Ts>
-        void operator()(Tag tag, NewCaptureDevice & api, Ts && ... args) {
+        void operator()(Tag tag, NewCaptureBase & api, Ts && ... args) {
             gdi::CaptureProxy prox;
             for (gdi::CaptureApi * pcap : api.caps) {
                 prox(tag, *pcap, std::forward<Ts>(args)...);
             }
         }
 
-        template<class... Ts>
         std::chrono::microseconds operator()(
-            gdi::CaptureProxy::snapshot_tag, NewCaptureDevice & api, Ts && ... args
+            gdi::CaptureProxy::snapshot_tag, NewCaptureBase & api,
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
         ) {
-            std::chrono::microseconds ret;
-            for (gdi::CaptureApi * pcap : api.caps) {
-                ret = std::min(ret, pcap->snapshot(std::forward<Ts>(args)...));
+            api.cap.capture_event.reset();
+
+            if (api.cap.drawable) {
+                api.cap.drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
             }
-            return ret;
+
+            api.cap.last_now = now;
+            api.cap.last_x   = cursor_x;
+            api.cap.last_y   = cursor_y;
+
+            std::chrono::microseconds time = std::chrono::microseconds::max();
+            if (!api.caps.empty()) {
+                for (gdi::CaptureApi * pcap : api.caps) {
+                    time = std::min(time, pcap->snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                }
+                api.cap.capture_event.update(time.count());
+            }
+            return time;
+        }
+
+        void operator()(gdi::CaptureProxy::update_config_tag, NewCaptureBase & api, Inifile const & ini) {
+            //TODO enable_real_time
+            if (api.psc) {
+                api.psc->update_config(ini);
+            }
+            if (api.pnc) {
+                api.pnc->update_config(ini);
+            }
         }
     };
 
-    using NewCapture = gdi::CaptureAdaptor<NewCaptureProxy, NewCaptureDevice>;
+    using NewCapture = gdi::CaptureAdaptor<NewCaptureProxy, NewCaptureBase>;
 
     NewCapture capture_api;
 
@@ -349,15 +379,13 @@ private:
 
         void cache(RDPBrushCache const & cmd) override { this->gd->draw(cmd); }
         void cache(RDPColCache   const & cmd) override { this->gd->draw(cmd); }
-        void cache(RDPMemBlt     const &    ) override { /* NOTE unimplmented*/ }
-        void cache(RDPMem3Blt    const &    ) override { /* NOTE unimplmented*/ }
 
         RDPGraphicDevice * gd;
     };
 
     NewCache * cache_api = nullptr;
 
-    struct NewFlush : gdi::FlushApi {
+    struct NewCaptureDevice : gdi::CaptureDeviceApi {
         void flush() override {
             for (RDPGraphicDevice * pgd : gds) {
                 pgd->flush();
@@ -367,43 +395,7 @@ private:
         std::vector<RDPGraphicDevice *> gds;
     };
 
-    NewFlush * flush_api = nullptr;
-
-    struct NewSnapshot : gdi::SnapshotApi {
-        NewSnapshot(Capture & cap) : cap(cap) {}
-
-        void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval, wait_obj & capture_event) override {
-            capture_event.reset();
-
-            if (cap.drawable) {
-                cap.drawable->set_mouse_cursor_pos(x, y);
-            }
-
-            cap.last_now = now;
-            cap.last_x   = x;
-            cap.last_y   = y;
-
-            bool const requested_to_stop = false;
-
-            if (cap.capture_png) {
-                auto time = cap.psc->snapshot(now, x, y, ignore_frame_in_timeval);
-                capture_event.update(time.count());
-            }
-            if (cap.capture_wrm) {
-                cap.pnc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
-                capture_event.update(cap.pnc->time_to_wait);
-            }
-
-            if (cap.pkc) {
-                cap.pkc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
-                capture_event.update(cap.pkc->time_to_wait);
-            }
-        }
-
-        Capture & cap;
-    };
-
-    NewSnapshot * snapshot_api = nullptr;
+    NewCaptureDevice capture_device_api;
 
     struct NewInputKbd : gdi::InputKbdApi {
         bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
@@ -418,28 +410,6 @@ private:
     };
 
     NewInputKbd input_kbd_api;
-
-    struct NewSessionUpdate : gdi::SessionUpdateApi {
-        void session_update(const timeval& now, const array_view< const char >& message) override {
-            for (RDPCaptureDevice * pcd : this->cds) {
-                pcd->session_update(now, message.data()/* TODO , message.size()*/);
-            }
-        }
-
-        std::vector<RDPCaptureDevice *> cds;
-    };
-
-    NewSessionUpdate * session_update_api = nullptr;
-
-    struct NewUpdateConfig : gdi::UpdateConfigApi {
-        void update_config(const Inifile & ini) override {
-            // TODO
-        }
-
-        std::vector<RDPGraphicDevice *> gds;
-    };
-
-    NewUpdateConfig update_config_api;
 
     struct NewExternalEvent : gdi::ExternalEventApi {
         void external_breakpoint() override {
@@ -459,17 +429,23 @@ private:
 
     NewExternalEvent * external_event_api = nullptr;
 
-    struct NewPPossibleActiveWindowChange : gdi::PossibleActiveWindowChangeApi {
+    struct NewCaptureProbe : gdi::CaptureProbeApi {
         void possible_active_window_change() override {
             for (RDPCaptureDevice * pcd : this->cds) {
                 pcd->possible_active_window_change();
             }
         }
 
+        void session_update(const timeval& now, const array_view< const char >& message) override {
+            for (RDPCaptureDevice * pcd : this->cds) {
+                pcd->session_update(now, message.data()/* TODO , message.size()*/);
+            }
+        }
+
         std::vector<RDPCaptureDevice *> cds;
     };
 
-    NewPPossibleActiveWindowChange possible_active_window_change_api;
+    NewCaptureProbe capture_probe_api;
 
 
     const Inifile & ini;
@@ -508,6 +484,8 @@ public:
     , last_y(height / 2)
     , order_bpp(order_bpp)
     , capture_bpp(capture_bpp)
+    // TODO
+    , capture_api(NewCaptureProxy{}, *this)
     , ini(ini)
     {
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
@@ -615,16 +593,17 @@ public:
                 );
         }
 
-        this->session_update_api = new NewSessionUpdate;
+        capture_api.pnc = this->pnc;
+        capture_api.psc = this->psc;
+
         if (this->gd_api) {
             this->cache_api = new NewCache(this->gd);
-            this->flush_api = new NewFlush;
-            this->snapshot_api = new NewSnapshot(*this);
             this->external_event_api = new NewExternalEvent;
             if (this->pnc) {
                 this->gd_api->gds.push_back(this->pnc);
-                this->flush_api->gds.push_back(this->pnc);
-                this->session_update_api->cds.push_back(this->pnc);
+                this->capture_device_api.gds.push_back(this->pnc);
+                this->capture_api.caps.push_back(this->pnc);
+                this->capture_probe_api.cds.push_back(this->pnc);
                 this->external_event_api->cds.push_back(this->pnc);
             }
             if (this->psc) {
@@ -636,11 +615,9 @@ public:
             }
         }
         if (this->pkc) {
-            this->session_update_api->cds.push_back(this->pkc);
-            this->possible_active_window_change_api.cds.push_back(this->pkc);
+            this->capture_probe_api.cds.push_back(this->pkc);
             this->input_kbd_api.kbds.push_back(this->pkc);
         }
-        //if (this->pnc) this->update_config_api.gds.push_back(this->pnc);
 
         if (this->pnc && !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
             this->input_kbd_api.kbds.push_back(this->pnc);
@@ -667,8 +644,6 @@ public:
 
         delete this->gd_api;
         delete this->cache_api;
-        delete this->flush_api;
-        delete this->snapshot_api;
     }
 
     void request_full_cleaning()
@@ -695,13 +670,7 @@ public:
     }
 
     void update_config(const Inifile & ini) {
-        //TODO update_config_api.update_config(ini);
-        if (this->capture_png) {
-            this->psc->update_config(ini);
-        }
-        if (this->capture_wrm) {
-            this->pnc->update_config(ini);
-        }
+        this->capture_api.update_config(ini);
     }
 
     void set_row(size_t rownum, const uint8_t * data) override {
@@ -711,13 +680,14 @@ public:
     }
 
     void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
+    // TODO
                           bool const & requested_to_stop) override {
-        this->snapshot_api->snapshot(now, x, y, ignore_frame_in_timeval, this->capture_event);
+        this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
     void flush() override {
         if (this->capture_wrm) {
-            this->flush_api->flush();
+            this->capture_device_api.flush();
         }
     }
 
@@ -918,11 +888,11 @@ public:
     }
 
     void session_update(const timeval & now, const char * message) override {
-        this->session_update_api->session_update(now, {message, strlen(message)});
+        this->capture_probe_api.session_update(now, {message, strlen(message)});
     }
 
     void possible_active_window_change() override {
-        this->possible_active_window_change_api.possible_active_window_change();
+        this->capture_probe_api.possible_active_window_change();
     }
 };
 
