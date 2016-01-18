@@ -104,6 +104,8 @@
 #include "RDP/mppc_60.hpp"
 #include "RDP/mppc_61.hpp"
 
+#include "utils/timeout.hpp"
+
 #include <memory>
 
 
@@ -422,6 +424,8 @@ private:
 
     bool session_probe_started_ = false;
 
+    Timeout timeout;
+
 public:
     Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -430,6 +434,7 @@ public:
           , CryptoContext & cctx
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
+          , time_t now
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
@@ -461,7 +466,8 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
     , authentifier(nullptr)
-    , auth_info_sent(false) {
+    , auth_info_sent(false)
+    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>()) {
         // init TLS
         // --------------------------------------------------------
 
@@ -523,6 +529,8 @@ public:
             this->encrypt.encryptionMethod = 2; /* 128 bits */
         break;
         }
+
+        this->event.set(0);
     }
 
     ~Front() override {
@@ -999,8 +1007,23 @@ public:
         }
     }
 
-    void incoming(Callback & cb)
+    void incoming(Callback & cb, time_t now)
     {
+        switch(this->timeout.check(now)) {
+        case Timeout::TIMEOUT_REACHED:
+            LOG(LOG_ERR, "RDP handshake timeout reached!");
+            throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+            break;
+        case Timeout::TIMEOUT_NOT_REACHED:
+            this->event.set(200000);
+            break;
+        default:
+            this->event.reset();
+            break;
+        }
+
+        if (this->event.waked_up_by_time) return;
+
         unsigned expected;
 
         if (this->verbose & 4) {
@@ -3601,6 +3624,7 @@ private:
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
                 this->up_and_running = 1;
+                this->timeout.cancel_timeout();
                 cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);

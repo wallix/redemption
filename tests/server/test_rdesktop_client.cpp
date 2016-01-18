@@ -115,14 +115,16 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::bogus_user_id>(false);
     ini.set<cfg::client::rdp_compression>(0);
 
+    time_t now = 1450864840;
+
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
     Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini, cctx
-               , fastpath_support, mem3blt_support);
+               , fastpath_support, mem3blt_support, now);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod);
+        front.incoming(no_mod, now);
     }
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

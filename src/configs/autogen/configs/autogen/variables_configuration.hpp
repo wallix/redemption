@@ -1015,6 +1015,14 @@ namespace cfg {
             type value{"/var/run/redemption-sesman-sock"};
         };
 
+        // Time out during RDP handshake stage (in seconds).
+        struct handshake_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = unsigned;
+            type value{10};
+        };
         // No traffic auto disconnection (in seconds).
         struct session_timeout {
             static constexpr ::configs::VariableProperties properties() {
@@ -1030,6 +1038,14 @@ namespace cfg {
             }
             using type = unsigned;
             type value{30};
+        };
+        // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
+        struct authentication_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = unsigned;
+            type value{120};
         };
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
         struct close_timeout {
@@ -1969,8 +1985,10 @@ struct globals
 , cfg::globals::notimestamp
 , cfg::globals::encryptionLevel
 , cfg::globals::authfile
+, cfg::globals::handshake_timeout
 , cfg::globals::session_timeout
 , cfg::globals::keepalive_grace_delay
+, cfg::globals::authentication_timeout
 , cfg::globals::close_timeout
 , cfg::globals::trace_type
 , cfg::globals::listen_address

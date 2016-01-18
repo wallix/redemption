@@ -32,6 +32,8 @@
 #include "config_access.hpp"
 #include "widget2/language_button.hpp"
 
+#include "utils/timeout.hpp"
+
 using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::context::password,   vcfg::write>,
     vcfg::var<cfg::globals::auth_user,  vcfg::write>,
@@ -43,7 +45,8 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::font>,
     vcfg::var<cfg::theme>,
     vcfg::var<cfg::context::opt_message, vcfg::read>,
-    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>
+    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>,
+    vcfg::var<cfg::globals::authentication_timeout>
 >;
 
 
@@ -52,6 +55,7 @@ class FlatLoginMod : public InternalMod, public NotifyApi
     LanguageButton language_button;
 
     FlatLogin login;
+    Timeout timeout;
 
     CopyPaste copy_paste;
 
@@ -61,7 +65,7 @@ public:
     FlatLoginMod(
         FlatLoginModVariables vars,
         char const * username, char const * password,
-        FrontAPI & front, uint16_t width, uint16_t height
+        FrontAPI & front, uint16_t width, uint16_t height, time_t now
     )
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->login, *this, front, this->font(), this->theme())
@@ -73,8 +77,12 @@ public:
                 vars.get<cfg::context::opt_message>().c_str(),
                 &this->language_button,
                 this->font(), Translator(language(vars)), this->theme())
+        , timeout(now, vars.get<cfg::globals::authentication_timeout>())
         , vars(vars)
     {
+        if (vars.get<cfg::globals::authentication_timeout>()) {
+            LOG(LOG_INFO, "LoginMod: Ending session in %u seconds", vars.get<cfg::globals::authentication_timeout>());
+        }
         this->screen.add_widget(&this->login);
 
         this->login.login_edit.set_text(username);
@@ -123,7 +131,19 @@ public:
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
-        this->event.reset();
+
+        switch(this->timeout.check(now)) {
+        case Timeout::TIMEOUT_REACHED:
+            this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
+            break;
+        case Timeout::TIMEOUT_NOT_REACHED:
+            this->event.set(200000);
+            break;
+        default:
+            this->event.reset();
+            break;
+        }
     }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
