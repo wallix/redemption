@@ -4,8 +4,11 @@
 
 
 #include <iostream>
+#include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <boost/algorithm/string.hpp>
 #include "../src/keyboard/keylayouts.hpp"
 //#include "keymap2.hpp"
 #define SIZE 128
@@ -49,11 +52,30 @@ static int over(0);
     
 int main () {
     
-        
-    
     for(int i = 0; i < 84; i++) {
         
         const Keylayout *  keylayout_WORK(keylayouts[i]); 
+        
+        
+        std::string loc_name(keylayout_WORK->locale_name);
+        std::replace( loc_name.begin(), loc_name.end(), '.', '_');
+        std::replace( loc_name.begin(), loc_name.end(), '-', '_');
+        boost::to_upper(loc_name);
+        
+         std::cout << loc_name;
+        
+            for (int j = 0; j < (25 - loc_name.size()); j++) {
+                std::cout << " ";
+            }
+        
+        
+        std::cout << " = 0x" << std::hex << keylayout_WORK->LCID +0x80000000 << ", \t";
+        
+        if ((i)%3 == 2 && i != 0) {
+            std::cout << std::endl;   
+        }
+        
+        
         int LCID(keylayout_WORK->LCID);
         int LCIDreverse(LCID+0x80000000);
         
@@ -62,7 +84,10 @@ int main () {
         std::string name = ss.str();
         std::ofstream fichier(("src/keyboard/reversed_keymaps/keylayout_x"+name+".hpp").c_str(), std::ios::out | std::ios::trunc);
         
+        
         if(fichier) {
+            
+            
 
             fichier << "#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X"<<std::hex<<LCIDreverse<<"_HPP_" << std::endl;
             fichier << "#define _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X"<<std::hex<<LCIDreverse<<"_HPP_" << std::endl<< std::endl;
@@ -97,14 +122,8 @@ int main () {
             }
             fichier << "};" << std::endl;
             fichier << std::endl << std::endl;
-            
-           /* fichier << "const Keylayout_r::dkey_t deadkeys[] = {" << std::endl;
-            fichier << "\t{ 0, 0,  0, { {0, 0} " << std::endl;
-            fichier << "\t            }" << std::endl;
-            fichier << "\t}," << std::endl;
-            fichier << "};" << std::endl << std::endl;*/
-            
-           int nbDeadKeys(keylayout_WORK->nbDeadkeys);
+
+            int nbDeadKeys(keylayout_WORK->nbDeadkeys);
             fichier << "const static uint8_t nbDeadkeys = " << std::dec << nbDeadKeys << ";" << std::endl << std::endl;
             
             fichier << "}" << std::endl << std::endl;
@@ -135,7 +154,7 @@ int main () {
         }
     }
     
-    std::cout << "missed data = " << over << std::endl;
+    std::cout << std::endl << std::dec << "missed data = " << over << std::endl;
     
     return 0;
 }
@@ -165,8 +184,3 @@ void tabToReversedMap(const Keylayout::KeyLayout_t & read, std::ofstream & fichi
     fichier << std::endl << std::endl;
 }
 
-
-
-void printDeadKeys(int send[]){
-    
-}

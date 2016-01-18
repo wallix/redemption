@@ -48,11 +48,45 @@ static const Keylayout_r * keylayoutsList[] = { &keylayout_x80000405, &keylayout
 
 class Qt_ScanCode_KeyMap
 {
+
+public:
+    
+    enum {
+        CS_CZ                     = 0x80000405,     DA_DK                     = 0x80000406,     DE_DE                     = 0x80000407,     
+        EL_GR                     = 0x80000408,     EN_US                     = 0x80000409,     ES_ES                     = 0x8000040a,     
+        FI_FI_FINNISH             = 0x8000040b,     FR_FR                     = 0x8000040c,     IS_IS                     = 0x8000040f,     
+        IT_IT                     = 0x80000410,     NL_NL                     = 0x80000413,     NB_NO                     = 0x80000414,     
+        PL_PL_PROGRAMMERS         = 0x80000415,     PT_BR_ABNT                = 0x80000416,     RO_RO                     = 0x80000418,     
+        RU_RU                     = 0x80000419,     HR_HR                     = 0x8000041a,     SK_SK                     = 0x8000041b,     
+        SV_SE                     = 0x8000041d,     TR_TR_Q                   = 0x8000041f,     UK_UA                     = 0x80000422,     
+        SL_SI                     = 0x80000424,     ET_EE                     = 0x80000425,     LV_LV                     = 0x80000426,     
+        LT_LT_IBM                 = 0x80000427,     MK_MK                     = 0x8000042f,     FO_FO                     = 0x80000438,     
+        MT_MT_47                  = 0x8000043a,     SE_NO                     = 0x8000043b,     KK_KZ                     = 0x8000043f,     
+        KY_KG                     = 0x80000440,     TT_RU                     = 0x80000444,     MN_MN                     = 0x80000450,     
+        CY_GB                     = 0x80000452,     LB_LU                     = 0x8000046e,     MI_NZ                     = 0x80000481,     
+        DE_CH                     = 0x80000807,     EN_GB                     = 0x80000809,     ES_MX                     = 0x8000080a,     
+        FR_BE_FR                  = 0x8000080c,     NL_BE                     = 0x80000813,     PT_PT                     = 0x80000816,     
+        SR_LA                     = 0x8000081a,     SE_SE                     = 0x8000083b,     UZ_CY                     = 0x80000843,     
+        IU_LA                     = 0x8000085d,     FR_CA                     = 0x80000c0c,     SR_CY                     = 0x80000c1a,     
+        EN_CA_FR                  = 0x80001009,     FR_CH                     = 0x8000100c,     BS_CY                     = 0x8000201a,     
+        BG_BG_LATIN               = 0x80010402,     CS_CZ_QWERTY              = 0x80010405,     EN_IE_IRISH               = 0x80001809,     
+        DE_DE_IBM                 = 0x80010407,     EL_GR_220                 = 0x80010408,     ES_ES_VARIATION           = 0x8001040a,     
+        HU_HU                     = 0x8001040e,     EN_US_DVORAK              = 0x80010409,     IT_IT_142                 = 0x80010410,     
+        PL_PL                     = 0x80010415,     PT_BR_ABNT2               = 0x80010416,     RU_RU_TYPEWRITER          = 0x80010419,     
+        SK_SK_QWERTY              = 0x8001041b,     TR_TR_F                   = 0x8001041f,     LV_LV_QWERTY              = 0x80010426,     
+        LT_LT                     = 0x80010427,     MT_MT_48                  = 0x8001043a,     SE_NO_EXT_NORWAY          = 0x8001043b,     
+        FR_BE                     = 0x8001080c,     SE_SE_2                   = 0x8001083b,     EN_CA_MULTILINGUAL        = 0x80011009,     
+        EN_IE                     = 0x80011809,     CS_CZ_PROGRAMMERS         = 0x80020405,     EL_GR_319                 = 0x80020408,     
+        EN_US_INTERNATIONAL       = 0x80020409,     SE_SE_EXT_FINLAND_SWEDEN  = 0x8002083b,     BG_BG                     = 0x80030402,     
+        EL_GR_220_LATIN           = 0x80030408,     EN_US_DVORAK_LEFT         = 0x80030409,     EL_GR_319_LATIN           = 0x80040408,     
+        EN_US_DVORAK_RIGHT        = 0x80040409,     EL_GR_LATIN               = 0x80050408,     EL_GR_POLYTONIC           = 0x80060408    
+    };
+
     
 private:
     int                                 _verbose;
     uint8_t                             _keyboardMods;
-    const Keylayout_r *                 _keylayout_WORK;
+    const Keylayout_r                 * _keylayout_WORK;
     const Keylayout_r::KeyLayoutMap_t * _layoutMods[9];
     const Keylayout_r::KeyLayoutMap_t * _layout;
     
@@ -79,7 +113,7 @@ private:
         , MIN_NON_CHAR_QT_KEY_VALUE = 0x00FFFFFF       
         , MIN_DEAD_QT_KEY_VALUE     = 0x01001249
         , MAX_DEAD_QT_KEY_VALUE     = 0x01001263
-        , MASK_ALT                  = 0x0F
+        , MASK_ALT                  = 0x0F 
     };
     
     enum {
@@ -257,26 +291,25 @@ private:
         //---------------------------------------------
         //    Not mod neither char keys NO Extended
         //---------------------------------------------
-            case Qt::Key_Return     : this->scanCode = 0x1C; break; //  ENTER
-            case Qt::Key_Backspace  : this->scanCode = 0x0E; break; //  BKSP
-            case Qt::Key_Escape     : this->scanCode = 0x01; break; //  ESCAPE
-            case Qt::Key_F1         : this->scanCode = 0x3B; break; //  F1
-            case Qt::Key_F2         : this->scanCode = 0x3C; break; //  F2
-            case Qt::Key_F3         : this->scanCode = 0x3D; break; //  F3
-            case Qt::Key_F4         : this->scanCode = 0x3E; break; //  F4
-            case Qt::Key_F5         : this->scanCode = 0x3F; break; //  F5
-            case Qt::Key_F6         : this->scanCode = 0x40; break; //  F6
-            case Qt::Key_F7         : this->scanCode = 0x41; break; //  F7
-            case Qt::Key_F8         : this->scanCode = 0x42; break; //  F8
-            case Qt::Key_F9         : this->scanCode = 0x43; break; //  F9
-            case Qt::Key_F10        : this->scanCode = 0x44; break; //  F10
-            case Qt::Key_F11        : this->scanCode = 0x57; break; //  F11
-            case Qt::Key_F12        : this->scanCode = 0x58; break; //  F12
-            case Qt::Key_ScrollLock : this->scanCode = 0x46; break; //  SCROLL 
-            case Qt::Key_Pause      : this->scanCode = 0xE1; break; //  PAUSE
-            case Qt::Key_Tab        : this->scanCode = 0x0F; break; //  TAB
-            case Qt::Key_Home       : this->scanCode = 0x47; break; //  HOME
-            
+            case Qt::Key_Return               : this->scanCode = 0x1C; break; //  ENTER
+            case Qt::Key_Backspace            : this->scanCode = 0x0E; break; //  BKSP
+            case Qt::Key_Escape               : this->scanCode = 0x01; break; //  ESCAPE
+            case Qt::Key_F1                   : this->scanCode = 0x3B; break; //  F1
+            case Qt::Key_F2                   : this->scanCode = 0x3C; break; //  F2
+            case Qt::Key_F3                   : this->scanCode = 0x3D; break; //  F3
+            case Qt::Key_F4                   : this->scanCode = 0x3E; break; //  F4
+            case Qt::Key_F5                   : this->scanCode = 0x3F; break; //  F5
+            case Qt::Key_F6                   : this->scanCode = 0x40; break; //  F6
+            case Qt::Key_F7                   : this->scanCode = 0x41; break; //  F7
+            case Qt::Key_F8                   : this->scanCode = 0x42; break; //  F8
+            case Qt::Key_F9                   : this->scanCode = 0x43; break; //  F9
+            case Qt::Key_F10                  : this->scanCode = 0x44; break; //  F10
+            case Qt::Key_F11                  : this->scanCode = 0x57; break; //  F11
+            case Qt::Key_F12                  : this->scanCode = 0x58; break; //  F12
+            case Qt::Key_ScrollLock           : this->scanCode = 0x46; break; //  SCROLL 
+            case Qt::Key_Pause                : this->scanCode = 0xE1; break; //  PAUSE
+            case Qt::Key_Tab                  : this->scanCode = 0x0F; break; //  TAB
+            case Qt::Key_Home                 : this->scanCode = 0x47; break; //  HOME
             case Qt::Key_MediaStop            : this->scanCode = 0x24; break; //
             case Qt::Key_MediaPrevious        : this->scanCode = 0x10; break; //
             case Qt::Key_MediaNext            : this->scanCode = 0x19; break; //
@@ -393,7 +426,7 @@ private:
             //case Qt::Key_Dead_Cedilla          : this->scanCode = '¸'; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Ogonek           : this->scanCode = '˛'; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Iota             : this->scanCode = 'ι'; this->_deadKeys = true; break;
-            //ase Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
+            //Case Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Semivoiced_Sound : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Belowdot         : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Hook             : this->scanCode = ' ̡'; this->_deadKeys = true; break;
@@ -474,12 +507,12 @@ public:
     //=================//
     //   CONSTRUCTOR   //
     //=======================================================================================================================================
-    Qt_ScanCode_KeyMap(int LCID, int verbose = 0): 
+    Qt_ScanCode_KeyMap(int LCID = EN_US_INTERNATIONAL, int verbose = 0): 
       _verbose(verbose)
     , _keyboardMods(0) 
-    , _keylayout_WORK(&keylayout_x80000409)
+    , _keylayout_WORK(nullptr)
     , _layoutMods()
-    , _layout(&(this->_keylayout_WORK->noMod)) 
+    , _layout(nullptr) 
     , _customNoExtended()
     , _customExtended()
     , _customNoExtendedKeylayoutApplied()
@@ -487,6 +520,13 @@ public:
     , _deadKeys(false)
     , _unvalidScanCode(false)
     {  
+        setLayoutLanguage(LCID);
+    }//======================================================================================================================================
+    
+    
+    ~Qt_ScanCode_KeyMap() {}
+
+    void setLayoutLanguage(int LCID) {
         bool found = false;
         for (uint8_t i = 0 ; i < sizeof(keylayoutsList)/sizeof(keylayoutsList[0]); i++) {
             if (keylayoutsList[i]->LCID == LCID){
@@ -496,7 +536,7 @@ public:
             }
         }
         if (!found){
-            std::cout << std::hex << "Unknown keyboard layout 0x" << LCID << ". Reverting to default (English - United States)" << std::endl;
+            std::cout << std::hex << "Unknown keyboard layout 0x" << LCID << ". Reverting to default (English - United States - International)" << std::endl;
         }
         
         this->_layoutMods[0] = this->_keylayout_WORK->getnoMod();
@@ -510,10 +550,7 @@ public:
         this->_layoutMods[8] = this->_keylayout_WORK->getctrl();
         
         this->_layout = this->_layoutMods[0]; // noMod
-    }//======================================================================================================================================
-    
-    
-    ~Qt_ScanCode_KeyMap() {}
+    }
     
     
     void setCustomNoExtendedKeylayoutApplied(int customNoExtended[][2], int size) {
