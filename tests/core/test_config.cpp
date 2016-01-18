@@ -167,7 +167,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -402,7 +401,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -641,7 +639,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -724,7 +721,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "allow_channels=audin\n"
                           "deny_channels=*\n"
                           "fast_path=no\n"
-                          "client_device_announce_timeout=1000\n"
                           "proxy_managed_drives=\n"
                           "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
                           "shell_working_directory=C:\\WINDOWS\\\n"
@@ -881,7 +877,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -953,7 +948,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "persist_bitmap_cache_on_disk=no\n"
                           "fast_path=yes\n"
                           "bogus_sc_net_size=no\n"
-                          "client_device_announce_timeout=1500\n"
                           "proxy_managed_drives=*docs\n"
                           "alternate_shell=\n"
                           "enable_session_probe=false\n"
@@ -1098,7 +1092,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1500,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("*docs",                          ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -1286,7 +1279,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -1345,7 +1337,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "\t[mod_rdp]\n"
                           "rdp_compression=0\n"
                           "bogus_sc_net_size=no\n"
-                          "client_device_announce_timeout=1500\n"
                           "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
                           "shell_working_directory=\n"
                           "session_probe_launch_timeout=6000\n"
@@ -1481,7 +1472,6 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1500,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -1652,7 +1642,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -1822,7 +1811,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("docs,apps",                      ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -1980,7 +1968,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());
@@ -2137,7 +2124,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    BOOST_CHECK_EQUAL(1000,                             ini.get<cfg::mod_rdp::client_device_announce_timeout>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     BOOST_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>().c_str());

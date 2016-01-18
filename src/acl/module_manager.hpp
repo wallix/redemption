@@ -819,9 +819,9 @@ public:
 
                 // BEGIN READ PROXY_OPT
                 if (!this->ini.get<cfg::globals::disable_proxy_opt>()) {
-                    update_authorized_channels(this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
-                                               this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
-                                               this->ini.get<cfg::context::proxy_opt>());
+                    AuthorizationChannels::update_authorized_channels(this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
+                                                                      this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
+                                                                      this->ini.get<cfg::context::proxy_opt>());
                 }
                 // END READ PROXY_OPT
 
@@ -835,6 +835,7 @@ public:
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
                 mod_rdp_params.auth_user                           = this->ini.get<cfg::globals::auth_user>().c_str();
+                mod_rdp_params.target_application                  = this->ini.get<cfg::globals::target_application>().c_str();
 
                 mod_rdp_params.client_name                         = this->front.client_info.hostname;
 
@@ -906,8 +907,6 @@ public:
                 mod_rdp_params.server_redirection_support          = this->ini.get<cfg::mod_rdp::server_redirection_support>();
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.get<cfg::mod_rdp::bogus_sc_net_size>();
-
-                mod_rdp_params.client_device_announce_timeout      = this->ini.get<cfg::mod_rdp::client_device_announce_timeout>();
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
 
