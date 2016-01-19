@@ -31,8 +31,11 @@
 #include <errno.h>
 
 #include "utils/genrandom.hpp"
+#include "utils/ssl_calls.hpp"
+#include "utils/cast.hpp"
+
 #include "openssl_crypto.hpp"
-#include "openssl_evp.hpp"
+//#include "openssl_evp.hpp"
 #include "core/config.hpp"
 
 enum crypto_file_state {
@@ -112,18 +115,13 @@ class CryptoContext {
     void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
     {
          // generate key derivator as SHA256(basename)
+         TODO("We should be able to get basename without using strdupa"
+              ", for instance start and ends pointers would do");
         char * file = strdupa(const_file);
         char * file_basename = basename(file);
-        char tmp_derivated[SHA256_DIGEST_LENGTH];
-        if (SHA256((unsigned char *)file_basename, 
-            strlen(file_basename), 
-            (unsigned char *)tmp_derivated) == nullptr)
-        {
-            std::printf("[CRYPTO_ERROR][%d]: Could not derivate trace crypto key, SHA256 from=%s!\n", 
-                getpid(), file_basename);
-            return;
-        }
-        memcpy(derivator, tmp_derivated, MIN(derivator_len, SHA256_DIGEST_LENGTH));
+        SslSha256 sha256;
+        sha256.update(byte_ptr_cast(file_basename), strlen(file_basename));
+        sha256.final(derivator, derivator_len);
     }
 
     void random(void * dest, size_t size) 
@@ -192,12 +190,8 @@ class CryptoContext {
          */
         char sha256_computed[SHA256_DIGEST_LENGTH];
 
-        if (SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
-            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == nullptr)
-        {
-            printf("[CRYPTO_ERROR][%d]: Could not check crypto key, SHA256!\n", getpid());
-            return 1;
-        }
+        SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
+            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed);
 
         if (strncmp(tmp_buf + 1, sha256_computed, SHA256_DIGEST_LENGTH)){
             printf("[CRYPTO_ERROR][%d]: Crypto key integrity check failed!\n", getpid());
@@ -286,10 +280,7 @@ class CryptoContext {
 
         memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
         memcpy(tmp_derivation + DERIVATOR_LENGTH, this->get_crypto_key(), CRYPTO_KEY_LENGTH);
-        if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == nullptr){
-            std::printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
-            return -1;
-        }
+        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
         memcpy(hmac, derivated, HMAC_KEY_LENGTH);
         return 0;
     }
