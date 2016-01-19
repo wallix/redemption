@@ -1082,11 +1082,7 @@ public:
 
                     out_stream.out_uint32_le(file_full_directory_information.size());   // Length(4)
 
-auto out_stream_p = out_stream.get_current();
                     file_full_directory_information.emit(out_stream);
-LOG(LOG_INFO, "FileFullDirectoryInformation: size=%u",
-    (unsigned int)(out_stream.get_current() - out_stream_p));
-hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
                 }
                 break;
 

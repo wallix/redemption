@@ -1555,6 +1555,14 @@ namespace cfg {
             using type = ::configs::ServerNotification;
             type value{static_cast< ::configs::ServerNotification>(1)};
         };
+        // Do not transmit client machine name or RDP server.
+        struct hide_client_name {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{0};
+        };
     };
 
     struct mod_replay {
@@ -2047,6 +2055,7 @@ struct mod_rdp
 , cfg::mod_rdp::server_cert_success_message
 , cfg::mod_rdp::server_cert_failure_message
 , cfg::mod_rdp::server_cert_error_message
+, cfg::mod_rdp::hide_client_name
 { static constexpr bool is_section = true; };
 
 struct mod_replay
