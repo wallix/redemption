@@ -41,7 +41,6 @@
 #include "gdi/input_kbd_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
-#include "gdi/external_event.hpp"
 
 #include "utils/pattutils.hpp"
 
@@ -152,7 +151,7 @@ private:
 
         template<class... Ts>
         void operator()(NewGraphicDevice & ngd, Ts && ... args) {
-            NewGraphicDeviceProxy()(ngd, std::forward<Ts>(args)...);
+            this->encode(1, ngd, std::forward<Ts>(args)...);
         }
 
         // TODO
@@ -191,87 +190,76 @@ private:
             }
         }
 
-        BGRColor color(BGRColor c) {
+        BGRColor encode_color(BGRColor c) {
             return Encode::operator()(Decode::operator()(c));
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPMultiOpaqueRect & cmd, const Rect & clip) {
-            RDPMultiOpaqueRect capture_cmd = cmd;
-            capture_cmd._Color = this->color(cmd._Color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPMultiOpaqueRect & cmd) {
+            cmd._Color = this->encode_color(cmd._Color);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
-            RDP::RDPMultiPatBlt capture_cmd = cmd;
-            capture_cmd.BackColor = this->color(cmd.BackColor);
-            capture_cmd.ForeColor = this->color(cmd.ForeColor);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDP::RDPMultiPatBlt & cmd) {
+            cmd.BackColor = this->encode_color(cmd.BackColor);
+            cmd.ForeColor = this->encode_color(cmd.ForeColor);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPPatBlt & cmd, const Rect &clip) {
-            RDPPatBlt capture_cmd = cmd;
-            capture_cmd.back_color = this->color(cmd.back_color);
-            capture_cmd.fore_color = this->color(cmd.fore_color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPPatBlt & cmd) {
+            cmd.back_color = this->encode_color(cmd.back_color);
+            cmd.fore_color = this->encode_color(cmd.fore_color);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
-            RDPMem3Blt capture_cmd = cmd;
-            capture_cmd.back_color = this->color(cmd.back_color);
-            capture_cmd.fore_color = this->color(cmd.fore_color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip, bmp);
+        void encode_cmd_color(RDPMem3Blt & cmd) {
+            cmd.back_color = this->encode_color(cmd.back_color);
+            cmd.fore_color = this->encode_color(cmd.fore_color);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPOpaqueRect & cmd, const Rect & clip) {
-            RDPOpaqueRect capture_cmd = cmd;
-            capture_cmd.color = this->color(cmd.color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPOpaqueRect & cmd) {
+            cmd.color = this->encode_color(cmd.color);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPLineTo & cmd, const Rect & clip) {
-            RDPLineTo capture_cmd = cmd;
-            capture_cmd.back_color = this->color(cmd.back_color);
-            capture_cmd.pen.color = this->color(cmd.pen.color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPLineTo & cmd) {
+            cmd.back_color = this->encode_color(cmd.back_color);
+            cmd.pen.color = this->encode_color(cmd.pen.color);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
-            RDPGlyphIndex capture_cmd = cmd;
-            capture_cmd.back_color = this->color(cmd.back_color);
-            capture_cmd.fore_color = this->color(cmd.fore_color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip, gly_cache);
+        void encode_cmd_color(RDPGlyphIndex & cmd) {
+            cmd.back_color = this->encode_color(cmd.back_color);
+            cmd.fore_color = this->encode_color(cmd.fore_color);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPPolygonSC & cmd, const Rect & clip) {
-            RDPPolygonSC capture_cmd = cmd;
-            capture_cmd.BrushColor = this->color(cmd.BrushColor);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPPolygonSC & cmd) {
+            cmd.BrushColor = this->encode_color(cmd.BrushColor);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPPolygonCB & cmd, const Rect & clip) {
-            RDPPolygonCB capture_cmd = cmd;
-            capture_cmd.foreColor = this->color(cmd.foreColor);
-            capture_cmd.backColor = this->color(cmd.backColor);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPPolygonCB & cmd) {
+            cmd.foreColor = this->encode_color(cmd.foreColor);
+            cmd.backColor = this->encode_color(cmd.backColor);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPPolyline & cmd, const Rect & clip) {
-            RDPPolyline capture_cmd = cmd;
-            capture_cmd.PenColor = this->color(cmd.PenColor);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPPolyline & cmd) {
+            cmd.PenColor = this->encode_color(cmd.PenColor);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPEllipseSC & cmd, const Rect & clip) {
-            RDPEllipseSC capture_cmd = cmd;
-            capture_cmd.color = this->color(cmd.color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPEllipseSC & cmd) {
+            cmd.color = this->encode_color(cmd.color);
         }
 
-        void operator()(NewGraphicDevice & ngd, const RDPEllipseCB & cmd, const Rect & clip) {
-            RDPEllipseCB capture_cmd = cmd;
-            capture_cmd.back_color = this->color(cmd.back_color);
-            capture_cmd.fore_color = this->color(cmd.fore_color);
-            NewGraphicDeviceProxy()(ngd, capture_cmd, clip);
+        void encode_cmd_color(RDPEllipseCB & cmd) {
+            cmd.back_color = this->encode_color(cmd.back_color);
+            cmd.fore_color = this->encode_color(cmd.fore_color);
+        }
+
+        template<class Cmd, class... Ts>
+        auto encode(int, NewGraphicDevice & ngd, Cmd const & cmd, Ts && ... args)
+        -> decltype(this->encode_cmd_color(std::declval<Cmd&>())) {
+            auto capture_cmd = cmd;
+            this->encode_cmd_color(capture_cmd);
+            NewGraphicDeviceProxy()(ngd, capture_cmd, std::forward<Ts>(args)...);
+        }
+
+        template<class Cmd, class... Ts>
+        void encode(unsigned, NewGraphicDevice & ngd, Cmd const & cmd, Ts && ... args) {
+            NewGraphicDeviceProxy()(ngd, cmd, std::forward<Ts>(args)...);
         }
     };
 
@@ -410,24 +398,6 @@ private:
     };
 
     NewInputKbd input_kbd_api;
-
-    struct NewExternalEvent : gdi::ExternalEventApi {
-        void external_breakpoint() override {
-            for (RDPCaptureDevice * pcd : this->cds) {
-                pcd->external_breakpoint();
-            }
-        }
-
-        void external_time(const timeval& now) override {
-            for (RDPCaptureDevice * pcd : this->cds) {
-                pcd->external_time(now);
-            }
-        }
-
-        std::vector<RDPCaptureDevice *> cds;
-    };
-
-    NewExternalEvent * external_event_api = nullptr;
 
     struct NewCaptureProbe : gdi::CaptureProbeApi {
         void possible_active_window_change() override {
@@ -598,13 +568,11 @@ public:
 
         if (this->gd_api) {
             this->cache_api = new NewCache(this->gd);
-            this->external_event_api = new NewExternalEvent;
             if (this->pnc) {
                 this->gd_api->gds.push_back(this->pnc);
                 this->capture_device_api.gds.push_back(this->pnc);
                 this->capture_api.caps.push_back(this->pnc);
                 this->capture_probe_api.cds.push_back(this->pnc);
-                this->external_event_api->cds.push_back(this->pnc);
             }
             if (this->psc) {
                 this->capture_api.caps.push_back(this->psc);
@@ -876,15 +844,11 @@ public:
 
     // toggles externally genareted breakpoint.
     void external_breakpoint() override {
-        if (this->capture_wrm) {
-            this->external_event_api->external_breakpoint();
-        }
+        this->capture_api.external_breakpoint();
     }
 
     void external_time(const timeval & now) override {
-        if (this->capture_wrm) {
-            this->external_event_api->external_time(now);
-        }
+        this->capture_api.external_time(now);
     }
 
     void session_update(const timeval & now, const char * message) override {

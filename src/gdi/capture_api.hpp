@@ -54,6 +54,10 @@ struct CaptureApi : private noncopyable
     virtual void resume_capture(timeval const & now) = 0;
     // virtual start_capture(timeval const & now) = 0;
     // virtual stop_capture(timeval const &  now) = 0;
+
+    // TODO other interface
+    virtual void external_breakpoint() = 0;
+    virtual void external_time(const timeval& now) = 0;
 };
 
 struct CaptureProxy
@@ -62,6 +66,8 @@ struct CaptureProxy
     struct update_config_tag {};
     struct pause_capture_tag {};
     struct resume_capture_tag {};
+    struct external_breakpoint {};
+    struct external_time {};
 
     template<class Api>
     std::chrono::microseconds operator()(
@@ -86,6 +92,16 @@ struct CaptureProxy
     template<class Api>
     void operator()(resume_capture_tag, Api & api, timeval const & now) {
         api.resume_capture(now);
+    }
+
+    template<class Api>
+    void operator()(external_time, Api & api, timeval const & now) {
+        api.external_time(now);
+    }
+
+    template<class Api>
+    void operator()(external_breakpoint, Api & api) {
+        api.external_breakpoint();
     }
 };
 
@@ -117,6 +133,14 @@ struct CaptureAdaptor : AdaptorBase<Proxy, InterfaceBase>
 
     void resume_capture(timeval const & now) {
         this->prox()(CaptureProxy::resume_capture_tag{}, *this, now);
+    }
+
+    void external_breakpoint() {
+        this->prox()(CaptureProxy::external_breakpoint{}, *this);
+    }
+
+    void external_time(const timeval& now) {
+        this->prox()(CaptureProxy::external_time{}, *this, now);
     }
 };
 
