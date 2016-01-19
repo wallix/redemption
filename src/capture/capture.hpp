@@ -37,9 +37,10 @@
 #include "gdi/graphic_api.hpp"
 #include "gdi/cache_api.hpp"
 #include "gdi/capture_api.hpp"
-#include "gdi/capture_device_api.hpp"
+#include "gdi/synchronise_api.hpp"
 #include "gdi/input_kbd_api.hpp"
 #include "gdi/capture_probe_api.hpp"
+#include "gdi/synchronise_api.hpp"
 
 
 #include "utils/pattutils.hpp"
@@ -362,28 +363,34 @@ private:
 
     NewCapture capture_api;
 
-    struct NewCache : gdi::CacheApi {
-        NewCache(RDPGraphicDevice * gd) : gd(gd) {}
-
-        void cache(RDPBrushCache const & cmd) override { this->gd->draw(cmd); }
-        void cache(RDPColCache   const & cmd) override { this->gd->draw(cmd); }
-
-        RDPGraphicDevice * gd;
-    };
-
-    NewCache * cache_api = nullptr;
-
-    struct NewCaptureDevice : gdi::CaptureDeviceApi {
-        void flush() override {
-            for (RDPGraphicDevice * pgd : gds) {
-                pgd->flush();
-            }
-        }
-
+    struct NewCacheDevice : gdi::CacheApi {
         std::vector<RDPGraphicDevice *> gds;
     };
 
-    NewCaptureDevice capture_device_api;
+    struct NewCacheDeviceProxy {
+        template<class... Ts>
+        void operator()(NewCacheDevice & ngd, Ts const & ... args) {
+            for (RDPGraphicDevice * gd : ngd.gds) {
+                gd->draw(args...);
+            }
+        }
+    };
+
+    using NewCache = gdi::CacheAdaptor<NewCacheDeviceProxy, NewCacheDevice>;
+
+    NewCache * cache_api = nullptr;
+
+    struct NewSynchronise : gdi::SynchroniseApi {
+        void sync() override {
+            for (gdi::SynchroniseApi * pgd : gds) {
+                pgd->sync();
+            }
+        }
+
+        std::vector<gdi::SynchroniseApi *> gds;
+    };
+
+    NewSynchronise synchronise_api;
 
     struct NewInputKbd : gdi::InputKbdApi {
         bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
@@ -567,12 +574,13 @@ public:
         capture_api.psc = this->psc;
 
         if (this->gd_api) {
-            this->cache_api = new NewCache(this->gd);
+            this->cache_api = new NewCache;
             if (this->pnc) {
-                this->gd_api->gds.push_back(this->pnc);
-                this->capture_device_api.gds.push_back(this->pnc);
+                this->gd_api->gds.push_back(&this->pnc->recorder);
+                this->synchronise_api.gds.push_back(this->pnc);
                 this->capture_api.caps.push_back(this->pnc);
                 this->capture_probe_api.cds.push_back(this->pnc);
+                this->cache_api->gds.push_back(&this->pnc->recorder);
             }
             if (this->psc) {
                 this->capture_api.caps.push_back(this->psc);
@@ -655,7 +663,7 @@ public:
 
     void flush() override {
         if (this->capture_wrm) {
-            this->capture_device_api.flush();
+            this->synchronise_api.sync();
         }
     }
 

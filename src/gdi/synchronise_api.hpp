@@ -18,18 +18,18 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_CAPTURE_DEVICE_API_HPP
-#define REDEMPTION_GDI_CAPTURE_DEVICE_API_HPP
+#ifndef REDEMPTION_GDI_SYNCHRONISE_API_HPP
+#define REDEMPTION_GDI_SYNCHRONISE_API_HPP
 
 #include "noncopyable.hpp"
 
 namespace gdi {
 
-struct CaptureDeviceApi : private noncopyable
+struct SynchroniseApi : private noncopyable
 {
-    virtual ~CaptureDeviceApi() = default;
+    virtual ~SynchroniseApi() = default;
 
-    virtual void flush() = 0;
+    virtual void sync() = 0;
 };
 
 }

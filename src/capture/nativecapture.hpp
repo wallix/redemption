@@ -27,10 +27,12 @@
 #include "GraphicToFile.hpp"
 #include "gdi/input_kbd_api.hpp"
 #include "gdi/capture_api.hpp"
+#include "gdi/synchronise_api.hpp"
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
-class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice, public gdi::InputKbdApi, public gdi::CaptureApi
+class NativeCapture : public RDPCaptureDevice, public gdi::InputKbdApi, public gdi::CaptureApi, public gdi::SynchroniseApi
 {
+// TODO private
 public:
     uint64_t frame_interval;
     timeval start_native_capture;
@@ -123,7 +125,7 @@ public:
         }
     }
 
-    void flush() override {
+    void sync() override {
         this->recorder.flush();
     }
 
@@ -155,10 +157,6 @@ public:
         this->keyboard_input_mask_enabled = enable;
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
-        this->recorder.server_set_pointer(cursor);
-    }
-
     // toggles externally genareted breakpoint.
     void external_breakpoint() override {
         REDASSERT(this->externally_generated_breakpoint);
@@ -174,102 +172,6 @@ public:
     void session_update(const timeval & now, const char * message) override {
         this->recorder.session_update(now, message);
     }
-
-
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->recorder.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->recorder.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        this->recorder.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-            size_t size, const Bitmap & bmp) override {
-        this->recorder.draw(bitmap_data, data, size, bmp);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->recorder.draw(order);
-    }
-
-    using RDPGraphicDevice::draw;
 };
 
 #endif

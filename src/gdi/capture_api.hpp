@@ -123,23 +123,23 @@ struct CaptureAdaptor : AdaptorBase<Proxy, InterfaceBase>
         );
     }
 
-    void update_config(Inifile const & ini) {
+    void update_config(Inifile const & ini) override {
         this->prox()(CaptureProxy::update_config_tag{}, *this, ini);
     }
 
-    void pause_capture (timeval const & now) {
+    void pause_capture (timeval const & now) override {
         this->prox()(CaptureProxy::pause_capture_tag{}, *this, now);
     }
 
-    void resume_capture(timeval const & now) {
+    void resume_capture(timeval const & now) override {
         this->prox()(CaptureProxy::resume_capture_tag{}, *this, now);
     }
 
-    void external_breakpoint() {
+    void external_breakpoint() override {
         this->prox()(CaptureProxy::external_breakpoint{}, *this);
     }
 
-    void external_time(const timeval& now) {
+    void external_time(const timeval& now) override {
         this->prox()(CaptureProxy::external_time{}, *this, now);
     }
 };
