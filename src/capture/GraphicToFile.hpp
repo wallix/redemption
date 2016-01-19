@@ -37,7 +37,11 @@
 #include "RDP/RDPDrawable.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
+
 #include "gdi/dump_png24.hpp"
+#include "gdi/input_kbd_api.hpp"
+#include "gdi/synchronise_api.hpp"
+#include "gdi/capture_probe_api.hpp"
 
 
 template <size_t SZ>
@@ -81,7 +85,11 @@ private:
     }
 };
 
-class GraphicToFile : public RDPSerializer, public RDPCaptureDevice
+class GraphicToFile final
+: public RDPSerializer
+, public gdi::InputKbdApi
+, public gdi::SynchroniseApi
+, public gdi::CaptureProbeApi
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
@@ -121,7 +129,7 @@ public:
     enum class SendInput { NO, YES };
 
     GraphicToFile(const timeval & now
-                , Transport * trans
+                , Transport & trans
                 , const uint16_t width
                 , const uint16_t height
                 , const uint8_t  capture_bpp
@@ -132,12 +140,11 @@ public:
                 , const Inifile & ini
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
-    : RDPSerializer( trans, this->buffer_stream_orders
+    : RDPSerializer( this->buffer_stream_orders
                    , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, gly_cache, ptr_cache,
                    0, 1, 1, 32 * 1024, ini)
-    , RDPCaptureDevice()
-    , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
-    , trans_target(*trans)
+    , compression_wrapper(trans, ini.get<cfg::video::wrm_compression_algorithm>())
+    , trans_target(trans)
     , trans(this->compression_wrapper.get())
     , last_sent_timer()
     , timer(now)
@@ -189,11 +196,11 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
-        uint32_t count  = data_sz / sizeof(uint32_t);
+    bool input_kbd(const timeval& now, const array_const_u8& input_data_32) override {
+        size_t const count  = input_data_32.size() / sizeof(uint32_t);
 
         size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
-        keyboard_buffer_32.out_copy_bytes(input_data_32, c * sizeof(uint32_t));
+        keyboard_buffer_32.out_copy_bytes(input_data_32.data(), c * sizeof(uint32_t));
 
         return true;
     }
@@ -558,7 +565,7 @@ protected:
     }
 
 public:
-    void flush() override {
+    void sync() override {
         this->flush_bitmaps();
         this->flush_orders();
     }
@@ -610,8 +617,8 @@ protected:
     }
 
 public:
-    void session_update(const timeval & now, const char * message) override {
-        uint16_t message_length = ::strlen(message) + 1;    // Null-terminator is included.
+    void session_update(const timeval& now, const array_const_u8 & message) override {
+        uint16_t message_length = message.size() + 1;       // Null-terminator is included.
 
         StaticOutStream<16> payload;
         payload.out_timeval_to_uint64le_usec(now);
@@ -619,10 +626,13 @@ public:
 
         send_wrm_chunk(this->trans, SESSION_UPDATE, payload.get_offset() + message_length, 1);
         this->trans.send(payload.get_data(), payload.get_offset());
-        this->trans.send(message, message_length);
+        this->trans.send(message.data(), message.size());
+        this->trans.send("\0", 1);
 
         this->last_sent_timer = this->timer;
     }
+
+    void possible_active_window_change() override {}
 };  // struct GraphicToFile
 
 #endif

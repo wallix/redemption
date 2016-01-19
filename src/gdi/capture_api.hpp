@@ -21,8 +21,6 @@
 #ifndef REDEMPTION_GDI_CAPTURE_API_HPP
 #define REDEMPTION_GDI_CAPTURE_API_HPP
 
-#include "utils/virtual_deleter.hpp"
-
 #include "noncopyable.hpp"
 
 // TODO array_view_fwd

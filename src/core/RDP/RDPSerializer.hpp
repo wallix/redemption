@@ -120,12 +120,17 @@
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
 
-#include "transport.hpp"
-
 #include "finally.hpp"
 #include "stream.hpp"
 
-struct RDPSerializer : public RDPGraphicDevice
+#include "gdi/railgraphic_api.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/cache_api.hpp"
+
+struct RDPSerializer
+: public gdi::RAILGraphicApi
+, public gdi::GraphicApi
+, public gdi::CacheApi
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
     enum { MAX_ORDERS_SIZE = 16384,
@@ -133,17 +138,12 @@ struct RDPSerializer : public RDPGraphicDevice
            MAX_BITMAP_SIZE_64K = 65536
     };
 
-    using RDPGraphicDevice::draw;
-
 protected:
     OutStream & stream_orders;
     OutStream & stream_bitmaps;
 
 private:
     uint8_t bpp;
-
-protected:
-    Transport * trans;
 
 protected:
     const Inifile & ini;
@@ -186,8 +186,7 @@ protected:
     const uint32_t verbose;
 
 public:
-    RDPSerializer( Transport * trans
-                 , OutStream & stream_orders
+    RDPSerializer( OutStream & stream_orders
                  , OutStream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
@@ -199,11 +198,9 @@ public:
                  , size_t max_bitmap_size
                  , const Inifile & ini
                  , uint32_t verbose = 0)
-    : RDPGraphicDevice()
-    , stream_orders(stream_orders)
+    : stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
     , bpp(bpp)
-    , trans(trans)
     , ini(ini)
     , bitmap_cache_version(bitmap_cache_version)
     , use_bitmap_comp(use_bitmap_comp)
@@ -471,10 +468,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-        const GlyphCache * gly_cache) override {
-        REDASSERT(gly_cache);
-
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
             uint16_t delta = cmd.data[i++];
             if (delta == 0x80) {
@@ -491,7 +485,7 @@ public:
         for (uint8_t i = 0; i < new_cmd.data_len; ) {
             if (new_cmd.data[i] <= 0xFD) {
                 //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                FontChar const & fc = gly_cache->glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                FontChar const & fc = gly_cache.glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
                 REDASSERT(fc);
 
                 int cacheIndex;
@@ -580,12 +574,12 @@ public:
         }
     }
 
-    void draw(const RDPBrushCache & cmd) override {
+    void cache(const RDPBrushCache & cmd) override {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream_orders);
     }
 
-    void draw(const RDPColCache & cmd) override {
+    void cache(const RDPColCache & cmd) override {
         this->reserve_order(2000);
         cmd.emit(this->stream_orders);
     }
@@ -707,18 +701,19 @@ public:
         this->bitmap_count++;
     }
 
-    void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) override {
-        this->reserve_bitmap(bitmap_data.struct_size() + size);
+    void draw( const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        REDASSERT(bmp.has_data_compressed());
+        auto data_compressed = bmp.data_compressed();
+        this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
 
         bitmap_data.emit(this->stream_bitmaps);
-        this->stream_bitmaps.out_copy_bytes(data, size);
+        this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
         if (this->ini.get<cfg::debug::bitmap_update>()) {
             bitmap_data.log(LOG_INFO, "RDPSerializer");
         }
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void draw(const Pointer & cursor) override {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -736,6 +731,9 @@ public:
         break;
         }
     }
+
+    // TODO
+    void draw(const BGRPalette& palette) override {}
 };
 
 #endif

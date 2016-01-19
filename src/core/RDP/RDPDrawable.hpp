@@ -61,9 +61,14 @@
 #include "png.hpp"
 #include "text_metrics.hpp"
 
+#include "gdi/railgraphic_api.hpp"
+#include "gdi/graphic_api.hpp"
+
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
-class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice
+class RDPDrawable
+: public gdi::RAILGraphicApi
+, public gdi::GraphicApi
 {
     using Color = Drawable::Color;
 
@@ -153,7 +158,7 @@ private:
     }
 
 public:
-    void set_row(size_t rownum, const uint8_t * data) override {
+    void set_row(size_t rownum, const uint8_t * data) /*TODO override*/ {
         this->drawable.set_row(rownum, data);
     }
 
@@ -460,7 +465,7 @@ public:
     void draw_VariableBytes(uint8_t const * data, uint16_t size, bool has_delta_bytes,
             uint16_t & draw_pos_ref, int16_t offset_y, Color color,
             int16_t bmp_pos_x, int16_t bmp_pos_y, Rect const & clip,
-            uint8_t cache_id, const GlyphCache * gly_cache) {
+            uint8_t cache_id, const GlyphCache & gly_cache) {
         InStream variable_bytes(data, size);
 
         uint8_t const * fragment_begin_position = variable_bytes.get_current();
@@ -470,7 +475,7 @@ public:
             uint8_t data = variable_bytes.in_uint8();
             if (data <= 0xFD)
             {
-                FontChar const & fc = gly_cache->glyphs[cache_id][data].font_item;
+                FontChar const & fc = gly_cache.glyphs[cache_id][data].font_item;
                 if (!fc)
                 {
                     LOG( LOG_INFO
@@ -554,7 +559,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         if (!cmd.bk.has_intersection(clip)) {
             return;
         }
@@ -581,11 +586,6 @@ public:
             draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
             clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
     }
-
-    void draw(const RDPBrushCache & cmd) override {}
-    void draw(const RDPColCache & cmd) override {}
-
-    void flush() override {}
 
     static const FontChar & get_font(const Font& font, uint32_t c)
     {
@@ -718,8 +718,7 @@ public:
         this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-            size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         const Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                           , bitmap_data.dest_right - bitmap_data.dest_left + 1
                           , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
@@ -740,11 +739,11 @@ public:
     void draw(const RDP::RAIL::CachedIcon          & order) override {}
     void draw(const RDP::RAIL::DeletedWindow       & order) override {}
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void draw(const Pointer & cursor) override {
         this->drawable.use_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
     }
 
-    void set_mod_palette(const BGRPalette & palette) override {
+    void draw(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
     }
 

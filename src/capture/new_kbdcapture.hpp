@@ -23,15 +23,21 @@
 #define CAPTURE_NEW_KBDCAPTURE_HPP
 
 #include "utils/match_finder.hpp"
+#include "utils/difftimeval.hpp"
 #include "CaptureDevice.hpp"
 #include "stream.hpp"
 #include "cast.hpp"
 
 #include "gdi/input_kbd_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_probe_api.hpp"
 
 #include <ctime>
 
-struct NewKbdCapture : public RDPCaptureDevice, public gdi::InputKbdApi
+struct NewKbdCapture
+: public gdi::CaptureApi
+, public gdi::CaptureProbeApi
+, public gdi::InputKbdApi
 {
 private:
     StaticOutStream<49152> unlogged_data;
@@ -142,15 +148,11 @@ public:
     }
 
 public:
-    bool input_kbd(const timeval& now, array_const_u8 const & input_data_32) override {
-        return this->input(now, input_data_32.data(), input_data_32.size());
-    }
-
-    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override
+    bool input_kbd(const timeval& now, array_const_u8 const & input_data_32) override
     {
         bool can_be_sent_to_server = true;
 
-        InStream in_raw_kbd_data(input_data_32, data_sz);
+        InStream in_raw_kbd_data(input_data_32);
         uint32_t uchar;
 
         bool loop = true;
@@ -300,22 +302,25 @@ public:
         }
     }
 
-    virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
-                          bool const & requested_to_stop) override {
+    std::chrono::microseconds snapshot(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) override {
+        std::chrono::microseconds const ret {uint64_t(this->time_to_wait)};
+
         if ((difftimeval(now, this->last_snapshot) < 1000000) &&
             (this->unlogged_data.get_offset() < 8 * sizeof(uint32_t))) {
-            return;
+            return ret;
         }
 
         if (this->wait_until_next_snapshot) {
             this->wait_until_next_snapshot = false;
 
-            return;
+            return ret;
         }
 
         this->flush();
 
         this->last_snapshot = now;
+
+        return ret;
     }
 
 private:
@@ -419,8 +424,7 @@ public:
         this->data.rewind();
     }
 
-    virtual void session_update(const timeval & now, const char * message)
-            override {
+    void session_update(const timeval& now, const array_const_u8 & message) override {
         this->is_driven_by_ocr          = true;
         this->is_probe_enabled_session  = true;
 
@@ -434,6 +438,13 @@ public:
 
         this->send_session_data();
     }
+
+    // TODO
+    void external_breakpoint() override {}
+    void external_time(const timeval& now) override {}
+    void pause_capture(const timeval& now) override {}
+    void resume_capture(const timeval& now) override {}
+    void update_config(const Inifile& ini) override {}
 };
 
 #endif

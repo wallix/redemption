@@ -70,10 +70,95 @@ private:
 // for extension
 // end extension
 
-    BmpCache      * pnc_bmp_cache;
-    GlyphCache    * pnc_gly_cache;
-    PointerCache  * pnc_ptr_cache;
-    NativeCapture * pnc;
+    struct Native : private gdi::InputKbdApi
+    {
+        BmpCache     bmp_cache;
+        GlyphCache   gly_cache;
+        PointerCache ptr_cache;
+
+        DumpPng24FromRDPDrawableAdapter dump_png24_api;
+
+        GraphicToFile graphic_to_file;
+        NativeCapture nc;
+
+        std::size_t idx_kbd = -1u;
+
+        Native(
+            const timeval & now, Transport & trans, uint8_t capture_bpp,
+            RDPDrawable & drawable, const Inifile & ini
+        )
+        : bmp_cache(
+            BmpCache::Recorder, capture_bpp, 3, false,
+            BmpCache::CacheOption(600, 768, false),
+            BmpCache::CacheOption(300, 3072, false),
+            BmpCache::CacheOption(262, 12288, false))
+        , ptr_cache(/*pointerCacheSize=*/0x19)
+        , dump_png24_api{drawable}
+        , graphic_to_file(
+            now, trans, drawable.width(), drawable.height(), capture_bpp,
+            this->bmp_cache, this->gly_cache, this->ptr_cache,
+            this->dump_png24_api, ini, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
+        , nc(this->graphic_to_file, this->dump_png24_api, now, ini)
+        {}
+
+        void attach_apis(Capture & cap, const Inifile & ini) {
+            cap.gd_api->gds.push_back(&this->graphic_to_file);
+            cap.synchronise_api.gds.push_back(&this->graphic_to_file);
+            cap.capture_api.caps.push_back(&this->nc);
+            cap.capture_probe_api.cds.push_back(&this->graphic_to_file);
+            cap.cache_api->gds.push_back(&this->graphic_to_file);
+
+            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
+                cap.input_kbd_api.kbds.push_back(&this->graphic_to_file);
+                this->idx_kbd = cap.input_kbd_api.kbds.size();
+            }
+        }
+
+        void enable_keyboard_input_mask(Capture & cap, bool enable) {
+            if (this->idx_kbd == -1u) {
+                return ;
+            }
+            cap.input_kbd_api.kbds[this->idx_kbd] = enable
+              ?  static_cast<gdi::InputKbdApi*>(this)
+              : &static_cast<gdi::InputKbdApi&>(this->graphic_to_file);
+        }
+
+    private:
+        bool input_kbd(const timeval& now, const array_const_u8& input_data_32) override {
+            static const char shadow_buf[] =
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
+            ;
+            return this->graphic_to_file.input_kbd(now, {
+                reinterpret_cast<unsigned char const *>(shadow_buf),
+                std::min(input_data_32.size(), (sizeof(shadow_buf)-1))
+            });
+        }
+    } * pnc;
 
     RDPDrawable * drawable;
     RDPGraphicDevice * gd;
@@ -92,7 +177,7 @@ private:
 
     struct NewGraphicDevice : gdi::GraphicApi {
         NewGraphicDevice(Capture & cap) : cap(cap) {}
-        std::vector<RDPGraphicDevice *> gds;
+        std::vector<gdi::GraphicApi*> gds;
         std::vector<gdi::CaptureApi*> snapshoters;
         Capture & cap;
     };
@@ -115,26 +200,9 @@ private:
 
         template<class... Ts>
         void dispatch(NewGraphicDevice & ngd, Ts const & ... args) {
-            for (RDPGraphicDevice * pgd : ngd.gds) {
-                this->adapt(pgd, args...);
+            for (gdi::GraphicApi * pgd : ngd.gds) {
+                pgd->draw(args...);
             }
-        }
-
-        template<class... Ts>
-        void adapt(RDPGraphicDevice * pgd, Ts const & ... args) {
-            pgd->draw(args...);
-        }
-
-        void adapt(RDPGraphicDevice * pgd, const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
-            pgd->draw(cmd, clip, &gly_cache);
-        }
-
-        void adapt(RDPGraphicDevice * pgd, BGRPalette const & palette) {
-            pgd->set_mod_palette(palette);
-        }
-
-        void adapt(RDPGraphicDevice * pgd, Pointer const & pointer) {
-            pgd->server_set_pointer(pointer);
         }
     };
 
@@ -158,35 +226,44 @@ private:
         // TODO
         void operator()(NewGraphicDevice & ngd, const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
             if (this->cap.capture_wrm) {
+                auto compress_and_draw_bitmap_update = [&bitmap_data, this](
+                    const Bitmap & bmp, gdi::GraphicApi & gd
+                ) {
+                    StaticOutStream<65535> bmp_stream;
+                    bmp.compress(this->cap.capture_bpp, bmp_stream);
+
+                    RDPBitmapData target_bitmap_data = bitmap_data;
+
+                    target_bitmap_data.bits_per_pixel = bmp.bpp();
+                    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                    target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+                    gd.draw(target_bitmap_data, bmp);
+                };
+
                 if (bmp.bpp() > this->cap.capture_bpp) {
                     // reducing the color depth of image.
                     Bitmap capture_bmp(this->cap.capture_bpp, bmp);
 
-                    for (RDPGraphicDevice * pgd : ngd.gds) {
-                        ::compress_and_draw_bitmap_update(bitmap_data, capture_bmp, this->cap.capture_bpp, *pgd);
+                    for (gdi::GraphicApi * pgd : ngd.gds) {
+                        compress_and_draw_bitmap_update(capture_bmp, *pgd);
                     }
                 }
                 else if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
-                    for (RDPGraphicDevice * pgd : ngd.gds) {
-                        ::compress_and_draw_bitmap_update(bitmap_data, bmp, this->cap.capture_bpp, *pgd);
+                    for (gdi::GraphicApi * pgd : ngd.gds) {
+                        compress_and_draw_bitmap_update(bmp, *pgd);
                     }
                 }
                 else {
                     REDASSERT(bmp.has_data_compressed());
-                    for (RDPGraphicDevice * pgd : ngd.gds) {
-                        ::compress_and_draw_bitmap_update(bitmap_data, bmp, this->cap.capture_bpp, *pgd);
+                    for (gdi::GraphicApi * pgd : ngd.gds) {
+                        compress_and_draw_bitmap_update(bmp, *pgd);
                     }
                 }
             }
-            else if (bmp.has_data_compressed()) {
-                auto data_compressed = bmp.data_compressed();
-                for (RDPGraphicDevice * pgd : ngd.gds) {
-                    pgd->draw(bitmap_data, data_compressed.data(), data_compressed.size(), bmp);
-                }
-            }
             else {
-                for (RDPGraphicDevice * pgd : ngd.gds) {
-                    pgd->draw(bitmap_data, bmp.data(), bmp.bmp_size(), bmp);
+                for (gdi::GraphicApi * pgd : ngd.gds) {
+                    pgd->draw(bitmap_data, bmp);
                 }
             }
         }
@@ -347,16 +424,6 @@ private:
             }
             return time;
         }
-
-        void operator()(gdi::CaptureProxy::update_config_tag, NewCaptureBase & api, Inifile const & ini) {
-            //TODO enable_real_time
-            if (api.psc) {
-                api.psc->update_config(ini);
-            }
-            if (api.pnc) {
-                api.pnc->update_config(ini);
-            }
-        }
     };
 
     using NewCapture = gdi::CaptureAdaptor<NewCaptureProxy, NewCaptureBase>;
@@ -364,14 +431,14 @@ private:
     NewCapture capture_api;
 
     struct NewCacheDevice : gdi::CacheApi {
-        std::vector<RDPGraphicDevice *> gds;
+        std::vector<gdi::CacheApi *> gds;
     };
 
     struct NewCacheDeviceProxy {
         template<class... Ts>
         void operator()(NewCacheDevice & ngd, Ts const & ... args) {
-            for (RDPGraphicDevice * gd : ngd.gds) {
-                gd->draw(args...);
+            for (gdi::CacheApi * gd : ngd.gds) {
+                gd->cache(args...);
             }
         }
     };
@@ -408,18 +475,18 @@ private:
 
     struct NewCaptureProbe : gdi::CaptureProbeApi {
         void possible_active_window_change() override {
-            for (RDPCaptureDevice * pcd : this->cds) {
+            for (gdi::CaptureProbeApi * pcd : this->cds) {
                 pcd->possible_active_window_change();
             }
         }
 
-        void session_update(const timeval& now, const array_view< const char >& message) override {
-            for (RDPCaptureDevice * pcd : this->cds) {
-                pcd->session_update(now, message.data()/* TODO , message.size()*/);
+        void session_update(const timeval& now, array_const_u8 const & message) override {
+            for (gdi::CaptureProbeApi * pcd : this->cds) {
+                pcd->session_update(now, message);
             }
         }
 
-        std::vector<RDPCaptureDevice *> cds;
+        std::vector<gdi::CaptureProbeApi *> cds;
     };
 
     NewCaptureProbe capture_probe_api;
@@ -443,9 +510,6 @@ public:
     , cctx(cctx)
     , png_trans(nullptr)
     , wrm_trans(nullptr)
-    , pnc_bmp_cache(nullptr)
-    , pnc_gly_cache(nullptr)
-    , pnc_ptr_cache(nullptr)
     , pnc(nullptr)
     , drawable(nullptr)
     , gd(nullptr)
@@ -521,15 +585,6 @@ public:
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
 
-            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false
-                                              , BmpCache::CacheOption(600, 768, false)
-                                              , BmpCache::CacheOption(300, 3072, false)
-                                              , BmpCache::CacheOption(262, 12288, false)
-                                              );
-            this->pnc_gly_cache = new GlyphCache();
-            const int pointerCacheSize = 0x19;
-            this->pnc_ptr_cache = new PointerCache(pointerCacheSize);
-
             if (this->trace_type == configs::TraceType::cryptofile) {
                 auto * trans = new CryptoOutMetaSequenceTransport(
                     &this->cctx, record_path, hash_path, basename, now
@@ -549,10 +604,7 @@ public:
                     width, height, groupid, authentifier);
                 this->wrm_trans = trans;
             }
-            this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
-                                         , *this->drawable, ini
-                                         , NativeCapture::SendInput::YES);
+            this->pnc = new Native(now, *this->wrm_trans, capture_bpp, *this->drawable, ini);
         }
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
@@ -568,17 +620,10 @@ public:
                 );
         }
 
-        capture_api.pnc = this->pnc;
-        capture_api.psc = this->psc;
-
         if (this->gd_api) {
             this->cache_api = new NewCache;
             if (this->pnc) {
-                this->gd_api->gds.push_back(&this->pnc->recorder);
-                this->synchronise_api.gds.push_back(this->pnc);
-                this->capture_api.caps.push_back(this->pnc);
-                this->capture_probe_api.cds.push_back(this->pnc);
-                this->cache_api->gds.push_back(&this->pnc->recorder);
+                this->pnc->attach_apis(*this, ini);
             }
             if (this->psc) {
                 this->capture_api.caps.push_back(this->psc);
@@ -592,10 +637,6 @@ public:
             this->capture_probe_api.cds.push_back(this->pkc);
             this->input_kbd_api.kbds.push_back(this->pkc);
         }
-
-        if (this->pnc && !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
-            this->input_kbd_api.kbds.push_back(this->pnc);
-        }
     }
 
     ~Capture() override {
@@ -606,13 +647,10 @@ public:
 
         if (this->pnc) {
             timeval now = tvtime();
-            this->pnc->recorder.timestamp(now);
-            this->pnc->recorder.send_timestamp_chunk(false);
+            this->pnc->graphic_to_file.timestamp(now);
+            this->pnc->graphic_to_file.send_timestamp_chunk(false);
             delete this->pnc;
         }
-        delete this->pnc_bmp_cache;
-        delete this->pnc_gly_cache;
-        delete this->pnc_ptr_cache;
         delete this->drawable;
         delete this->wrm_trans;
 
@@ -636,8 +674,8 @@ public:
         if (this->capture_wrm){
             this->wrm_trans->next();
             timeval now = tvtime();
-            this->pnc->recorder.timestamp(now);
-            this->pnc->recorder.send_timestamp_chunk(true);
+            this->pnc->graphic_to_file.timestamp(now);
+            this->pnc->graphic_to_file.send_timestamp_chunk(true);
 
             this->capture_api.resume_capture(now);
         }
@@ -672,7 +710,7 @@ public:
     // TODO is not virtual
     void enable_keyboard_input_mask(bool enable) {
         if (this->capture_wrm) {
-            this->pnc->enable_keyboard_input_mask(enable);
+            this->pnc->enable_keyboard_input_mask(*this, enable);
         }
 
         if (this->pkc) {
@@ -858,7 +896,9 @@ public:
     }
 
     void session_update(const timeval & now, const char * message) override {
-        this->capture_probe_api.session_update(now, {message, strlen(message)});
+        this->capture_probe_api.session_update(now, {
+            reinterpret_cast<unsigned char const *>(message), strlen(message)
+        });
     }
 
     void possible_active_window_change() override {

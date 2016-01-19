@@ -91,7 +91,7 @@ private:
     }
 
 public:
-    void update_config(const Inifile & ini){
+    void update_config(const Inifile & ini) override {
         if (ini.get<cfg::video::png_limit>() < this->conf.png_limit) {
             this->unlink_filegen(ini.get<cfg::video::png_limit>());
         }
