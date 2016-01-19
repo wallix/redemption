@@ -83,7 +83,6 @@
 #include "channel_names.hpp"
 #include "finally.hpp"
 #include "timeout.hpp"
-//#include "outbound_connection_monitor_rules.hpp"
 
 #include "channels/cliprdr_channel.hpp"
 #include "channels/rdpdr_channel.hpp"
@@ -312,7 +311,7 @@ class mod_rdp : public RDPChannelManagerMod {
     int      share_id;
     uint16_t userid;
 
-    char hostname[16];
+    char hostname[HOST_NAME_MAX + 1];
     char username[128];
     char password[2048];
     char domain[256];
@@ -452,16 +451,10 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-//    wait_obj    session_probe_event;
-//    bool        session_probe_is_ready            = false;
-//    bool        session_probe_keep_alive_received = true;
-
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
     Translation::language_t lang;
-
-//    OutboundConnectionMonitorRules outbound_connection_monitor_rules;
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -725,7 +718,7 @@ public:
         , enable_multiopaquerect(false)
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
-        , remote_program(mod_rdp_params.remote_program)
+        , remote_program(info.remote_program)
         , server_redirection_support(mod_rdp_params.server_redirection_support)
         , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
@@ -735,7 +728,6 @@ public:
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , lang(mod_rdp_params.lang)
-//        , outbound_connection_monitor_rules("", mod_rdp_params.outbound_connection_blocking_rules)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
@@ -823,8 +815,13 @@ public:
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
             LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(info.hostname), sizeof(this->hostname));
         }
-        strncpy(this->hostname, info.hostname, 15);
-        this->hostname[15] = 0;
+        if (mod_rdp_params.hide_client_name) {
+            ::gethostname(this->hostname, sizeof(this->hostname));
+        }
+        else{
+            ::strncpy(this->hostname, info.hostname, sizeof(this->hostname) - 1);
+        }
+        this->hostname[sizeof(this->hostname) - 1] = 0;
 
 
         const char * domain_pos   = nullptr;
@@ -881,7 +878,7 @@ public:
         //  characters are both null terminators.
         SOHSeparatedStringsToMultiSZ(this->password, sizeof(this->password), mod_rdp_params.target_password);
 
-        snprintf(this->client_name, sizeof(this->client_name), "%s", mod_rdp_params.client_name);
+        snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
         std::string alternate_shell(mod_rdp_params.alternate_shell);
         if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
