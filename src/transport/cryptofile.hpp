@@ -219,10 +219,21 @@ class CryptoContext {
     {
         memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
         this->crypto_key_loaded = true;
-        const unsigned char HASH_DERIVATOR[] = {
-             0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
-        };                
-        this->compute_hmac(this->hmac_key, HASH_DERIVATOR);
+        const unsigned char tmp_derivation[] = 
+        {
+                // derivator
+                0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b,
+                // crypto_key
+                this->crypto_key[0x00], this->crypto_key[0x01], this->crypto_key[0x02], this->crypto_key[0x03],
+                this->crypto_key[0x04], this->crypto_key[0x05], this->crypto_key[0x06], this->crypto_key[0x07],
+                this->crypto_key[0x08], this->crypto_key[0x09], this->crypto_key[0x0A], this->crypto_key[0x0B],
+                this->crypto_key[0x0C], this->crypto_key[0x0D], this->crypto_key[0x0E], this->crypto_key[0x0F],
+                this->crypto_key[0x10], this->crypto_key[0x11], this->crypto_key[0x12], this->crypto_key[0x13],
+                this->crypto_key[0x14], this->crypto_key[0x15], this->crypto_key[0x16], this->crypto_key[0x17],
+                this->crypto_key[0x18], this->crypto_key[0x19], this->crypto_key[0x1A], this->crypto_key[0x1B],
+                this->crypto_key[0x1C], this->crypto_key[0x1D], this->crypto_key[0x1E], this->crypto_key[0x1F],
+        };
+        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, this->hmac_key);
         return 0;
     }
 
