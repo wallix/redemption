@@ -172,8 +172,10 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<Level>(), "encryptionLevel", rdp_level_desc, set(Level::low));
         W.member(A, type_<std::string>(), "authfile", set("/var/run/redemption-sesman-sock"));
         W.sep();
+        W.member(V, type_<unsigned>(), "handshake_timeout", desc{"Time out during RDP handshake stage (in seconds)."}, set(10));
         W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
+        W.member(A, type_<unsigned>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
 
@@ -299,8 +301,6 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, str_authid{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
-        W.member(A, type_<unsigned>(), "client_device_announce_timeout", set(1000), r);
-        W.sep();
         W.member(A, type_<StringList>(), "proxy_managed_drives", r);
         W.sep();
         W.member(H, type_<bool>(), "ignore_auth_channel", set(false), r);
@@ -311,13 +311,20 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
         W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
-        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", set(20000), r);
         W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
             "Behavior on failure to launch Session Probe.\n"
             "  0: ignore failure and continue.\n"
             "  1: disconnect user.\n"
             "  2: reconnect without Session Probe."
-        }, set(SessionProbeOnLaunchFailure::disconnect_user), r);
+        }, set(SessionProbeOnLaunchFailure::retry_without_session_probe), r);
+        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", desc{
+            "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
+            "In milliseconds, 0 to disable timeout."
+        }, set(20000), r);
+        W.member(A, type_<unsigned>(), "session_probe_launch_fallback_timeout", desc{
+            "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
+            "In milliseconds, 0 to disable timeout."
+        }, set(7000), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));

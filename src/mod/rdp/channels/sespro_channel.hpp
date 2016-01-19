@@ -36,9 +36,10 @@ private:
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
 
+    const unsigned session_probe_effective_launch_timeout;
+
     const bool     param_session_probe_loading_mask_enabled;
 
-    const unsigned param_session_probe_launch_timeout;
     const unsigned param_session_probe_keepalive_timeout;
 
     const ::configs::SessionProbeOnLaunchFailure
@@ -77,6 +78,7 @@ public:
         bool session_probe_loading_mask_enabled;
 
         unsigned session_probe_launch_timeout;
+        unsigned session_probe_launch_fallback_timeout;
         unsigned session_probe_keepalive_timeout;
 
         ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
@@ -109,10 +111,14 @@ public:
     : BaseVirtualChannel(nullptr,
                          to_server_sender_,
                          params)
+    , session_probe_effective_launch_timeout(
+            (params.session_probe_on_launch_failure ==
+             ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?
+            params.session_probe_launch_timeout :
+            params.session_probe_launch_fallback_timeout
+        )
     , param_session_probe_loading_mask_enabled(
           params.session_probe_loading_mask_enabled)
-    , param_session_probe_launch_timeout(
-          params.session_probe_launch_timeout)
     , param_session_probe_keepalive_timeout(
           params.session_probe_keepalive_timeout)
     , param_session_probe_on_launch_failure(
@@ -138,14 +144,16 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                    "timeout=%u on_launch_failure=%d",
-                this->param_session_probe_launch_timeout,
+                    "timeout=%u fallback_timeout=%u effective_timeout=%u on_launch_failure=%d",
+                params.session_probe_launch_timeout,
+                params.session_probe_launch_fallback_timeout,
+                this->session_probe_effective_launch_timeout,
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
 
         this->session_probe_event.object_and_time = true;
 
-        if (this->param_session_probe_launch_timeout > 0) {
+        if (this->session_probe_effective_launch_timeout > 0) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
@@ -153,7 +161,7 @@ public:
             }
 
             this->session_probe_event.set(
-                this->param_session_probe_launch_timeout * 1000);
+                this->session_probe_effective_launch_timeout * 1000);
         }
     }
 
@@ -193,7 +201,7 @@ public:
         this->session_probe_event.reset();
         this->session_probe_event.waked_up_by_time = false;
 
-        if (this->param_session_probe_launch_timeout &&
+        if (this->session_probe_effective_launch_timeout &&
             !this->session_probe_ready) {
             LOG(((this->param_session_probe_on_launch_failure ==
                   ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?

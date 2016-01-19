@@ -173,11 +173,17 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "authfile")) {
             ::configs::parse(static_cast<cfg::globals::authfile&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "handshake_timeout")) {
+            ::configs::parse(static_cast<cfg::globals::handshake_timeout&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "session_timeout")) {
             ::configs::parse(static_cast<cfg::globals::session_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "keepalive_grace_delay")) {
             ::configs::parse(static_cast<cfg::globals::keepalive_grace_delay&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "authentication_timeout")) {
+            ::configs::parse(static_cast<cfg::globals::authentication_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "close_timeout")) {
             ::configs::parse(static_cast<cfg::globals::close_timeout&>(this->variables).value, value);
@@ -283,9 +289,6 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "bogus_sc_net_size")) {
             ::configs::parse(static_cast<cfg::mod_rdp::bogus_sc_net_size&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "client_device_announce_timeout")) {
-            ::configs::parse(static_cast<cfg::mod_rdp::client_device_announce_timeout&>(this->variables).value, value);
-        }
         else if (0 == strcmp(key, "proxy_managed_drives")) {
             ::configs::parse(static_cast<cfg::mod_rdp::proxy_managed_drives&>(this->variables).value, value);
         }
@@ -307,11 +310,14 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "enable_session_probe_loading_mask")) {
             ::configs::parse(static_cast<cfg::mod_rdp::enable_session_probe_loading_mask&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "session_probe_on_launch_failure")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::session_probe_on_launch_failure&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "session_probe_launch_timeout")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_launch_timeout&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "session_probe_on_launch_failure")) {
-            ::configs::parse(static_cast<cfg::mod_rdp::session_probe_on_launch_failure&>(this->variables).value, value);
+        else if (0 == strcmp(key, "session_probe_launch_fallback_timeout")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::session_probe_launch_fallback_timeout&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "session_probe_keepalive_timeout")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables).value, value);

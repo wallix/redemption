@@ -292,6 +292,10 @@ project redemption
     <define>__STDC_FORMAT_MACROS
 
     <define>PUBLIC
+   
+    <define>QT_NO_KEYWORDS
+    <define>QT_NO_DEBUG
+
    : default-build release
 
 ;
@@ -788,8 +792,8 @@ unit-test test_strings : tests/test_strings.cpp libboost_unit_test : $(TEST_DEPE
 
 ## Transport tests
 ## @{
-unit-test test_meta_writer : tests/transport/test_meta_writer.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_meta_opener : tests/transport/test_meta_opener.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_meta_writer : tests/transport/detail/test_meta_writer.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_meta_opener : tests/transport/detail/test_meta_opener.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_filename_sequence_transport : tests/transport/test_filename_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -974,24 +978,26 @@ explicit test_rdp_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
 
 using qt : /usr ;
 
-obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
+#obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
+obj test_rdp_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt :
     src/front/front_Qt.hpp
-    src/keyboard/Qt_RDP_KeyMap.hpp
-    test_rdp_Qt.o
-    bitmap_data_allocator.o
-    /qt//QtGui
-    krb5
-    openssl
-    crypto
-    gssglue
-    png
-    d3des
-    z
-    dl
-    libboost_unit_test
+    src/front/front_widget_Qt.hpp
+    src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
+    test_rdp_Qt.o 
+    bitmap_data_allocator.o 
+    /qt//QtGui 
+    krb5 
+    openssl 
+    crypto 
+    gssglue 
+    png 
+    d3des 
+    z 
+    dl 
+    libboost_unit_test 
     :
     <include>/usr/include/qt4
     ;

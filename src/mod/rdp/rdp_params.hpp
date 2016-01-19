@@ -36,6 +36,7 @@ struct ModRDPParams {
     const char * client_address;
 
     const char * auth_user;
+    const char * target_application;
 
     const char * client_name;
 
@@ -56,6 +57,7 @@ struct ModRDPParams {
     bool disable_file_system_log_wrm;
 
     unsigned                              session_probe_launch_timeout;
+    unsigned                              session_probe_launch_fallback_timeout;
     configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
     unsigned                              session_probe_keepalive_timeout;
     bool                                  session_probe_end_disconnected_session;
@@ -113,8 +115,6 @@ struct ModRDPParams {
 
     bool bogus_sc_net_size;
 
-    unsigned client_device_announce_timeout;
-
     const char * proxy_managed_drives;
 
     Translation::language_t lang;
@@ -135,6 +135,7 @@ struct ModRDPParams {
         , client_address(client_address)
 
         , auth_user("")
+        , target_application("")
 
         , client_name(nullptr)
 
@@ -156,6 +157,7 @@ struct ModRDPParams {
         , disable_file_system_log_wrm(false)
 
         , session_probe_launch_timeout(0)
+        , session_probe_launch_fallback_timeout(0)
         , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
         , session_probe_end_disconnected_session(false)
@@ -212,8 +214,6 @@ struct ModRDPParams {
 
         , bogus_sc_net_size(true)
 
-        , client_device_announce_timeout(1000)
-
         , proxy_managed_drives("")
 
         , lang(Translation::EN)
@@ -239,6 +239,8 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams auth_user=\"%s\"",                       (this->auth_user ? this->auth_user : "<null>"));
+        LOG(LOG_INFO,
+            "ModRDPParams target_application=\"%s\"",              (this->target_application ? this->target_application : "<null>"));
 
         LOG(LOG_INFO,
             "ModRDPParams client_name=\"%s\"",                     (this->client_name ? this->client_name : "<null>"));
@@ -266,6 +268,9 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_timeout=%u",        this->session_probe_launch_timeout);
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_launch_fallback_timeout=%u",
+                                                                   this->session_probe_launch_fallback_timeout);
         LOG(LOG_INFO,
             "ModRDPParams session_probe_on_launch_failure=%d",     static_cast<int>(this->session_probe_on_launch_failure));
         LOG(LOG_INFO,
@@ -371,9 +376,6 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
-
-        LOG(LOG_INFO,
-            "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
 
         LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
 

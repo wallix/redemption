@@ -430,17 +430,10 @@ private:
 public:
     Capture(
         const timeval & now,
-        int width,
-        int height,
-        int order_bpp,
-        int capture_bpp,
-        bool clear_png,
-        bool no_timestamp,
-        auth_api * authentifier,
-        const Inifile & ini,
-        Random & rnd,
-        CryptoContext & cctx,
-        bool externally_generated_breakpoint = false)
+        int width, int height, int order_bpp, int capture_bpp,
+        bool clear_png, bool no_timestamp, auth_api * authentifier,
+        const Inifile & ini, Random & rnd, CryptoContext & cctx,
+        bool full_video, bool extract_meta_data)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , psc(nullptr)
@@ -465,6 +458,10 @@ public:
     , capture_api(NewCaptureProxy{}, *this)
     , ini(ini)
     {
+        TODO("Remove that after change of capture interface")
+        (void)full_video;
+        TODO("Remove that after change of capture interface")
+        (void)extract_meta_data;
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_png;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>();
@@ -547,13 +544,14 @@ public:
             }
             else {
                 auto * trans = new OutMetaSequenceTransport(
+                    &this->cctx,
                     record_path, hash_path, basename, now,
                     width, height, groupid, authentifier);
                 this->wrm_trans = trans;
             }
             this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
                                          , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
-                                         , *this->drawable, ini, externally_generated_breakpoint
+                                         , *this->drawable, ini
                                          , NativeCapture::SendInput::YES);
         }
 

@@ -1015,6 +1015,14 @@ namespace cfg {
             type value{"/var/run/redemption-sesman-sock"};
         };
 
+        // Time out during RDP handshake stage (in seconds).
+        struct handshake_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = unsigned;
+            type value{10};
+        };
         // No traffic auto disconnection (in seconds).
         struct session_timeout {
             static constexpr ::configs::VariableProperties properties() {
@@ -1030,6 +1038,14 @@ namespace cfg {
             }
             using type = unsigned;
             type value{30};
+        };
+        // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
+        struct authentication_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = unsigned;
+            type value{120};
         };
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
         struct close_timeout {
@@ -1313,22 +1329,12 @@ namespace cfg {
             type value{1};
         };
 
-        // AUTHID_MOD_RDP_CLIENT_DEVICE_ANNOUNCE_TIMEOUT
-        struct client_device_announce_timeout {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 16; }
-            using type = unsigned;
-            type value{1000};
-        };
-
         // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
         struct proxy_managed_drives {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 17; }
+            static constexpr unsigned index() { return 16; }
             using type = std::string;
             type value{};
         };
@@ -1338,7 +1344,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 18; }
+            static constexpr unsigned index() { return 17; }
             using type = bool;
             type value{0};
         };
@@ -1356,7 +1362,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 19; }
+            static constexpr unsigned index() { return 18; }
             using type = std::string;
             type value{};
         };
@@ -1365,7 +1371,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 20; }
+            static constexpr unsigned index() { return 19; }
             using type = std::string;
             type value{};
         };
@@ -1375,7 +1381,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 21; }
+            static constexpr unsigned index() { return 20; }
             using type = bool;
             type value{0};
         };
@@ -1384,18 +1390,9 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 22; }
+            static constexpr unsigned index() { return 21; }
             using type = bool;
             type value{1};
-        };
-        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
-        struct session_probe_launch_timeout {
-            static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
-            }
-            static constexpr unsigned index() { return 23; }
-            using type = unsigned;
-            type value{20000};
         };
         // Behavior on failure to launch Session Probe.
         //   0: ignore failure and continue.
@@ -1406,9 +1403,31 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
-            static constexpr unsigned index() { return 24; }
+            static constexpr unsigned index() { return 22; }
             using type = ::configs::SessionProbeOnLaunchFailure;
-            type value{static_cast< ::configs::SessionProbeOnLaunchFailure>(1)};
+            type value{static_cast< ::configs::SessionProbeOnLaunchFailure>(2)};
+        };
+        // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
+        // In milliseconds, 0 to disable timeout.
+        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
+        struct session_probe_launch_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 23; }
+            using type = unsigned;
+            type value{20000};
+        };
+        // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+        // In milliseconds, 0 to disable timeout.
+        // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT
+        struct session_probe_launch_fallback_timeout {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 24; }
+            using type = unsigned;
+            type value{7000};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         struct session_probe_keepalive_timeout {
@@ -1966,8 +1985,10 @@ struct globals
 , cfg::globals::notimestamp
 , cfg::globals::encryptionLevel
 , cfg::globals::authfile
+, cfg::globals::handshake_timeout
 , cfg::globals::session_timeout
 , cfg::globals::keepalive_grace_delay
+, cfg::globals::authentication_timeout
 , cfg::globals::close_timeout
 , cfg::globals::trace_type
 , cfg::globals::listen_address
@@ -2005,7 +2026,6 @@ struct mod_rdp
 , cfg::mod_rdp::server_redirection_support
 , cfg::mod_rdp::redir_info
 , cfg::mod_rdp::bogus_sc_net_size
-, cfg::mod_rdp::client_device_announce_timeout
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel
 , cfg::mod_rdp::auth_channel
@@ -2013,8 +2033,9 @@ struct mod_rdp
 , cfg::mod_rdp::shell_working_directory
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
-, cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_launch_timeout
+, cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
@@ -2114,15 +2135,15 @@ using VariablesAclPack = Pack<
 , cfg::client::keyboard_layout
 , cfg::client::disable_tsk_switch_shortcuts
 , cfg::mod_rdp::bogus_sc_net_size
-, cfg::mod_rdp::client_device_announce_timeout
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel
 , cfg::mod_rdp::alternate_shell
 , cfg::mod_rdp::shell_working_directory
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
-, cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_launch_timeout
+, cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check

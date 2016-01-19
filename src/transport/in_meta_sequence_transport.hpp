@@ -33,14 +33,14 @@ struct InMetaSequenceTransport
     detail::empty_ctor<transbuf::ifile_buf>
 > >
 {
-    InMetaSequenceTransport(const char * filename, const char * extension, uint32_t verbose = 0)
+    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(
         detail::in_meta_sequence_buf_param<>(detail::temporary_concat(filename, extension).str, verbose))
     {
         this->verbose = verbose;
     }
 
-    explicit InMetaSequenceTransport(const char * filename, uint32_t verbose = 0)
+    explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename, verbose))
     {
         this->verbose = verbose;

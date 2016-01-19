@@ -183,6 +183,8 @@ int main(int argc, char * argv[]) {
 
     LCGRandom gen(0);
 
+    CryptoContext cctx(gen, ini, 1);
+
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
 
@@ -199,14 +201,17 @@ int main(int argc, char * argv[]) {
             persistent_key_list_filename.c_str());
     }
 
+    time_t now = time(nullptr);
+
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
-    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini,
-        fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
+    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini, cctx,
+        fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod);
+        now = time(nullptr);
+        front.incoming(no_mod, now);
     }
 
     LOG(LOG_INFO, "hostname=\"%s\"", front.client_info.hostname);
@@ -365,8 +370,10 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             }
 
             if (is_set(front_event, st_front, rfds)) {
+                time_t now = time(nullptr);
+
                 try {
-                    front.incoming(mod);
+                    front.incoming(mod, now);
                 }
                 catch (...) {
                     run_session = false;

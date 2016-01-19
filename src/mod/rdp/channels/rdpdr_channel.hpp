@@ -1049,17 +1049,17 @@ public:
                 uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
                 if (Length) {
-/*                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR)*/ {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         fscc::FileFullDirectoryInformation
                             file_full_directory_information;
 
-                        auto chunk_p = chunk.get_current();
+                        //auto chunk_p = chunk.get_current();
 
                         file_full_directory_information.receive(chunk);
 
-                        LOG(LOG_INFO, "FileFullDirectoryInformation: size=%u",
-                            (unsigned int)(chunk.get_current() - chunk_p));
-                        hexdump(chunk_p, chunk.get_current() - chunk_p);
+                        //LOG(LOG_INFO, "FileFullDirectoryInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
 
                         file_full_directory_information.log(LOG_INFO);
                     }

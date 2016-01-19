@@ -49,22 +49,19 @@ public:
 
     bool disable_keyboard_log_wrm;
 
-    bool externally_generated_breakpoint;
-
     typedef GraphicToFile::SendInput SendInput;
 
     bool keyboard_input_mask_enabled = false;
 
     NativeCapture( const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache
                  , GlyphCache & gly_cache, PointerCache & ptr_cache, RDPDrawable & drawable, const Inifile & ini
-                 , bool externally_generated_breakpoint = false, SendInput send_input = SendInput::NO)
+                 , SendInput send_input = SendInput::NO)
     : dump_png24_api{drawable}
     , recorder( now, &trans, width, height, capture_bpp, bmp_cache, gly_cache, ptr_cache, this->dump_png24_api, ini, send_input
               , ini.get<cfg::debug::capture>())
     , nb_file(0)
     , time_to_wait(0)
     , disable_keyboard_log_wrm(bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm))
-    , externally_generated_breakpoint(externally_generated_breakpoint)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -113,8 +110,7 @@ public:
             this->time_to_wait = this->inter_frame_interval_native_capture;
             this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
             this->start_native_capture = now;
-            if (!this->externally_generated_breakpoint &&
-                (difftimeval(now, this->start_break_capture) >=
+            if ((difftimeval(now, this->start_break_capture) >=
                  this->inter_frame_interval_start_break_capture)) {
                 this->recorder.breakpoint();
                 this->start_break_capture = now;
@@ -159,8 +155,6 @@ public:
 
     // toggles externally genareted breakpoint.
     void external_breakpoint() override {
-        REDASSERT(this->externally_generated_breakpoint);
-
         this->recorder.breakpoint();
     }
 
