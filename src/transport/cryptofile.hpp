@@ -123,7 +123,7 @@ class CryptoContext {
         sha256.update(byte_ptr_cast(file_basename), strlen(file_basename));
         uint8_t tmp[SHA256_DIGEST_LENGTH];
         sha256.final(tmp, SHA256_DIGEST_LENGTH);
-        memcpy(derivator, tmp, SHA256_DIGEST_LENGTH);
+        memcpy(derivator, tmp, derivator_len);
     }
 
     void random(void * dest, size_t size) 
