@@ -133,7 +133,6 @@ extern "C" {
 
 
 UdevRandom * get_rnd(){
-    printf("get_rnd()\n");
     static UdevRandom * rnd = nullptr;
     if (rnd == nullptr){
         rnd = new UdevRandom;
@@ -142,8 +141,6 @@ UdevRandom * get_rnd(){
 }
 
 Inifile * get_ini(){
-    printf("get_ini()\n");
-
     static Inifile * ini = nullptr;
     if (ini == nullptr){
         ini = new Inifile;
@@ -159,11 +156,8 @@ Inifile * get_ini(){
 
 CryptoContext * get_cctx()
 {
-    printf("get_cctx()\n");
-
     static CryptoContext * cctx = nullptr;
     if (cctx == nullptr){
-        printf("new get cctx\n");
         cctx = new CryptoContext(*get_rnd(), *get_ini(), 1);
     }
     return cctx;
@@ -595,34 +589,21 @@ static PyMethodDef redcryptoFileMethods[] = {
 PyMODINIT_FUNC 
 initredcryptofile(void)
 {
-    printf("initredcryptofile\n");
-
     PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
                            "redcryptofile module");
 
 
-    printf("ready to compute HMAC\n");
-
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
 
     uint8_t tmp[32] = {};
-
-    printf("ready to compute HMAC 2\n");
-
     CryptoContext * cctx = get_cctx();
-    printf("ready to compute HMAC 3\n");
     cctx->compute_hmac(tmp, HASH_DERIVATOR);
-
-    printf("ready to compute HMAC 4\n");
 
 //    if (-1 == get_cctx()->compute_hmac(tmp, HASH_DERIVATOR)){
 //        //TODO: we should LOG something here
 //        printf("Error HMAC\n");
 //    }
     get_ini()->set<cfg::crypto::key1>(tmp);
-
-    printf("compute HMAC done\n");
-
     OpenSSL_add_all_digests();
 
     size_t idx = 0;
@@ -640,8 +621,6 @@ initredcryptofile(void)
     {
         gl_file_store_write[idxw] = nullptr;
     }
-
-    printf("Python extension\n");
 
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wuseless-cast"
