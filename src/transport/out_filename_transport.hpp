@@ -24,23 +24,36 @@
 #define REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
 
 // #include "buffer/buffering_buf.hpp"
-#include "transport/buffer/file_buf.hpp"
 #include "transport/mixin_transport.hpp"
+#include "transport/buffer/file_buf.hpp"
+#include "transport/buffer/crypto_filename_buf.hpp"
+
 
 struct OutFilenameTransport
-: SeekableTransport<
-// FlushingTransport<
-OutputTransport<
-    /*transbuf::obuffering_buf<*/ transbuf::ofile_buf/*>*/
->
-// >
->
+: SeekableTransport<OutputTransport<transbuf::ofile_buf>>
 {
     OutFilenameTransport(const char * filename)
     {
         if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+    }
+};
+
+struct CryptoOutFilenameTransport
+: OutputTransport<transbuf::ocrypto_filename_buf>
+{
+    CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = nullptr)
+    : CryptoOutFilenameTransport::TransportType(crypto_ctx)
+    {
+        if (this->buffer().open(filename, 0600) < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+
+        if (authentifier) {
+            this->set_authentifier(authentifier);
         }
     }
 };
