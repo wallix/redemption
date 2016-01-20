@@ -39,7 +39,7 @@ namespace detail
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
 
-            printf("ocrypto_filter: cctx.get_derivator\n");
+//            printf("ocrypto_filter: cctx.get_derivator\n");
             cctx.get_derivator(filename, derivator, DERIVATOR_LENGTH);
             if (-1 == cctx.compute_hmac(trace_key, derivator)) {
                 return -1;

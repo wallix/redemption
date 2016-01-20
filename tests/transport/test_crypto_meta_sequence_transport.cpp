@@ -7,9 +7,9 @@
 #define SHARE_PATH FIXTURES_PATH
 #define LOGNULL
 
-#include "crypto_in_meta_sequence_transport.hpp"
-#include "crypto_out_meta_sequence_transport.hpp"
-#include "sequence_generator.hpp"
+#include "transport/crypto_in_meta_sequence_transport.hpp"
+#include "transport/crypto_out_meta_sequence_transport.hpp"
+#include "transport/sequence_generator.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {

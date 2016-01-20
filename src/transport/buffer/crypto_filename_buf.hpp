@@ -31,7 +31,7 @@ namespace transbuf {
         int init_trace_key(Buf & buf, CryptoContext * cctx, const char * filename, mode_t mode, unsigned char * trace_key)
         {
             unsigned char derivator[DERIVATOR_LENGTH];
-            printf("init_trace_key: cctx.get_derivator\n");
+//            printf("init_trace_key: cctx.get_derivator\n");
 
             cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
             if (-1 == cctx->compute_hmac(trace_key, derivator)) {
