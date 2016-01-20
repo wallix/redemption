@@ -29,12 +29,12 @@
 
 #include "FileToChunk.hpp"
 #include "ChunkToFile.hpp"
-#include "out_meta_sequence_transport.hpp"
-#include "crypto_out_meta_sequence_transport.hpp"
-#include "in_meta_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/crypto_out_meta_sequence_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
 #include "recording_progress.hpp"
 #include "iter.hpp"
-#include "crypto_in_meta_sequence_transport.hpp"
+#include "transport/crypto_in_meta_sequence_transport.hpp"
 #include "program_options/program_options.hpp"
 #include "auth_api.hpp" 
 

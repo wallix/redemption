@@ -25,7 +25,7 @@
 #include "RDP/nla/credssp.hpp"
 #include "RDP/nla/ntlm/ntlm.hpp"
 #include "RDP/nla/kerberos/kerberos.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 
 #define NLA_PKG_NAME NTLMSP_NAME
 

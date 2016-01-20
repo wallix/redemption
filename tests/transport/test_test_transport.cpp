@@ -27,7 +27,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)

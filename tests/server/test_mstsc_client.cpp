@@ -38,7 +38,7 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "font.hpp"
 #include "null/null.hpp"
 #include "internal/test_card_mod.hpp"

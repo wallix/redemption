@@ -25,7 +25,7 @@
 #include "channel_list.hpp"
 #include "virtual_channel_data_sender.hpp"
 #include "RDP/channels/rdpdr.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "wait_obj.hpp"
 
 class RdpdrDriveReadTask : public AsynchronousTask {

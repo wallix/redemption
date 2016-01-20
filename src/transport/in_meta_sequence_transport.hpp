@@ -21,10 +21,10 @@
 #ifndef REDEMPTION_TRANSPORT_IN_META_SEQUENCE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_IN_META_SEQUENCE_TRANSPORT_HPP
 
-#include "detail/meta_opener.hpp"
-#include "mixin_transport.hpp"
+#include "transport/detail/meta_opener.hpp"
+#include "transport/mixin_transport.hpp"
 // #include "buffer/buffering_buf.hpp"
-#include "buffer/file_buf.hpp"
+#include "transport/buffer/file_buf.hpp"
 
 
 struct InMetaSequenceTransport

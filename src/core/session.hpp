@@ -46,12 +46,12 @@
 
 #include "config.hpp"
 #include "wait_obj.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "bitmap.hpp"
 
 #include "authentifier.hpp"
 
-#include "socket_transport_utility.hpp"
+#include "utils/socket_transport_utility.hpp"
 
 using namespace std;
 

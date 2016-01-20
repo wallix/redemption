@@ -24,9 +24,9 @@
 
 #include <cstdio>
 
-#include "cryptofile.hpp"
-#include "meta_opener.hpp"
-#include "meta_writer.hpp"
+#include "transport/cryptofile.hpp"
+#include "transport/detail/meta_opener.hpp"
+#include "transport/detail/meta_writer.hpp"
 #include "fileutils.hpp"
 
 namespace detail {

@@ -27,7 +27,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "in_meta_sequence_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)

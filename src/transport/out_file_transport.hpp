@@ -22,8 +22,8 @@
 #define REDEMPTION_TRANSPORT_OUT_FILE_TRANSPORT_HPP
 
 // #include "buffer/buffering_buf.hpp"
-#include "mixin_transport.hpp"
-#include "fdbuf.hpp"
+#include "transport/mixin_transport.hpp"
+#include "utils/fdbuf.hpp"
 
 // typedef SeekableTransport<OutputTransport<io::posix::fdbuf> > OutFileTransport;
 

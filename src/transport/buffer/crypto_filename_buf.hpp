@@ -21,8 +21,8 @@
 #ifndef REDEMPTION_TRANSPORT_BUFFER_CRYPTO_FILENAME_BUF_HPP
 #define REDEMPTION_TRANSPORT_BUFFER_CRYPTO_FILENAME_BUF_HPP
 
-#include "file_buf.hpp"
-#include "filter/crypto_filter.hpp"
+#include "transport/buffer/file_buf.hpp"
+#include "transport/filter/crypto_filter.hpp"
 #include "urandom_read.hpp"
 
 namespace transbuf {
@@ -31,6 +31,8 @@ namespace transbuf {
         int init_trace_key(Buf & buf, CryptoContext * cctx, const char * filename, mode_t mode, unsigned char * trace_key)
         {
             unsigned char derivator[DERIVATOR_LENGTH];
+            printf("init_trace_key: cctx.get_derivator\n");
+
             cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
             if (-1 == cctx->compute_hmac(trace_key, derivator)) {
                 return -1;

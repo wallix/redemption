@@ -39,7 +39,7 @@
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "update_lock.hpp"
-#include "socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "channel_names.hpp"
 #include "strutils.hpp"
 #include "utf.hpp"

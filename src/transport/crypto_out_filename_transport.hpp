@@ -21,8 +21,8 @@
 #ifndef REDEMPTION_TRANSPORT_CRYPTO_OUT_FILENAME_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_CRYPTO_OUT_FILENAME_TRANSPORT_HPP
 
-#include "buffer/crypto_filename_buf.hpp"
-#include "mixin_transport.hpp"
+#include "transport/buffer/crypto_filename_buf.hpp"
+#include "transport/mixin_transport.hpp"
 
 struct CryptoOutFilenameTransport
 : OutputTransport<transbuf::ocrypto_filename_buf>

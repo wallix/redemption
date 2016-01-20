@@ -248,7 +248,6 @@ project redemption
     <include>src/capture
     <include>src/keyboard
     <include>src/keyboard/reversed_keymaps
-    <include>src/transport
     <include>src/regex
     <include>src/headers
     <include>src/main
@@ -330,6 +329,7 @@ install install-etc-themes
     ;
 
 actions gen_redcryptofile {
+    echo "$(>)" "$(<)" ;
     cp "$(>)" "$(<)"
     cp "$(<)" tools/redcryptofile/redcryptofile.so
 }

@@ -21,9 +21,9 @@
 #ifndef REDEMPTION_TRANSPORT_CRYPTO_IN_META_SEQUENCE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_CRYPTO_IN_META_SEQUENCE_TRANSPORT_HPP
 
-#include "detail/meta_opener.hpp"
-#include "mixin_transport.hpp"
-#include "buffer/crypto_filename_buf.hpp"
+#include "transport/detail/meta_opener.hpp"
+#include "transport/mixin_transport.hpp"
+#include "transport/buffer/crypto_filename_buf.hpp"
 
 struct CryptoInMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<

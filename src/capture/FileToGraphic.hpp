@@ -28,7 +28,7 @@
 #ifndef _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
 #define _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
 
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "RDP/caches/glyphcache.hpp"

@@ -24,7 +24,6 @@
 #include "log.hpp"
 
 #include "openssl_crypto.hpp"
-//#include "openssl_evp.hpp"
 
 #include <cerrno>
 #include <fcntl.h>
@@ -34,7 +33,7 @@
 
 #include <memory>
 
-#include "cryptofile.hpp"
+#include "transport/cryptofile.hpp"
 
 #define HASH_LEN (MD_HASH_LENGTH << 1)
 

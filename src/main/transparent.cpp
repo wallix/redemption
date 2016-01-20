@@ -28,9 +28,9 @@
 
 #include "listen.hpp"
 #include "session.hpp"
-#include "socket_transport.hpp"
-#include "out_file_transport.hpp"
-#include "socket_transport_utility.hpp"
+#include "transport/socket_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "utils/socket_transport_utility.hpp"
 #include "internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 

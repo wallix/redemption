@@ -25,7 +25,7 @@
 #include "error.hpp"
 #include "no_param.hpp"
 #include "fileutils.hpp"
-#include "filter/crypto_filter.hpp"
+#include "transport/filter/crypto_filter.hpp"
 
 #include <algorithm>
 #include <cerrno>

@@ -13,8 +13,12 @@
 Crypto trace interface
 """
 
+print "redcryptotrace"
+
 import struct
 import redcryptofile
+
+print "redcryptotrace : defining classes"
 
 class TraceIntegrityError(Exception):
     pass

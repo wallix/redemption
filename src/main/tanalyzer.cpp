@@ -28,7 +28,7 @@
 
 #include "channel_list.hpp"
 #include "front_api.hpp"
-#include "in_file_transport.hpp"
+#include "transport/in_file_transport.hpp"
 #include "RDP/autoreconnect.hpp"
 #include "RDP/mppc_unified_dec.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"

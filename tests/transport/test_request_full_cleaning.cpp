@@ -30,7 +30,7 @@
 #define LOGNULL
 #include "fileutils.hpp"
 
-#include "out_meta_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 {

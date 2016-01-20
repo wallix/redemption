@@ -27,7 +27,7 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 #define LOGNULL
-#include "out_meta_sequence_transport_with_sum.hpp"
+#include "transport/out_meta_sequence_transport_with_sum.hpp"
 #include "fileutils.hpp"
 
 

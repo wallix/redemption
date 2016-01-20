@@ -22,10 +22,16 @@ typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include <genrandom.hpp>
 #include <new>
 
-#include "fdbuf.hpp"
-#include "filter/crypto_filter.hpp"
 
-#include "cryptofile.hpp"
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
+
+#include "fdbuf.hpp"
+#include "transport/filter/crypto_filter.hpp"
+
+#include "transport/cryptofile.hpp"
+
 
 struct crypto_file_read
 {
@@ -127,6 +133,7 @@ extern "C" {
 
 
 UdevRandom * get_rnd(){
+    printf("get_rnd()\n");
     static UdevRandom * rnd = nullptr;
     if (rnd == nullptr){
         rnd = new UdevRandom;
@@ -135,9 +142,16 @@ UdevRandom * get_rnd(){
 }
 
 Inifile * get_ini(){
+    printf("get_ini()\n");
+
     static Inifile * ini = nullptr;
     if (ini == nullptr){
         ini = new Inifile;
+        ini->set<cfg::crypto::key0>(cstr_array_view(
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"));
     }
     return ini;
 }
@@ -145,9 +159,12 @@ Inifile * get_ini(){
 
 CryptoContext * get_cctx()
 {
+    printf("get_cctx()\n");
+
     static CryptoContext * cctx = nullptr;
     if (cctx == nullptr){
-        cctx = new CryptoContext(*get_rnd(), *get_ini());
+        printf("new get cctx\n");
+        cctx = new CryptoContext(*get_rnd(), *get_ini(), 1);
     }
     return cctx;
 }
@@ -169,7 +186,7 @@ typedef union {
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 t_PyTyOb redcryptofile_NoddyType = {
-    PyObject_HEAD_INIT(NULL)
+    PyObject_HEAD_INIT(nullptr)
     0,                         /*ob_size*/
     "redcryptofile.Noddy",     /*tp_name*/
     sizeof(redcryptofile_NoddyObject), /*tp_basicsize*/
@@ -275,7 +292,7 @@ static PyMethodDef Random_methods[] = {
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 t_PyTyOb PyTyRandom = {
-    PyObject_HEAD_INIT(NULL)
+    PyObject_HEAD_INIT(nullptr)
     0,                         /*ob_size*/
     "redcryptofile.Random",    /*tp_name*/
     sizeof(PyORandom), /*tp_basicsize*/
@@ -472,7 +489,7 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
         auto cfw = gl_file_store_write[cf.idx];
         gl_file_store_write[cf.idx] = nullptr;
         gl_write_nb_files--;
-        result = cfw->encrypt.close(cfw->file, hash, get_cctx()->hmac_key);
+        result = cfw->encrypt.close(cfw->file, hash, get_cctx()->get_hmac_key());
         delete cfw;
     }
     break;
@@ -578,15 +595,36 @@ static PyMethodDef redcryptoFileMethods[] = {
 PyMODINIT_FUNC 
 initredcryptofile(void)
 {
+    printf("initredcryptofile\n");
+
     PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
                            "redcryptofile module");
 
+
+    printf("ready to compute HMAC\n");
+
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
 
-    if (-1 == get_cctx()->compute_hmac(get_cctx()->hmac_key, HASH_DERIVATOR)){
-        //TODO: we should LOG something here
-    }
+    uint8_t tmp[32] = {};
+
+    printf("ready to compute HMAC 2\n");
+
+    CryptoContext * cctx = get_cctx();
+    printf("ready to compute HMAC 3\n");
+    cctx->compute_hmac(tmp, HASH_DERIVATOR);
+
+    printf("ready to compute HMAC 4\n");
+
+//    if (-1 == get_cctx()->compute_hmac(tmp, HASH_DERIVATOR)){
+//        //TODO: we should LOG something here
+//        printf("Error HMAC\n");
+//    }
+    get_ini()->set<cfg::crypto::key1>(tmp);
+
+    printf("compute HMAC done\n");
+
     OpenSSL_add_all_digests();
+
     size_t idx = 0;
     for (; idx < sizeof(gl_file_store)/sizeof(gl_file_store[0]);idx++)
     {
@@ -602,6 +640,8 @@ initredcryptofile(void)
     {
         gl_file_store_write[idxw] = nullptr;
     }
+
+    printf("Python extension\n");
 
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wuseless-cast"

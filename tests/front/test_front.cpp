@@ -41,7 +41,7 @@
 
 #include "config.hpp"
 //#include "socket_transport.hpp"
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 #include "utils/fileutils.hpp"

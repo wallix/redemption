@@ -47,9 +47,8 @@
 #include <new>
 
 #include "fdbuf.hpp"
-#include "filter/crypto_filter.hpp"
-
-#include "cryptofile.hpp"
+#include "transport/filter/crypto_filter.hpp"
+#include "transport/cryptofile.hpp"
 
 extern "C" {
 

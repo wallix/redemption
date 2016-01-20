@@ -22,13 +22,29 @@
 #define REDEMPTION_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
 
 // #include "buffer/buffering_buf.hpp"
-#include "buffer/file_buf.hpp"
-#include "mixin_transport.hpp"
+#include "transport/buffer/crypto_filename_buf.hpp"
+#include "transport/buffer/file_buf.hpp"
+#include "transport/mixin_transport.hpp"
 
 struct InFilenameTransport
 : SeekableTransport< InputTransport< /*transbuf::ibuffering_buf<*/transbuf::ifile_buf/*>*/ > >
 {
     InFilenameTransport(const char * filename)
+    {
+        if (this->buffer().open(filename, 0600) < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+    }
+};
+
+
+
+struct CryptoInFilenameTransport
+: InputTransport<transbuf::icrypto_filename_buf>
+{
+    CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename)
+    : CryptoInFilenameTransport::TransportType(crypto_ctx)
     {
         if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
