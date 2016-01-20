@@ -38,10 +38,53 @@ struct InFilenameTransport
     }
 };
 
+namespace transbuf {
+    class icrypto_filename_buf2
+    {
+        transfil::decrypt_filter decrypt;
+        CryptoContext * cctx;
+        ifile_buf file;
+
+    public:
+        explicit icrypto_filename_buf2(CryptoContext * cctx)
+        : cctx(cctx)
+        {}
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            unsigned char derivator[DERIVATOR_LENGTH];
+
+            this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
+                return -1;
+            }
+
+            int err = this->file.open(filename, mode);
+            if (err < 0) {
+                return err;
+            }
+
+            return this->decrypt.open(this->file, trace_key);
+        }
+
+        ssize_t read(void * data, size_t len)
+        { return this->decrypt.read(this->file, data, len); }
+
+        int close()
+        { return this->file.close(); }
+
+        bool is_open() const noexcept
+        { return this->file.is_open(); }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return this->file.seek(offset, whence); }
+    };
+}
 
 
 struct CryptoInFilenameTransport
-: InputTransport<transbuf::icrypto_filename_buf>
+: InputTransport<transbuf::icrypto_filename_buf2>
 {
     CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename)
     : CryptoInFilenameTransport::TransportType(crypto_ctx)

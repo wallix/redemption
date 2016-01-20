@@ -31,7 +31,8 @@
 #include "transport/detail/meta_hash.hpp"
 #include "transport/buffer/checksum_buf.hpp"
 #include "transport/buffer/null_buf.hpp"
-
+#include "transport/filter/crypto_filter.hpp"
+#include "urandom_read.hpp"
 
 namespace detail
 {
@@ -147,6 +148,87 @@ namespace detail
         {}
     };
 }
+
+#include "transport/buffer/file_buf.hpp"
+#include "transport/filter/crypto_filter.hpp"
+#include "urandom_read.hpp"
+
+namespace transbuf {
+    class ocrypto_filename_buf
+    {
+        transfil::encrypt_filter encrypt;
+        CryptoContext * cctx;
+        ofile_buf file;
+
+    public:
+        explicit ocrypto_filename_buf(CryptoContext * cctx)
+        : cctx(cctx)
+        {}
+
+        explicit ocrypto_filename_buf(CryptoContext & cctx)
+        : cctx(&cctx)
+        {}
+
+        ~ocrypto_filename_buf()
+        {
+            if (this->is_open()) {
+                this->close();
+            }
+        }
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            unsigned char derivator[DERIVATOR_LENGTH];
+//            printf("init_trace_key: cctx.get_derivator\n");
+
+            cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
+                return -1;
+            }
+
+            int err = this->file.open(filename, mode);
+            if (err < 0) {
+                return err;
+            }
+
+            unsigned char iv[32];
+            this->cctx->random(iv, 32);
+//            if (-1 == urandom_read(iv, 32)) {
+//                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
+//                return -1;
+//            }
+
+            return this->encrypt.open(this->file, trace_key, this->cctx, iv);
+        }
+
+        ssize_t write(const void * data, size_t len)
+        { return this->encrypt.write(this->file, data, len); }
+
+        int close(unsigned char hash[MD_HASH_LENGTH << 1])
+        {
+            const int res1 = this->encrypt.close(this->file, hash, this->cctx->get_hmac_key());
+            const int res2 = this->file.close();
+            return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+        }
+
+        int close()
+        {
+            unsigned char hash[MD_HASH_LENGTH << 1];
+            return this->close(hash);
+        }
+
+        bool is_open() const noexcept
+        { return this->file.is_open(); }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return this->file.seek(offset, whence); }
+
+        int flush() const
+        { return this->file.flush(); }
+    };
+}
+
 
 struct OutMetaSequenceTransport
 : //SeekableTransport<

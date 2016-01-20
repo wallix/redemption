@@ -25,7 +25,52 @@
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
 #include "transport/buffer/crypto_filename_buf.hpp"
+#include "transport/filter/crypto_filter.hpp"
+#include "urandom_read.hpp"
 
+namespace transbuf {
+    class icrypto_filename_buf
+    {
+        transfil::decrypt_filter decrypt;
+        CryptoContext * cctx;
+        ifile_buf file;
+
+    public:
+        explicit icrypto_filename_buf(CryptoContext * cctx)
+        : cctx(cctx)
+        {}
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            unsigned char derivator[DERIVATOR_LENGTH];
+
+            this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
+                return -1;
+            }
+
+            int err = this->file.open(filename, mode);
+            if (err < 0) {
+                return err;
+            }
+
+            return this->decrypt.open(this->file, trace_key);
+        }
+
+        ssize_t read(void * data, size_t len)
+        { return this->decrypt.read(this->file, data, len); }
+
+        int close()
+        { return this->file.close(); }
+
+        bool is_open() const noexcept
+        { return this->file.is_open(); }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return this->file.seek(offset, whence); }
+    };
+}
 
 struct InMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<
