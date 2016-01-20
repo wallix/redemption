@@ -28,30 +28,38 @@ REDCRYPTOFILE_MAGIC = 0x4D464357
 class CryptoTrace:
     """ New crypto trace format writer """
     def __init__(self, path, mode):
+        print "PYTHON: CryptoTrace::init %s" % path
         self._fd = redcryptofile.open(path, mode)
+        print "PYTHON: CryptoTrace::init done"
+
         if self._fd == -1:
             raise TraceIntegrityError("Invalid CryptoTrace")
     def flush(self):
+        print "PYTHON: CryptoTrace::flush"
         flush_ret = redcryptofile.flush(self._fd)
         if flush_ret == -1:
             raise TraceIntegrityError("Flush failed")
         return flush_ret
     def write(self, data):
+        print "PYTHON: CryptoTrace::write"
         write_ret = redcryptofile.write(self._fd, data)
         if write_ret == -1:
             raise TraceIntegrityError("Write failed")
         return write_ret
     def read(self, sz):
+        print "PYTHON: CryptoTrace::read"
         read_ret = redcryptofile.read(self._fd, sz)
         if read_ret == -1:
             raise TraceIntegrityError("Read failed")
         return read_ret
     def close(self):
+        print "PYTHON: CryptoTrace::close"
         close_ret = redcryptofile.close(self._fd)
         if close_ret == -1:
             raise TraceIntegrityError("Close failed")
         return close_ret
     def __del__(self):
+        print "PYTHON: CryptoTrace::del"
         try:
             self.close()
         except Exception, e:
