@@ -318,6 +318,8 @@ inline RGBColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, 
 
 
 struct encode_color8 {
+    static constexpr const uint8_t bpp = 8;
+
     RGBColor operator()(BGRColor c) const noexcept {
         // rrrgggbb
         return
@@ -333,6 +335,8 @@ struct encode_color8 {
 };
 
 struct encode_color15 {
+    static constexpr const uint8_t bpp = 15;
+
     RGBColor operator()(BGRColor c) const noexcept {
         // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return
@@ -346,6 +350,8 @@ struct encode_color15 {
 };
 
 struct encode_color16 {
+    static constexpr const uint8_t bpp = 16;
+
     RGBColor operator()(BGRColor c) const noexcept {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return
@@ -359,6 +365,8 @@ struct encode_color16 {
 };
 
 struct encode_color24 {
+    static constexpr const uint8_t bpp = 24;
+
     RGBColor operator()(BGRColor c) const noexcept {
         return c;
     }

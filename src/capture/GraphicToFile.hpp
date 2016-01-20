@@ -85,7 +85,7 @@ private:
     }
 };
 
-class GraphicToFile final
+class GraphicToFile
 : public RDPSerializer
 , public gdi::InputKbdApi
 , public gdi::SynchroniseApi

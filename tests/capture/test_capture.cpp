@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
 
-        const char * filename = capture.png_trans->seqgen()->get(0);
+        const char * filename = "./capture-000000.png";
 
         auto s = get_file_contents<std::string>(filename);
         char message[1024];

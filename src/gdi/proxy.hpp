@@ -23,6 +23,7 @@
 
 #include <utility>
 #include <type_traits>
+#include <vector>
 
 
 namespace gdi {
@@ -60,6 +61,20 @@ protected:
     proxy_type & prox() noexcept { return static_cast<proxy_type&>(*this); }
 };
 
+template<class Api, class Proxy>
+struct DispatcherProxy : Proxy
+{
+    std::vector<Api *> apis;
+
+    using Proxy::Proxy;
+
+    template<class T, class... Ts>
+    void operator()(T &, Ts && ... args) {
+        for (Api * papi : this->apis) {
+            Proxy::operator()(*papi, std::forward<Ts>(args)...);
+        }
+    }
+};
 
 struct DummyProxy {
     template<class ... Ts>
