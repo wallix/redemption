@@ -64,6 +64,7 @@ class TestCryptoTrace(unittest.TestCase):
 
 
     def test_decryptlongfile(self):
+        print "test_decryptlongfile"
         t2 = CryptoTrace(os.path.join(PATH,"fixtures/long.bin.trc"), "r")
         with open(os.path.join(PATH,"long.bin.roundtrip"), 'w') as f:
             while True:
@@ -79,6 +80,7 @@ class TestCryptoTrace(unittest.TestCase):
 
 
     def test_crypttextfile(self):
+        print "test_crypttextfile"
         t = CryptoTrace(os.path.join(PATH,"text.txt.crypted.trc"), "w")
         with open(os.path.join(PATH,"fixtures/text.txt"), 'r') as f:
             for l in f:
@@ -105,6 +107,7 @@ class TestCryptoTrace(unittest.TestCase):
             hashfile(os.path.join(PATH,"text.txt.roundtrip")))
 
     def test_cryptlongfile(self):
+        print "test_cryptlongfile"
         t = CryptoTrace(os.path.join(PATH,"long.bin.crypted.trc"), "w")
         with open(os.path.join(PATH,"fixtures/long.bin"), 'r') as f:
             for l in f:
@@ -129,6 +132,7 @@ class TestCryptoTrace(unittest.TestCase):
             hashfile(os.path.join(PATH,"long.bin.roundtrip")))
 
     def test_flattextfile(self):
+        print "test_flattextfile"
         t = open(os.path.join(PATH,"text.txt.clear.trc"), "w")
         with open(os.path.join(PATH,"fixtures/text.txt"), 'r') as f:
             for l in f:
@@ -152,6 +156,7 @@ class TestCryptoTrace(unittest.TestCase):
             hashfile(os.path.join(PATH,"text.txt.clear.roundtrip")))
 
     def test_flatlongfile(self):
+        print "test_flatlongfile"
         t = open(os.path.join(PATH,"long.bin.clear.trc"), "w")
         with open(os.path.join(PATH,"fixtures/long.bin"), 'r') as f:
             for l in f:

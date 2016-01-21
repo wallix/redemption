@@ -93,7 +93,9 @@ public:
         , timeout(now, vars.get<cfg::globals::close_timeout>())
         , showtimer(showtimer)
     {
-        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", vars.get<cfg::globals::close_timeout>());
+        if (vars.get<cfg::globals::close_timeout>()) {
+            LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", vars.get<cfg::globals::close_timeout>());
+        }
         this->front.set_mod_palette(BGRPalette::classic_332());
 
         this->screen.add_widget(&this->close_widget);

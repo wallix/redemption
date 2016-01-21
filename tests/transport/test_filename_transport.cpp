@@ -29,11 +29,8 @@
 #define LOGPRINT
 // #define LOGNULL
 
-#include "in_filename_transport.hpp"
-#include "out_filename_transport.hpp"
-#include "crypto_in_filename_transport.hpp"
-#include "crypto_out_filename_transport.hpp"
-
+#include "transport/in_filename_transport.hpp"
+#include "transport/out_filename_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFilename)
 {

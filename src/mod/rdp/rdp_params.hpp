@@ -36,8 +36,7 @@ struct ModRDPParams {
     const char * client_address;
 
     const char * auth_user;
-
-    const char * client_name;
+    const char * target_application;
 
     bool enable_tls;
     bool enable_nla;
@@ -96,6 +95,8 @@ struct ModRDPParams {
     configs::ServerNotification server_cert_failure_message;
     configs::ServerNotification server_cert_error_message;
 
+    bool hide_client_name;
+
     const char * device_id;
 
     const char * extra_orders;
@@ -109,12 +110,9 @@ struct ModRDPParams {
     const std::string * allow_channels;
     const std::string * deny_channels;
 
-    bool remote_program;
     bool server_redirection_support;
 
     bool bogus_sc_net_size;
-
-    unsigned client_device_announce_timeout;
 
     const char * proxy_managed_drives;
 
@@ -136,8 +134,7 @@ struct ModRDPParams {
         , client_address(client_address)
 
         , auth_user("")
-
-        , client_name(nullptr)
+        , target_application("")
 
         , enable_tls(true)
         , enable_nla(true)
@@ -197,6 +194,8 @@ struct ModRDPParams {
         , server_cert_failure_message(configs::ServerNotification::syslog)
         , server_cert_error_message(configs::ServerNotification::syslog)
 
+        , hide_client_name(false)
+
         , device_id("")
         , extra_orders("")
 
@@ -209,12 +208,9 @@ struct ModRDPParams {
         , allow_channels(nullptr)
         , deny_channels(nullptr)
 
-        , remote_program(false)
         , server_redirection_support(false)
 
         , bogus_sc_net_size(true)
-
-        , client_device_announce_timeout(1000)
 
         , proxy_managed_drives("")
 
@@ -241,9 +237,8 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams auth_user=\"%s\"",                       (this->auth_user ? this->auth_user : "<null>"));
-
         LOG(LOG_INFO,
-            "ModRDPParams client_name=\"%s\"",                     (this->client_name ? this->client_name : "<null>"));
+            "ModRDPParams target_application=\"%s\"",              (this->target_application ? this->target_application : "<null>"));
 
         LOG(LOG_INFO,
             "ModRDPParams enable_tls=%s",                          (this->enable_tls ? "yes" : "no"));
@@ -351,6 +346,9 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams server_cert_error_message=%d",           static_cast<int>(this->server_cert_error_message));
 
+        LOG(LOG_INFO,
+            "ModRDPParams hide_client_name=%s",                    (this->hide_client_name ? "yes" : "no"));
+
         LOG(LOG_INFO, "ModRDPParams extra_orders=%s",              (this->extra_orders ? this->extra_orders : "<none>"));
 
         LOG(LOG_INFO,
@@ -369,16 +367,10 @@ struct ModRDPParams {
             "ModRDPParams deny_channels=%s",                       (this->deny_channels ? this->deny_channels->c_str() : "<none>"));
 
         LOG(LOG_INFO,
-            "ModRDPParams remote_program=%s",                      (this->remote_program ? "yes" : "no"));
-
-        LOG(LOG_INFO,
             "ModRDPParams server_redirection_support=%s",          (this->server_redirection_support ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
-
-        LOG(LOG_INFO,
-            "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
 
         LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
 

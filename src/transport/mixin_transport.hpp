@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_TRANSPORT_MIXIN_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_MIXIN_TRANSPORT_HPP
 
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include <cerrno>
 
 namespace detail

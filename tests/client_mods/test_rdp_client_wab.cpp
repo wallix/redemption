@@ -36,7 +36,7 @@
 
 #include "check_sig.hpp"
 #include "config.hpp"
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 #include "../front/fake_front.hpp"

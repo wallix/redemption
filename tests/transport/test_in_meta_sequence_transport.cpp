@@ -27,13 +27,18 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "in_meta_sequence_transport.hpp"
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/sequence_generator.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
     // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport wrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -188,7 +193,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2sum)
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
     // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport wrm_trans("./tests/fixtures/sample_v2", ".mwrm");
+    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample_v2", ".mwrm");
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -217,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -248,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -282,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 
     // This is what we are actually testing, chaining of several files content
     try {
-        InMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -327,7 +332,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InMetaSequenceTransport mwrm_trans("./tests/fixtures/moved_sample", ".mwrm");
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/moved_sample", ".mwrm");
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -358,7 +363,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans("./tests/fixtures/moved_sample", ".mwrm");
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/moved_sample", ".mwrm");
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -380,4 +385,107 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
+}
+
+BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
+{
+    OpenSSL_add_all_digests();
+
+    // cleanup of possible previous test files
+    {
+        const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
+        for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+            ::unlink(file[i]);
+        }
+    }
+
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+
+
+    LCGRandom rnd(0);
+
+    CryptoContext cctx(rnd, ini, 1);
+    cctx.get_crypto_key();
+
+    {
+        struct timeval tv;
+        tv.tv_usec = 0;
+        tv.tv_sec = 1352304810;
+        const int groupid = 0;
+        CryptoOutMetaSequenceTransport crypto_trans(&cctx, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
+                                                    nullptr, 0, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+        crypto_trans.send("AAAAX", 5);
+        tv.tv_sec += 100;
+        crypto_trans.timestamp(tv);
+        crypto_trans.next();
+        crypto_trans.send("BBBBXCCCCX", 10);
+        tv.tv_sec += 100;
+        crypto_trans.timestamp(tv);
+    }
+
+    {
+        CryptoInMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm");
+
+        char buffer[1024] = {};
+        char * bob = buffer;
+        char ** pbuffer = &bob;
+        crypto_trans.recv(pbuffer, 15);
+        BOOST_CHECK_EQUAL(15, *pbuffer - buffer);
+
+        if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
+            BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
+            buffer[15] = 0;
+            LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
+            BOOST_CHECK(false);
+        }
+
+        BOOST_CHECK(true);
+    }
+
+    const char * file[] = {
+        "/tmp/TESTOFS.mwrm", // hash
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+        if (::unlink(file[i])){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
+{
+
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+
+    LCGRandom rnd(0);
+
+    CryptoContext cctx(rnd, ini, 1);
+    cctx.get_crypto_key();
+
+    try {
+        CryptoInMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm");
+        BOOST_CHECK(false); // check open fails if file does not exist
+    } catch (Error & e) {
+        if (e.id != ERR_TRANSPORT_OPEN_FAILED) {
+            BOOST_CHECK(false); // check open fails if file does not exist
+        }
+    }
 }

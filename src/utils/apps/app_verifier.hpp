@@ -12,13 +12,13 @@
 #include <string>
 
 #include "version.hpp"
-#include "crypto_in_filename_transport.hpp"
-#include "in_meta_sequence_transport.hpp"
+#include "transport/in_filename_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
 #include "ssl_calls.hpp"
 #include "config.hpp"
 #include "fdbuf.hpp"
-#include "detail/meta_opener.hpp"
-#include "detail/meta_hash.hpp"
+#include "transport/detail/meta_opener.hpp"
+#include "transport/detail/meta_hash.hpp"
 
 #include "program_options/program_options.hpp"
 

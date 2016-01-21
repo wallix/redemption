@@ -26,8 +26,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "bulk_compression_transport.hpp"
-#include "test_transport.hpp"
+#include "transport/bulk_compression_transport.hpp"
+#include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBulkCompressionTransport)
 {

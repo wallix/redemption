@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_
 #define _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_
 
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "transparentchunk.hpp"
 
 class TransparentRecorder {

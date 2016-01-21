@@ -21,6 +21,11 @@
 #ifndef REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
 #define REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
 
+/* for HMAC calculations */
+#define MD_HASH_FUNC   SHA256
+#define MD_HASH_NAME   "SHA256"
+#define MD_HASH_LENGTH SHA256_DIGEST_LENGTH
+
 #include <libgen.h>
 #include <string.h>
 #include <cstdio>
@@ -31,8 +36,11 @@
 #include <errno.h>
 
 #include "utils/genrandom.hpp"
+#include "utils/ssl_calls.hpp"
+#include "utils/cast.hpp"
+
 #include "openssl_crypto.hpp"
-#include "openssl_evp.hpp"
+//#include "openssl_evp.hpp"
 #include "core/config.hpp"
 
 enum crypto_file_state {
@@ -52,10 +60,6 @@ enum {
 /* size of salt to protect master key */
 #define MKSALT_LEN 8
 
-/* for HMAC calculations */
-#define MD_HASH_FUNC   SHA256
-#define MD_HASH_NAME   "SHA256"
-#define MD_HASH_LENGTH SHA256_DIGEST_LENGTH
 
 #define CRYPTO_BUFFER_SIZE ((4096 * 4))
 
@@ -112,18 +116,15 @@ class CryptoContext {
     void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
     {
          // generate key derivator as SHA256(basename)
+         TODO("We should be able to get basename without using strdupa"
+              ", for instance start and ends pointers would do");
         char * file = strdupa(const_file);
         char * file_basename = basename(file);
-        char tmp_derivated[SHA256_DIGEST_LENGTH];
-        if (SHA256((unsigned char *)file_basename, 
-            strlen(file_basename), 
-            (unsigned char *)tmp_derivated) == nullptr)
-        {
-            std::printf("[CRYPTO_ERROR][%d]: Could not derivate trace crypto key, SHA256 from=%s!\n", 
-                getpid(), file_basename);
-            return;
-        }
-        memcpy(derivator, tmp_derivated, MIN(derivator_len, SHA256_DIGEST_LENGTH));
+        SslSha256 sha256;
+        sha256.update(byte_ptr_cast(file_basename), strlen(file_basename));
+        uint8_t tmp[SHA256_DIGEST_LENGTH];
+        sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        memcpy(derivator, tmp, derivator_len);
     }
 
     void random(void * dest, size_t size) 
@@ -192,12 +193,8 @@ class CryptoContext {
          */
         char sha256_computed[SHA256_DIGEST_LENGTH];
 
-        if (SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
-            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed) == nullptr)
-        {
-            printf("[CRYPTO_ERROR][%d]: Could not check crypto key, SHA256!\n", getpid());
-            return 1;
-        }
+        SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
+            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed);
 
         if (strncmp(tmp_buf + 1, sha256_computed, SHA256_DIGEST_LENGTH)){
             printf("[CRYPTO_ERROR][%d]: Crypto key integrity check failed!\n", getpid());
@@ -219,10 +216,21 @@ class CryptoContext {
     {
         memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
         this->crypto_key_loaded = true;
-        const unsigned char HASH_DERIVATOR[] = {
-             0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
-        };                
-        this->compute_hmac(this->hmac_key, HASH_DERIVATOR);
+        const unsigned char tmp_derivation[] = 
+        {
+                // derivator
+                0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b,
+                // crypto_key
+                this->crypto_key[0x00], this->crypto_key[0x01], this->crypto_key[0x02], this->crypto_key[0x03],
+                this->crypto_key[0x04], this->crypto_key[0x05], this->crypto_key[0x06], this->crypto_key[0x07],
+                this->crypto_key[0x08], this->crypto_key[0x09], this->crypto_key[0x0A], this->crypto_key[0x0B],
+                this->crypto_key[0x0C], this->crypto_key[0x0D], this->crypto_key[0x0E], this->crypto_key[0x0F],
+                this->crypto_key[0x10], this->crypto_key[0x11], this->crypto_key[0x12], this->crypto_key[0x13],
+                this->crypto_key[0x14], this->crypto_key[0x15], this->crypto_key[0x16], this->crypto_key[0x17],
+                this->crypto_key[0x18], this->crypto_key[0x19], this->crypto_key[0x1A], this->crypto_key[0x1B],
+                this->crypto_key[0x1C], this->crypto_key[0x1D], this->crypto_key[0x1E], this->crypto_key[0x1F],
+        };
+        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, this->hmac_key);
         return 0;
     }
 
@@ -272,14 +280,11 @@ class CryptoContext {
     {
         unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
         unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-
         memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
         memcpy(tmp_derivation + DERIVATOR_LENGTH, this->get_crypto_key(), CRYPTO_KEY_LENGTH);
-        if (SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated) == nullptr){
-            std::printf("[CRYPTO_ERROR][%d]: Could not derivate hash crypto key, SHA256!\n", getpid());
-            return -1;
-        }
+        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
         memcpy(hmac, derivated, HMAC_KEY_LENGTH);
+
         return 0;
     }
 };

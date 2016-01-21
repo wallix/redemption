@@ -28,7 +28,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "RDP/gcc.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)

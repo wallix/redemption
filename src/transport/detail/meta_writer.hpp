@@ -31,8 +31,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "../buffer/file_buf.hpp"
-#include "sequence_generator.hpp"
+#include "transport/buffer/file_buf.hpp"
+#include "transport/sequence_generator.hpp"
 #include "no_param.hpp"
 #include "error.hpp"
 #include "log.hpp"
@@ -40,7 +40,7 @@
 #include "fileutils.hpp"
 #include "iter.hpp"
 
-#include "cryptofile.hpp" // MD_HASH_LENGTH
+#include "transport/cryptofile.hpp" // MD_HASH_LENGTH
 
 namespace detail
 {

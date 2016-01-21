@@ -23,7 +23,7 @@
 #ifndef REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
 
-#include "transport.hpp"
+#include "transport/transport.hpp"
 
 class CountTransport
 : public Transport

@@ -32,7 +32,7 @@
 #include <string.h>
 #include "openssl_tls.hpp"
 #include "stream.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"
@@ -64,8 +64,8 @@
 #include "colors.hpp"
 #include "bitfu.hpp"
 #include "confdescriptor.hpp"
-#include "in_file_transport.hpp"
-#include "out_file_transport.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/out_file_transport.hpp"
 #include "pattutils.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
@@ -103,6 +103,8 @@
 #include "RDP/mppc_50.hpp"
 #include "RDP/mppc_60.hpp"
 #include "RDP/mppc_61.hpp"
+
+#include "utils/timeout.hpp"
 
 #include <memory>
 
@@ -422,6 +424,8 @@ private:
 
     bool session_probe_started_ = false;
 
+    Timeout timeout;
+
 public:
     Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -430,6 +434,7 @@ public:
           , CryptoContext & cctx
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
+          , time_t now
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
@@ -461,7 +466,8 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
     , authentifier(nullptr)
-    , auth_info_sent(false) {
+    , auth_info_sent(false)
+    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>()) {
         // init TLS
         // --------------------------------------------------------
 
@@ -523,6 +529,8 @@ public:
             this->encrypt.encryptionMethod = 2; /* 128 bits */
         break;
         }
+
+        this->event.set(0);
     }
 
     ~Front() override {
@@ -668,8 +676,14 @@ public:
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
+        TODO("remove this after unifying capture interface");
+        bool full_video = false;
+        TODO("remove this after unifying capture interface");
+        bool extract_meta_data = false;
         this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
-                                   , true, false, authentifier, ini, this->gen, this->cctx);
+                                   , true, false, authentifier
+                                   , ini, this->gen, this->cctx
+                                   , full_video, extract_meta_data);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
@@ -999,8 +1013,23 @@ public:
         }
     }
 
-    void incoming(Callback & cb)
+    void incoming(Callback & cb, time_t now)
     {
+        switch(this->timeout.check(now)) {
+        case Timeout::TIMEOUT_REACHED:
+            LOG(LOG_ERR, "RDP handshake timeout reached!");
+            throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+            break;
+        case Timeout::TIMEOUT_NOT_REACHED:
+            this->event.set(200000);
+            break;
+        default:
+            this->event.reset();
+            break;
+        }
+
+        if (this->event.waked_up_by_time) return;
+
         unsigned expected;
 
         if (this->verbose & 4) {
@@ -3601,6 +3630,7 @@ private:
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
                 this->up_and_running = 1;
+                this->timeout.cancel_timeout();
                 cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);

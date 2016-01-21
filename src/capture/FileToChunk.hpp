@@ -22,7 +22,7 @@
 #define _REDEMPTION_CAPTURE_FILETOCHUNK_HPP_
 
 #include "FileToGraphic.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "RDPChunkedDevice.hpp"
 #include "compression_transport_wrapper.hpp"
 

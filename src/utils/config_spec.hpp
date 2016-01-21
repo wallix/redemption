@@ -172,8 +172,10 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<Level>(), "encryptionLevel", rdp_level_desc, set(Level::low));
         W.member(A, type_<std::string>(), "authfile", set("/var/run/redemption-sesman-sock"));
         W.sep();
+        W.member(V, type_<unsigned>(), "handshake_timeout", desc{"Time out during RDP handshake stage (in seconds)."}, set(10));
         W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
         W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
+        W.member(A, type_<unsigned>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
 
@@ -299,8 +301,6 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, str_authid{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
-        W.member(A, type_<unsigned>(), "client_device_announce_timeout", set(1000), r);
-        W.sep();
         W.member(A, type_<StringList>(), "proxy_managed_drives", r);
         W.sep();
         W.member(H, type_<bool>(), "ignore_auth_channel", set(false), r);
@@ -332,8 +332,8 @@ void config_spec_definition(Writer && W)
 
         //@{
         // ConnectionPolicy
-        W.member(type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true), r);
-        W.member(type_<ServerCertCheck>(), "server_cert_check", desc{
+        W.member(H, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true), r);
+        W.member(H, type_<ServerCertCheck>(), "server_cert_check", desc{
             "Behavior of certificates check.\n"
             "  0: fails if certificates doesn't match or miss.\n"
             "  1: fails if certificate doesn't match, succeed if no known certificate.\n"
@@ -349,27 +349,29 @@ void config_spec_definition(Writer && W)
             "Values can be added (everyone: 1+2+4=7, mute: 0)"
         );
 
-        W.member(type_<ServerNotification>(), "server_access_allowed_message", desc{(
+        W.member(H, type_<ServerNotification>(), "server_access_allowed_message", desc{(
             "Warn if check allow connexion to server.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_create_message", desc{(
+        W.member(H, type_<ServerNotification>(), "server_cert_create_message", desc{(
             "Warn that new server certificate file was created.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_success_message", desc{(
+        W.member(H, type_<ServerNotification>(), "server_cert_success_message", desc{(
             "Warn that server certificate file was successfully checked.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_failure_message", desc{(
+        W.member(H, type_<ServerNotification>(), "server_cert_failure_message", desc{(
             "Warn that server certificate file checking failed.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
-        W.member(type_<ServerNotification>(), "server_cert_error_message", desc{(
+        W.member(H, type_<ServerNotification>(), "server_cert_error_message", desc{(
             "Warn that server certificate check raised some internal error.\n"
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
         //@}
+
+        W.member(V, type_<bool>(), "hide_client_name", desc{"Do not transmit client machine name or RDP server."}, set(false));
     });
 
     W.section("mod_vnc", [&]
