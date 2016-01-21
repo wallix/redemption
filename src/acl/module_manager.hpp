@@ -25,7 +25,7 @@
 #ifndef _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
-#include "socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "config.hpp"
 #include "netutils.hpp"
 #include "mod_api.hpp"
@@ -723,7 +723,8 @@ public:
                                          accounts.password,
                                          this->front,
                                          this->front.client_info.width,
-                                         this->front.client_info.height
+                                         this->front.client_info.height,
+                                         now
             );
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
@@ -771,16 +772,6 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
 
-                // REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.");
-                // char hostname[255];
-
-                // TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
-                // hostname[0] = 0;
-                // if (this->front.client_info.hostname[0]){
-                //     memcpy(hostname, this->front.client_info.hostname, 31);
-                //     hostname[31] = 0;
-                // }
-
                 ClientInfo client_info = this->front.client_info;
 
                 if (ini.get<cfg::context::mode_console>() == "force") {
@@ -791,9 +782,9 @@ public:
                     client_info.console_session = false;
                     LOG(LOG_INFO, "Session::mode console : forbid");
                 }
-                else {
-                    // default is "allow", do nothing special
-                }
+                //else {
+                //    // default is "allow", do nothing special
+                //}
 
                 static const char * name = "RDP Target";
 
@@ -835,8 +826,7 @@ public:
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
                 mod_rdp_params.auth_user                           = this->ini.get<cfg::globals::auth_user>().c_str();
-
-                mod_rdp_params.client_name                         = this->front.client_info.hostname;
+                mod_rdp_params.target_application                  = this->ini.get<cfg::globals::target_application>().c_str();
 
                 //mod_rdp_params.enable_tls                          = true;
                 if (!mod_rdp_params.target_password[0]) {
@@ -875,7 +865,8 @@ public:
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-                mod_rdp_params.shell_working_directory             = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+                mod_rdp_params.working_dir                         = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+                mod_rdp_params.use_client_provided_alternate_shell = this->ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
                 mod_rdp_params.target_application_account          = this->ini.get<cfg::globals::target_application_account>().c_str();
                 mod_rdp_params.target_application_password         = this->ini.get<cfg::globals::target_application_password>().c_str();
                 mod_rdp_params.rdp_compression                     = this->ini.get<cfg::mod_rdp::rdp_compression>();
@@ -891,6 +882,8 @@ public:
                 mod_rdp_params.server_cert_failure_message         = this->ini.get<cfg::mod_rdp::server_cert_failure_message>();
                 mod_rdp_params.server_cert_error_message           = this->ini.get<cfg::mod_rdp::server_cert_error_message>();
 
+                mod_rdp_params.hide_client_name                    = this->ini.get<cfg::mod_rdp::hide_client_name>();
+
                 mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
                 mod_rdp_params.enable_cache_waiting_list           = this->ini.get<cfg::mod_rdp::cache_waiting_list>();
                 mod_rdp_params.persist_bitmap_cache_on_disk        = this->ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>();
@@ -902,12 +895,9 @@ public:
                 mod_rdp_params.allow_channels                      = &(this->ini.get<cfg::mod_rdp::allow_channels>());
                 mod_rdp_params.deny_channels                       = &(this->ini.get<cfg::mod_rdp::deny_channels>());
 
-                mod_rdp_params.remote_program                      = this->front.client_info.remote_program;
                 mod_rdp_params.server_redirection_support          = this->ini.get<cfg::mod_rdp::server_redirection_support>();
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.get<cfg::mod_rdp::bogus_sc_net_size>();
-
-                mod_rdp_params.client_device_announce_timeout      = this->ini.get<cfg::mod_rdp::client_device_announce_timeout>();
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
 
@@ -940,9 +930,6 @@ public:
                     throw;
                 }
 
-                // DArray<Rect> rects(1);
-                // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
-                // this->mod->rdp_input_invalidate2(rects);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();

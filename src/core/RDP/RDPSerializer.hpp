@@ -120,7 +120,7 @@
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
 
-#include "transport.hpp"
+#include "transport/transport.hpp"
 
 #include "finally.hpp"
 #include "stream.hpp"
@@ -376,8 +376,10 @@ public:
 protected:
     void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx, bool in_wait_list)
     {
-        const Bitmap & bmp = this->bmp_cache.get(
-            (in_wait_list ? BmpCache::MAXIMUM_NUMBER_OF_CACHES : cache_id), cache_idx);
+        const Bitmap & bmp = (in_wait_list)
+            ? this->bmp_cache.get(BmpCache::MAXIMUM_NUMBER_OF_CACHES, cache_idx)
+            : this->bmp_cache.get(cache_id, cache_idx);
+
         if (!bmp.is_valid()) {
             //LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
             //    cache_id, cache_idx);

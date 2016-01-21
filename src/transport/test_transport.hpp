@@ -23,10 +23,10 @@
 #ifndef REDEMPTION_TRANSPORT_TEST_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_TEST_TRANSPORT_HPP
 
-#include "transport.hpp"
-#include "mixin_transport.hpp"
-#include "buffer/dynarray_buf.hpp"
-#include "buffer/check_buf.hpp"
+#include "transport/transport.hpp"
+#include "transport/mixin_transport.hpp"
+#include "transport/buffer/dynarray_buf.hpp"
+#include "transport/buffer/check_buf.hpp"
 #include "stream.hpp"
 
 #include <new>

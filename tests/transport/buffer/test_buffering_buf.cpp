@@ -26,8 +26,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "buffer/buffering_buf.hpp"
-#include "buffer/file_buf.hpp"
+#include "transport/buffer/buffering_buf.hpp"
+#include "transport/buffer/file_buf.hpp"
 
 #include <fstream>
 #include <sstream>

@@ -31,7 +31,7 @@
 #include "client_info.hpp"
 #include "make_unique.hpp"
 #include "stream.hpp"
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "virtual_channel_data_sender.hpp"
 #include "rdp/channels/rdpdr_channel.hpp"
 #include "rdp/channels/rdpdr_file_system_drive_manager.hpp"

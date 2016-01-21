@@ -28,9 +28,9 @@
 #define LOGPRINT
 #define LOGNULL
 
-#include "buffer/checksum_buf.hpp"
-#include "buffer/null_buf.hpp"
-#include "detail/meta_hash.hpp"
+#include "transport/buffer/checksum_buf.hpp"
+#include "transport/buffer/null_buf.hpp"
+#include "transport/detail/meta_hash.hpp"
 
 template<size_t N>
 long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]) {

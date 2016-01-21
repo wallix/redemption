@@ -248,7 +248,6 @@ project redemption
     <include>src/capture
     <include>src/keyboard
     <include>src/keyboard/reversed_keymaps
-    <include>src/transport
     <include>src/regex
     <include>src/headers
     <include>src/main
@@ -330,6 +329,7 @@ install install-etc-themes
     ;
 
 actions gen_redcryptofile {
+    echo "$(>)" "$(<)" ;
     cp "$(>)" "$(<)"
     cp "$(<)" tools/redcryptofile/redcryptofile.so
 }
@@ -792,21 +792,21 @@ unit-test test_strings : tests/test_strings.cpp libboost_unit_test : $(TEST_DEPE
 ## @{
 unit-test test_meta_writer : tests/transport/detail/test_meta_writer.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_meta_opener : tests/transport/detail/test_meta_opener.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport.cpp crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_filename_sequence_transport : tests/transport/test_filename_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_out_meta_sequence_transport_with_sum : tests/transport/test_out_meta_sequence_transport_with_sum.cpp crypto dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport.cpp crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_test_transport : tests/transport/test_test_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_count_transport : tests/transport/test_count_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp openssl crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_file_transport : tests/transport/test_file_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta_sequence_transport.cpp crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_filename_transport : tests/transport/test_filename_transport.cpp z dl snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+unit-test test_cryptofile : tests/transport/test_cryptofile.cpp libboost_unit_test openssl crypto snappy dl z : $(TEST_DEPENDENCIES) ;
 
 unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp z snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}

@@ -47,7 +47,7 @@ private:
 
     const bool     param_session_probe_end_disconnected_session;
 
-    std::string    param_auth_user;
+    std::string    param_target_informations;
 
     const uint16_t param_front_width;
     const uint16_t param_front_height;
@@ -85,7 +85,7 @@ public:
 
         bool session_probe_end_disconnected_session;
 
-        const char* auth_user;
+        const char* target_informations;
 
         uint16_t front_width;
         uint16_t front_height;
@@ -125,7 +125,7 @@ public:
           params.session_probe_on_launch_failure)
     , param_session_probe_end_disconnected_session(
           params.session_probe_end_disconnected_session)
-    , param_auth_user(params.auth_user)
+    , param_target_informations(params.target_informations)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
     , param_real_alternate_shell(params.real_alternate_shell)
@@ -438,19 +438,19 @@ public:
             }
         }
         else if (!session_probe_message.compare(
-                     "Request=Get authenticated user")) {
+                     "Request=Get target informations")) {
             StaticOutStream<1024> out_s;
 
             const size_t message_length_offset = out_s.get_offset();
             out_s.out_skip_bytes(sizeof(uint16_t));
 
             {
-                const char cstr[] = "AuthenticatedUser=";
+                const char cstr[] = "TargetInformations=";
                 out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
             }
 
-            out_s.out_copy_bytes(this->param_auth_user.data(),
-                this->param_auth_user.size());
+            out_s.out_copy_bytes(this->param_target_informations.data(),
+                this->param_target_informations.size());
 
             out_s.out_clear_bytes(1);   // Null-terminator.
 

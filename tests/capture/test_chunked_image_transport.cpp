@@ -31,8 +31,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "test_transport.hpp"
-#include "out_filename_sequence_transport.hpp"
+#include "transport/test_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"

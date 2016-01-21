@@ -31,8 +31,8 @@
 
 #include "authentifier.hpp"
 #include "module_manager.hpp"
-#include "count_transport.hpp"
-#include "test_transport.hpp"
+#include "transport/count_transport.hpp"
+#include "transport/test_transport.hpp"
 
 struct ActivityAlwaysTrue : ActivityChecker {
     virtual bool check_and_reset_activity() { return true; };

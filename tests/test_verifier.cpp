@@ -47,9 +47,9 @@
 #include <new>
 
 #include "fdbuf.hpp"
-#include "filter/crypto_filter.hpp"
-
-#include "cryptofile.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
+#include "transport/cryptofile.hpp"
 
 extern "C" {
 

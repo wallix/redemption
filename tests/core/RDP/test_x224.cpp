@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "RDP/x224.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)

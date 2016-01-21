@@ -29,7 +29,7 @@
 #define LOGNULL
 
 #include "stream.hpp"
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "RDP/sec.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)

@@ -29,7 +29,7 @@
 
 #include "log.hpp"
 #include "RDP/nego.hpp"
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNego)
 {

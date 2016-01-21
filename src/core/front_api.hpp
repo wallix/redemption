@@ -26,6 +26,8 @@
 
 #include "RDP/RDPGraphicDevice.hpp"
 
+#include "core/wait_obj.hpp"
+
 class Capability;
 class InStream;
 class OrderCaps;
@@ -51,11 +53,17 @@ class FrontAPI : public RDPGraphicDevice{
     bool notimestamp;
     bool nomouse;
 
+    protected:
+    wait_obj event;
+
     FrontAPI(bool notimestamp, bool nomouse)
         : mouse_x(0)
         , mouse_y(0)
         , notimestamp(notimestamp)
         , nomouse(nomouse) {}
+
+    public:
+    virtual wait_obj& get_event() { return this->event; }
 
     TODO("RZ : Move these methods in OrderCaps class.")
     virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {}

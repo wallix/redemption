@@ -31,7 +31,7 @@
 #define LOGPRINT
 
 #include "stream.hpp"
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "RDP/sec.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/fastpath.hpp"
