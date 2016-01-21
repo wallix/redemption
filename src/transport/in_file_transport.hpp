@@ -39,7 +39,7 @@ struct InFileSeekableTransport
 : SeekableTransport<InputTransport</*transbuf::ibuffering_buf<*/io::posix::fdbuf/*>*/ > >
 {
     explicit InFileSeekableTransport(int fd) noexcept
-    : InFileTransport::TransportType(fd)
+    : InFileSeekableTransport::TransportType(fd)
     {}
 };
 
