@@ -139,7 +139,7 @@ class Engine(object):
         self.displaytargets = []
         self.proxyrightsinput = None
         self.pidhandler = None
-        self.subprotocol = None
+
 
         self.session_result = True
         self.session_diag = u'Success'
@@ -538,12 +538,15 @@ class Engine(object):
                     protocol = u"APP"
                     host = None
                     alias = None
+                    subprotocols = []
                 else:
                     target_name = right.resource.device.cn
                     service_name = right.resource.service.cn
                     protocol = right.resource.service.protocol.cn
                     host = right.resource.device.host
                     alias = right.resource.device.deviceAlias
+                    subprotocols = right.subprotocols
+                    # subprotocols = right.resource.device.service.subprotocols
                 if target_context is not None:
                     if host is None:
                         continue
@@ -594,7 +597,7 @@ class Engine(object):
                                                        service_name,
                                                        protocol,
                                                        target_groups,
-                                                       right.subprotocols,
+                                                       subprotocols,
                                                        host))
 
     def get_selected_target(self, target_login, target_device, target_service,
@@ -834,11 +837,14 @@ class Engine(object):
         if proxytype == "RDP":
             separator = u"\x01"
             matchproto = lambda x: x == u"RDP"
-        elif proxytype == "SSH":
+        elif proxytype == u"SSH":
             separator = u"|"
-            matchproto = lambda x: (x == self.subprotocol
-                                    or (x == u'SSH_SHELL_SESSION'
-                                        and self.subprotocol == u'SSH_X11_SESSION'))
+            matchproto = lambda x: x in ["SSH_SHELL_SESSION",
+                                         "SSH_REMOTE_COMMAND",
+                                         "SSH_SCP_UP",
+                                         "SSH_SCP_DOWN",
+                                         "SFTP_SESSION",
+                                         "RLOGIN", "TELNET"]
         else:
             return None, None
         try:
@@ -908,6 +914,7 @@ class Engine(object):
         if not target:
             return None
         proto = target.resource.service.protocol.cn
+        # subproto = [x.cn for x in target.resource.service.subprotocols]
         subproto = [x.cn for x in target.subprotocols]
         return ProtocolInfo(proto, subproto)
 

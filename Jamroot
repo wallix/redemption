@@ -806,6 +806,8 @@ unit-test test_bulk_compression_transport : tests/transport/test_bulk_compressio
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
+unit-test test_cryptofile : tests/transport/test_cryptofile.cpp libboost_unit_test openssl crypto snappy dl z : $(TEST_DEPENDENCIES) ;
+
 unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp z snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 

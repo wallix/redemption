@@ -1395,7 +1395,7 @@ class Sesman():
                                             self.reporting_message = _reporting_message
 
                                             try_next = True
-                                            release_reason = u'Connexion failed'
+                                            release_reason = u'Connection failed'
                                             self.engine.set_session_status(
                                                 result=False, diag=release_reason)
                                             break
