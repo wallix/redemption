@@ -24,7 +24,6 @@
 #include "transport/detail/meta_opener.hpp"
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
-#include "transport/buffer/crypto_filename_buf.hpp"
 #include "transport/filter/crypto_filter.hpp"
 #include "urandom_read.hpp"
 

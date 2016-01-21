@@ -25,13 +25,13 @@
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
 #include "fdbuf.hpp"
-#include "transport/buffer/crypto_filename_buf.hpp"
+#include "transport/filter/crypto_filter.hpp"
+#include "urandom_read.hpp"
 #include "utils/genrandom.hpp"
 #include "fileutils.hpp"
 #include "transport/detail/meta_hash.hpp"
 #include "transport/buffer/checksum_buf.hpp"
 #include "transport/buffer/null_buf.hpp"
-#include "transport/filter/crypto_filter.hpp"
 #include "urandom_read.hpp"
 
 namespace detail
@@ -180,7 +180,6 @@ namespace transbuf {
         {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
-//            printf("init_trace_key: cctx.get_derivator\n");
 
             cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
             if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {

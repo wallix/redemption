@@ -22,8 +22,9 @@
 #define REDEMPTION_TRANSPORT_IN_FILENAME_TRANSPORT_HPP
 
 // #include "buffer/buffering_buf.hpp"
-#include "transport/buffer/crypto_filename_buf.hpp"
 #include "transport/buffer/file_buf.hpp"
+#include "transport/filter/crypto_filter.hpp"
+#include "urandom_read.hpp"
 #include "transport/mixin_transport.hpp"
 
 struct InFilenameTransport
