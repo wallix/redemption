@@ -21,6 +21,11 @@
 #ifndef REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
 #define REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
 
+/* for HMAC calculations */
+#define MD_HASH_FUNC   SHA256
+#define MD_HASH_NAME   "SHA256"
+#define MD_HASH_LENGTH SHA256_DIGEST_LENGTH
+
 #include <libgen.h>
 #include <string.h>
 #include <cstdio>
@@ -55,10 +60,6 @@ enum {
 /* size of salt to protect master key */
 #define MKSALT_LEN 8
 
-/* for HMAC calculations */
-#define MD_HASH_FUNC   SHA256
-#define MD_HASH_NAME   "SHA256"
-#define MD_HASH_LENGTH SHA256_DIGEST_LENGTH
 
 #define CRYPTO_BUFFER_SIZE ((4096 * 4))
 

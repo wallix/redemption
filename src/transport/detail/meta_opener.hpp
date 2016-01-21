@@ -21,15 +21,25 @@
 #ifndef REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
 #define REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
 
+#include <cerrno>
+#include <fcntl.h>
+#include <snappy-c.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <algorithm>
+#include <cerrno>
+#include <cstdio>
+
+#include <memory>
+
+
 #include "log.hpp"
 #include "error.hpp"
 #include "no_param.hpp"
 #include "fileutils.hpp"
-#include "transport/filter/crypto_filter.hpp"
-
-#include <algorithm>
-#include <cerrno>
-#include <cstdio>
+#include "log.hpp"
+#include "openssl_crypto.hpp"
+#include "transport/cryptofile.hpp"
 
 namespace detail
 {
@@ -161,8 +171,8 @@ namespace detail
         time_t  ctime;
         time_t  start_time;
         time_t  stop_time;
-        unsigned char hash1[HASH_LEN / 2];
-        unsigned char hash2[HASH_LEN / 2];
+        unsigned char hash1[MD_HASH_LENGTH];
+        unsigned char hash2[MD_HASH_LENGTH];
     };
 
     inline time_t meta_parse_sec(const char * first, const char * last)
@@ -317,7 +327,7 @@ namespace detail
         if (has_checksum
          && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
         ) {
-            auto read = [&](unsigned char (&hash)[HASH_LEN / 2]) {
+            auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
                 auto phash = begin(hash);
                 for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
                     *phash = (chex_to_int(*pend, err) << 4);
