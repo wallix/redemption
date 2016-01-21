@@ -176,14 +176,14 @@ transport/out_meta_sequence_transport 100 100
 transport/socket_transport 100 100
 transport/test_transport 100 100
 transport/cryptofile 100 100
-transport/snappy_compression_transport
-transport/bulk_compression_transport
-transport/count_transport
-transport/filename_sequence_transport
-transport/filename_transport
-transport/file_transport
-transport/gzip_compression_transport
-transport/request_full_cleaning
+transport/snappy_compression_transport 100 100
+transport/bulk_compression_transport 100 100
+transport/count_transport 100 100
+transport/filename_sequence_transport 100 100
+transport/filename_transport 100 100
+transport/file_transport 100 100
+transport/gzip_compression_transport 100 100
+transport/request_full_cleaning 100 100
 utils/algostring 100 100
 utils/authorization_channels 100 100
 utils/bitfu 100 100
