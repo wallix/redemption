@@ -28,18 +28,13 @@
 
 
 struct OutFilenameSequenceTransport
-: SeekableTransport<
-// FlushingTransport<
-RequestCleaningTransport<
-    OutputNextTransport<
-        detail::out_sequence_filename_buf<
+:
+    RequestCleaningTransport<
+        OutputNextTransport<
+            detail::out_sequence_filename_buf<
             detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >
-        >/*,
-        detail::GetCurrentPath*/
-    >
->
-// >
->
+    >>>
+
 {
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
@@ -63,12 +58,11 @@ RequestCleaningTransport<
 };
 
 struct OutFilenameSequenceSeekableTransport
-: SeekableTransport<
-    RequestCleaningTransport<
-        OutputNextTransport<
-            detail::out_sequence_filename_buf<
+: RequestCleaningTransport<
+     OutputNextTransport<
+         detail::out_sequence_filename_buf<
                 detail::empty_ctor<io::posix::fdbuf>
-        >>>>
+      >>>
 {
     OutFilenameSequenceSeekableTransport(
         FilenameGenerator::Format format,
@@ -89,6 +83,13 @@ struct OutFilenameSequenceSeekableTransport
 
     const FilenameGenerator * seqgen() const noexcept
     { return &(this->buffer().seqgen()); }
+    
+    void seek(int64_t offset, int whence) override {
+        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        }
+    }
+
 };
 
 

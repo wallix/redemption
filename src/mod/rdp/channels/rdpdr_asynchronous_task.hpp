@@ -29,7 +29,7 @@
 #include "wait_obj.hpp"
 
 class RdpdrDriveReadTask : public AsynchronousTask {
-    Transport * transport;
+    InFileSeekableTransport * transport;
 
     const int file_descriptor;
 
@@ -48,7 +48,7 @@ class RdpdrDriveReadTask : public AsynchronousTask {
     const uint32_t verbose;
 
 public:
-    RdpdrDriveReadTask(Transport * transport,
+    RdpdrDriveReadTask(InFileSeekableTransport * transport,
                        int file_descriptor,
                        uint32_t DeviceId,
                        uint32_t CompletionId,
