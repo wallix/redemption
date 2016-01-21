@@ -120,6 +120,8 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     
     
+    
+    
 #ifndef TEST_CLOSE_FROM_SCREEN
     
     QApplication app2(argc, argv);
