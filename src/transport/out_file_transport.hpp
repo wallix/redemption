@@ -25,16 +25,8 @@
 #include "transport/mixin_transport.hpp"
 #include "utils/fdbuf.hpp"
 
-// typedef SeekableTransport<OutputTransport<io::posix::fdbuf> > OutFileTransport;
-
 struct OutFileTransport
-: /*FlushingTransport<*/
-SeekableTransport<
-    OutputTransport<
-        /*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/
-    >
->
-// >
+: SeekableTransport<OutputTransport<io::posix::fdbuf>>
 {
     explicit OutFileTransport(int fd) noexcept
     : OutFileTransport::TransportType(fd)

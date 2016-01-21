@@ -62,4 +62,34 @@ RequestCleaningTransport<
     { return &(this->buffer().seqgen()); }
 };
 
+struct OutFilenameSequenceSeekableTransport
+: SeekableTransport<
+    RequestCleaningTransport<
+        OutputNextTransport<
+            detail::out_sequence_filename_buf<
+                detail::empty_ctor<io::posix::fdbuf>
+        >>>>
+{
+    OutFilenameSequenceSeekableTransport(
+        FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        unsigned verbose = 0)
+    : OutFilenameSequenceSeekableTransport::TransportType(
+        detail::out_sequence_filename_buf_param<>(format, prefix, filename, extension, groupid))
+    {
+        (void)verbose;
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    { return &(this->buffer().seqgen()); }
+};
+
+
 #endif
