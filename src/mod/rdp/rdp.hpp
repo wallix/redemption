@@ -395,9 +395,10 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool                                   session_probe_end_disconnected_session;
           std::string                            session_probe_alternate_shell;
 
+    std::string session_probe_target_informations;
+
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
-    std::string auth_user;
     std::string outbound_connection_killing_rules;
 
     size_t recv_bmp_update;
@@ -686,7 +687,6 @@ public:
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
-        , auth_user(mod_rdp_params.auth_user)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -922,12 +922,19 @@ public:
             }
             replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}", exe_var_str);
 
-            // Target Session Id
+            // Target informations
+            this->session_probe_target_informations  = mod_rdp_params.target_application;
+            this->session_probe_target_informations += ":";
+            this->session_probe_target_informations += mod_rdp_params.auth_user;
+
+
             char proxy_managed_connection_cookie[9];
-            get_proxy_managed_connection_cookie(mod_rdp_params.auth_user,
-                mod_rdp_params.target_application,
+            get_proxy_managed_connection_cookie(
+                this->session_probe_target_informations.c_str(),
+                this->session_probe_target_informations.length(),
                 proxy_managed_connection_cookie);
-            replace_tag(this->session_probe_alternate_shell, "${CONN_VAR}", proxy_managed_connection_cookie);
+            replace_tag(this->session_probe_alternate_shell, "${COOKIE_VAR}",
+                proxy_managed_connection_cookie);
 
             strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
@@ -1208,8 +1215,8 @@ protected:
         session_probe_virtual_channel_params.session_probe_end_disconnected_session =
             this->session_probe_end_disconnected_session;
 
-        session_probe_virtual_channel_params.auth_user                              =
-            this->auth_user.c_str();
+        session_probe_virtual_channel_params.target_informations                    =
+            this->session_probe_target_informations.c_str();
 
         session_probe_virtual_channel_params.front_width                            =
             this->front_width;
@@ -1236,15 +1243,10 @@ protected:
     }
 
 public:
-    static void get_proxy_managed_connection_cookie(const char * auth_user,
-            const char * target_application, char (&cookie)[9]) {
-        std::string target_session_data;
-        target_session_data += auth_user;
-        target_session_data += target_application;
-
+    static void get_proxy_managed_connection_cookie(const char * target_informations,
+            size_t target_informations_length, char (&cookie)[9]) {
         SslSha1 sha1;
-        sha1.update(byte_ptr_cast(target_session_data.c_str()),
-            target_session_data.length());
+        sha1.update(byte_ptr_cast(target_informations), target_informations_length);
         uint8_t sig[20];
         sha1.final(sig, sizeof(sig));
 
@@ -1852,7 +1854,6 @@ private:
 public:
     void draw_event(time_t now) override {
         if (!this->event.waked_up_by_time &&
-//            (!this->enable_session_probe || !this->session_probe_event.set_state || !this->session_probe_event.waked_up_by_time)) {
             (!this->session_probe_virtual_channel_p || !this->session_probe_virtual_channel_p->is_event_signaled())) {
             try{
                 char * hostname = this->hostname;
