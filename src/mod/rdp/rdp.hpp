@@ -880,7 +880,16 @@ public:
 
         snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
-        std::string alternate_shell(mod_rdp_params.alternate_shell);
+        const char * tmp_alternate_shell =
+            (((mod_rdp_params.alternate_shell && (*mod_rdp_params.alternate_shell)) ||
+              !mod_rdp_params.use_client_provided_alternate_shell) ?
+             mod_rdp_params.alternate_shell : info.alternate_shell);
+        const char * tmp_working_dir     =
+            (((mod_rdp_params.working_dir && (*mod_rdp_params.working_dir)) ||
+              !mod_rdp_params.use_client_provided_alternate_shell) ?
+             mod_rdp_params.working_dir : info.working_dir);
+
+        std::string alternate_shell(tmp_alternate_shell);
         if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
             const char * user_marker = "${USER}";
             size_t pos = alternate_shell.find(user_marker, 0);
@@ -898,7 +907,7 @@ public:
 
         if (this->enable_session_probe) {
             this->real_alternate_shell = std::move(alternate_shell);
-            this->real_working_dir     = mod_rdp_params.shell_working_directory;
+            this->real_working_dir     = tmp_working_dir;
 
             auto replace_tag = [](std::string & str, const char * tag,
                                   const char * replacement_text) {
@@ -947,7 +956,7 @@ public:
         else {
             strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
-            strncpy(this->directory, mod_rdp_params.shell_working_directory, sizeof(this->directory) - 1);
+            strncpy(this->directory, tmp_working_dir, sizeof(this->directory) - 1);
             this->directory[sizeof(this->directory) - 1] = 0;
         }
 

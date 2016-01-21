@@ -1376,6 +1376,14 @@ namespace cfg {
             type value{};
         };
 
+        struct use_client_provided_alternate_shell {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{0};
+        };
+
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE
         struct enable_session_probe {
             static constexpr ::configs::VariableProperties properties() {
@@ -2039,6 +2047,7 @@ struct mod_rdp
 , cfg::mod_rdp::auth_channel
 , cfg::mod_rdp::alternate_shell
 , cfg::mod_rdp::shell_working_directory
+, cfg::mod_rdp::use_client_provided_alternate_shell
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::enable_session_probe_loading_mask
 , cfg::mod_rdp::session_probe_on_launch_failure

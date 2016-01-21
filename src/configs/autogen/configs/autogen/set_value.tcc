@@ -304,6 +304,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "shell_working_directory")) {
             ::configs::parse(static_cast<cfg::mod_rdp::shell_working_directory&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "use_client_provided_alternate_shell")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::use_client_provided_alternate_shell&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "enable_session_probe")) {
             ::configs::parse(static_cast<cfg::mod_rdp::enable_session_probe&>(this->variables).value, value);
         }
