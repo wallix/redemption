@@ -248,7 +248,7 @@ namespace transfil {
         }
 
         template<class Sink>
-        int close(Sink & snk, unsigned char hash[HASH_LEN], const unsigned char * hmac_key)
+        int close(Sink & snk, unsigned char hash[MD_HASH_LENGTH << 2], const unsigned char * hmac_key)
         {
             int result = this->flush(snk);
 
@@ -274,7 +274,7 @@ namespace transfil {
             this->xmd_update(tmp_buf, 8);
 
             if (hash) {
-                unsigned char tmp_hash[HASH_LEN];
+                unsigned char tmp_hash[MD_HASH_LENGTH << 1];
                 if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
                     result = -1;
