@@ -38,32 +38,6 @@
 #define HASH_LEN (MD_HASH_LENGTH << 1)
 
 namespace transfil {
-    namespace detail {
-        inline int init_cypher(EVP_CIPHER_CTX * ctx, const unsigned char * trace_key, const unsigned char * iv, bool is_decrypion)
-        {
-            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-            const int          nrounds = 5;
-            unsigned char      key[32];
-            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-            if (i != 32) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                return -1;
-            }
-
-            ::EVP_CIPHER_CTX_init(ctx);
-            if ((is_decrypion
-            ? ::EVP_DecryptInit_ex(ctx, cipher, nullptr, key, iv)
-            : ::EVP_EncryptInit_ex(ctx, cipher, nullptr, key, iv)) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize %scrypion context\n",
-                    ::getpid(), is_decrypion ? "de":"en");
-                return -1;
-            }
-
-            return 0;
-        }
-    }
 
     class decrypt_filter
     {
@@ -115,7 +89,25 @@ namespace transfil {
             }
 
             unsigned char * const iv = tmp_buf + 8;
-            return detail::init_cypher(&this->ectx, trace_key, iv, true);
+
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+            if (i != 32) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                return -1;
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->ectx);
+            if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+                return -1;
+            }
+
+            return 0;
         }
 
         template<class Source>
@@ -278,8 +270,21 @@ namespace transfil {
             this->raw_size = 0;
             this->file_size = 0;
 
-            if (const int err = detail::init_cypher(&this->ectx, trace_key, iv, false)) {
-                return err;
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+            if (i != 32) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                return -1;
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->ectx);
+            if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
+                return -1;
             }
 
             // MD stuff
