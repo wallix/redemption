@@ -54,8 +54,6 @@
 #include "fdbuf.hpp"
 #include "bitmap_data_allocator.hpp"
 
-#include "fdbuf.hpp"
-
 using std::size_t;
 
 class Bitmap
@@ -480,14 +478,51 @@ public:
 
             TODO(" reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?");
             {
-                io::posix::fdbuf file;
-                int const fd_ = file.open(filename, O_RDONLY);
+                int const fd_ = ::open(filename, O_RDONLY);
                 if (fd_ == -1) {
                     LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
                     this->load_error_bitmap();
                     // throw Error(ERR_BITMAP_LOAD_FAILED);
                     return ;
                 }
+
+                class fdbuf
+                {
+                    int fd;
+                public:
+                    explicit fdbuf(int fd = -1) noexcept : fd(fd){}
+
+                    ~fdbuf(){::close(this->fd);}
+                    ssize_t read(void * data, size_t len) const
+                    {
+                        size_t remaining_len = len;
+                        while (remaining_len) {
+                            ssize_t ret = ::read(this->fd, static_cast<char*>(data)
+                                                +(len - remaining_len), remaining_len);
+                            if (ret < 0){
+                                if (errno == EINTR){
+                                    continue;
+                                }
+                                // Error should still be there next time we try to read
+                                if (remaining_len != len){
+                                    return len - remaining_len;
+                                }
+                                return ret;
+                            }
+                            // We must exit loop or we will enter infinite loop
+                            if (ret == 0){
+                                break;
+                            }
+                            remaining_len -= ret;
+                        }
+                        return len - remaining_len;
+                    }
+
+                    off64_t seek(off64_t offset, int whence) const
+                    {
+                        return lseek64(this->fd, offset, whence);
+                    }
+                } file(fd_);
 
                 char type1[2];
 
@@ -518,7 +553,7 @@ public:
                 }
 
                 // skip some bytes to set file pointer to bmp header
-                lseek(fd_, 14, SEEK_SET);
+                file.seek(14, SEEK_SET);
                 if (file.read(stream_data, 40) < 40){
                     LOG(LOG_ERR, "Widget_load: error read file size (2)");
                     throw Error(ERR_BITMAP_LOAD_FAILED);
@@ -543,7 +578,7 @@ public:
                 header.clr_important = stream.in_uint32_le();
 
                 // skip header (including more fields that we do not read if any)
-                lseek(fd_, 14 + header.size, SEEK_SET);
+                file.seek(14 + header.size, SEEK_SET);
 
                 // compute pixel size (in Quartet) and read palette if needed
                 int file_Qpp = 1;
