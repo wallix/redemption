@@ -25,6 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRDPQt
 #include <boost/test/auto_unit_test.hpp>
+#include <unistd.h>
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
@@ -38,14 +39,17 @@
 #include "../src/front/front_widget_Qt.hpp"
 
 
+#define TARGET_IP "10.10.46.73"
+//#define TARGET_IP "10.10.46.88"
+
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
     bool test_boost(false);
-    
+    std::string targetIP(TARGET_IP); // 10.10.46.73
     int verbose(511);
     int argc(8);
-    char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", "10.10.46.88", "-p", "3389"}; 
-    // test_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.8 -p 3389
+    char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
+    // test_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
     
     
     
@@ -70,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     if (frontInit._connector != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
     test_boost = false;
-
+ 
     if (frontInit._callback            != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
     test_boost = false;
@@ -86,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     BOOST_CHECK_EQUAL(frontInit._userName, "QA\\administrateur");
     BOOST_CHECK_EQUAL(frontInit._pwd,      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(frontInit._targetIP, "10.10.46.88");
+    BOOST_CHECK_EQUAL(frontInit._targetIP, targetIP);
     BOOST_CHECK_EQUAL(frontInit._port,     3389);
     
     BOOST_CHECK_EQUAL(frontInit._connected, true);
@@ -159,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._targetIP, "10.10.46.88");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
     BOOST_CHECK_EQUAL(front._port,     3389);
     
     BOOST_CHECK_EQUAL(front._connected, true);
@@ -199,12 +203,12 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       "10.10.46.88");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP);
     BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),          3389);
     
     BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._targetIP, "10.10.46.88");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
     BOOST_CHECK_EQUAL(front._port,     3389);
     
     BOOST_CHECK_EQUAL(front._connected, false);
@@ -215,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     // test connexion error
     //======================
     std::cout <<  std::endl << "Test connexion error" <<  std::endl;
-    front._form->set_IPField("10.10.46.80");
+    front._form->set_IPField(targetIP+"0");
     front.connexionReleased();
     
     if (front._screen    != nullptr) { test_boost = true;}
@@ -243,16 +247,16 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._targetIP, "10.10.46.80");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP+"0");
     BOOST_CHECK_EQUAL(front._port,     3389);
     
     BOOST_CHECK_EQUAL(front._connected, false);
     
-    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "<font color='Red'>Cannot connect to [10.10.46.80].</font>");
+    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "<font color='Red'>Cannot connect to ["+targetIP+"0].</font>");
     
     BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       "10.10.46.80");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP+"0");
     BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),           3389);
     
 
@@ -261,18 +265,18 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     //  test reconnexion
     //=====================
     std::cout <<  std::endl << "Test reconnexion" <<  std::endl;
-    front._form->set_IPField("10.10.46.88");
+    front._form->set_IPField(targetIP);
     
     BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       "10.10.46.88");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP);
     BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),           3389);
     
     front.connexionReleased();
     
     BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._targetIP, "10.10.46.88");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
     BOOST_CHECK_EQUAL(front._port,     3389);
     
     if (front._screen    != nullptr) { test_boost = true;}
@@ -310,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       "10.10.46.88");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP);
     BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),           3389);
     
     BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "");
@@ -382,7 +386,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(front._targetIP, "10.10.46.88");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
     BOOST_CHECK_EQUAL(front._port,     3389);
     
     BOOST_CHECK_EQUAL(front._connected, true);

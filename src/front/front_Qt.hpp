@@ -61,15 +61,15 @@
 #include "client_info.hpp"
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
-#include <QtGui/QPushButton>
-        
+
+#include <QtGui/QImage>        
 
 
 
 class Form_Qt;
 class Screen_Qt;
 class Connector_Qt;
-
+class QPushButton;
 
 class Front_Qt_API : public FrontAPI
 {
@@ -116,13 +116,6 @@ public:
     virtual void call_Draw() = 0;
     virtual void disconnect(std::string txt) = 0;
     virtual void updateForm(bool enable) = 0;
-    
-    void initButton(QPushButton & button, const char * str, QRect & rect) {
-        button.setToolTip(QString(str));
-        button.setGeometry(rect);
-        button.setCursor(Qt::PointingHandCursor);
-        button.setFocusPolicy(Qt::NoFocus);
-    }
 };
 
 
@@ -165,12 +158,8 @@ public:
     };
     
     
-    QColor u32_to_qcolor(uint32_t color){
-        uint8_t b(color >> 16);
-        uint8_t g(color >> 8);
-        uint8_t r(color);
-        return {r, g, b};
-    }
+  
+   
     
     virtual void flush() override {
         if (this->verbose > 10) {
@@ -243,6 +232,22 @@ public:
         }
         return 1;
     }
+    
+    
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+    //---------------------------------------
+    //   GRAPHIC FUNCTIONS (factorization)
+    //---------------------------------------
+
+    void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert);
+    
+    QColor u32_to_qcolor(uint32_t color);
+    
+    QImage::Format bpp_to_QFormat(int bpp); 
+    
+    void draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert);
     
     
     
@@ -321,15 +326,7 @@ public:
         //this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        std::cout << "RDPMemBlt" << std::endl;
-    }
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->verbose > 10) {
