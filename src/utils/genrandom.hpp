@@ -127,13 +127,14 @@ class UdevRandom : public Random
             LOG(LOG_INFO, "using /dev/urandom as random source");
         }
 
-         // this object is useful for RAII
+         // this object is useful for RAII, do not unwrap
         struct fdbuf
         {
-            int fd;
+            const int fd;
             explicit fdbuf(int fd) : fd(fd){}
             ~fdbuf() { ::close(this->fd);}
 
+            TODO("This is basically a blocking read, we should provide timeout management and behaviour")
             ssize_t read(uint8_t * data, size_t len) const
             {
                 size_t remaining_len = len;
