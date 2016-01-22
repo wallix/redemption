@@ -172,17 +172,17 @@ public:
                 os << name << '=';
                 for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
                     if (auth.cliprdr_restriction_[i] == val_ok) {
-                        os << cliprde_list[i];
+                        os << cliprde_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
                     if (auth.rdpdr_restriction_[i] == val_ok) {
-                        os << rdpdr_list[i];
+                        os << rdpdr_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpsnd_restriction_.size(); ++i) {
                     if (auth.rdpsnd_restriction_[i] == val_ok) {
-                        os << rdpdr_list[i];
+                        os << rdpdr_list()[i];
                     }
                 }
                 os << s << '\n';
@@ -286,7 +286,7 @@ public:
 
 private:
     static constexpr const std::array<const char *, 3> cliprde_list() {
-        
+
         return {{"cliprdr_up,", "cliprdr_down,", "cliprdr_file,"}};
     }
     static constexpr const std::array<const char *, 5> rdpdr_list() {
@@ -371,8 +371,8 @@ private:
     std::array<bool, 5> rdpdr_restriction_ {{}};
     std::array<bool, 3> cliprdr_restriction_ {{}};
     std::array<bool, 1> rdpsnd_restriction_ {{}};
-    
-    
+
+
 };
 
 

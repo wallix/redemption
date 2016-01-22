@@ -25,6 +25,8 @@
 
 namespace gdi {
 
+// TODO Synchroni*z*eApi
+// TODO merge with GraphicApi ?
 struct SynchroniseApi : private noncopyable
 {
     virtual ~SynchroniseApi() = default;

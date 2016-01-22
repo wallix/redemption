@@ -26,7 +26,7 @@
 #include "difftimeval.hpp"
 #include "GraphicToFile.hpp"
 #include "gdi/capture_api.hpp"
-#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "gdi/dump_png24.hpp"
 
 class NativeCapture
 : public gdi::CaptureApi

@@ -58,6 +58,10 @@
 #include "wrm_label.hpp"
 #include "cast.hpp"
 #include "png.hpp"
+#include "gdi/synchronise_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/cache_api.hpp"
 
 struct FileToGraphic
 {
@@ -122,6 +126,10 @@ public:
     struct Consumer {
         RDPGraphicDevice * graphic_device;
         RDPCaptureDevice * capture_device;
+        gdi::SynchroniseApi * sync_gdi;
+        gdi::CacheApi * cache_gdi;
+        gdi::GraphicApi * graphic_gdi;
+        gdi::CaptureApi * capture_gdi;
     } consumers[10];
 
     bool meta_ok;
@@ -286,9 +294,19 @@ public:
         delete this->bmp_cache;
     }
 
-    void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device) {
+    void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device,
+        gdi::SynchroniseApi * sync_gdi = nullptr,
+        gdi::CacheApi * cache_gdi = nullptr,
+        gdi::GraphicApi * graphic_gdi = nullptr,
+        gdi::CaptureApi * capture_gdi = nullptr
+    ) {
+        assert(std::end(this->consumers) != &this->consumers[this->nbconsumers]);
         this->consumers[this->nbconsumers  ].graphic_device = graphic_device;
-        this->consumers[this->nbconsumers++].capture_device = capture_device;
+        this->consumers[this->nbconsumers  ].capture_device = capture_device;
+        this->consumers[this->nbconsumers  ].sync_gdi = sync_gdi;
+        this->consumers[this->nbconsumers  ].cache_gdi = cache_gdi;
+        this->consumers[this->nbconsumers  ].graphic_gdi = graphic_gdi;
+        this->consumers[this->nbconsumers++].capture_gdi = capture_gdi;
     }
 
     bool next_order()
@@ -314,7 +332,12 @@ public:
 
         if (!this->remaining_order_count){
             for (size_t i = 0; i < this->nbconsumers; i++){
-                this->consumers[i].graphic_device->flush();
+                if (this->consumers[i].graphic_device) {
+                    this->consumers[i].graphic_device->flush();
+                }
+                if (this->consumers[i].sync_gdi) {
+                    this->consumers[i].sync_gdi->sync();
+                }
             }
 
             try {
@@ -365,6 +388,43 @@ public:
         return true;
     }
 
+    void dispatch_draw(Consumer & consumer, RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
+        if (consumer.graphic_device) consumer.graphic_device->draw(cmd, clip, &gly_cache);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd, clip, gly_cache);
+    }
+
+    void dispatch_draw(Consumer & consumer, Pointer const & cursor) {
+        if (consumer.graphic_device) consumer.graphic_device->server_set_pointer(cursor);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cursor);
+    }
+
+    void dispatch_draw(Consumer & consumer, BGRPalette const & palette) {
+        if (consumer.graphic_device) consumer.graphic_device->set_mod_palette(palette);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(palette);
+    }
+
+    template<class Sz>
+    void dispatch_draw(Consumer & consumer, RDPBitmapData const & cmd, uint8_t const * data, Sz sz, Bitmap const & bmp) {
+        if (consumer.graphic_device) consumer.graphic_device->draw(cmd, data, sz, bmp);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd, bmp);
+    }
+
+    void dispatch_draw(Consumer & consumer, RDPColCache const & cmd) {
+        if (consumer.graphic_device) consumer.graphic_device->draw(cmd);
+        if (consumer.cache_gdi) consumer.cache_gdi->cache(cmd);
+    }
+
+    void dispatch_draw(Consumer & consumer, RDPBrushCache const & cmd) {
+        if (consumer.graphic_device) consumer.graphic_device->draw(cmd);
+        if (consumer.cache_gdi) consumer.cache_gdi->cache(cmd);
+    }
+
+    template<class... Ts>
+    void dispatch_draw(Consumer & consumer, Ts const & ... args) {
+        if (consumer.graphic_device) consumer.graphic_device->draw(args...);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(args...);
+    }
+
     void interpret_order()
     {
         this->total_orders_count++;
@@ -394,7 +454,7 @@ public:
                             order.log(LOG_INFO);
                         }
                         for (size_t i = 0; i < this->nbconsumers; i++){
-                            this->consumers[i].graphic_device->draw(order);
+                            this->dispatch_draw(this->consumers[i], order);
                         }
                     }
                     break;
@@ -462,7 +522,7 @@ public:
                     this->statistics.GlyphIndex++;
                     this->glyphindex.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->glyphindex, clip, &this->gly_cache);
+                        this->dispatch_draw(this->consumers[i], this->glyphindex, clip, this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
@@ -472,7 +532,7 @@ public:
                         this->destblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->destblt, clip);
+                        this->dispatch_draw(this->consumers[i], this->destblt, clip);
                     }
                     break;
                 case RDP::MULTIDSTBLT:
@@ -482,7 +542,7 @@ public:
                         this->multidstblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multidstblt, clip);
+                        this->dispatch_draw(this->consumers[i], this->multidstblt, clip);
                     }
                     break;
                 case RDP::MULTIOPAQUERECT:
@@ -492,7 +552,7 @@ public:
                         this->multiopaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multiopaquerect, clip);
+                        this->dispatch_draw(this->consumers[i], this->multiopaquerect, clip);
                     }
                     break;
                 case RDP::MULTIPATBLT:
@@ -502,7 +562,7 @@ public:
                         this->multipatblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multipatblt, clip);
+                        this->dispatch_draw(this->consumers[i], this->multipatblt, clip);
                     }
                     break;
                 case RDP::MULTISCRBLT:
@@ -512,7 +572,7 @@ public:
                         this->multiscrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multiscrblt, clip);
+                        this->dispatch_draw(this->consumers[i], this->multiscrblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
@@ -522,7 +582,7 @@ public:
                         this->patblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->patblt, clip);
+                        this->dispatch_draw(this->consumers[i], this->patblt, clip);
                     }
                     break;
                 case RDP::SCREENBLT:
@@ -532,7 +592,7 @@ public:
                         this->scrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->scrblt, clip);
+                        this->dispatch_draw(this->consumers[i], this->scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
@@ -542,7 +602,7 @@ public:
                         this->lineto.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->lineto, clip);
+                        this->dispatch_draw(this->consumers[i], this->lineto, clip);
                     }
                     break;
                 case RDP::RECT:
@@ -552,7 +612,7 @@ public:
                         this->opaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->opaquerect, clip);
+                        this->dispatch_draw(this->consumers[i], this->opaquerect, clip);
                     }
                     break;
                 case RDP::MEMBLT:
@@ -569,7 +629,7 @@ public:
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers; i++){
-                                this->consumers[i].graphic_device->draw(this->memblt, clip, bmp);
+                                this->dispatch_draw(this->consumers[i], this->memblt, clip, bmp);
                             }
                         }
                     }
@@ -588,7 +648,7 @@ public:
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers; i++){
-                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, bmp);
+                                this->dispatch_draw(this->consumers[i], this->mem3blt, clip, bmp);
                             }
                         }
                     }
@@ -600,7 +660,7 @@ public:
                         this->polyline.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->polyline, clip);
+                        this->dispatch_draw(this->consumers[i], this->polyline, clip);
                     }
                     break;
                 case RDP::ELLIPSESC:
@@ -610,7 +670,7 @@ public:
                         this->ellipseSC.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->ellipseSC, clip);
+                        this->dispatch_draw(this->consumers[i], this->ellipseSC, clip);
                     }
                     break;
                 default:
@@ -699,7 +759,12 @@ public:
                 else {
                    if (this->real_time) {
                         for (size_t i = 0; i < this->nbconsumers; i++) {
-                            this->consumers[i].graphic_device->flush();
+                            if (this->consumers[i].graphic_device) {
+                                this->consumers[i].graphic_device->flush();
+                            }
+                            if (this->consumers[i].sync_gdi) {
+                                this->consumers[i].sync_gdi->sync();
+                            }
                         }
 
                         struct timeval now     = tvtime();
@@ -1064,6 +1129,9 @@ public:
                             if (this->consumers[cu].capture_device) {
                                 this->consumers[cu].capture_device->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
                             }
+                            if (this->consumers[cu].graphic_gdi) {
+                                this->consumers[cu].graphic_gdi->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+                            }
                         }
                     }
                     png_read_end(ppng, pinfo);
@@ -1112,7 +1180,7 @@ public:
                 }
 
                 for (size_t i = 0; i < this->nbconsumers; i++) {
-                    this->consumers[i].graphic_device->draw( bitmap_data
+                    this->dispatch_draw(this->consumers[i],  bitmap_data
                                             , data
                                             , bitmap_data.bitmap_size()
                                             , bitmap);
@@ -1142,7 +1210,7 @@ public:
                     this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->server_set_pointer(cursor);
+                        this->dispatch_draw(this->consumers[i], cursor);
                     }
                 }
                 else {
@@ -1158,7 +1226,7 @@ public:
                     memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->server_set_pointer(cursor);
+                        this->dispatch_draw(this->consumers[i], cursor);
                     }
                 }
             }
@@ -1202,7 +1270,12 @@ public:
                 else {
                    if (this->real_time) {
                         for (size_t i = 0; i < this->nbconsumers; i++) {
-                            this->consumers[i].graphic_device->flush();
+                            if (this->consumers[i].graphic_device) {
+                                this->consumers[i].graphic_device->flush();
+                            }
+                            if (this->consumers[i].sync_gdi) {
+                                this->consumers[i].sync_gdi->sync();
+                            }
                         }
 
                         struct timeval now     = tvtime();
@@ -1238,9 +1311,9 @@ public:
     void play(CbUpdateProgress update_progess, bool const & requested_to_stop) {
         time_t last_sent_record_now = 0;
         this->privplay([&](time_t record_now) {
-                if (last_sent_record_now != this->record_now.tv_sec) {
-                    update_progess(this->record_now.tv_sec);
-                    last_sent_record_now = this->record_now.tv_sec;
+                if (last_sent_record_now != record_now) {
+                    update_progess(record_now);
+                    last_sent_record_now = record_now;
                 }
             }, requested_to_stop);
     }
@@ -1260,6 +1333,10 @@ private:
                         this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
                                                                    , this->ignore_frame_in_timeval
                                                                    , requested_to_stop);
+                    }
+                    if (this->consumers[i].capture_gdi) {
+                        this->consumers[i].capture_gdi->snapshot( this->record_now, this->mouse_x, this->mouse_y
+                                                                   , this->ignore_frame_in_timeval);
                     }
                 }
 

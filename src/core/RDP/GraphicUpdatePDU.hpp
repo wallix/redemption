@@ -432,6 +432,8 @@ class GraphicsUpdatePDU : public RDPSerializer {
     rdp_mppc_enc * mppc_enc;
     bool           compression;
 
+    Transport * trans;
+
 public:
     GraphicsUpdatePDU( Transport * trans
                      , uint16_t & userid
@@ -452,8 +454,7 @@ public:
                      , bool compression
                      , uint32_t verbose
                      )
-        : RDPSerializer( trans
-                       , this->buffer_stream_orders.get_data_stream()
+        : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
                        , bpp, bmp_cache, gly_cache, pointer_cache
                        , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, ini, verbose)
@@ -464,7 +465,8 @@ public:
         , offset_bitmap_count(0)
         , fastpath_support(fastpath_support)
         , mppc_enc(mppc_enc)
-        , compression(compression) {
+        , compression(compression)
+        , trans(trans) {
         this->init_orders();
         this->init_bitmaps();
     }
@@ -494,7 +496,8 @@ public:
     }
 
 public:
-    void flush() override {
+    // TODO restored override
+    void flush() {
         this->flush_bitmaps();
         this->flush_orders();
     }
@@ -782,7 +785,8 @@ protected:
     }   // void set_pointer(int cache_idx)
 
 public:
-    void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
+    // TODO restored override ?
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }

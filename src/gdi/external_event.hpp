@@ -37,22 +37,6 @@ struct ExternalEventApi : private noncopyable
     virtual void external_time(const timeval & now) = 0;
 };
 
-using ExternalEventApiDeleterBase = utils::virtual_deleter_base<ExternalEventApi>;
-using ExternalEventApiPtr = utils::unique_ptr_with_virtual_deleter<ExternalEventApi>;
-
-using utils::default_delete;
-using utils::no_delete;
-
-template<class ExternalEvent, class... Args>
-ExternalEventApiPtr make_external_event_ptr(Args && ... args) {
-    return ExternalEventApiPtr(new ExternalEvent(std::forward<Args>(args)...), default_delete);
-}
-
-template<class ExternalEvent>
-ExternalEventApiPtr make_external_event_ref(ExternalEvent & gd) {
-    return ExternalEventApiPtr(&gd, no_delete);
-}
-
 }
 
 #endif

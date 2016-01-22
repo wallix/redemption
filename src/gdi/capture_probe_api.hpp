@@ -28,6 +28,7 @@ struct timeval;
 
 namespace gdi {
 
+// TODO merge with CaptureApi ?
 struct CaptureProbeApi : private noncopyable
 {
     virtual ~CaptureProbeApi() = default;

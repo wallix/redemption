@@ -91,6 +91,9 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
+
+    // TODO berk
+    virtual void set_row(std::size_t rownum, const uint8_t * data) {}
 };
 
 struct GraphicProxy

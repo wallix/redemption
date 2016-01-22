@@ -38,13 +38,13 @@ struct TestDraw : mod_api
     TestDraw(uint16_t w, uint16_t h) : mod_api(w, h), gd(w, h, 24) {}
 
     virtual void draw_event(time_t now) {}
-    virtual void rdp_input_invalidate(const Rect& r) {} 
+    virtual void rdp_input_invalidate(const Rect& r) {}
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {}
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) {}
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) {}
     virtual void send_to_front_channel(const char*const mod_channel_name, const uint8_t* data, size_t length, size_t chunk_size, int flags) {}
 
-    
+
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->gd.draw(cmd, clip);
@@ -106,17 +106,17 @@ struct TestDraw : mod_api
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
-        this->gd.draw(cmd, clip, gly_cache);
+        this->gd.draw(cmd, clip, *gly_cache);
     }
 
     virtual void draw(const RDPBrushCache & cmd)
     {
-        this->gd.draw(cmd);
+        //this->gd.draw(cmd);
     }
 
     virtual void draw(const RDPColCache & cmd)
     {
-        this->gd.draw(cmd);
+        //this->gd.draw(cmd);
     }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
@@ -138,7 +138,7 @@ struct TestDraw : mod_api
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp)
     {
-        this->gd.draw(bitmap_data, data, size, bmp);
+        this->gd.draw(bitmap_data, bmp);
     }
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) {
@@ -158,7 +158,7 @@ struct TestDraw : mod_api
     }
 
     virtual void server_set_pointer(const Pointer & cursor) {
-        this->gd.server_set_pointer(cursor);
+        this->gd.draw(cursor);
     }
 
     virtual void begin_update() {}

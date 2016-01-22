@@ -292,7 +292,7 @@ project redemption
     <define>__STDC_FORMAT_MACROS
 
     <define>PUBLIC
-   
+
     <define>QT_NO_KEYWORDS
     <define>QT_NO_DEBUG
 
@@ -986,18 +986,18 @@ exe test_rdp_Qt :
     src/front/front_Qt.hpp
     src/front/front_widget_Qt.hpp
     src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
-    test_rdp_Qt.o 
-    bitmap_data_allocator.o 
-    /qt//QtGui 
-    krb5 
-    openssl 
-    crypto 
-    gssglue 
-    png 
-    d3des 
-    z 
-    dl 
-    libboost_unit_test 
+    test_rdp_Qt.o
+    bitmap_data_allocator.o
+    /qt//QtGui
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    libboost_unit_test
     :
     <include>/usr/include/qt4
     ;

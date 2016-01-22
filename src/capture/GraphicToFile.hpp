@@ -565,6 +565,7 @@ protected:
     }
 
 public:
+    // TODO flush
     void sync() override {
         this->flush_bitmaps();
         this->flush_orders();

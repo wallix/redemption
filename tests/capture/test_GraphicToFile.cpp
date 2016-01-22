@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
+    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
 
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
-    consumer.flush();
+    consumer.sync();
 
     now.tv_sec++;
     consumer.timestamp(now);
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     now.tv_sec++;
     consumer.timestamp(now);
 
-    consumer.flush();
+    consumer.sync();
 }
 
 const char expected_stripped_wrm2[] =
@@ -368,7 +368,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
+    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), BLACK), screen_rect);
 
-    consumer.flush();
+    consumer.sync();
 }
 
 BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24_api(drawable);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, ini);
+    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, ini);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     now.tv_sec++;
     BOOST_CHECK_EQUAL(0, 0);
     consumer.timestamp(now);
-    consumer.flush();
+    consumer.sync();
     BOOST_CHECK_EQUAL(0, 0);
 
     RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), WHITE);
@@ -439,7 +439,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.draw(cmd3, screen_rect);
     now.tv_sec+=6;
     consumer.timestamp(now);
-    consumer.flush();
+    consumer.sync();
     BOOST_CHECK_EQUAL(0, 0);
     trans.disconnect(); // close file before reading filesize
     BOOST_CHECK_EQUAL(1588, filesize(filename));
@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
-    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
+    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable1, nullptr);
 
     png_recorder.flush();
     out_png_trans.next();

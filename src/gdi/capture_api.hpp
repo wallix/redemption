@@ -74,7 +74,7 @@ struct CaptureProxy
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) {
-        api.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        return api.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
     template<class Api>

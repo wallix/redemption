@@ -93,14 +93,14 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         GlyphCache gly_cache;
         RDPDrawable drawable(scr.cx, scr.cy, 24);
         DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-        GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+        GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
         drawable.draw(RDPOpaqueRect(scr, RED), scr);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
         drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
         consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
         drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
         consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-        consumer.flush();
+        consumer.sync();
         consumer.send_image_chunk();
     }
     catch (Error const & e){
@@ -173,14 +173,14 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush();
+    consumer.sync();
 
     OutChunkedBufferingTransport<100> png_trans(trans);
     try {
@@ -263,14 +263,14 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush();
+    consumer.sync();
 
     OutChunkedBufferingTransport<16> png_trans(trans);
 
@@ -428,7 +428,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
+    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -503,7 +503,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
+    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable1, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -583,7 +583,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
+    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }

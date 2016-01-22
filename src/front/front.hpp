@@ -614,7 +614,7 @@ public:
     }
 
     void server_set_pointer(const Pointer & cursor) override {
-        this->orders->server_set_pointer(cursor);
+        this->orders->draw(cursor);
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             this->capture->server_set_pointer(cursor);
@@ -624,10 +624,10 @@ public:
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override
     {
         this->orders->update_pointer_position(xPos, yPos);
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->update_pointer_position(xPos, yPos);
-        }
+        //if (  this->capture
+        //   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+        //    this->capture->update_pointer_position(xPos, yPos);
+        //}
     }
 
     // ===========================================================================
@@ -2261,7 +2261,7 @@ public:
                             // resizing done
                             {
                                 RDPColCache cmd(0, BGRPalette::classic_332());
-                                this->orders->draw(cmd);
+                                this->orders->cache(cmd);
                             }
                             if (this->verbose & 1) {
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
@@ -3623,7 +3623,7 @@ private:
 
                 if (this->client_info.bpp == 8) {
                     RDPColCache cmd(0, BGRPalette::classic_332());
-                    this->orders->draw(cmd);
+                    this->orders->cache(cmd);
                 }
 
                 if (this->verbose & (8|1)) {
@@ -4069,7 +4069,7 @@ private:
         if (this->client_info.bpp == 8) {
             if (!this->palette_memblt_sent[palette_id]) {
                 RDPColCache cmd(palette_id, bitmap.palette());
-                this->orders->draw(cmd);
+                this->orders->cache(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
         }
@@ -4231,7 +4231,8 @@ public:
             this->cache_brush(new_cmd.brush);
 
             if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(new_cmd, clip, gly_cache);
+                assert(gly_cache);
+                this->orders->draw(new_cmd, clip, *gly_cache);
 
                 if (  this->capture
                    && (this->capture_state == CAPTURE_STATE_STARTED)) {
@@ -4493,7 +4494,7 @@ public:
                 RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
                     sizeof(this->orders.brush_at(cache_idx).pattern),
                     this->orders.brush_at(cache_idx).pattern);
-                this->orders->draw(cmd);
+                this->orders->cache(cmd);
             }
             brush.hatch = cache_idx;
             brush.style = 0x81;
@@ -4501,7 +4502,7 @@ public:
     }
 
     void draw(const RDPColCache & cmd) override {
-        this->orders->draw(cmd);
+        this->orders->cache(cmd);
     }
 
     void set_mod_palette(const BGRPalette & palette) override {
@@ -4588,28 +4589,29 @@ public:
         }
 
         if (!this->input_event_and_graphics_update_disabled) {
-            ::compress_and_draw_bitmap_update(bitmap_data,
-                                              Bitmap(this->client_info.bpp, bmp),
-                                              this->client_info.bpp,
-                                              this->orders.p->graphics_update_pdu);
+            StaticOutStream<65535> bmp_stream;
+            Bitmap new_bmp(this->client_info.bpp, bmp);
+
+            new_bmp.compress(this->client_info.bpp, bmp_stream);
+
+            RDPBitmapData target_bitmap_data = bitmap_data;
+
+            target_bitmap_data.bits_per_pixel = new_bmp.bpp();
+            target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+            target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+            this->orders->draw(target_bitmap_data, new_bmp);
 
             //bitmap_data.log(LOG_INFO, "Front");
             //hexdump_d(data, size);
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                if ((bmp.bpp() > this->capture_bpp) || (bmp.bpp() == 8)) {
-                    Bitmap capture_bmp(this->capture_bpp, bmp);
-
-                    ::compress_and_draw_bitmap_update(bitmap_data, capture_bmp, this->capture_bpp, *this->capture);
+                if (this->client_info.bpp == this->capture_bpp) {
+                    this->capture->draw(bitmap_data, bmp_stream.get_data(), bmp_stream.get_offset(), new_bmp);
                 }
                 else {
-                    if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
-                        ::compress_and_draw_bitmap_update(bitmap_data, bmp, this->capture_bpp, *this->capture);
-                    }
-                    else {
-                        this->capture->draw(bitmap_data, data, size, bmp);
-                    }
+                    this->capture->draw(bitmap_data, data, size, bmp);
                 }
             }
         }

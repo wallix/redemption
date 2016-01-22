@@ -31,6 +31,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "dump_png24_from_rdp_drawable_adapter.hpp"
 #include "out_filename_sequence_transport.hpp"
 #include "nativecapture.hpp"
 #include "RDP/caches/bmpcache.hpp"
@@ -56,7 +57,12 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     Inifile ini;
     ini.set<cfg::video::wrm_compression_algorithm>(0);
     RDPDrawable drawable(800, 600, 24);
-    NativeCapture consumer(now, trans, 800, 600, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
+    GraphicToFile graphic_to_file(
+        now, trans, 800, 600, 24,
+        bmp_cache, gly_cache, ptr_cache, dump_png, ini
+    );
+    NativeCapture consumer(graphic_to_file, dump_png, now, ini);
 
     drawable.show_mouse_cursor(false);
 
@@ -65,13 +71,12 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     consumer.update_config(ini);
 
     bool ignore_frame_in_timeval = false;
-    bool requested_to_stop       = false;
 
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
-    consumer.draw(RDPOpaqueRect(scr, RED), scr);
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
+    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     trans.disconnect();
 
     const char * filename;

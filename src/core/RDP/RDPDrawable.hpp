@@ -158,7 +158,7 @@ private:
     }
 
 public:
-    void set_row(size_t rownum, const uint8_t * data) /*TODO override*/ {
+    void set_row(size_t rownum, const uint8_t * data) override {
         this->drawable.set_row(rownum, data);
     }
 

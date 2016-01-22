@@ -180,7 +180,8 @@ public:
         RDPGlyphIndex new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip, gly_cache);
+        assert(gly_cache);
+        this->gd.draw(new_cmd24, clip, *gly_cache);
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
@@ -303,7 +304,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(bitmap_data, data, size, bmp);
+        this->gd.draw(bitmap_data, bmp);
     }
 
     using FrontAPI::draw;
@@ -358,7 +359,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.server_set_pointer(cursor);
+        this->gd.draw(cursor);
     }
 
     virtual int server_resize(int width, int height, int bpp) override {

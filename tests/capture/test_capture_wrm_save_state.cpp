@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
@@ -113,14 +113,14 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
         RDPMemBlt(0, Rect(0, scr.cy - 10, bloc20x10.cx(), bloc20x10.cy()), 0xCC, 0, 0, 0),
         scr,
         bloc20x10);
-    consumer.flush();
+    consumer.sync();
 
     now.tv_sec++;
     consumer.timestamp(now);
 
     consumer.save_bmp_caches();
 
-    consumer.flush();
+    consumer.sync();
 }
 
 BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
+    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -243,21 +243,21 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr.shrink(5), BLUE), scr);
     consumer.draw(RDPOpaqueRect(scr.shrink(10), RED), scr);
 
-    consumer.flush();
+    consumer.sync();
 
     consumer.send_save_state_chunk();
 
     now.tv_sec++;
     consumer.timestamp(now);
     consumer.draw(RDPOpaqueRect(scr.shrink(20), GREEN), scr);
-    consumer.flush();
+    consumer.sync();
 }
 
 BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
+    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
+    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();

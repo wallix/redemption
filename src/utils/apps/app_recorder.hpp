@@ -36,7 +36,7 @@
 #include "iter.hpp"
 #include "crypto_in_meta_sequence_transport.hpp"
 #include "program_options/program_options.hpp"
-#include "auth_api.hpp" 
+#include "auth_api.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -237,7 +237,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , bool no_timestamp
                     , auth_api * authentifier
                     , Inifile & ini, Random & rnd, CryptoContext & cctx
-                    
+
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
@@ -338,7 +338,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     //std::cout << "zoom: " << zoom << '%' << std::endl;
                 }
 
-                capture.psc->zoom(zoom);
+                capture.zoom(zoom);
             }
             player.add_consumer(&capture, &capture);
 
@@ -496,11 +496,11 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
             run(
                 OutMetaSequenceTransport(
                     &cctx,
-                    outfile_path.c_str(), 
-                    ini.get<cfg::video::hash_path>(), 
+                    outfile_path.c_str(),
+                    ini.get<cfg::video::hash_path>(),
                     outfile_basename.c_str(),
-                    begin_record, 
-                    player.info_width, 
+                    begin_record,
+                    player.info_width,
                     player.info_height,
                     ini.get<cfg::video::capture_groupid>()
                 ));
@@ -880,14 +880,14 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         if (infile_is_encrypted == false) {
             InMetaSequenceTransport in_wrm_trans_tmp(
                 &cctx,
-                infile_prefix, 
+                infile_prefix,
                 infile_extension.c_str());
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
         else {
             CryptoInMetaSequenceTransport in_wrm_trans_tmp(
-                &cctx, 
-                infile_prefix, 
+                &cctx,
+                infile_prefix,
                 infile_extension.c_str());
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
@@ -919,10 +919,10 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
              || show_statistics
              || file_count > 1
              || order_count);
-             
+
             if (test){
                 std::cout << "[A]" << std::endl;
-                
+
                 result = do_record<CaptureMaker>(trans
                             , begin_record, end_record
                             , begin_capture, end_capture
@@ -960,17 +960,17 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
             if (infile_is_encrypted == false) {
                 InMetaSequenceTransport in_wrm_trans_tmp(
                     &cctx,
-                    infile_prefix, 
+                    infile_prefix,
                     infile_extension.c_str());
-                    
+
                 remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
             }
             else {
                 CryptoInMetaSequenceTransport in_wrm_trans_tmp(
-                    &cctx, 
-                    infile_prefix, 
+                    &cctx,
+                    infile_prefix,
                     infile_extension.c_str());
                 remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()

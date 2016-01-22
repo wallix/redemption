@@ -192,7 +192,8 @@ class ClientFront : public FrontAPI {
         RDPGlyphIndex new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip, gly_cache);
+        assert(gly_cache);
+        this->gd.draw(new_cmd24, clip, *gly_cache);
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
@@ -331,7 +332,7 @@ class ClientFront : public FrontAPI {
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(bitmap_data, data, size, bmp);
+        this->gd.draw(bitmap_data, bmp);
 
     }
 
@@ -361,7 +362,7 @@ class ClientFront : public FrontAPI {
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.server_set_pointer(cursor);
+        this->gd.draw(cursor);
     }
 
     void begin_update() override {
@@ -379,7 +380,7 @@ class ClientFront : public FrontAPI {
             LOG(LOG_INFO, "========================================\n");
         }
     }
-    
+
 
     // reutiliser le FakeFront
     // creer un main calqué sur celui de transparent.cpp et reussir a lancer un mod_rdp

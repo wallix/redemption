@@ -38,12 +38,12 @@
 #include "gdi/railgraphic_api.hpp"
 #include "gdi/cache_api.hpp"
 #include "gdi/capture_api.hpp"
-#include "gdi/synchronise_api.hpp"
 #include "gdi/input_kbd_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/synchronise_api.hpp"
 
 #include "utils/pattutils.hpp"
+#include "dump_png24_from_rdp_drawable_adapter.hpp"
 #include "gdi/utils/non_null.hpp"
 
 class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
@@ -347,6 +347,10 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             cap.capture_list().push_back(&this->sc);
             cap.graphic_snapshot_list().push_back(&this->sc);
         }
+
+        void zoom(unsigned percent) {
+            this->sc.zoom(percent);
+        }
     };
 
 
@@ -378,6 +382,12 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             template<class... Ts>
             Transport(configs::TraceType trace_type, Ts && ... args)
             {
+                TODO("there should only be one outmeta, not two."
+                    " Capture code should not really care if file is encrypted or not."
+                    "Here is not the right level to manage anything related to encryption.")
+                TODO("Also we may wonder why we are encrypting wrm and not png"
+                    "(This is related to the path split between png and wrm)."
+                    "We should stop and consider what we should actually do")
                 switch (trace_type) {
                     case configs::TraceType::cryptofile:
                         this->trans = new (&this->variant.out_crypto)
@@ -442,8 +452,8 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
 
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
                 auto & list = cap.input_kbd_list();
-                list.push_back(&this->graphic_to_file);
                 this->idx_kbd = list.size();
+                list.push_back(&this->graphic_to_file);
             }
         }
 
@@ -764,13 +774,6 @@ public:
                     LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                 }
 
-                TODO("there should only be one outmeta, not two."
-                    " Capture code should not really care if file is encrypted or not."
-                    "Here is not the right level to manage anything related to encryption.")
-                TODO("Also we may wonder why we are encrypting wrm and not png"
-                    "(This is related to the path split between png and wrm)."
-                    "We should stop and consider what we should actually do")
-
                 this->pnc.reset(new Native(
                     now, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     this->cctx, record_path, hash_path, basename,
@@ -1050,6 +1053,12 @@ public:
 
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
+    }
+
+    // TODO move to ctor
+    void zoom(unsigned percent) {
+        assert(this->pnc);
+        this->psc->zoom(percent);
     }
 };
 
