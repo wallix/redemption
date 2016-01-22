@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     std::string targetIP(TARGET_IP); // 10.10.46.73
     int verbose(511);
     int argc(8);
-    char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
+    const char * argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
     // test_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
     
     

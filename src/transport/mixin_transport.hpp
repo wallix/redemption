@@ -195,29 +195,6 @@ protected:
     typedef OutputNextTransport TransportType;
 };
 
-
-template<class TTransport>
-struct SeekableTransport
-: TTransport
-{
-    SeekableTransport() = default;
-
-    template<class T>
-    explicit SeekableTransport(const T & params)
-    : TTransport(params)
-    {}
-
-    void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        }
-    }
-
-protected:
-    typedef SeekableTransport TransportType;
-};
-
-
 template<class TTransport>
 struct RequestCleaningTransport
 : TTransport

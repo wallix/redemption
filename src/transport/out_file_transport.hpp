@@ -26,7 +26,7 @@
 #include "utils/fdbuf.hpp"
 
 struct OutFileTransport
-: SeekableTransport<OutputTransport<io::posix::fdbuf>>
+: OutputTransport<io::posix::fdbuf>
 {
     explicit OutFileTransport(int fd) noexcept
     : OutFileTransport::TransportType(fd)

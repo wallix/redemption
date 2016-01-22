@@ -243,7 +243,7 @@ namespace transfil {
 
 
 struct InFilenameTransport
-: SeekableTransport< InputTransport< /*transbuf::ibuffering_buf<*/transbuf::ifile_buf/*>*/ > >
+: InputTransport<transbuf::ifile_buf>
 {
     InFilenameTransport(const char * filename)
     {

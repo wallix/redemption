@@ -25,10 +25,8 @@
 #include "mixin_transport.hpp"
 #include "fdbuf.hpp"
 
-// typedef SeekableTransport<InputTransport<io::posix::fdbuf> > InFileTransport;
-
 struct InFileTransport
-: SeekableTransport<InputTransport</*transbuf::ibuffering_buf<*/io::posix::fdbuf/*>*/ > >
+: InputTransport<io::posix::fdbuf>
 {
     explicit InFileTransport(int fd) noexcept
     : InFileTransport::TransportType(fd)
@@ -36,11 +34,17 @@ struct InFileTransport
 };
 
 struct InFileSeekableTransport
-: SeekableTransport<InputTransport<io::posix::fdbuf> >
+: InputTransport<io::posix::fdbuf>
 {
     explicit InFileSeekableTransport(int fd) noexcept
     : InFileSeekableTransport::TransportType(fd)
     {}
+    
+    void seek(int64_t offset, int whence) override {
+        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        }
+    }
 };
 
 #endif
