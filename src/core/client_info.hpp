@@ -83,6 +83,9 @@ struct ClientInfo {
 
     bool remote_program = false;
 
+    char alternate_shell[512] = { 0 };
+    char working_dir[512] = { 0 };
+
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
@@ -157,6 +160,9 @@ struct ClientInfo {
         }
 
         this->remote_program = (infoPacket.flags & INFO_RAIL);
+
+        snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.AlternateShell);
+        snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
     }
 };
 

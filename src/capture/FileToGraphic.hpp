@@ -28,7 +28,7 @@
 #ifndef _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
 #define _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
 
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "RDP/caches/glyphcache.hpp"
@@ -1093,7 +1093,7 @@ public:
                     TODO("check png row_size is identical to drawable rowsize");
 
                     uint32_t tmp[8192];
-                    assert(sizeof(tmp) / sizeof(tmp[0]) < height);
+                    assert(sizeof(tmp) / sizeof(tmp[0]) >= width);
                     for (size_t k = 0; k < height; ++k) {
                         png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), nullptr);
 

@@ -24,7 +24,7 @@
 #define REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 
 #include "defines.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "netutils.hpp"
 #include "fileutils.hpp"
 #include "openssl_crypto.hpp"

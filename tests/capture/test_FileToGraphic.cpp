@@ -31,8 +31,8 @@
 //#define LOGPRINT
 
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
-#include "out_filename_sequence_transport.hpp"
-#include "in_file_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
+#include "transport/in_file_transport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "image_capture.hpp"

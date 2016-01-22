@@ -31,7 +31,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "out_filename_sequence_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/RDPDrawable.hpp"

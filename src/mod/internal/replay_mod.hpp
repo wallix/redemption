@@ -27,7 +27,7 @@
 
 #include "FileToGraphic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
-#include "in_meta_sequence_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
 class ReplayMod : public InternalMod {

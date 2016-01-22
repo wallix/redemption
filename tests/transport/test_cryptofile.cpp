@@ -1,40 +1,52 @@
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/shm.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdint.h>
+/*
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-#include <memory>
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
 
-// this is to silent warning as Python.h will redefine this constant
-#undef _XOPEN_SOURCE
-// this is to silent warning as Python.h will redefine this constant
-#undef _POSIX_C_SOURCE
-#include "Python.h"
-#include <structmember.h>
-typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
-#include <algorithm>
-#include <unistd.h>
-#include <genrandom.hpp>
-#include <new>
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+   Product name: redemption, a FLOSS RDP proxy
+   Copyright (C) Wallix 2010-2013
+   Author(s): Raphael Zhou
+
+   Unit test of Verifier module
+*/
+
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE TestVerifier
+#include <boost/test/auto_unit_test.hpp>
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#include <snappy-c.h>
+#define LOGNULL
 
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <algorithm>
+#include <unistd.h>
+#include <genrandom.hpp>
+
+#include <new>
+
+#include <snappy-c.h>
 #include "fdbuf.hpp"
 
 #include "transport/cryptofile.hpp"
 
 namespace transfil {
 
-    class decrypt_filter3
+    class decrypt_filter4
     {
         char           buf[CRYPTO_BUFFER_SIZE]; //
         EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
@@ -44,7 +56,7 @@ namespace transfil {
         unsigned int   MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
     public:
-        decrypt_filter3() = default;
+        decrypt_filter4() = default;
         //: pos(0)
         //, raw_size(0)
         //, state(0)
@@ -240,7 +252,7 @@ namespace transfil {
 
 namespace transfil {
 
-    class encrypt_filter3
+    class encrypt_filter4
     {
         char           buf[CRYPTO_BUFFER_SIZE]; //
         EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
@@ -251,7 +263,7 @@ namespace transfil {
         uint32_t       file_size;               // the current file size
 
     public:
-        encrypt_filter3() = default;
+        encrypt_filter4() = default;
         //: pos(0)
         //, raw_size(0)
         //, file_size(0)
@@ -617,609 +629,328 @@ namespace transfil {
 
 
 
-struct crypto_file_read
-{
-  transfil::decrypt_filter3 decrypt;
-  io::posix::fdbuf file;
-  crypto_file_read(int fd) : file(fd) {}
-};
+extern "C" {
 
-struct crypto_file_write
-{
-  transfil::encrypt_filter3 encrypt;
-  io::posix::fdbuf file;
-  crypto_file_write(int fd) : file(fd) {}
-};
 
-enum crypto_type {
+/**********************************************
+ *                Public API                  *
+ **********************************************/
+
+enum Crypto_type {
     CRYPTO_DECRYPT_TYPE,
     CRYPTO_ENCRYPT_TYPE
 };
 
-extern "C" {
-
-int gl_read_nb_files = 0;
-struct crypto_file_read * gl_file_store_read[1024];
-int gl_write_nb_files = 0;
-struct crypto_file_write * gl_file_store_write[1024];
-
-unsigned char iv[32] = {0}; //  not used for reading
-}
-
-
-struct crypto_file
+struct Crypto_file
 {
-    enum crypto_type type;
-    int idx;
-    crypto_file(): type(CRYPTO_DECRYPT_TYPE), idx(-1) {}
+    Crypto_type type;
+    io::posix::fdbuf file;
 
+    Crypto_file(int fd, Crypto_type t)
+        : type(t)
+        , file(fd)
+        {}
 
-    crypto_file(crypto_type t, int fd)
-    : type(t)
-    , idx(-1)
-    {
-        switch (t){
-        case CRYPTO_DECRYPT_TYPE:
-        {
-            auto cf = new crypto_file_read(fd);
-            int idx = 0;
-            for (; idx < gl_read_nb_files ; idx++){
-                if (gl_file_store_read[idx] == nullptr){
-                    break;
-                }
-            }
-            gl_read_nb_files += 1;
-            gl_file_store_read[idx] = cf;
-            this->idx = idx;
-        }
-        break;
-        case CRYPTO_ENCRYPT_TYPE:
-        {
-            auto cf = new crypto_file_write(fd);
-            int idx = 0;
-            for (; idx < gl_write_nb_files ; idx++){
-                if (gl_file_store_write[idx] == nullptr){
-                    break;
-                }
-            }
-            gl_write_nb_files += 1;
-            gl_file_store_write[idx] = cf;
-            this->idx = idx;
-        }
-        break;
-        }
-    }
+    bool is_encrypt() const
+    { return CRYPTO_ENCRYPT_TYPE == type; }
+
+    bool is_decrypt() const
+    { return CRYPTO_DECRYPT_TYPE == type; }
 };
 
-extern "C" {
-int gl_nb_files = 0;
-struct crypto_file gl_file_store[1024];
-}
-
-
-extern "C" {
-    UdevRandom * get_rnd();
-    CryptoContext * get_cctx();
-}
-
-/* File format V1:  ([...] represent an uint32_t)
- *
- * Header:
- *  [WABCRYPTOFILE_MAGIC][FILE_VERSION][Crypto IV]
- *
- * Chunk:
- *  [ciphered chunk size (size it takes on disk)][data]
- *
- * Footer:
- *  [WABCRYPTOFILE_EOF_MAGIC][raw_file_size]
- *
- */
-
-
-UdevRandom * get_rnd(){
-    static UdevRandom * rnd = nullptr;
-    if (rnd == nullptr){
-        rnd = new UdevRandom;
-    }
-    return rnd;
-}
-
-Inifile * get_ini(){
-    static Inifile * ini = nullptr;
-    if (ini == nullptr){
-        ini = new Inifile;
-        ini->set<cfg::crypto::key0>(cstr_array_view(
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"));
-    }
-    return ini;
-}
-
-
-CryptoContext * get_cctx()
+struct Crypto_file_decrypt : public Crypto_file
 {
-    static CryptoContext * cctx = nullptr;
-    if (cctx == nullptr){
-        cctx = new CryptoContext(*get_rnd(), *get_ini(), 1);
-    }
-    return cctx;
-}
-
-extern "C" {
-
-typedef struct {
-    PyObject_HEAD
-    /* Type-specific fields go here. */
-} redcryptofile_NoddyObject;
-
-// This union is work around for 
-typedef union {
-    PyTypeObject pto;
-    PyObject po;
-} t_PyTyOb;
-
-
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-t_PyTyOb redcryptofile_NoddyType = {
-    PyObject_HEAD_INIT(nullptr)
-    0,                         /*ob_size*/
-    "redcryptofile.Noddy",     /*tp_name*/
-    sizeof(redcryptofile_NoddyObject), /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    nullptr,                   /*tp_dealloc*/
-    nullptr,                   /*tp_print*/
-    nullptr,                   /*tp_getattr*/
-    nullptr,                   /*tp_setattr*/
-    nullptr,                   /*tp_compare*/
-    nullptr,                   /*tp_repr*/
-    nullptr,                   /*tp_as_number*/
-    nullptr,                   /*tp_as_sequence*/
-    nullptr,                   /*tp_as_mapping*/
-    nullptr,                   /*tp_hash */
-    nullptr,                   /*tp_call*/
-    nullptr,                   /*tp_str*/
-    nullptr,                   /*tp_getattro*/
-    nullptr,                   /*tp_setattro*/
-    nullptr,                   /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-    "Noddy objects",           /* tp_doc */
-    nullptr,                   /* tp_traverse */
-    nullptr,                   /* tp_clear */
-    nullptr,                   /* tp_richcompare */
-    0,                         /* tp_weaklistoffset */
-    nullptr,                   /* tp_iter */
-    nullptr,                   /* tp_iternext */
-    nullptr,                   /* tp_methods */
-    nullptr,                   /* tp_members */
-    nullptr,                   /* tp_getset */
-    nullptr,                   /* tp_base */
-    nullptr,                   /* tp_dict */
-    nullptr,                   /* tp_descr_get */
-    nullptr,                   /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    nullptr,                   /* tp_init */
-    nullptr,                   /* tp_alloc */
-    nullptr,                   /* tp_new */
-    nullptr,                   /* tp_free */
-    nullptr,                   /* tp_is_gc */
-    nullptr,                   /* tp_bases */
-    nullptr,                   /* tp_mro */
-    nullptr,                   /* tp_cache */
-    nullptr,                   /* tp_subclasses */
-    nullptr,                   /* tp_weaklist */
-    nullptr,                   /* tp_del */
-};
-#pragma GCC diagnostic pop
-
-typedef struct {
-    PyObject_HEAD
-    /* Type-specific fields go here. */
-    UdevRandom * rnd;
-} PyORandom;
-
-static void Random_dealloc(PyORandom* self) {
-    printf("Random dealloc\n");
-    delete self->rnd;
-    self->ob_type->tp_free((PyObject*)self);
-}
-
-static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-    printf("Random new\n");
-    PyORandom *self = (PyORandom *)type->tp_alloc(type, 0);
-    if (self != NULL) {
-        self->rnd = new UdevRandom;
-    }
-    return (PyObject *)self;
-}
-
-static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
-{
-    printf("Random init\n");
-    if (self != nullptr) {
-        if (self->rnd == nullptr){
-            self->rnd = new UdevRandom;
-        }
-    }
-    return 0;
-}
-
-static PyObject *
-Random_rand(PyORandom* self)
-{
-    printf("Random rand\n");
-    long val = (long)self->rnd->rand64();
-    PyObject * result = PyInt_FromLong(val);
-    return result;
-}
-
-static PyMemberDef Random_members[] = {
-    {nullptr, 0, 0, 0, nullptr}
+  transfil::decrypt_filter4 decrypt;
+  Crypto_file_decrypt(int fd)
+    : Crypto_file(fd, CRYPTO_DECRYPT_TYPE)
+    {}
 };
 
-
-static PyMethodDef Random_methods[] = {
-    {"rand", (PyCFunction)Random_rand, METH_NOARGS, "Return a new random int"},
-    {nullptr, nullptr, 0, nullptr}
-  /* Sentinel */
+struct Crypto_file_encrypt : public Crypto_file
+{
+  transfil::encrypt_filter4 encrypt;
+  Crypto_file_encrypt(int fd)
+    : Crypto_file(fd, CRYPTO_ENCRYPT_TYPE)
+    {}
 };
 
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-t_PyTyOb PyTyRandom = {
-    PyObject_HEAD_INIT(nullptr)
-    0,                         /*ob_size*/
-    "redcryptofile.Random",    /*tp_name*/
-    sizeof(PyORandom), /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)Random_dealloc,/*tp_dealloc*/
-    nullptr,                   /*tp_print*/
-    nullptr,                   /*tp_getattr*/
-    nullptr,                   /*tp_setattr*/
-    nullptr,                   /*tp_compare*/
-    nullptr,                   /*tp_repr*/
-    nullptr,                   /*tp_as_number*/
-    nullptr,                   /*tp_as_sequence*/
-    nullptr,                   /*tp_as_mapping*/
-    nullptr,                   /*tp_hash */
-    nullptr,                   /*tp_call*/
-    nullptr,                   /*tp_str*/
-    nullptr,                   /*tp_getattro*/
-    nullptr,                   /*tp_setattro*/
-    nullptr,                   /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT| Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    "Random objects",          /* tp_doc */
-    nullptr,                   /* tp_traverse */
-    nullptr,                   /* tp_clear */
-    nullptr,                   /* tp_richcompare */
-    0,                         /* tp_weaklistoffset */
-    nullptr,                   /* tp_iter */
-    nullptr,                   /* tp_iternext */
-    Random_methods,            /* tp_methods */
-    Random_members,            /* tp_members */
-    nullptr,                   /* tp_getset */
-    nullptr,                   /* tp_base */
-    nullptr,                   /* tp_dict */
-    nullptr,                   /* tp_descr_get */
-    nullptr,                   /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)Random_init,     /* tp_init */
-    nullptr,                   /* tp_alloc */
-    Random_new,                /* tp_new */
-    nullptr,                   /* tp_free */
-    nullptr,                   /* tp_is_gc */
-    nullptr,                   /* tp_bases */
-    nullptr,                   /* tp_mro */
-    nullptr,                   /* tp_cache */
-    nullptr,                   /* tp_subclasses */
-    nullptr,                   /* tp_weaklist */
-    nullptr,                   /* tp_del */
-};
-#pragma GCC diagnostic pop
-
-static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
+Crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx)
 {
-    char *path = nullptr;
-    char *omode = nullptr;
-    if (!PyArg_ParseTuple(args, "ss", &path, &omode)){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-    unsigned char derivator[DERIVATOR_LENGTH];
-    get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
-    unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (get_cctx()->compute_hmac(trace_key, derivator) == -1){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
+    (void)cctx;
+    Crypto_file_decrypt * cf_struct = new (std::nothrow) Crypto_file_decrypt(systemfd);
 
-    if (omode[0] == 'r') {
-        int system_fd = open(path, O_RDONLY, 0600);
-        if (system_fd == -1){
-            printf("failed opening=%s\n", path);
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-        }
-
-        auto result = crypto_file(CRYPTO_DECRYPT_TYPE, system_fd);
-        auto cfr = gl_file_store_read[result.idx];
-        cfr->decrypt.open(cfr->file, trace_key);
-
-        int fd = 0;
-        for (; fd < gl_nb_files ; fd++){
-            if (gl_file_store[fd].idx == -1){
-                break;
-            }
-        }
-        gl_nb_files += 1;
-        gl_file_store[fd] = result;
-        return Py_BuildValue("i", fd);
-
-    } else if (omode[0] == 'w') {
-        unsigned i = 0;
-        for (i = 0; i < sizeof(iv) ; i++){ iv[i] = i; }
-
-        int system_fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
-        if (system_fd == -1){
-            printf("failed opening=%s\n", path);
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-        }
-
-        auto result = crypto_file(CRYPTO_ENCRYPT_TYPE, system_fd);
-        auto cfw = gl_file_store_write[result.idx];
-        cfw->encrypt.open(cfw->file, trace_key, get_cctx(), iv);
-
-        int fd = 0;
-        for (; fd < gl_nb_files ; fd++){
-            if (gl_file_store[fd].idx == -1){
-                break;
-            }
-        }
-        gl_nb_files += 1;
-        gl_file_store[fd] = result;
-        return Py_BuildValue("i", fd);
-    } else {
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-
-    return Py_BuildValue("i", -1);
-}
-
-static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
-{
-    int fd = 0;
-    if (!PyArg_ParseTuple(args, "i", &fd)){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-    if (fd >= gl_nb_files){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-    auto & cf = gl_file_store[fd];
-    int result = -1;
-    if (cf.type == CRYPTO_ENCRYPT_TYPE){
-        auto & cfw = gl_file_store_write[cf.idx];
-        result = cfw->encrypt.flush(cfw->file);
-    }
-    return Py_BuildValue("i", result);
-}
-
-static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
-{
-    int fd = 0;
-    unsigned char hash[MD_HASH_LENGTH<<1];
-    char hash_digest[(MD_HASH_LENGTH*4)+1];
-
-    if (!PyArg_ParseTuple(args, "i", &fd)){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-
-    if (fd >= static_cast<int>(sizeof(gl_file_store)/sizeof(gl_file_store[0]))){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-
-    auto & cf = gl_file_store[fd];
-    if (cf.idx == -1){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-
-    int result = 0;
-    switch (cf.type){
-    case CRYPTO_DECRYPT_TYPE:
-    {
-        auto cfr = gl_file_store_read[cf.idx];
-        gl_file_store_read[cf.idx] = nullptr;
-        gl_read_nb_files--;
-        delete cfr;
-    }
-    break;
-    case CRYPTO_ENCRYPT_TYPE:
-    {
-        auto cfw = gl_file_store_write[cf.idx];
-        gl_file_store_write[cf.idx] = nullptr;
-        gl_write_nb_files--;
-        result = cfw->encrypt.close(cfw->file, hash, get_cctx()->get_hmac_key());
-        delete cfw;
-    }
-    break;
-    }
-
-    cf.idx = -1;
-    gl_nb_files--;
-
-    // Crazy API: return error as integer or HASH as string... change that
-    if (result){
-        return Py_BuildValue("i", result);
-    }
-
-    int idx = 0;
-    for (idx = 0; idx < MD_HASH_LENGTH; idx++) {
-        sprintf(hash_digest + idx * 2, "%02x", hash[idx]);
-    }
-    for (idx = MD_HASH_LENGTH; idx < (MD_HASH_LENGTH*2); idx++) {
-        sprintf(hash_digest + idx * 2, "%02x", hash[idx]);
-    }
-    hash_digest[MD_HASH_LENGTH*4] = 0;
-    return Py_BuildValue("s", hash_digest);
-}
-
-static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
-{
-    int fd;
-    PyObject *python_buf;
-    if (!PyArg_ParseTuple(args, "iS", &fd, &python_buf)){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-
-    int buf_len = PyString_Size(python_buf);
-    if (buf_len > 2147483647 || buf_len < 0){
-        return Py_BuildValue("i", -1);
-    }
-    char *buf = PyString_AsString(python_buf);
-
-    if (fd >= gl_nb_files){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-
-    auto & cf = gl_file_store[fd];
-    int result = -1;
-    if (cf.type == CRYPTO_ENCRYPT_TYPE){
-        auto & cfw = gl_file_store_write[cf.idx];
-        result = cfw->encrypt.write(cfw->file, buf, buf_len);
-    }
-
-    return Py_BuildValue("i", result);
-}
-
-static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
-{
-    int fd;
-    int buf_len;
-
-    if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len))
+    if (!cf_struct) {
         return nullptr;
-    if (buf_len > 2147483647 || buf_len <= 0){
-        return Py_BuildValue("i", -1);
     }
 
-    if (fd >= gl_nb_files){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
+    if (-1 == cf_struct->decrypt.open(cf_struct->file, trace_key)) {
+        delete cf_struct;
+        return nullptr;
     }
 
-    std::unique_ptr<char[]> buf(new char[buf_len]);
-
-    auto & cf = gl_file_store[fd];
-    int result = -1;
-    if (cf.type ==  CRYPTO_DECRYPT_TYPE) {
-        auto & cfr = gl_file_store_read[cf.idx];
-        result = cfr->decrypt.read(cfr->file, buf.get(), buf_len);
-    }
-    if (result < 0){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-    return PyString_FromStringAndSize(buf.get(), result);
+    return reinterpret_cast<Crypto_file*>(cf_struct);
 }
 
-static PyMethodDef redcryptoFileMethods[] = {
-    {"open", python_redcryptofile_open, METH_VARARGS, ""},
-    {"flush", python_redcryptofile_flush, METH_VARARGS, ""},
-    {"close", python_redcryptofile_close, METH_VARARGS, ""},
-    {"write", python_redcryptofile_write, METH_VARARGS, ""},
-    {"read", python_redcryptofile_read, METH_VARARGS, ""},
-    {nullptr, nullptr, 0, nullptr}
-};
-
-PyMODINIT_FUNC 
-initredcryptofile(void)
+Crypto_file_encrypt * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
 {
-    PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
-                           "redcryptofile module");
+    Crypto_file_encrypt * cf_struct = new (std::nothrow) Crypto_file_encrypt(systemfd);
+
+    if (!cf_struct) {
+        return nullptr;
+    }
+
+    if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
+        delete cf_struct;
+        return nullptr;
+    }
+
+    return cf_struct;
+}
+
+/* Flush procedure (compression, encryption, effective file writing)
+ * Return 0 on success, -1 on error
+ */
+int crypto_flush(Crypto_file * cf)
+{
+    if (cf->is_decrypt()) {
+        return -1;
+    }
+    Crypto_file_encrypt * cf_struct = reinterpret_cast<Crypto_file_encrypt*>(cf);
+    return cf_struct->encrypt.flush(cf_struct->file);
+}
+
+/* The actual read method. Read chunks until we reach requested size.
+ * Return the actual size read into buf, -1 on error
+ */
+int crypto_read(Crypto_file * cf, char * buf, unsigned int buf_size)
+{
+    if (cf->is_decrypt()) {
+        Crypto_file_decrypt * cf_struct = reinterpret_cast<Crypto_file_decrypt*>(cf);
+        return cf_struct->decrypt.read(cf_struct->file, buf, buf_size);
+    }
+    return -1;
+}
+
+/* Actually appends data to Crypto_file buffer, flush if buffer gets full
+ * Return the written size, -1 on error
+ */
+int crypto_write(Crypto_file *cf, const char * buf, unsigned int size)
+{
+    if (reinterpret_cast<Crypto_file*>(cf)->is_decrypt()) {
+        return -1;
+    }
+    Crypto_file_encrypt * cf_struct = reinterpret_cast<Crypto_file_encrypt*>(cf);
+    return cf_struct->encrypt.write(cf_struct->file, buf, size);
+}
+
+int crypto_close(Crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
+{
+    int nResult = 0;
+    if (reinterpret_cast<Crypto_file*>(cf)->is_decrypt()) {
+        Crypto_file_decrypt * cf_struct = reinterpret_cast<Crypto_file_decrypt*>(cf);
+        delete cf_struct;
+    }
+    else {
+        Crypto_file_encrypt * cf_struct = reinterpret_cast<Crypto_file_encrypt*>(cf);
+        nResult = cf_struct->encrypt.close(cf_struct->file, hash, hmac_key);
+        delete cf_struct;
+    }
+    return nResult;
+}
+
+} // extern "C"
 
 
-    const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-
-    uint8_t tmp[32] = {};
-    CryptoContext * cctx = get_cctx();
-    cctx->compute_hmac(tmp, HASH_DERIVATOR);
-
-//    if (-1 == get_cctx()->compute_hmac(tmp, HASH_DERIVATOR)){
-//        //TODO: we should LOG something here
-//        printf("Error HMAC\n");
-//    }
-    get_ini()->set<cfg::crypto::key1>(tmp);
+BOOST_AUTO_TEST_CASE(TestDecrypt)
+{
     OpenSSL_add_all_digests();
 
-    size_t idx = 0;
-    for (; idx < sizeof(gl_file_store)/sizeof(gl_file_store[0]);idx++)
-    {
-        gl_file_store[idx].idx = -1;
-    }
-    size_t idxr = 0;
-    for (; idxr < sizeof(gl_file_store_read)/sizeof(gl_file_store_read[0]);idxr++)
-    {
-        gl_file_store_read[idxr] = nullptr;
-    }
-    size_t idxw = 0;
-    for (; idxw < sizeof(gl_file_store_write)/sizeof(gl_file_store_write[0]);idxw++)
-    {
-        gl_file_store_write[idxw] = nullptr;
+    LCGRandom rnd(0);
+
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+
+    CryptoContext cctx(rnd, ini, 2);
+
+    const char * file = "tests/fixtures/encrypted_video/"
+        "x@10.10.43.13,qaadministrateur@win78,20131211-085926,wab2-4-0-0.yourdomain,5423.rdptrc";
+
+    unsigned char derivator[DERIVATOR_LENGTH];
+    cctx.get_derivator(file, derivator, DERIVATOR_LENGTH);
+
+    BOOST_CHECK(0 == memcmp("\xdc\x07\x64\x92\xda\x52\xfe\xa9", derivator, DERIVATOR_LENGTH));
+
+    unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+    int res = cctx.compute_hmac(trace_key, derivator);
+    BOOST_CHECK(0 == res);
+
+/*    LOG(LOG_INFO, "Dumping trace_key");*/
+
+    BOOST_CHECK(true);
+/*    hexdump_c(trace_key, CRYPTO_KEY_LENGTH);*/
+
+    BOOST_CHECK(true);
+
+    int system_fd = open(file, O_RDONLY, 0600);
+    if (system_fd == -1){
+        printf("failed opening=%s\n", file);
+        BOOST_CHECK(false);
     }
 
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-    redcryptofile_NoddyType.pto.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&redcryptofile_NoddyType.pto) == 0){
-        Py_INCREF(&redcryptofile_NoddyType.po);
-        PyModule_AddObject(module, "Noddy", &redcryptofile_NoddyType.po);
-    }
+    BOOST_CHECK(true);
 
-//    PyTyRandom.pto.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&PyTyRandom.pto) == 0){
-        Py_INCREF(&PyTyRandom.po);
-        PyModule_AddObject(module, "Random", &PyTyRandom.po);
-    }
-#pragma GCC diagnostic pop
+    Crypto_file * cf_struct = crypto_open_read(system_fd, trace_key, &cctx);
+    BOOST_CHECK(cf_struct);
+
+    char buf[1024];
+    int sz = crypto_read(cf_struct, buf, 1024);
+    BOOST_CHECK_EQUAL(118, sz);
+
+    uint32_t i1 = buf[0] + (buf[1]<<8) + (buf[2]<<16) + (buf[3]<<24);
+    uint32_t i2 = buf[4] + (buf[5]<<8) + (buf[6]<<16) + (buf[7]<<24);
+    uint32_t i3 = buf[8] + (buf[9]<<8) + (buf[10]<<16) + (buf[11]<<24);
+
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(1369971550), i1); // EPOCH: python int(time().time)
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(397820), i2); // Micro-seconds: (time.time() - EPOCH) * 1000000
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(106), i3);
+    BOOST_CHECK(0 == memcmp(
+        buf+12,
+        "/var/wab/recorded/rdp/x@10.10.43.13,qaadministrateur@win78,20131211-085925,wab2-4-0-0.yourdomain,1188.mwrm",
+        106));
+
+    delete reinterpret_cast<Crypto_file_decrypt*>(cf_struct);
 }
 
+BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
+{
+    unsigned char expected_hmac_key[]
+             = { 0x86, 0x41, 0x05, 0x58, 0xc4, 0x95, 0xcc, 0x4e,
+                 0x49, 0x21, 0x57, 0x87, 0x47, 0x74, 0x08, 0x8a,
+                 0x33, 0xb0, 0x2a, 0xb8, 0x65, 0xcc, 0x38, 0x41,
+                 0x20, 0xfe, 0xc2, 0xc9, 0xb8, 0x72, 0xc8, 0x2c
+               };
+
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    LCGRandom rnd(0);
+    CryptoContext cctx(rnd, ini, 2);
+    cctx.get_crypto_key();
+//    hexdump_c(cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+    BOOST_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), 32));
+}
+
+
+BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey2)
+{
+    unsigned char expected_hmac_key[] = {
+         0x86U, 0x41U, 0x05U, 0x58U, 0xc4U, 0x95U, 0xccU, 0x4eU,
+         0x49U, 0x21U, 0x57U, 0x87U, 0x47U, 0x74U, 0x08U, 0x8aU,
+         0x33U, 0xb0U, 0x2aU, 0xb8U, 0x65U, 0xccU, 0x38U, 0x41U,
+         0x20U, 0xfeU, 0xc2U, 0xc9U, 0xb8U, 0x72U, 0xc8U, 0x2cU
+         };
+
+    LCGRandom rnd(0);
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    CryptoContext cctx(rnd, ini, 2);
+    cctx.get_crypto_key();
+    BOOST_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), HMAC_KEY_LENGTH));
+}
+
+BOOST_AUTO_TEST_CASE(TestCryptAndReadBack)
+{
+    const char * file = "/tmp/testcryptofile.tmp";
+    unlink(file);
+
+    LCGRandom rnd(0);
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"));
+
+    CryptoContext cctx(rnd, ini, 2);
+    cctx.get_crypto_key();
+
+    OpenSSL_add_all_digests();
+
+    LCGRandom gen(0);
+
+    unsigned char iv[32] = {};
+//    dev_urandom_read(iv, 32);
+    gen.random(iv, 32); // fixed random sequence to repeat test
+
+    unsigned char derivator[DERIVATOR_LENGTH];
+    cctx.get_derivator(file, derivator, DERIVATOR_LENGTH);
+    unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+    BOOST_CHECK(0 == cctx.compute_hmac(trace_key, derivator));
+
+    int system_fd = open(file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+    if (system_fd == -1){
+        printf("failed opening=%s\n", file);
+        BOOST_CHECK(false);
+    }
+
+    Crypto_file * cf_struct = crypto_open_write(system_fd, trace_key, &cctx, iv);
+    if (!cf_struct){
+        close(system_fd);
+        unlink(file);
+    }
+
+    BOOST_CHECK(cf_struct != nullptr);
+
+    char buf[4*8192] = {};
+    gen.random(buf, sizeof(buf));
+    int res1 = crypto_write(cf_struct, buf, sizeof(buf));
+    BOOST_CHECK_EQUAL(res1, sizeof(buf)); // amount of data written
+
+    gen.random(buf, sizeof(buf));
+    int res2 = crypto_write(cf_struct, buf, sizeof(buf));
+    BOOST_CHECK_EQUAL(res2, sizeof(buf)); // amount of data written
+
+    {
+        uint8_t hmac[32*2] = {};
+        int res3 = crypto_close(cf_struct, hmac, cctx.get_hmac_key());
+        BOOST_CHECK_EQUAL(res3, 0);
+        unlink(file);
+
+        uint8_t expected_hmac[] = {
+            0xa1, 0x8d, 0x12, 0xaa, 0x29, 0x80, 0xbb, 0x48,
+            0xa2, 0xd4, 0x99, 0x9c, 0x69, 0x4b, 0x86, 0x0e,
+            0x66, 0x91, 0xea, 0x81, 0xc8, 0xd2, 0xa2, 0x67,
+            0xf4, 0x18, 0xaf, 0xa5, 0x86, 0x20, 0xdb, 0x8c,
+            0xb9, 0x21, 0x56, 0xd2, 0xe8, 0x28, 0x32, 0xd9,
+            0x6b, 0x60, 0xad, 0x8f, 0xb5, 0xc4, 0x85, 0x20,
+            0xed, 0x55, 0xbb, 0x2f, 0x5d, 0x2c, 0x4a, 0x4b,
+            0x09, 0x3f, 0x51, 0xc3, 0xdf, 0x62, 0xf9, 0x6d,
+        };
+        BOOST_CHECK(0 == memcmp(hmac, expected_hmac, sizeof(expected_hmac)));
+
+//       printf("hmac=\n");
+//       {
+//           int i = 0;
+//           for (i = 0; i < sizeof(hmac) ; i++){
+//                printf("0x%.2x, ", hmac[i] & 0xFF);
+//                if (((i+1) % 8) == 0){
+//                    printf("\n");
+//                }
+//           }
+//       }
+    }
 }

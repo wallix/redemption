@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "RDP/nla/nla.hpp"
 
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 
 // BOOST_AUTO_TEST_CASE(TestNla)
 // {

@@ -304,6 +304,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "shell_working_directory")) {
             ::configs::parse(static_cast<cfg::mod_rdp::shell_working_directory&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "use_client_provided_alternate_shell")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::use_client_provided_alternate_shell&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "enable_session_probe")) {
             ::configs::parse(static_cast<cfg::mod_rdp::enable_session_probe&>(this->variables).value, value);
         }
@@ -330,6 +333,30 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         }
         else if (0 == strcmp(key, "session_probe_alternate_shell")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_alternate_shell&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "server_cert_store")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::server_cert_store&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "server_cert_check")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::server_cert_check&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "server_access_allowed_message")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::server_access_allowed_message&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "server_cert_create_message")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::server_cert_create_message&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "server_cert_success_message")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::server_cert_success_message&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "server_cert_failure_message")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::server_cert_failure_message&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "server_cert_error_message")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::server_cert_error_message&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "hide_client_name")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::hide_client_name&>(this->variables).value, value);
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {

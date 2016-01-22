@@ -132,15 +132,18 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wdisabled-optimization
     <cxxflags>-Woverlength-strings
     <cxxflags>-Warray-bounds
+;
 
-#     <toolset>clang:<cxxflags>-Weverything
-#     <toolset>clang:<cxxflags>-Wno-c++98-compat
-    <toolset>clang:<cxxflags>-Wno-mismatched-tags
-#    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
-    <toolset>clang:<cxxflags>-Wno-char-subscripts
-    <toolset>clang:<cxxflags>-Wno-unused-variable
-#     <toolset>clang:<cxxflags>-Wno-unused-private-field
-    <toolset>clang:<cxxflags>-Woverlength-strings
+
+constant CXXFLAGS-CLANG :
+#     <cxxflags>-Weverything
+#     <cxxflags>-Wno-c++98-compat
+    <cxxflags>-Wno-mismatched-tags
+#    <cxxflags>-Wno-overloaded-virtual
+    <cxxflags>-Wno-char-subscripts
+    <cxxflags>-Wno-unused-variable
+#     <cxxflags>-Wno-unused-private-field
+    <cxxflags>-Woverlength-strings
 ;
 
 
@@ -249,7 +252,6 @@ project redemption
     <include>src/capture
     <include>src/keyboard
     <include>src/keyboard/reversed_keymaps
-    <include>src/transport
     <include>src/regex
     <include>src/headers
     <include>src/main
@@ -267,6 +269,7 @@ project redemption
 
 
     $(CXXFLAGS-COMMON)
+    <toolset>clang:$(CXXFLAGS-CLANG)
     <toolset>gcc-4.7:$(CXXFLAGS-GCC-4.7)
     <toolset>gcc-4.8:$(CXXFLAGS-GCC-4.8)
     <toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9)
@@ -332,6 +335,7 @@ install install-etc-themes
     ;
 
 actions gen_redcryptofile {
+    echo "$(>)" "$(<)" ;
     cp "$(>)" "$(<)"
     cp "$(<)" tools/redcryptofile/redcryptofile.so
 }
@@ -794,21 +798,21 @@ unit-test test_strings : tests/test_strings.cpp libboost_unit_test : $(TEST_DEPE
 ## @{
 unit-test test_meta_writer : tests/transport/detail/test_meta_writer.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_meta_opener : tests/transport/detail/test_meta_opener.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport.cpp crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_filename_sequence_transport : tests/transport/test_filename_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_out_meta_sequence_transport_with_sum : tests/transport/test_out_meta_sequence_transport_with_sum.cpp crypto dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport.cpp crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_test_transport : tests/transport/test_test_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_count_transport : tests/transport/test_count_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp openssl crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_file_transport : tests/transport/test_file_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_crypto_meta_sequence_transport : tests/transport/test_crypto_meta_sequence_transport.cpp crypto snappy dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_filename_transport : tests/transport/test_filename_transport.cpp z dl snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+unit-test test_cryptofile : tests/transport/test_cryptofile.cpp libboost_unit_test openssl crypto snappy dl z : $(TEST_DEPENDENCIES) ;
 
 unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp z snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
@@ -974,19 +978,21 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
-explicit test_rdp_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
+#explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
+explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
 
 using qt : /usr ;
 
-#obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
-obj test_rdp_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/qt4 ;
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
+obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt :
+    test_rdp_Qt.o
     src/front/front_Qt.hpp
     src/front/front_widget_Qt.hpp
     src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
-    test_rdp_Qt.o
+    front_Qt.o
     bitmap_data_allocator.o
     /qt//QtGui
     krb5

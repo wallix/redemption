@@ -28,9 +28,9 @@
 
 #include "listen.hpp"
 #include "session.hpp"
-#include "socket_transport.hpp"
-#include "out_file_transport.hpp"
-#include "socket_transport_utility.hpp"
+#include "transport/socket_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "utils/socket_transport_utility.hpp"
 #include "internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 
@@ -278,7 +278,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.transparent_recorder_transport      = record_oft;
             mod_rdp_params.auth_channel                        = ini.get<cfg::mod_rdp::auth_channel>();
             mod_rdp_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-            mod_rdp_params.shell_working_directory             = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+            mod_rdp_params.working_dir                         = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
             mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
             mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
             mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();

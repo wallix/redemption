@@ -21,10 +21,8 @@
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
-#include "out_meta_sequence_transport.hpp"
-#include "out_meta_sequence_transport_with_sum.hpp"
-#include "crypto_out_meta_sequence_transport.hpp"
-#include "out_filename_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 
 #include "nativecapture.hpp"
 #include "staticcapture.hpp"

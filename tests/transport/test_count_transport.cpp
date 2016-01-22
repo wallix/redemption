@@ -26,7 +26,7 @@
 
 #define LOGNULL
 
-#include "count_transport.hpp"
+#include "transport/count_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCountTransport)
 {

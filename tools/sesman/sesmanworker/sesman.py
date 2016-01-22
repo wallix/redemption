@@ -1123,8 +1123,8 @@ class Sesman():
                 session_id = self.engine.start_session(selected_target, self.pid,
                                                        self.effective_login)
                 if session_id is None:
-                    _status, _error = False, TR(u"account_locked")
-                    self.send_data({u'rejected': TR(u'account_locked')})
+                    _status, _error = False, TR(u"start_session_failed")
+                    self.send_data({u'rejected': TR(u'start_session_failed')})
 
             if _status:
                 kv[u'session_id'] = session_id
@@ -1194,6 +1194,10 @@ class Sesman():
                         connectionpolicy_kv = {}
 
                         #Logger().info(u"%s" % conn_opts)
+
+                        rdp_section = conn_opts.get('rdp')
+                        if rdp_section is not None:
+                            connectionpolicy_kv[u'use_client_provided_alternate_shell'] = rdp_section.get('use_client_provided_alternate_shell')
 
                         session_probe_section = conn_opts.get('session_probe')
                         if session_probe_section is not None:
@@ -1395,7 +1399,7 @@ class Sesman():
                                             self.reporting_message = _reporting_message
 
                                             try_next = True
-                                            release_reason = u'Connexion failed'
+                                            release_reason = u'Connection failed'
                                             self.engine.set_session_status(
                                                 result=False, diag=release_reason)
                                             break

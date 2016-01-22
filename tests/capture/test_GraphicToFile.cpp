@@ -31,10 +31,10 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "test_transport.hpp"
-#include "out_file_transport.hpp"
-#include "in_file_transport.hpp"
-#include "out_filename_sequence_transport.hpp"
+#include "transport/test_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"

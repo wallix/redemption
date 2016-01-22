@@ -32,7 +32,7 @@
 #include <string.h>
 #include "openssl_tls.hpp"
 #include "stream.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"
@@ -64,8 +64,8 @@
 #include "colors.hpp"
 #include "bitfu.hpp"
 #include "confdescriptor.hpp"
-#include "in_file_transport.hpp"
-#include "out_file_transport.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/out_file_transport.hpp"
 #include "pattutils.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
