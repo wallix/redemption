@@ -1123,8 +1123,8 @@ class Sesman():
                 session_id = self.engine.start_session(selected_target, self.pid,
                                                        self.effective_login)
                 if session_id is None:
-                    _status, _error = False, TR(u"account_locked")
-                    self.send_data({u'rejected': TR(u'account_locked')})
+                    _status, _error = False, TR(u"start_session_failed")
+                    self.send_data({u'rejected': TR(u'start_session_failed')})
 
             if _status:
                 kv[u'session_id'] = session_id
