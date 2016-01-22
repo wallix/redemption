@@ -5,7 +5,7 @@
 
 namespace x80010426{ 
 
-const static int LCID = 0x80010426;
+const static int LCID = 0x10426;
 
 const static char * const locale_name = "lv-LV.qwerty";
 

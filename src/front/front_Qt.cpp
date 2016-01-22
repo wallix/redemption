@@ -39,7 +39,7 @@
 
 
 
-Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
+Front_Qt::Front_Qt(const char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     : Front_Qt_API(false, false, verbose)
     , mod_bpp(24)
     , mod_palette(BGRPalette::classic_332())
@@ -107,13 +107,10 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     if (this->mod_bpp == 8) {
         this->mod_palette = BGRPalette::classic_332();
     }
-    this->_qtRDPKeymap.setLayoutLanguage(this->_info.keylayout - REVERSE);
-    int customKeys[2][2]
-    { 
-        { 0x152, 0xB2 }, //œ or square
-        { 0x39c, 0xB5 }, // µ
-    };
-    this->_qtRDPKeymap.setCustomNoExtendedKeylayoutApplied(customKeys, 2);
+    this->_qtRDPKeymap.setKeyboardLayout(this->_info.keylayout);
+    
+    this->_qtRDPKeymap.setCustomASCIIcode(0x152, 0xB2); // squared
+    this->_qtRDPKeymap.setCustomASCIIcode(0x39c, 0xB5); // µ
     this->_keymap.init_layout(this->_info.keylayout);
 
 
@@ -398,48 +395,32 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
             // |      | RPN: DSon                     |
             // +------+-------------------------------+
-        case 0x11: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x11:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0x11>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
             // | 0x22 | ROP: 0x00220326               |
             // |      | RPN: DSna                     |
             // +------+-------------------------------+
-        case 0x22: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x22:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0x22>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
             // | 0x33 | ROP: 0x00330008 (NOTSRCCOPY)  |
             // |      | RPN: Sn                       |
             // +------+-------------------------------+
-        case 0x33: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x33:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0x33>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
             // | 0x44 | ROP: 0x00440328 (SRCERASE)    |
             // |      | RPN: SDna                     |
             // +------+-------------------------------+
-        case 0x44: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x44:  // TODO
+                       
             //this->scr_blt_op<Ops::Op_0x44>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
@@ -452,48 +433,32 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
             // |      | RPN: DSx                      |
             // +------+-------------------------------+
-        case 0x66: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x66:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0x66>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
             // | 0x77 | ROP: 0x007700E6               |
             // |      | RPN: DSan                     |
             // +------+-------------------------------+
-        case 0x77: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x77:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0x77>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
             // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
             // |      | RPN: DSa                      |
             // +------+-------------------------------+
-        case 0x88: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x88:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0x88>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
             // | 0x99 | ROP: 0x00990066               |
             // |      | RPN: DSxn                     |
             // +------+-------------------------------+
-        case 0x99:  { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0x99:   // TODO
+                        
             //this->scr_blt_op<Ops::Op_0x99>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
@@ -506,12 +471,8 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
             // |      | RPN: DSno                     |
             // +------+-------------------------------+
-        case 0xBB: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0xBB:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0xBB>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
@@ -524,25 +485,16 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             // | 0xDD | ROP: 0x00DD0228               |
             // |      | RPN: SDno                     |
             // +------+-------------------------------+
-        case 0xDD: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
+        case 0xDD:  // TODO
+                        
             //this->scr_blt_op<Ops::Op_0xDD>(srcx, srcy, drect);
             break;
             // +------+-------------------------------+
             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
             // |      | RPN: DSo                      |
             // +------+-------------------------------+
-        case 0xEE: { // TODO
-                        const QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
-                        const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-                        this->_screen->paintCache().drawImage(trect, qbitmap);
-                        this->_screen->repaint();
-                   }
-            //this->scr_blt_op<Ops::Op_0xEE>(srcx, srcy, drect);
+        case 0xEE:  // TODO
+                        
             break;
             // +------+-------------------------------+
             // | 0xFF | ROP: 0x00FF0062 (WHITENESS)   |

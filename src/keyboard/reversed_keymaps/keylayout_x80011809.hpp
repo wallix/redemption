@@ -5,7 +5,7 @@
 
 namespace x80011809{ 
 
-const static int LCID = 0x80011809;
+const static int LCID = 0x11809;
 
 const static char * const locale_name = "en-IE";
 
