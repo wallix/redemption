@@ -684,34 +684,21 @@ class Engine(object):
         return None
 
     def checkout_target(self, target):
+        """
+        Checkout target and get credentials object
+        """
         if self.target_credentials.get(target) is None:
-            Logger().debug("checkout_target")
             try:
-                try:
-                    creds = self.wabengine.checkout_target(target)
-                except AccountLocked:
-                    Logger().info("Engine checkout_target failed: account locked")
-                    return False
-                except Exception, e:
-                    Logger().info(">>> Engine checkout_target does not exist")
-                    creds = self.wabengine.get_target_credentials(target)
+                Logger().debug("** CALL checkout_target")
+                creds = self.wabengine.checkout_target(target)
                 self.target_credentials[target] = creds
             except AccountLocked:
                 Logger().info("Engine checkout_target failed: account locked")
                 return False
-            Logger().debug("checkout_target done")
+            Logger().debug("** END checkout_target")
         else:
             Logger().info("checkout_target: target already checked out")
         return True
-
-    # def get_target_credentials(self, target_device):
-    #     if self.target_credentials.get(target_device) is None:
-    #         Logger().debug("get_target_credentials")
-    #         self.target_credentials[target_device] = self.wabengine.get_target_credentials(target_device)
-    #         Logger().debug("get_target_credentials done")
-    #         # Logger().info("GET_TARGET_CREDENTIALS = '%s'" % self.target_credentials)
-    #     target_credentials = self.target_credentials.get(target_device, {})
-    #     return target_credentials
 
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
@@ -795,9 +782,6 @@ class Engine(object):
             self.session_id = self.wabengine.start_session(
                 auth, self.get_pidhandler(pid), effective_login=effective_login,
                 **kwargs)
-        except AccountLocked:
-            self.session_id = None
-            Logger().info("Engine start_session failed: account locked")
         except Exception, e:
             import traceback
             self.session_id = None
