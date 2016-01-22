@@ -1093,6 +1093,7 @@ public:
                     TODO("check png row_size is identical to drawable rowsize");
 
                     uint32_t tmp[8192];
+                    assert(sizeof(tmp) / sizeof(tmp[0]) < height);
                     for (size_t k = 0; k < height; ++k) {
                         png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), nullptr);
 
