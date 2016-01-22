@@ -134,12 +134,12 @@ class UdevRandom : public Random
             explicit fdbuf(int fd) : fd(fd){}
             ~fdbuf() { ::close(this->fd);}
 
-            ssize_t read(void * data, size_t len) const
+            ssize_t read(uint8_t * data, size_t len) const
             {
                 size_t remaining_len = len;
                 while (remaining_len) {
                     ssize_t ret = ::read(this->fd
-                                , static_cast<char*>(data) + (len - remaining_len)
+                                , data + (len - remaining_len)
                                 , remaining_len);
                     if (ret < 0){
                         if (errno == EINTR){
@@ -161,7 +161,7 @@ class UdevRandom : public Random
             }
         } file(fd);
 
-        ssize_t res = file.read(dest, size);
+        ssize_t res = file.read(static_cast<uint8_t*>(dest), size);
         if (res != static_cast<ssize_t>(size)) {
             if (res >= 0){
                 LOG(LOG_ERR, "random source failed to provide enough random data [%zd]", res);
@@ -182,6 +182,5 @@ class UdevRandom : public Random
         return result;
     }
 };
-
 
 #endif
