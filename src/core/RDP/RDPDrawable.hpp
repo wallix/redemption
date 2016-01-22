@@ -162,6 +162,12 @@ public:
         this->drawable.set_row(rownum, data);
     }
 
+    void draw(RDPColCache   const & cmd) override {
+    }
+
+    void draw(RDPBrushCache const & cmd) override {
+    }
+
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.opaquerect(trect, this->u32rgb_to_color(cmd.color));

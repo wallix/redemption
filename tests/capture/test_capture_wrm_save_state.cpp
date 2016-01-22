@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
+    player.add_consumer(nullptr, nullptr, &drawable, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
+    player.add_consumer(nullptr, nullptr, &drawable, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
+    player.add_consumer(nullptr, nullptr, &drawable, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();

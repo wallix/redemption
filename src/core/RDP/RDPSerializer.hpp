@@ -125,12 +125,10 @@
 
 #include "gdi/railgraphic_api.hpp"
 #include "gdi/graphic_api.hpp"
-#include "gdi/cache_api.hpp"
 
 struct RDPSerializer
 : public gdi::RAILGraphicApi
 , public gdi::GraphicApi
-, public gdi::CacheApi
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
     enum { MAX_ORDERS_SIZE = 16384,
@@ -574,12 +572,12 @@ public:
         }
     }
 
-    void cache(const RDPBrushCache & cmd) override {
+    void draw(const RDPBrushCache & cmd) override {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream_orders);
     }
 
-    void cache(const RDPColCache & cmd) override {
+    void draw(const RDPColCache & cmd) override {
         this->reserve_order(2000);
         cmd.emit(this->stream_orders);
     }

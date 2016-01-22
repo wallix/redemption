@@ -111,12 +111,12 @@ struct TestDraw : mod_api
 
     virtual void draw(const RDPBrushCache & cmd)
     {
-        //this->gd.draw(cmd);
+        this->gd.draw(cmd);
     }
 
     virtual void draw(const RDPColCache & cmd)
     {
-        //this->gd.draw(cmd);
+        this->gd.draw(cmd);
     }
 
     virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {

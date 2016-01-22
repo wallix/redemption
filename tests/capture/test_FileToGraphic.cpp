@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
 
 //    png_recorder.update_config(ini);
-    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable1, nullptr);
+    player.add_consumer(nullptr, nullptr, &drawable1, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
     ini.set<cfg::video::frame_interval>(10);
@@ -110,8 +110,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     NativeCapture wrm_recorder(graphic_to_file, dump_png, player.record_now, ini);
 
     wrm_recorder.update_config(ini);
-    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable, nullptr);
-    player.add_consumer(nullptr, nullptr, &graphic_to_file, &graphic_to_file, &graphic_to_file, &wrm_recorder);
+    player.add_consumer(nullptr, nullptr, &drawable, nullptr);
+    player.add_consumer(nullptr, nullptr, &graphic_to_file, &wrm_recorder);
 
     bool requested_to_stop = false;
 

@@ -40,7 +40,6 @@
 
 #include "gdi/dump_png24.hpp"
 #include "gdi/input_kbd_api.hpp"
-#include "gdi/synchronise_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
 
@@ -88,7 +87,6 @@ private:
 class GraphicToFile
 : public RDPSerializer
 , public gdi::InputKbdApi
-, public gdi::SynchroniseApi
 , public gdi::CaptureProbeApi
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"

@@ -58,10 +58,8 @@
 #include "wrm_label.hpp"
 #include "cast.hpp"
 #include "png.hpp"
-#include "gdi/synchronise_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/graphic_api.hpp"
-#include "gdi/cache_api.hpp"
 
 struct FileToGraphic
 {
@@ -126,8 +124,6 @@ public:
     struct Consumer {
         RDPGraphicDevice * graphic_device;
         RDPCaptureDevice * capture_device;
-        gdi::SynchroniseApi * sync_gdi;
-        gdi::CacheApi * cache_gdi;
         gdi::GraphicApi * graphic_gdi;
         gdi::CaptureApi * capture_gdi;
     } consumers[10];
@@ -295,16 +291,12 @@ public:
     }
 
     void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device,
-        gdi::SynchroniseApi * sync_gdi = nullptr,
-        gdi::CacheApi * cache_gdi = nullptr,
         gdi::GraphicApi * graphic_gdi = nullptr,
         gdi::CaptureApi * capture_gdi = nullptr
     ) {
         assert(std::end(this->consumers) != &this->consumers[this->nbconsumers]);
         this->consumers[this->nbconsumers  ].graphic_device = graphic_device;
         this->consumers[this->nbconsumers  ].capture_device = capture_device;
-        this->consumers[this->nbconsumers  ].sync_gdi = sync_gdi;
-        this->consumers[this->nbconsumers  ].cache_gdi = cache_gdi;
         this->consumers[this->nbconsumers  ].graphic_gdi = graphic_gdi;
         this->consumers[this->nbconsumers++].capture_gdi = capture_gdi;
     }
@@ -335,8 +327,8 @@ public:
                 if (this->consumers[i].graphic_device) {
                     this->consumers[i].graphic_device->flush();
                 }
-                if (this->consumers[i].sync_gdi) {
-                    this->consumers[i].sync_gdi->sync();
+                if (this->consumers[i].graphic_gdi) {
+                    this->consumers[i].graphic_gdi->sync();
                 }
             }
 
@@ -411,12 +403,12 @@ public:
 
     void dispatch_draw(Consumer & consumer, RDPColCache const & cmd) {
         if (consumer.graphic_device) consumer.graphic_device->draw(cmd);
-        if (consumer.cache_gdi) consumer.cache_gdi->cache(cmd);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd);
     }
 
     void dispatch_draw(Consumer & consumer, RDPBrushCache const & cmd) {
         if (consumer.graphic_device) consumer.graphic_device->draw(cmd);
-        if (consumer.cache_gdi) consumer.cache_gdi->cache(cmd);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd);
     }
 
     template<class... Ts>
@@ -762,8 +754,8 @@ public:
                             if (this->consumers[i].graphic_device) {
                                 this->consumers[i].graphic_device->flush();
                             }
-                            if (this->consumers[i].sync_gdi) {
-                                this->consumers[i].sync_gdi->sync();
+                            if (this->consumers[i].graphic_gdi) {
+                                this->consumers[i].graphic_gdi->sync();
                             }
                         }
 
@@ -1273,8 +1265,8 @@ public:
                             if (this->consumers[i].graphic_device) {
                                 this->consumers[i].graphic_device->flush();
                             }
-                            if (this->consumers[i].sync_gdi) {
-                                this->consumers[i].sync_gdi->sync();
+                            if (this->consumers[i].graphic_gdi) {
+                                this->consumers[i].graphic_gdi->sync();
                             }
                         }
 

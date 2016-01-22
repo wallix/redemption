@@ -36,11 +36,9 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/railgraphic_api.hpp"
-#include "gdi/cache_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/input_kbd_api.hpp"
 #include "gdi/capture_probe_api.hpp"
-#include "gdi/synchronise_api.hpp"
 
 #include "utils/pattutils.hpp"
 #include "dump_png24_from_rdp_drawable_adapter.hpp"
@@ -59,14 +57,15 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
         };
 
     private:
-        struct GraphicProxy {
-            template<class... Ts>
-            void operator()(GraphicApiBase & ngd, Ts const & ... args) {
-                this->dispatch(ngd, args...);
+        struct GraphicProxy : gdi::GraphicProxy
+        {
+            template<class Tag, class... Ts>
+            void operator()(Tag tag, GraphicApiBase & ngd, Ts const & ... args) {
+                this->dispatch(tag, ngd, args...);
             }
 
-            void operator()(GraphicApiBase & ngd, RDP::FrameMarker const & cmd) {
-                this->dispatch(ngd, cmd);
+            void operator()(draw_tag tag, GraphicApiBase & ngd, RDP::FrameMarker const & cmd) {
+                this->dispatch(tag, ngd, cmd);
 
                 if (cmd.action == RDP::FrameMarker::FrameEnd) {
                     for (gdi::CaptureApi * cap : ngd.snapshoters) {
@@ -80,7 +79,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
                 }
             }
 
-            void operator()(GraphicApiBase & ngd, const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
+            void operator()(draw_tag tag, GraphicApiBase & ngd, const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
                 if (ngd.cap.capture_wrm) {
                     auto compress_and_draw_bitmap_update = [&bitmap_data, &ngd, this](const Bitmap & bmp) {
                         StaticOutStream<65535> bmp_stream;
@@ -92,7 +91,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
                         target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
                         target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
 
-                        this->dispatch(ngd, target_bitmap_data, bmp);
+                        this->dispatch(draw_tag{}, ngd, target_bitmap_data, bmp);
                     };
 
                     if (bmp.bpp() > ngd.cap.capture_bpp) {
@@ -110,13 +109,13 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
                     assert(bmp.has_data_compressed());
                 }
 
-                this->dispatch(ngd, bitmap_data, bmp);
+                this->dispatch(tag, ngd, bitmap_data, bmp);
             }
 
-            template<class... Ts>
-            void dispatch(GraphicApiBase & ngd, Ts const & ... args) {
+            template<class Tag, class... Ts>
+            void dispatch(Tag tag, GraphicApiBase & ngd, Ts const & ... args) {
                 for (gdi::GraphicApi * pgd : ngd.gds) {
-                    pgd->draw(args...);
+                    gdi::GraphicProxy()(tag, *pgd, args...);
                 }
             }
         };
@@ -129,9 +128,16 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             , Decode(dec)
             {}
 
-            template<class... Ts>
-            void operator()(GraphicApiBase & ngd, Ts && ... args) {
+            using draw_tag = gdi::GraphicProxy::draw_tag;
+
+            template<class Tag, class... Ts>
+            void operator()(draw_tag, GraphicApiBase & ngd, Ts && ... args) {
                 this->encode(1, ngd, std::forward<Ts>(args)...);
+            }
+
+            template<class... Ts>
+            void operator()(Ts && ... args) {
+                GraphicProxy()(std::forward<Ts>(args)...);
             }
 
             BGRColor encode_color(BGRColor c) {
@@ -356,10 +362,6 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
 
     class Native final : private gdi::InputKbdApi
     {
-        struct Serializer final : GraphicToFile {
-            using GraphicToFile::GraphicToFile;
-        };
-
         BmpCache     bmp_cache;
         GlyphCache   gly_cache;
         PointerCache ptr_cache;
@@ -409,14 +411,12 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             }
         } trans_variant;
 
-        Serializer graphic_to_file;
+        GraphicToFile graphic_to_file;
         NativeCapture nc;
 
         std::size_t idx_kbd = -1u;
 
     public:
-        using CacheApiBase = Serializer;
-
         Native(
             const timeval & now, uint8_t capture_bpp, configs::TraceType trace_type,
             CryptoContext & cctx,
@@ -439,14 +439,11 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             this->bmp_cache, this->gly_cache, this->ptr_cache,
             this->dump_png24_api, ini, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
         , nc(this->graphic_to_file, this->dump_png24_api, now, ini)
-        {
-            cap.cache_api = &this->graphic_to_file;
-        }
+        {}
 
         void attach_apis(Capture & cap, const Inifile & ini) {
             cap.graphic_list().push_back(&this->graphic_to_file);
             cap.rail_graphic_list().push_back(&this->graphic_to_file);
-            cap.synchronize_list().push_back(&this->graphic_to_file);
             cap.capture_list().push_back(&this->nc);
             cap.capture_probe_list().push_back(&this->graphic_to_file);
 
@@ -588,17 +585,6 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
     using NewCapture = gdi::CaptureAdaptor<CaptureProxy, CaptureApiBase>;
 
 
-    struct NewSynchronise : gdi::SynchroniseApi {
-        void sync() override {
-            for (gdi::SynchroniseApi * pgd : gds) {
-                pgd->sync();
-            }
-        }
-
-        std::vector<gdi::SynchroniseApi *> gds;
-    };
-
-
     struct NewInputKbd : gdi::InputKbdApi {
         bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
             bool ret = true;
@@ -660,12 +646,10 @@ private:
     std::unique_ptr<Kbd> pkc;
 
     NewCapture capture_api;
-    NewSynchronise synchronise_api;
     NewInputKbd input_kbd_api;
     NewCaptureProbe capture_probe_api;
     Graphic::GraphicApiBase * graphic_api = nullptr;
     Graphic::RAILGraphicApiBase * rail_graphic_api = nullptr;
-    Native::CacheApiBase * cache_api = nullptr;
 
 
     const Inifile & ini;
@@ -689,10 +673,6 @@ private:
         return this->input_kbd_api.kbds;
     }
 
-    std::vector<gdi::SynchroniseApi*> & synchronize_list() {
-        return this->synchronise_api.gds;
-    }
-
     std::vector<gdi::RAILGraphicApi*> & rail_graphic_list() {
         assert(this->rail_graphic_api);
         return this->rail_graphic_api->get_proxy().apis;
@@ -701,11 +681,6 @@ private:
     std::vector<gdi::CaptureProbeApi*> & capture_probe_list() {
         return this->capture_probe_api.cds;
     }
-
-//     std::vector<gdi::CacheApi*> & cache_list() {
-//         return ;
-//     }
-
 
 public:
     Capture(
@@ -850,7 +825,9 @@ public:
     }
 
     void flush() override {
-        this->synchronise_api.sync();
+        if (this->graphic_api) {
+            this->graphic_api->sync();
+        }
     }
 
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
@@ -935,14 +912,14 @@ public:
     }
 
     void draw(const RDPBrushCache & cmd) override {
-        if (this->cache_api) {
-            this->cache_api->cache(cmd);
+        if (this->graphic_api) {
+            this->graphic_api->draw(cmd);
         }
     }
 
     void draw(const RDPColCache & cmd) override {
-        if (this->cache_api) {
-            this->cache_api->cache(cmd);
+        if (this->graphic_api) {
+            this->graphic_api->draw(cmd);
         }
     }
 

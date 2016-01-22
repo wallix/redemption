@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
-    player.add_consumer(nullptr, nullptr, nullptr, nullptr, &drawable1, nullptr);
+    player.add_consumer(nullptr, nullptr, &drawable1, nullptr);
 
     png_recorder.flush();
     out_png_trans.next();

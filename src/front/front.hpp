@@ -2261,7 +2261,7 @@ public:
                             // resizing done
                             {
                                 RDPColCache cmd(0, BGRPalette::classic_332());
-                                this->orders->cache(cmd);
+                                this->orders->draw(cmd);
                             }
                             if (this->verbose & 1) {
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
@@ -3623,7 +3623,7 @@ private:
 
                 if (this->client_info.bpp == 8) {
                     RDPColCache cmd(0, BGRPalette::classic_332());
-                    this->orders->cache(cmd);
+                    this->orders->draw(cmd);
                 }
 
                 if (this->verbose & (8|1)) {
@@ -4069,7 +4069,7 @@ private:
         if (this->client_info.bpp == 8) {
             if (!this->palette_memblt_sent[palette_id]) {
                 RDPColCache cmd(palette_id, bitmap.palette());
-                this->orders->cache(cmd);
+                this->orders->draw(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
         }
@@ -4494,7 +4494,7 @@ public:
                 RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
                     sizeof(this->orders.brush_at(cache_idx).pattern),
                     this->orders.brush_at(cache_idx).pattern);
-                this->orders->cache(cmd);
+                this->orders->draw(cmd);
             }
             brush.hatch = cache_idx;
             brush.style = 0x81;
@@ -4502,7 +4502,7 @@ public:
     }
 
     void draw(const RDPColCache & cmd) override {
-        this->orders->cache(cmd);
+        this->orders->draw(cmd);
     }
 
     void set_mod_palette(const BGRPalette & palette) override {

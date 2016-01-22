@@ -57,6 +57,9 @@ class Rect;
 class Bitmap;
 class GlyphCache;
 
+class RDPColCache;
+class RDPBrushCache;
+
 namespace RDP {
     class RDPMultiPatBlt;
     class RDPMultiScrBlt;
@@ -92,15 +95,35 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
 
-    // TODO berk
+    // TODO("The 2 methods below should not exist and cache access be done before calling drawing orders")
+    virtual void draw(RDPColCache   const & cmd) {}
+    virtual void draw(RDPBrushCache const & cmd) {}
+
+    virtual void sync() {}
+
+    // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) {}
 };
 
 struct GraphicProxy
 {
+    struct draw_tag {};
+    struct sync_tag {};
+    struct set_row_tag {};
+
     template<class Api, class... Ts>
-    void operator()(Api & api, Ts const & ... args) {
+    void operator()(draw_tag, Api & api, Ts const & ... args) {
         api.draw(args...);
+    }
+
+    template<class Api>
+    void operator()(sync_tag, Api & api) {
+        api.sync();
+    }
+
+    template<class Api>
+    void operator()(set_row_tag, Api & api, std::size_t rownum, const uint8_t * data) {
+        api.set_row(rownum, data);
     }
 };
 
@@ -111,38 +134,45 @@ struct GraphicAdaptor : AdaptorBase<Proxy, InterfaceBase>
 
     using AdaptorBase<Proxy, InterfaceBase>::AdaptorBase;
 
-    void draw(RDP::FrameMarker    const & order) override { this->prox()(*this, order); }
-    void draw(Pointer             const & cursor) override { this->prox()(*this, cursor); }
-    void draw(BGRPalette          const & palette) override { this->prox()(*this, palette); }
+    void draw(RDP::FrameMarker    const & order) override { this->prox()(GraphicProxy::draw_tag{}, *this, order); }
+    void draw(Pointer             const & cursor) override { this->prox()(GraphicProxy::draw_tag{}, *this, cursor); }
+    void draw(BGRPalette          const & palette) override { this->prox()(GraphicProxy::draw_tag{}, *this, palette); }
 
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->prox()(*this, cmd, clip); }
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip); }
 
-    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->prox()(*this, cmd, bmp); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd, bmp); }
 
     void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
-        this->prox()(*this, cmd, clip, bmp);
+        this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip, bmp);
     }
 
     void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override {
-        this->prox()(*this, cmd, clip, bmp);
+        this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip, bmp);
     }
 
     void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
-        this->prox()(*this, cmd, clip, gly_cache);
+        this->prox()(GraphicProxy::draw_tag{}, *this, cmd, clip, gly_cache);
     }
+
+    void draw(RDPColCache   const & cmd) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->prox()(GraphicProxy::draw_tag{}, *this, cmd); }
+
+    void sync() override { this->prox()(GraphicProxy::sync_tag{}, *this); }
+
+    void set_row(std::size_t rownum, const uint8_t * data) override { this->prox()(GraphicProxy::set_row_tag{}, *this, rownum, data); }
 };
 
 }
