@@ -309,7 +309,7 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<std::string>(), "alternate_shell", r);
         W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
-        W.member(V, type_<bool>(), "use_client_provided_alternate_shell", set(false));
+        W.member(V, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
         W.sep();
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
         W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);

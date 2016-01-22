@@ -116,6 +116,7 @@ class SesmanConfig(object):
             , u'error %s'               : u'Erreur: %s'
             , u'authentication_failed' : u"Echec d'authentification."
             , u'account_locked' : u"Compte verrouillé."
+            , u'start_session_failed' : u'Echec de démarage de session.'
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -199,6 +200,7 @@ class SesmanConfig(object):
             , u'error %s'               : u'Error: %s'
             , u'authentication_failed' : u'Authentication failed.'
             , u'account_locked' : u"Account locked."
+            , u'start_session_failed' : u'Failed to start session.'
             }
         }
 
