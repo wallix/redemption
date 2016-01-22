@@ -51,7 +51,7 @@ class Qt_ScanCode_KeyMap
 
 public:
     
-    enum {
+    enum : long {
         CS_CZ                     = 0x80000405,     DA_DK                     = 0x80000406,     DE_DE                     = 0x80000407,     
         EL_GR                     = 0x80000408,     EN_US                     = 0x80000409,     ES_ES                     = 0x8000040a,     
         FI_FI_FINNISH             = 0x8000040b,     FR_FR                     = 0x8000040c,     IS_IS                     = 0x8000040f,     
@@ -100,7 +100,7 @@ private:
     
     
     
-    enum {
+    enum : int {
           ALT_MOD      = 0x10
         , CTRL_MOD     = 0x08
         , CAPSLOCK_MOD = 0x04
@@ -108,7 +108,7 @@ private:
         , SHIFT_MOD    = 0x01
     };
     
-    enum {
+    enum : int {
           MAX_CHAR_QT_KEY_VALUE     = 256 
         , MIN_NON_CHAR_QT_KEY_VALUE = 0x00FFFFFF       
         , MIN_DEAD_QT_KEY_VALUE     = 0x01001249
@@ -116,7 +116,7 @@ private:
         , MASK_ALT                  = 0x0F 
     };
     
-    enum {
+    enum : int {
            KBDFLAGS_EXTENDED = 0x0100
          , KBDFLAGS_DOWN     = 0x4000
          , KBDFLAGS_RELEASE  = 0x8000
@@ -284,10 +284,7 @@ private:
             case Qt::Key_Right      : this->scanCode = 0x4D; this->flag = this->flag | KBDFLAGS_EXTENDED; break; //  R ARROW
             case Qt::Key_Meta       : this->scanCode = 0x5c; this->flag = this->flag | KBDFLAGS_EXTENDED; break; //  R WINDOW
             case Qt::Key_Menu       : this->scanCode = 0x5D; this->flag = this->flag | KBDFLAGS_EXTENDED; break; //  MENU APPS
-
     //------------------------------------------------------------------------------------------------------------------------
-    
-
         //---------------------------------------------
         //    Not mod neither char keys NO Extended
         //---------------------------------------------
@@ -324,10 +321,7 @@ private:
             case Qt::Key_PowerOff             : this->scanCode = 0x5E; break; //
             case Qt::Key_WakeUp               : this->scanCode = 0x63; break; //
             case Qt::Key_Sleep                : this->scanCode = 0x5F; break; //
-
     //----------------------------------------------------------------------
-        
-
             //--------------------------
             //    keyboard modifiers
             //--------------------------
@@ -506,7 +500,7 @@ public:
     
     //=================//
     //   CONSTRUCTOR   //
-    //=======================================================================================================================================
+    //==================================================================
     Qt_ScanCode_KeyMap(int LCID = EN_US_INTERNATIONAL, int verbose = 0): 
       _verbose(verbose)
     , _keyboardMods(0) 
@@ -521,7 +515,7 @@ public:
     , _unvalidScanCode(false)
     {  
         setLayoutLanguage(LCID);
-    }//======================================================================================================================================
+    }//=================================================================
     
     
     ~Qt_ScanCode_KeyMap() {}

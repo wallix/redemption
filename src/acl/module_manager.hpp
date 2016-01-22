@@ -865,7 +865,8 @@ public:
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-                mod_rdp_params.shell_working_directory             = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+                mod_rdp_params.working_dir                         = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+                mod_rdp_params.use_client_provided_alternate_shell = this->ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
                 mod_rdp_params.target_application_account          = this->ini.get<cfg::globals::target_application_account>().c_str();
                 mod_rdp_params.target_application_password         = this->ini.get<cfg::globals::target_application_password>().c_str();
                 mod_rdp_params.rdp_compression                     = this->ini.get<cfg::mod_rdp::rdp_compression>();

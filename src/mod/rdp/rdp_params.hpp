@@ -77,7 +77,8 @@ struct ModRDPParams {
     const char * auth_channel;
 
     const char * alternate_shell;
-    const char * shell_working_directory;
+    const char * working_dir;
+    bool         use_client_provided_alternate_shell;
     const char * target_application_account;
     const char * target_application_password;
 
@@ -176,7 +177,8 @@ struct ModRDPParams {
         , auth_channel("")
 
         , alternate_shell("")
-        , shell_working_directory("")
+        , working_dir("")
+        , use_client_provided_alternate_shell(false)
         , target_application_account("")
         , target_application_password("")
 
@@ -315,7 +317,9 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams alternate_shell=\"%s\"",                 (this->alternate_shell ? this->alternate_shell : "<null>"));
         LOG(LOG_INFO,
-            "ModRDPParams shell_working_directory=\"%s\"",         (this->shell_working_directory ? this->shell_working_directory : "<null>"));
+            "ModRDPParams working_dir=\"%s\"",                     (this->working_dir ? this->working_dir : "<null>"));
+        LOG(LOG_INFO,
+            "ModRDPParams use_client_provided_alternate_shell=%s", (this->use_client_provided_alternate_shell ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams target_application_account=\"%s\"",      (this->target_application_account ? this->target_application_account : "<null>"));
         LOG(LOG_INFO,
