@@ -11,19 +11,18 @@
 #include "../src/front/front_Qt.hpp"
 
 #include <QtGui/QWidget>
-#include <QtGui/QPicture>
 #include <QtGui/QLabel>
 #include <QtGui/QPainter>
 #include <QtGui/QColor>
 #include <QtGui/QDesktopWidget>
 #include <QtGui/QApplication>
-#include <QtGui/QImage>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QWheelEvent>
 #include <QtCore/QSocketNotifier>
 #include <QtGui/QLineEdit>
 #include <QtGui/QFormLayout>
 #include <QtGui/QDialog>
+#include <QtGui/QPushButton>
 
 
 
@@ -60,14 +59,18 @@ public:
         this->_layout.addRow(&(this->_title));
         this->setLayout(&(this->_layout));
         
-        QRect rectConnexion(QPoint(160, 266), QSize(110, 24)); 
-        this->_front->initButton(this->_buttonSave, "Save", rectConnexion);
+        QRect rectSave(QPoint(160, 266), QSize(110, 24)); 
+        this->_buttonSave.setToolTip(this->_buttonSave.text());
+        this->_buttonSave.setGeometry(rectSave);
+        this->_buttonSave.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonSave)   , SIGNAL (pressed()),  this, SLOT (savePressed()));
         this->QObject::connect(&(this->_buttonSave)   , SIGNAL (released()), this, SLOT (saveReleased()));
         this->_buttonSave.setFocusPolicy(Qt::StrongFocus);
         
-        QRect rectOptions(QPoint(280, 266), QSize(110, 24)); 
-        this->_front->initButton(this->_buttonCancel, "Cancel", rectOptions);
+        QRect rectCancel(QPoint(280, 266), QSize(110, 24)); 
+        this->_buttonCancel.setToolTip(this->_buttonCancel.text());
+        this->_buttonCancel.setGeometry(rectCancel);
+        this->_buttonCancel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
         this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (released()), this, SLOT (cancelReleased()));
         this->_buttonCancel.setFocusPolicy(Qt::StrongFocus);
@@ -81,7 +84,7 @@ public:
     }
     
     ~DialogOptions_Qt() {}
-    
+
     
 public Q_SLOTS:
     void savePressed() {}
@@ -157,13 +160,17 @@ public:
         this->setLayout(&(this->_formLayout));
         
         QRect rectConnexion(QPoint(280, 256), QSize(110, 24)); 
-        this->_front->initButton(this->_buttonConnexion, "Connexion", rectConnexion);
+        this->_buttonConnexion.setToolTip(this->_buttonConnexion.text());
+        this->_buttonConnexion.setGeometry(rectConnexion);
+        this->_buttonConnexion.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (pressed()),  this, SLOT (connexionPressed()));
         this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (released()), this, SLOT (connexionReleased()));
         this->_buttonConnexion.setFocusPolicy(Qt::StrongFocus);
         
-         QRect rectOptions(QPoint(10, 256), QSize(110, 24)); 
-        this->_front->initButton(this->_buttonOptions, "Options", rectOptions);
+        QRect rectOptions(QPoint(10, 256), QSize(110, 24)); 
+        this->_buttonOptions.setToolTip(this->_buttonOptions.text());
+        this->_buttonOptions.setGeometry(rectOptions);
+        this->_buttonOptions.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonOptions)   , SIGNAL (pressed()),  this, SLOT (optionsPressed()));
         this->QObject::connect(&(this->_buttonOptions)   , SIGNAL (released()), this, SLOT (optionsReleased()));
         this->_buttonOptions.setFocusPolicy(Qt::StrongFocus);
@@ -282,19 +289,28 @@ public:
         this->setAttribute(Qt::WA_DeleteOnClose);
     
         QRect rectCtrlAltDel(QPoint(0, this->_front->_info.height+1),QSize(this->_front->_info.width/3, 20));
-        this->_front->initButton(this->_buttonCtrlAltDel, "CTRL + ALT + DELETE", rectCtrlAltDel);
+        this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
+        this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
+        this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
         QRect rectRefresh(QPoint(this->_front->_info.width/3, this->_front->_info.height+1),QSize(this->_front->_info.width/3, 20));
-        this->_front->initButton(this->_buttonRefresh, "Refresh", rectRefresh);
+        this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
+        this->_buttonRefresh.setGeometry(rectRefresh);
+        this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
+        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
         
         QRect rectDisconnexion(QPoint(((this->_front->_info.width/3)*2), this->_front->_info.height+1),QSize(this->_front->_info.width-((this->_front->_info.width/3)*2), 20));
-        this->_front->initButton(this->_buttonDisconnexion, "Disconnexion", rectDisconnexion);
+        this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
+        this->_buttonDisconnexion.setGeometry(rectDisconnexion);
+        this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
+        this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
         
         this->setFocusPolicy(Qt::StrongFocus);
     }
@@ -509,8 +525,14 @@ public:
         mod_rdp_params.server_redirection_support        = true;
         
         LCGRandom gen(0); // To always get the same client random, in tests
-        
-        this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+
+        try {
+            this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+        } catch (const std::exception & e) {
+            std::cout << errorMsg << std::endl;
+                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+                this->_front->disconnect(labelErrorMsg);
+        }
         
         if (this->_callback != nullptr) {
             this->_front->_callback = this->_callback;
