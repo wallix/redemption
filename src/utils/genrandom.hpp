@@ -28,16 +28,24 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
+#include <stdio.h>
 #include <stdint.h>
-#include "log.hpp"
-#include "noncopyable.hpp"
-#include "fdbuf.hpp"
 
-class Random : noncopyable
+#include "log.hpp"
+
+class Random
 {
+    protected:
+        // this makes object noncopyable by removing copy constructors
+        Random(Random&&) = delete;
+        Random(const Random&) = delete;
+        Random& operator=(Random&&) = delete;
+        Random& operator=(const Random&) = delete;
+
     public:
-    virtual ~Random() {}
+             Random() = default;
+    virtual ~Random() = default;
+
     virtual void random(void * dest, size_t size) = 0;
     virtual uint32_t rand32() = 0;
     uint64_t rand64()
@@ -46,6 +54,7 @@ class Random : noncopyable
         uint64_t p2 = this->rand32();
         return (p1 << 32) | p2;
     }
+
 };
 
 class LCGRandom : public Random
@@ -101,17 +110,56 @@ class UdevRandom : public Random
     ~UdevRandom() override {}
 
     void random(void * dest, size_t size) override {
-        io::posix::fdbuf file(open("/dev/urandom", O_RDONLY));
-        if (!file.is_open()) {
-            LOG(LOG_INFO, "using /dev/random as random source");
-            file.open("/dev/random", O_RDONLY);
-            if (!file.is_open()) {
-                LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device");
+
+        int fd = open("/dev/urandom", O_RDONLY);
+        if (fd == -1){
+            LOG(LOG_INFO, "access to /dev/urandom failed: %s", strerror(errno));
+            fd = open("/dev/random", O_RDONLY);
+            if (fd == -1){
+                LOG(LOG_ERR, "random source failed to provide random data : couldn't open device");
+                TODO("If random fails an exception should be raised, because security layers depends on random and should probably refuse working");
+                memset(dest, 0x44, size);
+                return;
             }
+            LOG(LOG_INFO, "using /dev/random as random source");
         }
         else {
             LOG(LOG_INFO, "using /dev/urandom as random source");
         }
+
+         // this object is useful for RAII
+        struct fdbuf
+        {
+            int fd;
+            explicit fdbuf(int fd) : fd(fd){}
+            ~fdbuf() { ::close(this->fd);}
+
+            ssize_t read(void * data, size_t len) const
+            {
+                size_t remaining_len = len;
+                while (remaining_len) {
+                    ssize_t ret = ::read(this->fd
+                                , static_cast<char*>(data) + (len - remaining_len)
+                                , remaining_len);
+                    if (ret < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Error should still be there next time we try to read
+                        if (remaining_len != len){
+                            return len - remaining_len;
+                        }
+                        return ret;
+                    }
+                    // We must exit loop or we will enter infinite loop
+                    if (ret == 0){
+                        break;
+                    }
+                    remaining_len -= ret;
+                }
+                return len - remaining_len;
+            }
+        } file(fd);
 
         ssize_t res = file.read(dest, size);
         if (res != static_cast<ssize_t>(size)) {
