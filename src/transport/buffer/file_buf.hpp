@@ -21,57 +21,145 @@
 #ifndef REDEMPTION_TRANSPORT_BUFFER_FILE_BUF_HPP
 #define REDEMPTION_TRANSPORT_BUFFER_FILE_BUF_HPP
 
-#include "fdbuf.hpp"
+#include <cerrno>
+#include <cstddef>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "utils/log.hpp"
+#include "exchange.hpp"
+
 
 namespace transbuf {
 
     class ifile_buf
     {
-        io::posix::fdbuf fdbuf;
-
+        int fd;
     public:
+        ifile_buf() : fd(-1) {}
+        
+        ~ifile_buf()
+        {
+            this->close();
+        }
+
         int open(const char * filename)
-        { return this->fdbuf.open(filename, O_RDONLY); }
+        {
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
 
         int open(const char * filename, mode_t /*mode*/)
-        { return this->fdbuf.open(filename, O_RDONLY); }
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
 
         int close()
-        { return this->fdbuf.close(); }
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
 
         bool is_open() const noexcept
-        { return this->fdbuf.is_open(); }
+        { return -1 != this->fd; }
 
         ssize_t read(void * data, size_t len)
-        { return this->fdbuf.read(data, len); }
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
 
         off64_t seek(off64_t offset, int whence) const
-        { return this->fdbuf.seek(offset, whence); }
+        { return lseek64(this->fd, offset, whence); }
     };
 
     class ofile_buf
     {
-        io::posix::fdbuf fdbuf;
-
+        int fd;
     public:
+        ofile_buf() : fd(-1) {}
+        ~ofile_buf()
+        {
+            this->close();
+        }
+
         int open(const char * filename, mode_t mode)
-        { return this->fdbuf.open(filename, O_WRONLY | O_CREAT, mode); }
+        {
+            this->close();
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
 
         int close()
-        { return this->fdbuf.close(); }
-
-        bool is_open() const noexcept
-        { return this->fdbuf.is_open(); }
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
 
         ssize_t write(const void * data, size_t len)
-        { return this->fdbuf.write(data, len); }
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
 
         off64_t seek(off64_t offset, int whence) const
-        { return this->fdbuf.seek(offset, whence); }
+        { return ::lseek64(this->fd, offset, whence); }
 
         int flush() const
         { return 0; }
     };
+
+
 }
 
 #endif

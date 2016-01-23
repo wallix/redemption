@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestInMetaSequenceTransport
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -399,6 +399,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         }
     }
 
+    BOOST_CHECK(true);
+
     Inifile ini;
     ini.set<cfg::crypto::key0>(cstr_array_view(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -413,6 +415,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
     CryptoContext cctx(rnd, ini, 1);
     cctx.get_crypto_key();
+
+    BOOST_CHECK(true);
 
     {
         struct timeval tv;
