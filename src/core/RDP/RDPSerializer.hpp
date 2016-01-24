@@ -142,16 +142,14 @@ protected:
     OutStream & stream_orders;
     OutStream & stream_bitmaps;
 
-private:
-    uint8_t bpp;
+    const uint8_t capture_bpp;
 
-protected:
     const Inifile & ini;
 
 private:
     const int bitmap_cache_version;
-    const int use_bitmap_comp;
-    const int op2;
+    const bool use_bitmap_comp;
+    const bool use_compact_packets;
     const size_t max_bitmap_size;
 
 protected:
@@ -193,18 +191,18 @@ public:
                  , GlyphCache & glyph_cache
                  , PointerCache & pointer_cache
                  , const int bitmap_cache_version
-                 , const int use_bitmap_comp
-                 , const int op2
+                 , const bool use_bitmap_comp
+                 , const bool use_compact_packets
                  , size_t max_bitmap_size
                  , const Inifile & ini
                  , uint32_t verbose = 0)
     : stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
-    , bpp(bpp)
+    , capture_bpp(bpp)
     , ini(ini)
     , bitmap_cache_version(bitmap_cache_version)
     , use_bitmap_comp(use_bitmap_comp)
-    , op2(op2)
+    , use_compact_packets(use_compact_packets)
     , max_bitmap_size(max_bitmap_size)
     // Internal state of orders
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
@@ -386,8 +384,8 @@ protected:
             this->bmp_cache.is_cache_persistent(cache_id), in_wait_list,
             this->ini.get<cfg::debug::secondary_orders>());
         this->reserve_order(cmd_cache.bmp.bmp_size() + 16);
-        cmd_cache.emit( this->bpp, this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
-                      , this->op2);
+        cmd_cache.emit( this->capture_bpp, this->stream_orders, this->bitmap_cache_version
+                      , this->use_bitmap_comp, this->use_compact_packets);
 
         if (this->ini.get<cfg::debug::secondary_orders>()) {
             cmd_cache.log(LOG_INFO);

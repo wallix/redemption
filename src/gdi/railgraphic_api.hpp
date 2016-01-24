@@ -29,7 +29,7 @@
 #include "meta/meta.hpp"
 #include "utils/virtual_deleter.hpp"
 
-#include "proxy.hpp"
+#include "adapter_base.hpp"
 
 #include "noncopyable.hpp"
 
@@ -64,16 +64,16 @@ struct RAILGraphicProxy
 };
 
 template<class Proxy, class InterfaceBase = RAILGraphicApi>
-struct RAILGraphicAdaptor : AdaptorBase<Proxy, InterfaceBase>
+struct RAILGraphicAdapter : AdapterBase<Proxy, InterfaceBase>
 {
     static_assert(std::is_base_of<RAILGraphicApi, InterfaceBase>::value, "InterfaceBase isn't a RAILGraphicApi");
 
-    using AdaptorBase<Proxy, InterfaceBase>::AdaptorBase;
+    using AdapterBase<Proxy, InterfaceBase>::AdapterBase;
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) { this->prox()(*this, order); }
-    void draw(const RDP::RAIL::WindowIcon          & order) { this->prox()(*this, order); }
-    void draw(const RDP::RAIL::CachedIcon          & order) { this->prox()(*this, order); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) { this->prox()(*this, order); }
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) { this->get_proxy()(*this, order); }
+    void draw(const RDP::RAIL::WindowIcon          & order) { this->get_proxy()(*this, order); }
+    void draw(const RDP::RAIL::CachedIcon          & order) { this->get_proxy()(*this, order); }
+    void draw(const RDP::RAIL::DeletedWindow       & order) { this->get_proxy()(*this, order); }
 };
 
 }

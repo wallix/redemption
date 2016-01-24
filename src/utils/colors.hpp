@@ -396,32 +396,4 @@ struct to_color8_palette
     BGRPalette const & palette;
 };
 
-struct to_color_fail {};
-
-template<class Fn>
-bool compile_encode_color(uint8_t bpp, Fn && fn) {
-    switch (bpp) {
-        case 8 : fn(encode_color8{});
-        case 15: fn(encode_color15{});
-        case 16: fn(encode_color16{});
-        case 24:
-        case 32: fn(encode_color24{});
-        default: return false;
-    }
-    return true;
-}
-
-template<class Fn>
-bool compile_decode_color(uint8_t bpp, Fn && fn, BGRPalette & palette) {
-    switch (bpp) {
-        case 8 : fn(to_color8_palette<decode_color8_opaquerect>{palette});
-        case 15: fn(decode_color15_opaquerect{});
-        case 16: fn(decode_color16_opaquerect{});
-        case 24:
-        case 32: fn(decode_color24_opaquerect{});
-        default: return false;
-    }
-    return true;
-}
-
 #endif

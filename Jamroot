@@ -205,8 +205,13 @@ constant CXXFLAGS-GCC-5.1 :
 ;
 
 
+constant CXXFLAGS-GCC-5.2 :
+    $(CXXFLAGS-GCC-5.1)
+;
+
+
 constant CXXFLAGS-GCC-6 :
-    $(CXXFLAGS-GCC-5)
+    $(CXXFLAGS-GCC-5.2)
 ;
 
 
@@ -280,8 +285,9 @@ project redemption
     <toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5)
     <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1)
     <toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1)
-    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.1)
-    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 

@@ -474,7 +474,7 @@ class RDPBmpCache {
     }
 
     void emit(uint8_t session_color_depth, OutStream & stream, const int bitmap_cache_version,
-        const int use_bitmap_comp, const int use_compact_packets) const
+        bool use_bitmap_comp, bool use_compact_packets) const
     {
         using namespace RDP;
         switch (bitmap_cache_version){
@@ -509,7 +509,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed(uint8_t session_color_depth, OutStream & stream, const int use_compact_packets) const {
+    void emit_v1_compressed(uint8_t session_color_depth, OutStream & stream, bool use_compact_packets) const {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;

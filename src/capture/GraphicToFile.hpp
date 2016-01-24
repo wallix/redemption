@@ -106,7 +106,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     timeval timer;
     const uint16_t width;
     const uint16_t height;
-    const uint8_t  capture_bpp;
     uint16_t mouse_x;
     uint16_t mouse_y;
     const bool send_input;
@@ -138,9 +137,8 @@ public:
                 , const Inifile & ini
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
-    : RDPSerializer( this->buffer_stream_orders
-                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, gly_cache, ptr_cache,
-                   0, 1, 1, 32 * 1024, ini)
+    : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
+                   , bmp_cache, gly_cache, ptr_cache, 0, 1, 1, 32 * 1024, ini)
     , compression_wrapper(trans, ini.get<cfg::video::wrm_compression_algorithm>())
     , trans_target(trans)
     , trans(this->compression_wrapper.get())
@@ -148,7 +146,6 @@ public:
     , timer(now)
     , width(width)
     , height(height)
-    , capture_bpp(capture_bpp)
     , mouse_x(0)
     , mouse_y(0)
     , send_input(send_input == SendInput::YES)

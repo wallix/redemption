@@ -24,54 +24,22 @@
 #include <utility>
 #include <type_traits>
 #include <vector>
+#include <functional>
 #include "meta/meta.hpp"
 
 namespace gdi {
 
-template<class Proxy, class InterfaceBase>
-struct AdaptorBase : InterfaceBase, private Proxy
-{
-    using proxy_type = Proxy;
-    using interface_base = InterfaceBase;
-
-    AdaptorBase() = default;
-    AdaptorBase(AdaptorBase const &) = delete;
-
-    template<class... ProxyArgs>
-    AdaptorBase(ProxyArgs && ... args)
-    : Proxy{std::forward<ProxyArgs>(args)...}
-    {}
-
-    template<class... Ts>
-    AdaptorBase(Proxy && proxy, Ts && ... args)
-    : InterfaceBase{std::forward<Ts>(args)...}
-    , Proxy(std::move(proxy))
-    {}
-
-    template<class... Ts>
-    AdaptorBase(Proxy const & proxy, Ts && ... args)
-    : InterfaceBase{std::forward<Ts>(args)...}
-    , Proxy(proxy)
-    {}
-
-    proxy_type & get_proxy() noexcept { return static_cast<proxy_type&>(*this); }
-    proxy_type const & get_proxy() const noexcept { return static_cast<proxy_type const&>(*this); }
-
-protected:
-    proxy_type & prox() noexcept { return static_cast<proxy_type&>(*this); }
-};
-
 template<class Api, class Proxy>
 struct DispatcherProxy : Proxy
 {
-    std::vector<Api *> apis;
+    std::vector<std::reference_wrapper<Api>> apis;
 
     using Proxy::Proxy;
 
     template<class T, class... Ts>
     void operator()(T &, Ts && ... args) {
-        for (Api * papi : this->apis) {
-            Proxy::operator()(*papi, std::forward<Ts>(args)...);
+        for (Api & api : this->apis) {
+            Proxy::operator()(api, std::forward<Ts>(args)...);
         }
     }
 };
