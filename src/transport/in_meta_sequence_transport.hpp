@@ -37,36 +37,7 @@
 
 #include "urandom_read.hpp"
 
-template<class Buf>
-struct InputNextTransport
-: InputTransport<Buf>
-{
-    InputNextTransport() = default;
-
-    template<class T>
-    explicit InputNextTransport(const T & buf_params)
-    : InputTransport<Buf>(buf_params)
-    {}
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res){
-            this->status = false;
-            if (res < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-protected:
-    typedef InputNextTransport TransportType;
-};
+//
 
 
 namespace transfil {
@@ -666,11 +637,43 @@ namespace transbuf {
 
 }
 
-struct InMetaSequenceTransport
-: InputNextTransport<detail::in_meta_sequence_buf<
+struct InputNextTransport_flat
+: InputTransport<detail::in_meta_sequence_buf<
     transbuf::ifile_buf,
-    transbuf::ifile_buf_meta
-> >
+    transbuf::ifile_buf_meta>>
+{
+    InputNextTransport_flat() = default;
+
+    template<class T>
+    explicit InputNextTransport_flat(const T & buf_params)
+    : InputTransport<detail::in_meta_sequence_buf<
+        transbuf::ifile_buf,
+        transbuf::ifile_buf_meta>>(buf_params)
+    {}
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res){
+            this->status = false;
+            if (res < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+protected:
+    typedef InputNextTransport_flat TransportType;
+};
+
+
+struct InMetaSequenceTransport
+: InputNextTransport_flat
 {
     InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(
@@ -696,11 +699,41 @@ struct InMetaSequenceTransport
     { return this->buffer().current_path(); }
 };
 
+struct InputNextTransport_crypto
+: InputTransport<detail::in_meta_sequence_buf<transbuf::icrypto_filename_buf,transbuf::icrypto_filename_buf_meta>>
+{
+    InputNextTransport_crypto() = default;
+
+    template<class T>
+    explicit InputNextTransport_crypto(const T & buf_params)
+    : InputTransport<
+        detail::in_meta_sequence_buf<
+            transbuf::icrypto_filename_buf,
+            transbuf::icrypto_filename_buf_meta>>(buf_params)
+    {}
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res){
+            this->status = false;
+            if (res < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+protected:
+    typedef InputNextTransport_crypto TransportType;
+};
+
 struct CryptoInMetaSequenceTransport
-: InputNextTransport<detail::in_meta_sequence_buf<
-    transbuf::icrypto_filename_buf,
-    transbuf::icrypto_filename_buf_meta
-> >
+: InputNextTransport_crypto
 {
     CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : CryptoInMetaSequenceTransport::TransportType(
