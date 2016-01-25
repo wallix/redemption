@@ -104,13 +104,13 @@ Front_Qt::Front_Qt(const char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         }
     }
     
-    if (this->mod_bpp == 8) {
+    if (this->mod_bpp == this->_info.bpp) {
         this->mod_palette = BGRPalette::classic_332();
     }
     this->_qtRDPKeymap.setKeyboardLayout(this->_info.keylayout);
     
-    this->_qtRDPKeymap.setCustomASCIIcode(0x152, 0xB2); // squared
-    this->_qtRDPKeymap.setCustomASCIIcode(0x39c, 0xB5); // µ
+    this->_qtRDPKeymap.setCustomKeyCode(0x152, 0xB2, 0, false); // squared
+    this->_qtRDPKeymap.setCustomKeyCode(0x39c, 0xB5, 0, false); // µ
     this->_keymap.init_layout(this->_info.keylayout);
 
 
