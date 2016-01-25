@@ -344,9 +344,6 @@ private:
         }
     }
 
-//    transbuf::ifile_buf1 & buffer() noexcept
-//    { return this->buf; }
-
     const transbuf::ifile_buf1 & buffer() const noexcept
     { return this->buf; }
 
