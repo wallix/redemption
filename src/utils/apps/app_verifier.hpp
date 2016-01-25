@@ -159,9 +159,13 @@ bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_status
 
             ReaderBuf(transbuf::icrypto_filename_buf & buf) : buf(buf) {}
 
-            ssize_t operator()(char * buf, size_t len) const {
+            ssize_t read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
+
+//            ssize_t operator()(char * buf, size_t len) const {
+//                return this->buf.read(buf, len);
+//            }
         };
 
         detail::ReaderLine<ReaderBuf> reader(ifile);
@@ -201,9 +205,14 @@ bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
         {
             transbuf::ifile_buf & buf;
 
-            ssize_t operator()(char * buf, size_t len) const {
+//            ssize_t operator()(char * buf, size_t len) const {
+//                return this->buf.read(buf, len);
+//            }
+
+            ssize_t read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
+
         };
 
         detail::ReaderLine<ReaderBuf> reader({ifile});
@@ -254,9 +263,14 @@ int check_encrypted_or_checksumed_file_icrypto_filename_buf(std::string const & 
         {
             transbuf::icrypto_filename_buf & buf;
 
-            ssize_t operator()(char * buf, size_t len) const {
+//            ssize_t operator()(char * buf, size_t len) const {
+//                return this->buf.read(buf, len);
+//            }
+
+            ssize_t read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
+
         };
 
         detail::ReaderLine<ReaderBuf> reader({ifile});
@@ -339,7 +353,7 @@ int check_encrypted_or_checksumed_file_icrypto_filename_buf(std::string const & 
                     char    * remaining_data_buf;
                     ssize_t   remaining_data_length;
 
-                    ssize_t operator()(char * buf, size_t len) {
+                    ssize_t read(char * buf, size_t len) {
                         ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
                         if (number_of_bytes_to_read == 0) {
                             return -1;
@@ -352,6 +366,20 @@ int check_encrypted_or_checksumed_file_icrypto_filename_buf(std::string const & 
 
                         return number_of_bytes_to_read;
                     }
+
+//                    ssize_t operator()(char * buf, size_t len) {
+//                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
+//                        if (number_of_bytes_to_read == 0) {
+//                            return -1;
+//                        }
+
+//                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
+
+//                        this->remaining_data_buf    += number_of_bytes_to_read;
+//                        this->remaining_data_length -= number_of_bytes_to_read;
+
+//                        return number_of_bytes_to_read;
+//                    }
                 };
 
                 detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
@@ -415,9 +443,13 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
         {
             transbuf::ifile_buf_meta & buf;
 
-            ssize_t operator()(char * buf, size_t len) const {
+            ssize_t read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
+
+//            ssize_t operator()(char * buf, size_t len) const {
+//                return this->buf.read(buf, len);
+//            }
         };
 
         detail::ReaderLine<ReaderBuf> reader({ifile});
@@ -504,7 +536,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
                     char    * remaining_data_buf;
                     ssize_t   remaining_data_length;
 
-                    ssize_t operator()(char * buf, size_t len) {
+                    ssize_t read(char * buf, size_t len) {
                         ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
                         if (number_of_bytes_to_read == 0) {
                             return -1;
@@ -517,6 +549,20 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
 
                         return number_of_bytes_to_read;
                     }
+
+//                    ssize_t operator()(char * buf, size_t len) {
+//                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
+//                        if (number_of_bytes_to_read == 0) {
+//                            return -1;
+//                        }
+
+//                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
+
+//                        this->remaining_data_buf    += number_of_bytes_to_read;
+//                        this->remaining_data_length -= number_of_bytes_to_read;
+
+//                        return number_of_bytes_to_read;
+//                    }
                 };
 
                 detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});

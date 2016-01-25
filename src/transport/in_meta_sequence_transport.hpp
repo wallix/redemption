@@ -483,14 +483,14 @@ struct InMetaSequenceTransport
 {
     InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(detail::temporary_concat(filename, extension).str, verbose, cctx, cctx))
+        detail::in_meta_sequence_buf_param(detail::temporary_concat(filename, extension).str, verbose, cctx, cctx))
     {
         this->verbose = verbose;
     }
 
     explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(
-            detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, verbose, cctx, cctx))
+            detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
     {
         this->verbose = verbose;
     }
@@ -513,13 +513,13 @@ struct CryptoInMetaSequenceTransport
 {
     CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : CryptoInMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(
+        detail::in_meta_sequence_buf_param(
             detail::temporary_concat(filename, extension).c_str(), verbose, cctx, cctx))
     {}
 
     CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
     : CryptoInMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, verbose, cctx, cctx))
+        detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
     {}
 
     time_t begin_chunk_time() const noexcept

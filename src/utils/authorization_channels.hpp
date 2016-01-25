@@ -172,17 +172,17 @@ public:
                 os << name << '=';
                 for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
                     if (auth.cliprdr_restriction_[i] == val_ok) {
-                        os << cliprde_list[i];
+                        os << cliprde_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
                     if (auth.rdpdr_restriction_[i] == val_ok) {
-                        os << rdpdr_list[i];
+                        os << rdpdr_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpsnd_restriction_.size(); ++i) {
                     if (auth.rdpsnd_restriction_[i] == val_ok) {
-                        os << rdpdr_list[i];
+                        os << rdpdr_list()[i];
                     }
                 }
                 os << s << '\n';

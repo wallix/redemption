@@ -61,7 +61,7 @@ namespace detail
 
         int read(int err)
         {
-            ssize_t ret = this->reader(this->buf, sizeof(this->buf));
+            ssize_t ret = this->reader.read(this->buf, sizeof(this->buf));
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
             }
@@ -368,19 +368,18 @@ namespace detail
     }
 
 
-    template<class BufParam, class BufMetaParam>
     struct in_meta_sequence_buf_param
     {
         const char * meta_filename;
-        BufParam buf_param;
-        BufMetaParam meta_param;
+        CryptoContext * buf_param;
+        CryptoContext * meta_param;
         uint32_t verbose;
 
         explicit in_meta_sequence_buf_param(
             const char * meta_filename,
-            uint32_t verbose = 0,
-            const BufParam & buf_param = BufParam(),
-            const BufMetaParam & meta_param = BufMetaParam())
+            uint32_t verbose,
+            CryptoContext * buf_param,
+            CryptoContext * meta_param)
         : meta_filename(meta_filename)
         , buf_param(buf_param)
         , meta_param(meta_param)
@@ -401,7 +400,7 @@ namespace detail
             : buf(buf)
             {}
 
-            ssize_t operator()(char * buf, size_t len) const {
+            ssize_t read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
         };
@@ -414,8 +413,7 @@ namespace detail
         uint32_t verbose;
 
     public:
-        template<class BufParam, class BufMetaParam>
-        explicit in_meta_sequence_buf(const in_meta_sequence_buf_param<BufParam, BufMetaParam> & params)
+        explicit in_meta_sequence_buf(const in_meta_sequence_buf_param & params)
         : Buf(params.buf_param)
         , buf_meta(params.meta_param)
         , reader([&]() {
