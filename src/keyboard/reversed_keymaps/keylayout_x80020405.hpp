@@ -5,7 +5,7 @@
 
 namespace x80020405{ 
 
-const static int LCID = 0x80020405;
+const static int LCID = 0x20405;
 
 const static char * const locale_name = "cs-CZ.programmers";
 

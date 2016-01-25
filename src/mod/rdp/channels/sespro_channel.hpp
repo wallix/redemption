@@ -41,6 +41,7 @@ private:
     const bool     param_session_probe_loading_mask_enabled;
 
     const unsigned param_session_probe_keepalive_timeout;
+    const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
 
     const ::configs::SessionProbeOnLaunchFailure
                    param_session_probe_on_launch_failure;
@@ -80,6 +81,7 @@ public:
         unsigned session_probe_launch_timeout;
         unsigned session_probe_launch_fallback_timeout;
         unsigned session_probe_keepalive_timeout;
+        bool     session_probe_on_keepalive_timeout_disconnect_user;
 
         ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
 
@@ -121,6 +123,8 @@ public:
           params.session_probe_loading_mask_enabled)
     , param_session_probe_keepalive_timeout(
           params.session_probe_keepalive_timeout)
+    , param_session_probe_on_keepalive_timeout_disconnect_user(
+          params.session_probe_on_keepalive_timeout_disconnect_user)
     , param_session_probe_on_launch_failure(
           params.session_probe_on_launch_failure)
     , param_session_probe_end_disconnected_session(
@@ -249,7 +253,12 @@ public:
                         throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
                     }
 
-                    throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                    if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
+                        throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                    }
+                    else {
+                        this->front.session_probe_started(false);
+                    }
                 }
             }
             else {
@@ -341,8 +350,6 @@ public:
         const char request_hello[] = "Request=Hello";
 
         if (!session_probe_message.compare(request_hello)) {
-            REDASSERT(!this->session_probe_ready);
-
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
@@ -351,7 +358,7 @@ public:
 
             this->session_probe_ready = true;
 
-            this->front.session_probe_started();
+            this->front.session_probe_started(true);
 
             if (this->param_session_probe_loading_mask_enabled &&
                 this->front.disable_input_event_and_graphics_update(false)) {

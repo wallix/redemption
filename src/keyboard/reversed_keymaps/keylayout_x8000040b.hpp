@@ -5,7 +5,7 @@
 
 namespace x8000040b{ 
 
-const static int LCID = 0x8000040b;
+const static int LCID = 0x40b;
 
 const static char * const locale_name = "fi-FI.finnish";
 

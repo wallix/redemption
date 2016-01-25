@@ -81,7 +81,7 @@ class FrontAPI : public RDPGraphicDevice{
     ////////////////////////////////
     // Session Probe.
 
-    virtual void session_probe_started() {}
+    virtual void session_probe_started(bool started) {}
     virtual void set_keylayout(int LCID) {}
     /// \return  -1 is error
     virtual int get_keylayout() const { return -1; }

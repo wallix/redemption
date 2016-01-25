@@ -96,7 +96,7 @@ int main () {
             
             fichier << "namespace x"<< std::hex<<LCIDreverse << "{ " << std::endl<< std::endl;
             
-            fichier << "const static int LCID = 0x"<< std::hex<<LCIDreverse <<";"<< std::endl<< std::endl;
+            fichier << "const static int LCID = 0x"<< std::hex<< LCID <<";"<< std::endl<< std::endl;
 
             fichier << "const static char * const locale_name = \""<<keylayout_WORK->locale_name<<"\";"<< std::endl<< std::endl;
 
