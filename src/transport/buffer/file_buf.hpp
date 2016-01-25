@@ -34,74 +34,74 @@
 
 namespace transbuf {
 
-    class ifile_buf
-    {
-        int fd;
-    public:
-        ifile_buf() : fd(-1) {}
-        
-        ~ifile_buf()
-        {
-            this->close();
-        }
+//    class ifile_buf
+//    {
+//        int fd;
+//    public:
+//        ifile_buf() : fd(-1) {}
+//        
+//        ~ifile_buf()
+//        {
+//            this->close();
+//        }
 
-        int open(const char * filename)
-        {
-            this->close();
-            this->fd = ::open(filename, O_RDONLY);
-            return this->fd;
-        }
+//        int open(const char * filename)
+//        {
+//            this->close();
+//            this->fd = ::open(filename, O_RDONLY);
+//            return this->fd;
+//        }
 
-        int open(const char * filename, mode_t /*mode*/)
-        {
-            TODO("see why mode is ignored even if it's provided as a parameter?");
-            this->close();
-            this->fd = ::open(filename, O_RDONLY);
-            return this->fd;
-        }
+//        int open(const char * filename, mode_t /*mode*/)
+//        {
+//            TODO("see why mode is ignored even if it's provided as a parameter?");
+//            this->close();
+//            this->fd = ::open(filename, O_RDONLY);
+//            return this->fd;
+//        }
 
-        int close()
-        {
-            if (this->is_open()) {
-                const int ret = ::close(this->fd);
-                this->fd = -1;
-                return ret;
-            }
-            return 0;
-        }
+//        int close()
+//        {
+//            if (this->is_open()) {
+//                const int ret = ::close(this->fd);
+//                this->fd = -1;
+//                return ret;
+//            }
+//            return 0;
+//        }
 
-        bool is_open() const noexcept
-        { return -1 != this->fd; }
+//        bool is_open() const noexcept
+//        { return -1 != this->fd; }
 
-        ssize_t read(void * data, size_t len)
-        {
-            TODO("this is blocking read, add support for timeout reading");
-            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-            size_t remaining_len = len;
-            while (remaining_len) {
-                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                if (ret < 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    // Error should still be there next time we try to read
-                    if (remaining_len != len){
-                        return len - remaining_len;
-                    }
-                    return ret;
-                }
-                // We must exit loop or we will enter infinite loop
-                if (ret == 0){
-                    break;
-                }
-                remaining_len -= ret;
-            }
-            return len - remaining_len;        
-        }
+//        ssize_t read(void * data, size_t len)
+//        {
+//            TODO("this is blocking read, add support for timeout reading");
+//            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+//            size_t remaining_len = len;
+//            while (remaining_len) {
+//                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+//                if (ret < 0){
+//                    if (errno == EINTR){
+//                        continue;
+//                    }
+//                    // Error should still be there next time we try to read
+//                    if (remaining_len != len){
+//                        return len - remaining_len;
+//                    }
+//                    return ret;
+//                }
+//                // We must exit loop or we will enter infinite loop
+//                if (ret == 0){
+//                    break;
+//                }
+//                remaining_len -= ret;
+//            }
+//            return len - remaining_len;        
+//        }
 
-        off64_t seek(off64_t offset, int whence) const
-        { return lseek64(this->fd, offset, whence); }
-    };
+//        off64_t seek(off64_t offset, int whence) const
+//        { return lseek64(this->fd, offset, whence); }
+//    };
 
     class ofile_buf
     {

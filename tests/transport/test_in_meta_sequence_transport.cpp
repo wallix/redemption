@@ -58,7 +58,21 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 
 BOOST_AUTO_TEST_CASE(TestMetav2)
 {
-    transbuf::ifile_buf ifile;
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+
+
+    LCGRandom rnd(0);
+
+    CryptoContext cctx(rnd, ini, 1);
+
+    transbuf::ifile_buf ifile(&cctx);
     ifile.open("./tests/fixtures/sample_v2.mwrm");
 
     struct ReaderBuf
@@ -117,7 +131,21 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
 
 BOOST_AUTO_TEST_CASE(TestMetav2sum)
 {
-    transbuf::ifile_buf ifile;
+    Inifile ini;
+    ini.set<cfg::crypto::key0>(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+
+
+    LCGRandom rnd(0);
+
+    CryptoContext cctx(rnd, ini, 1);
+
+    transbuf::ifile_buf ifile(&cctx);
     ifile.open("./tests/fixtures/sample_v2_checksum.mwrm");
 
     struct ReaderBuf
