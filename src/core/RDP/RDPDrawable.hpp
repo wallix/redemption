@@ -162,10 +162,10 @@ public:
         this->drawable.set_row(rownum, data);
     }
 
-    void draw(RDPColCache   const & cmd) override {
+    void draw(RDPColCache   const &) override {
     }
 
-    void draw(RDPBrushCache const & cmd) override {
+    void draw(RDPBrushCache const &) override {
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {

@@ -44,12 +44,13 @@
 #include "gdi/proxy.hpp"
 
 #include "utils/graphic_capture_impl.hpp"
+#include "utils/wrm_capture_impl.hpp"
 
 class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
 {
     // for snapshot
     using MouseInfo = MouseTrace;
-    
+
     using Graphic = GraphicCaptureImpl;
 
 
@@ -70,9 +71,9 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
              clear_png, ini, graphic.impl())
         {}
 
-        void attach_apis(Capture & cap, const Inifile &) {
-            cap.capture_list().push_back(this->sc);
-            cap.graphic_snapshot_list().push_back(this->sc);
+        void attach_apis(ApisRegister & apis_register, const Inifile &) {
+            apis_register.capture_list.push_back(this->sc);
+            apis_register.graphic_snapshot_list->push_back(this->sc);
         }
 
         void zoom(unsigned percent) {
@@ -81,194 +82,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
     };
 
 
-    class Native final : private gdi::InputKbdApi
-    {
-        BmpCache     bmp_cache;
-        GlyphCache   gly_cache;
-        PointerCache ptr_cache;
-
-        DumpPng24FromRDPDrawableAdapter dump_png24_api;
-
-        struct Transport {
-            union Variant
-            {
-                OutMetaSequenceTransportWithSum out_with_sum;
-                CryptoOutMetaSequenceTransport out_crypto;
-                OutMetaSequenceTransport out;
-
-                struct {} dummy;
-                Variant() : dummy() {}
-                ~Variant() {}
-            } variant;
-            ::Transport * trans;
-
-            template<class... Ts>
-            Transport(configs::TraceType trace_type, Ts && ... args)
-            {
-                TODO("there should only be one outmeta, not two."
-                    " Capture code should not really care if file is encrypted or not."
-                    "Here is not the right level to manage anything related to encryption.")
-                TODO("Also we may wonder why we are encrypting wrm and not png"
-                    "(This is related to the path split between png and wrm)."
-                    "We should stop and consider what we should actually do")
-                switch (trace_type) {
-                    case configs::TraceType::cryptofile:
-                        this->trans = new (&this->variant.out_crypto)
-                        CryptoOutMetaSequenceTransport(std::forward<Ts>(args)...);
-                        break;
-                    case configs::TraceType::localfile_hashed:
-                        this->trans = new (&this->variant.out_with_sum)
-                        OutMetaSequenceTransportWithSum(std::forward<Ts>(args)...);
-                        break;
-                    default :
-                        this->trans = new (&this->variant.out)
-                        OutMetaSequenceTransport(std::forward<Ts>(args)...);
-                        break;
-                }
-            }
-
-            ~Transport() {
-                this->trans->~Transport();
-            }
-        } trans_variant;
-        
-        struct Serializer final : GraphicToFile {
-            using GraphicToFile::GraphicToFile;
-          
-            using GraphicToFile::GraphicToFile::draw;
-            using GraphicToFile::GraphicToFile::capture_bpp;
-
-            void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-                auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
-                    StaticOutStream<65535> bmp_stream;
-                    bmp.compress(this->capture_bpp, bmp_stream);
-
-                    RDPBitmapData target_bitmap_data = bitmap_data;
-
-                    target_bitmap_data.bits_per_pixel = bmp.bpp();
-                    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-                    target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
-
-                    GraphicToFile::draw(target_bitmap_data, bmp);
-                };
-
-                if (bmp.bpp() > this->capture_bpp) {
-                    // reducing the color depth of image.
-                    Bitmap capture_bmp(this->capture_bpp, bmp);
-                    compress_and_draw_bitmap_update(capture_bmp);
-                }
-                else if (!bmp.has_data_compressed()) {
-                    compress_and_draw_bitmap_update(bmp);
-                }
-                else {
-                    GraphicToFile::draw(bitmap_data, bmp);   
-                }
-            }
-        } graphic_to_file;
-
-        NativeCapture nc;
-
-        std::size_t idx_kbd = -1u;
-
-    public:
-        Native(
-            const timeval & now, uint8_t capture_bpp, configs::TraceType trace_type,
-            CryptoContext & cctx,
-            const char * record_path, const char * hash_path, const char * basename,
-            int groupid, auth_api * authentifier,
-            RDPDrawable & drawable, const Inifile & ini, Capture & cap
-        )
-        : bmp_cache(
-            BmpCache::Recorder, capture_bpp, 3, false,
-            BmpCache::CacheOption(600, 768, false),
-            BmpCache::CacheOption(300, 3072, false),
-            BmpCache::CacheOption(262, 12288, false))
-        , ptr_cache(/*pointerCacheSize=*/0x19)
-        , dump_png24_api{drawable}
-        , trans_variant(
-            trace_type, &cctx, record_path, hash_path, basename, now,
-            drawable.width(), drawable.height(), groupid, authentifier)
-        , graphic_to_file(
-            now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
-            this->bmp_cache, this->gly_cache, this->ptr_cache,
-            this->dump_png24_api, ini, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
-        , nc(this->graphic_to_file, this->dump_png24_api, now, ini)
-        {}
-
-        void attach_apis(Capture & cap, const Inifile & ini) {
-            cap.graphic_list().push_back({this->graphic_to_file, this->graphic_to_file.capture_bpp});
-            cap.rail_graphic_list().push_back(this->graphic_to_file);
-            cap.capture_list().push_back(this->nc);
-            cap.capture_probe_list().push_back(this->graphic_to_file);
-
-            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
-                auto & list = cap.input_kbd_list();
-                this->idx_kbd = list.size();
-                list.push_back(this->graphic_to_file);
-            }
-        }
-
-        void enable_keyboard_input_mask(Capture & cap, bool enable) {
-            if (this->idx_kbd == -1u) {
-                return ;
-            }
-            auto & kbd = cap.input_kbd_list()[this->idx_kbd];
-            assert(&kbd.get() == this || &kbd.get() == &this->graphic_to_file);
-            kbd = enable
-              ? static_cast<gdi::InputKbdApi&>(*this)
-              : static_cast<gdi::InputKbdApi&>(this->graphic_to_file);
-        }
-
-        void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
-            this->graphic_to_file.timestamp(now);
-            this->graphic_to_file.send_timestamp_chunk(ignore_time_interval);
-        }
-
-        void request_full_cleaning() {
-            this->trans_variant.trans->request_full_cleaning();
-        }
-
-        void next_file() {
-            this->trans_variant.trans->next();
-        }
-
-    private:
-        bool input_kbd(const timeval& now, const array_const_u8& input_data_32) override {
-            static const char shadow_buf[] =
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-              "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
-            ;
-            static_assert((sizeof(shadow_buf)-1) % 4 == 0, "");
-            return this->graphic_to_file.input_kbd(now, {
-                reinterpret_cast<unsigned char const *>(shadow_buf),
-                std::min(input_data_32.size(), sizeof(shadow_buf)-1)
-            });
-        }
-    };
+    using Native = WrmCaptureImpl;
 
 
     class Kbd
@@ -284,9 +98,9 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             ini.get<cfg::debug::capture>())
         {}
 
-        void attach_apis(Capture & cap, const Inifile & ini) {
-            cap.capture_probe_list().push_back(this->kc);
-            cap.input_kbd_list().push_back(this->kc);
+        void attach_apis(ApisRegister & api_register, const Inifile & ini) {
+            api_register.capture_probe_list.push_back(this->kc);
+            api_register.input_kbd_list.push_back(this->kc);
         }
 
         void enable_keyboard_input_mask(bool enable) {
@@ -294,10 +108,10 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
         }
     };
 
-    struct CaptureProxy 
+    struct CaptureProxy
     {
         CaptureProxy(Capture & cap) : cap(cap) {}
-        
+
         template<class Tag, class... Ts>
         void operator()(Tag tag, gdi::CaptureApi &, Ts && ... args) {
             gdi::CaptureProxy prox;
@@ -329,7 +143,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             }
             return time;
         }
-        
+
         std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
 
     private:
@@ -339,7 +153,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
     using NewCapture = gdi::CaptureAdapter<CaptureProxy>;
 
 
-    struct NewInputKbd : gdi::InputKbdApi 
+    struct NewInputKbd : gdi::InputKbdApi
     {
         bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
             bool ret = true;
@@ -353,7 +167,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
     };
 
 
-    struct NewCaptureProbe : gdi::CaptureProbeApi 
+    struct NewCaptureProbe : gdi::CaptureProbeApi
     {
         void possible_active_window_change() override {
             for (gdi::CaptureProbeApi & cap_prob : this->cds) {
@@ -405,7 +219,17 @@ private:
 
     const Inifile & ini;
 
-    
+    ApisRegister get_apis_register() {
+        return {
+            this->graphic_api ? &this->graphic_api->get_proxy().gds : nullptr,
+            this->rail_graphic_api ? &this->rail_graphic_api->get_proxy().apis : nullptr,
+            this->graphic_api ? &this->graphic_api->get_proxy().snapshoters : nullptr,
+            this->capture_api.get_proxy().caps,
+            this->input_kbd_api.kbds,
+            this->capture_probe_api.cds
+        };
+    };
+
     std::vector<Graphic::GdRef> & graphic_list() {
         assert(this->graphic_api);
         return this->graphic_api->get_proxy().gds;
@@ -505,7 +329,7 @@ public:
                 this->pnc.reset(new Native(
                     now, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     this->cctx, record_path, hash_path, basename,
-                    groupid, authentifier, this->gd->rdp_drawable(), ini, *this
+                    groupid, authentifier, this->gd->rdp_drawable(), ini
                 ));
             }
         }
@@ -517,10 +341,12 @@ public:
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
 
-        //TODO if (this->gd ) { this->gd->attach_apis (*this, ini); }
-        if (this->pnc) { this->pnc->attach_apis(*this, ini); }
-        if (this->psc) { this->psc->attach_apis(*this, ini); }
-        if (this->pkc) { this->pkc->attach_apis(*this, ini); }
+        ApisRegister apis_register = this->get_apis_register();
+
+        if (this->gd ) { this->gd->attach_apis (apis_register, ini); }
+        if (this->pnc) { this->pnc->attach_apis(apis_register, ini); }
+        if (this->psc) { this->psc->attach_apis(apis_register, ini); }
+        if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
 
         if (this->gd ) { this->gd->start(order_bpp); }
     }
@@ -592,7 +418,8 @@ public:
     // TODO is not virtual
     void enable_keyboard_input_mask(bool enable) {
         if (this->pnc) {
-            this->pnc->enable_keyboard_input_mask(*this, enable);
+            ApisRegister apis_register = this->get_apis_register();
+            this->pnc->enable_keyboard_input_mask(apis_register, enable);
         }
 
         if (this->pkc) {

@@ -21,6 +21,7 @@
 #ifndef REDEMPTION_CAPTURE_UTILS_GRAPHIC_CAPTURE_IMPL_HPP
 #define REDEMPTION_CAPTURE_UTILS_GRAPHIC_CAPTURE_IMPL_HPP
 
+#include "apis_register.hpp"
 #include "mouse_trace.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_cmd_color_converter.hpp"
@@ -33,21 +34,8 @@
 class GraphicCaptureImpl
 {
 public:
-    struct GdRef 
-    {
-        std::reference_wrapper<gdi::GraphicApi> gd;
-        // TODO move in gdi::GraphicApi
-        uint8_t bpp;
-        
-        template<class... Ts>
-        void operator()(Ts const & ... args) const {
-            gd.get().draw(args...);
-        }
-        
-        operator gdi::GraphicApi & () const {
-            return gd.get();
-        }
-    };
+    // TODO
+    using GdRef = ::GdRef;
 
 private:
     using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
@@ -60,11 +48,11 @@ private:
         std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
 
         GraphicProxy(MouseTrace const & mouse) : mouse(mouse) {}
-        
+
         using draw_tag = gdi::GraphicProxy::draw_tag;
 
         template<class Cmd, class... Ts>
-        auto operator()(draw_tag, gdi::GraphicApi &, Cmd const & cmd, Ts const & ... args) 
+        auto operator()(draw_tag, gdi::GraphicApi &, Cmd const & cmd, Ts const & ... args)
         // avoid some virtual call
         -> decltype(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, cmd))
         {
@@ -97,6 +85,9 @@ private:
         }
     };
 
+
+    // GraphicProxy::cmd_color_distributor
+    //@{
     template<class CmdColorDistributor>
     struct CmdColorDistributorProxy
     {
@@ -113,11 +104,11 @@ private:
             assert(false);
         }
     };
-    
+
     struct RngByBpp
     {
         using iterator = std::vector<GdRef>::const_iterator;
-        
+
         iterator its[5];
         range<iterator> rng8() const { return {its[0], its[1]}; }
         range<iterator> rng15() const { return {its[1], its[2]}; }
@@ -125,14 +116,14 @@ private:
         range<iterator> rng24() const { return {its[3], its[4]}; }
         range<iterator> rng_all() const { return {its[0], its[4]}; }
     };
-    
+
     static PtrColorConverter choose_color_converter(std::vector<GdRef> gds, uint8_t order_bpp) {
         std::sort(gds.begin(), gds.end(), [](GdRef const & a, GdRef const & b) {
             return a.bpp < b.bpp;
         });
-        
+
         RngByBpp rng_by_bpp{{gds.begin(), gds.begin(), gds.begin(), gds.begin(), gds.end()}};
-        
+
         struct ge {
             uint8_t bpp;
             bool operator()(GdRef const & x) const {
@@ -156,14 +147,14 @@ private:
             default: assert(nullptr); return PtrColorConverter{};
         }
     }
-    
+
     template<class Dec>
     static PtrColorConverter choose_encoder(Dec dec, RngByBpp const & rng_by_bpp) {
         return make_converter(
-            dec, rng_by_bpp, 
-            rng_by_bpp.its[0] != rng_by_bpp.its[1], 
-            rng_by_bpp.its[1] != rng_by_bpp.its[2], 
-            rng_by_bpp.its[2] != rng_by_bpp.its[3], 
+            dec, rng_by_bpp,
+            rng_by_bpp.its[0] != rng_by_bpp.its[1],
+            rng_by_bpp.its[1] != rng_by_bpp.its[2],
+            rng_by_bpp.its[2] != rng_by_bpp.its[3],
             rng_by_bpp.its[3] != rng_by_bpp.its[4]
         );
     }
@@ -184,6 +175,8 @@ private:
             return make_converter<Dec, Bools..., 0>(dec, rng_by_bpp, y...);
         }
     }
+    //@}
+
 
     struct BasicRAILGraphic final
     : gdi::RAILGraphicAdapter<
@@ -210,15 +203,16 @@ public:
     : graphic_api(mouse)
     , drawable(width, height, order_bpp)
     {
-        this->graphic_api.get_proxy().gds.push_back({
-            this->drawable, this->drawable.impl().bpp()
-        });
-        this->rail_graphic_api.get_proxy().apis.push_back(this->drawable);
     }
 
-    // TODO
-    // void attach_apis(ApisRegister &, const Inifile &) {
-    // }
+    void attach_apis(ApisRegister & apis_register, const Inifile &) {
+        assert(apis_register.graphic_list);
+        apis_register.graphic_list->push_back({
+            this->drawable, this->drawable.impl().bpp()
+        });
+        assert(apis_register.rail_graphic_list);
+        apis_register.rail_graphic_list->push_back(this->drawable);
+    }
 
     void start(uint8_t order_bpp) {
         this->graphic_api.get_proxy().cmd_color_distributor = this->choose_color_converter(
@@ -232,5 +226,5 @@ public:
     Drawable & impl() { return this->drawable.impl(); }
     RDPDrawable & rdp_drawable() { return this->drawable; }
 };
-    
+
 #endif
