@@ -62,14 +62,14 @@
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
 
-#include <QtGui/QImage>        
+#include <QtGui/QImage>
 
 
 
 class Form_Qt;
 class Screen_Qt;
 class Connector_Qt;
-class QPushButton;
+
 
 class Front_Qt_API : public FrontAPI
 {
@@ -557,14 +557,14 @@ public:
     }
     
     void keyPressEvent(QKeyEvent *e) override { 
-        this->_qtRDPKeymap.keyEvent(0x0000,      e);
+        this->_qtRDPKeymap.keyEvent(0       ,      e);
         if (this->_qtRDPKeymap.scanCode != 0) {
             this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
         }
     }
     
     void keyReleaseEvent(QKeyEvent *e) override {
-        this->_qtRDPKeymap.keyEvent(KBD_FLAG_UP, e);
+        this->_qtRDPKeymap.keyEvent(0x8000, e);
         if (this->_qtRDPKeymap.scanCode != 0) {
             this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
         }
@@ -646,6 +646,7 @@ public:
     void updateForm(bool enable) override;
     
     
+    
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //--------------------------------
@@ -660,7 +661,7 @@ public:
             } catch (const Error & e) {
                 const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is lasted.");
                 std::cout << errorMsg << std::endl;
-                std::string labelErrorMsg("<font color='Red'>"+errorMsg+" azer</font>");
+                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
                 
                 this->disconnect(labelErrorMsg);
             }

@@ -370,7 +370,7 @@ private:
         this->_front->keyPressEvent(e);
     }
     
-    void keyReleaseEvent(QKeyEvent *e) {
+    void keyReleaseEvent(QKeyEvent *e) { 
         this->_front->keyReleaseEvent(e);
     }
     
