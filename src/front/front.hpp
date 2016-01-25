@@ -1266,6 +1266,24 @@ public:
                         }
                     }
                     break;
+                    case CS_MCS_MSGCHANNEL:
+                    {
+                        GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+                        cs_mcs_msgchannel.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_mcs_msgchannel.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MULTITRANSPORT:
+                    {
+                        GCC::UserData::CSMultiTransport cs_multitransport;
+                        cs_multitransport.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_multitransport.log("Receiving from Client");
+                        }
+                    }
+                    break;
                     default:
                         LOG(LOG_WARNING, "Unexpected data block tag %x\n", f.tag);
                     break;
@@ -2460,10 +2478,14 @@ private:
         return true;
     }
 
-    void session_probe_started() override {
-        this->session_probe_started_ = true;
+    void session_probe_started(bool started) override {
+        this->session_probe_started_ = started;
 
         this->update_keyboard_input_mask_state();
+
+        if (!started) {
+            this->session_update("Probe.Status=Unknown");
+        }
     }
 
     void set_keylayout(int LCID) override {

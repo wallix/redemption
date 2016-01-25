@@ -62,14 +62,14 @@
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
 
-#include <QtGui/QImage>        
+#include <QtGui/QImage>
 
 
 
 class Form_Qt;
 class Screen_Qt;
 class Connector_Qt;
-class QPushButton;
+
 
 class Front_Qt_API : public FrontAPI
 {
@@ -152,15 +152,9 @@ public:
       , IP_GOTTEN     = 4
       , PORT_GOTTEN   = 8
     };
-    
-    enum : long {
-        REVERSE       = 0x80000000
-    };
-    
+
     
   
-   
-    
     virtual void flush() override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -178,6 +172,7 @@ public:
             LOG(LOG_INFO, "send_to_channel");
             LOG(LOG_INFO, "========================================\n");
         }
+        std::cout << "send_to_channel" << std::endl;
     }
 
     virtual void send_global_palette() override {
@@ -493,7 +488,7 @@ public:
     //      CONSTRUCTOR
     //------------------------
     
-    Front_Qt(char* argv[], int argc, uint32_t verbose);
+    Front_Qt(const char* argv[], int argc, uint32_t verbose);
     
     // -------- Start of system wide SSL_Ctx option ------------------------------
 
@@ -562,14 +557,14 @@ public:
     }
     
     void keyPressEvent(QKeyEvent *e) override { 
-        this->_qtRDPKeymap.keyQtEvent(0x0000,      e);
+        this->_qtRDPKeymap.keyEvent(0       ,      e);
         if (this->_qtRDPKeymap.scanCode != 0) {
             this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
         }
     }
     
     void keyReleaseEvent(QKeyEvent *e) override {
-        this->_qtRDPKeymap.keyQtEvent(KBD_FLAG_UP, e);
+        this->_qtRDPKeymap.keyEvent(0x8000, e);
         if (this->_qtRDPKeymap.scanCode != 0) {
             this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
         }
@@ -651,6 +646,7 @@ public:
     void updateForm(bool enable) override;
     
     
+    
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
     //--------------------------------
@@ -659,7 +655,16 @@ public:
     
     void call_Draw() override {
         if (this->_callback != nullptr) {
-            this->_callback->draw_event(time(nullptr));
+            try {
+                this->_callback->draw_event(time(nullptr));
+                
+            } catch (const Error & e) {
+                const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is lasted.");
+                std::cout << errorMsg << std::endl;
+                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+                
+                this->disconnect(labelErrorMsg);
+            }
         }
     }
     

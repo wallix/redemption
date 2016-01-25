@@ -5,7 +5,7 @@
 
 namespace x80000406{ 
 
-const static int LCID = 0x80000406;
+const static int LCID = 0x406;
 
 const static char * const locale_name = "da-DK";
 

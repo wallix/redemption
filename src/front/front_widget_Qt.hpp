@@ -370,7 +370,7 @@ private:
         this->_front->keyPressEvent(e);
     }
     
-    void keyReleaseEvent(QKeyEvent *e) {
+    void keyReleaseEvent(QKeyEvent *e) { 
         this->_front->keyReleaseEvent(e);
     }
     
@@ -459,7 +459,7 @@ public:
     bool connect() {
         const char * name(this->_front->_userName.c_str());      
         const char * targetIP(this->_front->_targetIP.c_str());                 
-        std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
+        const std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
         
         //std::cout << name << " " << this->_front->_pwd << " " << this->_front->_targetIP.c_str() << " " << this->_front->_port << std::endl;
 
@@ -497,7 +497,7 @@ public:
         const char * pwd(this->_front->_pwd.c_str()); 
         const char * targetIP(this->_front->_targetIP.c_str());         
         const char * localIP(this->_front->_localIP.c_str());
-        std::string errorMsg("Connected to [" + this->_front->_targetIP +  "].");
+        
         
         Inifile ini;
         ModRDPParams mod_rdp_params( name
@@ -528,21 +528,18 @@ public:
 
         try {
             this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
-        } catch (const std::exception & e) {
-            std::cout << errorMsg << std::endl;
-                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-                this->_front->disconnect(labelErrorMsg);
-        }
-        
-        if (this->_callback != nullptr) {
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead, SIGNAL(activated(int)), this, SLOT(call_Draw()));
-        } else {
+            
+        } catch (const Error & e) {
+            const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is lasted.");
             std::cout << errorMsg << std::endl;
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+            
             this->_front->disconnect(labelErrorMsg);
         }
+        
     }
     
 public Q_SLOTS:
