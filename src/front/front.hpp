@@ -2460,10 +2460,14 @@ private:
         return true;
     }
 
-    void session_probe_started() override {
-        this->session_probe_started_ = true;
+    void session_probe_started(bool started) override {
+        this->session_probe_started_ = started;
 
         this->update_keyboard_input_mask_state();
+
+        if (!started) {
+            this->session_update("Probe.Status=Unknown");
+        }
     }
 
     void set_keylayout(int LCID) override {
