@@ -1448,6 +1448,13 @@ namespace cfg {
             using type = unsigned;
             type value{5000};
         };
+        struct session_probe_on_keepalive_timeout_disconnect_user {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
         // End automatically a disconnected session
         struct session_probe_end_disconnected_session {
             static constexpr ::configs::VariableProperties properties() {
@@ -2056,6 +2063,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
 , cfg::mod_rdp::session_probe_alternate_shell
