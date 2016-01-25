@@ -37,9 +37,6 @@
 
 #include "urandom_read.hpp"
 
-//
-
-
 namespace transfil {
 
     class decrypt_filter
@@ -776,16 +773,21 @@ namespace detail {
     };    
 }
 
-
-struct InputNextTransport_flat
-: InputTransport<detail::in_meta_sequence_buf_flat>
+struct InMetaSequenceTransport : InputTransport<detail::in_meta_sequence_buf_flat>
 {
-    InputNextTransport_flat() = default;
+    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
+    : InputTransport<detail::in_meta_sequence_buf_flat>(
+        detail::in_meta_sequence_buf_param(detail::temporary_concat(filename, extension).str, verbose, cctx, cctx))
+    {
+        this->verbose = verbose;
+    }
 
-    template<class T>
-    explicit InputNextTransport_flat(const T & buf_params)
-    : InputTransport<detail::in_meta_sequence_buf_flat>(buf_params)
-    {}
+    explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
+    : InputTransport<detail::in_meta_sequence_buf_flat>(
+            detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
+    {
+        this->verbose = verbose;
+    }
 
     bool next() override {
         if (this->status == false) {
@@ -803,28 +805,6 @@ struct InputNextTransport_flat
         return true;
     }
 
-protected:
-    typedef InputNextTransport_flat TransportType;
-};
-
-
-struct InMetaSequenceTransport
-: InputNextTransport_flat
-{
-    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : InMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param(detail::temporary_concat(filename, extension).str, verbose, cctx, cctx))
-    {
-        this->verbose = verbose;
-    }
-
-    explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : InMetaSequenceTransport::TransportType(
-            detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
-    {
-        this->verbose = verbose;
-    }
-
     unsigned begin_chunk_time() const noexcept
     { return this->buffer().get_begin_chunk_time(); }
 
@@ -835,8 +815,7 @@ struct InMetaSequenceTransport
     { return this->buffer().current_path(); }
 };
 
-struct InputNextTransport_crypto
-: InputTransport<detail::in_meta_sequence_buf_crypto>
+struct InputNextTransport_crypto : InputTransport<detail::in_meta_sequence_buf_crypto>
 {
     InputNextTransport_crypto() = default;
 
@@ -865,8 +844,7 @@ protected:
     typedef InputNextTransport_crypto TransportType;
 };
 
-struct CryptoInMetaSequenceTransport
-: InputNextTransport_crypto
+struct CryptoInMetaSequenceTransport : InputNextTransport_crypto
 {
     CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : CryptoInMetaSequenceTransport::TransportType(
