@@ -241,17 +241,113 @@ namespace transfil {
 
 }
 
-
-struct InFilenameTransport
-: InputTransport<transbuf::ifile_buf>
-{
-    InFilenameTransport(const char * filename)
+namespace transbuf {
+    class ifile_buf1
     {
-        if (this->buffer().open(filename, 0600) < 0) {
+        int fd;
+    public:
+        ifile_buf1(CryptoContext * cctx) : fd(-1) {}
+        
+        ~ifile_buf1()
+        {
+            this->close();
+        }
+
+        int open(const char * filename)
+        {
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int open(const char * filename, mode_t /*mode*/)
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        ssize_t read(void * data, size_t len)
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return lseek64(this->fd, offset, whence); }
+    };
+}
+
+struct InFilenameTransport : public Transport
+{
+    transbuf::ifile_buf1 buf;
+
+    InFilenameTransport(CryptoContext * cctx, const char * filename) 
+        : buf(cctx)
+    {
+        if (this->buf.open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
     }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) override {
+        const ssize_t res = this->buf.read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
+    const transbuf::ifile_buf1 & buffer() const noexcept
+    { return this->buf; }
+
+    typedef InFilenameTransport TransportType;
 };
 
 namespace transbuf {
@@ -259,11 +355,12 @@ namespace transbuf {
     {
         transfil::decrypt_filter2 decrypt;
         CryptoContext * cctx;
-        ifile_buf file;
+        ifile_buf1 file;
 
     public:
         explicit icrypto_filename_buf2(CryptoContext * cctx)
         : cctx(cctx)
+        , file(cctx)
         {}
 
         int open(const char * filename, mode_t mode = 0600)

@@ -245,15 +245,156 @@ namespace transfil {
 
 
 namespace transbuf {
-    class icrypto_filename_buf
+
+    class ifile_buf
+    {
+        int fd;
+    public:
+        ifile_buf(CryptoContext * cctx) : fd(-1) {}
+        
+        ~ifile_buf()
+        {
+            this->close();
+        }
+
+        int open(const char * filename)
+        {
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int open(const char * filename, mode_t /*mode*/)
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        ssize_t read(void * data, size_t len)
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return lseek64(this->fd, offset, whence); }
+    };
+
+    class ifile_buf_meta
+    {
+        int fd;
+    public:
+        ifile_buf_meta(CryptoContext * cctx) : fd(-1) {}
+        
+        ~ifile_buf_meta()
+        {
+            this->close();
+        }
+
+        int open(const char * filename)
+        {
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int open(const char * filename, mode_t /*mode*/)
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        ssize_t read(void * data, size_t len)
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return lseek64(this->fd, offset, whence); }
+    };
+
+
+    class icrypto_filename_buf_meta
     {
         transfil::decrypt_filter decrypt;
         CryptoContext * cctx;
-        ifile_buf file;
+        ifile_buf_meta file;
 
     public:
-        explicit icrypto_filename_buf(CryptoContext * cctx)
+        explicit icrypto_filename_buf_meta(CryptoContext * cctx)
         : cctx(cctx)
+        , file(cctx)
         {}
 
         int open(const char * filename, mode_t mode = 0600)
@@ -286,23 +427,70 @@ namespace transbuf {
         off64_t seek(off64_t offset, int whence) const
         { return this->file.seek(offset, whence); }
     };
+
+
+    class icrypto_filename_buf
+    {
+        transfil::decrypt_filter decrypt;
+        CryptoContext * cctx;
+        ifile_buf file;
+
+    public:
+        explicit icrypto_filename_buf(CryptoContext * cctx)
+        : cctx(cctx)
+        , file(cctx)
+        {}
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            unsigned char derivator[DERIVATOR_LENGTH];
+
+            this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
+                return -1;
+            }
+
+            int err = this->file.open(filename, mode);
+            if (err < 0) {
+                return err;
+            }
+
+            return this->decrypt.open(this->file, trace_key);
+        }
+
+        ssize_t read(void * data, size_t len)
+        { return this->decrypt.read(this->file, data, len); }
+
+        int close()
+        { return this->file.close(); }
+
+        bool is_open() const noexcept
+        { return this->file.is_open(); }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return this->file.seek(offset, whence); }
+    };
+
+
 }
 
 struct InMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<
-    detail::empty_ctor</*transbuf::ibuffering_buf<*/transbuf::ifile_buf/*> */>,
-    detail::empty_ctor<transbuf::ifile_buf>
+    transbuf::ifile_buf,
+    transbuf::ifile_buf_meta
 > >
 {
     InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : InMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<>(detail::temporary_concat(filename, extension).str, verbose))
+        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(detail::temporary_concat(filename, extension).str, verbose, cctx, cctx))
     {
         this->verbose = verbose;
     }
 
     explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename, verbose))
+    : InMetaSequenceTransport::TransportType(
+            detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, verbose, cctx, cctx))
     {
         this->verbose = verbose;
     }
@@ -320,18 +508,18 @@ struct InMetaSequenceTransport
 struct CryptoInMetaSequenceTransport
 : InputNextTransport<detail::in_meta_sequence_buf<
     transbuf::icrypto_filename_buf,
-    transbuf::icrypto_filename_buf
+    transbuf::icrypto_filename_buf_meta
 > >
 {
-    CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : CryptoInMetaSequenceTransport::TransportType(
         detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(
-            detail::temporary_concat(filename, extension).c_str(), 0, crypto_ctx, crypto_ctx))
+            detail::temporary_concat(filename, extension).c_str(), verbose, cctx, cctx))
     {}
 
-    CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename)
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
     : CryptoInMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, 0, crypto_ctx, crypto_ctx))
+        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, verbose, cctx, cctx))
     {}
 
     time_t begin_chunk_time() const noexcept
