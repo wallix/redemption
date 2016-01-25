@@ -132,37 +132,6 @@ protected:
 };
 
 
-template<class Buf>
-struct InputNextTransport
-: InputTransport<Buf>
-{
-    InputNextTransport() = default;
-
-    template<class T>
-    explicit InputNextTransport(const T & buf_params)
-    : InputTransport<Buf>(buf_params)
-    {}
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res){
-            this->status = false;
-            if (res < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-protected:
-    typedef InputNextTransport TransportType;
-};
-
 template<class Buf, class PathTraits = detail::NoCurrentPath>
 struct OutputNextTransport
 : OutputTransport<Buf, PathTraits>
