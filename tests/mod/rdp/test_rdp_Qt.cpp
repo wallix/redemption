@@ -31,7 +31,6 @@
 
 #define LOGNULL
 //#define LOGPRINTlibboost_unit_test
-//#define TEST_CLOSE_FROM_SCREEN
 #include "config.hpp"
 //#include "test_transport.hpp"
 
@@ -39,8 +38,8 @@
 #include "../src/front/front_widget_Qt.hpp"
 
 
-#define TARGET_IP "10.10.46.73"
-//#define TARGET_IP "10.10.46.88"
+//#define TARGET_IP "10.10.46.73"
+#define TARGET_IP "10.10.46.88"
 
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
@@ -48,87 +47,11 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     std::string targetIP(TARGET_IP); // 10.10.46.73
     int verbose(511);
     int argc(8);
-    char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
+    const char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
     // test_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
-    
-    
-    
-    
-#ifdef TEST_CLOSE_FROM_SCREEN
-    
-    QApplication app(argc, argv);
 
-    //=====================
-    // test connexion init
-    //=====================
-    std::cout << std::endl;
-    std::cout << "FRONT INIT TEST" << std::endl;
-    Front_Qt frontInit(argv, argc, verbose);
-
-    if (frontInit._screen    != nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (frontInit._form      != nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false; 
-    if (frontInit._connector != nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
- 
-    if (frontInit._callback            != nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (frontInit._connector->_sckRead != nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (frontInit._connector->_sck     != nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    BOOST_CHECK_EQUAL(frontInit._callback->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(frontInit._callback->get_front_height(), 600);
     
-    BOOST_CHECK_EQUAL(frontInit._userName, "QA\\administrateur");
-    BOOST_CHECK_EQUAL(frontInit._pwd,      "S3cur3!1nux");
-    BOOST_CHECK_EQUAL(frontInit._targetIP, targetIP);
-    BOOST_CHECK_EQUAL(frontInit._port,     3389);
-    
-    BOOST_CHECK_EQUAL(frontInit._connected, true);
-    
-    
-    
-    //========================
-    // test close from screen
-    //========================
-    std::cout <<  std::endl << "Test close from screen" <<  std::endl;
-    app.exec();
-    
-    BOOST_CHECK_EQUAL(frontInit._connected, true);
-    
-    if (frontInit._callback  == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (frontInit._connector->_callback == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (frontInit._connector->_sckRead  == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (frontInit._connector->_sck      == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    
-    //************************************************************************
-    
-#endif
-    
-    
-    
-    
-    
-#ifndef TEST_CLOSE_FROM_SCREEN
-    
-    QApplication app2(argc, argv);
+    QApplication app(argc, const_cast<char**>(argv));
     
     //=====================
     // test connexion init
@@ -150,6 +73,10 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     if (front._callback            != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
+    if (test_boost) {
+        BOOST_CHECK_EQUAL(front._callback->get_front_width(), 800);
+        BOOST_CHECK_EQUAL(front._callback->get_front_height(), 600);
+    }
     test_boost = false;
     if (front._connector->_sckRead != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
@@ -157,9 +84,6 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     if (front._connector->_sck     != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
     test_boost = false;
-    
-    BOOST_CHECK_EQUAL(front._callback->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(front._callback->get_front_height(), 600);
     
     BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
@@ -291,6 +215,10 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     if (front._callback            != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
+    if (test_boost) {
+        BOOST_CHECK_EQUAL(front._callback->get_front_width(), 800);
+        BOOST_CHECK_EQUAL(front._callback->get_front_height(), 600);
+    }
     test_boost = false;
     if (front._connector->_sckRead != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
@@ -298,9 +226,6 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     if (front._connector->_sck     != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
     test_boost = false;
-    
-    BOOST_CHECK_EQUAL(front._callback->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(front._callback->get_front_height(), 600);
     
     BOOST_CHECK_EQUAL(front._connected, true);
     
@@ -396,32 +321,61 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     
     //========================
-    // test close from form
+    //     test close
     //========================
-    std::cout <<  std::endl << "Test close from form" <<  std::endl;
-    front.connexionReleased();
-    std::cout <<  std::endl << "Test close from form" <<  std::endl;
+    std::cout <<  std::endl << "Test show window" <<  std::endl;
+    front.connexionReleased();;
     front.disconnect("");
-    app2.exec();
-
-    BOOST_CHECK_EQUAL(front._connected, false);
-
-    if (front._callback  == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_callback == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sckRead  == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sck      == nullptr) { test_boost = true;}
-    BOOST_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    //************************************************************************
+    app.exec();
     
-#endif
+    std::cout <<  std::endl << "Test close" <<  std::endl;
+    if (front._connected) {
+        
+        //========================
+        // test close from screen
+        //========================
+        
+        BOOST_CHECK_EQUAL(front._connected, true);
+        
+        if (front._callback  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_callback == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sckRead  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sck      == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        
+        //************************************************************************
+        
+    } else { 
+
+        //========================
+        // test close from form
+        //========================
+
+        BOOST_CHECK_EQUAL(front._connected, false);
+
+        if (front._callback  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_callback == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sckRead  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sck      == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+
+        //************************************************************************
+    }
+    
     
 }
 

@@ -5,7 +5,7 @@
 
 namespace x8001040a{ 
 
-const static int LCID = 0x8001040a;
+const static int LCID = 0x1040a;
 
 const static char * const locale_name = "es-ES.variation";
 

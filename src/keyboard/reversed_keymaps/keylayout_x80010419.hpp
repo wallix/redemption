@@ -5,7 +5,7 @@
 
 namespace x80010419{ 
 
-const static int LCID = 0x80010419;
+const static int LCID = 0x10419;
 
 const static char * const locale_name = "ru-RU.typewriter";
 
