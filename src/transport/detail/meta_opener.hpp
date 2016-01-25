@@ -368,7 +368,7 @@ namespace detail
     }
 
 
-    template<class BufParam = no_param, class BufMetaParam = no_param>
+    template<class BufParam, class BufMetaParam>
     struct in_meta_sequence_buf_param
     {
         const char * meta_filename;

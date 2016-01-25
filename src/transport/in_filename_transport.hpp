@@ -246,7 +246,7 @@ namespace transbuf {
     {
         int fd;
     public:
-        ifile_buf1() : fd(-1) {}
+        ifile_buf1(CryptoContext * cctx) : fd(-1) {}
         
         ~ifile_buf1()
         {
@@ -312,15 +312,45 @@ namespace transbuf {
     };
 }
 
-struct InFilenameTransport : InputTransport<transbuf::ifile_buf1>
+struct InFilenameTransport : public Transport
 {
-    InFilenameTransport(const char * filename)
+    transbuf::ifile_buf1 buf;
+
+    InFilenameTransport(CryptoContext * cctx, const char * filename) 
+        : buf(cctx)
     {
         if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
     }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) override {
+        const ssize_t res = this->buf.read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
+    transbuf::ifile_buf1 & buffer() noexcept
+    { return this->buf; }
+
+    const transbuf::ifile_buf1 & buffer() const noexcept
+    { return this->buf; }
+
+    typedef InFilenameTransport TransportType;
 };
 
 namespace transbuf {
@@ -333,6 +363,7 @@ namespace transbuf {
     public:
         explicit icrypto_filename_buf2(CryptoContext * cctx)
         : cctx(cctx)
+        , file(cctx)
         {}
 
         int open(const char * filename, mode_t mode = 0600)
