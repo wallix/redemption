@@ -25,16 +25,56 @@
 #include "mixin_transport.hpp"
 #include "fdbuf.hpp"
 
-struct InFileTransport
-: InputTransport<io::posix::fdbuf>
+class InputTransportFlat : public Transport
+{
+    io::posix::fdbuf buf;
+
+public:
+    InputTransportFlat() = default;
+
+    template<class T>
+    explicit InputTransportFlat(const T & buf_params)
+    : buf(buf_params)
+    {}
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) override {
+        const ssize_t res = this->buf.read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
+protected:
+    io::posix::fdbuf & buffer() noexcept
+    { return this->buf; }
+
+    const io::posix::fdbuf & buffer() const noexcept
+    { return this->buf; }
+
+    typedef InputTransportFlat TransportType;
+};
+
+
+struct InFileTransport : InputTransportFlat
 {
     explicit InFileTransport(int fd) noexcept
     : InFileTransport::TransportType(fd)
     {}
 };
 
-struct InFileSeekableTransport
-: InputTransport<io::posix::fdbuf>
+struct InFileSeekableTransport : InputTransportFlat
 {
     explicit InFileSeekableTransport(int fd) noexcept
     : InFileSeekableTransport::TransportType(fd)

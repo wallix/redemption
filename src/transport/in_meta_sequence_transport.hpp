@@ -690,18 +690,60 @@ namespace detail {
     };    
 }
 
-struct InMetaSequenceTransport : InputTransport<detail::in_meta_sequence_buf_flat>
+class InputTransportMetaFlat
+: public Transport
+{
+    detail::in_meta_sequence_buf_flat buf;
+
+public:
+    InputTransportMetaFlat() = default;
+
+    template<class T>
+    explicit InputTransportMetaFlat(const T & buf_params)
+    : buf(buf_params)
+    {}
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) override {
+        const ssize_t res = this->buf.read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
+protected:
+    detail::in_meta_sequence_buf_flat & buffer() noexcept
+    { return this->buf; }
+
+    const detail::in_meta_sequence_buf_flat & buffer() const noexcept
+    { return this->buf; }
+
+    typedef InputTransportMetaFlat TransportType;
+};
+
+
+struct InMetaSequenceTransport : public InputTransportMetaFlat
 {
     InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : InputTransport<detail::in_meta_sequence_buf_flat>(
+    : InputTransportMetaFlat(
         detail::in_meta_sequence_buf_param(detail::temporary_concat(filename, extension).str, verbose, cctx, cctx))
     {
         this->verbose = verbose;
     }
 
     explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : InputTransport<detail::in_meta_sequence_buf_flat>(
-            detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
+    : InputTransportMetaFlat(detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
     {
         this->verbose = verbose;
     }
@@ -732,13 +774,56 @@ struct InMetaSequenceTransport : InputTransport<detail::in_meta_sequence_buf_fla
     { return this->buffer().current_path(); }
 };
 
-struct InputNextTransport_crypto : InputTransport<detail::in_meta_sequence_buf_crypto>
+class InputTransportMetaCrypto
+: public Transport
+{
+    detail::in_meta_sequence_buf_crypto buf;
+
+public:
+    InputTransportMetaCrypto() = default;
+
+    template<class T>
+    explicit InputTransportMetaCrypto(const T & buf_params)
+    : buf(buf_params)
+    {}
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) override {
+        const ssize_t res = this->buf.read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
+protected:
+    detail::in_meta_sequence_buf_crypto & buffer() noexcept
+    { return this->buf; }
+
+    const detail::in_meta_sequence_buf_crypto & buffer() const noexcept
+    { return this->buf; }
+
+    typedef InputTransportMetaCrypto TransportType;
+};
+
+
+struct InputNextTransport_crypto : public InputTransportMetaCrypto
 {
     InputNextTransport_crypto() = default;
 
     template<class T>
     explicit InputNextTransport_crypto(const T & buf_params)
-    : InputTransport<detail::in_meta_sequence_buf_crypto>(buf_params)
+    : InputTransportMetaCrypto(buf_params)
     {}
 
     bool next() override {

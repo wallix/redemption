@@ -395,18 +395,44 @@ namespace transbuf {
     };
 }
 
-
-struct CryptoInFilenameTransport
-: InputTransport<transbuf::icrypto_filename_buf2>
+struct CryptoInFilenameTransport : public Transport
 {
-    CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename)
-    : CryptoInFilenameTransport::TransportType(crypto_ctx)
+    transbuf::icrypto_filename_buf2 buf;
+
+public:
+    CryptoInFilenameTransport(CryptoContext * cctx, const char * filename)
+        : buf(cctx)
     {
         if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
     }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) override {
+        const ssize_t res = this->buf.read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
+    transbuf::icrypto_filename_buf2 & buffer() noexcept
+    { return this->buf; }
+
+    const transbuf::icrypto_filename_buf2 & buffer() const noexcept
+    { return this->buf; }
 };
 
 #endif

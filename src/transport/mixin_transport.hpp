@@ -88,48 +88,6 @@ protected:
     typedef OutputTransport TransportType;
 };
 
-template <class Buf>
-class InputTransport
-: public Transport
-{
-    Buf buf;
-
-public:
-    InputTransport() = default;
-
-    template<class T>
-    explicit InputTransport(const T & buf_params)
-    : buf(buf_params)
-    {}
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-private:
-    void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf.read(*pbuffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-        *pbuffer += res;
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-    }
-
-protected:
-    Buf & buffer() noexcept
-    { return this->buf; }
-
-    const Buf & buffer() const noexcept
-    { return this->buf; }
-
-    typedef InputTransport TransportType;
-};
 
 
 template<class Buf, class PathTraits = detail::NoCurrentPath>
