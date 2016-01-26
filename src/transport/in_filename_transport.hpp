@@ -121,14 +121,6 @@ namespace transfil {
             while (requested_size > 0) {
                 // Check how much we have decoded
                 if (!this->raw_size) {
-                    // Buffer is empty. Read a chunk from file
-                    /*
-                     i f (-1 == ::do_chunk_read*(this)) {
-                         return -1;
-                }
-                */
-                    // TODO: avoid reading size directly into an integer, performance enhancement is minimal
-                    // and it's not portable because of endianness issue => read in a buffer and decode by hand
                     unsigned char tmp_buf[4] = {};
                     if (const int err = this->raw_read(src, tmp_buf, 4)) {
                         return err;
@@ -241,7 +233,73 @@ namespace transfil {
 
 }
 
-namespace transbuf {
+struct InFilenameTransport : public Transport
+{
+    private:
+    int fd;
+
+    public:
+    InFilenameTransport(CryptoContext * cctx, const char * filename) 
+        : fd(-1)
+    {
+        this->fd = ::open(filename, O_RDONLY);
+        if (this->fd < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+    }
+
+    ~InFilenameTransport()
+    {
+        if (-1 != this->fd) {
+            ::close(this->fd);
+        }
+    }
+
+    bool disconnect() override {
+        if (-1 != this->fd) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) override {
+        TODO("this is blocking read, add support for timeout reading");
+        TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+        ssize_t res = 0;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            res = ::read(this->fd, static_cast<char*>(*pbuffer) + (len - remaining_len), remaining_len);
+            if (res <= 0){
+                // We must exit loop or we will enter infinite loop
+                if ((res == 0)
+                || ((errno!=EINTR) && (remaining_len != len))){
+                    res = len - remaining_len;
+                    break;
+                }
+                if (errno == EINTR){
+                    continue;
+                }
+                this->status = false;
+                throw Error(ERR_TRANSPORT_READ_FAILED, res);
+            }
+            remaining_len -= res;
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+};
+
+struct CryptoInFilenameTransport : public Transport
+{
+    transfil::decrypt_filter2 decrypt;
     class ifile_buf1
     {
         int fd;
@@ -270,16 +328,13 @@ namespace transbuf {
 
         int close()
         {
-            if (this->is_open()) {
+            if (-1 != this->fd) {
                 const int ret = ::close(this->fd);
                 this->fd = -1;
                 return ret;
             }
             return 0;
         }
-
-        bool is_open() const noexcept
-        { return -1 != this->fd; }
 
         ssize_t read(void * data, size_t len)
         {
@@ -288,7 +343,10 @@ namespace transbuf {
             size_t remaining_len = len;
             while (remaining_len) {
                 ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                if (ret < 0){
+                if (ret <= 0){
+                    if (ret == 0){
+                        break;
+                    }
                     if (errno == EINTR){
                         continue;
                     }
@@ -296,12 +354,10 @@ namespace transbuf {
                     if (remaining_len != len){
                         return len - remaining_len;
                     }
+                    // here ret < 0
                     return ret;
                 }
                 // We must exit loop or we will enter infinite loop
-                if (ret == 0){
-                    break;
-                }
                 remaining_len -= ret;
             }
             return len - remaining_len;        
@@ -309,46 +365,7 @@ namespace transbuf {
 
         off64_t seek(off64_t offset, int whence) const
         { return lseek64(this->fd, offset, whence); }
-    };
-}
-
-struct InFilenameTransport : public Transport
-{
-    transbuf::ifile_buf1 buf;
-
-    InFilenameTransport(CryptoContext * cctx, const char * filename) 
-        : buf(cctx)
-    {
-        if (this->buf.open(filename, 0600) < 0) {
-            LOG(LOG_ERR, "failed opening=%s\n", filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-private:
-    void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf.read(*pbuffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-        *pbuffer += res;
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-    }
-};
-
-struct CryptoInFilenameTransport : public Transport
-{
-    transfil::decrypt_filter2 decrypt;
-    transbuf::ifile_buf1 file;
+    } file;
 
 public:
     CryptoInFilenameTransport(CryptoContext * cctx, const char * filename)
