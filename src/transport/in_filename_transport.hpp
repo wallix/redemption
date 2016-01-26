@@ -350,72 +350,44 @@ private:
     typedef InFilenameTransport TransportType;
 };
 
-namespace transbuf {
-    class icrypto_filename_buf2
-    {
-        transfil::decrypt_filter2 decrypt;
-        CryptoContext * cctx;
-        ifile_buf1 file;
-
-    public:
-        explicit icrypto_filename_buf2(CryptoContext * cctx)
-        : cctx(cctx)
-        , file(cctx)
-        {}
-
-        int open(const char * filename, mode_t mode = 0600)
-        {
-            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            unsigned char derivator[DERIVATOR_LENGTH];
-
-            this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
-                return -1;
-            }
-
-            int err = this->file.open(filename, mode);
-            if (err < 0) {
-                return err;
-            }
-
-            return this->decrypt.open(this->file, trace_key);
-        }
-
-        ssize_t read(void * data, size_t len)
-        { return this->decrypt.read(this->file, data, len); }
-
-        int close()
-        { return this->file.close(); }
-
-        bool is_open() const noexcept
-        { return this->file.is_open(); }
-
-        off64_t seek(off64_t offset, int whence) const
-        { return this->file.seek(offset, whence); }
-    };
-}
-
 struct CryptoInFilenameTransport : public Transport
 {
-    transbuf::icrypto_filename_buf2 buf;
+    transfil::decrypt_filter2 decrypt;
+    transbuf::ifile_buf1 file;
 
 public:
     CryptoInFilenameTransport(CryptoContext * cctx, const char * filename)
-        : buf(cctx)
+        : file(cctx)
     {
-        if (this->buf.open(filename, 0600) < 0) {
+        mode_t mode = 0600;
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        unsigned char derivator[DERIVATOR_LENGTH];
+
+        cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+        if (-1 == cctx->compute_hmac(trace_key, derivator)) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+
+        int err = this->file.open(filename, mode);
+        if (err < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+
+        if (this->decrypt.open(this->file, trace_key) < 0){
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
     }
 
     bool disconnect() override {
-        return !this->buf.close();
+        return !this->file.close();
     }
 
 private:
     void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf.read(*pbuffer, len);
+        const ssize_t res = this->decrypt.read(this->file, *pbuffer, len);
         if (res < 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
@@ -427,12 +399,6 @@ private:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
-
-//    transbuf::icrypto_filename_buf2 & buffer() noexcept
-//    { return this->buf; }
-
-//    const transbuf::icrypto_filename_buf2 & buffer() const noexcept
-//    { return this->buf; }
 };
 
 #endif
