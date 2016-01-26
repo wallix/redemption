@@ -736,7 +736,7 @@ int crypto_read(Crypto_file * cf, char * buf, unsigned int buf_size)
  */
 int crypto_write(Crypto_file *cf, const char * buf, unsigned int size)
 {
-    if (reinterpret_cast<Crypto_file*>(cf)->is_decrypt()) {
+    if (cf->is_decrypt()) {
         return -1;
     }
     Crypto_file_encrypt * cf_struct = reinterpret_cast<Crypto_file_encrypt*>(cf);
@@ -746,7 +746,7 @@ int crypto_write(Crypto_file *cf, const char * buf, unsigned int size)
 int crypto_close(Crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
 {
     int nResult = 0;
-    if (reinterpret_cast<Crypto_file*>(cf)->is_decrypt()) {
+    if (cf->is_decrypt()) {
         Crypto_file_decrypt * cf_struct = reinterpret_cast<Crypto_file_decrypt*>(cf);
         delete cf_struct;
     }

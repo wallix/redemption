@@ -1171,7 +1171,7 @@ hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
 };  // ManagedDirectory
 
 class ManagedFile : public ManagedFileSystemObject {
-    std::unique_ptr<InFileTransport> in_file_transport; // For read operations only.
+    std::unique_ptr<InFileSeekableTransport> in_file_transport; // For read operations only.
 
 public:
     //ManagedFile() {
@@ -1283,7 +1283,7 @@ public:
            this, verbose, this->fd);
 
         if (this->fd > -1) {
-            this->in_file_transport = std::make_unique<InFileTransport>(this->fd);
+            this->in_file_transport = std::make_unique<InFileSeekableTransport>(this->fd);
         }
 
         if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
