@@ -343,11 +343,6 @@ private:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
-
-    const transbuf::ifile_buf1 & buffer() const noexcept
-    { return this->buf; }
-
-    typedef InFilenameTransport TransportType;
 };
 
 struct CryptoInFilenameTransport : public Transport
