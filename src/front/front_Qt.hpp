@@ -61,8 +61,8 @@
 #include "client_info.hpp"
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
-
 #include <QtGui/QImage>
+
 
 
 
@@ -84,6 +84,7 @@ public:
     int               _nbTry;
     int               _retryDelay;
     mod_api         * _callback;
+    QImage::Format    _imageFormat;
     
     
     Front_Qt_API( bool param1
@@ -115,7 +116,7 @@ public:
     virtual bool eventFilter(QObject *obj, QEvent *e) = 0;
     virtual void call_Draw() = 0;
     virtual void disconnect(std::string txt) = 0;
-    virtual void updateForm(bool enable) = 0;
+    virtual void send_Cliboard(const char * const front_channel_name, InStream & chunk, size_t length, uint32_t flags) = 0;
 };
 
 
@@ -136,6 +137,7 @@ public:
     Connector_Qt       * _connector;
     int                  _timer;
     bool                 _connected;
+    CHANNELS::ChannelDefArray mod_channel_list;
 
     // Keyboard Controllers members
     Keymap2              _keymap;
@@ -145,12 +147,13 @@ public:
     Qt_ScanCode_KeyMap   _qtRDPKeymap;
     
     
+    
     enum : int {
         COMMAND_VALID = 15
-      , NAME_GOTTEN   = 1
-      , PWD_GOTTEN    = 2
-      , IP_GOTTEN     = 4
-      , PORT_GOTTEN   = 8
+      , NAME_GOTTEN   =  1
+      , PWD_GOTTEN    =  2
+      , IP_GOTTEN     =  4
+      , PORT_GOTTEN   =  8
     };
 
     
@@ -173,7 +176,10 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
         std::cout << "send_to_channel" << std::endl;
+        
+        
     }
+    
 
     virtual void send_global_palette() override {
         if (this->verbose > 10) {
@@ -256,6 +262,12 @@ public:
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override;
     
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
+    
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
+    
+    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override;
+    
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -321,8 +333,6 @@ public:
         //this->gd.draw(new_cmd24, clip);
     }
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
-
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -332,8 +342,6 @@ public:
 
         std::cout << "RDPMem3Blt" << std::endl;
     }
-
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->verbose > 10) {
@@ -475,11 +483,7 @@ public:
     virtual void draw(const RDPColCache   & cmd) {}
     
     virtual void draw(const RDPBrushCache & cmd) {}
-    
-    
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override;
-    
+
     
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -643,8 +647,6 @@ public:
 
     void closeFromForm() override;
     
-    void updateForm(bool enable) override;
-    
     
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -657,9 +659,8 @@ public:
         if (this->_callback != nullptr) {
             try {
                 this->_callback->draw_event(time(nullptr));
-                
             } catch (const Error & e) {
-                const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is lasted.");
+                const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
                 std::cout << errorMsg << std::endl;
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
                 
@@ -668,7 +669,22 @@ public:
         }
     }
     
+    
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+    //--------------------------------
+    //   CLIPBOARD EVENTS FUNCTIONS
+    //--------------------------------
+    
+    void send_Cliboard(const char * const front_channel_name
+                    , InStream &         chunk
+                    , size_t             length
+                    , uint32_t           flags) override {
+        
 
+        this->_callback->send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
 };
 
 

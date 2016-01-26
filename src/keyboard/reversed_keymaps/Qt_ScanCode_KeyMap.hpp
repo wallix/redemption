@@ -26,12 +26,12 @@
  *           
  *           qsckm.setKeyboardLayout(KEYBOARDS::EN_US);       // set keyboard type from KEYBOARDS::
  *                                           
- *           qsckm.keyQtEvent(0, keyEvent);                   // call keyEvent(int keyStatusFlag, QKeyEvent * keyEvent), 
+ *           qsckm.keyQtEvent(0, keyEvent);                   // call keyEvent(uint16_t keyStatusFlag, QKeyEvent * keyEvent), 
  *                                                            // if key is pressed then keyStatusFlag = 0, if key is released keyStatusFlag = 0x8000.
  *                                                             
  *          int Scan_Code     = qsckm.scanCode;                  // retrieve the scan code (The Unicode character input code. ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
  *          
- *          int Keyboard_Flag = qsckm.flag;                      // retrieve the 2 bytes keyboard flag (A 16-bit unsigned integer. The flags describing the Unicode keyboard event. 
+ *          uint16_t Keyboard_Flag = qsckm.flag;                 // retrieve the 2 bytes keyboard flag (A 16-bit unsigned integer. The flags describing the Unicode keyboard event. 
  *                                                               //                                     ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
  *     }
  *  
@@ -41,9 +41,9 @@
  * 
  *      Qt_ScanCode_KeyMap qsckm();
  * 
- *      qsckm.setCustomKeyCode(qt_key, ASCII_Code, scan_Code, extended);   // Call setCustomKeyCode(int qt_key, int ASCII_Code, int scan_Code, bool extended) to match a Qt key code to an ASCII 
- *                                                                         // code, Qt_ScanCode_KeyMap will try to find it within active keyboard layout to retrieve the scan code.
- *                                                                         // You can directly match a scan code to a Qt key code as well. Set a variable to 0 to avoid the match.
+ *      qsckm.setCustomKeyCode(qt_key, ASCII_Code, scan_Code, extended);   // Call setCustomKeyCode(int qt_key, int ASCII_Code, int scan_Code, bool extended) to add new match between a Qt key 
+ *                                                                         // code and an ASCII code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
+ *                                                                         // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
  * 
  * 
  *
@@ -551,7 +551,7 @@ private:
     
 public:
     int scanCode;
-    int flag;
+    uint16_t flag;
     
     //=================//
     //   CONSTRUCTOR   //
@@ -633,7 +633,7 @@ public:
     }
     
 
-    void keyEvent(const int keyStatusFlag, const QKeyEvent *keyEvent) { 
+    void keyEvent(const uint16_t keyStatusFlag, const QKeyEvent *keyEvent) { 
         this->flag = keyStatusFlag;
         this->scanCode = keyEvent->key(); 
         int keyCode(keyEvent->key());
