@@ -403,7 +403,7 @@ public:
     CryptoInFilenameTransport(CryptoContext * cctx, const char * filename)
         : buf(cctx)
     {
-        if (this->buffer().open(filename, 0600) < 0) {
+        if (this->buf.open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -428,11 +428,11 @@ private:
         }
     }
 
-    transbuf::icrypto_filename_buf2 & buffer() noexcept
-    { return this->buf; }
+//    transbuf::icrypto_filename_buf2 & buffer() noexcept
+//    { return this->buf; }
 
-    const transbuf::icrypto_filename_buf2 & buffer() const noexcept
-    { return this->buf; }
+//    const transbuf::icrypto_filename_buf2 & buffer() const noexcept
+//    { return this->buf; }
 };
 
 #endif
