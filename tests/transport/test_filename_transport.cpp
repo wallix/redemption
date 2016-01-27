@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(TestFilename)
     ::unlink(filename);
 
     {
-        OutFilenameTransport in(filename);
-        in.send("ABCDE", 5);
+        OutFilenameTransport out(filename);
+        out.send("ABCDE", 5);
     }
 
     {
@@ -59,17 +59,17 @@ BOOST_AUTO_TEST_CASE(TestFilename)
 
         CryptoContext cctx(rnd, ini, 1);
 
-        InFilenameTransport out(&cctx, filename);
+        InFilenameTransport in(&cctx, filename, 0);
         char s[5];
         char * sp = s;
         char ** p = &sp;
-        out.recv(p, 5);
+        in.recv(p, 5);
         BOOST_CHECK_EQUAL(sp-s, 5);
         BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
-            out.recv(p, 1);
+            in.recv(p, 1);
             BOOST_CHECK(false);
         }
         catch (Error & e) {
@@ -101,22 +101,22 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     CryptoContext cctx(rnd, ini, 1);
 
     {
-        CryptoOutFilenameTransport in(&cctx, filename);
-        in.send("ABCDE", 5);
+        CryptoOutFilenameTransport out(&cctx, filename);
+        out.send("ABCDE", 5);
     }
 
     {
-        CryptoInFilenameTransport out(&cctx, filename);
+        CryptoInFilenameTransport in(&cctx, filename, 1);
         char s[5];
         char * sp = s;
         char ** p = &sp;
-        out.recv(p, 5);
+        in.recv(p, 5);
         BOOST_CHECK_EQUAL(sp-s, 5);
         BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
-            out.recv(p, 1);
+            in.recv(p, 1);
             BOOST_CHECK(false);
         }
         catch (Error & e) {

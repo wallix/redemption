@@ -41,7 +41,7 @@ struct InFilenameTransport : public Transport
     int fd;
 
     public:
-    InFilenameTransport(CryptoContext * cctx, const char * filename) 
+    InFilenameTransport(CryptoContext * cctx, const char * filename, int encryption) 
         : fd(-1)
     {
         TODO("this is basically the same as InFileTransport, but with the open performed in class. merge both");
@@ -114,7 +114,7 @@ struct CryptoInFilenameTransport : public Transport
 
 
 public:
-    CryptoInFilenameTransport(CryptoContext * cctx, const char * filename)
+    CryptoInFilenameTransport(CryptoContext * cctx, const char * filename, int encryption)
         : pos(0)
         , raw_size(0)
         , state(0)
