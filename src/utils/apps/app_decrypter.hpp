@@ -88,7 +88,7 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, CryptoC
 
     OpenSSL_add_all_digests();
 
-    CryptoInFilenameTransport in_t(&cctx, input_filename.c_str(), 1);
+    InFilenameTransport in_t(&cctx, input_filename.c_str(), 1);
 
     const int fd = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
     if (fd != -1) {

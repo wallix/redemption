@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     }
 
     {
-        CryptoInFilenameTransport in(&cctx, filename, 1);
+        InFilenameTransport in(&cctx, filename, 1);
         char s[5];
         char * sp = s;
         char ** p = &sp;
