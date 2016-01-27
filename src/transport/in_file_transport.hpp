@@ -21,67 +21,71 @@
 #ifndef REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 
-// #include "buffer/buffering_buf.hpp"
-#include "mixin_transport.hpp"
-#include "fdbuf.hpp"
+#include "error.hpp"
+#include "transport/transport.hpp"
 
-class InputTransportFlat : public Transport
+class InFileTransport : public Transport
 {
-    io::posix::fdbuf buf;
+protected:
+    int fd;
 
 public:
-    InputTransportFlat() = default;
-
-    template<class T>
-    explicit InputTransportFlat(const T & buf_params)
-    : buf(buf_params)
+    explicit InFileTransport(int fd)
+    : fd(fd)
     {}
 
-    bool disconnect() override {
-        return !this->buf.close();
+    ~InFileTransport()
+    {
+        this->disconnect();
+    }
+
+    bool disconnect() {
+        if (-1 != this->fd) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return !ret;
+        }
+        return !0;
     }
 
 private:
-    void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf.read(*pbuffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+    void do_recv(char ** pbuffer, size_t len) {
+        ssize_t res = -1;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            res = ::read(this->fd, *pbuffer + (len - remaining_len), remaining_len);
+            if (res <= 0){
+                if ((res == 0)
+                ||  ((errno != EINTR) && (remaining_len != len))){
+                    break;
+                }
+                if (errno == EINTR){
+                    continue;
+                }
+                throw Error(ERR_TRANSPORT_READ_FAILED, res);
+            }
+            remaining_len -= res;
         }
+        res = len - remaining_len;
         *pbuffer += res;
         this->last_quantum_received += res;
         if (static_cast<size_t>(res) != len){
-            this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
-
-protected:
-    io::posix::fdbuf & buffer() noexcept
-    { return this->buf; }
-
-    const io::posix::fdbuf & buffer() const noexcept
-    { return this->buf; }
-
-    typedef InputTransportFlat TransportType;
 };
 
 
-struct InFileTransport : InputTransportFlat
-{
-    explicit InFileTransport(int fd) noexcept
-    : InFileTransport::TransportType(fd)
-    {}
-};
 
-struct InFileSeekableTransport : InputTransportFlat
+struct InFileSeekableTransport : public InFileTransport
 {
+    public:
     explicit InFileSeekableTransport(int fd) noexcept
-    : InFileSeekableTransport::TransportType(fd)
+    : InFileTransport(fd)
     {}
     
     void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
+        if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }

@@ -272,7 +272,7 @@ private:
         ssize_t res = 0;
         size_t remaining_len = len;
         while (remaining_len) {
-            res = ::read(this->fd, static_cast<char*>(*pbuffer) + (len - remaining_len), remaining_len);
+            res = ::read(this->fd, *pbuffer + (len - remaining_len), remaining_len);
             if (res <= 0){
                 // We must exit loop or we will enter infinite loop
                 if ((res == 0)
