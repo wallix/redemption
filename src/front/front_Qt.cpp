@@ -56,7 +56,8 @@ Front_Qt::Front_Qt(const char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
     this->_info.console_session = 0;
     this->_info.brush_cache_code = 0;
-    this->_info.bpp = 24;
+    this->_info.bpp = 32;
+    this->_imageFormat = bpp_to_QFormat(this->_info.bpp);
     this->_info.width = 800;
     this->_info.height = 600;
     this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
@@ -176,8 +177,6 @@ void Front_Qt::closeFromForm() {
     
     
 void Front_Qt::connect() {
-    this->updateForm(false);
-
     if (this->_connector->connect()) {
 
         this->_form->hide(); 
@@ -191,11 +190,10 @@ void Front_Qt::connect() {
     
     this->_form->setCursor(Qt::ArrowCursor);
     this->_screen->setCursor(Qt::ArrowCursor);
-    this->updateForm(true);;
 }
 
 
-void Front_Qt::disconnect(std::string txt) {
+void Front_Qt::disconnect(std::string error) {
     
     if (this->_connector != nullptr) {
         this->_connector->drop_connexion();
@@ -207,7 +205,7 @@ void Front_Qt::disconnect(std::string txt) {
     this->_form->set_portField(this->_port);
     this->_form->set_PWDField(this->_pwd);
     this->_form->set_userNameField(this->_userName);
-    this->_form->set_ErrorMsg(txt);
+    this->_form->set_ErrorMsg(error);
     this->_form->show();
     
     this->_form->setCursor(Qt::ArrowCursor);
@@ -224,12 +222,6 @@ void Front_Qt::connexionReleased(){
     this->_pwd      =  this->_form->get_PWDField();
     this->_port     =  this->_form->get_portField();
     this->connect();
-}
-
-
-void Front_Qt::updateForm(bool enable){
-    this->_form->setEnable(enable);
-    this->_form->update();
 }
 
 

@@ -23,6 +23,10 @@
 #include <QtGui/QFormLayout>
 #include <QtGui/QDialog>
 #include <QtGui/QPushButton>
+#include <QtGui/QClipboard>
+#include <QtGui/QTabWidget>
+#include <QtGui/QGridLayout>
+#include <QtGui/QDockWidget>
 
 
 
@@ -36,45 +40,69 @@ public:
     Front_Qt_API       * _front;
     const int            _width;
     const int            _height;
-    QFormLayout          _layout;
-    QLabel               _title;
+    QWidget              _emptyPanel;
+    QWidget            * _viewTab;
+    QWidget            * _keyboardTab;
+    QGridLayout        * _layout;
     QPushButton          _buttonSave;
     QPushButton          _buttonCancel;
-    
+    QTabWidget         * _tabs;
+
     
     DialogOptions_Qt(Front_Qt_API * front, QWidget * parent) 
         : QDialog(parent)
         , _front(front)
         , _width(400)
-        , _height(300)
-        , _layout(this)
-        , _title("Options", this)
+        , _height(350)
+        , _emptyPanel(this)
+        , _viewTab(nullptr)
+        , _keyboardTab(nullptr)
+        , _layout(nullptr)
         , _buttonSave("Save", this)
         , _buttonCancel("Cancel", this)
+        , _tabs(nullptr)
     {
         this->setWindowTitle("Options");
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
+        this->setModal(true);
         
-        this->_layout.addRow(&(this->_title));
-        this->setLayout(&(this->_layout));
+        this->_layout = new QGridLayout(this);
         
-        QRect rectSave(QPoint(160, 266), QSize(110, 24)); 
+        
+        // Tab options
+        this->_viewTab = new QWidget(this);
+        this->_keyboardTab = new QWidget(this);
+        this->_tabs = new QTabWidget(this);
+        
+        const QString strView("View");
+        this->_tabs->addTab(this->_viewTab, strView);
+        
+        const QString strKeyboard("Keyboard");
+        this->_tabs->addTab(this->_keyboardTab, strKeyboard);
+        this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
+        
+        
+        // Bottons
+        this->_layout->addWidget(&(this->_emptyPanel), 11, 0, 1, 2);
+ 
         this->_buttonSave.setToolTip(this->_buttonSave.text());
-        this->_buttonSave.setGeometry(rectSave);
         this->_buttonSave.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonSave)   , SIGNAL (pressed()),  this, SLOT (savePressed()));
         this->QObject::connect(&(this->_buttonSave)   , SIGNAL (released()), this, SLOT (saveReleased()));
         this->_buttonSave.setFocusPolicy(Qt::StrongFocus);
-        
-        QRect rectCancel(QPoint(280, 266), QSize(110, 24)); 
+        this->_layout->addWidget(&(this->_buttonSave), 11, 2);
+ 
         this->_buttonCancel.setToolTip(this->_buttonCancel.text());
-        this->_buttonCancel.setGeometry(rectCancel);
         this->_buttonCancel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
         this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (released()), this, SLOT (cancelReleased()));
         this->_buttonCancel.setFocusPolicy(Qt::StrongFocus);
+        this->_layout->addWidget(&(this->_buttonCancel), 11, 3);
         
+        
+        this->setLayout(this->_layout);
+
         QDesktopWidget* desktop = QApplication::desktop();
         int centerW = (desktop->width()/2)  - (this->_width/2);
         int centerH = (desktop->height()/2) - (this->_height/2);
@@ -90,14 +118,12 @@ public Q_SLOTS:
     void savePressed() {}
     
     void saveReleased() {
-        this->_front->updateForm(true);
         this->close();
     }
     
     void cancelPressed() {}
     
     void cancelReleased() {
-        this->_front->updateForm(true);
         this->close();
     }
     
@@ -185,9 +211,9 @@ public:
         this->_front->closeFromForm();
     }
     
-    void set_ErrorMsg(std::string txt) {
+    void set_ErrorMsg(std::string str) {
         this->_errorLabel.clear();
-        this->_errorLabel.setText(QString(txt.c_str()));
+        this->_errorLabel.setText(QString(str.c_str()));
     }
     
     void set_IPField(std::string str) {
@@ -230,11 +256,6 @@ public:
         return this->_portField.text().toInt();
     }
     
-    void setEnable(bool enable) {
-        this->_buttonConnexion.setEnabled(enable);
-        this->_buttonOptions.setEnabled(enable);
-    }
-    
     
 private Q_SLOTS:
     void connexionPressed() {
@@ -248,8 +269,6 @@ private Q_SLOTS:
     void optionsPressed() {}
     
     void optionsReleased() {
-        this->setEnable(false);
-        this->update();
         DialogOptions_Qt * dia = new DialogOptions_Qt(this->_front, this);
     }
 };
@@ -423,7 +442,8 @@ public:
     mod_api         * _callback;
     SocketTransport * _sck;
     int               _client_sck;
-    
+    QClipboard      * _clipboard;
+     
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
     : QObject(parent)
@@ -432,7 +452,11 @@ public:
     , _callback(nullptr)
     , _sck(nullptr)
     , _client_sck(0)
-    {}
+    , _clipboard(nullptr)
+    {
+        this->_clipboard = QApplication::clipboard();
+        this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(send_clipboard()));
+    }
     
     ~Connector_Qt() {
         this->drop_connexion();
@@ -530,22 +554,37 @@ public:
             this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
-            this->QObject::connect(this->_sckRead, SIGNAL(activated(int)), this, SLOT(call_Draw()));
+            this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
             
         } catch (const Error & e) {
-            const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is lasted.");
+            const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is closed.");
             std::cout << errorMsg << std::endl;
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
             
             this->_front->disconnect(labelErrorMsg);
         }
-        
     }
+
     
 public Q_SLOTS:
     void call_Draw() {
         this->_front->call_Draw();
     }
+    
+    void send_clipboard() {
+        std::cout << "modifying clipboard" << std::endl;
+        if (this->_callback != nullptr) {
+            //this->_front->send_Cliboard(front_channel_name, chunk, length, flags);
+        }
+        
+        /*const char * const front_channel_name
+                    , InStream &         chunk
+                    , size_t             length
+                    , uint32_t           flags
+                    */
+    }
+    
+
     
 };
 
