@@ -242,6 +242,7 @@ struct InFilenameTransport : public Transport
     InFilenameTransport(CryptoContext * cctx, const char * filename) 
         : fd(-1)
     {
+        TODO("this is basically the same as InFileTransport, but with the open performed in class. merge both");
         this->fd = ::open(filename, O_RDONLY);
         if (this->fd < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
@@ -267,6 +268,7 @@ struct InFilenameTransport : public Transport
 
 private:
     void do_recv(char ** pbuffer, size_t len) override {
+        TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
         TODO("this is blocking read, add support for timeout reading");
         TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
         ssize_t res = 0;
@@ -277,7 +279,6 @@ private:
                 // We must exit loop or we will enter infinite loop
                 if ((res == 0)
                 || ((errno!=EINTR) && (remaining_len != len))){
-                    res = len - remaining_len;
                     break;
                 }
                 if (errno == EINTR){
@@ -288,9 +289,10 @@ private:
             }
             remaining_len -= res;
         }
+        res = len - remaining_len;
         *pbuffer += res;
         this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
+        if (remaining_len != 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }

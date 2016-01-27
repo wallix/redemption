@@ -50,6 +50,7 @@ public:
 
 private:
     void do_recv(char ** pbuffer, size_t len) {
+        TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
         ssize_t res = -1;
         size_t remaining_len = len;
         while (remaining_len) {
@@ -62,6 +63,7 @@ private:
                 if (errno == EINTR){
                     continue;
                 }
+                this->status = false;
                 throw Error(ERR_TRANSPORT_READ_FAILED, res);
             }
             remaining_len -= res;
@@ -69,7 +71,7 @@ private:
         res = len - remaining_len;
         *pbuffer += res;
         this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
+        if (remaining_len != 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
