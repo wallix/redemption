@@ -207,7 +207,7 @@ public:
         unsigned char      key[32];
         const int i = ::EVP_BytesToKey(cipher
                                        , ::EVP_sha1()
-                                       , reinterpret_cast<const unsigned char *>(salt)
+                                       , reinterpret_cast<const uint8_t*>(&salt[0])
                                        , trace_key
                                        , CRYPTO_KEY_LENGTH
                                        , nrounds
@@ -237,9 +237,40 @@ public:
     }
 
 private:
-
-    ssize_t decrypt_read(void * data, size_t requested_size)
+    int decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
     {
+        int safe_size = *dst_sz;
+        int remaining_size = 0;
+
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+            return -1;
+        }
+        if (EVP_DecryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+            return -1;
+        }
+        if (EVP_DecryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+            return -1;
+        }
+        *dst_sz = safe_size + remaining_size;
+        return 0;
+    }
+           
+    int close()
+    {
+        if (-1 != this->fd) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t requested_size) override {
         if (this->state & CF_EOF) {
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
@@ -373,7 +404,7 @@ private:
             // Check how much we can copy
             unsigned int copiable_size = MIN(remaining_size, remaining_requested_size);
             // Copy buffer to caller
-            ::memcpy(static_cast<char*>(data) + (requested_size - remaining_requested_size)
+            ::memcpy(&(*pbuffer)[requested_size - remaining_requested_size]
                     , this->buf + this->pos, copiable_size);
             this->pos      += copiable_size;
             remaining_requested_size -= copiable_size;
@@ -382,51 +413,11 @@ private:
                 this->raw_size = 0;
             }
         }
-        return requested_size - remaining_requested_size;
-    }
-
-    int decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-    {
-        int safe_size = *dst_sz;
-        int remaining_size = 0;
-
-        /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-            return -1;
-        }
-        if (EVP_DecryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-            return -1;
-        }
-        if (EVP_DecryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-            return -1;
-        }
-        *dst_sz = safe_size + remaining_size;
-        return 0;
-    }
-           
-    int close()
-    {
-        if (-1 != this->fd) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return ret;
-        }
-        return 0;
-    }
-
-private:
-    void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->decrypt_read(*pbuffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-        *pbuffer += res;
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
+        
+        *pbuffer += requested_size - remaining_requested_size;
+        this->last_quantum_received += requested_size - remaining_requested_size;
+        
+        if (remaining_requested_size != 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
