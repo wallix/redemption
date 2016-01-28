@@ -410,21 +410,165 @@ namespace detail {
     class in_meta_sequence_buf_crypto
     : public transbuf::icrypto_filename_buf
     {
-        struct ReaderBuf
+        char rl_buf[1024];
+        char * rl_eof;
+        char * rl_cur;
+
+        class ibase_crypto_file_buf
         {
-            transbuf::icrypto_filename_buf_meta & buf;
+            transfil::decrypt_filter decrypt;
+            CryptoContext * cctx;
+            transbuf::ifile_buf file;
 
-            explicit ReaderBuf(transbuf::icrypto_filename_buf_meta & buf)
-            : buf(buf)
-            {}
-
-            ssize_t read(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
+        public:
+            explicit ibase_crypto_file_buf(CryptoContext * cctx, const char * meta_filename)
+            : cctx(cctx)
+            , file(cctx)
+            {
+                if (this->open(meta_filename) < 0) {
+                    LOG(LOG_WARNING, "read failed 4");
+                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                }
             }
-        };
 
-        transbuf::icrypto_filename_buf_meta buf_meta;
-        ReaderLine<ReaderBuf> reader;
+            int open(const char * filename, mode_t mode = 0600)
+            {
+                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+                unsigned char derivator[DERIVATOR_LENGTH];
+
+                this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+                if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
+                    return -1;
+                }
+
+                int err = this->file.open(filename, mode);
+                if (err < 0) {
+                    return err;
+                }
+
+                return this->decrypt.open(this->file, trace_key);
+            }
+
+            ssize_t read(void * data, size_t len)
+            { return this->decrypt.read(this->file, data, len); }
+
+            int close()
+            { return this->file.close(); }
+
+            bool is_open() const noexcept
+            { return this->file.is_open(); }
+
+            off64_t seek(off64_t offset, int whence) const
+            { return this->file.seek(offset, whence); }
+        } buf_meta;
+        
+        int reader_read(int err)
+        {
+            LOG(LOG_INFO, "reader_read: rl_buf=%s %d %d", this->rl_buf
+                , static_cast<int>(this->rl_cur-this->rl_buf)
+                , static_cast<int>(this->rl_eof-this->rl_buf));
+        
+            ssize_t ret = this->buf_meta.read(this->rl_buf, sizeof(this->rl_buf));
+            if (ret < 0 && errno != EINTR) {
+                LOG(LOG_WARNING, "read failed");
+                return -ERR_TRANSPORT_READ_FAILED;
+            }
+            LOG(LOG_INFO, "reader_read: rl_buf=%s %d %d %d", this->rl_buf
+                , static_cast<int>(this->rl_cur-this->rl_buf)
+                , static_cast<int>(this->rl_eof-this->rl_buf)
+                , static_cast<int>(ret));
+
+            if (ret == 0) {
+                LOG(LOG_WARNING, "read failed xxx");
+                return -err;
+            }
+            this->rl_eof = this->rl_buf + ret;
+            this->rl_cur = this->rl_buf;
+            return 0;
+        }
+
+        ssize_t reader_read_line(char * dest, size_t len, int err)
+        {
+            ssize_t total_read = 0;
+            LOG(LOG_INFO, "rl_buf=%s [%d] len=%d", this->rl_buf, this->rl_cur - this->rl_buf, len);
+            while (1) {
+                char * pos = std::find(this->rl_cur, this->rl_eof, '\n');
+                LOG(LOG_INFO, "rl_buf (%d) %s [%d]", pos, this->rl_buf, this->rl_cur - this->rl_buf);
+                if (len < static_cast<size_t>(pos - this->rl_cur)) {
+                    total_read += len;
+                    memcpy(dest, this->rl_cur, len);
+                    this->rl_cur += len;
+                    break;
+                }
+                total_read += pos - this->rl_cur;
+                memcpy(dest, this->rl_cur, pos - this->rl_cur);
+                dest += pos - this->rl_cur;
+                this->rl_cur = pos + 1;
+                if (pos != this->rl_eof) {
+                    break;
+                }
+                if (int e = this->reader_read(err)) {
+                    LOG(LOG_INFO, "reader_read result: rl_buf=%s %d %d %d", this->rl_buf
+                        , static_cast<int>(this->rl_cur-this->rl_buf)
+                        , static_cast<int>(this->rl_eof-this->rl_buf)
+                        , static_cast<int>(e));
+                    return e;
+                }
+            }
+            return total_read;
+        }
+
+        int reader_next_line()
+        {
+            LOG(LOG_INFO, "reader_next_line");
+            
+            char * pos;
+            while ((pos = std::find(this->rl_cur, this->rl_eof, '\n')) == this->rl_eof) {
+                if (int e = this->reader_read(ERR_TRANSPORT_READ_FAILED)) {
+                    return e;
+                }
+            }
+            this->rl_cur = pos+1;
+            return 0;
+        }
+
+
+        MetaHeader read_meta_headers()
+        {
+            MetaHeader header{1, false};
+
+            char line[32];
+            auto sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
+            if (sz < 0) {
+                LOG(LOG_WARNING, "read failed 1");
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+
+            // v2
+            if (line[0] == 'v') {
+                LOG(LOG_INFO, "v2");
+                if (this->reader_next_line()
+                 || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
+                ) {
+                    LOG(LOG_WARNING, "read failed 2");
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+                header.version = 2;
+                header.has_checksum = (line[0] == 'c');
+            }
+            // else v1
+
+            if (this->reader_next_line()
+             || this->reader_next_line()
+            ) {
+                LOG(LOG_WARNING, "read failed 3");
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+
+            return header;
+        }
+
+
         MetaHeader meta_header;
         MetaLine meta_line;
         char meta_path[2048];
@@ -433,16 +577,14 @@ namespace detail {
     public:
         explicit in_meta_sequence_buf_crypto(const in_meta_sequence_buf_param & params)
         : transbuf::icrypto_filename_buf(params.cctx_buf)
-        , buf_meta(params.cctx_meta)
-        , reader([&]() {
-            if (this->buf_meta.open(params.meta_filename) < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-            return ReaderBuf{this->buf_meta};
-        }())
-        , meta_header(read_meta_headers(this->reader))
+        , rl_eof(rl_buf)
+        , rl_cur(rl_buf)
+        , buf_meta(params.cctx_meta, params.meta_filename)
+        , meta_header(this->read_meta_headers())
         , verbose(params.verbose)
         {
+            LOG(LOG_INFO, "v2");
+            
             this->meta_line.start_time = 0;
             this->meta_line.stop_time = 0;
 
@@ -498,12 +640,182 @@ namespace detail {
                 this->close();
             }
 
-            return this->next_line();
+            return this->reader_next_line();
+        }
+
+        int read_meta_file_v1(MetaLine & meta_line) {
+            char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
+            ssize_t len = this->reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+            if (len < 0) {
+                return -len;
+            }
+            line[len] = 0;
+
+            // Line format "fffff sssss eeeee hhhhh HHHHH"
+            //                               ^  ^  ^  ^
+            //                               |  |  |  |
+            //                               |hash1|  |
+            //                               |     |  |
+            //                           space3    |hash2
+            //                                     |
+            //                                   space4
+            //
+            // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+            //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+            typedef std::reverse_iterator<char*> reverse_iterator;
+
+            using std::begin;
+
+            reverse_iterator last(line);
+            reverse_iterator first(line + len);
+            reverse_iterator e1 = std::find(first, last, ' ');
+            if (e1 - first == 64) {
+                int err = 0;
+                auto phash = begin(meta_line.hash2);
+                for (char * b = e1.base(), * e = b + 64; e != b; ++b, ++phash) {
+                    *phash = (chex_to_int(*b, err) << 4);
+                    *phash |= chex_to_int(*++b, err);
+                }
+                REDASSERT(!err);
+            }
+
+            reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
+            if (e2 - (e1 + 1) == 64) {
+                int err = 0;
+                auto phash = begin(meta_line.hash1);
+                for (char * b = e2.base(), * e = b + 64; e != b; ++b, ++phash) {
+                    *phash = (chex_to_int(*b, err) << 4);
+                    *phash |= chex_to_int(*++b, err);
+                }
+                REDASSERT(!err);
+            }
+
+            if (e1 - first == 64 && e2 != last) {
+                first = e2 + 1;
+                e1 = std::find(first, last, ' ');
+                e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
+            }
+
+            meta_line.stop_time = meta_parse_sec(e1.base(), first.base());
+            if (e1 != last) {
+                ++e1;
+            }
+            meta_line.start_time = meta_parse_sec(e2.base(), e1.base());
+
+            if (e2 != last) {
+                *e2 = 0;
+            }
+
+            auto path_len = std::min(int(e2.base() - line), PATH_MAX);
+            memcpy(meta_line.filename, line, path_len);
+            meta_line.filename[path_len] = 0;
+
+            return 0;
+        }
+
+        char const * sread_filename(char * p, char const * e, char const * pline)
+        {
+            e -= 1;
+            for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
+                *p = *pline;
+            }
+            *p = 0;
+            return pline;
+        }
+
+        template<bool read_start_stop_time>
+        int read_meta_file_v2_impl(bool has_checksum, MetaLine & meta_line
+        ) {
+            char line[
+                PATH_MAX + 1 + 1 +
+                (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
+                (1 + MD_HASH_LENGTH*2) * 2 +
+                2
+            ];
+            ssize_t len = this->reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+            if (len < 0) {
+                return -len;
+            }
+            line[len] = 0;
+
+            // Line format "fffff
+            // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
+            // sssss eeeee hhhhh HHHHH"
+            //            ^  ^  ^  ^
+            //            |  |  |  |
+            //            |hash1|  |
+            //            |     |  |
+            //        space3    |hash2
+            //                  |
+            //                space4
+            //
+            // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
+            //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+            //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+
+            using std::begin;
+            using std::end;
+
+            auto pline = line + (this->sread_filename(begin(meta_line.filename), end(meta_line.filename), line) - line);
+
+            int err = 0;
+            auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.uid        = strtoll (pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.gid        = strtoll (pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.dev        = strtoull(pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
+            if (read_start_stop_time) {
+            err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+            }
+
+            if (has_checksum
+             && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
+            ) {
+                auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
+                    auto phash = begin(hash);
+                    for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
+                        *phash = (chex_to_int(*pend, err) << 4);
+                        *phash |= chex_to_int(*++pend, err);
+                    }
+                };
+                read(meta_line.hash1);
+                err |= (*pend != ' ');
+                read(meta_line.hash2);
+            }
+
+            err |= bool(*pend);
+
+            if (err) {
+                LOG(LOG_WARNING, "read failed 5");
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+
+            return 0;
+        }
+
+
+        int read_meta_file_v2(MetaHeader const & meta_header, MetaLine & meta_line) {
+            return read_meta_file_v2_impl<true>(meta_header.has_checksum, meta_line);
+        }
+
+        int read_meta_file(MetaHeader const & meta_header, MetaLine & meta_line)
+        {
+            if (meta_header.version == 1) {
+                return this->read_meta_file_v1(meta_line);
+            }
+            else {
+                return this->read_meta_file_v2(meta_header, meta_line);
+            }
         }
 
     private:
         int open_next() {
-            if (const int e = this->next_line()) {
+            if (const int e = this->reader_next_line()) {
                 return e < 0 ? e : -1;
             }
             const int e = this->transbuf::icrypto_filename_buf::open(this->meta_line.filename);
@@ -512,7 +824,7 @@ namespace detail {
 
         int next_line()
         {
-            if (auto err = read_meta_file(this->reader, this->meta_header, this->meta_line)) {
+            if (auto err = this->read_meta_file(this->meta_header, this->meta_line)) {
                 return err;
             }
 
@@ -548,6 +860,9 @@ namespace detail {
         { return this->meta_line.stop_time; }
     };
     
+    
+    
+    
     class in_meta_sequence_buf_flat
     : public transbuf::ifile_buf
     {
@@ -577,6 +892,7 @@ namespace detail {
         , buf_meta(params.cctx_meta)
         , reader([&]() {
             if (this->buf_meta.open(params.meta_filename) < 0) {
+                LOG(LOG_WARNING, "read failed 6");
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
             return ReaderBuf{this->buf_meta};

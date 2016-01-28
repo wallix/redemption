@@ -460,6 +460,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         crypto_trans.send("BBBBXCCCCX", 10);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
+        BOOST_CHECK(true);
     }
 
     {
@@ -468,12 +469,23 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         char buffer[1024] = {};
         char * bob = buffer;
         char ** pbuffer = &bob;
-        crypto_trans.recv(pbuffer, 15);
+
+        BOOST_CHECK(true);
+
+        try {
+            crypto_trans.recv(pbuffer, 15);
+        } catch (Error & e){
+            BOOST_CHECK(false);               
+        };
+
+        BOOST_CHECK(true);
+
         BOOST_CHECK_EQUAL(15, *pbuffer - buffer);
 
         if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
             BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
             buffer[15] = 0;
+            BOOST_CHECK(true);
             LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
             BOOST_CHECK(false);
         }
