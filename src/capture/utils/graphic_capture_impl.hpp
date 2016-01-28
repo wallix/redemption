@@ -136,7 +136,7 @@ private:
         its[2] = std::find_if(its[1], its[4], ge{16});
         its[3] = std::find_if(its[2], its[4], ge{24});
 
-        using dec8 = to_color8_palette<decode_color8_opaquerect>;
+        using dec8 = with_color8_palette<decode_color8_opaquerect>;
         switch (order_bpp) {
             case 8 : return choose_encoder(dec8{BGRPalette::classic_332_rgb()}, rng_by_bpp);
             case 15: return choose_encoder(decode_color15_opaquerect{}, rng_by_bpp);
@@ -190,7 +190,7 @@ public:
     using GraphicApi = BasicGraphic;
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
-    : graphic_api(mouse)
+    : graphic_api(GraphicProxy{mouse}, gdi::GraphicDepths::depth24)
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
     {

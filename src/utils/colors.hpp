@@ -404,7 +404,7 @@ inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
 }
 
 template<class Converter>
-struct to_color8_palette
+struct with_color8_palette
 {
     static constexpr const uint8_t bpp = Converter::bpp;
 

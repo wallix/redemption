@@ -34,7 +34,6 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
 
@@ -560,7 +559,6 @@ protected:
     }
 
 public:
-    // TODO flush
     void sync() override {
         this->flush_bitmaps();
         this->flush_orders();

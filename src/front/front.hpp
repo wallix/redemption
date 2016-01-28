@@ -364,7 +364,7 @@ private:
         }
 
         gdi::GraphicApi& initialize_drawable(uint8_t mod_bpp, uint8_t client_bpp, BGRPalette const & palette) {
-            using dec8 = to_color8_palette<decode_color8_opaquerect>;
+            using dec8 = with_color8_palette<decode_color8_opaquerect>;
             using dec15 = decode_color15_opaquerect;
             using dec16 = decode_color16_opaquerect;
             using dec24 = decode_color24_opaquerect;
@@ -442,11 +442,12 @@ private:
         template<class Dec, class Enc>
         void build_graphics(Dec const & dec, Enc const & enc) {
             using color_converter_t = color_converter<Dec, Enc>;
-            using Drawable = gdi::GraphicAdapter<DrawableProxy<color_converter_t>>;
-            this->gd_converted = std::make_unique<Drawable>(
+            using Proxy = DrawableProxy<color_converter_t>;
+            using Drawable = gdi::GraphicAdapter<Proxy>;
+            this->gd_converted = std::make_unique<Drawable>(Proxy{
                 color_converter_t(dec, enc),
                 this->graphics_update_pdu()
-            );
+            }, gdi::GraphicDepths::from_bpp(Dec::bpp));
             this->gd = this->gd_converted.get();
         }
     } orders;
@@ -494,9 +495,8 @@ private:
         return gd;
     }
 
-    // TODO reference_wrapper ?
-    gdi::GraphicApi * gd = &null_gd();
-    gdi::GraphicApi * graphics_update = &null_gd();
+    gdi::utils::non_null<gdi::GraphicApi*> gd = &null_gd();
+    gdi::utils::non_null<gdi::GraphicApi*> graphics_update = &null_gd();
 
     void set_gd(gdi::GraphicApi & new_gd) {
         this->gd = &new_gd;
@@ -4212,15 +4212,17 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
+private:
+    template<class RngDeltaPoint>
+    static Rect delta_list_to_rect(int16_t minx, int16_t miny, const RngDeltaPoint & delta_points) {
+        int16_t maxx, maxy, previousx, previousy;
 
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
+        maxx = previousx = minx;
+        maxy = previousy = miny;
 
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaPoints[i].xDelta;
-            previousy += cmd.deltaPoints[i].yDelta;
+        for (auto & delta_point : delta_points) {
+            previousx += delta_point.xDelta;
+            previousy += delta_point.yDelta;
 
             minx = std::min(minx, previousx);
             miny = std::min(miny, previousy);
@@ -4228,7 +4230,15 @@ public:
             maxx = std::max(maxx, previousx);
             maxy = std::max(maxy, previousy);
         }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
+        return Rect(minx, miny, maxx-minx+1, maxy-miny+1);
+    }
+
+public:
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
+        const Rect rect = this->delta_list_to_rect(
+            cmd.xStart, cmd.yStart,
+            make_array_view(cmd.deltaPoints, cmd.NumDeltaEntries)
+        );
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
@@ -4236,22 +4246,10 @@ public:
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaPoints[i].xDelta;
-            previousy += cmd.deltaPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
+        const Rect rect = this->delta_list_to_rect(
+            cmd.xStart, cmd.yStart,
+            make_array_view(cmd.deltaPoints, cmd.NumDeltaEntries)
+        );
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
@@ -4259,22 +4257,10 @@ public:
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaEncodedPoints[i].xDelta;
-            previousy += cmd.deltaEncodedPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
+        const Rect rect = this->delta_list_to_rect(
+            cmd.xStart, cmd.yStart,
+            make_array_view(cmd.deltaEncodedPoints, cmd.NumDeltaEntries)
+        );
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
             this->graphics_update->draw(cmd, clip);

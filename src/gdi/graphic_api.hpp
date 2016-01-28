@@ -71,8 +71,49 @@ namespace RDP {
 
 namespace gdi {
 
+struct GraphicDepths
+{
+    enum Depths {
+        unspecified,
+        depth8  = 1 << 0,
+        depth15 = 1 << 1,
+        depth16 = 1 << 2,
+        depth24 = 1 << 3,
+        all = depth8 | depth15 | depth16 | depth24,
+    };
+
+    constexpr GraphicDepths(Depths e)
+    : depth_(e) {
+    }
+
+    static GraphicDepths from_bpp(uint8_t bpp) {
+        return
+            bpp == 8  ? depth8 :
+            bpp == 15 ? depth15 :
+            bpp == 16 ? depth16 :
+            bpp == 24 ? depth24 :
+            bpp == 32 ? depth24 :
+            unspecified;
+    }
+
+    operator Depths () const {
+        return this->depth_;
+    }
+
+    bool contains(Depths e) const {
+        return this->depth_ & e;
+    }
+
+private:
+    Depths depth_;
+};
+
 struct GraphicApi : private noncopyable
 {
+    GraphicApi(GraphicDepths const & depths = GraphicDepths::unspecified)
+    : depth_(depths)
+    {}
+
     virtual ~GraphicApi() = default;
 
     virtual void draw(RDP::FrameMarker    const & order) = 0;
@@ -111,6 +152,18 @@ struct GraphicApi : private noncopyable
 
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) {}
+
+    GraphicDepths const & depths() const {
+        return this->depth_;
+    }
+
+private:
+    GraphicDepths depth_;
+
+protected:
+    void set_depths(GraphicDepths const & depths) {
+        this->depth_ = depths;
+    }
 };
 
 struct GraphicProxy

@@ -203,9 +203,6 @@ private:
 
     MouseInfo mouse_info;
 
-    uint8_t order_bpp;
-    uint8_t capture_bpp;
-
     std::unique_ptr<Graphic> gd;
     std::unique_ptr<Native> pnc;
     std::unique_ptr<Static> psc;
@@ -215,8 +212,6 @@ private:
     NewInputKbd input_kbd_api;
     NewCaptureProbe capture_probe_api;
     Graphic::GraphicApi * graphic_api = nullptr;
-
-    const Inifile & ini;
 
     ApisRegister get_apis_register() {
         return {
@@ -240,11 +235,8 @@ public:
     , capture_event{}
     , cctx(cctx)
     , mouse_info{now, width / 2, height / 2}
-    , order_bpp(order_bpp)
-    , capture_bpp(capture_bpp)
     // TODO
     , capture_api(*this)
-    , ini(ini)
     {
         TODO("Remove that after change of capture interface")
         (void)full_video;

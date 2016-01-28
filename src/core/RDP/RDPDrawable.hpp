@@ -62,7 +62,7 @@
 #include "text_metrics.hpp"
 
 #include "gdi/graphic_api.hpp"
-
+#include <iostream>
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
 class RDPDrawable
@@ -72,19 +72,18 @@ class RDPDrawable
 
     Drawable drawable;
     int frame_start_count;
-    int order_bpp;
     BGRPalette mod_palette_rgb;
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height, int order_bpp)
-    : drawable(width, height)
+    : GraphicApi(gdi::GraphicDepths::from_bpp(order_bpp))
+    , drawable(width, height)
     , frame_start_count(0)
-    , order_bpp(order_bpp)
     , mod_palette_rgb(BGRPalette::classic_332())
     {
-        REDASSERT(order_bpp);
+        REDASSERT(gdi::GraphicDepths::unspecified != this->depths());
     }
 
     const uint8_t * data() const noexcept {
@@ -131,28 +130,47 @@ public:
     //@}
 
 private:
-    Color u32_to_color(uint32_t color) const
-    {
+    Color u32_to_color(uint32_t color) const {
         return this->drawable.u32bgr_to_color(color);
     }
 
-    Color u32rgb_to_color(BGRColor color) const
-    {
-        return this->u32_to_color((this->order_bpp == 24)
-            ? color
-            : ::color_decode_opaquerect(color, this->order_bpp, this->mod_palette_rgb)
-        );
+    Color u32rgb_to_color(BGRColor color) const {
+        using Depths = gdi::GraphicDepths;
+
+        if (this->depths() != Depths::depth24) {
+            switch (this->depths()){
+                case Depths::depth8:  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+                case Depths::depth15: color = decode_color15_opaquerect()(color); break;
+                case Depths::depth16: color = decode_color16_opaquerect()(color); break;
+                default: REDASSERT(false);
+            }
+        }
+
+        return this->u32_to_color(color);
     }
 
-    std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const
-    {
-        if (this->order_bpp == 24) {
-            return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
+    std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const {
+        using Depths = gdi::GraphicDepths;
+
+        if (this->depths() == Depths::depth24) {
+            switch (this->depths()){
+                case Depths::depth8:
+                    color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
+                    color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
+                    break;
+                case Depths::depth15:
+                    color1 = decode_color15_opaquerect()(color1);
+                    color2 = decode_color15_opaquerect()(color2);
+                    break;
+                case Depths::depth16:
+                    color1 = decode_color16_opaquerect()(color1);
+                    color2 = decode_color16_opaquerect()(color2);
+                    break;
+                default:;
+            }
         }
-        return std::pair<Color, Color>{
-            this->u32_to_color(::color_decode_opaquerect(color1, this->order_bpp, this->mod_palette_rgb)),
-            this->u32_to_color(::color_decode_opaquerect(color2, this->order_bpp, this->mod_palette_rgb))
-        };
+
+        return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
     }
 
 public:
