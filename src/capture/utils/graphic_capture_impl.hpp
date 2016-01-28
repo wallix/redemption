@@ -27,7 +27,6 @@
 #include "gdi/graphic_cmd_color_converter.hpp"
 #include "gdi/proxy.hpp"
 #include "gdi/graphic_api.hpp"
-#include "gdi/railgraphic_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "utils/range.hpp"
 
@@ -54,10 +53,10 @@ private:
         template<class Cmd, class... Ts>
         auto operator()(draw_tag, gdi::GraphicApi &, Cmd const & cmd, Ts const & ... args)
         // avoid some virtual call
-        -> decltype(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, cmd))
+        -> decltype(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, std::declval<Cmd&>(cmd)))
         {
             assert(bool(this->cmd_color_distributor));
-            this->cmd_color_distributor->draw(args...);
+            this->cmd_color_distributor->draw(cmd, args...);
         }
 
         void operator()(draw_tag tag, gdi::GraphicApi &, RDP::FrameMarker const & cmd) {
@@ -178,14 +177,6 @@ private:
     //@}
 
 
-    struct BasicRAILGraphic final
-    : gdi::RAILGraphicAdapter<
-        gdi::DispatcherProxy<
-            gdi::RAILGraphicApi,
-            gdi::RAILGraphicProxy
-        >
-    > {};
-
     struct BasicGraphic final
     : gdi::GraphicAdapter<GraphicProxy> {
         using gdi::GraphicAdapter<GraphicProxy>::GraphicAdapter;
@@ -193,15 +184,15 @@ private:
 
     BasicGraphic graphic_api;
     RDPDrawable drawable;
-    BasicRAILGraphic rail_graphic_api;
+    uint8_t order_bpp;
 
 public:
-    using RAILGraphicApi = BasicRAILGraphic;
     using GraphicApi = BasicGraphic;
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
     : graphic_api(mouse)
     , drawable(width, height, order_bpp)
+    , order_bpp(order_bpp)
     {
     }
 
@@ -210,18 +201,15 @@ public:
         apis_register.graphic_list->push_back({
             this->drawable, this->drawable.impl().bpp()
         });
-        assert(apis_register.rail_graphic_list);
-        apis_register.rail_graphic_list->push_back(this->drawable);
     }
 
-    void start(uint8_t order_bpp) {
+    void start() {
         this->graphic_api.get_proxy().cmd_color_distributor = this->choose_color_converter(
-            this->graphic_api.get_proxy().gds, order_bpp
+            this->graphic_api.get_proxy().gds, this->order_bpp
         );
     }
 
     GraphicApi & get_graphic_api() { return this->graphic_api; }
-    RAILGraphicApi & get_rail_graphic_api() { return this->rail_graphic_api; }
 
     Drawable & impl() { return this->drawable.impl(); }
     RDPDrawable & rdp_drawable() { return this->drawable; }

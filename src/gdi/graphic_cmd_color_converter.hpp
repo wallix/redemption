@@ -74,16 +74,30 @@ struct GraphicCmdColor
 
     static uint32_t & cmd_color1(RDPEllipseCB & cmd) { return cmd.back_color; }
     static uint32_t & cmd_color2(RDPEllipseCB & cmd) { return cmd.fore_color; }
-    
+
+private:
     template<class Enc, class Cmd>
-    static auto encode_cmd_color(Enc const & enc, Cmd & cmd) -> decltype(cmd_color(cmd), void()) {
+    static auto encode_cmd_color_(Enc const & enc, Cmd & cmd) -> decltype(cmd_color(cmd), void()) {
         cmd_color(cmd) = enc(cmd_color(cmd));
     }
-    
+
     template<class Enc, class Cmd>
-    static auto encode_cmd_color(Enc const & enc, Cmd & cmd) -> decltype(cmd_color2(cmd), void()) {
+    static auto encode_cmd_color_(Enc const & enc, Cmd & cmd) -> decltype(cmd_color2(cmd), void()) {
         cmd_color1(cmd) = enc(cmd_color1(cmd));
         cmd_color2(cmd) = enc(cmd_color2(cmd));
+    }
+
+    template<class Cmd>
+    struct abort_const_cmd {
+        static_assert(!std::is_const<Cmd>::value, "cmd is const qualified");
+        using type = Cmd;
+    };
+
+public:
+    template<class Enc, class Cmd>
+    static auto encode_cmd_color(Enc const & enc, Cmd & cmd)
+    -> decltype(encode_cmd_color_(enc, std::declval<typename abort_const_cmd<Cmd>::type&>())) {
+        encode_cmd_color_(enc, cmd);
     }
 };
 
@@ -102,35 +116,35 @@ struct GraphicCmdColorDistributor : private GraphicCmdColor, private Dec
     : Dec(dec)
     , rng_by_bpp(rng_by_bpp)
     {}
-    
+
     template<class Cmd, class... Ts>
     void operator()(Cmd const & cmd, Ts const & ... args) const {
         this->encode_cmd(1, cmd, args...);
     }
-    
+
 private:
     template<bool b> using bool_ = std::integral_constant<bool, b>;
     using true_ = std::true_type;
     using false_ = std::false_type;
-    
+
     template<class Range, class... Ts>
     void dispatch_if(true_, Range && rng, Ts const & ... args) const {
         for (auto && gd : rng) {
             gd(args...);
         }
     }
-    
+
     template<class Range, class... Ts>
     void dispatch_if(false_, Range const &, Ts const & ...) const {
     }
 
 
-    template<bool Mut, class Enc, class Range, class Cmd, class... Ts>
-    auto encode_if(int, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const 
+    template<class Mut, class Enc, class Range, class Cmd, class... Ts>
+    auto encode_if(int, Mut is_mut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
     -> decltype(cmd_color(cmd), void()) {
-        if (!Mut) {
+        if (!is_mut) {
             this->cmd_color(cmd) = enc(this->cmd_color(cmd));
-            this->dispatch_if(true_{}, rng, cmd, args...);                
+            this->dispatch_if(true_{}, rng, cmd, args...);
         }
         else {
             auto c1 = this->cmd_color(cmd); this->cmd_color(cmd) = enc(c1);
@@ -138,14 +152,14 @@ private:
             this->cmd_color(cmd) = c1;
         }
     }
-    
-    template<bool Mut, class Enc, class Range, class Cmd, class... Ts>
-    auto encode_if(int, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const 
+
+    template<class Mut, class Enc, class Range, class Cmd, class... Ts>
+    auto encode_if(int, Mut is_mut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
     -> decltype(cmd_color2(cmd), void()) {
-        if (!Mut) {
+        if (!is_mut) {
             this->cmd_color1(cmd) = enc(this->cmd_color1(cmd));
             this->cmd_color2(cmd) = enc(this->cmd_color2(cmd));
-            this->dispatch_if(true_{}, rng, cmd, args...);                
+            this->dispatch_if(true_{}, rng, cmd, args...);
         }
         else {
             auto c1 = this->cmd_color1(cmd); this->cmd_color1(cmd) = enc(c1);
@@ -156,44 +170,44 @@ private:
         }
     }
 
-    template<bool Mut, class Bool, class Enc, class Range, class Cmd, class... Ts>
-    void encode_if(unsigned, Bool, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const {
+    template<class Mut, class Bool, class Enc, class Range, class Cmd, class... Ts>
+    void encode_if(unsigned, Mut, Bool, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const {
         this->dispatch_if(Bool{}, rng, cmd, args...);
     }
-    
+
     Dec const & decoder() const { return static_cast<Dec const&>(*this); }
 
     template<class Cmd, class... Ts>
-    auto encode_cmd(int, Cmd const & cmd, Ts const & ... args) const 
-    -> decltype(this->encode_cmd_color(this->decoder(), cmd), void()) {
+    auto encode_cmd(int, Cmd const & cmd, Ts const & ... args) const
+    -> decltype(this->encode_cmd_color(this->decoder(), std::declval<Cmd&>())) {
         this->dispatch_if(bool_<Enc8  && Dec::bpp == 8 >{}, this->rng_by_bpp.rng8 (), cmd, args...);
         this->dispatch_if(bool_<Enc15 && Dec::bpp == 15>{}, this->rng_by_bpp.rng15(), cmd, args...);
         this->dispatch_if(bool_<Enc16 && Dec::bpp == 16>{}, this->rng_by_bpp.rng16(), cmd, args...);
         this->dispatch_if(bool_<Enc24 && Dec::bpp == 24>{}, this->rng_by_bpp.rng24(), cmd, args...);
-        
+
         auto new_cmd = cmd;
         this->encode_cmd_color(this->decoder(), new_cmd);
 
         this->dispatch_if(bool_<Enc24 && Dec::bpp != 24>{}, this->rng_by_bpp.rng24(), new_cmd, args...);
-        this->encode_if<Enc15+Enc16>(1, encode_color8{}, 
-            bool_<Enc8  && Dec::bpp != 8 >{}, this->rng_by_bpp.rng8 (), new_cmd, args...);
-        this->encode_if<Enc16>(1, encode_color15{}, 
-            bool_<Enc15 && Dec::bpp != 15>{}, this->rng_by_bpp.rng15(), new_cmd, args...);
-        this->encode_if<false>(1, encode_color16{}, 
-            bool_<Enc16 && Dec::bpp != 16>{}, this->rng_by_bpp.rng16(), new_cmd, args...);
+        this->encode_if(1, bool_<bool(Enc15+Enc16)>{}, bool_<Enc8 && Dec::bpp != 8>{},
+            encode_color8 {}, this->rng_by_bpp.rng8 (), new_cmd, args...);
+        this->encode_if(1, bool_<bool(Enc16)>{}, bool_<Enc15 && Dec::bpp != 15>{},
+            encode_color15{}, this->rng_by_bpp.rng15(), new_cmd, args...);
+        this->encode_if(1, false_{}, bool_<Enc16 && Dec::bpp != 16>{},
+            encode_color16{}, this->rng_by_bpp.rng16(), new_cmd, args...);
     }
-    
+
     template<class Cmd, class... Ts>
     void encode_cmd(unsigned, Cmd const & cmd, Ts const & ... args) const {
         this->dispatch_all(1, cmd, args...);
     }
-    
+
     template<class... Ts>
-    auto dispatch_all(int, Ts const & ... args) const 
+    auto dispatch_all(int, Ts const & ... args) const
     -> decltype(std::declval<RngByBpp const &>().rng_all(), void()) {
         this->dispatch_if(true_{}, this->rng_by_bpp.rng_all(), args...);
     }
-    
+
     template<class... Ts>
     void dispatch_all(unsigned, Ts const & ... args) const {
         this->dispatch_if(bool_<Enc8 >{}, this->rng_by_bpp.rng8 (), args...);
@@ -201,7 +215,7 @@ private:
         this->dispatch_if(bool_<Enc16>{}, this->rng_by_bpp.rng16(), args...);
         this->dispatch_if(bool_<Enc24>{}, this->rng_by_bpp.rng24(), args...);
     }
-    
+
     RngByBpp rng_by_bpp;
 };
 
@@ -210,80 +224,66 @@ struct GraphicCmdColorDistributor<RngByBpp, Dec, false, false, false, false>
 {
     GraphicCmdColorDistributor(RngByBpp const &, Dec const &)
     {}
-    
+
     template<class Cmd, class... Ts>
     void operator()(Cmd const &, Ts const & ...) const {
     }
 };
 
 
-template<class Enc>
-struct GraphicCmdColorConverter : private GraphicCmdColor, private Enc
+template<class ColorConverter, class ProxyBase = gdi::GraphicProxy>
+struct CmdColorConverterProxy : private GraphicCmdColor, ProxyBase
 {
-    GraphicCmdColorConverter(Enc const & enc)
-    : Enc(enc)
-    {}
-    
-    template<class Gd, class Cmd, class... Ts>
-    void operator()(Gd gd, Cmd const & cmd, Ts const & ... args) const {
-        this->encode_cmd(1, cmd, args...);
-    }
-    
-private:
-    Enc const & encoder() const { return static_cast<Enc const&>(*this); }
-
-    template<class Gd, class Cmd, class... Ts>
-    auto encode_cmd(int, Gd gd, Cmd const & cmd, Ts const & ... args) const 
-    -> decltype(this->encode_cmd_color(this->encoder(), cmd), void()) {
-        auto new_cmd = cmd;
-        this->encode_cmd_color(this->encoder(), cmd);
-        gd(new_cmd, args...);
-    }
-
-    template<class Gd, class Cmd, class... Ts>
-    void encode_cmd(unsigned, Gd gd, Cmd const & cmd, Ts const & ... args) const {
-        gd(cmd, args...);
-    }
-};
-
-template<class Convertor, class ProxyBase = gdi::GraphicProxy>
-struct CmdColorConvertorProxy : ProxyBase
-{
-    template<class... ConvertorArgs>
-    CmdColorConvertorProxy(ProxyBase && base, ConvertorArgs &&...args) 
+    template<class... ColorConverterArgs>
+    CmdColorConverterProxy(ProxyBase && base, ColorConverterArgs &&...args)
     : ProxyBase(std::move(base))
-    , cmd_color_converter(std::forward<ConvertorArgs>(args)...) 
+    , cmd_color_converter(std::forward<ColorConverterArgs>(args)...)
     {}
 
-    template<class... ConvertorArgs>
-    CmdColorConvertorProxy(ProxyBase const & base, ConvertorArgs &&...args) 
+    template<class... ColorConverterArgs>
+    CmdColorConverterProxy(ProxyBase const & base, ColorConverterArgs &&...args)
     : ProxyBase(base)
-    , cmd_color_converter(std::forward<ConvertorArgs>(args)...) 
+    , cmd_color_converter(std::forward<ColorConverterArgs>(args)...)
     {}
 
-    template<class... ConvertorArgs>
-    CmdColorConvertorProxy(ConvertorArgs &&...args) 
-    : cmd_color_converter(std::forward<ConvertorArgs>(args)...)
+    template<class... ColorConverterArgs>
+    CmdColorConverterProxy(ColorConverterArgs &&...args)
+    : cmd_color_converter(std::forward<ColorConverterArgs>(args)...)
     {}
 
-    template<class... ConvertorArgs>
-    CmdColorConvertorProxy(ProxyBase const & base) : ProxyBase(base) {}
+    template<class... ColorConverterArgs>
+    CmdColorConverterProxy(ProxyBase const & base)
+    : ProxyBase(base)
+    {}
 
     using draw_tag = gdi::GraphicProxy::draw_tag;
     template<class Gd, class... Ts>
     void operator()(draw_tag, Gd & gd, Ts const & ... args) {
-        this->cmd_color_converter(gd, args...);
+        this->encode_cmd(1, gd, args...);
     }
 
     template<class Gd, class Tag, class... Ts>
     void operator()(Tag tag, Gd & gd, Ts const & ... args) {
         static_cast<ProxyBase&>(*this)(tag, gd, args...);
     }
-    
-    const Convertor & get_converter() const { return this->cmd_color_converter; }
-    
+
+    const ColorConverter & get_converter() const { return this->cmd_color_converter; }
+
 private:
-    Convertor cmd_color_converter;
+    ColorConverter cmd_color_converter;
+
+    template<class Gd, class Cmd, class... Ts>
+    auto encode_cmd(int, Gd & gd, Cmd const & cmd, Ts const & ... args)
+    -> decltype(this->encode_cmd_color(this->cmd_color_converter, std::declval<Cmd&>())) {
+        auto new_cmd = cmd;
+        this->encode_cmd_color(this->cmd_color_converter, new_cmd);
+        static_cast<ProxyBase&>(*this)(draw_tag{}, gd, new_cmd, args...);
+    }
+
+    template<class Gd, class Cmd, class... Ts>
+    void encode_cmd(unsigned, Gd & gd, Cmd const & cmd, Ts const & ... args) {
+        static_cast<ProxyBase&>(*this)(draw_tag{}, gd, cmd, args...);
+    }
 };
 
 }

@@ -496,8 +496,7 @@ public:
     }
 
 public:
-    // TODO restored override
-    void flush() {
+    void sync() override {
         this->flush_bitmaps();
         this->flush_orders();
     }

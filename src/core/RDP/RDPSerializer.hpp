@@ -125,12 +125,10 @@
 #include "finally.hpp"
 #include "stream.hpp"
 
-#include "gdi/railgraphic_api.hpp"
 #include "gdi/graphic_api.hpp"
 
 struct RDPSerializer
-: public gdi::RAILGraphicApi
-, public gdi::GraphicApi
+: public gdi::GraphicApi
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
     enum { MAX_ORDERS_SIZE = 16384,
@@ -228,7 +226,9 @@ public:
     , bmp_cache(bmp_cache)
     , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)
-    , verbose(verbose) {}
+    , verbose(verbose) {
+
+    }
 
     ~RDPSerializer() override {}
 

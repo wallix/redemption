@@ -43,7 +43,6 @@ struct GdRef
 
 namespace gdi {
   class GraphicApi;
-  class RAILGraphicApi;
   class CaptureApi;
   class CaptureProbeApi;
   class InputKbdApi;
@@ -53,7 +52,6 @@ struct ApisRegister
 {
     // TODO
     std::vector<GdRef> * graphic_list;
-    std::vector<std::reference_wrapper<gdi::RAILGraphicApi>> * rail_graphic_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
     std::vector<std::reference_wrapper<gdi::InputKbdApi>> & input_kbd_list;

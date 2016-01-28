@@ -33,7 +33,6 @@
 #include "wait_obj.hpp"
 
 #include "gdi/graphic_api.hpp"
-#include "gdi/railgraphic_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/input_kbd_api.hpp"
 #include "gdi/capture_probe_api.hpp"
@@ -100,6 +99,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
 
         void attach_apis(ApisRegister & api_register, const Inifile & ini) {
             api_register.capture_probe_list.push_back(this->kc);
+            api_register.capture_list.push_back(this->kc);
             api_register.input_kbd_list.push_back(this->kc);
         }
 
@@ -215,47 +215,18 @@ private:
     NewInputKbd input_kbd_api;
     NewCaptureProbe capture_probe_api;
     Graphic::GraphicApi * graphic_api = nullptr;
-    Graphic::RAILGraphicApi * rail_graphic_api = nullptr;
 
     const Inifile & ini;
 
     ApisRegister get_apis_register() {
         return {
             this->graphic_api ? &this->graphic_api->get_proxy().gds : nullptr,
-            this->rail_graphic_api ? &this->rail_graphic_api->get_proxy().apis : nullptr,
             this->graphic_api ? &this->graphic_api->get_proxy().snapshoters : nullptr,
             this->capture_api.get_proxy().caps,
             this->input_kbd_api.kbds,
             this->capture_probe_api.cds
         };
     };
-
-    std::vector<Graphic::GdRef> & graphic_list() {
-        assert(this->graphic_api);
-        return this->graphic_api->get_proxy().gds;
-    }
-
-    std::vector<std::reference_wrapper<gdi::RAILGraphicApi>> & rail_graphic_list() {
-        assert(this->rail_graphic_api);
-        return this->rail_graphic_api->get_proxy().apis;
-    }
-
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> & graphic_snapshot_list() {
-        assert(this->graphic_api);
-        return this->graphic_api->get_proxy().snapshoters;
-    }
-
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list() {
-        return this->capture_api.get_proxy().caps;
-    }
-
-    std::vector<std::reference_wrapper<gdi::InputKbdApi>> & input_kbd_list() {
-        return this->input_kbd_api.kbds;
-    }
-
-    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list() {
-        return this->capture_probe_api.cds;
-    }
 
 public:
     Capture(
@@ -304,7 +275,6 @@ public:
         if (capture_drawable) {
             this->gd.reset(new Graphic(width, height, order_bpp, this->mouse_info));
             this->graphic_api = &this->gd->get_graphic_api();
-            this->rail_graphic_api = &this->gd->get_rail_graphic_api();
 
             if (this->capture_png) {
                 if (recursive_create_directory(record_tmp_path, S_IRWXU|S_IRWXG, groupid) != 0) {
@@ -348,7 +318,7 @@ public:
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
 
-        if (this->gd ) { this->gd->start(order_bpp); }
+        if (this->gd ) { this->gd->start(); }
     }
 
     ~Capture() override {
@@ -554,26 +524,38 @@ public:
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        if (this->rail_graphic_api) {
-            this->rail_graphic_api->draw(order);
+        if (this->graphic_api) {
+            this->graphic_api->draw(order);
         }
     }
 
     void draw(const RDP::RAIL::WindowIcon & order) override {
-        if (this->rail_graphic_api) {
-            this->rail_graphic_api->draw(order);
+        if (this->graphic_api) {
+            this->graphic_api->draw(order);
         }
     }
 
     void draw(const RDP::RAIL::CachedIcon & order) override {
-        if (this->rail_graphic_api) {
-            this->rail_graphic_api->draw(order);
+        if (this->graphic_api) {
+            this->graphic_api->draw(order);
         }
     }
 
     void draw(const RDP::RAIL::DeletedWindow & order) override {
-        if (this->rail_graphic_api) {
-            this->rail_graphic_api->draw(order);
+        if (this->graphic_api) {
+            this->graphic_api->draw(order);
+        }
+    }
+
+    gdi::GraphicApi * get_graphic_api() const {
+        return this->graphic_api;
+    }
+
+    void add_graphic(gdi::GraphicApi & gd, uint8_t bpp) {
+        if (this->graphic_api) {
+            this->get_apis_register().graphic_list->push_back({gd, bpp});
+            // TODO
+            this->gd->start();
         }
     }
 

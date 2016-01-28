@@ -41,13 +41,13 @@ struct AdapterBase : InterfaceBase, protected Proxy
 
     template<class... Ts>
     AdapterBase(Proxy && proxy, Ts && ... args)
-    : InterfaceBase{std::forward<Ts>(args)...}
+    : InterfaceBase(std::forward<Ts>(args)...)
     , Proxy(std::move(proxy))
     {}
 
     template<class... Ts>
     AdapterBase(Proxy const & proxy, Ts && ... args)
-    : InterfaceBase{std::forward<Ts>(args)...}
+    : InterfaceBase(std::forward<Ts>(args)...)
     , Proxy(proxy)
     {}
 

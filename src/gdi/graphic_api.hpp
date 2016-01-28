@@ -59,6 +59,13 @@ namespace RDP {
     class RDPMultiPatBlt;
     class RDPMultiScrBlt;
     class FrameMarker;
+
+    namespace RAIL {
+        class NewOrExistingWindow;
+        class WindowIcon;
+        class CachedIcon;
+        class DeletedWindow;
+    }
 }
 
 
@@ -89,6 +96,12 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
+
+    // NOTE maybe in an other interface
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow &) {}
+    virtual void draw(const RDP::RAIL::WindowIcon          &) {}
+    virtual void draw(const RDP::RAIL::CachedIcon          &) {}
+    virtual void draw(const RDP::RAIL::DeletedWindow       &) {}
 
     // TODO("The 2 methods below should not exist and cache access be done before calling drawing orders")
     virtual void draw(RDPColCache   const & cmd) {}
@@ -162,12 +175,17 @@ struct GraphicAdapter : AdapterBase<Proxy, InterfaceBase>
         this->draw_(cmd, clip, gly_cache);
     }
 
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowIcon          & order) { this->draw_(order); }
+    void draw(const RDP::RAIL::CachedIcon          & order) { this->draw_(order); }
+    void draw(const RDP::RAIL::DeletedWindow       & order) { this->draw_(order); }
+
     void draw(RDPColCache   const & cmd) override { this->draw_(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_(cmd); }
 
     void sync() override { this->get_proxy()(GraphicProxy::sync_tag{}, *this); }
 
-    void set_row(std::size_t rownum, const uint8_t * data) override { 
+    void set_row(std::size_t rownum, const uint8_t * data) override {
       this->get_proxy()(GraphicProxy::set_row_tag{}, *this, rownum, data);
     }
 

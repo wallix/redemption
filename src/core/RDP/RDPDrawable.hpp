@@ -61,14 +61,12 @@
 #include "png.hpp"
 #include "text_metrics.hpp"
 
-#include "gdi/railgraphic_api.hpp"
 #include "gdi/graphic_api.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
 class RDPDrawable
-: public gdi::RAILGraphicApi
-, public gdi::GraphicApi
+: public gdi::GraphicApi
 {
     using Color = Drawable::Color;
 
