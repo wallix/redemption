@@ -268,10 +268,9 @@ public:
             this->session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
                     this->session_probe_to_server_sender.get(),
-                    this->file_system_drive_manager,
                     this->front,
                     *this,
-                    file_system_virtual_channel.to_server_sender,
+                    file_system_virtual_channel,
                     this->get_session_probe_virtual_channel_params());
         }
 

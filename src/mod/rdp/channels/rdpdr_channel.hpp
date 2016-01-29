@@ -31,10 +31,8 @@
 
 class FileSystemVirtualChannel : public BaseVirtualChannel
 {
-public:
     VirtualChannelDataSender& to_server_sender;
 
-private:
     rdpdr::SharedHeader client_message_header;
     rdpdr::SharedHeader server_message_header;
 
@@ -79,6 +77,10 @@ private:
                             std::unique_ptr<std::string>>>
             device_info_inventory_type;
         device_info_inventory_type device_info_inventory;
+
+        FileSystemDriveManager& file_system_drive_manager;
+
+        bool& proxy_managed_drives_announced;
 
     public:
         class ToDeviceAnnounceCollectionSender :
@@ -150,10 +152,14 @@ private:
             ];
         OutStream remaining_device_announce_request_header_stream;
 
+        bool session_probe_drive_should_be_disable = false;
+
         const uint32_t verbose;
 
     public:
         DeviceRedirectionManager(
+            FileSystemDriveManager& file_system_drive_manager,
+            bool& proxy_managed_drives_announced,
             VirtualChannelDataSender* to_client_sender_,
             VirtualChannelDataSender* to_server_sender_,
             bool file_system_authorized,
@@ -163,7 +169,9 @@ private:
             bool smart_card_authorized,
             uint32_t channel_chunk_length,
             uint32_t verbose)
-        : to_device_announce_collection_sender(device_announces)
+        : file_system_drive_manager(file_system_drive_manager)
+        , proxy_managed_drives_announced(proxy_managed_drives_announced)
+        , to_device_announce_collection_sender(device_announces)
         , to_client_sender(to_client_sender_)
         , to_server_sender(to_server_sender_)
         , param_file_system_authorized(file_system_authorized)
@@ -191,6 +199,24 @@ private:
         }
 
     public:
+        void DisableSessionProbeDrive() {
+            this->session_probe_drive_should_be_disable = true;
+
+            this->EffectiveDisableSessionProbeDrive();
+        }
+
+        void EffectiveDisableSessionProbeDrive() {
+            if (this->proxy_managed_drives_announced &&
+                !this->waiting_for_server_device_announce_response &&
+                !this->device_announces.size() &&
+                this->session_probe_drive_should_be_disable) {
+                this->file_system_drive_manager.DisableSessionProbeDrive(
+                    (*this->to_server_sender), this->verbose);
+
+                this->session_probe_drive_should_be_disable = false;
+            }
+        }
+
         const char* get_device_name(uint32_t DeviceId) {
             for (device_info_inventory_type::const_iterator iter =
                      this->device_info_inventory.cbegin();
@@ -313,8 +339,12 @@ private:
                 this->device_announces.pop_front();
 
                 this->waiting_for_server_device_announce_response = true;
+            }   // if (!this->waiting_for_server_device_announce_response &&
+                //     this->device_announces.size())
+            else {
+                this->EffectiveDisableSessionProbeDrive();
             }
-        }
+        }   // void announce_device()
 
     public:
         void process_client_device_list_announce_request(
@@ -802,6 +832,8 @@ public:
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , param_acl(params.acl)
     , device_redirection_manager(
+          file_system_drive_manager,
+          proxy_managed_drives_announced,
           to_client_sender_,
           to_server_sender_,
           (params.file_system_read_authorized ||
@@ -860,6 +892,10 @@ public:
                     (std::get<4>(*iter) ? "yes" : "no"));
             }
         }
+    }
+
+    void disable_session_probe_drive() {
+        this->device_redirection_manager.DisableSessionProbeDrive();
     }
 
 protected:
