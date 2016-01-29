@@ -331,14 +331,15 @@ public:
 
         if (rectBmp.has_intersection(this->fg_rect)) {
             const subrect_t rect4 = this->subrect(rectBmp);
-            this->front.flush();
+            // TODO front.sync() ?
+            this->front.sync();
             this->mod.begin_update();
             this->draw_bitmap_rect(rect4.top, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.right, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.bottom, rectBmp, bmp);
             this->draw_bitmap_rect(rect4.left, rectBmp, bmp);
             this->mod.end_update();
-            this->front.flush();
+            this->front.sync();
         }
         else {
             this->mod.draw(bitmap_data, data, size, bmp);

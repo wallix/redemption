@@ -401,16 +401,6 @@ public:
         if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd, bmp);
     }
 
-    void dispatch_draw(Consumer & consumer, RDPColCache const & cmd) {
-        if (consumer.graphic_device) consumer.graphic_device->draw(cmd);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd);
-    }
-
-    void dispatch_draw(Consumer & consumer, RDPBrushCache const & cmd) {
-        if (consumer.graphic_device) consumer.graphic_device->draw(cmd);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd);
-    }
-
     template<class... Ts>
     void dispatch_draw(Consumer & consumer, Ts const & ... args) {
         if (consumer.graphic_device) consumer.graphic_device->draw(args...);

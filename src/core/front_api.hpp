@@ -24,7 +24,8 @@
 #ifndef _REDEMPTION_CORE_FRONT_API_HPP_
 #define _REDEMPTION_CORE_FRONT_API_HPP_
 
-#include "RDP/RDPGraphicDevice.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/input_pointer_api.hpp"
 
 #include "core/wait_obj.hpp"
 
@@ -37,7 +38,7 @@ namespace CHANNELS {
     class ChannelDef;
 }
 
-class FrontAPI : public RDPGraphicDevice{
+class FrontAPI : public gdi::GraphicApi, public gdi::InputPointer {
     public:
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
@@ -65,7 +66,7 @@ class FrontAPI : public RDPGraphicDevice{
     public:
     virtual wait_obj& get_event() { return this->event; }
 
-    TODO("RZ : Move these methods in OrderCaps class.")
+    // TODO("RZ : Move these methods in OrderCaps class.")
     virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {}
     virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {}
 
@@ -88,14 +89,12 @@ class FrontAPI : public RDPGraphicDevice{
     virtual void session_update(const char * message) {}
 
     virtual bool disable_input_event_and_graphics_update(bool disable) { return false; }
-    
-    /// \return  -1 is error
+
+    /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }
 
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
-
-    virtual void flush() {}
 };
 
 #endif

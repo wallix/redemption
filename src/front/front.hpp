@@ -787,7 +787,7 @@ public:
         return res;
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         this->graphics_update->set_pointer(cursor);
     }
 
@@ -1088,7 +1088,7 @@ public:
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }
         if (this->order_level == 0) {
-            this->flush();
+            this->sync();
         }
     }
 
@@ -1175,7 +1175,7 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette");
             }
 
-            this->flush();
+            this->sync();
 
             StaticOutReservedStreamHelper<1024, 65536-1024> stream;
             GeneratePaletteUpdateData(stream.get_data_stream());
@@ -4199,7 +4199,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()) {
             this->send_global_palette();
             // TODO
@@ -4208,7 +4208,7 @@ public:
             // this may change the brush and send it to to remote cache
             this->cache_brush(new_cmd.brush);
 
-            this->graphics_update->draw(new_cmd, clip, *gly_cache);
+            this->graphics_update->draw(new_cmd, clip, gly_cache);
         }
     }
 
@@ -4283,7 +4283,7 @@ public:
         }
     }
 
-    void flush() override {
+    void sync() override {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "Front::flush");
         }
@@ -4312,7 +4312,7 @@ public:
         this->orders.graphics_update_pdu().draw(cmd);
     }
 
-    void set_mod_palette(const BGRPalette & palette) override {
+    void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
         this->palette_sent = false;
 
@@ -4350,10 +4350,10 @@ public:
         order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
+        // TODO
         if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
             // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
             || (bitmap_data.bits_per_pixel != this->client_info.bpp)
@@ -4369,7 +4369,11 @@ public:
             return;
         }
 
-        if (!this->input_event_and_graphics_update_disabled) {
+        // TODO uses graphics_update
+        if (!this->input_event_and_graphics_update_disabled
+          && this->capture
+          && (this->capture_state == CAPTURE_STATE_STARTED)
+        ) {
             StaticOutStream<65535> bmp_stream;
             Bitmap new_bmp(this->client_info.bpp, bmp);
 
@@ -4381,7 +4385,7 @@ public:
             target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
             target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
 
-            this->graphics_update->draw(target_bitmap_data, new_bmp);
+            this->capture->draw(target_bitmap_data, new_bmp.data_compressed().data(), new_bmp.data_compressed().size(), new_bmp);
         }
     }
 

@@ -51,7 +51,13 @@
 #include "version.hpp"
 #include "program_options/program_options.hpp"
 
-class Analyzer : public FrontAPI {
+struct GraphicAssertion {
+    template<class... Ts> void operator()(Ts const & ...) { REDASSERT(false); }
+};
+
+using FrontWithoutGraphic = gdi::GraphicAdapter<GraphicAssertion, FrontAPI>;
+
+class Analyzer : public FrontWithoutGraphic {
 private:
     CHANNELS::ChannelDefArray channel_list;
 
@@ -116,42 +122,9 @@ private:
     } statistic;
 
 public:
-    // RDPGraphicDevice
-    void draw(const RDPOpaqueRect      & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPScrBlt          & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPDestBlt         & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPPatBlt          & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) override { REDASSERT(false); }
-    void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) override { REDASSERT(false); }
-    void draw(const RDPLineTo          & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) override { REDASSERT(false); }
-    void draw(const RDPPolygonSC       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPPolygonCB       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPPolyline        & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPEllipseSC       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPEllipseCB       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDP::FrameMarker &) override { REDASSERT(false); }
-    void draw(const RDPBitmapData &, const uint8_t *, size_t, const Bitmap &) override { REDASSERT(false); }
-    void draw(const RDPBrushCache &) override { REDASSERT(false); }
-    void draw(const RDPColCache &) override { REDASSERT(false); }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override { REDASSERT(false); }
-    void draw(const RDP::RAIL::WindowIcon          & order) override { REDASSERT(false); }
-    void draw(const RDP::RAIL::CachedIcon          & order) override { REDASSERT(false); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) override { REDASSERT(false); }
-
-    void server_set_pointer(const Pointer & cursor) override { REDASSERT(false); }
-
-    void flush() override { REDASSERT(false); }
-
     // DrawApi
     void begin_update() override { REDASSERT(false); }
     void end_update() override { REDASSERT(false); }
-
 
 
     // FrontAPI
@@ -165,7 +138,6 @@ public:
     }
 
     void send_global_palette() override { REDASSERT(false); }
-    void set_mod_palette(const BGRPalette & palette) override { REDASSERT(false); }
 
     int server_resize(int width, int height, int bpp) override {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
@@ -453,8 +425,10 @@ public:
         }
     }
 
+    void update_pointer_position(uint16_t, uint16_t) override {}
+
     Analyzer()
-    : FrontAPI(false, false)
+    : FrontWithoutGraphic(GraphicAssertion{}, false, false)
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
     , patblt(Rect(), 0, 0, 0, RDPBrush())
