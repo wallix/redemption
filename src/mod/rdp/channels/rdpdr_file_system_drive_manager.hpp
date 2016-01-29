@@ -2104,10 +2104,9 @@ public:
         }
     }
 
-    bool DisableSessionProbeDrive(VirtualChannelDataSender & to_server_sender,
-            uint32_t verbose = 0) {
+    void RemoveSessionProbeDrive(uint32_t verbose) {
         if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
-            return false;
+            return;
         }
 
         const uint32_t old_session_probe_drive_id = this->session_probe_drive_id;
@@ -2122,12 +2121,21 @@ public:
 
                 if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                     LOG(LOG_INFO,
-                        "FileSystemDriveManager::DisableSessionProbeDrive: Drive removed.");
+                        "FileSystemDriveManager::RemoveSessionProbeDrive: Drive removed.");
                 }
-
-                return true;
             }
         }
+    }
+
+    void DisableSessionProbeDrive(VirtualChannelDataSender & to_server_sender,
+            uint32_t verbose) {
+        if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            return;
+        }
+
+        const uint32_t old_session_probe_drive_id = this->session_probe_drive_id;
+
+        this->session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
         StaticOutStream<1024> out_stream;
 
@@ -2149,8 +2157,6 @@ public:
             LOG(LOG_INFO,
                 "FileSystemDriveManager::DisableSessionProbeDrive: Remove request sent.");
         }
-
-        return true;
     }
 };  // FileSystemDriveManager
 

@@ -42,13 +42,13 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     // DeviceId, FileId, CompletionId, MajorFunction, (extra data), Path.
     typedef std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t,
-                                   uint32_t, std::unique_ptr<std::string>>>
+                                   uint32_t, std::string>>
         device_io_request_info_inventory_type;
     device_io_request_info_inventory_type device_io_request_info_inventory;
 
     // DeviceId, FileId, file_path, for_reading, for_writing.
     typedef std::vector<std::tuple<uint32_t, uint32_t,
-                                   std::unique_ptr<std::string>, bool, bool>>
+                                   std::string, bool, bool>>
         device_io_target_info_inventory_type;
     device_io_target_info_inventory_type device_io_target_info_inventory;
 
@@ -64,7 +64,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     auth_api*         param_acl;
 
-    bool proxy_managed_drives_announced = false;
+    bool user_logged_on = false;
 
     class DeviceRedirectionManager {
         // (Virtual Channel) data_length, (Virtual Channel) data.
@@ -74,13 +74,13 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
         // DeviceId, PreferredDosName.
         typedef std::vector<std::tuple<uint32_t,
-                            std::unique_ptr<std::string>>>
+                            std::string>>
             device_info_inventory_type;
         device_info_inventory_type device_info_inventory;
 
         FileSystemDriveManager& file_system_drive_manager;
 
-        bool& proxy_managed_drives_announced;
+        bool& user_logged_on;
 
     public:
         class ToDeviceAnnounceCollectionSender :
@@ -159,7 +159,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
     public:
         DeviceRedirectionManager(
             FileSystemDriveManager& file_system_drive_manager,
-            bool& proxy_managed_drives_announced,
+            bool& user_logged_on,
             VirtualChannelDataSender* to_client_sender_,
             VirtualChannelDataSender* to_server_sender_,
             bool file_system_authorized,
@@ -170,7 +170,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
             uint32_t channel_chunk_length,
             uint32_t verbose)
         : file_system_drive_manager(file_system_drive_manager)
-        , proxy_managed_drives_announced(proxy_managed_drives_announced)
+        , user_logged_on(user_logged_on)
         , to_device_announce_collection_sender(device_announces)
         , to_client_sender(to_client_sender_)
         , to_server_sender(to_server_sender_)
@@ -188,8 +188,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         void add_known_device(uint32_t DeviceId,
                               const char* PreferredDosName) {
             this->device_info_inventory.push_back(
-                std::make_tuple(DeviceId,
-                    std::make_unique<std::string>(PreferredDosName)));
+                std::make_tuple(DeviceId, PreferredDosName));
             if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
@@ -200,8 +199,10 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     public:
         void DisableSessionProbeDrive() {
-            if (this->file_system_drive_manager.DisableSessionProbeDrive(
-                    (*this->to_server_sender), this->verbose)) {
+            if (!this->user_logged_on) {
+                this->file_system_drive_manager.RemoveSessionProbeDrive(
+                    this->verbose);
+
                 return;
             }
 
@@ -211,7 +212,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
         void EffectiveDisableSessionProbeDrive() {
-            if (this->proxy_managed_drives_announced &&
+            if (this->user_logged_on &&
                 !this->waiting_for_server_device_announce_response &&
                 !this->device_announces.size() &&
                 this->session_probe_drive_should_be_disable) {
@@ -227,7 +228,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                      this->device_info_inventory.cbegin();
                  iter != this->device_info_inventory.cend(); ++iter) {
                 if (std::get<0>(*iter) == DeviceId) {
-                    return std::get<1>(*iter)->c_str();
+                    return std::get<1>(*iter).c_str();
                 }
             }
 
@@ -244,7 +245,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device: "
                                 "Remove \"%s\"(DeviceId=%u) from known dervice list.",
-                            std::get<1>(*iter)->c_str(),
+                            std::get<1>(*iter).c_str(),
                             DeviceId);
                     }
 
@@ -294,18 +295,6 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         this->add_known_device(
                             device_announce_header.DeviceId(),
                             device_announce_header.PreferredDosName());
-                        this->device_info_inventory.push_back(
-                            std::make_tuple(device_announce_header.DeviceId(),
-                                std::make_unique<std::string>(
-                                    device_announce_header.PreferredDosName()))
-                            );
-                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                            LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::DeviceRedirectionManager::announce_device: "
-                                    "Add \"%s\"(DeviceId=%u) to known dervice list.",
-                                device_announce_header.PreferredDosName(),
-                                device_announce_header.DeviceId());
-                        }
                     }
                 }
 
@@ -629,7 +618,9 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                 }
             }   // while (chunk.in_remain())
 
-            this->announce_device();
+            if (this->user_logged_on) {
+                this->announce_device();
+            }
         }   // process_client_device_list_announce_request()
 
         void process_client_drive_device_list_remove(uint32_t total_length,
@@ -838,7 +829,7 @@ public:
     , param_acl(params.acl)
     , device_redirection_manager(
           file_system_drive_manager,
-          proxy_managed_drives_announced,
+          user_logged_on,
           to_client_sender_,
           to_server_sender_,
           (params.file_system_read_authorized ||
@@ -872,9 +863,7 @@ public:
                     std::get<0>(*iter), std::get<1>(*iter),
                     std::get<2>(*iter), std::get<3>(*iter),
                     std::get<4>(*iter),
-                    (std::get<5>(*iter) ?
-                     std::get<5>(*iter)->c_str() :
-                     ""));
+                    std::get<5>(*iter).c_str());
             }
         }
 
@@ -892,7 +881,7 @@ public:
                         "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
                         "for_writing=%s",
                     std::get<0>(*iter), std::get<1>(*iter),
-                    (std::get<2>(*iter) ? std::get<2>(*iter)->c_str() : ""),
+                    std::get<2>(*iter).c_str(),
                     (std::get<3>(*iter) ? "yes" : "no"),
                     (std::get<4>(*iter) ? "yes" : "no"));
             }
@@ -1391,17 +1380,13 @@ public:
                 device_io_response.DeviceId(),
                 device_io_response.CompletionId());
 
-//            REDASSERT(false);
-
             return true;
         }
 
         const uint32_t FileId        = std::get<1>(*iter);
         const uint32_t MajorFunction = std::get<3>(*iter);
         const uint32_t extra_data    = std::get<4>(*iter);
-        const char*    file_path     = (std::get<5>(*iter) ?
-                                        std::get<5>(*iter)->c_str() :
-                                        "");
+        const char*    file_path     = std::get<5>(*iter).c_str();
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             LOG(LOG_INFO,
@@ -1438,17 +1423,16 @@ public:
                             device_io_response.DeviceId());
 
                     if (device_name) {
-                        std::unique_ptr<std::string> target_file_name =
-                            std::make_unique<std::string>(device_name);
+                        std::string target_file_name(device_name);
 
-                        *target_file_name += file_path;
+                        target_file_name += file_path;
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                             LOG(LOG_INFO,
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "Add \"%s\" to known file list. "
                                     "DeviceId=%u FileId=%u",
-                                target_file_name->c_str(),
+                                target_file_name.c_str(),
                                 device_io_response.DeviceId(),
                                 device_create_response.FileId());
                         }
@@ -1497,7 +1481,7 @@ public:
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "Remove \"%s\" from known file list. "
                                     "DeviceId=%u FileId=%u",
-                                std::get<2>(*target_iter)->c_str(),
+                                std::get<2>(*target_iter).c_str(),
                                 device_io_response.DeviceId(),
                                 FileId);
                         }
@@ -1569,11 +1553,11 @@ public:
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<3>(*target_iter)) {
                                         if (!::ends_case_with(
-                                                std::get<2>(*target_iter)->c_str(),
+                                                std::get<2>(*target_iter).c_str(),
                                                 "/desktop.ini")) {
                                             if (this->param_acl) {
                                                 std::string info("file_name=\"");
-                                                info += std::get<2>(*target_iter)->c_str();
+                                                info += std::get<2>(*target_iter).c_str();
                                                 info += "\"";
 
                                                 this->param_acl->log4(
@@ -1586,7 +1570,7 @@ public:
                                                 std::string message(
                                                     "ReadRedirectedFileSystem=");
                                                 message +=
-                                                    std::get<2>(*target_iter)->c_str();
+                                                    std::get<2>(*target_iter).c_str();
 
                                                 this->front.session_update(
                                                     message.c_str());
@@ -1646,7 +1630,7 @@ public:
                                     if (!std::get<4>(*target_iter)) {
                                         if (this->param_acl) {
                                             std::string info("file_name=\"");
-                                            info += std::get<2>(*target_iter)->c_str();
+                                            info += std::get<2>(*target_iter).c_str();
                                             info += "\"";
 
                                             this->param_acl->log4(
@@ -1659,7 +1643,7 @@ public:
                                             std::string message(
                                                 "WriteRedirectedFileSystem=");
                                             message +=
-                                                std::get<2>(*target_iter)->c_str();
+                                                std::get<2>(*target_iter).c_str();
 
                                             this->front.session_update(
                                                 message.c_str());
@@ -2068,7 +2052,7 @@ public:
 
     bool process_server_create_drive_request(uint32_t total_length,
         uint32_t flags, InStream& chunk,
-        std::unique_ptr<std::string>& file_path)
+        std::string& file_path)
     {
         rdpdr::DeviceCreateRequest device_create_request;
 
@@ -2141,15 +2125,14 @@ public:
             return false;
         }
 
-        file_path = std::make_unique<std::string>(
-            device_create_request.Path());
+        file_path = device_create_request.Path();
 
         return true;
     }   // process_server_create_drive_request
 
     bool process_server_drive_io_request(uint32_t total_length,
         uint32_t flags, InStream& chunk,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
+        std::unique_ptr<AsynchronousTask>& out_asynchronous_task)
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->server_device_io_request.receive(chunk);
@@ -2181,7 +2164,7 @@ public:
         bool send_message_to_client  = true;
         bool do_not_add_to_inventory = false;
 
-        std::unique_ptr<std::string> file_path;
+        std::string file_path;
 
         switch (this->server_device_io_request.MajorFunction())
         {
@@ -2439,17 +2422,17 @@ public:
                             "Server User Logged On");
                 }
 
-                if (!this->proxy_managed_drives_announced) {
+                if (!this->user_logged_on) {
                     this->file_system_drive_manager.AnnounceDrive(
                         this->device_capability_version_02_supported,
                         this->device_redirection_manager.to_device_announce_collection_sender,
                         this->verbose);
-
-                    this->proxy_managed_drives_announced = true;
-
-                    this->device_redirection_manager.process_server_user_logged_on(
-                        total_length, flags, chunk);
                 }
+
+                this->user_logged_on = true;
+
+                this->device_redirection_manager.process_server_user_logged_on(
+                    total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_PRN_USING_XPS:
