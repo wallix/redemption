@@ -200,6 +200,11 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     public:
         void DisableSessionProbeDrive() {
+            if (this->file_system_drive_manager.DisableSessionProbeDrive(
+                    (*this->to_server_sender), this->verbose)) {
+                return;
+            }
+
             this->session_probe_drive_should_be_disable = true;
 
             this->EffectiveDisableSessionProbeDrive();
