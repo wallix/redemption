@@ -194,7 +194,7 @@ public:
                  , size_t max_bitmap_size
                  , const Inifile & ini
                  , uint32_t verbose = 0)
-    : GraphicApi(gdi::GraphicDepths::all)
+    : GraphicApi(gdi::GraphicDepth::unspecified())
     , stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
     , capture_bpp(bpp)

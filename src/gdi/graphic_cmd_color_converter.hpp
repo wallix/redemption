@@ -108,6 +108,7 @@ public:
 //   Range rng16();
 //   Range rng24();
 //   Range rng_all(); [optional]
+//   void apply(T, Cmd, Args);
 // };
 template<class RngByBpp, class Dec, bool Enc8, bool Enc15, bool Enc16, bool Enc24>
 struct GraphicCmdColorDistributor : private GraphicCmdColor, private Dec
@@ -130,7 +131,7 @@ private:
     template<class Range, class... Ts>
     void dispatch_if(true_, Range && rng, Ts const & ... args) const {
         for (auto && gd : rng) {
-            gd(args...);
+            this->rng_by_bpp.apply(gd, args...);
         }
     }
 

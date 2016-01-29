@@ -24,23 +24,6 @@
 #include <vector>
 #include <functional>
 
-// TODO
-struct GdRef
-{
-    std::reference_wrapper<gdi::GraphicApi> gd;
-    // TODO move in gdi::GraphicApi (::order_bpp)
-    uint8_t bpp;
-
-    template<class... Ts>
-    void operator()(Ts const & ... args) const {
-        gd.get().draw(args...);
-    }
-
-    operator gdi::GraphicApi & () const {
-        return gd.get();
-    }
-};
-
 namespace gdi {
   class GraphicApi;
   class CaptureApi;
@@ -51,7 +34,7 @@ namespace gdi {
 struct ApisRegister
 {
     // TODO
-    std::vector<GdRef> * graphic_list;
+    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
     std::vector<std::reference_wrapper<gdi::InputKbdApi>> & input_kbd_list;

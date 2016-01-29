@@ -78,12 +78,12 @@ class RDPDrawable
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height, int order_bpp)
-    : GraphicApi(gdi::GraphicDepths::from_bpp(order_bpp))
+    : GraphicApi(gdi::GraphicDepth::from_bpp(order_bpp))
     , drawable(width, height)
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
     {
-        REDASSERT(gdi::GraphicDepths::unspecified != this->depths());
+        REDASSERT(this->order_depth().is_defined());
     }
 
     const uint8_t * data() const noexcept {
@@ -135,13 +135,13 @@ private:
     }
 
     Color u32rgb_to_color(BGRColor color) const {
-        using Depths = gdi::GraphicDepths;
+        using Depths = gdi::GraphicDepth;
 
-        if (this->depths() != Depths::depth24) {
-            switch (this->depths()){
-                case Depths::depth8:  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
-                case Depths::depth15: color = decode_color15_opaquerect()(color); break;
-                case Depths::depth16: color = decode_color16_opaquerect()(color); break;
+        if (!this->order_depth().is_depth24()) {
+            switch (this->order_depth()){
+                case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+                case Depths::depth15(): color = decode_color15_opaquerect()(color); break;
+                case Depths::depth16(): color = decode_color16_opaquerect()(color); break;
                 default: REDASSERT(false);
             }
         }
@@ -150,23 +150,23 @@ private:
     }
 
     std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const {
-        using Depths = gdi::GraphicDepths;
+        using Depths = gdi::GraphicDepth;
 
-        if (this->depths() == Depths::depth24) {
-            switch (this->depths()){
-                case Depths::depth8:
+        if (!this->order_depth().is_depth24()) {
+            switch (this->order_depth()) {
+                case Depths::depth8():
                     color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
                     color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
                     break;
-                case Depths::depth15:
+                case Depths::depth15():
                     color1 = decode_color15_opaquerect()(color1);
                     color2 = decode_color15_opaquerect()(color2);
                     break;
-                case Depths::depth16:
+                case Depths::depth16():
                     color1 = decode_color16_opaquerect()(color1);
                     color2 = decode_color16_opaquerect()(color2);
                     break;
-                default:;
+                default: REDASSERT(false);
             }
         }
 

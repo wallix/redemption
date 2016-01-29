@@ -447,7 +447,7 @@ private:
             this->gd_converted = std::make_unique<Drawable>(Proxy{
                 color_converter_t(dec, enc),
                 this->graphics_update_pdu()
-            }, gdi::GraphicDepths::from_bpp(Dec::bpp));
+            }, gdi::GraphicDepth::from_bpp(Dec::bpp));
             this->gd = this->gd_converted.get();
         }
     } orders;
@@ -861,7 +861,7 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(*this->capture->get_graphic_api());
-            this->capture->add_graphic(this->orders.graphics_update_pdu(), this->client_info.bpp);
+            this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
         this->update_keyboard_input_mask_state();

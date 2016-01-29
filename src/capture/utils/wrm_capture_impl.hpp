@@ -145,7 +145,7 @@ public:
     {}
 
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        apis_register.graphic_list->push_back({this->graphic_to_file, this->graphic_to_file.capture_bpp});
+        apis_register.graphic_list->push_back(this->graphic_to_file);
         apis_register.capture_list.push_back(this->nc);
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 

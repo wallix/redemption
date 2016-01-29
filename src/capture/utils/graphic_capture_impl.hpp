@@ -32,12 +32,9 @@
 
 class GraphicCaptureImpl
 {
-public:
-    // TODO
-    using GdRef = ::GdRef;
-
 private:
     using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
+    using GdRef = std::reference_wrapper<gdi::GraphicApi>;
 
     struct GraphicProxy
     {
@@ -114,27 +111,35 @@ private:
         range<iterator> rng16() const { return {its[2], its[3]}; }
         range<iterator> rng24() const { return {its[3], its[4]}; }
         range<iterator> rng_all() const { return {its[0], its[4]}; }
+
+        template<class... Ts>
+        void apply(gdi::GraphicApi & gd, Ts const & ... args) const {
+            gd.draw(args...);
+        }
     };
 
     static PtrColorConverter choose_color_converter(std::vector<GdRef> gds, uint8_t order_bpp) {
-        std::sort(gds.begin(), gds.end(), [](GdRef const & a, GdRef const & b) {
-            return a.bpp < b.bpp;
+        auto const order_depth = gdi::GraphicDepth::from_bpp(order_bpp);
+        assert(order_depth.is_defined());
+        std::sort(gds.begin(), gds.end(), [order_depth](gdi::GraphicApi const & a, gdi::GraphicApi const & b) {
+            return a.order_depth().depth_or(order_depth).id() < b.order_depth().depth_or(order_depth).id();
         });
 
         RngByBpp rng_by_bpp{{gds.begin(), gds.begin(), gds.begin(), gds.begin(), gds.end()}};
 
         struct ge {
-            uint8_t bpp;
-            bool operator()(GdRef const & x) const {
-                return x.bpp >= this->bpp;
+            gdi::GraphicDepth order_depth;
+            gdi::GraphicDepth bpp;
+            bool operator()(gdi::GraphicApi const & x) const {
+                return x.order_depth().depth_or(order_depth).id() >= this->bpp.id();
             }
         };
 
         auto & its = rng_by_bpp.its;
-        its[0] = std::find_if(its[0], its[4], ge{8});
-        its[1] = std::find_if(its[0], its[4], ge{15});
-        its[2] = std::find_if(its[1], its[4], ge{16});
-        its[3] = std::find_if(its[2], its[4], ge{24});
+        its[0] = std::find_if(its[0], its[4], ge{order_depth, gdi::GraphicDepth::depth8()});
+        its[1] = std::find_if(its[0], its[4], ge{order_depth, gdi::GraphicDepth::depth15()});
+        its[2] = std::find_if(its[1], its[4], ge{order_depth, gdi::GraphicDepth::depth16()});
+        its[3] = std::find_if(its[2], its[4], ge{order_depth, gdi::GraphicDepth::depth24()});
 
         using dec8 = with_color8_palette<decode_color8_opaquerect>;
         switch (order_bpp) {
@@ -190,7 +195,7 @@ public:
     using GraphicApi = BasicGraphic;
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
-    : graphic_api(GraphicProxy{mouse}, gdi::GraphicDepths::depth24)
+    : graphic_api(GraphicProxy{mouse}, gdi::GraphicDepth::depth24())
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
     {
@@ -198,9 +203,7 @@ public:
 
     void attach_apis(ApisRegister & apis_register, const Inifile &) {
         assert(apis_register.graphic_list);
-        apis_register.graphic_list->push_back({
-            this->drawable, this->drawable.impl().bpp()
-        });
+        apis_register.graphic_list->push_back(this->drawable);
     }
 
     void start() {

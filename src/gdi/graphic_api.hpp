@@ -21,8 +21,9 @@
 #ifndef REDEMPTION_GDI_GRAPHIC_DEVICE_HPP
 #define REDEMPTION_GDI_GRAPHIC_DEVICE_HPP
 
-#include <cstdint>
 #include <type_traits>
+
+#include <cstdint>
 
 #include "adapter_base.hpp"
 
@@ -71,47 +72,67 @@ namespace RDP {
 
 namespace gdi {
 
-struct GraphicDepths
+struct GraphicDepth
 {
-    enum Depths {
-        unspecified,
-        depth8  = 1 << 0,
-        depth15 = 1 << 1,
-        depth16 = 1 << 2,
-        depth24 = 1 << 3,
-        all = depth8 | depth15 | depth16 | depth24,
-    };
+    static constexpr GraphicDepth unspecified() { return {0}; }
+    static constexpr GraphicDepth depth8() { return {1}; }
+    static constexpr GraphicDepth depth15() { return {2}; }
+    static constexpr GraphicDepth depth16() { return {3}; }
+    static constexpr GraphicDepth depth24() { return {4}; }
 
-    constexpr GraphicDepths(Depths e)
-    : depth_(e) {
+    static constexpr GraphicDepth from_bpp(uint8_t bpp) {
+        return {
+            bpp == 8  ? depth8() :
+            bpp == 15 ? depth15() :
+            bpp == 16 ? depth16() :
+            bpp == 24 ? depth24() :
+            bpp == 32 ? depth24() :
+            unspecified()
+        };
     }
 
-    static GraphicDepths from_bpp(uint8_t bpp) {
-        return
-            bpp == 8  ? depth8 :
-            bpp == 15 ? depth15 :
-            bpp == 16 ? depth16 :
-            bpp == 24 ? depth24 :
-            bpp == 32 ? depth24 :
-            unspecified;
-    }
-
-    operator Depths () const {
-        return this->depth_;
-    }
-
-    bool contains(Depths e) const {
-        return this->depth_ & e;
-    }
+    constexpr GraphicDepth(GraphicDepth const &) = default;
 
 private:
-    Depths depth_;
+    struct bpp_table { int table[5] = {0, 8, 15, 16, 24}; };
+public:
+    constexpr uint8_t to_bpp(uint8_t bpp) const {
+        return bpp_table{}.table[unsigned(this->depth_)];
+    }
+
+    constexpr bool is_defined() const { return !this->is_unspecified(); }
+    constexpr bool is_unspecified() const { return this->depth_ == unspecified().depth_; }
+    constexpr bool is_depth8() const { return this->depth_ == depth8().depth_; }
+    constexpr bool is_depth15() const { return this->depth_ == depth15().depth_; }
+    constexpr bool is_depth16() const { return this->depth_ == depth16().depth_; }
+    constexpr bool is_depth24() const { return this->depth_ == depth24().depth_; }
+
+    constexpr bool contains(GraphicDepth depth) const {
+        return this->is_unspecified() || depth.is_unspecified() || (this->depth_ == depth.depth_);
+    }
+
+    constexpr GraphicDepth const & depth_or(GraphicDepth const & default_depth) const {
+        return this->is_unspecified() ? default_depth : *this;
+    }
+
+    constexpr unsigned id() const { return this->depth_; }
+
+private:
+    enum class PrivateDepth { d0, d1, d2, d3, d4 };
+public:
+    // for switch/case, == and !=
+    constexpr operator PrivateDepth () const { return static_cast<PrivateDepth>(this->depth_); }
+
+private:
+    constexpr GraphicDepth(uint8_t depth) : depth_(depth) {}
+
+    uint8_t depth_;
 };
 
 struct GraphicApi : private noncopyable
 {
-    GraphicApi(GraphicDepths const & depths = GraphicDepths::unspecified)
-    : depth_(depths)
+    GraphicApi(GraphicDepth const & order_depths = GraphicDepth::unspecified())
+    : order_depth_(order_depths)
     {}
 
     virtual ~GraphicApi() = default;
@@ -153,16 +174,16 @@ struct GraphicApi : private noncopyable
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) {}
 
-    GraphicDepths const & depths() const {
-        return this->depth_;
+    GraphicDepth const & order_depth() const {
+        return this->order_depth_;
     }
 
 private:
-    GraphicDepths depth_;
+    GraphicDepth order_depth_;
 
 protected:
-    void set_depths(GraphicDepths const & depths) {
-        this->depth_ = depths;
+    void set_depths(GraphicDepth const & depths) {
+        this->order_depth_ = depths;
     }
 };
 

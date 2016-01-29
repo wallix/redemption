@@ -543,9 +543,9 @@ public:
         return this->graphic_api;
     }
 
-    void add_graphic(gdi::GraphicApi & gd, uint8_t bpp) {
+    void add_graphic(gdi::GraphicApi & gd) {
         if (this->graphic_api) {
-            this->get_apis_register().graphic_list->push_back({gd, bpp});
+            this->get_apis_register().graphic_list->push_back(gd);
             // TODO
             this->gd->start();
         }
