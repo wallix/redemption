@@ -35,6 +35,7 @@
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/input_kbd_api.hpp"
+#include "gdi/input_pointer_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
 #include "utils/pattutils.hpp"
@@ -157,13 +158,25 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
     {
         bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
             bool ret = true;
-            for (gdi::InputKbdApi & kpd : this->kbds) {
-                ret &= kpd.input_kbd(now, input_data_32);
+            for (gdi::InputKbdApi & kbd : this->kbds) {
+                ret &= kbd.input_kbd(now, input_data_32);
             }
             return ret;
         }
 
         std::vector<std::reference_wrapper<gdi::InputKbdApi>> kbds;
+    };
+
+
+    struct NewInputPointer : gdi::InputPointer
+    {
+        void update_pointer_position(uint16_t x, uint16_t y) override {
+            for (gdi::InputPointer & mouse : this->mouses) {
+                mouse.update_pointer_position(x, y);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::InputPointer>> mouses;
     };
 
 
@@ -210,6 +223,7 @@ private:
 
     NewCapture capture_api;
     NewInputKbd input_kbd_api;
+    NewInputPointer input_pointer_api;
     NewCaptureProbe capture_probe_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
@@ -219,6 +233,7 @@ private:
             this->graphic_api ? &this->graphic_api->get_proxy().snapshoters : nullptr,
             this->capture_api.get_proxy().caps,
             this->input_kbd_api.kbds,
+            this->input_pointer_api.mouses,
             this->capture_probe_api.cds
         };
     };
@@ -375,6 +390,10 @@ public:
 
     bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
         return this->input_kbd_api.input_kbd(now, {input_data_32, data_sz});
+    }
+
+    void update_pointer_position(uint16_t x, uint16_t y) override {
+        this->input_pointer_api.update_pointer_position(x, y);
     }
 
     // TODO is not virtual
@@ -553,13 +572,13 @@ public:
 
     void server_set_pointer(const Pointer & cursor) override {
         if (this->graphic_api) {
-            this->graphic_api->draw(cursor);
+            this->graphic_api->set_pointer(cursor);
         }
     }
 
     void set_mod_palette(const BGRPalette & palette) override {
         if (this->graphic_api) {
-            this->graphic_api->draw(palette);
+            this->graphic_api->set_palette(palette);
         }
     }
 

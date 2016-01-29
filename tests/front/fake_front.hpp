@@ -359,7 +359,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(cursor);
+        this->gd.set_pointer(cursor);
     }
 
     virtual int server_resize(int width, int height, int bpp) override {

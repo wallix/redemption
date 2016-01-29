@@ -362,7 +362,7 @@ class ClientFront : public FrontAPI {
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(cursor);
+        this->gd.set_pointer(cursor);
     }
 
     void begin_update() override {

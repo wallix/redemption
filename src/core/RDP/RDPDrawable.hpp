@@ -761,11 +761,11 @@ public:
     void draw(const RDP::RAIL::CachedIcon          & order) override {}
     void draw(const RDP::RAIL::DeletedWindow       & order) override {}
 
-    void draw(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         this->drawable.use_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
     }
 
-    void draw(const BGRPalette & palette) override {
+    void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
     }
 

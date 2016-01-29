@@ -14,33 +14,24 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2016
+*   Copyright (C) Wallix 2010-2015
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CAPTURE_UTILS_APIS_REGISTER_HPP
-#define REDEMPTION_CAPTURE_UTILS_APIS_REGISTER_HPP
+#ifndef REDEMPTION_GDI_INPUT_POINTER_API_HPP
+#define REDEMPTION_GDI_INPUT_POINTER_API_HPP
 
-#include <vector>
-#include <functional>
+#include "utils/noncopyable.hpp"
 
 namespace gdi {
-  class GraphicApi;
-  class CaptureApi;
-  class CaptureProbeApi;
-  class InputKbdApi;
-  class InputPointer;
-}
 
-struct ApisRegister
+struct InputPointer : private noncopyable
 {
-    // TODO
-    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
-    std::vector<std::reference_wrapper<gdi::InputKbdApi>> & input_kbd_list;
-    std::vector<std::reference_wrapper<gdi::InputPointer>> & input_pointer_list;
-    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
+    virtual ~InputPointer() = default;
+
+    virtual void update_pointer_position(uint16_t x, uint16_t y) = 0;
 };
+
+}
 
 #endif

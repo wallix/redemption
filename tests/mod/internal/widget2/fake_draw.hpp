@@ -158,7 +158,7 @@ struct TestDraw : mod_api
     }
 
     virtual void server_set_pointer(const Pointer & cursor) {
-        this->gd.draw(cursor);
+        this->gd.set_pointer(cursor);
     }
 
     virtual void begin_update() {}

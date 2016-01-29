@@ -93,7 +93,7 @@ struct FakeMod : mod_api
         this->gd.draw(bitmap_data, bmp);
     }
 
-    void server_set_pointer(const Pointer & cursor) override { this->gd.draw(cursor); }
+    void server_set_pointer(const Pointer & cursor) override { this->gd.set_pointer(cursor); }
 };
 
 BOOST_AUTO_TEST_CASE(TestModOSD)

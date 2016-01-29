@@ -712,7 +712,7 @@ public:
         }
     }
 
-    void draw(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -732,7 +732,7 @@ public:
     }
 
     // TODO
-    void draw(const BGRPalette& palette) override {}
+    void set_palette(const BGRPalette& palette) override {}
 };
 
 #endif

@@ -129,6 +129,7 @@ private:
     uint8_t depth_;
 };
 
+
 struct GraphicApi : private noncopyable
 {
     GraphicApi(GraphicDepth const & order_depths = GraphicDepth::unspecified())
@@ -137,9 +138,10 @@ struct GraphicApi : private noncopyable
 
     virtual ~GraphicApi() = default;
 
+    virtual void set_pointer(Pointer      const & cursor) {}
+    virtual void set_palette(BGRPalette   const & palette) {}
+
     virtual void draw(RDP::FrameMarker    const & order) = 0;
-    virtual void draw(Pointer             const & cursor) = 0;
-    virtual void draw(BGRPalette          const & palette) = 0;
     virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) = 0;
     virtual void draw(RDPPatBlt           const & cmd, Rect const & clip) = 0;
@@ -190,12 +192,23 @@ protected:
 struct GraphicProxy
 {
     struct draw_tag {};
+    struct set_tag {};
     struct sync_tag {};
     struct set_row_tag {};
 
     template<class Api, class... Ts>
     void operator()(draw_tag, Api & api, Ts const & ... args) {
         api.draw(args...);
+    }
+
+    template<class Api>
+    void operator()(set_tag, Api & api, Pointer const & pointer) {
+        api.set_pointer(pointer);
+    }
+
+    template<class Api>
+    void operator()(set_tag, Api & api, BGRPalette const & palette) {
+        api.set_palette(palette);
     }
 
     template<class Api>
@@ -216,9 +229,14 @@ struct GraphicAdapter : AdapterBase<Proxy, InterfaceBase>
 
     using AdapterBase<Proxy, InterfaceBase>::AdapterBase;
 
+    void set_pointer(Pointer    const & cursor) override {
+        this->get_proxy()(GraphicProxy::set_tag{}, *this, cursor);
+    }
+    void set_palette(BGRPalette const & palette) override {
+        this->get_proxy()(GraphicProxy::set_tag{}, *this, palette);
+    }
+
     void draw(RDP::FrameMarker    const & order) override { this->draw_(order); }
-    void draw(Pointer             const & cursor) override { this->draw_(cursor); }
-    void draw(BGRPalette          const & palette) override { this->draw_(palette); }
 
     void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }

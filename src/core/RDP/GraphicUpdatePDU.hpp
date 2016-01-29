@@ -32,6 +32,7 @@
 
 #include "log.hpp"
 #include "RDPSerializer.hpp"
+#include "gdi/input_pointer_api.hpp"
 #include "gcc.hpp"
 #include "sec.hpp"
 #include "mcs.hpp"
@@ -416,7 +417,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-class GraphicsUpdatePDU : public RDPSerializer {
+class GraphicsUpdatePDU : public RDPSerializer, public gdi::InputPointer {
     StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
     StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
 
@@ -784,8 +785,9 @@ protected:
     }   // void set_pointer(int cache_idx)
 
 public:
-    // TODO restored override ?
-    void update_pointer_position(uint16_t xPos, uint16_t yPos) {
+    using RDPSerializer::set_pointer;
+
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }

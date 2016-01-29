@@ -788,7 +788,7 @@ public:
     }
 
     void server_set_pointer(const Pointer & cursor) override {
-        this->graphics_update->draw(cursor);
+        this->graphics_update->set_pointer(cursor);
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override

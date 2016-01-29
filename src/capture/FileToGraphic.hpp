@@ -387,12 +387,12 @@ public:
 
     void dispatch_draw(Consumer & consumer, Pointer const & cursor) {
         if (consumer.graphic_device) consumer.graphic_device->server_set_pointer(cursor);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cursor);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->set_pointer(cursor);
     }
 
     void dispatch_draw(Consumer & consumer, BGRPalette const & palette) {
         if (consumer.graphic_device) consumer.graphic_device->set_mod_palette(palette);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(palette);
+        if (consumer.graphic_gdi) consumer.graphic_gdi->set_palette(palette);
     }
 
     template<class Sz>

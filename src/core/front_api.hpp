@@ -83,13 +83,14 @@ class FrontAPI : public RDPGraphicDevice{
 
     virtual void session_probe_started() {}
     virtual void set_keylayout(int LCID) {}
-    /// \return  -1 is error
-    virtual int get_keylayout() const { return -1; }
     virtual void set_focus_on_password_textbox(bool set) {}
     virtual void set_consent_ui_visible(bool set) {}
     virtual void session_update(const char * message) {}
 
     virtual bool disable_input_event_and_graphics_update(bool disable) { return false; }
+    
+    /// \return  -1 is error
+    virtual int get_keylayout() const { return -1; }
 
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
