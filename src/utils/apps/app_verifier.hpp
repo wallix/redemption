@@ -6,7 +6,7 @@
    redrec video verifier program
 */
 
-// unify : ifile_buf and icrypto_filename_buf
+// unify : ifile_buf and ifile_buf_crypto
 
 #include <iostream>
 
@@ -138,7 +138,7 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
         len_to_check, is_status_enabled, meta_line);
 }
 
-bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_status_enabled,
+bool check_mwrm_file_ifile_buf_crypto(const char * file_path, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
         CryptoContext * cctx, int infile_is_encrypted)
     {
@@ -146,7 +146,7 @@ bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_status
     bool result = false;
 
     if (check_file(file_path, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
-        transbuf::icrypto_filename_buf ifile(cctx, infile_is_encrypted);
+        transbuf::ifile_buf_crypto ifile(cctx, infile_is_encrypted);
         if (ifile.open(file_path) < 0) {
             LOG(LOG_ERR, "failed opening=%s", file_path);
             return false;
@@ -155,11 +155,11 @@ bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_status
         struct ReaderBuf
         {
             private:
-            transbuf::icrypto_filename_buf & buf;
+            transbuf::ifile_buf_crypto & buf;
 
             public:
 
-            ReaderBuf(transbuf::icrypto_filename_buf & buf) : buf(buf) {}
+            ReaderBuf(transbuf::ifile_buf_crypto & buf) : buf(buf) {}
 
             ssize_t read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
@@ -260,12 +260,12 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
         OpenSSL_add_all_digests();
 
         {
-            transbuf::icrypto_filename_buf ifile(cctx, infile_is_encrypted);
+            transbuf::ifile_buf_crypto ifile(cctx, infile_is_encrypted);
             ifile.open(fullfilename);
 
             struct ReaderBuf
             {
-                transbuf::icrypto_filename_buf & buf;
+                transbuf::ifile_buf_crypto & buf;
 
     //            ssize_t operator()(char * buf, size_t len) const {
     //                return this->buf.read(buf, len);
@@ -307,7 +307,7 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
             std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
 
             try {
-                transbuf::icrypto_filename_buf in_hash_fb(cctx, infile_is_encrypted);
+                transbuf::ifile_buf_crypto in_hash_fb(cctx, infile_is_encrypted);
                 in_hash_fb.open(file_path);
                 if (verbose) {
                     LOG(LOG_INFO, "File buffer created");
@@ -416,7 +416,7 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
         ******************/
 
         const bool is_status_enabled = (infile_version > 1);
-        if (!check_mwrm_file_icrypto_filename_buf(fullfilename, is_status_enabled, hash_line,
+        if (!check_mwrm_file_ifile_buf_crypto(fullfilename, is_status_enabled, hash_line,
                 (quick_check ? QUICK_CHECK_LENGTH : 0), cctx, infile_is_encrypted)) {
             std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 

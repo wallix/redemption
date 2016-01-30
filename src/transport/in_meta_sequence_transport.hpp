@@ -56,7 +56,7 @@ namespace transfil {
         //, MAX_CIPHERED_SIZE(0)
         //{}
 
-        // transbuf::ifile_buf& src | transbuf::icrypto_filename_buf& src
+        // transbuf::ifile_buf& src | transbuf::ifile_buf_crypto& src
         template<class Source>
         int open(Source & src, unsigned char * trace_key)
         {
@@ -322,7 +322,7 @@ namespace transbuf {
 
 // =============================================================================
 
-    class icrypto_filename_buf
+    class ifile_buf_crypto
     {
     public:
         transfil::decrypt_filter decrypt;
@@ -331,7 +331,7 @@ namespace transbuf {
         int encryption;
 
     public:
-        explicit icrypto_filename_buf(CryptoContext * cctx, int encryption)
+        explicit ifile_buf_crypto(CryptoContext * cctx, int encryption)
         : cctx(cctx)
         , file(cctx, 0/*encryption*/)
         {}
