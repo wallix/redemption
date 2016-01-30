@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
 
     CryptoContext cctx(rnd, ini, 1);
 
-    transbuf::ifile_buf ifile(&cctx);
+    transbuf::ifile_buf ifile(&cctx, 0);
     ifile.open("./tests/fixtures/sample_v2.mwrm");
 
     struct ReaderBuf
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2sum)
 
     CryptoContext cctx(rnd, ini, 1);
 
-    transbuf::ifile_buf ifile(&cctx);
+    transbuf::ifile_buf ifile(&cctx, 0);
     ifile.open("./tests/fixtures/sample_v2_checksum.mwrm");
 
     struct ReaderBuf

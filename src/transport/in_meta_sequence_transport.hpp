@@ -251,10 +251,11 @@ namespace transbuf {
     public:
         transfil::decrypt_filter decrypt;
         CryptoContext * cctx;
+        int encryption;
 
         int fd;
 
-        ifile_buf(CryptoContext * cctx) : fd(-1) {}
+        ifile_buf(CryptoContext * cctx, int encryption) : fd(-1) {}
         
         ~ifile_buf()
         {
@@ -327,11 +328,12 @@ namespace transbuf {
         transfil::decrypt_filter decrypt;
         CryptoContext * cctx;
         ifile_buf file;
+        int encryption;
 
     public:
-        explicit icrypto_filename_buf(CryptoContext * cctx)
+        explicit icrypto_filename_buf(CryptoContext * cctx, int encryption)
         : cctx(cctx)
-        , file(cctx)
+        , file(cctx, 0/*encryption*/)
         {}
 
         int open(const char * filename, mode_t mode = 0600)
@@ -505,12 +507,12 @@ namespace detail {
     public:
         explicit in_meta_sequence_buf_crypto(const in_meta_sequence_buf_param & params)
         : cfb_cctx(params.cctx_buf)
-        , cfb_file(params.cctx_buf)
+        , cfb_file(params.cctx_buf, 1/*encryption*/)
         , rl_eof(rl_buf)
         , rl_cur(rl_buf)
         , buf_meta_decrypt{}
         , buf_meta_cctx(params.cctx_meta)
-        , buf_meta_file(params.cctx_meta)
+        , buf_meta_file(params.cctx_meta, 1/*encryption*/)
         , meta_header_version(1)
         , meta_header_has_checksum(false)
         , verbose(params.verbose)
@@ -916,8 +918,8 @@ namespace detail {
 
     public:
         explicit in_meta_sequence_buf_flat(const in_meta_sequence_buf_param & params)
-        : transbuf::ifile_buf(params.cctx_buf)
-        , buf_meta(params.cctx_meta)
+        : transbuf::ifile_buf(params.cctx_buf, 0/*encryption*/)
+        , buf_meta(params.cctx_meta, 0/*encryption*/)
         , reader([&]() {
             if (this->buf_meta.open(params.meta_filename) < 0) {
                 LOG(LOG_WARNING, "read failed 6");
