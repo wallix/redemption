@@ -246,7 +246,7 @@ namespace transfil {
 
 namespace transbuf {
 
-    class ibase_file_buf
+    class ifile_buf
     {
     public:
         transfil::decrypt_filter decrypt;
@@ -254,9 +254,9 @@ namespace transbuf {
 
         int fd;
 
-        ibase_file_buf(CryptoContext * cctx) : fd(-1) {}
+        ifile_buf(CryptoContext * cctx) : fd(-1) {}
         
-        ~ibase_file_buf()
+        ~ifile_buf()
         {
             this->close();
         }
@@ -319,22 +319,9 @@ namespace transbuf {
         { return lseek64(this->fd, offset, whence); }
     };
 
-    class ifile_buf : public ibase_file_buf
-    {
-        public:
-        ifile_buf(CryptoContext * cctx) : ibase_file_buf(cctx) {}
-    };
-
-    class ifile_buf_meta  : public ibase_file_buf
-    {
-        public:
-        ifile_buf_meta(CryptoContext * cctx) : ibase_file_buf(cctx) {}
-    };
-
-
 // =============================================================================
 
-    class ibase_crypto_file_buf
+    class icrypto_filename_buf
     {
     public:
         transfil::decrypt_filter decrypt;
@@ -342,7 +329,7 @@ namespace transbuf {
         ifile_buf file;
 
     public:
-        explicit ibase_crypto_file_buf(CryptoContext * cctx)
+        explicit icrypto_filename_buf(CryptoContext * cctx)
         : cctx(cctx)
         , file(cctx)
         {}
@@ -377,21 +364,6 @@ namespace transbuf {
         off64_t seek(off64_t offset, int whence) const
         { return this->file.seek(offset, whence); }
     };
-
-    class icrypto_filename_buf : public ibase_crypto_file_buf
-    {
-        public:
-        icrypto_filename_buf(CryptoContext * cctx) 
-            : ibase_crypto_file_buf(cctx) {}
-    };
-
-    class icrypto_filename_buf_meta : public ibase_crypto_file_buf
-    {
-        public:
-        icrypto_filename_buf_meta(CryptoContext * cctx) 
-            : ibase_crypto_file_buf(cctx) {}
-    };
-
 }
 
 // =============================================================================
@@ -924,9 +896,9 @@ namespace detail {
     {
         struct ReaderBuf
         {
-            transbuf::ifile_buf_meta & buf;
+            transbuf::ifile_buf & buf;
 
-            explicit ReaderBuf(transbuf::ifile_buf_meta & buf)
+            explicit ReaderBuf(transbuf::ifile_buf & buf)
             : buf(buf)
             {}
 
@@ -935,7 +907,7 @@ namespace detail {
             }
         };
 
-        transbuf::ifile_buf_meta buf_meta;
+        transbuf::ifile_buf buf_meta;
         ReaderLine<ReaderBuf> reader;
         MetaHeader meta_header;
         MetaLine meta_line;
