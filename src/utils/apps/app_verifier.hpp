@@ -138,10 +138,10 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
         len_to_check, is_status_enabled, meta_line);
 }
 
-bool check_mwrm_file_ifile_buf_crypto(const char * file_path, bool is_status_enabled,
+bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
         CryptoContext * cctx, int infile_is_encrypted)
-    {
+{
     TODO("Add unit test for this function")
     bool result = false;
 
@@ -190,54 +190,6 @@ bool check_mwrm_file_ifile_buf_crypto(const char * file_path, bool is_status_ena
     return result;
 }
 
-bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
-        detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
-        CryptoContext * cctx, int infile_is_encrypted) {
-    TODO("Add unit test for this function")
-    bool result = false;
-
-    if (check_file(file_path, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
-        transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
-        if (ifile.open(file_path) < 0) {
-            LOG(LOG_ERR, "failed opening=%s", file_path);
-            return false;
-        }
-
-        struct ReaderBuf
-        {
-            transbuf::ifile_buf & buf;
-
-//            ssize_t operator()(char * buf, size_t len) const {
-//                return this->buf.read(buf, len);
-//            }
-
-            ssize_t read(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
-            }
-
-        };
-
-        detail::ReaderLine<ReaderBuf> reader({ifile});
-        auto meta_header = detail::read_meta_headers(reader);
-
-        detail::MetaLine meta_line_wrm;
-
-        result = true;
-
-        while (detail::read_meta_file(reader, meta_header, meta_line_wrm) !=
-               ERR_TRANSPORT_NO_MORE_DATA) {
-            if (check_file(meta_line_wrm.filename, is_status_enabled,
-                           meta_line_wrm, len_to_check, cctx) == false) {
-                result = false;
-                break;
-            }
-        }
-    }
-
-    return result;
-}
-
-
 void make_file_path(const char * directory_name, const char * file_name,  char * file_path_buf, size_t file_path_len) {
     snprintf(file_path_buf, file_path_len, "%s%s%s", directory_name,
         ((directory_name[strlen(directory_name) - 1] == '/') ? "" : "/"),
@@ -258,347 +210,175 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
 
     if (infile_is_encrypted){
         OpenSSL_add_all_digests();
+    }
 
+    {
+        transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
+        ifile.open(fullfilename);
+
+        struct ReaderBuf
         {
-            transbuf::ifile_buf_crypto ifile(cctx, infile_is_encrypted);
-            ifile.open(fullfilename);
+            transbuf::ifile_buf & buf;
 
-            struct ReaderBuf
-            {
-                transbuf::ifile_buf_crypto & buf;
+            ssize_t read(char * buf, size_t len) const {
+                return this->buf.read(buf, len);
+            }
+        };
 
-    //            ssize_t operator()(char * buf, size_t len) const {
-    //                return this->buf.read(buf, len);
-    //            }
+        detail::ReaderLine<ReaderBuf> reader({ifile});
+        auto meta_header = detail::read_meta_headers(reader);
 
-                ssize_t read(char * buf, size_t len) const {
-                    return this->buf.read(buf, len);
-                }
+        infile_version       = meta_header.version;
+        infile_is_checksumed = meta_header.has_checksum;
+    }
 
-            };
+    if (verbose) {
+        LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
+            (infile_is_checksumed ? "yes" : "no"));
+    }
 
-            detail::ReaderLine<ReaderBuf> reader({ifile});
-            auto meta_header = detail::read_meta_headers(reader);
+    // TODO: check compatibility of version and encryption
+    if (infile_version < 2) {
+        std::cout << "Input file is unencrypted.\n";
+        return 0;
+    }
 
-            infile_version       = meta_header.version;
-            infile_is_checksumed = meta_header.has_checksum;
-        }
+    /*****************
+    * Load file hash *
+    *****************/
 
-        if (verbose) {
-            LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
-                (infile_is_checksumed ? "yes" : "no"));
-        }
+    detail::MetaLine hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
 
+    {
+        char file_path[PATH_MAX + 1] = {};
 
-        /*****************
-        * Load file hash *
-        *****************/
+        ssize_t filename_len = input_filename.length();
 
-        detail::MetaLine hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
+        bool hash_ok = false;
 
-        {
-            char file_path[PATH_MAX + 1] = {};
+        make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
+        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
 
-            ssize_t filename_len = input_filename.length();
+        try {
+            transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
+            in_hash_fb.open(file_path);
+            if (verbose) {
+                LOG(LOG_INFO, "File buffer created");
+            }
 
-            bool hash_ok = false;
+            char temp_buffer[8192];
+            memset(temp_buffer, 0, sizeof(temp_buffer));
 
-            make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
-            std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
+            ssize_t number_of_bytes_read = in_hash_fb.read(temp_buffer, sizeof(temp_buffer));
+            if (verbose) {
+                LOG(LOG_INFO, "Hash data received. Length=%zd", number_of_bytes_read);
+            }
 
-            try {
-                transbuf::ifile_buf_crypto in_hash_fb(cctx, infile_is_encrypted);
-                in_hash_fb.open(file_path);
+            if (infile_version == 1) {
                 if (verbose) {
-                    LOG(LOG_INFO, "File buffer created");
+                    LOG(LOG_INFO, "Hash data v1");
                 }
 
-                char temp_buffer[8192];
-                memset(temp_buffer, 0, sizeof(temp_buffer));
+                // Filename HASH_64_BYTES
+                //         ^
+                //         |
+                //     separator
+                if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) 
+                // Separator
+                &&  (temp_buffer[filename_len] == ' ')) {
 
-                ssize_t number_of_bytes_read = in_hash_fb.read(temp_buffer, sizeof(temp_buffer));
-                if (verbose) {
-                    LOG(LOG_INFO, "Hash data received. Length=%zd", number_of_bytes_read);
-                }
-
-                if (infile_version == 1) {
                     if (verbose) {
-                        LOG(LOG_INFO, "Hash data v1");
+                        LOG(LOG_INFO, "Copy hash");
                     }
 
-                    // Filename HASH_64_BYTES
-                    //         ^
-                    //         |
-                    //     separator
-                    if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
-                        // Separator
-                        (temp_buffer[filename_len] == ' ')) {
+                    memcpy(hash_line.hash1, temp_buffer + filename_len + 1, sizeof(hash_line.hash1));
+                    memcpy(hash_line.hash2, temp_buffer + filename_len + 1 + sizeof(hash_line.hash1), sizeof(hash_line.hash2));
 
-                        if (verbose) {
-                            LOG(LOG_INFO, "Copy hash");
+                    hash_ok = true;
+                }
+                else {
+                    std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
+                }
+            }
+            else {
+                if (verbose) {
+                    LOG(LOG_INFO, "Hash data v2 or plus");
+                }
+
+                struct ReaderBuf
+                {
+                    char    * remaining_data_buf;
+                    ssize_t   remaining_data_length;
+
+                    ssize_t read(char * buf, size_t len) {
+                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
+                        if (number_of_bytes_to_read == 0) {
+                            return -1;
                         }
 
-                        memcpy(hash_line.hash1, temp_buffer + filename_len + 1, sizeof(hash_line.hash1));
-                        memcpy(hash_line.hash2, temp_buffer + filename_len + 1 + sizeof(hash_line.hash1), sizeof(hash_line.hash2));
+                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
 
+                        this->remaining_data_buf    += number_of_bytes_to_read;
+                        this->remaining_data_length -= number_of_bytes_to_read;
+
+                        return number_of_bytes_to_read;
+                    }
+
+//                    ssize_t operator()(char * buf, size_t len) {
+//                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
+//                        if (number_of_bytes_to_read == 0) {
+//                            return -1;
+//                        }
+
+//                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
+
+//                        this->remaining_data_buf    += number_of_bytes_to_read;
+//                        this->remaining_data_length -= number_of_bytes_to_read;
+
+//                        return number_of_bytes_to_read;
+//                    }
+                };
+
+                detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
+                auto hash_header = detail::read_hash_headers(reader);
+
+                if (detail::read_hash_file_v2(reader, hash_header, infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
+                    if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
                         hash_ok = true;
                     }
                     else {
                         std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
                     }
                 }
-                else {
-                    if (verbose) {
-                        LOG(LOG_INFO, "Hash data v2 or plus");
-                    }
-
-                    struct ReaderBuf
-                    {
-                        char    * remaining_data_buf;
-                        ssize_t   remaining_data_length;
-
-                        ssize_t read(char * buf, size_t len) {
-                            ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-                            if (number_of_bytes_to_read == 0) {
-                                return -1;
-                            }
-
-                            memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-                            this->remaining_data_buf    += number_of_bytes_to_read;
-                            this->remaining_data_length -= number_of_bytes_to_read;
-
-                            return number_of_bytes_to_read;
-                        }
-
-    //                    ssize_t operator()(char * buf, size_t len) {
-    //                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-    //                        if (number_of_bytes_to_read == 0) {
-    //                            return -1;
-    //                        }
-
-    //                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-    //                        this->remaining_data_buf    += number_of_bytes_to_read;
-    //                        this->remaining_data_length -= number_of_bytes_to_read;
-
-    //                        return number_of_bytes_to_read;
-    //                    }
-                    };
-
-                    detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
-                    auto hash_header = detail::read_hash_headers(reader);
-
-                    if (detail::read_hash_file_v2(reader, hash_header, infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
-                        if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
-                            hash_ok = true;
-                        }
-                        else {
-                            std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
-                        }
-                    }
-                }
-            }
-            catch (Error const & e) {
-                std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
-            }
-            catch (...) {
-                std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
-            }
-
-            if (hash_ok == false) {
-                return 1;
             }
         }
+        catch (Error const & e) {
+            std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
+        }
+        catch (...) {
+            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
+        }
 
-        /******************
-        * Check mwrm file *
-        ******************/
-
-        const bool is_status_enabled = (infile_version > 1);
-        if (!check_mwrm_file_ifile_buf_crypto(fullfilename, is_status_enabled, hash_line,
-                (quick_check ? QUICK_CHECK_LENGTH : 0), cctx, infile_is_encrypted)) {
-            std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
-
+        if (hash_ok == false) {
             return 1;
         }
-
-        std::cout << "No error detected during the data verification." << std::endl << std::endl;
-
-        return 0;
     }
-    else {
-        {
-            transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
-            ifile.open(fullfilename);
 
-            struct ReaderBuf
-            {
-                transbuf::ifile_buf & buf;
+    /******************
+    * Check mwrm file *
+    ******************/
 
-                ssize_t read(char * buf, size_t len) const {
-                    return this->buf.read(buf, len);
-                }
+    const bool is_status_enabled = (infile_version > 1);
+    if (!check_mwrm_file_ifile_buf(fullfilename, is_status_enabled, hash_line,
+            (quick_check ? QUICK_CHECK_LENGTH : 0), cctx, infile_is_encrypted)) {
+        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 
-    //            ssize_t operator()(char * buf, size_t len) const {
-    //                return this->buf.read(buf, len);
-    //            }
-            };
-
-            detail::ReaderLine<ReaderBuf> reader({ifile});
-            auto meta_header = detail::read_meta_headers(reader);
-
-            infile_version       = meta_header.version;
-            infile_is_checksumed = meta_header.has_checksum;
-        }
-
-        if (verbose) {
-            LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
-                (infile_is_checksumed ? "yes" : "no"));
-        }
-
-        if (infile_version < 2) {
-            std::cout << "Input file is unencrypted.\n";
-            return 0;
-        }
-
-        /*****************
-        * Load file hash *
-        *****************/
-
-        detail::MetaLine hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
-
-        {
-            char file_path[PATH_MAX + 1] = {};
-
-            ssize_t filename_len = input_filename.length();
-
-            bool hash_ok = false;
-
-            make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
-            std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
-
-            try {
-                transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
-                in_hash_fb.open(file_path);
-                if (verbose) {
-                    LOG(LOG_INFO, "File buffer created");
-                }
-
-                char temp_buffer[8192];
-                memset(temp_buffer, 0, sizeof(temp_buffer));
-
-                ssize_t number_of_bytes_read = in_hash_fb.read(temp_buffer, sizeof(temp_buffer));
-                if (verbose) {
-                    LOG(LOG_INFO, "Hash data received. Length=%zd", number_of_bytes_read);
-                }
-
-                if (infile_version == 1) {
-                    if (verbose) {
-                        LOG(LOG_INFO, "Hash data v1");
-                    }
-
-                    // Filename HASH_64_BYTES
-                    //         ^
-                    //         |
-                    //     separator
-                    if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
-                        // Separator
-                        (temp_buffer[filename_len] == ' ')) {
-
-                        if (verbose) {
-                            LOG(LOG_INFO, "Copy hash");
-                        }
-
-                        memcpy(hash_line.hash1, temp_buffer + filename_len + 1, sizeof(hash_line.hash1));
-                        memcpy(hash_line.hash2, temp_buffer + filename_len + 1 + sizeof(hash_line.hash1), sizeof(hash_line.hash2));
-
-                        hash_ok = true;
-                    }
-                    else {
-                        std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
-                    }
-                }
-                else {
-                    if (verbose) {
-                        LOG(LOG_INFO, "Hash data v2 or plus");
-                    }
-
-                    struct ReaderBuf
-                    {
-                        char    * remaining_data_buf;
-                        ssize_t   remaining_data_length;
-
-                        ssize_t read(char * buf, size_t len) {
-                            ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-                            if (number_of_bytes_to_read == 0) {
-                                return -1;
-                            }
-
-                            memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-                            this->remaining_data_buf    += number_of_bytes_to_read;
-                            this->remaining_data_length -= number_of_bytes_to_read;
-
-                            return number_of_bytes_to_read;
-                        }
-
-    //                    ssize_t operator()(char * buf, size_t len) {
-    //                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-    //                        if (number_of_bytes_to_read == 0) {
-    //                            return -1;
-    //                        }
-
-    //                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-    //                        this->remaining_data_buf    += number_of_bytes_to_read;
-    //                        this->remaining_data_length -= number_of_bytes_to_read;
-
-    //                        return number_of_bytes_to_read;
-    //                    }
-                    };
-
-                    detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
-                    auto hash_header = detail::read_hash_headers(reader);
-
-                    if (detail::read_hash_file_v2(reader, hash_header, infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
-                        if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
-                            hash_ok = true;
-                        }
-                        else {
-                            std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
-                        }
-                    }
-                }
-            }
-            catch (Error const & e) {
-                std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
-            }
-            catch (...) {
-                std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
-            }
-
-            if (hash_ok == false) {
-                return 1;
-            }
-        }
-
-        /******************
-        * Check mwrm file *
-        ******************/
-
-        const bool is_status_enabled = (infile_version > 1);
-        if (!check_mwrm_file_ifile_buf(fullfilename, is_status_enabled, hash_line,
-                (quick_check ? QUICK_CHECK_LENGTH : 0), cctx, infile_is_encrypted)) {
-            std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
-
-            return 1;
-        }
-
-        std::cout << "No error detected during the data verification." << std::endl << std::endl;
-
-        return 0;
+        return 1;
     }
+
+    std::cout << "No error detected during the data verification." << std::endl << std::endl;
+
+    return 0;
 }
 
 int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)

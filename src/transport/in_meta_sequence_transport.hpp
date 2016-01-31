@@ -327,7 +327,82 @@ namespace transbuf {
     public:
         transfil::decrypt_filter decrypt;
         CryptoContext * cctx;
-        ifile_buf file;
+        class ifile_buf
+        {
+        public:
+            transfil::decrypt_filter decrypt;
+            CryptoContext * cctx;
+            int encryption;
+
+            int fd;
+
+            ifile_buf(CryptoContext * cctx, int encryption) : fd(-1) {}
+            
+            ~ifile_buf()
+            {
+                this->close();
+            }
+
+            int open(const char * filename)
+            {
+                this->close();
+                this->fd = ::open(filename, O_RDONLY);
+                return this->fd;
+            }
+
+            int open(const char * filename, mode_t /*mode*/)
+            {
+                TODO("see why mode is ignored even if it's provided as a parameter?");
+                this->close();
+                this->fd = ::open(filename, O_RDONLY);
+                return this->fd;
+            }
+
+            int close()
+            {
+                if (this->is_open()) {
+                    const int ret = ::close(this->fd);
+                    this->fd = -1;
+                    return ret;
+                }
+                return 0;
+            }
+
+            bool is_open() const noexcept
+            { return -1 != this->fd; }
+
+            ssize_t read(void * data, size_t len)
+            {
+                TODO("this is blocking read, add support for timeout reading");
+                TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+                size_t remaining_len = len;
+                while (remaining_len) {
+                    ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                    if (ret < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Error should still be there next time we try to read
+                        if (remaining_len != len){
+                            return len - remaining_len;
+                        }
+                        return ret;
+                    }
+                    // We must exit loop or we will enter infinite loop
+                    if (ret == 0){
+                        break;
+                    }
+                    remaining_len -= ret;
+                }
+                return len - remaining_len;        
+            }
+
+            off64_t seek(off64_t offset, int whence) const
+            {
+                return lseek64(this->fd, offset, whence);
+            }
+        } file;
+
         int encryption;
 
     public:
@@ -338,33 +413,52 @@ namespace transbuf {
 
         int open(const char * filename, mode_t mode = 0600)
         {
-            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            unsigned char derivator[DERIVATOR_LENGTH];
+            if (encryption){
 
-            this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
-                return -1;
+                int err = this->file.open(filename, mode);
+                if (err < 0) {
+                    return err;
+                }
+
+                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+                unsigned char derivator[DERIVATOR_LENGTH];
+
+                this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+                if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
+                    return -1;
+                }
+
+                return this->decrypt.open(this->file, trace_key);
             }
-
-            int err = this->file.open(filename, mode);
-            if (err < 0) {
-                return err;
+            else {
+                return this->file.open(filename, mode);
             }
-
-            return this->decrypt.open(this->file, trace_key);
         }
 
         ssize_t read(void * data, size_t len)
-        { return this->decrypt.read(this->file, data, len); }
+        {
+            if (encryption){
+                return this->decrypt.read(this->file, data, len);
+            }
+            else {
+                return this->file.read(data, len);
+            }
+        }
 
         int close()
-        { return this->file.close(); }
+        {
+            return this->file.close();
+        }
 
         bool is_open() const noexcept
-        { return this->file.is_open(); }
+        { 
+            return this->file.is_open();
+        }
 
         off64_t seek(off64_t offset, int whence) const
-        { return this->file.seek(offset, whence); }
+        {
+            return this->file.seek(offset, whence);
+        }
     };
 }
 
