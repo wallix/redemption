@@ -323,20 +323,6 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
 
                         return number_of_bytes_to_read;
                     }
-
-//                    ssize_t operator()(char * buf, size_t len) {
-//                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-//                        if (number_of_bytes_to_read == 0) {
-//                            return -1;
-//                        }
-
-//                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-//                        this->remaining_data_buf    += number_of_bytes_to_read;
-//                        this->remaining_data_length -= number_of_bytes_to_read;
-
-//                        return number_of_bytes_to_read;
-//                    }
                 };
 
                 detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
