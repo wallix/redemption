@@ -58,7 +58,7 @@ namespace transfil {
 
         // transbuf::ifile_buf& src | transbuf::ifile_buf_crypto& src
         template<class Source>
-        int open(Source & src, unsigned char * trace_key)
+        int decrypt_open(Source & src, unsigned char * trace_key)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -71,7 +71,7 @@ namespace transfil {
 
             unsigned char tmp_buf[40];
 
-            if (const ssize_t err = this->raw_read(src, tmp_buf, 40)) {
+            if (const ssize_t err = this->decrypt_raw_read(src, tmp_buf, 40)) {
                 return err;
             }
 
@@ -112,7 +112,7 @@ namespace transfil {
         }
 
         template<class Source>
-        ssize_t read(Source & src, void * data, size_t len)
+        ssize_t decrypt_read(Source & src, void * data, size_t len)
         {
             if (this->state & CF_EOF) {
                 //printf("cf EOF\n");
@@ -133,7 +133,7 @@ namespace transfil {
                     // TODO: avoid reading size directly into an integer, performance enhancement is minimal
                     // and it's not portable because of endianness issue => read in a buffer and decode by hand
                     unsigned char tmp_buf[4] = {};
-                    if (const int err = this->raw_read(src, tmp_buf, 4)) {
+                    if (const int err = this->decrypt_raw_read(src, tmp_buf, 4)) {
                         return err;
                     }
 
@@ -156,7 +156,7 @@ namespace transfil {
                             //char compressed_buf[compressed_buf_size];
                             unsigned char compressed_buf[65536];
 
-                            if (const ssize_t err = this->raw_read(src, ciphered_buf, ciphered_buf_size)) {
+                            if (const ssize_t err = this->decrypt_raw_read(src, ciphered_buf, ciphered_buf_size)) {
                                 return err;
                             }
 
@@ -213,7 +213,7 @@ namespace transfil {
     private:
         ///\return 0 if success, otherwise a negatif number
         template<class Source>
-        ssize_t raw_read(Source & src, void * data, size_t len)
+        ssize_t decrypt_raw_read(Source & src, void * data, size_t len)
         {
             ssize_t err = src.read(data, len);
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
@@ -325,7 +325,7 @@ namespace transbuf {
     class ifile_buf_crypto
     {
     public:
-        transfil::decrypt_filter decrypt;
+        transfil::decrypt_filter cfb_decrypt;
         CryptoContext * cctx;
         class ifile_buf
         {
@@ -428,7 +428,7 @@ namespace transbuf {
                     return -1;
                 }
 
-                return this->decrypt.open(this->file, trace_key);
+                return this->cfb_decrypt.decrypt_open(this->file, trace_key);
             }
             else {
                 return this->file.open(filename, mode);
@@ -438,7 +438,7 @@ namespace transbuf {
         ssize_t read(void * data, size_t len)
         {
             if (encryption){
-                return this->decrypt.read(this->file, data, len);
+                return this->cfb_decrypt.decrypt_read(this->file, data, len);
             }
             else {
                 return this->file.read(data, len);
@@ -487,11 +487,11 @@ namespace detail {
                 return err;
             }
 
-            return this->cfb_decrypt.open(this->cfb_file, trace_key);
+            return this->cfb_decrypt.decrypt_open(this->cfb_file, trace_key);
         }
 
         ssize_t cfb_read(void * data, size_t len)
-        { return this->cfb_decrypt.read(this->cfb_file, data, len); }
+        { return this->cfb_decrypt.decrypt_read(this->cfb_file, data, len); }
 
         int close()
         { return this->cfb_file.close(); }
@@ -511,7 +511,7 @@ namespace detail {
         {
             LOG(LOG_INFO, "reader_read");
  
-            ssize_t ret = this->buf_meta_decrypt.read(
+            ssize_t ret = this->buf_meta_decrypt.decrypt_read(
                 this->buf_meta_file, this->rl_buf, sizeof(this->rl_buf));
             if (ret < 0 && errno != EINTR) {
                 LOG(LOG_WARNING, "read failed");
@@ -621,7 +621,7 @@ namespace detail {
 
             LOG(LOG_INFO, "in_meta_sequence_buf_crypto : decryption of meta_file %s", meta_filename);
 
-            if (this->buf_meta_decrypt.open(this->buf_meta_file, trace_key) < 0){
+            if (this->buf_meta_decrypt.decrypt_open(this->buf_meta_file, trace_key) < 0){
                 LOG(LOG_WARNING, "read failed 4.2");
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }

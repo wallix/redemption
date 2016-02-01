@@ -114,7 +114,7 @@ crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoC
         return nullptr;
     }
 
-    if (-1 == cf_struct->decrypt.open(cf_struct->file, trace_key)) {
+    if (-1 == cf_struct->decrypt.decrypt_open(cf_struct->file, trace_key)) {
         delete cf_struct;
         return nullptr;
     }
@@ -157,7 +157,7 @@ int crypto_read(crypto_file * cf, char * buf, unsigned int buf_size)
 {
     if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
         Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
-        return cf_struct->decrypt.read(cf_struct->file, buf, buf_size);
+        return cf_struct->decrypt.decrypt_read(cf_struct->file, buf, buf_size);
     }
     return -1;
 }
