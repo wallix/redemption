@@ -185,8 +185,25 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
     private:
-        void add_known_device(uint32_t DeviceId,
+        bool add_known_device(uint32_t DeviceId,
                               const char* PreferredDosName) {
+            for (device_info_inventory_type::const_iterator iter =
+                     this->device_info_inventory.cbegin();
+                 iter != this->device_info_inventory.cend(); ++iter) {
+                if (std::get<0>(*iter) == DeviceId) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        LOG(LOG_INFO,
+                            "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
+                                "\"%s\"(DeviceId=%u) is already in the dervice list. "
+                                "Old=\"%s\"",
+                            PreferredDosName, DeviceId,
+                            std::get<1>(*iter).c_str());
+                    }
+
+                    return false;
+                }
+            }
+
             this->device_info_inventory.push_back(
                 std::make_tuple(DeviceId, PreferredDosName));
             if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
@@ -195,6 +212,8 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         "Add \"%s\"(DeviceId=%u) to known dervice list.",
                     PreferredDosName, DeviceId);
             }
+
+            return true;
         }
 
     public:
@@ -255,8 +274,9 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
         void announce_device() {
-            if (!this->waiting_for_server_device_announce_response &&
-                this->device_announces.size()) {
+LOG(LOG_INFO, "announce_device: ... device_announces_size=%u", this->device_announces.size());
+            while (!this->waiting_for_server_device_announce_response &&
+                   this->device_announces.size()) {
                 REDASSERT(this->to_server_sender);
 
                 const uint32_t total_length =
@@ -292,9 +312,14 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
                     if (device_announce_header.DeviceType() ==
                         rdpdr::RDPDR_DTYP_FILESYSTEM) {
-                        this->add_known_device(
-                            device_announce_header.DeviceId(),
-                            device_announce_header.PreferredDosName());
+                        if (!this->add_known_device(
+                                device_announce_header.DeviceId(),
+                                device_announce_header.PreferredDosName())) {
+
+                            this->device_announces.pop_front();
+
+                            continue;
+                        }
                     }
                 }
 
@@ -333,11 +358,11 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                 this->device_announces.pop_front();
 
                 this->waiting_for_server_device_announce_response = true;
-            }   // if (!this->waiting_for_server_device_announce_response &&
-                //     this->device_announces.size())
-            else {
-                this->EffectiveDisableSessionProbeDrive();
-            }
+            }   // while (!this->waiting_for_server_device_announce_response &&
+                //        this->device_announces.size())
+
+            this->EffectiveDisableSessionProbeDrive();
+LOG(LOG_INFO, "announce_device: OK.");
         }   // void announce_device()
 
     public:
