@@ -61,7 +61,7 @@ namespace detail
 
         int read(int err)
         {
-            ssize_t ret = this->reader.read(this->buf, sizeof(this->buf));
+            ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
             }

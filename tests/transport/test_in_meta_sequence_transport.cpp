@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
     {
         transbuf::ifile_buf & buf;
 
-        ssize_t read(char * buf, size_t len) const {
+        ssize_t reader_read(char * buf, size_t len) const {
             return this->buf.read(buf, len);
         }
     };
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2sum)
     {
         transbuf::ifile_buf & buf;
 
-        ssize_t read(char * buf, size_t len) const {
+        ssize_t reader_read(char * buf, size_t len) const {
             return this->buf.read(buf, len);
         }
     };

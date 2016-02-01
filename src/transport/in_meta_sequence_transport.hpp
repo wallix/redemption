@@ -998,7 +998,7 @@ namespace detail {
             : buf(buf)
             {}
 
-            ssize_t read(char * buf, size_t len) const {
+            ssize_t reader_read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
         };

@@ -161,7 +161,7 @@ bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
 
             ReaderBuf(transbuf::ifile_buf_crypto & buf) : buf(buf) {}
 
-            ssize_t read(char * buf, size_t len) const {
+            ssize_t reader_read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
 
@@ -220,7 +220,7 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
         {
             transbuf::ifile_buf & buf;
 
-            ssize_t read(char * buf, size_t len) const {
+            ssize_t reader_read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
         };
@@ -302,7 +302,7 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
             }
             else {
                 if (verbose) {
-                    LOG(LOG_INFO, "Hash data v2 or plus");
+                    LOG(LOG_INFO, "Hash data v2 or higher");
                 }
 
                 struct ReaderBuf
@@ -310,7 +310,7 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
                     char    * remaining_data_buf;
                     ssize_t   remaining_data_length;
 
-                    ssize_t read(char * buf, size_t len) {
+                    ssize_t reader_read(char * buf, size_t len) {
                         ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
                         if (number_of_bytes_to_read == 0) {
                             return -1;
