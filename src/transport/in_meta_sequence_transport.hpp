@@ -1190,60 +1190,21 @@ struct InMetaSequenceTransport : public Transport
 
 };
 
-class InputTransportMetaCrypto
-: public Transport
+struct CryptoInMetaSequenceTransport : public Transport
 {
     detail::in_meta_sequence_buf_crypto buf;
 
-public:
-    InputTransportMetaCrypto() = default;
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
+    : buf(detail::temporary_concat(filename, extension).c_str(), cctx, cctx, verbose)
+    {}
 
-    explicit InputTransportMetaCrypto(const char * meta_filename,
-                                     CryptoContext * cctx_buf,
-                                     CryptoContext * cctx_meta,
-                                     uint32_t verbose)
-    : buf(meta_filename, cctx_buf, cctx_meta, verbose)
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
+    : buf(filename, cctx, cctx, verbose)
     {}
 
     bool disconnect() override {
         return !this->buf.close();
     }
-
-private:
-    void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf.read(*pbuffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-        *pbuffer += res;
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-    }
-
-protected:
-    detail::in_meta_sequence_buf_crypto & buffer() noexcept
-    { return this->buf; }
-
-    const detail::in_meta_sequence_buf_crypto & buffer() const noexcept
-    { return this->buf; }
-
-    typedef InputTransportMetaCrypto TransportType;
-};
-
-struct CryptoInMetaSequenceTransport : InputTransportMetaCrypto
-{
-    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : InputTransportMetaCrypto(
-            detail::temporary_concat(filename, extension).c_str(), cctx, cctx, verbose)
-    {}
-
-    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : InputTransportMetaCrypto(filename, cctx, cctx, verbose)
-    {}
 
     time_t begin_chunk_time() const noexcept
     { return this->buffer().get_begin_chunk_time(); }
@@ -1268,6 +1229,26 @@ struct CryptoInMetaSequenceTransport : InputTransportMetaCrypto
         }
         ++this->seqno;
         return true;
+    }
+
+    detail::in_meta_sequence_buf_crypto & buffer() noexcept
+    { return this->buf; }
+
+    const detail::in_meta_sequence_buf_crypto & buffer() const noexcept
+    { return this->buf; }
+
+    void do_recv(char ** pbuffer, size_t len) override {
+        const ssize_t res = this->buf.read(*pbuffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
     }
 };
 
