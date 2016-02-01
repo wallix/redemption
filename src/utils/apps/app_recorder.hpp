@@ -879,14 +879,14 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
             InMetaSequenceTransport in_wrm_trans_tmp(
                 &cctx,
                 infile_prefix, 
-                infile_extension.c_str());
+                infile_extension.c_str(), 0, 0);
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
         else {
             CryptoInMetaSequenceTransport in_wrm_trans_tmp(
                 &cctx, 
                 infile_prefix, 
-                infile_extension.c_str());
+                infile_extension.c_str(), 1, 0);
             file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
         }
     }
@@ -959,7 +959,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                 InMetaSequenceTransport in_wrm_trans_tmp(
                     &cctx,
                     infile_prefix, 
-                    infile_extension.c_str());
+                    infile_extension.c_str(), 0, 0);
                     
                 remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()
@@ -969,7 +969,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                 CryptoInMetaSequenceTransport in_wrm_trans_tmp(
                     &cctx, 
                     infile_prefix, 
-                    infile_extension.c_str());
+                    infile_extension.c_str(), 1, 0);
                 remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                            , infile_basename.c_str(), infile_extension.c_str()
                            , infile_is_encrypted);
@@ -982,8 +982,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     };
 
     return infile_is_encrypted
-        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str()))
-        : run( InMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str()));
+        ? run( CryptoInMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str(), 1, 0))
+        : run( InMetaSequenceTransport(&cctx, infile_prefix, infile_extension.c_str(), 0, 0));
 }
 
 #endif
