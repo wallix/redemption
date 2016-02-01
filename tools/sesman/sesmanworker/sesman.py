@@ -1107,9 +1107,9 @@ class Sesman():
                 kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
             kv[u'timezone'] = str(altzone if daylight else timezone)
 
-            if not self.engine.checkout_target(selected_target):
-                _status, _error = False, TR(u"account_locked")
-                self.send_data({u'rejected': TR(u'account_locked')})
+            _status, _error = self.engine.checkout_target(selected_target)
+            if not _status:
+                self.send_data({u'rejected': _error})
 
             if _status:
                 kv['password'] = 'pass'
@@ -1183,9 +1183,10 @@ class Sesman():
                         physical_target = None
                         break
 
-                    if not self.engine.checkout_target(physical_target):
+                    _status, _error = self.engine.checkout_target(physical_target)
+                    if not _status:
                         try_next = True
-                        Logger().info("Account locked on jump server, try another one.")
+                        Logger().info("Account locked on jump server, %s." % _error)
                         continue
 
                     application = self.engine.get_application(selected_target)

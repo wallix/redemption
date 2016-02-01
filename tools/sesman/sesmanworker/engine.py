@@ -692,13 +692,13 @@ class Engine(object):
                 Logger().debug("** CALL checkout_target")
                 creds = self.wabengine.checkout_target(target)
                 self.target_credentials[target] = creds
-            except AccountLocked:
+            except AccountLocked as m:
                 Logger().info("Engine checkout_target failed: account locked")
-                return False
+                return False, "%s" % m
             Logger().debug("** END checkout_target")
         else:
             Logger().info("checkout_target: target already checked out")
-        return True
+        return True, "OK"
 
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
