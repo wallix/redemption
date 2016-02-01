@@ -1123,27 +1123,26 @@ namespace detail {
     };    
 }
 
-class InputTransportMetaFlat
-: public Transport
+struct InMetaSequenceTransport : public Transport
 {
     detail::in_meta_sequence_buf_flat buf;
 
-public:
-    InputTransportMetaFlat() = default;
+    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
+    : buf(detail::temporary_concat(filename, extension).str, cctx, cctx, verbose)
+    {
+        this->verbose = verbose;
+    }
 
-    explicit InputTransportMetaFlat(
-            const char * meta_filename,
-            CryptoContext * cctx_buf,
-            CryptoContext * cctx_meta,
-            uint32_t verbose)
-        : buf(meta_filename, cctx_buf, cctx_meta, verbose)
-    {}
+    explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
+    : buf(filename, cctx, cctx, verbose)
+    {
+        this->verbose = verbose;
+    }
 
     bool disconnect() override {
         return !this->buf.close();
     }
 
-private:
     void do_recv(char ** pbuffer, size_t len) override {
         const ssize_t res = this->buf.read(*pbuffer, len);
         if (res < 0){
@@ -1156,31 +1155,6 @@ private:
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
-    }
-
-protected:
-    detail::in_meta_sequence_buf_flat & buffer() noexcept
-    { return this->buf; }
-
-    const detail::in_meta_sequence_buf_flat & buffer() const noexcept
-    { return this->buf; }
-
-    typedef InputTransportMetaFlat TransportType;
-};
-
-
-struct InMetaSequenceTransport : public InputTransportMetaFlat
-{
-    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : InputTransportMetaFlat(detail::temporary_concat(filename, extension).str, cctx, cctx, verbose)
-    {
-        this->verbose = verbose;
-    }
-
-    explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : InputTransportMetaFlat(filename, cctx, cctx, verbose)
-    {
-        this->verbose = verbose;
     }
 
     bool next() override {
@@ -1207,6 +1181,13 @@ struct InMetaSequenceTransport : public InputTransportMetaFlat
 
     const char * path() const noexcept
     { return this->buffer().current_path(); }
+
+    detail::in_meta_sequence_buf_flat & buffer() noexcept
+    { return this->buf; }
+
+    const detail::in_meta_sequence_buf_flat & buffer() const noexcept
+    { return this->buf; }
+
 };
 
 class InputTransportMetaCrypto
@@ -1253,18 +1234,25 @@ protected:
     typedef InputTransportMetaCrypto TransportType;
 };
 
-
-struct InputNextTransport_crypto : public InputTransportMetaCrypto
+struct CryptoInMetaSequenceTransport : InputTransportMetaCrypto
 {
-    InputNextTransport_crypto() = default;
-
-    explicit InputNextTransport_crypto(
-            const char * meta_filename,
-            CryptoContext * cctx_buf,
-            CryptoContext * cctx_meta,
-            uint32_t verbose)
-    : InputTransportMetaCrypto(meta_filename, cctx_buf, cctx_meta, verbose)
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
+    : InputTransportMetaCrypto(
+            detail::temporary_concat(filename, extension).c_str(), cctx, cctx, verbose)
     {}
+
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
+    : InputTransportMetaCrypto(filename, cctx, cctx, verbose)
+    {}
+
+    time_t begin_chunk_time() const noexcept
+    { return this->buffer().get_begin_chunk_time(); }
+
+    time_t end_chunk_time() const noexcept
+    { return this->buffer().get_end_chunk_time(); }
+
+    const char * path() const noexcept
+    { return this->buffer().current_path(); }
 
     bool next() override {
         if (this->status == false) {
@@ -1281,30 +1269,6 @@ struct InputNextTransport_crypto : public InputTransportMetaCrypto
         ++this->seqno;
         return true;
     }
-
-protected:
-    typedef InputNextTransport_crypto TransportType;
-};
-
-struct CryptoInMetaSequenceTransport : InputNextTransport_crypto
-{
-    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : CryptoInMetaSequenceTransport::TransportType(
-            detail::temporary_concat(filename, extension).c_str(), cctx, cctx, verbose)
-    {}
-
-    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : CryptoInMetaSequenceTransport::TransportType(filename, cctx, cctx, verbose)
-    {}
-
-    time_t begin_chunk_time() const noexcept
-    { return this->buffer().get_begin_chunk_time(); }
-
-    time_t end_chunk_time() const noexcept
-    { return this->buffer().get_end_chunk_time(); }
-
-    const char * path() const noexcept
-    { return this->buffer().current_path(); }
 };
 
 #endif
