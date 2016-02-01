@@ -330,13 +330,9 @@ namespace transbuf {
         class ifile_buf
         {
         public:
-            transfil::decrypt_filter decrypt;
-            CryptoContext * cctx;
-            int encryption;
-
             int fd;
 
-            ifile_buf(CryptoContext * cctx, int encryption) : fd(-1) {}
+            ifile_buf() : fd(-1) {}
             
             ~ifile_buf()
             {
@@ -408,7 +404,7 @@ namespace transbuf {
     public:
         explicit ifile_buf_crypto(CryptoContext * cctx, int encryption)
         : cctx(cctx)
-        , file(cctx, 0/*encryption*/)
+        , file()
         {}
 
         int open(const char * filename, mode_t mode = 0600)
@@ -582,12 +578,14 @@ namespace detail {
 
         MetaLine meta_line;
         char meta_path[2048];
+        int encryption;
         uint32_t verbose;
 
     public:
         explicit in_meta_sequence_buf_crypto(const char * meta_filename,
                                              CryptoContext * cctx_buf,
                                              CryptoContext * cctx_meta,
+                                             int encryption,
                                              uint32_t verbose)
         : cfb_cctx(cctx_buf)
         , cfb_file(cctx_buf, 1/*encryption*/)
@@ -598,6 +596,7 @@ namespace detail {
         , buf_meta_file(cctx_meta, 1/*encryption*/)
         , meta_header_version(1)
         , meta_header_has_checksum(false)
+        , encryption(encryption)
         , verbose(verbose)
         {
             LOG(LOG_INFO, "in_meta_sequence_buf_crypto v2 %s", meta_filename);
@@ -997,6 +996,7 @@ namespace detail {
         MetaHeader meta_header;
         MetaLine meta_line;
         char meta_path[2048];
+        int encryption;
         uint32_t verbose;
 
     public:
@@ -1004,6 +1004,7 @@ namespace detail {
             const char * meta_filename,
             CryptoContext * cctx_buf,
             CryptoContext * cctx_meta,
+            int encryption,
             uint32_t verbose)
         : transbuf::ifile_buf(cctx_buf, 0/*encryption*/)
         , buf_meta(cctx_meta, 0/*encryption*/)
@@ -1015,6 +1016,7 @@ namespace detail {
             return ReaderBuf{this->buf_meta};
         }())
         , meta_header(read_meta_headers(this->reader))
+        , encryption(encryption)
         , verbose(verbose)
         {
             this->meta_line.start_time = 0;
@@ -1128,13 +1130,13 @@ struct InMetaSequenceTransport : public Transport
     detail::in_meta_sequence_buf_flat buf;
 
     InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : buf(detail::temporary_concat(filename, extension).str, cctx, cctx, verbose)
+    : buf(detail::temporary_concat(filename, extension).str, cctx, cctx, 0/* encryption*/, verbose)
     {
         this->verbose = verbose;
     }
 
-    explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : buf(filename, cctx, cctx, verbose)
+    explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, int encryption, uint32_t verbose = 0)
+    : buf(filename, cctx, cctx, 0 /* encryption */, verbose)
     {
         this->verbose = verbose;
     }
@@ -1195,11 +1197,11 @@ struct CryptoInMetaSequenceTransport : public Transport
     detail::in_meta_sequence_buf_crypto buf;
 
     CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : buf(detail::temporary_concat(filename, extension).c_str(), cctx, cctx, verbose)
+    : buf(detail::temporary_concat(filename, extension).c_str(), cctx, cctx, 1/*encryption*/, verbose)
     {}
 
     CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : buf(filename, cctx, cctx, verbose)
+    : buf(filename, cctx, cctx, 1/* encryption */, verbose)
     {}
 
     bool disconnect() override {
