@@ -1249,17 +1249,19 @@ class Sesman():
                         kv[u'disable_tsk_switch_shortcuts'] = u'yes'
                     self.cn = target_login_info.target_name
 
+                    if not self.passthrough_mode:
+                        kv[u'target_login'] = physical_info.account_login
+
                     if self.target_context:
                         kv[u'target_host'] = self.target_context.host
                         kv[u'target_device'] = self.target_context.showname()
+                        if not kv.get(u'target_login') and self.target_context.login:
+                            kv[u'target_login'] = self.target_context.login
                     else:
                         kv[u'target_host'] = physical_info.device_host
 
                     kv[u'target_port'] = physical_info.service_port
                     kv[u'device_id'] = physical_info.device_id
-
-                    if not self.passthrough_mode:
-                        kv[u'target_login'] = physical_info.account_login
 
                     release_reason = u''
 

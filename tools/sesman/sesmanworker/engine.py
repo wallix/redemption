@@ -555,6 +555,7 @@ class Engine(object):
                         host != target_context.dnsname):
                         continue
                     if (target_context.login and
+                        account_login and
                         account_login != target_context.login):
                         continue
                     if (target_context.service and
