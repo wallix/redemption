@@ -1747,6 +1747,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
+    
     void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started

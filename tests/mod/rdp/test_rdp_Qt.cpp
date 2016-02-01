@@ -38,8 +38,8 @@
 #include "../src/front/front_widget_Qt.hpp"
 
 
-//#define TARGET_IP "10.10.46.73"
-#define TARGET_IP "10.10.46.88"
+#define TARGET_IP "10.10.46.73"
+//#define TARGET_IP "10.10.46.88"
 
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
@@ -98,9 +98,9 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     //  test disconnexion
     //=====================
     std::cout <<  std::endl << "Test  disconnexion" <<  std::endl;
-    front.disconnect("disconnected");
+    front.disconnexionReleased();
     
-    if (front._screen    != nullptr) { test_boost = true;}
+    if (front._screen    == nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
     test_boost = false;
     if (front._form      != nullptr) { test_boost = true;}
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     BOOST_CHECK_EQUAL(test_boost, true);
     test_boost = false;
     
-    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "disconnected");
+    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "");
     
     BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
     BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     front._form->set_IPField(targetIP+"0");
     front.connexionReleased();
     
-    if (front._screen    != nullptr) { test_boost = true;}
+    if (front._screen    == nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);
     test_boost = false;
     if (front._form      != nullptr) { test_boost = true;}
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     
     
     //========================
-    //     test close
+    //       test show
     //========================
     std::cout <<  std::endl << "Test show window" <<  std::endl;
     front.connexionReleased();;

@@ -68,6 +68,17 @@ namespace CHANNELS {
         {
             this->name[0] = 0;
         }
+        
+        ChannelDef(const char * name, uint32_t flags, int chanid)
+        : flags(flags)
+        , chanid(chanid)
+        {
+            int i = 0;
+            for (; i < max_size_name && name[i]; i++) {
+                this->name[i] = name[i];
+            }
+            this->name[i] = 0;
+        }
 
         void log(unsigned index) const {
             LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = 0x%8X, chanid = %u)",
