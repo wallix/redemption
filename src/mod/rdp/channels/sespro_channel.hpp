@@ -64,9 +64,7 @@ private:
 
     mod_api& mod;
 
-    FileSystemDriveManager& file_system_drive_manager;
-
-    VirtualChannelDataSender& file_system_virtual_channel_to_server_sender;
+    FileSystemVirtualChannel& file_system_virtual_channel;
 
     wait_obj session_probe_event;
 
@@ -105,10 +103,9 @@ public:
 
     SessionProbeVirtualChannel(
         VirtualChannelDataSender* to_server_sender_,
-        FileSystemDriveManager& file_system_drive_manager,
         FrontAPI& front,
         mod_api& mod,
-        VirtualChannelDataSender& file_system_virtual_channel_to_server_sender,
+        FileSystemVirtualChannel& file_system_virtual_channel,
         const Params& params)
     : BaseVirtualChannel(nullptr,
                          to_server_sender_,
@@ -138,9 +135,7 @@ public:
     , param_acl(params.acl)
     , front(front)
     , mod(mod)
-    , file_system_drive_manager(file_system_drive_manager)
-    , file_system_virtual_channel_to_server_sender(
-          file_system_virtual_channel_to_server_sender)
+    , file_system_virtual_channel(file_system_virtual_channel)
     , outbound_connection_monitor_rules(
           params.outbound_connection_notifying_rules,
           params.outbound_connection_killing_rules)
@@ -372,9 +367,7 @@ public:
                     this->param_front_width, this->param_front_height));
             }
 
-            this->file_system_drive_manager.DisableSessionProbeDrive(
-                file_system_virtual_channel_to_server_sender,
-                this->verbose);
+            this->file_system_virtual_channel.disable_session_probe_drive();
 
             this->session_probe_event.reset();
 
