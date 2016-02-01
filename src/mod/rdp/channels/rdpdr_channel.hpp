@@ -274,7 +274,6 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
         void announce_device() {
-LOG(LOG_INFO, "announce_device: ... device_announces_size=%u", this->device_announces.size());
             while (!this->waiting_for_server_device_announce_response &&
                    this->device_announces.size()) {
                 REDASSERT(this->to_server_sender);
@@ -362,7 +361,6 @@ LOG(LOG_INFO, "announce_device: ... device_announces_size=%u", this->device_anno
                 //        this->device_announces.size())
 
             this->EffectiveDisableSessionProbeDrive();
-LOG(LOG_INFO, "announce_device: OK.");
         }   // void announce_device()
 
     public:
