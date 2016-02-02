@@ -6,8 +6,6 @@
    redrec video verifier program
 */
 
-// unify : ifile_buf and ifile_buf_crypto
-
 #include <iostream>
 
 #include <utility>
@@ -146,7 +144,7 @@ bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
     bool result = false;
 
     if (check_file(file_path, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
-        transbuf::ifile_buf_crypto ifile(cctx, infile_is_encrypted);
+        transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         if (ifile.open(file_path) < 0) {
             LOG(LOG_ERR, "failed opening=%s", file_path);
             return false;
@@ -155,11 +153,11 @@ bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
         struct ReaderBuf
         {
             private:
-            transbuf::ifile_buf_crypto & buf;
+            transbuf::ifile_buf & buf;
 
             public:
 
-            ReaderBuf(transbuf::ifile_buf_crypto & buf) : buf(buf) {}
+            ReaderBuf(transbuf::ifile_buf & buf) : buf(buf) {}
 
             ssize_t reader_read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
