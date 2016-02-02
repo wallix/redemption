@@ -233,9 +233,14 @@ public:
                     try {
                         this->front->incoming(*mm.mod, now);
                     } catch (Error & e) {
-                        if ((e.id != ERR_TRANSPORT_NO_MORE_DATA) &&
-                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT)) {
+                        if (
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
                             // Can be caused by wabwatchdog.
+                            (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
                             LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                         }
                         run_session = false;

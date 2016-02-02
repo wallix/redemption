@@ -68,12 +68,12 @@ namespace CHANNELS {
         {
             this->name[0] = 0;
         }
-        
+
         ChannelDef(const char * name, uint32_t flags, int chanid)
         : flags(flags)
         , chanid(chanid)
         {
-            int i = 0;
+            size_t i = 0;
             for (; i < max_size_name && name[i]; i++) {
                 this->name[i] = name[i];
             }
