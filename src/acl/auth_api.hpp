@@ -34,6 +34,8 @@ public:
 
     virtual void log4(bool duplicate_with_pid, const char * type,
         const char * extra = nullptr) const = 0;
+
+    virtual void disconnect_target() {};
 };
 
 
