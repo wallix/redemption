@@ -104,9 +104,9 @@ struct TestDraw : mod_api
         this->gd.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache)
     {
-        this->gd.draw(cmd, clip, *gly_cache);
+        this->gd.draw(cmd, clip, gly_cache);
     }
 
     virtual void draw(const RDPBrushCache & cmd)
@@ -136,7 +136,7 @@ struct TestDraw : mod_api
         this->gd.draw(order);
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp)
+    virtual void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
     {
         this->gd.draw(bitmap_data, bmp);
     }
@@ -157,7 +157,7 @@ struct TestDraw : mod_api
         this->gd.draw(order);
     }
 
-    virtual void server_set_pointer(const Pointer & cursor) {
+    virtual void set_pointer(const Pointer & cursor) {
         this->gd.set_pointer(cursor);
     }
 

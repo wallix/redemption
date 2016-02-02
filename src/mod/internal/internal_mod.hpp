@@ -121,9 +121,8 @@ public:
         this->front.draw(cmd, clip);
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        assert(gly_cache);
-        this->front.draw(cmd, clip, *gly_cache);
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
+        this->front.draw(cmd, clip, gly_cache);
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
@@ -154,7 +153,7 @@ public:
         this->front.draw(cmd);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         this->front.draw(bitmap_data, bmp);
     }
 
@@ -178,7 +177,7 @@ public:
         this->front.draw(order);
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         this->front.set_pointer(cursor);
     }
 

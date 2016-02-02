@@ -6116,7 +6116,7 @@ public:
                      );
             }
 
-            this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+            this->gd->draw(bmpdata, bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
@@ -6229,9 +6229,8 @@ public:
         this->front.draw(cmd, clip);
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        REDASSERT(gly_cache);
-        this->front.draw(cmd, clip, *gly_cache);
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
+        this->front.draw(cmd, clip, gly_cache);
     }
 
     void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
@@ -6255,7 +6254,7 @@ public:
         this->front.draw(cmd, clip);
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         this->front.set_pointer(cursor);
     }
 
@@ -6267,8 +6266,7 @@ public:
         this->front.draw(order);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         this->front.draw(bitmap_data, bmp);
     }
 

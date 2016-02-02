@@ -130,7 +130,6 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wnarrowing
     <cxxflags>-Wvolatile-register-var
     <cxxflags>-Wdisabled-optimization
-    <cxxflags>-Woverlength-strings
     <cxxflags>-Warray-bounds
 ;
 

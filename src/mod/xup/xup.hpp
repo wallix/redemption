@@ -378,9 +378,8 @@ enum {
         this->front.draw(cmd, clip);
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        assert(gly_cache);
-        this->front.draw(cmd, clip, *gly_cache);
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
+        this->front.draw(cmd, clip, gly_cache);
     }
 
     void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
@@ -423,16 +422,15 @@ enum {
         this->front.draw(order);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         this->front.draw(bitmap_data, bmp);
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         this->front.set_pointer(cursor);
     }
 
-    using RDPGraphicDevice::draw;
+    using gdi::GraphicApi::draw;
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
     }

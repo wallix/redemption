@@ -265,7 +265,7 @@ public:
         this->split_draw(Rect(cmd.startx, cmd.starty, cmd.endx - cmd.startx, cmd.endy - cmd.starty), cmd, clip);
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         this->split_draw(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), cmd, clip, gly_cache);
     }
 
@@ -323,8 +323,7 @@ private:
     }
 
 public:
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                     , bitmap_data.dest_right - bitmap_data.dest_left + 1
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
@@ -342,7 +341,7 @@ public:
             this->front.sync();
         }
         else {
-            this->mod.draw(bitmap_data, data, size, bmp);
+            this->mod.draw(bitmap_data, bmp);
         }
     }
 
@@ -407,12 +406,12 @@ public:
         this->mod.send_to_front_channel(mod_channel_name, data, length, chunk_size, flags);
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
-        this->mod.server_set_pointer(cursor);
+    void set_pointer(const Pointer & cursor) override {
+        this->mod.set_pointer(cursor);
     }
 
-    void flush() override {
-        this->mod.flush();
+    void sync() override {
+        this->mod.sync();
     }
 
     void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, size_t length, uint32_t flags) override {
@@ -445,8 +444,8 @@ public:
         this->mod.refresh_context(ini);
     }
 
-    void set_mod_palette(const BGRPalette& palette) override {
-        this->mod.set_mod_palette(palette);
+    void set_palette(const BGRPalette& palette) override {
+        this->mod.set_palette(palette);
     }
 };
 

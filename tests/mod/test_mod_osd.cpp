@@ -74,8 +74,8 @@ struct FakeMod : mod_api
     void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) override
     { this->gd.draw(cmd, clip, bmp); }
     void draw(const RDPLineTo          & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) override
-    { this->gd.draw(cmd, clip, *gly_cache); }
+    void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache & gly_cache) override
+    { this->gd.draw(cmd, clip, gly_cache); }
     void draw(const RDPPolygonSC       & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
     void draw(const RDPPolygonCB       & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
     void draw(const RDPPolyline        & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
@@ -88,12 +88,11 @@ struct FakeMod : mod_api
     void draw(const RDP::RAIL::CachedIcon          & order) override { this->gd.draw(order); }
     void draw(const RDP::RAIL::DeletedWindow       & order) override { this->gd.draw(order); }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         this->gd.draw(bitmap_data, bmp);
     }
 
-    void server_set_pointer(const Pointer & cursor) override { this->gd.set_pointer(cursor); }
+    void set_pointer(const Pointer & cursor) override { this->gd.set_pointer(cursor); }
 };
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
