@@ -29,6 +29,7 @@
 
 #include "noncopyable.hpp"
 
+#include <array>
 
 class BGRPalette;
 class RDPDestBlt;
@@ -68,7 +69,6 @@ namespace RDP {
         class DeletedWindow;
     }
 }
-
 
 namespace gdi {
 
@@ -286,6 +286,227 @@ private:
   void draw_(Ts const & ... args) {
     this->get_proxy()(GraphicProxy::draw_tag{}, *this, args...);
   }
+};
+
+namespace {
+    struct GraphicCoreAccess
+    {
+        template<class Derived, class... Ts>
+        static void draw(Derived & derived, Ts const & ... args) {
+            derived.draw_impl(args...);
+        }
+
+        template<class Derived>
+        static auto color_converter(Derived const & derived)
+        -> decltype(derived.color_converter_impl()) {
+            return derived.color_converter_impl();
+        }
+
+        template<class Derived, class Tag, class... Ts>
+        static void graphic_proxy_func(Derived & derived, Tag tag, Ts const & ... args) {
+            derived.graphic_proxy_func_impl(tag, args...);
+        }
+
+        template<class Derived>
+        static auto get_gd_proxy(Derived & derived)
+        -> decltype(derived.get_gd_proxy_impl()) {
+            return derived.get_gd_proxy_impl();
+        }
+
+        template<class Derived>
+        static auto get_gd_list(Derived & derived)
+        -> decltype(derived.get_gd_list_impl()) {
+            return derived.get_gd_list_impl();
+        }
+
+        template<class Derived, class Gd>
+        static auto to_graphic_facade(Derived & derived, Gd & gd)
+        -> decltype(derived.to_graphic_facade_impl(gd)) {
+            return derived.to_graphic_facade_impl(gd);
+        }
+    };
+}
+
+template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
+class GraphicBase : public InterfaceBase
+{
+    static_assert(std::is_base_of<GraphicApi, InterfaceBase>::value, "InterfaceBase isn't a GraphicApi");
+
+    friend CoreAccess;
+
+protected:
+    using core_access = CoreAccess;
+    using base_type = GraphicBase;
+
+public:
+    using InterfaceBase::InterfaceBase;
+
+    void draw(RDP::FrameMarker    const & order) override { this->draw_(order); }
+
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_(cmd, bmp); }
+
+    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
+        this->draw_(cmd, clip, bmp);
+    }
+
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override {
+        this->draw_(cmd, clip, bmp);
+    }
+
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
+        this->draw_(cmd, clip, gly_cache);
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowIcon          & order) { this->draw_(order); }
+    void draw(const RDP::RAIL::CachedIcon          & order) { this->draw_(order); }
+    void draw(const RDP::RAIL::DeletedWindow       & order) { this->draw_(order); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_(cmd); }
+
+protected:
+    Derived & derived() {
+        return static_cast<Derived&>(*this);
+    }
+
+private:
+    template<class... Ts>
+    void draw_(Ts const & ... args) {
+        CoreAccess::draw(this->derived(), args...);
+    }
+
+protected:
+    template<class... Ts> void draw_impl(Ts const & ...) { }
+};
+
+
+template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
+struct GraphicWrapper : GraphicBase<Derived, InterfaceBase, CoreAccess>
+{
+    using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
+    using base_type = GraphicWrapper;
+    friend CoreAccess;
+
+    void set_pointer(Pointer    const & pointer) override {
+        CoreAccess::get_gd_proxy(this->derived()).set_pointer(pointer);
+    }
+
+    void set_palette(BGRPalette const & palette) override {
+        CoreAccess::get_gd_proxy(this->derived()).set_palette(palette);
+    }
+
+    void sync() override {
+        CoreAccess::get_gd_proxy(this->derived()).sync();
+    }
+
+    void set_row(std::size_t rownum, const uint8_t * data) override {
+        CoreAccess::get_gd_proxy(this->derived()).set_row(rownum, data);
+    }
+
+protected:
+    template<class... Ts>
+    void draw_impl(Ts const & ... args) {
+        CoreAccess::get_gd_proxy(this->derived()).draw(args...);
+    }
+};
+
+
+template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
+struct GraphicDispatcher : GraphicBase<Derived, InterfaceBase, CoreAccess>
+{
+    using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
+    using base_type = GraphicDispatcher;
+    friend CoreAccess;
+
+    void set_pointer(Pointer    const & pointer) override {
+        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
+            CoreAccess::to_graphic_facade(this->derived(), gd).set_pointer(pointer);
+        }
+    }
+
+    void set_palette(BGRPalette const & palette) override {
+        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
+            CoreAccess::to_graphic_facade(this->derived(), gd).set_palette(palette);
+        }
+    }
+
+    void sync() override {
+        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
+            CoreAccess::to_graphic_facade(this->derived(), gd).sync();
+        }
+    }
+
+    void set_row(std::size_t rownum, const uint8_t * data) override {
+        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
+            CoreAccess::to_graphic_facade(this->derived(), gd).set_row(rownum, data);
+        }
+    }
+
+protected:
+    template<class... Ts>
+    void draw_impl(Ts const & ... args) {
+        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
+            CoreAccess::to_graphic_facade(this->derived(), gd).draw(args...);
+        }
+    }
+
+    GraphicApi & to_graphic_facade_impl(GraphicApi & gd) {
+        return gd;
+    }
+};
+
+template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
+struct GraphicProx : GraphicBase<Derived, InterfaceBase, CoreAccess>
+{
+    using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
+    using base_type = GraphicProx;
+    friend CoreAccess;
+
+    friend CoreAccess;
+
+    struct draw_tag {};
+    struct set_tag {};
+    struct sync_tag {};
+    struct set_row_tag {};
+
+    void set_pointer(Pointer    const & pointer) override {
+        CoreAccess::graphic_proxy_func(this->derived(), set_tag{}, pointer);
+    }
+
+    void set_palette(BGRPalette const & palette) override {
+        CoreAccess::graphic_proxy_func(this->derived(), set_tag{}, palette);
+    }
+
+    void sync() override {
+        CoreAccess::graphic_proxy_func(this->derived(), sync_tag{});
+    }
+
+    void set_row(std::size_t rownum, const uint8_t * data) override {
+        CoreAccess::graphic_proxy_func(this->derived(), set_row_tag{}, rownum, data);
+    }
+
+protected:
+    template<class... Ts> void draw_impl(Ts const & ... args) {
+        CoreAccess::graphic_proxy_func(this->derived(), draw_tag{}, args...);
+    }
+
+    template<class... Ts> void graphic_proxy_func_impl(Ts const & ...) {}
 };
 
 }

@@ -422,32 +422,45 @@ private:
             return *this->gd;
         }
 
-        template<class ColorConveter>
-        struct DrawableProxy
-        {
-            DrawableProxy(ColorConveter const & color_converter, Graphics::PrivateGraphicsUpdatePDU & graphics)
-            : converter(color_converter)
+        template<class ColorConverter>
+        struct GraphicConverted : gdi::GraphicWrapper<
+            GraphicConverted<ColorConverter>,
+            gdi::GraphicApi,
+            gdi::GraphicColorConverter
+        > {
+            friend gdi::GraphicCoreAccess;
+
+            GraphicConverted(
+                gdi::GraphicDepth depth,
+                Graphics::PrivateGraphicsUpdatePDU & graphics,
+                ColorConverter const & color_converter
+            )
+            : GraphicConverted::base_type(depth)
+            , color_converter(color_converter)
             , graphics(graphics)
             {}
 
-            template<class Tag, class Gd, class... Ts>
-            void operator()(Tag tag, Gd &, Ts const & ... args) {
-                this->converter(tag, this->graphics, args...);
+            ColorConverter const & color_converter_impl() const {
+                return this->color_converter;
             }
 
-            gdi::CmdColorConverterProxy<ColorConveter> converter;
+            Graphics::PrivateGraphicsUpdatePDU & get_gd_proxy_impl() {
+                return this->graphics;
+            }
+
+            ColorConverter color_converter;
             Graphics::PrivateGraphicsUpdatePDU & graphics;
         };
 
         template<class Dec, class Enc>
         void build_graphics(Dec const & dec, Enc const & enc) {
             using color_converter_t = color_converter<Dec, Enc>;
-            using Proxy = DrawableProxy<color_converter_t>;
-            using Drawable = gdi::GraphicAdapter<Proxy>;
-            this->gd_converted = std::make_unique<Drawable>(Proxy{
-                color_converter_t(dec, enc),
-                this->graphics_update_pdu()
-            }, gdi::GraphicDepth::from_bpp(Dec::bpp));
+            using Drawable = GraphicConverted<color_converter_t>;
+            this->gd_converted = std::make_unique<Drawable>(
+                gdi::GraphicDepth::from_bpp(Dec::bpp),
+                this->graphics_update_pdu(),
+                color_converter_t(dec, enc)
+            );
             this->gd = this->gd_converted.get();
         }
     } orders;
@@ -489,7 +502,7 @@ private:
 
     static gdi::GraphicApi & null_gd() {
         struct NullGd final
-        : gdi::GraphicAdapter<gdi::DummyProxy>
+        : gdi::GraphicBase<NullGd>
         {};
         static NullGd gd;
         return gd;

@@ -29,9 +29,9 @@
 
 class FrontAPI;
 
-struct null_mod : public gdi::GraphicAdapter<gdi::DummyProxy, mod_api> {
+struct null_mod : public gdi::GraphicBase<null_mod, mod_api> {
     explicit null_mod(FrontAPI & front)
-    : gdi::GraphicAdapter<gdi::DummyProxy, mod_api>(gdi::DummyProxy{}, 0, 0)
+    : gdi::GraphicBase<null_mod, mod_api>(0, 0)
     {}
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {}

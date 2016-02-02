@@ -51,13 +51,13 @@
 #include "version.hpp"
 #include "program_options/program_options.hpp"
 
-struct GraphicAssertion {
-    template<class... Ts> void operator()(Ts const & ...) { REDASSERT(false); }
-};
 
-using FrontWithoutGraphic = gdi::GraphicAdapter<GraphicAssertion, FrontAPI>;
+class Analyzer : public gdi::GraphicProx<Analyzer, FrontAPI>
+{
+    friend gdi::GraphicCoreAccess;
 
-class Analyzer : public FrontWithoutGraphic {
+    template<class... Ts> void graphic_proxy_func_impl(Ts const & ...) { REDASSERT(false); }
+
 private:
     CHANNELS::ChannelDefArray channel_list;
 
@@ -428,7 +428,7 @@ public:
     void update_pointer_position(uint16_t, uint16_t) override {}
 
     Analyzer()
-    : FrontWithoutGraphic(GraphicAssertion{}, false, false)
+    : Analyzer::base_type(false, false)
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
     , patblt(Rect(), 0, 0, 0, RDPBrush())

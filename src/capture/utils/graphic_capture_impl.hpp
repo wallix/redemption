@@ -36,71 +36,8 @@ private:
     using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
     using GdRef = std::reference_wrapper<gdi::GraphicApi>;
 
-    struct GraphicProxy
-    {
-        PtrColorConverter cmd_color_distributor;
-        MouseTrace const & mouse;
-        std::vector<GdRef> gds;
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
-
-        GraphicProxy(MouseTrace const & mouse) : mouse(mouse) {}
-
-        using draw_tag = gdi::GraphicProxy::draw_tag;
-
-        template<class Cmd, class... Ts>
-        auto operator()(draw_tag, gdi::GraphicApi &, Cmd const & cmd, Ts const & ... args)
-        // avoid some virtual call
-        -> decltype(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, std::declval<Cmd&>(cmd)))
-        {
-            assert(bool(this->cmd_color_distributor));
-            this->cmd_color_distributor->draw(cmd, args...);
-        }
-
-        void operator()(draw_tag tag, gdi::GraphicApi &, RDP::FrameMarker const & cmd) {
-            for (gdi::GraphicApi & gd : this->gds) {
-                gd.draw(cmd);
-            }
-
-            if (cmd.action == RDP::FrameMarker::FrameEnd) {
-                for (gdi::CaptureApi & cap : this->snapshoters) {
-                    cap.snapshot(
-                        this->mouse.last_now,
-                        this->mouse.last_x,
-                        this->mouse.last_y,
-                        false
-                    );
-                }
-            }
-        }
-
-        template<class Tag, class... Ts>
-        void operator()(Tag tag, gdi::GraphicApi & ngd, Ts const & ... args) {
-            for (gdi::GraphicApi & gd : this->gds) {
-                gdi::GraphicProxy()(tag, gd, args...);
-            }
-        }
-    };
-
-
     // GraphicProxy::cmd_color_distributor
     //@{
-    template<class CmdColorDistributor>
-    struct CmdColorDistributorProxy
-    {
-        CmdColorDistributor distributor;
-
-        using draw_tag = gdi::GraphicProxy::draw_tag;
-        template<class... Ts>
-        void operator()(draw_tag, gdi::GraphicApi &, Ts const & ... args) {
-            this->distributor(args...);
-        }
-
-        template<class Tag, class... Ts>
-        void operator()(Tag, gdi::GraphicApi &, Ts const & ...) {
-            assert(false);
-        }
-    };
-
     struct RngByBpp
     {
         using iterator = std::vector<GdRef>::const_iterator;
@@ -163,12 +100,27 @@ private:
         );
     }
 
+    template<class CmdColorDistributor>
+    struct GraphicConverted : gdi::GraphicBase<GraphicConverted<CmdColorDistributor>>
+    {
+        friend gdi::GraphicCoreAccess;
+
+        CmdColorDistributor distributor;
+
+        GraphicConverted(CmdColorDistributor distributor)
+        : distributor(distributor)
+        {}
+
+        template<class... Ts>
+        void draw_impl(Ts const & ... args) {
+            this->distributor(args...);
+        }
+    };
+
     template<class Dec, bool e8, bool e15, bool e16, bool e24>
     static PtrColorConverter make_converter(Dec dec, RngByBpp const & rng_by_bpp) {
         using ColorConv = gdi::GraphicCmdColorDistributor<RngByBpp, Dec, e8, e15, e16, e24>;
-        using Proxy = CmdColorDistributorProxy<ColorConv>;
-        using Gd = gdi::GraphicAdapter<Proxy>;
-        return PtrColorConverter{new Gd(Proxy{{rng_by_bpp, dec}})};
+        return PtrColorConverter{new GraphicConverted<ColorConv>{{rng_by_bpp, dec}}};
     }
 
     template<class Dec, bool... Bools, class... Bool>
@@ -183,8 +135,61 @@ private:
 
 
     struct BasicGraphic final
-    : gdi::GraphicAdapter<GraphicProxy> {
-        using gdi::GraphicAdapter<GraphicProxy>::GraphicAdapter;
+    : gdi::GraphicDispatcher<BasicGraphic>
+    {
+        friend gdi::GraphicCoreAccess;
+
+        PtrColorConverter cmd_color_distributor;
+        MouseTrace const & mouse;
+        std::vector<GdRef> gds;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
+
+        BasicGraphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
+        : BasicGraphic::base_type(depth)
+        , mouse(mouse)
+        {}
+
+        std::vector<GdRef> & get_gd_list_impl() {
+            return this->gds;
+        }
+
+        template<class Cmd, class... Ts>
+        void draw_impl(Cmd const & cmd, Ts const & ... args)
+        {
+            this->draw_impl2(1, cmd, args...);
+        }
+
+        template<class Cmd, class... Ts>
+        auto draw_impl2(int, Cmd const & cmd, Ts const & ... args)
+        // avoid some virtual call
+        -> decltype(void(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, std::declval<Cmd&>(cmd))))
+        {
+            assert(bool(this->cmd_color_distributor));
+            this->cmd_color_distributor->draw(cmd, args...);
+        }
+
+        template<class Cmd, class... Ts>
+        void draw_impl2(unsigned, Cmd const & cmd, Ts const & ... args)
+        {
+            BasicGraphic::base_type::draw_impl(cmd, args...);
+        }
+
+        void draw_impl(RDP::FrameMarker const & cmd) {
+            for (gdi::GraphicApi & gd : this->gds) {
+                gd.draw(cmd);
+            }
+
+            if (cmd.action == RDP::FrameMarker::FrameEnd) {
+                for (gdi::CaptureApi & cap : this->snapshoters) {
+                    cap.snapshot(
+                        this->mouse.last_now,
+                        this->mouse.last_x,
+                        this->mouse.last_y,
+                        false
+                    );
+                }
+            }
+        }
     };
 
     BasicGraphic graphic_api;
@@ -195,7 +200,7 @@ public:
     using GraphicApi = BasicGraphic;
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
-    : graphic_api(GraphicProxy{mouse}, gdi::GraphicDepth::depth24())
+    : graphic_api(gdi::GraphicDepth::depth24(), mouse)
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
     {
@@ -207,8 +212,8 @@ public:
     }
 
     void start() {
-        this->graphic_api.get_proxy().cmd_color_distributor = this->choose_color_converter(
-            this->graphic_api.get_proxy().gds, this->order_bpp
+        this->graphic_api.cmd_color_distributor = this->choose_color_converter(
+            this->graphic_api.gds, this->order_bpp
         );
     }
 

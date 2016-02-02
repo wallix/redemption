@@ -109,24 +109,15 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
         }
     };
 
-    struct CaptureProxy
+    struct NewCapture : gdi::CaptureDispatcher<NewCapture>
     {
-        CaptureProxy(Capture & cap) : cap(cap) {}
+        NewCapture(Capture & cap) : cap(cap) {}
 
-        template<class Tag, class... Ts>
-        void operator()(Tag tag, gdi::CaptureApi &, Ts && ... args) {
-            gdi::CaptureProxy prox;
-            for (gdi::CaptureApi & cap : this->caps) {
-                prox(tag, cap, std::forward<Ts>(args)...);
-            }
-        }
-
-        std::chrono::microseconds operator()(
-            gdi::CaptureProxy::snapshot_tag, gdi::CaptureApi &,
+        std::chrono::microseconds snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
-        ) {
+        ) override {
             this->cap.capture_event.reset();
 
             if (this->cap.gd) {
@@ -137,21 +128,23 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
 
             std::chrono::microseconds time = std::chrono::microseconds::max();
             if (!this->caps.empty()) {
-                for (gdi::CaptureApi & cap : this->caps) {
-                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
-                }
+                time = NewCapture::base_type::snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
                 this->cap.capture_event.update(time.count());
             }
             return time;
         }
 
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
+        friend gdi::CaptureCoreAccess;
 
-    private:
+        using captures_list = std::vector<std::reference_wrapper<gdi::CaptureApi>>;
+        captures_list caps;
+
+        captures_list & get_capture_list_impl() {
+            return this->caps;
+        }
+
         Capture & cap;
     };
-
-    using NewCapture = gdi::CaptureAdapter<CaptureProxy>;
 
 
     struct NewInputKbd : gdi::InputKbdApi
@@ -229,9 +222,9 @@ private:
 
     ApisRegister get_apis_register() {
         return {
-            this->graphic_api ? &this->graphic_api->get_proxy().gds : nullptr,
-            this->graphic_api ? &this->graphic_api->get_proxy().snapshoters : nullptr,
-            this->capture_api.get_proxy().caps,
+            this->graphic_api ? &this->graphic_api->gds : nullptr,
+            this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
+            this->capture_api.caps,
             this->input_kbd_api.kbds,
             this->input_pointer_api.mouses,
             this->capture_probe_api.cds

@@ -26,6 +26,7 @@
 #include "adapter_base.hpp"
 
 #include <chrono>
+#include <algorithm> // std::min
 
 struct timeval;
 class wait_obj;
@@ -137,6 +138,93 @@ struct CaptureAdapter : AdapterBase<Proxy, InterfaceBase>
 
     void external_time(const timeval& now) override {
         this->get_proxy()(CaptureProxy::external_time{}, *this, now);
+    }
+};
+
+
+namespace {
+    struct CaptureCoreAccess
+    {
+        template<class Derived>
+        static auto get_capture_list(Derived & derived)
+        -> decltype(derived.get_capture_list_impl()) {
+            return derived.get_capture_list_impl();
+        }
+
+        template<class Derived, class Gd>
+        static auto to_capture_facade(Derived & derived, Gd & cap)
+        -> decltype(derived.to_capture_facade_impl(cap)) {
+            return derived.to_capture_facade_impl(cap);
+        }
+    };
+}
+
+template<class Derived, class InterfaceBase = CaptureApi, class CoreAccess = CaptureCoreAccess>
+class CaptureDispatcher : public InterfaceBase
+{
+    static_assert(std::is_base_of<CaptureApi, InterfaceBase>::value, "InterfaceBase isn't a CaptureApi");
+
+    friend CoreAccess;
+
+protected:
+    using base_type = CaptureDispatcher;
+
+public:
+    using InterfaceBase::InterfaceBase;
+
+    std::chrono::microseconds snapshot(
+        timeval const & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    ) override {
+        std::chrono::microseconds time = std::chrono::microseconds::max();
+        for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
+            time = std::min(
+                time,
+                CoreAccess::to_capture_facade(this->derived(), cap)
+                    .snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval)
+            );
+        }
+        return time;
+    }
+
+    void update_config(Inifile const & ini) override {
+        for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
+            CoreAccess::to_capture_facade(this->derived(), cap).update_config(ini);
+        }
+    }
+
+    void pause_capture (timeval const & now) override {
+        for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
+            CoreAccess::to_capture_facade(this->derived(), cap).pause_capture(now);
+        }
+    }
+
+    void resume_capture(timeval const & now) override {
+        for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
+            CoreAccess::to_capture_facade(this->derived(), cap).resume_capture(now);
+        }
+    }
+
+    void external_breakpoint() override {
+        for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
+            CoreAccess::to_capture_facade(this->derived(), cap).external_breakpoint();
+        }
+    }
+
+    void external_time(const timeval& now) override {
+        for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
+            CoreAccess::to_capture_facade(this->derived(), cap).external_time(now);
+        }
+    }
+
+protected:
+    Derived & derived() {
+        return static_cast<Derived&>(*this);
+    }
+
+    CaptureApi & to_capture_facade_impl(CaptureApi & cap) {
+        return cap;
     }
 };
 

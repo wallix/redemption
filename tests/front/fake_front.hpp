@@ -31,56 +31,13 @@
 
 //#include <openssl/ssl.h>
 
-class DrawLogged {
-    struct ColorDecoder {
-        uint8_t    mod_bpp;
-        uint32_t operator()(uint32_t c) const {
-            return color_decode_opaquerect(c, this->mod_bpp, BGRPalette::classic_332());
-        }
-    };
+class FakeFront;
+namespace {
+    using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverter>;
+}
 
-    RDPDrawable & gd;
-    gdi::CmdColorConverterProxy<ColorDecoder> converter;
-    uint32_t verbose;
-
-public:
-    DrawLogged(RDPDrawable & gd, uint8_t mod_bpp, uint32_t verbose)
-    : gd(gd)
-    , converter{ColorDecoder{mod_bpp}}
-    , verbose(verbose)
-    {}
-
-    template<class Api, class Cmd, class... Ts>
-    void operator()(gdi::GraphicProxy::draw_tag tag, Api & api, Cmd const & cmd, Rect const & clip, Ts const & ... args) {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->converter(tag, this->gd, cmd, clip, args...);
-    }
-
-    template<class Api, class Cmd>
-    void operator()(gdi::GraphicProxy::draw_tag tag, Api & api, Cmd const & cmd) {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->converter(tag, this->gd, cmd);
-    }
-
-    template<class Tag, class Api, class... Ts>
-    void operator()(Tag tag, Api & api, Ts const & ... args) {
-        gdi::GraphicProxy()(tag, this->gd, args...);
-    }
-};
-
-using FrontWithDrawLog = gdi::GraphicAdapter<DrawLogged, FrontAPI>;
-
-class FakeFront : public FrontWithDrawLog {
+class FakeFront : public FakeFrontBase
+{
 public:
     uint32_t                    verbose;
     ClientInfo                & info;
@@ -95,6 +52,71 @@ public:
     bool nomouse;
 
     RDPDrawable gd;
+
+private:
+    struct ColorDecoder {
+        uint8_t    mod_bpp;
+        uint32_t operator()(uint32_t c) const {
+            return color_decode_opaquerect(c, this->mod_bpp, BGRPalette::classic_332());
+        }
+    };
+
+    friend gdi::GraphicCoreAccess;
+
+    ColorDecoder color_converter_impl() const {
+        return {this->mod_bpp};
+    }
+
+    void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            bitmap_data.log(LOG_INFO, "FakeFront");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(bitmap_data, bmp);
+    }
+
+    template<class Cmd, class... Ts>
+    void draw_impl(Cmd const & cmd, Rect const & clip, Ts const & ... args) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, args...);
+    }
+
+    template<class Cmd, class... Ts>
+    void draw_impl(Cmd const & cmd) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd);
+    }
+
+public:
+    void set_palette(const BGRPalette & palette) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_palette");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    void set_pointer(const Pointer & cursor) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_pointer");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.set_pointer(cursor);
+    }
 
     void sync() override {
         if (this->verbose > 10) {
@@ -139,24 +161,6 @@ public:
         //}
     }
 
-    void set_palette(const BGRPalette & palette) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "set_palette");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
-
-    void set_pointer(const Pointer & cursor) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "set_pointer");
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.set_pointer(cursor);
-    }
-
     int server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
@@ -186,7 +190,7 @@ public:
     }
 
     FakeFront(ClientInfo & info, uint32_t verbose)
-    : FrontWithDrawLog(DrawLogged(this->gd, info.bpp, verbose), false, false)
+    : FakeFrontBase(false, false)
     , verbose(verbose)
     , info(info)
     , mod_bpp(info.bpp)
@@ -199,6 +203,7 @@ public:
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
+        this->set_depths(gdi::GraphicDepth::from_bpp(this->mod_bpp));
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto
