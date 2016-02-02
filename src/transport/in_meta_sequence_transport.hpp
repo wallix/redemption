@@ -462,7 +462,7 @@ namespace transbuf {
 namespace detail {
 
 
-    class in_meta_sequence_buf_crypto
+    class in_meta_sequence_buf
     {
         transfil::decrypt_filter cfb_decrypt;
         CryptoContext * cfb_cctx;
@@ -608,7 +608,6 @@ namespace detail {
                     , static_cast<int>(ret));
 
                 if (ret == 0) {
-                    LOG(LOG_WARNING, "read failed xxx");
                     return -err;
                 }
                 this->rl_eof = this->rl_buf + ret;
@@ -616,19 +615,12 @@ namespace detail {
                 return 0;
             }
             else {
-                LOG(LOG_INFO, "reader_read");
-     
                 ssize_t ret = this->buf_meta_file.read(this->rl_buf, sizeof(this->rl_buf));
                 TODO("test on EINTR suspicious here, check that");
                 if (ret < 0 && errno != EINTR) {
                     LOG(LOG_WARNING, "read failed");
                     return -ERR_TRANSPORT_READ_FAILED;
                 }
-
-                LOG(LOG_INFO, "reader_read: rl_buf=%s %d %d %d", this->rl_buf
-                    , static_cast<int>(this->rl_cur-this->rl_buf)
-                    , static_cast<int>(this->rl_eof-this->rl_buf)
-                    , static_cast<int>(ret));
 
                 if (ret == 0) {
                     LOG(LOG_WARNING, "read failed xxx");
@@ -642,12 +634,9 @@ namespace detail {
 
         ssize_t reader_read_line(char * dest, size_t len, int err)
         {
-            LOG(LOG_INFO, "reader_read_line");
             ssize_t total_read = 0;
-            LOG(LOG_INFO, "rl_buf=%s [%d] len=%d", this->rl_cur, static_cast<int>(this->rl_cur - this->rl_buf), static_cast<int>(len));
             while (1) {
                 char * pos = std::find(this->rl_cur, this->rl_eof, '\n');
-                LOG(LOG_INFO, "rl_buf (%d) %s [%d]", static_cast<int>(pos - this->rl_buf), this->rl_cur, static_cast<int>(this->rl_cur - this->rl_buf));
                 if (len < static_cast<size_t>(pos - this->rl_cur)) {
                     total_read += len;
                     memcpy(dest, this->rl_cur, len);
@@ -662,64 +651,27 @@ namespace detail {
                     break;
                 }
                 if (int e = this->reader_read(err)) {
-                    LOG(LOG_INFO, "reader_read result: rl_buf=%s %d %d %d", this->rl_buf
-                        , static_cast<int>(this->rl_cur-this->rl_buf)
-                        , static_cast<int>(this->rl_eof-this->rl_buf)
-                        , e);
                     return e;
                 }
             }
             return total_read;
         }
 
-
-//        int next_line()
-//        {
-//            if (auto err = read_meta_file(this->reader, this->meta_header, this->meta_line)) {
-//                return err;
-//            }
-
-//            if (!file_exist(this->meta_line.filename)) {
-//                char original_path[1024] = {};
-//                char basename[1024] = {};
-//                char extension[256] = {};
-//                char filename[2048] = {};
-
-//                canonical_path( this->meta_line.filename
-//                              , original_path, sizeof(original_path)
-//                              , basename, sizeof(basename)
-//                              , extension, sizeof(extension)
-//                              , this->verbose);
-//                snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
-
-//                if (file_exist(filename)) {
-//                    strcpy(this->meta_line.filename, filename);
-//                }
-//            }
-
-//            return 0;
-//        }
-
-
         int reader_next_line()
         {
-            LOG(LOG_INFO, "in_meta_sequence_buf_crypto::reader_next_line");
-            
             char * pos;
             while ((pos = std::find(this->rl_cur, this->rl_eof, '\n')) == this->rl_eof) {
                 if (int e = this->reader_read(ERR_TRANSPORT_READ_FAILED)) {
-                    LOG(LOG_INFO, "in_meta_sequence_buf_crypto::reader_next_line -> e=%d", e);       
                     return e;
                 }
             }
             this->rl_cur = pos+1;
-            LOG(LOG_INFO, "in_meta_sequence_buf_crypto::reader_next_line -> 0");       
             return 0;
         }
 
 
     public:
-        explicit in_meta_sequence_buf_crypto(const char * meta_filename,
+        explicit in_meta_sequence_buf(const char * meta_filename,
                                              CryptoContext * cctx_buf,
                                              CryptoContext * cctx_meta,
                                              int encryption,
@@ -738,8 +690,6 @@ namespace detail {
         , verbose(verbose)
         {
             if (encryption){
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto v2 %s", meta_filename);
-               
                 unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
                 unsigned char derivator[DERIVATOR_LENGTH];
 
@@ -749,22 +699,15 @@ namespace detail {
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
 
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : opening meta_file %s", meta_filename);
-
                 int err = this->buf_meta_file.open(meta_filename, 0600);
                 if (err < 0) {
                     LOG(LOG_WARNING, "read failed 4.1");
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
-
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : decryption of meta_file %s", meta_filename);
-
                 if (this->buf_meta_decrypt.decrypt_open(this->buf_meta_file, trace_key) < 0){
                     LOG(LOG_WARNING, "read failed 4.2");
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
-
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : read first line of meta_file %s", meta_filename);
 
                 char line[32];
                 auto sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
@@ -775,29 +718,21 @@ namespace detail {
 
                 // v2
                 if (line[0] == 'v') {
-                    LOG(LOG_INFO, "in_meta_sequence_buf_crypto : first line of meta_file %s is v2", meta_filename);
                     if (this->reader_next_line() 
-                     || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
-                    ) {
+                     || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0) {
                         LOG(LOG_WARNING, "read failed 2");
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     this->meta_header_version = 2;
                     this->meta_header_has_checksum = (line[0] == 'c');
-                    LOG(LOG_INFO, "in_meta_sequence_buf_crypto : header of %s is v2 checksum=%s", meta_filename,
-                        this->meta_header_has_checksum?"yes":"no");
                 }
                 // else v1
 
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : second line of meta_file %s skipped", meta_filename);
                 if (this->reader_next_line()) {
-                    LOG(LOG_WARNING, "read failed 3.0");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : 3rd line of meta_file %s skipped", meta_filename);
                 if (this->reader_next_line()) {
-                    LOG(LOG_WARNING, "read failed 3.1");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
@@ -814,37 +749,15 @@ namespace detail {
                               , basename, sizeof(basename)
                               , extension, sizeof(extension)
                               , this->verbose);
-                LOG(LOG_INFO, "Flat in_meta_sequence_buf_crypto : end of constructor");
             }
             else {
-                LOG(LOG_INFO, "Flat in_meta_sequence_buf v2 %s", meta_filename);
                
-//                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-//                unsigned char derivator[DERIVATOR_LENGTH];
-
-//                this->buf_meta_cctx->get_derivator(meta_filename, derivator, DERIVATOR_LENGTH);
-//                if (-1 == this->buf_meta_cctx->compute_hmac(trace_key, derivator)) {
-//                    LOG(LOG_WARNING, "read failed 4.0");
-//                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-//                }
-
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : opening meta_file %s", meta_filename);
-
                 int err = this->buf_meta_file.open(meta_filename, 0600);
                 if (err < 0) {
                     LOG(LOG_WARNING, "Flat read failed 4.1");
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
 
-//                LOG(LOG_INFO, "in_meta_sequence_buf : decryption of meta_file %s", meta_filename);
-
-//                if (this->buf_meta_decrypt.decrypt_open(this->buf_meta_file, trace_key) < 0){
-//                    LOG(LOG_WARNING, "read failed 4.2");
-//                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-//                }
-
-                LOG(LOG_INFO, "Flat in_meta_sequence_buf : read first line of meta_file %s", meta_filename);
-
                 char line[32];
                 auto sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
                 if (sz < 0) {
@@ -854,7 +767,6 @@ namespace detail {
 
                 // v2
                 if (line[0] == 'v') {
-                    LOG(LOG_INFO, "Flat in_meta_sequence_buf_crypto : first line of meta_file %s is v2", meta_filename);
                     if (this->reader_next_line() 
                      || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
                     ) {
@@ -863,21 +775,13 @@ namespace detail {
                     }
                     this->meta_header_version = 2;
                     this->meta_header_has_checksum = (line[0] == 'c');
-                    LOG(LOG_INFO, "in_meta_sequence_buf_crypto : header of %s is v2 checksum=%s", meta_filename,
-                        this->meta_header_has_checksum?"yes":"no");
-                }
-                else {
-                // else v1
-                    LOG(LOG_INFO, "Flat in_meta_sequence_buf_crypto : first line of meta_file is v1");
                 }
 
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : second line of meta_file %s skipped", meta_filename);
                 if (this->reader_next_line()) {
                     LOG(LOG_WARNING, "read failed 3.0");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : 3rd line of meta_file %s skipped", meta_filename);
                 if (this->reader_next_line()) {
                     LOG(LOG_WARNING, "read failed 3.1");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
@@ -896,15 +800,11 @@ namespace detail {
                               , basename, sizeof(basename)
                               , extension, sizeof(extension)
                               , this->verbose);
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto : end of constructor");
-
             }
         }
 
         ssize_t read(void * data, size_t len)
         {
-            LOG(LOG_INFO, "read file=%s", this->meta_line.filename);
-
             if (!this->cfb_is_open()) {
                 if (const int e1 = this->next_line()) {
                     return e1 < 0 ? e1 : -1;
@@ -916,8 +816,6 @@ namespace detail {
                     }
                 }
             }
-
-            LOG(LOG_INFO, "read file=%s", this->meta_line.filename);
 
             ssize_t res = this->cfb_read(data, len);
             if (res < 0) {
@@ -953,9 +851,7 @@ namespace detail {
         /// \return 0 if success
         int next()
         {
-            LOG(LOG_INFO, "in_meta_sequence_buf_crypto::next");
             if (this->cfb_is_open()) {
-                LOG(LOG_INFO, "in_meta_sequence_buf_crypto::next::cfb_is_open not 0");
                 this->close();
             }
 
@@ -963,7 +859,6 @@ namespace detail {
         }
 
         int read_meta_file_v1(MetaLine & meta_line) {
-            LOG(LOG_INFO, "read_meta_file_v1");
             char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
             ssize_t len = this->reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
             if (len < 0) {
@@ -1045,7 +940,6 @@ namespace detail {
 
         template<bool read_start_stop_time>
         int read_meta_file_v2_impl(bool has_checksum, MetaLine & meta_line) {
-            LOG(LOG_INFO, "read_meta_file_v2_impl");
             char line[
                 PATH_MAX + 1 + 1 +
                 (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -1058,7 +952,6 @@ namespace detail {
                 return -len;
             }
             line[len] = 0;
-            LOG(LOG_INFO, "line=%s", line);
 
             // Line format "fffff
             // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
@@ -1112,22 +1005,18 @@ namespace detail {
             err |= bool(*pend);
 
             if (err) {
-                LOG(LOG_WARNING, "read failed 5");
                 throw Error(ERR_TRANSPORT_READ_FAILED);
             }
-            LOG(LOG_INFO, "read_meta_file_v2_impl done");
             return 0;
         }
 
 
         int read_meta_file_v2(MetaLine & meta_line) {
-            LOG(LOG_INFO, "read_meta_file_v2");
             return read_meta_file_v2_impl<true>(this->meta_header_has_checksum, meta_line);
         }
 
         int read_meta_file(MetaLine & meta_line)
         {
-            LOG(LOG_INFO, "read_meta_file");
             if (this->meta_header_version == 1) {
                 return this->read_meta_file_v1(meta_line);
             }
@@ -1138,7 +1027,6 @@ namespace detail {
 
     private:
         int open_next() {
-            LOG(LOG_INFO, "open_next");
             if (const int e = this->reader_next_line()) {
                 return e < 0 ? e : -1;
             }
@@ -1148,12 +1036,9 @@ namespace detail {
 
         int next_line()
         {
-            LOG(LOG_INFO, "next_line");
             if (auto err = this->read_meta_file(this->meta_line)) {
                 return err;
             }
-
-            LOG(LOG_INFO, "check if file exists");
 
             if (!file_exist(this->meta_line.filename)) {
                 char original_path[1024] = {};
@@ -1172,7 +1057,6 @@ namespace detail {
                     strcpy(this->meta_line.filename, filename);
                 }
             }
-            LOG(LOG_INFO, "next_line done");
 
             return 0;
         }
@@ -1189,164 +1073,12 @@ namespace detail {
 
 
     };
-    
-    
-    
-//    
-//    class in_meta_sequence_buf_flat
-//    : public transbuf::ifile_buf
-//    {
-//        struct ReaderBuf
-//        {
-//            transbuf::ifile_buf & buf;
-
-//            explicit ReaderBuf(transbuf::ifile_buf & buf)
-//            : buf(buf)
-//            {}
-
-//            ssize_t reader_read(char * buf, size_t len) const {
-//                return this->buf.read(buf, len);
-//            }
-//        };
-
-//        transbuf::ifile_buf buf_meta;
-//        ReaderLine<ReaderBuf> reader;
-//        MetaHeader meta_header;
-//        MetaLine meta_line;
-//        char meta_path[2048];
-//        int encryption;
-//        uint32_t verbose;
-
-//    public:
-//        explicit in_meta_sequence_buf_flat(
-//            const char * meta_filename,
-//            CryptoContext * cctx_buf,
-//            CryptoContext * cctx_meta,
-//            int encryption,
-//            uint32_t verbose)
-//        : transbuf::ifile_buf(cctx_buf, 0/*encryption*/)
-//        , buf_meta(cctx_meta, 0/*encryption*/)
-//        , reader([&]() {
-//            if (this->buf_meta.open(meta_filename) < 0) {
-//                LOG(LOG_WARNING, "read failed 6");
-//                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-//            }
-//            return ReaderBuf{this->buf_meta};
-//        }())
-//        , meta_header(read_meta_headers(this->reader))
-//        , encryption(encryption)
-//        , verbose(verbose)
-//        {
-//            this->meta_line.start_time = 0;
-//            this->meta_line.stop_time = 0;
-
-//            this->meta_path[0] = 0;
-
-//            char basename[1024] = {};
-//            char extension[256] = {};
-
-//            canonical_path( meta_filename
-//                          , this->meta_path, sizeof(this->meta_path)
-//                          , basename, sizeof(basename)
-//                          , extension, sizeof(extension)
-//                          , this->verbose);
-//        }
-
-//        ssize_t read(void * data, size_t len)
-//        {
-//            if (!this->is_open()) {
-//                if (const int e = this->open_next()) {
-//                    return e;
-//                }
-//            }
-
-//            ssize_t res = this->transbuf::ifile_buf::read(data, len);
-//            if (res < 0) {
-//                return res;
-//            }
-//            if (size_t(res) != len) {
-//                ssize_t res2 = res;
-//                do {
-//                    if (/*const ssize_t err = */this->close()) {
-//                        return res;
-//                    }
-//                    data = static_cast<char*>(data) + res2;
-//                    if (/*const int err = */this->open_next()) {
-//                        return res;
-//                    }
-//                    len -= res2;
-//                    res2 = this->transbuf::ifile_buf::read(data, len);
-//                    if (res2 < 0) {
-//                        return res;
-//                    }
-//                    res += res2;
-//                } while (size_t(res2) != len);
-//            }
-//            return res;
-//        }
-
-//        /// \return 0 if success
-//        int next()
-//        {
-//            if (this->is_open()) {
-//                this->close();
-//            }
-
-//            return this->next_line();
-//        }
-
-//    private:
-//        int open_next() {
-//            if (const int e = this->next_line()) {
-//                return e < 0 ? e : -1;
-//            }
-//            const int e = this->transbuf::ifile_buf::open(this->meta_line.filename);
-//            return (e < 0) ? e : 0;
-//        }
-
-//        int next_line()
-//        {
-//            if (auto err = read_meta_file(this->reader, this->meta_header, this->meta_line)) {
-//                return err;
-//            }
-
-//            if (!file_exist(this->meta_line.filename)) {
-//                char original_path[1024] = {};
-//                char basename[1024] = {};
-//                char extension[256] = {};
-//                char filename[2048] = {};
-
-//                canonical_path( this->meta_line.filename
-//                              , original_path, sizeof(original_path)
-//                              , basename, sizeof(basename)
-//                              , extension, sizeof(extension)
-//                              , this->verbose);
-//                snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
-
-//                if (file_exist(filename)) {
-//                    strcpy(this->meta_line.filename, filename);
-//                }
-//            }
-
-//            return 0;
-//        }
-
-//    public:
-//        const char * current_path() const noexcept
-//        { return this->meta_line.filename; }
-
-//        time_t get_begin_chunk_time() const noexcept
-//        { return this->meta_line.start_time; }
-
-//        time_t get_end_chunk_time() const noexcept
-//        { return this->meta_line.stop_time; }
-//    };    
 
 }
 
 struct InMetaSequenceTransport : public Transport
 {
-    detail::in_meta_sequence_buf_crypto buf;
+    detail::in_meta_sequence_buf buf;
 
     InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, int encryption, uint32_t verbose)
     : buf(detail::temporary_concat(filename, extension).str, cctx, cctx, 0/* encryption*/, verbose)
@@ -1403,17 +1135,17 @@ struct InMetaSequenceTransport : public Transport
     const char * path() const noexcept
     { return this->buffer().current_path(); }
 
-    detail::in_meta_sequence_buf_crypto & buffer() noexcept
+    detail::in_meta_sequence_buf & buffer() noexcept
     { return this->buf; }
 
-    const detail::in_meta_sequence_buf_crypto & buffer() const noexcept
+    const detail::in_meta_sequence_buf & buffer() const noexcept
     { return this->buf; }
 
 };
 
 struct CryptoInMetaSequenceTransport : public Transport
 {
-    detail::in_meta_sequence_buf_crypto buf;
+    detail::in_meta_sequence_buf buf;
 
     CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, int encryption, uint32_t verbose)
     : buf(detail::temporary_concat(filename, extension).c_str(), cctx, cctx, encryption, verbose)
@@ -1452,10 +1184,10 @@ struct CryptoInMetaSequenceTransport : public Transport
         return true;
     }
 
-    detail::in_meta_sequence_buf_crypto & buffer() noexcept
+    detail::in_meta_sequence_buf & buffer() noexcept
     { return this->buf; }
 
-    const detail::in_meta_sequence_buf_crypto & buffer() const noexcept
+    const detail::in_meta_sequence_buf & buffer() const noexcept
     { return this->buf; }
 
     void do_recv(char ** pbuffer, size_t len) override {
