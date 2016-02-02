@@ -2969,6 +2969,7 @@ public:
                                 this->end_session_reason.clear();
                                 this->end_session_message.clear();
 
+                                this->acl->disconnect_target();
                                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
                                 this->acl->log4(false, "SESSION_DISCONNECTED_BY_TARGET");

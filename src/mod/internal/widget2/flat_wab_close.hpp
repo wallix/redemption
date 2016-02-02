@@ -47,6 +47,7 @@ public:
     WidgetLabel target_label_value;
     WidgetLabel connection_closed_label;
     WidgetFlatButton cancel;
+    WidgetFlatButton * back;
     WidgetLabel diagnostic;
     WidgetMultiLine diagnostic_lines;
     WidgetLabel timeleft_label;
@@ -64,7 +65,8 @@ public:
     FlatWabClose(mod_api& drawable, int16_t width, int16_t height, Widget2& parent,
                  NotifyApi* notifier, const char * diagnostic_text, int group_id,
                  const char * username, const char * target,
-                 bool showtimer, Font const & font, Theme const & theme, Translation::language_t lang)
+                 bool showtimer, Font const & font, Theme const & theme,
+                 Translation::language_t lang, bool back_selector = false)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
     , bg_color(theme.global.bgcolor)
     // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
@@ -85,6 +87,12 @@ public:
     , cancel(drawable, 0, 0, *this, this, TR("close", lang), true, -14,
              theme.global.fgcolor, theme.global.bgcolor,
              theme.global.focus_color, font, 6, 2)
+    , back(back_selector ? new WidgetFlatButton(drawable, 0, 0, *this, this,
+                                                TR("back_selector", lang), true, -14,
+                                                theme.global.fgcolor,
+                                                theme.global.bgcolor,
+                                                theme.global.focus_color, font,
+                                                6, 2) : nullptr)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, nullptr, "Diagnostic:", true, -15,
                  theme.global.fgcolor, theme.global.bgcolor, font)
     , diagnostic_lines(drawable, 0, 0, *this, nullptr, diagnostic_text, true, -16,
@@ -111,7 +119,8 @@ public:
         this->timeleft_label.set_text(label);
 
         // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
-        this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
+        int back_width = this->back ? this->back->cx() + 10 : 0;
+        this->cancel.set_button_x((this->cx() - (this->cancel.cx() + back_width)) / 2);
         this->connection_closed_label.rect.x = (this->cx() - this->connection_closed_label.cx()) / 2;
 
         this->separator.rect.x = (this->cx() - 600) / 2;
@@ -179,6 +188,12 @@ public:
             y += this->timeleft_label.cy() + 20;
         }
 
+        if (this->back) {
+            this->add_widget(this->back);
+            this->back->set_button_x(this->cancel.dx() + this->cancel.cx() + 10);
+            this->back->set_button_y(y);
+        }
+
         this->cancel.set_button_y(y);
         y += this->cancel.cy();
 
@@ -192,6 +207,7 @@ public:
     }
 
     ~FlatWabClose() override {
+        delete this->back;
         this->clear();
     }
 
@@ -229,6 +245,9 @@ public:
     void notify(Widget2 * widget, NotifyApi::notify_event_t event) override {
         if (widget == &this->cancel && event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_CANCEL);
+        }
+        else if (this->back && widget == this->back && event == NOTIFY_SUBMIT) {
+            this->send_notify(NOTIFY_SUBMIT);
         }
         else {
             WidgetParent::notify(widget, event);

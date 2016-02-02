@@ -66,6 +66,7 @@ public:
     bool is_started() {
         return this->connected;
     }
+
     void start(time_t now) {
         this->connected = true;
         if (this->verbose & 0x10) {
@@ -73,6 +74,10 @@ public:
         }
         this->timeout    = now + 2 * this->grace_delay;
         this->renew_time = now + this->grace_delay;
+    }
+
+    void stop() {
+        this->connected = false;
     }
 
     bool check(time_t now, Inifile & ini) {
@@ -295,6 +300,10 @@ public:
                     mm.invoke_close_box(nullptr, signal, now);
                     return true;
                 }
+                if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
+                    mm.stop_record();
+                    this->keepalive.stop();
+                }
                 mm.remove_mod();
                 try {
                     mm.new_mod(next_state, now, this);
@@ -412,6 +421,10 @@ public:
         this->ini.set_acl<cfg::context::reporting>(report);
 
         this->ask_acl();
+    }
+
+    void disconnect_target() override {
+        this->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
     }
 
     void log4(bool duplicate_with_pid, const char * type,
