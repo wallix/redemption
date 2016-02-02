@@ -1208,6 +1208,7 @@ class Sesman():
                             connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')
                             connectionpolicy_kv[u'session_probe_launch_fallback_timeout'] = session_probe_section.get('launch_fallback_timeout')
                             connectionpolicy_kv[u'session_probe_keepalive_timeout']       = session_probe_section.get('keepalive_timeout')
+                            connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user'] = session_probe_section.get('on_keepalive_timeout_disconnect_user')
 
                             connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
 
