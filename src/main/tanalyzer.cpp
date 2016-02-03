@@ -137,8 +137,6 @@ public:
             channel.name, channel.chanid, length, chunk_size, flags);
     }
 
-    void send_global_palette() override { REDASSERT(false); }
-
     int server_resize(int width, int height, int bpp) override {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
         return 1;

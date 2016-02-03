@@ -108,7 +108,6 @@ public:
         }
 
         this->reader->add_consumer(nullptr, nullptr, &this->front, nullptr);
-        this->front.send_global_palette();
     }
 
     ~ReplayMod() override {

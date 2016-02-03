@@ -185,6 +185,24 @@ private:
                 }
             }
 
+            void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+                StaticOutStream<65535> bmp_stream;
+                Bitmap new_bmp(this->capture_bpp, bmp);
+
+                new_bmp.compress(this->capture_bpp, bmp_stream);
+
+                RDPBitmapData target_bitmap_data = bitmap_data;
+
+                target_bitmap_data.bits_per_pixel = new_bmp.bpp();
+                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+                GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
+            }
+
+            void set_palette(const BGRPalette&) override {
+            }
+
             OrderCaps & client_order_caps;
         } graphics_update_pdu;
 
@@ -550,13 +568,11 @@ private:
 
     Font font;
 
-    bool palette_sent;
     bool palette_memblt_sent[6];
 
-    BGRPalette palette332_rgb = BGRPalette::classic_332_rgb();
+    BGRPalette mod_palette_rgb {BGRPalette::classic_332_rgb()};
 
 public:
-    BGRPalette mod_palette_rgb {BGRPalette::no_init()};
     uint8_t mod_bpp;
 
 private:
@@ -685,7 +701,6 @@ public:
 
         // --------------------------------------------------------
 
-        this->palette_sent = false;
         for (size_t i = 0; i < 6 ; i++) {
             this->palette_memblt_sent[i] = false;
         }
@@ -746,7 +761,6 @@ public:
             this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb));
 
         if (bpp == 8) {
-            this->palette_sent = false;
             for (bool & b : this->palette_memblt_sent) {
                 b = false;
             }
@@ -1146,70 +1160,6 @@ public:
         virtual_channel_pdu.send_to_client( this->trans, this->encrypt
                                           , this->encryptionLevel, userid, channel.chanid
                                           , length, flags, chunk, chunk_size);
-    }
-
-private:
-    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
-    // -------------------------------------------------------------------
-
-    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
-    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
-
-    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
-    // Values in this field are ignored.
-
-    // numberColors (4 bytes): A 32-bit, unsigned integer.
-    // The number of RGB triplets in the paletteData field.
-    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
-
-    void GeneratePaletteUpdateData(OutStream & stream) {
-        const BGRPalette & palette = (this->mod_bpp == 8) ? this->mod_palette_rgb : this->palette332_rgb;
-
-        // Payload
-        stream.out_uint16_le(RDP_UPDATE_PALETTE);
-        stream.out_uint16_le(0);
-
-        stream.out_uint32_le(256); /* # of colors */
-        for (int i = 0; i < 256; i++) {
-            int color = palette[i];
-            // Palette entries is in BGR triplet format.
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
-            stream.out_uint8(b);
-        }
-    }
-
-public:
-    void send_global_palette() override {
-        if (!this->palette_sent && (this->client_info.bpp == 8)) {
-            if (this->verbose & 4) {
-                LOG(LOG_INFO, "Front::send_global_palette");
-            }
-
-            this->sync();
-
-            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-            GeneratePaletteUpdateData(stream.get_data_stream());
-
-            ::send_server_update( this->trans
-                                , this->server_fastpath_update_support
-                                , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
-                                , this->mppc_enc
-                                , this->share_id
-                                , this->encryptionLevel
-                                , this->encrypt
-                                , this->userid
-                                , SERVER_UPDATE_GRAPHICS_PALETTE
-                                , 0
-                                , stream
-                                , this->verbose
-                                );
-
-            this->palette_sent = true;
-        }
     }
 
     void incoming(Callback & cb, time_t now)
@@ -3862,6 +3812,10 @@ private:
 
                     this->auth_info_sent = true;
                 }
+
+                if (8 != this->mod_bpp) {
+                    this->send_palette();
+                }
             }
         }
         break;
@@ -4027,8 +3981,6 @@ private:
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
-
             this->graphics_update->draw(cmd, clip);
         }
     }
@@ -4055,16 +4007,12 @@ private:
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            this->send_global_palette();
-
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
-
             this->graphics_update->draw(cmd, clip);
         }
     }
@@ -4077,8 +4025,6 @@ private:
 
     void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
-
             this->graphics_update->draw(cmd, clip);
         }
     }
@@ -4114,8 +4060,6 @@ private:
         if (bitmap.cx() < cmd.srcx || bitmap.cy() < cmd.srcy) {
             return;
         }
-
-        this->send_global_palette();
 
         const uint8_t palette_id = 0;
         if (this->client_info.bpp == 8) {
@@ -4217,7 +4161,6 @@ public:
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()) {
-            this->send_global_palette();
             // TODO
             RDPGlyphIndex new_cmd = cmd;
 
@@ -4285,16 +4228,12 @@ public:
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->send_global_palette();
-
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->send_global_palette();
-
             this->graphics_update->draw(cmd, clip);
         }
     }
@@ -4328,14 +4267,79 @@ public:
         this->orders.graphics_update_pdu().draw(cmd);
     }
 
+private:
+    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
+    // -------------------------------------------------------------------
+
+    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
+    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
+
+    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
+    // Values in this field are ignored.
+
+    // numberColors (4 bytes): A 32-bit, unsigned integer.
+    // The number of RGB triplets in the paletteData field.
+    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
+
+    void GeneratePaletteUpdateData(OutStream & stream) {
+        // Payload
+        stream.out_uint16_le(RDP_UPDATE_PALETTE);
+        stream.out_uint16_le(0);
+
+        stream.out_uint32_le(256); /* # of colors */
+        for (auto color : this->mod_palette_rgb) {
+            // Palette entries is in BGR triplet format.
+            uint8_t r = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t b = color;
+            stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
+        }
+    }
+
+    bool palette_sent = false;
+
+    void send_palette() {
+        if (8 != this->client_info.bpp && this->palette_sent) {
+            return ;
+        }
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "Front::send_palette");
+        }
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        GeneratePaletteUpdateData(stream.get_data_stream());
+
+        ::send_server_update(
+            this->trans
+          , this->server_fastpath_update_support
+          , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
+          , this->mppc_enc
+          , this->share_id
+          , this->encryptionLevel
+          , this->encrypt
+          , this->userid
+          , SERVER_UPDATE_GRAPHICS_PALETTE
+          , 0
+          , stream
+          , this->verbose
+        );
+
+        this->sync();
+
+        this->palette_sent = true;
+    }
+
+public:
     void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
-        this->palette_sent = false;
 
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->set_mod_palette(palette);
-        }
+        this->gd->set_palette(palette);
+
+        this->palette_sent = false;
+        this->send_palette();
     }
 
     void draw(const RDP::FrameMarker & order) override {
@@ -4369,7 +4373,6 @@ public:
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
-        // TODO
         if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
             // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
             || (bitmap_data.bits_per_pixel != this->client_info.bpp)
@@ -4382,26 +4385,9 @@ public:
                          );
 
             this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
-            return;
         }
-
-        // TODO uses graphics_update
-        if (!this->input_event_and_graphics_update_disabled
-          && this->capture
-          && (this->capture_state == CAPTURE_STATE_STARTED)
-        ) {
-            StaticOutStream<65535> bmp_stream;
-            Bitmap new_bmp(this->client_info.bpp, bmp);
-
-            new_bmp.compress(this->client_info.bpp, bmp_stream);
-
-            RDPBitmapData target_bitmap_data = bitmap_data;
-
-            target_bitmap_data.bits_per_pixel = new_bmp.bpp();
-            target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-            target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
-
-            this->capture->draw(target_bitmap_data, new_bmp.data_compressed().data(), new_bmp.data_compressed().size(), new_bmp);
+        else {
+            this->graphics_update->draw(bitmap_data, bmp);
         }
     }
 

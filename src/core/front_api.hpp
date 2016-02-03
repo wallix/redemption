@@ -44,8 +44,6 @@ class FrontAPI : public gdi::GraphicApi, public gdi::InputPointer {
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , std::size_t length, std::size_t chunk_size, int flags) = 0;
 
-    virtual void send_global_palette() = 0;
-
     virtual int server_resize(int width, int height, int bpp) = 0;
     //virtual void update_config(const timeval & now, const Inifile & ini) {}
 

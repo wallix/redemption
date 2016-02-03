@@ -137,14 +137,6 @@ public:
         }
     }
 
-    void send_global_palette() override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_global_palette()");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
-
     void begin_update() override {
         //if (this->verbose > 10) {
         //    LOG(LOG_INFO, "--------- FRONT ------------------------");

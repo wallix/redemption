@@ -2002,7 +2002,6 @@ private:
         }
 
         this->front.set_palette(this->palette);
-        this->front.send_global_palette();
         this->front.begin_update();
         RDPColCache cmd(0, this->palette);
         this->gd->draw(cmd);

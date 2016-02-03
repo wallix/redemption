@@ -334,10 +334,10 @@ class ClientFront : public FrontAPI {
 
     }
 
-    void send_global_palette() override {
+    void set_palette(const BGRPalette&) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
-            LOG(LOG_INFO, "send_global_palette()");
+            LOG(LOG_INFO, "set_palette()");
             LOG(LOG_INFO, "========================================\n");
         }
     }

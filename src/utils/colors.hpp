@@ -24,10 +24,13 @@
 #ifndef _REDEMPTION_UTILS_COLORS_HPP_
 #define _REDEMPTION_UTILS_COLORS_HPP_
 
-#include <stdint.h>
-#include <assert.h>
-#include <stdlib.h>
+#include <iterator>
+
+#include <cstdint>
+#include <cassert>
+#include <cstdlib>
 #include <cstddef>
+
 #include "log.hpp"
 
 typedef uint32_t BGRColor;
@@ -66,6 +69,12 @@ struct BGRPalette
 
     BGRColor operator[](std::size_t i) const noexcept
     { return this->palette[i]; }
+
+    BGRColor const * begin() const
+    { using std::begin; return begin(this->palette); }
+    
+    BGRColor const * end() const
+    { using std::end; return end(this->palette); }
 
     void set_color(std::size_t i, BGRColor c) noexcept
     { this->palette[i] = c; }
