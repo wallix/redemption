@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestFilename)
 
         CryptoContext cctx(rnd, ini, 1);
 
-        InFilenameTransport in(&cctx, filename, 0);
+        InFilenameTransport in(&cctx, filename);
         char s[5];
         char * sp = s;
         char ** p = &sp;
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     }
 
     {
-        InFilenameTransport in(&cctx, filename, 1);
+        InFilenameTransport in(&cctx, filename);
         char s[5];
         char * sp = s;
         char ** p = &sp;

@@ -64,36 +64,24 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, CryptoC
         return -1;
     }
 
-
-    bool infile_is_encrypted = false;
-
-    if (io::posix::fdbuf file {open(input_filename.c_str(), O_RDONLY)}) {
-        uint32_t magic_test;
-        // Reads file header (4 bytes).
-        int res_test = file.read(&magic_test, sizeof(magic_test));
-        if ((res_test == sizeof(magic_test)) &&
-            (magic_test == WABCRYPTOFILE_MAGIC)) {
-            infile_is_encrypted = true;
-        }
-    }
-    else {
+    // This should move to InFilenameTransport
+    int fd  = open(input_filename.c_str(), O_RDONLY);
+    if (fd == -1) {
         std::cerr << "Input file is absent.\n\n";
         return -1;
     }
 
-    if (infile_is_encrypted == false) {
+    OpenSSL_add_all_digests();
+
+    InFilenameTransport in_t(&cctx, input_filename.c_str());
+    if (!in_t.is_encrypted()){
         std::cout << "Input file is unencrypted.\n\n";
         return 0;
     }
 
-    OpenSSL_add_all_digests();
-
-    InFilenameTransport in_t(&cctx, input_filename.c_str(), 1);
-
-    const int fd = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
-    if (fd != -1) {
-        io::posix::fdbuf file(fd); // auto-close
-        OutFileTransport out_t(fd);
+    const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+    if (fd1 != -1) {
+        OutFileTransport out_t(fd1);
 
         char mem[4096];
         char *buf;
@@ -114,7 +102,6 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, CryptoC
                 out_t.send(mem, buf - mem);
             }
         }
-
         close(fd);
     }
     else {
