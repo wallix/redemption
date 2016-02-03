@@ -43,6 +43,14 @@ struct InFilenameTransport : public Transport
     int start_index;
     int end_index;
 
+    char decompress_buffer[32768];
+    int decompress_start_index;
+    int decompress_end_index;
+
+    char decrypt_buffer[32768];
+    int decrypt_start_index;
+    int decrypt_end_index;
+
     char           buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
     uint32_t       pos;                     // current position in buf
