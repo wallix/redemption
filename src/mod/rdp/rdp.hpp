@@ -84,10 +84,11 @@
 #include "finally.hpp"
 #include "timeout.hpp"
 
-#include "channels/cliprdr_channel.hpp"
-#include "channels/rdpdr_channel.hpp"
-#include "channels/rdpdr_file_system_drive_manager.hpp"
-#include "channels/sespro_channel.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 
 #include "utils/splitter.hpp"
 #include "utils/algostring.hpp"
@@ -1746,7 +1747,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
-    
+
     void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
- 
+
 use Getopt::Long;
 use File::Path;
 use File::Copy;
@@ -21,12 +21,12 @@ GetOptions (
 );
 
 if (not $key and not $x509){
-    print STDERR "usage: rdpcert confpath [parameters]\n\n" 
+    print STDERR "usage: rdpcert confpath [parameters]\n\n"
         ."--key          : set RDP Proxy server private key (x509 is mandatory if changing key)\n"
         ."--inkey=<file> : user provider file containing private 2048 bit rsa key, PEM format\n"
         ."--x509         : set RDP Proxy server X509 certificate\n"
         ."--inx509=<file>: user provider X509 certificate matching private key, PEM format\n"
-        ."--force        :force erasing existing key or user provided certificate\n"
+        ."--force        : force erasing existing key or user provided certificate\n"
         ;
     die;
 }
@@ -40,7 +40,7 @@ if (@ARGV > 0){
 $confpath =~ s/^(.*[^\/]+)[\/]*$/$1/;
 $confpath or die "redemption:configuration path must be provided\n";
 
-mkpath $confpath unless -d $confpath 
+mkpath $confpath unless -d $confpath
 or die "redemption:configuration path does not exists and failed to create configuration path \"$confpath\"\n";
 
 
@@ -85,12 +85,12 @@ if ($x509){
         if (not -e $x509file){
           die "User provided X509 certificate file not found\n";
         }
-        copy($x509file, $cert) 
+        copy($x509file, $cert)
         or die "Setting up RDP proxy server with user provided x509 pem certificate failed $!";
 
         open(my $fh, ">", $user_X509);
         close $fh;
-        
+
         ($login,$pass,$uid,$gid) = getpwnam('wabuser');
         if (not $!){
             chown $uid, $gid, $user_X509;
@@ -99,7 +99,7 @@ if ($x509){
     }
     else {
         if (-e $user_X509 and -e $cert and not $force) {
-            die "Certificate is user provided, use --force to change to create a new autosigned certificate\n";        
+            die "Certificate is user provided, use --force to change to create a new autosigned certificate\n";
         }
         print STDERR "Creating new rdp proxy autosigned certificate\n";
         `openssl req -new -key $pkey -passin "pass:$pass" -out $certreq -subj "/CN=$hostname"`;
