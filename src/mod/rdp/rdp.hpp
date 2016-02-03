@@ -88,7 +88,6 @@
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
-#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 
 #include "utils/splitter.hpp"
 #include "utils/algostring.hpp"
