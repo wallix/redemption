@@ -232,61 +232,6 @@ struct GraphicCmdColorDistributor<RngByBpp, Dec, false, false, false, false>
 };
 
 
-template<class ColorConverter, class ProxyBase = gdi::GraphicProxy>
-struct CmdColorConverterProxy : private GraphicCmdColor, ProxyBase
-{
-    template<class... ColorConverterArgs>
-    CmdColorConverterProxy(ProxyBase && base, ColorConverterArgs &&...args)
-    : ProxyBase(std::move(base))
-    , cmd_color_converter(std::forward<ColorConverterArgs>(args)...)
-    {}
-
-    template<class... ColorConverterArgs>
-    CmdColorConverterProxy(ProxyBase const & base, ColorConverterArgs &&...args)
-    : ProxyBase(base)
-    , cmd_color_converter(std::forward<ColorConverterArgs>(args)...)
-    {}
-
-    template<class... ColorConverterArgs>
-    CmdColorConverterProxy(ColorConverterArgs &&...args)
-    : cmd_color_converter(std::forward<ColorConverterArgs>(args)...)
-    {}
-
-    template<class... ColorConverterArgs>
-    CmdColorConverterProxy(ProxyBase const & base)
-    : ProxyBase(base)
-    {}
-
-    using draw_tag = gdi::GraphicProxy::draw_tag;
-    template<class Gd, class... Ts>
-    void operator()(draw_tag, Gd & gd, Ts const & ... args) {
-        this->encode_cmd(1, gd, args...);
-    }
-
-    template<class Gd, class Tag, class... Ts>
-    void operator()(Tag tag, Gd & gd, Ts const & ... args) {
-        static_cast<ProxyBase&>(*this)(tag, gd, args...);
-    }
-
-    const ColorConverter & get_converter() const { return this->cmd_color_converter; }
-
-private:
-    ColorConverter cmd_color_converter;
-
-    template<class Gd, class Cmd, class... Ts>
-    auto encode_cmd(int, Gd & gd, Cmd const & cmd, Ts const & ... args)
-    -> decltype(this->encode_cmd_color(this->cmd_color_converter, std::declval<Cmd&>())) {
-        auto new_cmd = cmd;
-        this->encode_cmd_color(this->cmd_color_converter, new_cmd);
-        static_cast<ProxyBase&>(*this)(draw_tag{}, gd, new_cmd, args...);
-    }
-
-    template<class Gd, class Cmd, class... Ts>
-    void encode_cmd(unsigned, Gd & gd, Cmd const & cmd, Ts const & ... args) {
-        static_cast<ProxyBase&>(*this)(draw_tag{}, gd, cmd, args...);
-    }
-};
-
 namespace {
 
 template<class CoreAccess>

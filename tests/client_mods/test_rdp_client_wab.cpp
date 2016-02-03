@@ -135,5 +135,5 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                   )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
-    front.dump_png("trace_wab_");
+    //front.dump_png("trace_wab_");
 }

@@ -41,7 +41,6 @@
 #include "utils/pattutils.hpp"
 #include "dump_png24_from_rdp_drawable_adapter.hpp"
 #include "gdi/utils/non_null.hpp"
-#include "gdi/proxy.hpp"
 
 #include "utils/graphic_capture_impl.hpp"
 #include "utils/wrm_capture_impl.hpp"

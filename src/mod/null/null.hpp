@@ -23,7 +23,6 @@
 #define _REDEMPTION_MOD_NULL_NULL_HPP_
 
 #include "mod_api.hpp"
-#include "gdi/proxy.hpp"
 
 // Null module receive every event and does nothing. It allow session code to always have a receiving module active, thus avoidind to test that so back_end is available.
 
@@ -31,7 +30,7 @@ class FrontAPI;
 
 struct null_mod : public gdi::GraphicBase<null_mod, mod_api> {
     explicit null_mod(FrontAPI & front)
-    : gdi::GraphicBase<null_mod, mod_api>(0, 0)
+    : null_mod::base_type(0, 0)
     {}
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {}

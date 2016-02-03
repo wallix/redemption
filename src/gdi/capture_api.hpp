@@ -23,10 +23,11 @@
 
 #include "noncopyable.hpp"
 
-#include "adapter_base.hpp"
+#include <type_traits>
 
 #include <chrono>
 #include <algorithm> // std::min
+
 
 struct timeval;
 class wait_obj;
@@ -55,90 +56,6 @@ struct CaptureApi : private noncopyable
     // TODO other interface
     virtual void external_breakpoint() = 0;
     virtual void external_time(const timeval& now) = 0;
-};
-
-struct CaptureProxy
-{
-    struct snapshot_tag {};
-    struct update_config_tag {};
-    struct pause_capture_tag {};
-    struct resume_capture_tag {};
-    struct external_breakpoint {};
-    struct external_time {};
-
-    template<class Api>
-    std::chrono::microseconds operator()(
-        snapshot_tag, Api & api,
-        timeval const & now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval
-    ) {
-        return api.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    }
-
-    template<class Api>
-    void operator()(update_config_tag, Api & api, Inifile const & ini) {
-        api.update_config(ini);
-    }
-
-    template<class Api>
-    void operator()(pause_capture_tag, Api & api, timeval const & now) {
-        api.pause_capture(now);
-    }
-
-    template<class Api>
-    void operator()(resume_capture_tag, Api & api, timeval const & now) {
-        api.resume_capture(now);
-    }
-
-    template<class Api>
-    void operator()(external_time, Api & api, timeval const & now) {
-        api.external_time(now);
-    }
-
-    template<class Api>
-    void operator()(external_breakpoint, Api & api) {
-        api.external_breakpoint();
-    }
-};
-
-template<class Proxy, class InterfaceBase = CaptureApi>
-struct CaptureAdapter : AdapterBase<Proxy, InterfaceBase>
-{
-    static_assert(std::is_base_of<CaptureApi, InterfaceBase>::value, "InterfaceBase isn't a CaptureApi");
-
-    using AdapterBase<Proxy, InterfaceBase>::AdapterBase;
-
-    std::chrono::microseconds snapshot(
-        timeval const & now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval
-    ) override {
-        return this->get_proxy()(
-            CaptureProxy::snapshot_tag{}, *this,
-            now, cursor_x, cursor_y, ignore_frame_in_timeval
-        );
-    }
-
-    void update_config(Inifile const & ini) override {
-        this->get_proxy()(CaptureProxy::update_config_tag{}, *this, ini);
-    }
-
-    void pause_capture (timeval const & now) override {
-        this->get_proxy()(CaptureProxy::pause_capture_tag{}, *this, now);
-    }
-
-    void resume_capture(timeval const & now) override {
-        this->get_proxy()(CaptureProxy::resume_capture_tag{}, *this, now);
-    }
-
-    void external_breakpoint() override {
-        this->get_proxy()(CaptureProxy::external_breakpoint{}, *this);
-    }
-
-    void external_time(const timeval& now) override {
-        this->get_proxy()(CaptureProxy::external_time{}, *this, now);
-    }
 };
 
 

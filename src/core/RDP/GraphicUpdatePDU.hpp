@@ -433,10 +433,10 @@ class GraphicsUpdatePDU : public RDPSerializer, public gdi::InputPointer {
     rdp_mppc_enc * mppc_enc;
     bool           compression;
 
-    Transport * trans;
+    Transport & trans;
 
 public:
-    GraphicsUpdatePDU( Transport * trans
+    GraphicsUpdatePDU( Transport & trans
                      , uint16_t & userid
                      , int & shareid
                      , int & encryptionLevel
@@ -510,7 +510,7 @@ protected:
                    , this->order_count);
             }
 
-            ::send_server_update( *this->trans, this->fastpath_support, this->compression
+            ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid, SERVER_UPDATE_GRAPHICS_ORDERS
                                 , this->order_count, this->buffer_stream_orders, this->verbose);
@@ -530,7 +530,7 @@ protected:
             }
             this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
 
-            ::send_server_update( *this->trans, this->fastpath_support, this->compression
+            ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt
                                 , this->userid, SERVER_UPDATE_GRAPHICS_BITMAP, 0
                                 , this->buffer_stream_bitmaps, this->verbose);
@@ -725,7 +725,7 @@ protected:
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
 
-        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+        ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_COLOR
                             , 0, stream, this->verbose);
@@ -774,7 +774,7 @@ protected:
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         stream.get_data_stream().out_uint16_le(cache_idx);
 
-        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+        ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
                             , 0, stream, this->verbose);
@@ -796,7 +796,7 @@ public:
         stream.get_data_stream().out_uint16_le(xPos);
         stream.get_data_stream().out_uint16_le(yPos);
 
-        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+        ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
                             , 0, stream, this->verbose);

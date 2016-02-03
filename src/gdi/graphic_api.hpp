@@ -25,11 +25,8 @@
 
 #include <cstdint>
 
-#include "adapter_base.hpp"
-
 #include "noncopyable.hpp"
 
-#include <array>
 
 class BGRPalette;
 class RDPDestBlt;
@@ -189,104 +186,6 @@ protected:
     }
 };
 
-struct GraphicProxy
-{
-    struct draw_tag {};
-    struct set_tag {};
-    struct sync_tag {};
-    struct set_row_tag {};
-
-    template<class Api, class... Ts>
-    void operator()(draw_tag, Api & api, Ts const & ... args) {
-        api.draw(args...);
-    }
-
-    template<class Api>
-    void operator()(set_tag, Api & api, Pointer const & pointer) {
-        api.set_pointer(pointer);
-    }
-
-    template<class Api>
-    void operator()(set_tag, Api & api, BGRPalette const & palette) {
-        api.set_palette(palette);
-    }
-
-    template<class Api>
-    void operator()(sync_tag, Api & api) {
-        api.sync();
-    }
-
-    template<class Api>
-    void operator()(set_row_tag, Api & api, std::size_t rownum, const uint8_t * data) {
-        api.set_row(rownum, data);
-    }
-};
-
-template<class Proxy, class InterfaceBase = GraphicApi>
-struct GraphicAdapter : AdapterBase<Proxy, InterfaceBase>
-{
-    static_assert(std::is_base_of<GraphicApi, InterfaceBase>::value, "InterfaceBase isn't a GraphicApi");
-
-    using AdapterBase<Proxy, InterfaceBase>::AdapterBase;
-
-    void set_pointer(Pointer    const & cursor) override {
-        this->get_proxy()(GraphicProxy::set_tag{}, *this, cursor);
-    }
-    void set_palette(BGRPalette const & palette) override {
-        this->get_proxy()(GraphicProxy::set_tag{}, *this, palette);
-    }
-
-    void draw(RDP::FrameMarker    const & order) override { this->draw_(order); }
-
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-
-    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_(cmd, bmp); }
-
-    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
-        this->draw_(cmd, clip, bmp);
-    }
-
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override {
-        this->draw_(cmd, clip, bmp);
-    }
-
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
-        this->draw_(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) { this->draw_(order); }
-    void draw(const RDP::RAIL::WindowIcon          & order) { this->draw_(order); }
-    void draw(const RDP::RAIL::CachedIcon          & order) { this->draw_(order); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) { this->draw_(order); }
-
-    void draw(RDPColCache   const & cmd) override { this->draw_(cmd); }
-    void draw(RDPBrushCache const & cmd) override { this->draw_(cmd); }
-
-    void sync() override { this->get_proxy()(GraphicProxy::sync_tag{}, *this); }
-
-    void set_row(std::size_t rownum, const uint8_t * data) override {
-      this->get_proxy()(GraphicProxy::set_row_tag{}, *this, rownum, data);
-    }
-
-private:
-  template<class... Ts>
-  void draw_(Ts const & ... args) {
-    this->get_proxy()(GraphicProxy::draw_tag{}, *this, args...);
-  }
-};
 
 namespace {
     struct GraphicCoreAccess

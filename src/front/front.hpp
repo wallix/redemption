@@ -135,7 +135,7 @@ private:
         struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU {
             PrivateGraphicsUpdatePDU(
                 OrderCaps & client_order_caps
-              , Transport * trans
+              , Transport & trans
               , uint16_t & userid
               , int & shareid
               , int & encryptionLevel
@@ -191,7 +191,7 @@ private:
         Graphics(
             OrderCaps & client_order_caps
           , ClientInfo const & client_info
-          , Transport * trans
+          , Transport & trans
           , uint16_t & userid
           , int & shareid
           , int & encryptionLevel
@@ -263,7 +263,7 @@ private:
         }())
         , pointer_cache(client_info.pointer_cache_entries)
         , glyph_cache(client_info.number_of_entries_in_glyph_cache)
-        , graphics_update_pdu(/*TraceProxy{},*/
+        , graphics_update_pdu(
             client_order_caps
           , trans
           , userid
@@ -304,7 +304,7 @@ private:
         void initialize(
             OrderCaps & client_order_caps
           , ClientInfo const & client_info
-          , Transport * trans
+          , Transport & trans
           , uint16_t & userid
           , int & shareid
           , int & encryptionLevel
@@ -1066,10 +1066,11 @@ private:
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
+
         this->orders.initialize(
             this->client_order_caps
           , this->client_info
-          , &this->trans
+          , this->trans
           , this->userid
           , this->share_id
           , this->encryptionLevel
@@ -4076,6 +4077,8 @@ private:
 
     void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
+            this->send_global_palette();
+
             this->graphics_update->draw(cmd, clip);
         }
     }

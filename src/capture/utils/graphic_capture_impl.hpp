@@ -25,7 +25,6 @@
 #include "mouse_trace.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_cmd_color_converter.hpp"
-#include "gdi/proxy.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "utils/range.hpp"
