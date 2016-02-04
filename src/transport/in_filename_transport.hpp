@@ -46,6 +46,14 @@ struct InFilenameTransport : public Transport
 
         raw_t() : start(0), end(0) {}
 
+        uint32_t get_uint32_le(size_t offset)
+        {
+            return  this->b[0+offset]
+                  +(this->b[1+offset]<< 8)
+                  +(this->b[2+offset]<< 16)
+                  +(this->b[3+offset]<< 24);
+        }
+
         void read_min(int fd, size_t to_read, size_t min_to_read)
         {
             while ((size_t)(this->end - this->start) < min_to_read) {
@@ -79,7 +87,6 @@ struct InFilenameTransport : public Transport
     uint32_t       pos;                     // current position in buf
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       state;                   // enum crypto_file_state
-    unsigned int   MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
 
 public:
@@ -88,7 +95,6 @@ public:
         , pos(0)
         , raw_size(0)
         , state(0)
-        , MAX_CIPHERED_SIZE(0)
     {
         this->fd = ::open(filename, O_RDONLY);
         if (this->fd < 0) {
@@ -98,9 +104,7 @@ public:
 
 
         this->raw.read_min(this->fd, 40, 4);
-
-        const uint32_t magic = this->raw.b[0]+(this->raw.b[1]<<8)+(this->raw.b[2]<<16)+(this->raw.b[3]<<24);
-                             
+        const uint32_t magic = this->raw.get_uint32_le(0);
         if (magic != WABCRYPTOFILE_MAGIC) {
             // The data we have already read is in buffer and will be used later
             this->encryption = 0;
@@ -108,9 +112,7 @@ public:
 
         if (this->encryption){
             this->raw.read_min(this->fd, 40, 40);
-
-            const int version = this->raw.b[4]+(this->raw.b[5]<< 8)+(this->raw.b[6]<<16)+(this->raw.b[7]<<24);
-
+            const int version = this->raw.get_uint32_le(4);
             if (version > WABCRYPTOFILE_VERSION) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
                     ::getpid(), version, WABCRYPTOFILE_VERSION);
@@ -123,9 +125,6 @@ public:
             this->pos = 0;
             this->raw_size = 0;
             this->state = 0;
-            const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
-            this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
 
@@ -222,7 +221,7 @@ private:
                 // Check how much we have decoded
                 if (!this->raw_size) {
                     this->raw.read_min(this->fd, 4, 4);
-                    uint32_t ciphered_buf_size = this->raw.b[0]+(this->raw.b[1]<<8)+(this->raw.b[2]<<16)+(this->raw.b[3]<< 24);
+                    uint32_t ciphered_buf_size = this->raw.get_uint32_le(0);
                     this->raw.end = 0;
 
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
@@ -231,7 +230,7 @@ private:
                         this->raw_size = 0;
                         break;
                     }
-                    if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
+                    if (ciphered_buf_size > ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE) + AES_BLOCK_SIZE) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
                         this->status = false;
                         throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);

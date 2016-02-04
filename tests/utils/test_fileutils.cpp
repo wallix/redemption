@@ -24,8 +24,61 @@
 #define BOOST_TEST_MODULE TestFileUtils
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
+#include "log.hpp"
+
 #include "fileutils.hpp"
+
+
+
+BOOST_AUTO_TEST_CASE(TestBasename)
+{
+// basename() change behavior depending if <filegen.h> is included
+// or not. The POSIX version chnage it's argument, not the glibc one
+// we WANT to use the glibc one. This test below will fail if
+// <filegen.h> is included
+
+TODO("rename basename to some alias ensuring we are calling glibc one"
+     "never use it in code");
+
+//     Below expected behavior from the unix man pages
+//          path        basename
+//          "/usr/lib"  "lib"
+//          "/usr/"     ""         
+//          "usr"       "usr"
+//          "/"         "/"
+//          "."         "."
+//          ".."        ".."
+    {
+        char path[]= "/usr/lib";
+        BOOST_CHECK(0 == strcmp(basename(path), "lib"));
+    }
+    {
+        char path[]= "/usr/lib/";
+        BOOST_CHECK(0 == strcmp(basename(path), ""));
+    }
+    {
+        char path[]= "/usr/";
+        BOOST_CHECK(0 == strcmp(basename(path), ""));
+    }
+    {
+        char path[]= "usr";
+        BOOST_CHECK(0 == strcmp(basename(path), "usr"));
+    }
+    {
+        char path[]= "/";
+        BOOST_CHECK(0 == strcmp(basename(path), ""));
+    }
+    {
+        char path[]= ".";
+        BOOST_CHECK(0 == strcmp(basename(path), "."));
+    }
+    {
+        char path[]= "..";
+        BOOST_CHECK(0 == strcmp(basename(path), ".."));
+    }
+}
+
 
 #include <unistd.h> // for getgid
 #include <sys/types.h>
@@ -570,3 +623,5 @@ BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
     recursive_delete_directory(tmpdirname);
     BOOST_CHECK_EQUAL(false, file_exist(tmpdirname));
 }
+
+
