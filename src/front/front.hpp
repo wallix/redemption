@@ -761,6 +761,7 @@ public:
             this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb));
 
         if (bpp == 8) {
+            this->palette_sent = false;
             for (bool & b : this->palette_memblt_sent) {
                 b = false;
             }
@@ -4301,7 +4302,7 @@ private:
     bool palette_sent = false;
 
     void send_palette() {
-        if (8 != this->client_info.bpp && this->palette_sent) {
+        if (8 != this->client_info.bpp || this->palette_sent) {
             return ;
         }
 
