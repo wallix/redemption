@@ -16,13 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Jonathan Poelen
-
-   RDPGraphicDevice is an abstract class that describe a device able to
-   proceed RDP Drawing Orders. How the drawing will be actually done
-   depends on the implementation.
-   - It may be sent on the wire,
-   - Used to draw on some internal bitmap,
-   - etc.
 */
 
 #ifndef _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
@@ -32,7 +25,6 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/pointercache.hpp"
 #include "RDP/caches/glyphcache.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
@@ -54,12 +46,13 @@
 #include "difftimeval.hpp"
 #include "compression_transport_wrapper.hpp"
 #include "chunked_image_transport.hpp"
-#include "CaptureDevice.hpp"
 #include "wrm_label.hpp"
 #include "cast.hpp"
 #include "png.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/input_kbd_api.hpp"
+#include "gdi/capture_probe_api.hpp"
 
 struct FileToGraphic
 {
@@ -122,10 +115,10 @@ public:
     uint16_t nbconsumers;
 
     struct Consumer {
-        RDPGraphicDevice * graphic_device;
-        RDPCaptureDevice * capture_device;
-        gdi::GraphicApi * graphic_gdi;
-        gdi::CaptureApi * capture_gdi;
+        gdi::GraphicApi * graphic_ptr;
+        gdi::CaptureApi * capture_ptr;
+        gdi::InputKbdApi * input_kbd_ptr;
+        gdi::CaptureProbeApi * capture_probe_ptr;
     } consumers[10];
 
     bool meta_ok;
@@ -290,15 +283,17 @@ public:
         delete this->bmp_cache;
     }
 
-    void add_consumer(RDPGraphicDevice * graphic_device, RDPCaptureDevice * capture_device,
-        gdi::GraphicApi * graphic_gdi = nullptr,
-        gdi::CaptureApi * capture_gdi = nullptr
+    void add_consumer(
+        gdi::GraphicApi * graphic_ptr,
+        gdi::CaptureApi * capture_ptr,
+        gdi::InputKbdApi * input_kbd_ptr,
+        gdi::CaptureProbeApi * capture_probe_ptr
     ) {
         assert(std::end(this->consumers) != &this->consumers[this->nbconsumers]);
-        this->consumers[this->nbconsumers  ].graphic_device = graphic_device;
-        this->consumers[this->nbconsumers  ].capture_device = capture_device;
-        this->consumers[this->nbconsumers  ].graphic_gdi = graphic_gdi;
-        this->consumers[this->nbconsumers++].capture_gdi = capture_gdi;
+        this->consumers[this->nbconsumers  ].graphic_ptr = graphic_ptr;
+        this->consumers[this->nbconsumers  ].capture_ptr = capture_ptr;
+        this->consumers[this->nbconsumers  ].input_kbd_ptr = input_kbd_ptr;
+        this->consumers[this->nbconsumers++].capture_probe_ptr = capture_probe_ptr;
     }
 
     bool next_order()
@@ -324,11 +319,8 @@ public:
 
         if (!this->remaining_order_count){
             for (size_t i = 0; i < this->nbconsumers; i++){
-                if (this->consumers[i].graphic_device) {
-                    this->consumers[i].graphic_device->flush();
-                }
-                if (this->consumers[i].graphic_gdi) {
-                    this->consumers[i].graphic_gdi->sync();
+                if (this->consumers[i].graphic_ptr) {
+                    this->consumers[i].graphic_ptr->sync();
                 }
             }
 
@@ -381,30 +373,25 @@ public:
     }
 
     void dispatch_draw(Consumer & consumer, RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
-        if (consumer.graphic_device) consumer.graphic_device->draw(cmd, clip, &gly_cache);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd, clip, gly_cache);
+        if (consumer.graphic_ptr) consumer.graphic_ptr->draw(cmd, clip, gly_cache);
     }
 
     void dispatch_draw(Consumer & consumer, Pointer const & cursor) {
-        if (consumer.graphic_device) consumer.graphic_device->server_set_pointer(cursor);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->set_pointer(cursor);
+        if (consumer.graphic_ptr) consumer.graphic_ptr->set_pointer(cursor);
     }
 
     void dispatch_draw(Consumer & consumer, BGRPalette const & palette) {
-        if (consumer.graphic_device) consumer.graphic_device->set_mod_palette(palette);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->set_palette(palette);
+        if (consumer.graphic_ptr) consumer.graphic_ptr->set_palette(palette);
     }
 
     template<class Sz>
     void dispatch_draw(Consumer & consumer, RDPBitmapData const & cmd, uint8_t const * data, Sz sz, Bitmap const & bmp) {
-        if (consumer.graphic_device) consumer.graphic_device->draw(cmd, data, sz, bmp);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(cmd, bmp);
+        if (consumer.graphic_ptr) consumer.graphic_ptr->draw(cmd, bmp);
     }
 
     template<class... Ts>
     void dispatch_draw(Consumer & consumer, Ts const & ... args) {
-        if (consumer.graphic_device) consumer.graphic_device->draw(args...);
-        if (consumer.graphic_gdi) consumer.graphic_gdi->draw(args...);
+        if (consumer.graphic_ptr) consumer.graphic_ptr->draw(args...);
     }
 
     void interpret_order()
@@ -673,8 +660,8 @@ public:
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
                 for (size_t i = 0; i < this->nbconsumers; i++){
-                    if (this->consumers[i].capture_device) {
-                        this->consumers[i].capture_device->external_time(this->record_now);
+                    if (this->consumers[i].capture_ptr) {
+                        this->consumers[i].capture_ptr->external_time(this->record_now);
                     }
                 }
 
@@ -711,8 +698,11 @@ public:
                         this->stream.in_skip_bytes(this->stream.in_remain());
 
                         for (size_t i = 0; i < this->nbconsumers; i++){
-                            if (this->consumers[i].capture_device) {
-                                this->consumers[i].capture_device->input(this->record_now, this->input, this->input_len);
+                            if (this->consumers[i].input_kbd_ptr) {
+                                this->consumers[i].input_kbd_ptr->input_kbd(
+                                    this->record_now,
+                                    {this->input, this->input_len}
+                                );
                             }
                         }
 
@@ -741,11 +731,8 @@ public:
                 else {
                    if (this->real_time) {
                         for (size_t i = 0; i < this->nbconsumers; i++) {
-                            if (this->consumers[i].graphic_device) {
-                                this->consumers[i].graphic_device->flush();
-                            }
-                            if (this->consumers[i].graphic_gdi) {
-                                this->consumers[i].graphic_gdi->sync();
+                            if (this->consumers[i].graphic_ptr) {
+                                this->consumers[i].graphic_ptr->sync();
                             }
                         }
 
@@ -850,8 +837,8 @@ public:
                 }
 
                 for (size_t i = 0; i < this->nbconsumers; i++) {
-                    if (this->consumers[i].capture_device) {
-                        this->consumers[i].capture_device->external_breakpoint();
+                    if (this->consumers[i].capture_ptr) {
+                        this->consumers[i].capture_ptr->external_breakpoint();
                     }
                 }
             }
@@ -1109,11 +1096,8 @@ public:
                         }
 
                         for (size_t cu = 0; cu < this->nbconsumers; cu++){
-                            if (this->consumers[cu].capture_device) {
-                                this->consumers[cu].capture_device->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
-                            }
-                            if (this->consumers[cu].graphic_gdi) {
-                                this->consumers[cu].graphic_gdi->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+                            if (this->consumers[cu].graphic_ptr) {
+                                this->consumers[cu].graphic_ptr->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
                             }
                         }
                     }
@@ -1223,8 +1207,8 @@ public:
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
                 for (size_t i = 0; i < this->nbconsumers; i++){
-                    if (this->consumers[i].capture_device) {
-                        this->consumers[i].capture_device->external_time(this->record_now);
+                    if (this->consumers[i].capture_ptr) {
+                        this->consumers[i].capture_ptr->external_time(this->record_now);
                     }
                 }
 
@@ -1236,9 +1220,10 @@ public:
                     this->stream.in_skip_bytes(message_length);
 
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        if (this->consumers[i].capture_device) {
-                            this->consumers[i].capture_device->session_update(
-                                this->record_now, message);
+                        if (this->consumers[i].capture_probe_ptr) {
+                            this->consumers[i].capture_probe_ptr->session_update(
+                                this->record_now, {message, message_length}
+                            );
                         }
                     }
                 }
@@ -1253,11 +1238,8 @@ public:
                 else {
                    if (this->real_time) {
                         for (size_t i = 0; i < this->nbconsumers; i++) {
-                            if (this->consumers[i].graphic_device) {
-                                this->consumers[i].graphic_device->flush();
-                            }
-                            if (this->consumers[i].graphic_gdi) {
-                                this->consumers[i].graphic_gdi->sync();
+                            if (this->consumers[i].graphic_ptr) {
+                                this->consumers[i].graphic_ptr->sync();
                             }
                         }
 
@@ -1312,14 +1294,11 @@ private:
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                 for (size_t i = 0; i < this->nbconsumers; i++) {
-                    if (this->consumers[i].capture_device) {
-                        this->consumers[i].capture_device->snapshot( this->record_now, this->mouse_x, this->mouse_y
-                                                                   , this->ignore_frame_in_timeval
-                                                                   , requested_to_stop);
-                    }
-                    if (this->consumers[i].capture_gdi) {
-                        this->consumers[i].capture_gdi->snapshot( this->record_now, this->mouse_x, this->mouse_y
-                                                                   , this->ignore_frame_in_timeval);
+                    if (this->consumers[i].capture_ptr) {
+                        this->consumers[i].capture_ptr->snapshot(
+                            this->record_now, this->mouse_x, this->mouse_y
+                          , this->ignore_frame_in_timeval
+                        );
                     }
                 }
 

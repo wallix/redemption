@@ -28,8 +28,6 @@
 #include "staticcapture.hpp"
 #include "new_kbdcapture.hpp"
 
-#include "RDP/compress_and_draw_bitmap_update.hpp"
-
 #include "wait_obj.hpp"
 
 #include "gdi/graphic_api.hpp"
@@ -45,7 +43,12 @@
 #include "utils/graphic_capture_impl.hpp"
 #include "utils/wrm_capture_impl.hpp"
 
-class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
+class Capture final
+: public gdi::GraphicApi
+, public gdi::CaptureApi
+, public gdi::InputKbdApi
+, public gdi::InputPointer
+, public gdi::CaptureProbeApi
 {
     // for snapshot
     using MouseInfo = MouseTrace;
@@ -180,7 +183,7 @@ class Capture final : public RDPGraphicDevice, public RDPCaptureDevice
             }
         }
 
-        void session_update(const timeval& now, array_const_u8 const & message) override {
+        void session_update(const timeval& now, array_const_char const & message) override {
             for (gdi::CaptureProbeApi & cap_prob : this->cds) {
                 cap_prob.session_update(now, message);
             }
@@ -368,20 +371,22 @@ public:
         }
     }
 
-    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
-    // TODO
-                          bool const & requested_to_stop) override {
-        this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
+    std::chrono::microseconds snapshot(
+        const timeval & now,
+        int x, int y,
+        bool ignore_frame_in_timeval
+    ) override {
+        return this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    void flush() override {
+    void sync() override {
         if (this->graphic_api) {
             this->graphic_api->sync();
         }
     }
 
-    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
-        return this->input_kbd_api.input_kbd(now, {input_data_32, data_sz});
+    bool input_kbd(const timeval & now, array_const_u8 const & input_data_32) override {
+        return this->input_kbd_api.input_kbd(now, input_data_32);
     }
 
     void update_pointer_position(uint16_t x, uint16_t y) override {
@@ -478,13 +483,13 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip, *gly_cache);
+            this->graphic_api->draw(cmd, clip, gly_cache);
         }
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         if (this->graphic_api) {
             this->graphic_api->draw(bitmap_data, bmp);
         }
@@ -562,19 +567,19 @@ public:
         }
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         if (this->graphic_api) {
             this->graphic_api->set_pointer(cursor);
         }
     }
 
-    void set_mod_palette(const BGRPalette & palette) override {
+    void set_palette(const BGRPalette & palette) override {
         if (this->graphic_api) {
             this->graphic_api->set_palette(palette);
         }
     }
 
-    void set_pointer_display() override {
+    void set_pointer_display() /*override*/ {
         if (this->gd) {
             this->gd->rdp_drawable().show_mouse_cursor(false);
         }
@@ -589,19 +594,20 @@ public:
         this->capture_api.external_time(now);
     }
 
-    void session_update(const timeval & now, const char * message) override {
-        this->capture_probe_api.session_update(now, {
-            reinterpret_cast<unsigned char const *>(message), strlen(message)
-        });
+    void session_update(const timeval & now, array_const_char const & message) override {
+        this->capture_probe_api.session_update(now, message);
     }
 
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
     }
 
+    void pause_capture(const timeval& now) override {}
+    void resume_capture(const timeval& now) override {}
+
     // TODO move to ctor
     void zoom(unsigned percent) {
-        assert(this->pnc);
+        assert(this->psc);
         this->psc->zoom(percent);
     }
 };

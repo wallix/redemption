@@ -73,8 +73,6 @@
 #include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/remote_programs.hpp"
 
-#include "RDP/compress_and_draw_bitmap_update.hpp"
-
 #include "RDP/capabilities/bmpcache.hpp"
 #include "RDP/capabilities/offscreencache.hpp"
 #include "RDP/capabilities/bmpcache2.hpp"
@@ -953,11 +951,10 @@ public:
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
-            bool requested_to_stop = false;
-            this->capture->snapshot( now, this->mouse_x, this->mouse_y
-                                   , false  // ignore frame in time interval
-                                   , requested_to_stop
-                                   );
+            this->capture->snapshot(
+                now, this->mouse_x, this->mouse_y
+              , false  // ignore frame in time interval
+            );
         }
     }
     // ===========================================================================
@@ -2636,7 +2633,7 @@ private:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(const char * message) override {
+    void session_update(array_const_char const & message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
@@ -4438,7 +4435,10 @@ private:
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
             && decoded_data.get_offset()) {
-            send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.get_offset());
+            send_to_mod = this->capture->input_kbd(
+                tvtime(),
+                {decoded_data.get_data(), decoded_data.get_offset()}
+            );
         }
 
         if (this->up_and_running) {

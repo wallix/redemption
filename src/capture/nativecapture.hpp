@@ -22,7 +22,6 @@
 #ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 
-#include "CaptureDevice.hpp"
 #include "difftimeval.hpp"
 #include "GraphicToFile.hpp"
 #include "gdi/capture_api.hpp"

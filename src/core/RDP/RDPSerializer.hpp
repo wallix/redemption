@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Raphael Zhou
 
-   RDPSerializer is an implementation of RDPGraphicDevice that know how to serialize RDP Orders
+   RDPSerializer is an implementation of GraphicApi that know how to serialize RDP Orders
    and send them on the wire or store them in a file (actual storage will be provided as a Transport class).
    Serialized RDP orders are put in a chunk and sent when flush is called (either explicit call or because
    the provided buffer is full).
@@ -90,7 +90,6 @@
 
 #include "config.hpp"
 
-#include "RDPGraphicDevice.hpp"
 #include "bitmapupdate.hpp"
 
 #include "RDP/caches/bmpcache.hpp"

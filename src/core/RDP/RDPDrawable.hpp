@@ -26,11 +26,8 @@
 
 #include "font.hpp"
 
-#include "CaptureDevice.hpp"
-
 #include "bitmapupdate.hpp"
 #include "pointer.hpp"
-#include "RDPGraphicDevice.hpp"
 
 #include "caches/glyphcache.hpp"
 
@@ -62,7 +59,7 @@
 #include "text_metrics.hpp"
 
 #include "gdi/graphic_api.hpp"
-#include <iostream>
+
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
 class RDPDrawable

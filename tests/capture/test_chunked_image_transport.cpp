@@ -428,7 +428,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer(nullptr, nullptr, &drawable, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -503,7 +503,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
 
-    player.add_consumer(nullptr, nullptr, &drawable1, nullptr);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -583,7 +583,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
 
-    player.add_consumer(nullptr, nullptr, &drawable, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }

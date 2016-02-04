@@ -85,39 +85,38 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             , full_video, extract_meta_data);
 
         bool ignore_frame_in_timeval = false;
-        bool requested_to_stop       = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // The destruction of capture object will finalize the metafile content
     }
@@ -257,14 +256,13 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                         , full_video, extract_meta_data);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
-        capture.server_set_pointer(pointer1);
+        capture.set_pointer(pointer1);
 
         bool ignore_frame_in_timeval = true;
-        bool requested_to_stop       = false;
 
         capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         const char * filename = "./capture-000000.png";
 

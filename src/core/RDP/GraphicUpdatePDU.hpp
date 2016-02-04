@@ -16,13 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Raphael Zhou
-
-   RDPGraphicDevice is an abstract class that describe a device able to
-   proceed RDP Drawing Orders. How the drawing will be actually done
-   depends on the implementation.
-   - It may be sent on the wire,
-   - Used to draw on some internal bitmap,
-   - etc.
 */
 
 #ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_

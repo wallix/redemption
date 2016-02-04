@@ -26,7 +26,6 @@
 #define REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
 
 #include "FileToGraphic.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
@@ -107,7 +106,7 @@ public:
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
 
-        this->reader->add_consumer(nullptr, nullptr, &this->front, nullptr);
+        this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr);
     }
 
     ~ReplayMod() override {

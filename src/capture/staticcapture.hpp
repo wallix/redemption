@@ -26,7 +26,6 @@
 #include "difftimeval.hpp"
 #include "config.hpp"
 #include "transport/sequence_generator.hpp"
-#include "CaptureDevice.hpp"
 
 #include "gdi/capture_api.hpp"
 
