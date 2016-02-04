@@ -315,6 +315,7 @@ private:
                 this->raw.read_min(this->fd, requested_size, requested_size);
                 ::memcpy(&(*pbuffer)[0], this->raw.b, requested_size);
                 *pbuffer += requested_size;
+                this->raw.end = 0;
                 this->last_quantum_received += requested_size;
             } catch (...) {
                 this->status = false;
