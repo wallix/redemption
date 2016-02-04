@@ -2653,7 +2653,6 @@ private:
             LOG(LOG_INFO, "Front: %s graphics update.",
                 (disable ? "Disable" : "Enable"));
 
-
             this->input_event_and_graphics_update_disabled = disable;
             this->set_gd(*this->gd);
         }
@@ -3981,55 +3980,54 @@ private:
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
+        if (!clip.intersect(cmd.rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
+        if (!!clip.intersect(cmd.rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
+        if (!clip.intersect(cmd.rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() &&
-            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
+        if (!clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.isempty() &&
-            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
+        if (!clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
+        if (!clip.intersect(cmd.rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
+        if (!clip.intersect(cmd.rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
+        if (!clip.intersect(cmd.rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
+private:
     void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64) {
@@ -4044,7 +4042,6 @@ private:
         this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-private:
     void priv_draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
@@ -4138,8 +4135,10 @@ public:
 
             cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
             cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
-            // this may change the brush add send it to to remote cache
         }
+
+        // this may change the brush add send it to to remote cache
+        //this->cache_brush(cmd2.brush);
 
         this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
@@ -4155,20 +4154,51 @@ public:
                         std::max(cmd.startx, cmd.endx) - minx + 1,
                         std::max(cmd.starty, cmd.endy) - miny + 1);
 
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+        if (!clip.intersect(rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
+private:
+    bool updatable_cache_brush(RDPBrush const & brush) const {
+        return brush.style == 3 && this->client_info.brush_cache_code == 1;
+    }
+
+    void cache_brush(RDPBrush & brush)
+    {
+        if (this->updatable_cache_brush(brush)) {
+            this->update_cache_brush(brush);
+        }
+    }
+
+    void update_cache_brush(RDPBrush & brush)
+    {
+        uint8_t pattern[8];
+        pattern[0] = brush.hatch;
+        memcpy(pattern+1, brush.extra, 7);
+        int cache_idx = 0;
+        if (BRUSH_TO_SEND == this->orders.add_brush(pattern, cache_idx)) {
+            RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
+                sizeof(this->orders.brush_at(cache_idx).pattern),
+                this->orders.brush_at(cache_idx).pattern);
+            this->orders.graphics_update_pdu().draw(cmd);
+        }
+        brush.hatch = cache_idx;
+        brush.style = 0x81;
+    }
+
+public:
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()) {
-            // TODO
-            RDPGlyphIndex new_cmd = cmd;
-
-            // this may change the brush and send it to to remote cache
-            this->cache_brush(new_cmd.brush);
-
-            this->graphics_update->draw(new_cmd, clip, gly_cache);
+        if (!clip.intersect(cmd.bk).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDPGlyphIndex new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip, gly_cache);
+            }
+            else {
+                this->graphics_update->draw(cmd, clip, gly_cache);
+            }
         }
     }
 
@@ -4200,7 +4230,7 @@ public:
             make_array_view(cmd.deltaPoints, cmd.NumDeltaEntries)
         );
 
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+        if (!clip.intersect(rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
@@ -4211,7 +4241,7 @@ public:
             make_array_view(cmd.deltaPoints, cmd.NumDeltaEntries)
         );
 
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+        if (!clip.intersect(rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
@@ -4222,19 +4252,19 @@ public:
             make_array_view(cmd.deltaEncodedPoints, cmd.NumDeltaEntries)
         );
 
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+        if (!clip.intersect(rect).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
+        if (!clip.intersect(cmd.el.get_rect()).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
+        if (!clip.intersect(cmd.el.get_rect()).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
@@ -4246,26 +4276,12 @@ public:
         this->gd->sync();
     }
 
-    void cache_brush(RDPBrush & brush)
-    {
-        if ((brush.style == 3) && (this->client_info.brush_cache_code == 1)) {
-            uint8_t pattern[8];
-            pattern[0] = brush.hatch;
-            memcpy(pattern+1, brush.extra, 7);
-            int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->orders.add_brush(pattern, cache_idx)) {
-                RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
-                    sizeof(this->orders.brush_at(cache_idx).pattern),
-                    this->orders.brush_at(cache_idx).pattern);
-                this->orders.graphics_update_pdu().draw(cmd);
-            }
-            brush.hatch = cache_idx;
-            brush.style = 0x81;
-        }
-    }
-
     void draw(const RDPColCache & cmd) override {
         this->orders.graphics_update_pdu().draw(cmd);
+    }
+
+    void draw(const RDPBrushCache & cmd) override {
+        // TODO
     }
 
 private:
