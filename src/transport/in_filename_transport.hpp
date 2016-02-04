@@ -39,17 +39,40 @@ struct InFilenameTransport : public Transport
     int fd;
     int encryption;
     
-    char read_buffer[32768];
-    int start_index;
-    int end_index;
+    struct raw_t {
+        char b[32768];
+        int start;
+        int end;
 
-    char decompress_buffer[32768];
-    int decompress_start_index;
-    int decompress_end_index;
+        raw_t() : start(0), end(0) {}
 
-    char decrypt_buffer[32768];
-    int decrypt_start_index;
-    int decrypt_end_index;
+        void read_min(int fd, size_t to_read, size_t min_to_read)
+        {
+            while ((size_t)(this->end - this->start) < min_to_read) {
+                ssize_t ret = ::read(fd, &this->b[this->start], to_read - (this->end-this->start));
+                if (ret <= 0){
+                    if (ret < 0 && errno == EINTR){
+                        continue;
+                    }
+                    LOG(LOG_ERR, "failed reading from file");
+                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                }
+                this->end += ret;
+            }
+        }
+    } raw;
+
+    struct {
+        char b[32768];
+        int start;
+        int end;
+    } decrypted;
+
+    struct {
+        char b[32768];
+        int start;
+        int end;
+    } decompressed;
 
     char           buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
@@ -73,57 +96,24 @@ public:
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
 
-        unsigned char tbf[40];
 
-        size_t rl = 40;
-        while (rl > 36) {
-            ssize_t ret = ::read(this->fd, &tbf[40 - rl], rl);
-            if (ret <= 0){
-                if (ret < 0 && errno == EINTR){
-                    continue;
-                }
-                LOG(LOG_ERR, "failed reading magic from encrypted file=%s\n", filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-            // We must exit loop or we will enter infinite loop
-            rl -= ret;
-        }
+        this->raw.read_min(this->fd, 40, 4);
 
-        const uint32_t magic = tbf[0]+(tbf[1]<<8)+(tbf[2]<<16)+(tbf[3]<<24);
+        const uint32_t magic = this->raw.b[0]+(this->raw.b[1]<<8)+(this->raw.b[2]<<16)+(this->raw.b[3]<<24);
                              
         if (magic != WABCRYPTOFILE_MAGIC) {
-            TODO("We close and reopen because file is not encrypted and we want avoiding seek"
-                "but we should keep what has already been read in a buffer instead."
-                "This is important for that code to work on network sockets");
-            ::close(this->fd);
-            this->fd = ::open(filename, O_RDONLY);
-            if (this->fd < 0) {
-                LOG(LOG_ERR, "failed opening=%s\n", filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
+            // The data we have already read is in buffer and will be used later
             this->encryption = 0;
         }
 
         if (this->encryption){
-            while (rl) {
-                ssize_t ret = ::read(this->fd, &tbf[40 - rl], rl);
-                if (ret <= 0){
-                    if (ret < 0 && errno == EINTR){
-                        continue;
-                    }
-                    LOG(LOG_ERR, "failed reading magic from encrypted file=%s\n", filename);
-                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-                }
-                // We must exit loop or we will enter infinite loop
-                rl -= ret;
-            }
+            this->raw.read_min(this->fd, 40, 40);
 
-            const int version = tbf[4]+(tbf[5]<< 8)+(tbf[6]<<16)+(tbf[7]<<24);
+            const int version = this->raw.b[4]+(this->raw.b[5]<< 8)+(this->raw.b[6]<<16)+(this->raw.b[7]<<24);
 
             if (version > WABCRYPTOFILE_VERSION) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
                     ::getpid(), version, WABCRYPTOFILE_VERSION);
-                LOG(LOG_ERR, "failed opening=%s\n", filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
 
@@ -145,7 +135,8 @@ public:
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
 
-            unsigned char * const iv = tbf + 8;
+            unsigned char * const iv = reinterpret_cast<uint8_t *>(&this->raw.b[8]);
+            this->raw.start = this->raw.end = 0;
 
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
             const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
@@ -230,19 +221,9 @@ private:
             while (remaining_requested_size > 0) {
                 // Check how much we have decoded
                 if (!this->raw_size) {
-                    unsigned char tbf[4] = {};
-                    size_t rl = 4;
-                    while (rl) {
-                        ssize_t res = ::read(this->fd, &tbf[4 - rl], rl);
-                        if (res <= 0){
-                            if (res!=0 && errno == EINTR){continue;}
-                            this->status = false;
-                            throw Error(ERR_TRANSPORT_READ_FAILED, res==-1?errno:-1);
-                        }
-                        rl -= res;
-                    }
-
-                    uint32_t ciphered_buf_size = tbf[0]+(tbf[1]<<8)+(tbf[2]<<16)+(tbf[3]<< 24);
+                    this->raw.read_min(this->fd, 4, 4);
+                    uint32_t ciphered_buf_size = this->raw.b[0]+(this->raw.b[1]<<8)+(this->raw.b[2]<<16)+(this->raw.b[3]<< 24);
+                    this->raw.end = 0;
 
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
                         this->state |= CF_EOF;
@@ -258,43 +239,17 @@ private:
                     else {
                         uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
                         //char ciphered_buf[ciphered_buf_size];
-                        unsigned char ciphered_buf[65536];
                         //char compressed_buf[compressed_buf_size];
                         unsigned char compressed_buf[65536];
 
                         TODO("this is blocking read, add support for timeout reading");
                         TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-                        size_t rl = ciphered_buf_size;
-                        while (rl) {
-                            ssize_t res = ::read(this->fd
-                                                , &ciphered_buf[ciphered_buf_size - rl]
-                                                , rl);
-                            if (res <= 0){
-                                if (res == 0){
-                                    this->status = false;
-                                    throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-                                }
-                                if (errno == EINTR){
-                                    continue;
-                                }
-                                // Error should still be there next time we try to read
-                                if (rl != ciphered_buf_size){
-                                    this->status = false;
-                                    throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-                                }
-                                // here ret < 0
-                                this->status = false;
-                                throw Error(ERR_TRANSPORT_READ_FAILED, res);
-                            }
-                            // We must exit loop or we will enter infinite loop
-                            rl -= res;
-                        }
-
-                        if (this->decrypt_xaes_decrypt(ciphered_buf, ciphered_buf_size,
-                                                       compressed_buf, &compressed_buf_size)) {
+                        this->raw.read_min(this->fd, ciphered_buf_size, ciphered_buf_size);
+                        if (this->decrypt_xaes_decrypt(reinterpret_cast<uint8_t*>(&this->raw.b[0]), ciphered_buf_size, compressed_buf, &compressed_buf_size)) {
                             this->status = false;
                             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                         }
+                        this->raw.end = 0;
 
                         size_t chunk_size = CRYPTO_BUFFER_SIZE;
                         const snappy_status status = snappy_uncompress(
@@ -356,28 +311,14 @@ private:
             TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
             TODO("this is blocking read, add support for timeout reading");
             TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-            size_t rl = requested_size;
-            while (rl) {
-                size_t res = ::read(this->fd, *pbuffer + (requested_size - rl), rl);
-                if (res <= 0){
-                    // We must exit loop or we will enter infinite loop
-                    if ((res == 0)
-                    || ((errno!=EINTR) && (rl != requested_size))){
-                        break;
-                    }
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    this->status = false;
-                    throw Error(ERR_TRANSPORT_READ_FAILED, res);
-                }
-                rl -= res;
-            }
-            *pbuffer += requested_size - rl;
-            this->last_quantum_received += requested_size - rl;
-            if (rl != 0){
+            try {
+                this->raw.read_min(this->fd, requested_size, requested_size);
+                ::memcpy(&(*pbuffer)[0], this->raw.b, requested_size);
+                *pbuffer += requested_size;
+                this->last_quantum_received += requested_size;
+            } catch (...) {
                 this->status = false;
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+                throw;
             }
         }
     }
