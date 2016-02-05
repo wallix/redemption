@@ -22,6 +22,7 @@
 #define REDEMPTION_UTILS_ARRAY_VIEW_HPP
 
 #include <cstddef>
+#include <type_traits>
 
 template<class T>
 struct array_view
@@ -39,7 +40,9 @@ struct array_view
     , sz(sz)
     {}
 
-    template<class Cont>
+    template<class Cont, class = typename std::enable_if<
+        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::type
+    >>
     constexpr array_view(Cont & cont)
     : array_view(cont.data(), cont.size())
     {}
@@ -82,7 +85,9 @@ struct array_view<T const>
     , sz(sz)
     {}
 
-    template<class Cont>
+    template<class Cont, class = typename std::enable_if<
+        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::type
+    >>
     constexpr array_view(Cont & cont)
     : array_view(cont.data(), cont.size())
     {}

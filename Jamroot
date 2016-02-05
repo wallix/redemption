@@ -644,6 +644,7 @@ explicit test_trace.py.unittest ;
 ## Test facility functions or classes
 ## @{
 unit-test test_iter : tests/utils/test_iter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_array_view : tests/utils/test_array_view.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_noncopyable : tests/utils/test_noncopyable.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_splitter : tests/utils/test_splitter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_algostring : tests/utils/test_algostring.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
