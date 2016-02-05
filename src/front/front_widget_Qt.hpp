@@ -124,17 +124,19 @@ public:
         if ( indexBpp != -1 ) { 
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
+        this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
         
-        this->_ResolutionComboBox.addItem("640 * 480" , 640);
-        this->_ResolutionComboBox.addItem("800 * 600" , 800);
+        this->_ResolutionComboBox.addItem( "640 * 480", 640);
+        this->_ResolutionComboBox.addItem( "800 * 600", 800);
         this->_ResolutionComboBox.addItem("1024 * 768", 1024);
         this->_ResolutionComboBox.addItem("1600 * 900", 1600);
         int indexResolution = this->_ResolutionComboBox.findData(this->_front->_info.width);
         if ( indexResolution != -1 ) { 
             this->_ResolutionComboBox.setCurrentIndex(indexResolution);
         }
+        this->_ResolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_ResolutionComboBox));
         
@@ -150,13 +152,14 @@ public:
         
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
-        for (int i = 0; i < 84; i++) {
-            this->_languageComboBox.addItem(keylayouts[i]->locale_name, keylayouts[i]->LCID);
+        for (int i = 0; i < Qt_ScanCode_KeyMap::KEYLAYOUTS_LIST_SIZE; i++) {
+            this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
         }
         int indexLanguage = this->_languageComboBox.findData(this->_front->_info.keylayout);
         if ( indexLanguage != -1 ) { 
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
+        this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
         
@@ -179,8 +182,8 @@ public:
  
         this->_buttonCancel.setToolTip(this->_buttonCancel.text());
         this->_buttonCancel.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
-        this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (released()), this, SLOT (cancelReleased()));
+        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
+        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (released()), this, SLOT (cancelReleased()));
         this->_buttonCancel.setFocusPolicy(Qt::StrongFocus);
         this->_layout->addWidget(&(this->_buttonCancel), 11, 3);
         
@@ -273,7 +276,7 @@ public:
         , _buttonConnexion("Connexion", this)
         , _buttonOptions("Options", this)
     {
-        this->setWindowTitle("Desktop Linker");
+        this->setWindowTitle("Client RDP");
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
         
@@ -390,6 +393,7 @@ public:
     const int            _width;
     const int            _height;
     bool                 _connexionLasted;
+    const int            _buttonHeight;
     
     
     Screen_Qt (Front_Qt_API * front)
@@ -404,17 +408,18 @@ public:
     , _width(this->_front->_info.width)
     , _height(this->_front->_info.height)
     , _connexionLasted(false)
+    , _buttonHeight(20)
     {
-        this->setFixedSize(this->_width, this->_height+20);
+        this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
         this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
         this->setMouseTracking(true);
         this->installEventFilter(this);
-        this->setAttribute(Qt::WA_NoSystemBackground, true);
+        //this->setAttribute(Qt::WA_NoSystemBackground, true);
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str())); 
     
-        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, 20));
+        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
@@ -422,7 +427,7 @@ public:
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, 20));
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
         this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
         this->_buttonRefresh.setGeometry(rectRefresh);
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
@@ -430,7 +435,7 @@ public:
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
         this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
         
-        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), 20));
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), this->_buttonHeight));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
         this->_buttonDisconnexion.setGeometry(rectDisconnexion);
         this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
