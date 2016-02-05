@@ -71,7 +71,7 @@ struct InFilenameTransport : public Transport
     } raw;
 
     struct {
-        char b[32768];
+        uint8_t b[65536];
         int start;
         int end;
     } decrypted;
@@ -238,46 +238,43 @@ private:
                         uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
                         //char ciphered_buf[ciphered_buf_size];
                         //char compressed_buf[compressed_buf_size];
-                        unsigned char compressed_buf[65536];
+//                        unsigned char compressed_buf[65536];
 
                         TODO("this is blocking read, add support for timeout reading");
                         TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                         this->raw.read_min(this->fd, ciphered_buf_size, ciphered_buf_size);
-                        {
-                            uint32_t *dst_sz = &compressed_buf_size;
-                            int safe_size = compressed_buf_size;
-                            int remaining_size = 0;
 
-                            /* allows reusing of ectx for multiple encryption cycles */
-                            if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                                this->status = false;
-                                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-                            }
-                            if (EVP_DecryptUpdate(&this->ectx,
-                                                  compressed_buf,
-                                                  &safe_size,
-                                                  reinterpret_cast<uint8_t*>(&this->raw.b[0]),
-                                                  ciphered_buf_size) != 1){
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                                this->status = false;
-                                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-                            }
-                            if (EVP_DecryptFinal_ex(&this->ectx,
-                                                    compressed_buf + safe_size,
-                                                    &remaining_size) != 1){
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                                this->status = false;
-                                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-                            }
-                            *dst_sz = safe_size + remaining_size;
+                        int safe_size = compressed_buf_size;
+                        int ciph_remaining_size = 0;
+
+                        /* allows reusing of ectx for multiple encryption cycles */
+                        if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+                            this->status = false;
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                         }
-                        
+                        if (EVP_DecryptUpdate(&this->ectx,
+                                              &this->decrypted.b[0],
+                                              &safe_size,
+                                              reinterpret_cast<uint8_t*>(&this->raw.b[0]),
+                                              ciphered_buf_size) != 1){
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+                            this->status = false;
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+                        }
+                        if (EVP_DecryptFinal_ex(&this->ectx,
+                                                &this->decrypted.b[safe_size],
+                                                &ciph_remaining_size) != 1){
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+                            this->status = false;
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+                        }
+                        compressed_buf_size = safe_size + ciph_remaining_size;
                         this->raw.end = 0;
 
                         size_t chunk_size = CRYPTO_BUFFER_SIZE;
                         const snappy_status status = snappy_uncompress(
-                            reinterpret_cast<char *>(compressed_buf),
+                            reinterpret_cast<char *>(&this->decrypted.b[0]),
                            compressed_buf_size, this->buf, &chunk_size);
 
                         switch (status)
