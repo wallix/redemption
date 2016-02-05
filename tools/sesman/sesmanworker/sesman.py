@@ -1096,20 +1096,23 @@ class Sesman():
                 extra_info.is_recorded,
                 mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
 
+            if not _status:
+                self.send_data({u'rejected': _error})
+
             Logger().info(u"Fetching protocol")
 
             kv = {}
+            if _status:
+                target_login_info = self.engine.get_target_login_info(selected_target)
+                proto_info = self.engine.get_target_protocols(selected_target)
+                kv[u'proto_dest'] = proto_info.protocol
+                if proto_info.protocol == u'RDP':
+                    kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
+                    kv[u'timezone'] = str(altzone if daylight else timezone)
 
-            target_login_info = self.engine.get_target_login_info(selected_target)
-            proto_info = self.engine.get_target_protocols(selected_target)
-            kv[u'proto_dest'] = proto_info.protocol
-            if proto_info.protocol == u'RDP':
-                kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
-            kv[u'timezone'] = str(altzone if daylight else timezone)
-
-            _status, _error = self.engine.checkout_target(selected_target)
-            if not _status:
-                self.send_data({u'rejected': _error})
+                _status, _error = self.engine.checkout_target(selected_target)
+                if not _status:
+                    self.send_data({u'rejected': _error})
 
             if _status:
                 kv['password'] = 'pass'
