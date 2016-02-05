@@ -84,10 +84,10 @@
 #include "finally.hpp"
 #include "timeout.hpp"
 
-#include "channels/cliprdr_channel.hpp"
-#include "channels/rdpdr_channel.hpp"
-#include "channels/rdpdr_file_system_drive_manager.hpp"
-#include "channels/sespro_channel.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
 
 #include "utils/splitter.hpp"
 #include "utils/algostring.hpp"
@@ -268,10 +268,9 @@ public:
             this->session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
                     this->session_probe_to_server_sender.get(),
-                    this->file_system_drive_manager,
                     this->front,
                     *this,
-                    file_system_virtual_channel.to_server_sender,
+                    file_system_virtual_channel,
                     this->get_session_probe_virtual_channel_params());
         }
 
@@ -395,6 +394,7 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     const unsigned                               session_probe_launch_fallback_timeout;
     const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
     const unsigned                               session_probe_keepalive_timeout;
+    const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
     const bool                                   session_probe_end_disconnected_session;
           std::string                            session_probe_alternate_shell;
 
@@ -688,6 +688,7 @@ public:
         , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
         , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+        , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
@@ -1220,6 +1221,8 @@ protected:
             this->session_probe_launch_fallback_timeout;
         session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
             this->session_probe_keepalive_timeout;
+        session_probe_virtual_channel_params.session_probe_on_keepalive_timeout_disconnect_user =
+            this->session_probe_on_keepalive_timeout_disconnect_user;
 
         session_probe_virtual_channel_params.session_probe_on_launch_failure        =
             this->session_probe_on_launch_failure;
@@ -1746,6 +1749,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
+
     void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started
@@ -2968,6 +2972,7 @@ public:
                                 this->end_session_reason.clear();
                                 this->end_session_message.clear();
 
+                                this->acl->disconnect_target();
                                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
                                 this->acl->log4(false, "SESSION_DISCONNECTED_BY_TARGET");

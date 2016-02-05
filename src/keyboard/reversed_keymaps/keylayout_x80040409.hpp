@@ -5,7 +5,7 @@
 
 namespace x80040409{ 
 
-const static int LCID = 0x80040409;
+const static int LCID = 0x40409;
 
 const static char * const locale_name = "en-US.dvorak_right";
 

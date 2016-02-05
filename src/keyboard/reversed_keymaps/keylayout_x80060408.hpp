@@ -5,7 +5,7 @@
 
 namespace x80060408{ 
 
-const static int LCID = 0x80060408;
+const static int LCID = 0x60408;
 
 const static char * const locale_name = "el-GR.polytonic";
 

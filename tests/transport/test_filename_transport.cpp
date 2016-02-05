@@ -26,6 +26,7 @@
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
+
 #define LOGPRINT
 // #define LOGNULL
 
@@ -44,7 +45,21 @@ BOOST_AUTO_TEST_CASE(TestFilename)
     }
 
     {
-        InFilenameTransport out(filename);
+        Inifile ini;
+        ini.set<cfg::crypto::key0>(cstr_array_view(
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+        ));
+        ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+
+
+        LCGRandom rnd(0);
+
+        CryptoContext cctx(rnd, ini, 1);
+
+        InFilenameTransport out(&cctx, filename);
         char s[5];
         char * sp = s;
         char ** p = &sp;
@@ -71,6 +86,7 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     const char * const filename = "/tmp/inoufiletest_crypt.txt";
 
     ::unlink(filename);
+
     Inifile ini;
     ini.set<cfg::crypto::key0>(cstr_array_view(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -78,13 +94,11 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
     ));
-    //ini.configuration_holder().set_value("crypto", "key1", "12345678901234567890123456789012");
     ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
 
     LCGRandom rnd(0);
 
     CryptoContext cctx(rnd, ini, 1);
-    cctx.get_crypto_key();
 
     {
         CryptoOutFilenameTransport in(&cctx, filename);

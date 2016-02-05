@@ -81,7 +81,7 @@ class FrontAPI : public gdi::GraphicApi, public gdi::InputPointer {
     ////////////////////////////////
     // Session Probe.
 
-    virtual void session_probe_started() {}
+    virtual void session_probe_started(bool started) {}
     virtual void set_keylayout(int LCID) {}
     virtual void set_focus_on_password_textbox(bool set) {}
     virtual void set_consent_ui_visible(bool set) {}

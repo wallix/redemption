@@ -492,7 +492,7 @@ namespace transbuf {
 }
 
 struct OutFilenameTransport
-: SeekableTransport<OutputTransport<transbuf::ofile_buf>>
+: OutputTransport<transbuf::ofile_buf>
 {
     OutFilenameTransport(const char * filename)
     {

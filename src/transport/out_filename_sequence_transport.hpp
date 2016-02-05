@@ -28,18 +28,13 @@
 
 
 struct OutFilenameSequenceTransport
-: SeekableTransport<
-// FlushingTransport<
-RequestCleaningTransport<
-    OutputNextTransport<
-        detail::out_sequence_filename_buf<
+:
+    RequestCleaningTransport<
+        OutputNextTransport<
+            detail::out_sequence_filename_buf<
             detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >
-        >/*,
-        detail::GetCurrentPath*/
-    >
->
-// >
->
+    >>>
+
 {
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
@@ -61,5 +56,41 @@ RequestCleaningTransport<
     const FilenameGenerator * seqgen() const noexcept
     { return &(this->buffer().seqgen()); }
 };
+
+struct OutFilenameSequenceSeekableTransport
+: RequestCleaningTransport<
+     OutputNextTransport<
+         detail::out_sequence_filename_buf<
+                detail::empty_ctor<io::posix::fdbuf>
+      >>>
+{
+    OutFilenameSequenceSeekableTransport(
+        FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        unsigned verbose = 0)
+    : OutFilenameSequenceSeekableTransport::TransportType(
+        detail::out_sequence_filename_buf_param<>(format, prefix, filename, extension, groupid))
+    {
+        (void)verbose;
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    { return &(this->buffer().seqgen()); }
+    
+    void seek(int64_t offset, int whence) override {
+        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        }
+    }
+
+};
+
 
 #endif

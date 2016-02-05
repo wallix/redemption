@@ -1001,7 +1001,7 @@ public:
             }
         }
 
-        if (!certificate_matches) {
+        if (!certificate_matches && server_cert_store) {
             ::unlink(filename);
 
             LOG(LOG_INFO, "Dumping X509 peer certificate: \"%s\"\n", filename);

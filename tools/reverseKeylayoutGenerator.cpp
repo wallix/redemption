@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <boost/algorithm/string.hpp>
 #include "../src/keyboard/keylayouts.hpp"
 //#include "keymap2.hpp"
@@ -15,7 +16,7 @@
 
 
 void tabToReversedMap(const Keylayout::KeyLayout_t & read, std::ofstream & fichier, std::string name);
-
+bool keyLayout1IsInferiorThanKeylayout2(const Keylayout & k1, const Keylayout & k2);
 
 static const Keylayout * keylayouts[] = { &keylayout_x00000405, &keylayout_x00000406, &keylayout_x00000407
                                             , &keylayout_x00000408, &keylayout_x00000409, &keylayout_x0000040a
@@ -52,10 +53,59 @@ static int over(0);
     
 int main () {
     
+    
+    std::vector<const Keylayout *> vecKeylayouts;
+    
+    vecKeylayouts.push_back(keylayouts[0]);
+    
+    for(int i = 1; i < 84; i++) {
+        bool added(false);
+        int size(vecKeylayouts.size());
+        for (int j = 0; j < size; j++) {
+            if (keyLayout1IsInferiorThanKeylayout2(*keylayouts[i], *vecKeylayouts[j])) {
+                vecKeylayouts.insert(vecKeylayouts.begin() + j, keylayouts[i]);
+                added = true;
+            }
+            if (added) {
+                break;
+            }
+        }
+        
+        if (!added) {
+            vecKeylayouts.push_back(keylayouts[i]);
+        }
+    }
+    
+    for(int i = 0; i < 84; i++) {
+        std::cout << vecKeylayouts[i]->locale_name << std::endl;
+    }
+    
+    std:: cout << "static const Keylayout * keylayouts[] = {";            
     for(int i = 0; i < 84; i++) {
         
-        const Keylayout *  keylayout_WORK(keylayouts[i]); 
+        if (i != 0) {
+         std::cout << " ,";   
+        }
         
+        
+        
+        std::cout << "&keylayout_x800";
+        
+        if (vecKeylayouts[i]->LCID < 0x00010000) {
+            std::cout << "0";
+        }
+        if (vecKeylayouts[i]->LCID < 0x00001000) {
+            std::cout << "0";
+        }
+        
+        std::cout << std::hex << vecKeylayouts[i]->LCID;
+        
+        if ((i+1)%3 == 0) {
+            std::cout << std::endl << "                                       ";
+        }
+        
+        /*const Keylayout *  keylayout_WORK(keylayouts[i]); 
+             
         
         std::string loc_name(keylayout_WORK->locale_name);
         std::replace( loc_name.begin(), loc_name.end(), '.', '_');
@@ -96,7 +146,7 @@ int main () {
             
             fichier << "namespace x"<< std::hex<<LCIDreverse << "{ " << std::endl<< std::endl;
             
-            fichier << "const static int LCID = 0x"<< std::hex<<LCIDreverse <<";"<< std::endl<< std::endl;
+            fichier << "const static int LCID = 0x"<< std::hex<< LCID <<";"<< std::endl<< std::endl;
 
             fichier << "const static char * const locale_name = \""<<keylayout_WORK->locale_name<<"\";"<< std::endl<< std::endl;
 
@@ -151,12 +201,41 @@ int main () {
 
             std::cerr << "Error file" << std::endl;
 
-        }
+        }*/
     }
+    
+    std::cout << " };" << std::endl; 
     
     std::cout << std::endl << std::dec << "missed data = " << over << std::endl;
     
     return 0;
+}
+
+
+bool keyLayout1IsInferiorThanKeylayout2(const Keylayout & k1, const Keylayout & k2) {
+    std::string k1Name(k1.locale_name);
+    std::string k2Name(k2.locale_name);
+    int length(0);
+    bool k1IsShorter(false);
+    if (k1Name.length() < k2Name.length()) {
+        length = k1Name.length();
+        k1IsShorter = true;
+    } else {
+        length = k2Name.length();
+    }
+    
+    for (int i = 0; i < length; i++) {
+        char k1char(k1Name[i]);
+        char k2char(k2Name[i]);
+        if (k1char < k2char) {
+            return true;
+        }
+        if (k1char > k2char) {
+            return false;
+        }
+    }
+    
+    return k1IsShorter;
 }
 
 

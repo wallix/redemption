@@ -60,6 +60,7 @@
 #define STRMODULE_VALID            "valid"
 #define STRMODULE_TRANSITORY       "transitory"
 #define STRMODULE_CLOSE            "close"
+#define STRMODULE_CLOSE_BACK       "close_back"
 #define STRMODULE_CONNECTION       "connection"
 #define STRMODULE_TARGET           "interactive_target"
 #define STRMODULE_MESSAGE          "message"
@@ -78,6 +79,7 @@ enum {
     MODULE_XUP,
     MODULE_INTERNAL,
     MODULE_INTERNAL_CLOSE,
+    MODULE_INTERNAL_CLOSE_BACK,
     MODULE_INTERNAL_WIDGET2_DIALOG,
     MODULE_INTERNAL_WIDGET2_MESSAGE,
     MODULE_INTERNAL_WIDGET2_LOGIN,
@@ -109,6 +111,7 @@ const char * get_module_name(int module_id) {
         case MODULE_XUP:                                return "MODULE_XUP";
         case MODULE_INTERNAL:                           return "MODULE_INTERNAL";
         case MODULE_INTERNAL_CLOSE:                     return "MODULE_INTERNAL_CLOSE";
+        case MODULE_INTERNAL_CLOSE_BACK:                return "MODULE_INTERNAL_CLOSE_BACK";
         case MODULE_INTERNAL_WIDGET2_DIALOG:            return "MODULE_INTERNAL_WIDGET2_DIALOG";
         case MODULE_INTERNAL_WIDGET2_MESSAGE:           return "MODULE_INTERNAL_WIDGET2_MESSAGE";
         case MODULE_INTERNAL_WIDGET2_LOGIN:             return "MODULE_INTERNAL_WIDGET2_LOGIN";
@@ -178,15 +181,6 @@ public:
         LOG(LOG_INFO, "----------> ACL next_module <--------");
         auto & module_cstr = this->ini.get<cfg::context::module>();
 
-        if (this->connected &&
-            (module_cstr == STRMODULE_RDP ||
-             module_cstr == STRMODULE_VNC)) {
-            LOG(LOG_INFO, "===========> MODULE_CLOSE");
-            if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", language(this->ini)));
-            }
-            return MODULE_INTERNAL_CLOSE;
-        }
         if (module_cstr == STRMODULE_LOGIN) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET2_LOGIN;
@@ -225,6 +219,19 @@ public:
         }
         else if (module_cstr == STRMODULE_CLOSE) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
+            return MODULE_INTERNAL_CLOSE;
+        }
+        else if (module_cstr == STRMODULE_CLOSE_BACK) {
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
+            return MODULE_INTERNAL_CLOSE_BACK;
+        }
+        if (this->connected &&
+            (module_cstr == STRMODULE_RDP ||
+             module_cstr == STRMODULE_VNC)) {
+            LOG(LOG_INFO, "===========> MODULE_CLOSE");
+            if (this->ini.get<cfg::context::auth_error_message>().empty()) {
+                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", language(this->ini)));
+            }
             return MODULE_INTERNAL_CLOSE;
         }
         else if (module_cstr == STRMODULE_RDP) {
@@ -511,6 +518,7 @@ public:
     void new_mod(int target_module, time_t now, auth_api * acl) override {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
+        this->connected = false;
         if (this->last_module) this->front.stop_capture();
         switch (target_module)
         {
@@ -591,6 +599,23 @@ public:
                                             );
             }
             LOG(LOG_INFO, "ModuleManager::internal module Close ready");
+            break;
+        case MODULE_INTERNAL_CLOSE_BACK:
+            {
+                if (this->ini.get<cfg::context::auth_error_message>().empty()) {
+                    this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
+                }
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::CloseBack'");
+                this->mod = new FlatWabCloseMod(this->ini,
+                                                this->front,
+                                                this->front.client_info.width,
+                                                this->front.client_info.height,
+                                                now,
+                                                true,
+                                                true
+                                                );
+            }
+            LOG(LOG_INFO, "ModuleManager::internal module Close Back ready");
             break;
         case MODULE_INTERNAL_TARGET:
             {
@@ -850,6 +875,8 @@ public:
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>();
                 mod_rdp_params.session_probe_on_launch_failure     = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
+                mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user =
+                                                                     this->ini.get<cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user>();
                 mod_rdp_params.session_probe_end_disconnected_session
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
                 mod_rdp_params.session_probe_customize_executable_name
@@ -1046,8 +1073,11 @@ public:
             this->front.pause_capture();
         }
     }
-
+    void stop_record() override {
+        if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
+            this->front.stop_capture();
+        }
+    }
 };
 
 #endif
-

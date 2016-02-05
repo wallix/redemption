@@ -625,6 +625,8 @@ private:
 
     Timeout timeout;
 
+    bool is_client_disconnected = false;
+
 public:
     Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -1126,13 +1128,15 @@ public:
             LOG(LOG_INFO, "Front::disconnect");
         }
 
-        write_packets(
-            this->trans,
-            [](StreamSize<256>, OutStream & mcs_data) {
-                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-            },
-            write_x224_dt_tpdu_fn{}
-        );
+        if (!this->is_client_disconnected) {
+            write_packets(
+                this->trans,
+                [](StreamSize<256>, OutStream & mcs_data) {
+                    MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+                },
+                write_x224_dt_tpdu_fn{}
+            );
+        }
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -1412,6 +1416,24 @@ public:
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MCS_MSGCHANNEL:
+                    {
+                        GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+                        cs_mcs_msgchannel.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_mcs_msgchannel.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MULTITRANSPORT:
+                    {
+                        GCC::UserData::CSMultiTransport cs_multitransport;
+                        cs_multitransport.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_multitransport.log("Receiving from Client");
                         }
                     }
                     break;
@@ -1710,7 +1732,8 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1784,7 +1807,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1979,7 +2003,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -2296,7 +2321,8 @@ public:
                     TODO("What is the clean way to actually disconnect ?")
                     X224::DR_TPDU_Recv x224(stream);
                     LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
-                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
                 }
                 else if (fx224.type != X224::DT_TPDU) {
                     LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
@@ -2311,7 +2337,8 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -2609,10 +2636,14 @@ private:
         return true;
     }
 
-    void session_probe_started() override {
-        this->session_probe_started_ = true;
+    void session_probe_started(bool started) override {
+        this->session_probe_started_ = started;
 
         this->update_keyboard_input_mask_state();
+
+        if (!started) {
+            this->session_update("Probe.Status=Unknown");
+        }
     }
 
     void set_keylayout(int LCID) override {

@@ -41,6 +41,7 @@ private:
     const bool     param_session_probe_loading_mask_enabled;
 
     const unsigned param_session_probe_keepalive_timeout;
+    const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
 
     const ::configs::SessionProbeOnLaunchFailure
                    param_session_probe_on_launch_failure;
@@ -63,9 +64,7 @@ private:
 
     mod_api& mod;
 
-    FileSystemDriveManager& file_system_drive_manager;
-
-    VirtualChannelDataSender& file_system_virtual_channel_to_server_sender;
+    FileSystemVirtualChannel& file_system_virtual_channel;
 
     wait_obj session_probe_event;
 
@@ -80,6 +79,7 @@ public:
         unsigned session_probe_launch_timeout;
         unsigned session_probe_launch_fallback_timeout;
         unsigned session_probe_keepalive_timeout;
+        bool     session_probe_on_keepalive_timeout_disconnect_user;
 
         ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
 
@@ -103,10 +103,9 @@ public:
 
     SessionProbeVirtualChannel(
         VirtualChannelDataSender* to_server_sender_,
-        FileSystemDriveManager& file_system_drive_manager,
         FrontAPI& front,
         mod_api& mod,
-        VirtualChannelDataSender& file_system_virtual_channel_to_server_sender,
+        FileSystemVirtualChannel& file_system_virtual_channel,
         const Params& params)
     : BaseVirtualChannel(nullptr,
                          to_server_sender_,
@@ -121,6 +120,8 @@ public:
           params.session_probe_loading_mask_enabled)
     , param_session_probe_keepalive_timeout(
           params.session_probe_keepalive_timeout)
+    , param_session_probe_on_keepalive_timeout_disconnect_user(
+          params.session_probe_on_keepalive_timeout_disconnect_user)
     , param_session_probe_on_launch_failure(
           params.session_probe_on_launch_failure)
     , param_session_probe_end_disconnected_session(
@@ -134,9 +135,7 @@ public:
     , param_acl(params.acl)
     , front(front)
     , mod(mod)
-    , file_system_drive_manager(file_system_drive_manager)
-    , file_system_virtual_channel_to_server_sender(
-          file_system_virtual_channel_to_server_sender)
+    , file_system_virtual_channel(file_system_virtual_channel)
     , outbound_connection_monitor_rules(
           params.outbound_connection_notifying_rules,
           params.outbound_connection_killing_rules)
@@ -249,7 +248,12 @@ public:
                         throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
                     }
 
-                    throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                    if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
+                        throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                    }
+                    else {
+                        this->front.session_probe_started(false);
+                    }
                 }
             }
             else {
@@ -341,8 +345,6 @@ public:
         const char request_hello[] = "Request=Hello";
 
         if (!session_probe_message.compare(request_hello)) {
-            REDASSERT(!this->session_probe_ready);
-
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
@@ -351,7 +353,7 @@ public:
 
             this->session_probe_ready = true;
 
-            this->front.session_probe_started();
+            this->front.session_probe_started(true);
 
             if (this->param_session_probe_loading_mask_enabled &&
                 this->front.disable_input_event_and_graphics_update(false)) {
@@ -365,9 +367,7 @@ public:
                     this->param_front_width, this->param_front_height));
             }
 
-            this->file_system_drive_manager.DisableSessionProbeDrive(
-                file_system_virtual_channel_to_server_sender,
-                this->verbose);
+            this->file_system_virtual_channel.disable_session_probe_drive();
 
             this->session_probe_event.reset();
 

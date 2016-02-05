@@ -51,8 +51,7 @@ namespace transfil {
         //, MAX_CIPHERED_SIZE(0)
         //{}
 
-        template<class Source>
-        int open(Source & src, unsigned char * trace_key)
+        int open(io::posix::fdbuf & src, unsigned char * trace_key)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -65,8 +64,8 @@ namespace transfil {
 
             unsigned char tmp_buf[40];
 
-            if (const ssize_t err = this->raw_read(src, tmp_buf, 40)) {
-                return err;
+            if (src.read(tmp_buf, 40) < 40) {
+                return err < 0 ? err :-1;
             }
 
             // Check magic
@@ -105,8 +104,7 @@ namespace transfil {
             return 0;
         }
 
-        template<class Source>
-        ssize_t read(Source & src, void * data, size_t len)
+        ssize_t read(io::posix::fdbuf & src, void * data, size_t len)
         {
             if (this->state & CF_EOF) {
                 //printf("cf EOF\n");
@@ -127,8 +125,8 @@ namespace transfil {
                     // TODO: avoid reading size directly into an integer, performance enhancement is minimal
                     // and it's not portable because of endianness issue => read in a buffer and decode by hand
                     unsigned char tmp_buf[4] = {};
-                    if (const int err = this->raw_read(src, tmp_buf, 4)) {
-                        return err;
+                    if (src.read(tmp_buf, 4) < 4) {
+                        return err < 0 ? err : -1;
                     }
 
                     uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
@@ -150,8 +148,8 @@ namespace transfil {
                             //char compressed_buf[compressed_buf_size];
                             unsigned char compressed_buf[65536];
 
-                            if (const ssize_t err = this->raw_read(src, ciphered_buf, ciphered_buf_size)) {
-                                return err;
+                            if (src.read(ciphered_buf, ciphered_buf_size) < ciphered_buf_size) {
+                                return err < 0 ? err :-1;
                             }
 
                             if (this->xaes_decrypt(ciphered_buf, ciphered_buf_size, compressed_buf, &compressed_buf_size)) {
@@ -206,8 +204,7 @@ namespace transfil {
 
     private:
         ///\return 0 if success, otherwise a negatif number
-        template<class Source>
-        ssize_t raw_read(Source & src, void * data, size_t len)
+        ssize_t raw_read(io::posix::fdbuf & src, void * data, size_t len)
         {
             ssize_t err = src.read(data, len);
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;

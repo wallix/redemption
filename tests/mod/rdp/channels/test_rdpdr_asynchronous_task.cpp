@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     io::posix::fdbuf fd_wrapper(fd);
 
-    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
 
     fd_wrapper.release();
 
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     io::posix::fdbuf fd_wrapper(fd);
 
-    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
 
     fd_wrapper.release();
 
