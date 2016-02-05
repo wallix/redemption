@@ -113,15 +113,12 @@ class CryptoContext {
                 HMAC_KEY_LENGTH);
         }
 
-    void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
+    void get_derivator(const char *file, unsigned char * derivator, int derivator_len)
     {
-         // generate key derivator as SHA256(basename)
-         TODO("We should be able to get basename without using strdupa"
-              ", for instance start and ends pointers would do");
-        char * file = strdupa(const_file);
-        char * file_basename = basename(file);
+        size_t len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(file, len));
         SslSha256 sha256;
-        sha256.update(byte_ptr_cast(file_basename), strlen(file_basename));
+        sha256.update(base, len);
         uint8_t tmp[SHA256_DIGEST_LENGTH];
         sha256.final(tmp, SHA256_DIGEST_LENGTH);
         memcpy(derivator, tmp, derivator_len);

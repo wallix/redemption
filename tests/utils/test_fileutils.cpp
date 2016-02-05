@@ -29,17 +29,12 @@
 
 #include "fileutils.hpp"
 
-
-
 BOOST_AUTO_TEST_CASE(TestBasename)
 {
 // basename() change behavior depending if <filegen.h> is included
 // or not. The POSIX version chnage it's argument, not the glibc one
 // we WANT to use the glibc one. This test below will fail if
 // <filegen.h> is included
-
-TODO("rename basename to some alias ensuring we are calling glibc one"
-     "never use it in code");
 
 //     Below expected behavior from the unix man pages
 //          path        basename
@@ -54,29 +49,87 @@ TODO("rename basename to some alias ensuring we are calling glibc one"
         BOOST_CHECK(0 == strcmp(basename(path), "lib"));
     }
     {
+        char path[]= "/usr/lib";
+        size_t len = 0;
+        char * base = basename_len(path, len);
+        BOOST_CHECK_EQUAL(3, len);
+        BOOST_CHECK(0 == memcmp(base, "lib", len));
+
+    }
+
+    {
         char path[]= "/usr/lib/";
         BOOST_CHECK(0 == strcmp(basename(path), ""));
+    }
+    {
+        char path[]= "/usr/lib/";
+        size_t len = 0;
+        char * base = basename_len(path, len);
+        BOOST_CHECK_EQUAL(0, len);
+        BOOST_CHECK(0 == memcmp(base, "", len));
+
     }
     {
         char path[]= "/usr/";
         BOOST_CHECK(0 == strcmp(basename(path), ""));
     }
     {
+        char path[]= "/usr";
+        size_t len = 0;
+        char * base = basename_len(path, len);
+        BOOST_CHECK_EQUAL(3, len);
+        BOOST_CHECK(0 == memcmp(base, "usr", len));
+
+    }
+    {
         char path[]= "usr";
         BOOST_CHECK(0 == strcmp(basename(path), "usr"));
+    }
+    {
+        char path[]= "usr";
+        size_t len = 0;
+        char * base = basename_len(path, len);
+        BOOST_CHECK_EQUAL(3, len);
+        BOOST_CHECK(0 == memcmp(base, "usr", len));
+
     }
     {
         char path[]= "/";
         BOOST_CHECK(0 == strcmp(basename(path), ""));
     }
     {
+        char path[]= "/";
+        size_t len = 0;
+        char * base = basename_len(path, len);
+        BOOST_CHECK_EQUAL(0, len);
+        BOOST_CHECK(0 == memcmp(base, "", len));
+
+    }
+    {
         char path[]= ".";
         BOOST_CHECK(0 == strcmp(basename(path), "."));
+    }
+    {
+        char path[]= ".";
+        size_t len = 0;
+        char * base = basename_len(path, len);
+        BOOST_CHECK_EQUAL(1, len);
+        BOOST_CHECK(0 == memcmp(base, ".", len));
+
     }
     {
         char path[]= "..";
         BOOST_CHECK(0 == strcmp(basename(path), ".."));
     }
+    {
+        const char path[]= "..";
+        size_t len = 0;
+        const char * base = basename_len(path, len);
+        BOOST_CHECK_EQUAL(2, len);
+        BOOST_CHECK(0 == memcmp(base, "..", len));
+
+    }
+
 }
 
 

@@ -129,6 +129,15 @@ public:
             unsigned char derivator[DERIVATOR_LENGTH];
 
             cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+
+            size_t len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
+            SslSha256 sha256;
+            sha256.update(base, len);
+            uint8_t tmp[SHA256_DIGEST_LENGTH];
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+            memcpy(derivator, tmp, DERIVATOR_LENGTH);
+
             if (-1 == cctx->compute_hmac(trace_key, derivator)) {
                 LOG(LOG_ERR, "failed opening=%s\n", filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
