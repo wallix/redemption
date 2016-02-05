@@ -105,7 +105,7 @@ class SesmanConfig(object):
             , u"Too many login failures or selector orders, closing": u"Trop de login incorrect, fermeture"
             , u"Trace writer failed for %s": u"Echec de l'enregistrement des traces pour %s"
             , u"x509 browser authentication not validated by user": u"Authentification X509 via le navigateur non validée."
-            , u'not_accept_message': u"Echec d'affichage du mot de passe de confirmation"
+            , u'not_accept_message': u"Message de confirmation refusé."
             , u'selected_target': u'Cible sélectionnée'
             , u'Username_parse_error %s': u"Erreur de parsing du nom d'utilisateur %s"
             , u'Your password will expire in %s days. Please change it.': u'Votre mot de passe expirera dans %s jours. Vous devriez le changer.'
@@ -189,7 +189,7 @@ class SesmanConfig(object):
             , u"Too many login failures or selector orders, closing": u"Too many login failures or selector orders, closing"
             , u"Trace writer failed for %s": u"Trace writer failed for %s"
             , u"x509 browser authentication not validated by user": u"x509 browser authentication not validated by user"
-            , u'not_accept_message': u'Unable to display confirmation message'
+            , u'not_accept_message': u'Confirmation message refused.'
             , u'selected_target': u'Selected target'
             , u'Username_parse_error %s': u'Username_parse_error %s'
             , u'Your password will expire in %s days. Please change it.': u'Your password will expire in %s days. Please change it.'
