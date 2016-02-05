@@ -102,7 +102,6 @@ public:
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
 
-
         this->raw.read_min(this->fd, 40, 4);
         const uint32_t magic = this->raw.get_uint32_le(0);
         if (magic != WABCRYPTOFILE_MAGIC) {
@@ -125,34 +124,46 @@ public:
             this->pos = 0;
             this->raw_size = 0;
             this->state = 0;
+            unsigned char * const iv = reinterpret_cast<uint8_t *>(&this->raw.b[8]);
+            this->raw.start = this->raw.end = 0;
+
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            unsigned char derivator[DERIVATOR_LENGTH];
+            uint8_t tmp[SHA256_DIGEST_LENGTH];
 
             size_t len = 0;
             const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
             SslSha256 sha256;
             sha256.update(base, len);
-            uint8_t tmp[SHA256_DIGEST_LENGTH];
             sha256.final(tmp, SHA256_DIGEST_LENGTH);
-            memcpy(derivator, tmp, DERIVATOR_LENGTH);
 
-            unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-            unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-            memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-            memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-            SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-            memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+            SslSha256 sha256_2;
+            sha256_2.update(tmp, DERIVATOR_LENGTH);
+            sha256_2.update(cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+            sha256_2.final(tmp, SHA256_DIGEST_LENGTH);
 
-            unsigned char * const iv = reinterpret_cast<uint8_t *>(&this->raw.b[8]);
-            this->raw.start = this->raw.end = 0;
+            memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
 
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const uint8_t salt[]  = { 0x39, 0x30, 0, 0, 0x31, 0xd4, 0, 0 };
             const int          nrounds = 5;
             unsigned char      key[32];
+            
+            // Key Derivation Algorithm
+            // ------------------------
+
+            // The key and IV is derived by concatenating D_1, D_2, etc
+            // until enough data is available for the key and IV . D_i
+            // is defined as:
+
+            // D_i = HASH^count(D_(i-1) || data || salt)
+            // where || denotes concatentaion, D_0 is empty, 
+            // HASH is the digest algorithm in use,
+            // HASH^1(data) is simply HASH (data),
+            // HASH^2(data) is HASH ( HASH (data)) and so on.
+            
             const int i = ::EVP_BytesToKey(cipher
                                            , ::EVP_sha1()
-                                           , reinterpret_cast<const uint8_t*>(&salt[0])
+                                           , &salt[0]
                                            , trace_key
                                            , CRYPTO_KEY_LENGTH
                                            , nrounds
