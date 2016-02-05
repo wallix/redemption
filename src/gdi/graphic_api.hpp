@@ -296,10 +296,10 @@ protected:
 
 
 template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
-struct GraphicWrapper : GraphicBase<Derived, InterfaceBase, CoreAccess>
+struct GraphicProxy : GraphicBase<Derived, InterfaceBase, CoreAccess>
 {
     using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
-    using base_type = GraphicWrapper;
+    using base_type = GraphicProxy;
     friend CoreAccess;
 
     void set_pointer(Pointer    const & pointer) override {

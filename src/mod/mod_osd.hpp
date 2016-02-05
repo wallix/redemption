@@ -31,6 +31,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -47,40 +48,13 @@
 #include "RDP/bitmapupdate.hpp"
 #include "bitmap.hpp"
 
+#include "gdi/clip_from_cmd.hpp"
+
 #include <functional>
 
 
-class mod_osd : public mod_api
+class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
 {
-    template<class Command, class... OtherArgs>
-    void split_draw(const Rect & cmd_rect, Command const & cmd, const Rect & clip, OtherArgs const &... other_args)
-    {
-        const Rect rect = cmd_rect.intersect(clip);
-        if (this->fg_rect.contains(rect) || rect.isempty()) {
-            //nada
-        }
-        else if (rect.has_intersection(this->fg_rect)) {
-            const subrect_t rect4 = this->subrect(rect);
-            this->mod.begin_update();
-            if (!rect4.top.isempty()) {
-                this->mod.draw(cmd, rect4.top, other_args...);
-            }
-            if (!rect4.right.isempty()) {
-                this->mod.draw(cmd, rect4.right, other_args...);
-            }
-            if (!rect4.bottom.isempty()) {
-                this->mod.draw(cmd, rect4.bottom, other_args...);
-            }
-            if (!rect4.left.isempty()) {
-                this->mod.draw(cmd, rect4.left, other_args...);
-            }
-            this->mod.end_update();
-        }
-        else {
-            this->mod.draw(cmd, clip, other_args...);
-        }
-    }
-
     struct subrect_t {
         Rect top;
         Rect right;
@@ -101,25 +75,21 @@ class mod_osd : public mod_api
 
     void draw_fg(Rect const & rect)
     {
-        this->dispatch_draw_fg(this->mod, rect, this->fg_rect);
+        this->drawable_fn(this->mod, rect, this->fg_rect);
     }
+
+    using drawable_function_type = std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)>;
 
     const Rect fg_rect;
     mod_api & mod;
-    FrontAPI & front;
-    std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> dispatch_draw_fg;
+    drawable_function_type drawable_fn;
 
 public:
-    mod_osd(
-        FrontAPI & front, mod_api & mod, const Rect & rect,
-        std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
-        bool call_f = true
-    )
-    : mod_api(mod.get_front_width(), mod.get_front_height())
+    mod_osd(mod_api & mod, Rect const & rect, drawable_function_type f, bool call_f = true)
+    : mod_osd::base_type(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
     , mod(mod)
-    , front(front)
-    , dispatch_draw_fg(std::move(f))
+    , drawable_fn(std::move(f))
     {
         if (call_f) {
             this->draw_fg(this->fg_rect);
@@ -133,17 +103,16 @@ private:
         const int bmp_srcx;
         const int bmp_srcy;
 
-        void operator()(mod_api & mod, const Rect & rect, const Rect & clip) const {
+        void operator()(mod_api & mod, Rect const & rect, Rect const & clip) const {
             mod.draw(RDPMemBlt(0, rect, 0xCC, this->bmp_srcx, this->bmp_srcy, 0), clip, this->bmp);
         }
     };
 public:
-    mod_osd(FrontAPI & front, mod_api & mod, const Bitmap& bmp, int x = 0, int y = 0)
-    : mod_api(mod.get_front_width(), mod.get_front_height())
+    mod_osd(mod_api & mod, Bitmap const & bmp, int x = 0, int y = 0)
+    : mod_osd::base_type(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(Rect(x,y,bmp.cx(),bmp.cy())))
     , mod(mod)
-    , front(front)
-    , dispatch_draw_fg(dispatch_bmp_draw{bmp, x - this->fg_rect.x, y - this->fg_rect.y})
+    , drawable_fn(dispatch_bmp_draw{bmp, x - this->fg_rect.x, y - this->fg_rect.y})
     {
         this->draw_fg(this->fg_rect);
         this->set_gd(mod, this);
@@ -183,8 +152,92 @@ public:
         return this->mod.get_event();
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->split_draw(cmd.rect, cmd, clip);
+protected:
+    friend gdi::GraphicCoreAccess;
+
+    template<class Command>
+    void draw_impl(Command const & cmd) {
+        this->mod.draw(cmd);
+    }
+
+    template<class Command, class... Args>
+    void draw_impl(Command const & cmd, Rect const & clip, Args const &... args) {
+        auto const & rect = clip_from_cmd(cmd);
+        if (this->fg_rect.contains(rect) || rect.isempty()) {
+            //nada
+        }
+        else if (rect.has_intersection(this->fg_rect)) {
+            const subrect_t rect4 = this->subrect(rect);
+            this->mod.begin_update();
+            if (!rect4.top.isempty()) {
+                this->mod.draw(cmd, rect4.top, args...);
+            }
+            if (!rect4.right.isempty()) {
+                this->mod.draw(cmd, rect4.right, args...);
+            }
+            if (!rect4.bottom.isempty()) {
+                this->mod.draw(cmd, rect4.bottom, args...);
+            }
+            if (!rect4.left.isempty()) {
+                this->mod.draw(cmd, rect4.left, args...);
+            }
+            this->mod.end_update();
+        }
+        else {
+            this->mod.draw(cmd, clip, args...);
+        }
+    }
+
+    void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
+        Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
+                    , bitmap_data.dest_right - bitmap_data.dest_left + 1
+                    , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
+
+        if (rectBmp.has_intersection(this->fg_rect)) {
+            const subrect_t rect4 = this->subrect(rectBmp);
+
+            auto draw_bitmap_rect = [this, &rectBmp, &bmp](Rect const & rect) {
+                if (!rect.isempty()) {
+                    this->mod.draw(
+                        RDPMemBlt(0, rect, 0xCC, rect.x - rectBmp.x, rect.y - rectBmp.y, 0),
+                        rect, bmp
+                    );
+                }
+            };
+
+            //this->mod.sync();
+            this->mod.begin_update();
+            draw_bitmap_rect(rect4.top);
+            draw_bitmap_rect(rect4.right);
+            draw_bitmap_rect(rect4.bottom);
+            draw_bitmap_rect(rect4.left);
+            this->mod.end_update();
+        }
+        else {
+            this->mod.draw(bitmap_data, bmp);
+        }
+    }
+
+    void draw_impl(const RDPScrBlt & cmd, const Rect & clip) {
+        const Rect drect = cmd.rect.intersect(clip);
+        const int deltax = cmd.srcx - cmd.rect.x;
+        const int deltay = cmd.srcy - cmd.rect.y;
+        const int srcx = drect.x + deltax;
+        const int srcy = drect.y + deltay;
+        const Rect srect(srcx, srcy, drect.cx, drect.cy);
+
+        const bool has_dest_intersec_fg = drect.has_intersection(this->fg_rect);
+        const bool has_src_intersec_fg = srect.has_intersection(this->fg_rect);
+
+        if (!has_dest_intersec_fg && !has_src_intersec_fg) {
+            this->mod.draw(cmd, clip);
+            return ;
+        }
+        else {
+            this->mod.begin_update();
+            this->subrect_input_invalidate(drect);
+            this->mod.end_update();
+        }
     }
 
 private:
@@ -207,164 +260,6 @@ private:
     }
 
 public:
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        const Rect drect = cmd.rect.intersect(clip);
-        const int deltax = cmd.srcx - cmd.rect.x;
-        const int deltay = cmd.srcy - cmd.rect.y;
-        const int srcx = drect.x + deltax;
-        const int srcy = drect.y + deltay;
-        const Rect srect(srcx, srcy, drect.cx, drect.cy);
-
-        const bool has_dest_intersec_fg = drect.has_intersection(this->fg_rect);
-        const bool has_src_intersec_fg = srect.has_intersection(this->fg_rect);
-
-        if (!has_dest_intersec_fg && !has_src_intersec_fg) {
-            this->mod.draw(cmd, clip);
-            return ;
-        }
-        else {
-            this->mod.begin_update();
-            this->subrect_input_invalidate(drect);
-            this->mod.end_update();
-        }
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        this->split_draw(cmd.rect, cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->split_draw(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight), cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->split_draw(cmd.rect, cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->split_draw(cmd.rect, cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->split_draw(cmd.rect, cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->split_draw(cmd.rect, cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        this->split_draw(Rect(cmd.startx, cmd.starty, cmd.endx - cmd.startx, cmd.endy - cmd.starty), cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        this->split_draw(Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        int16_t endx = 0;
-        int16_t endy = 0;
-        for (unsigned i = 0; i < cmd.NumDeltaEntries; i++) {
-            endx = std::max(endx, cmd.deltaPoints[i].xDelta);
-            endy = std::max(endy, cmd.deltaPoints[i].yDelta);
-        }
-        this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        int16_t endx = 0;
-        int16_t endy = 0;
-        for (unsigned i = 0; i < cmd.NumDeltaEntries; i++) {
-            endx = std::max(endx, cmd.deltaPoints[i].xDelta);
-            endy = std::max(endy, cmd.deltaPoints[i].yDelta);
-        }
-        this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        int16_t endx = 0;
-        int16_t endy = 0;
-        for (unsigned i = 0; i < cmd.NumDeltaEntries; i++) {
-            endx = std::max(endx, cmd.deltaEncodedPoints[i].xDelta);
-            endy = std::max(endy, cmd.deltaEncodedPoints[i].yDelta);
-        }
-        this->split_draw(Rect(cmd.xStart, cmd.yStart, endx - cmd.xStart, endy - cmd.yStart), cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        this->split_draw(Rect(cmd.el.center_x() - cmd.el.radius_x(),
-                              cmd.el.center_y() - cmd.el.radius_y(), cmd.el.radius_x() * 2, cmd.el.radius_y() * 2),
-                         cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        this->split_draw(Rect(cmd.el.center_x() - cmd.el.radius_x(),
-                              cmd.el.center_y() - cmd.el.radius_y(), cmd.el.radius_x() * 2, cmd.el.radius_y() * 2),
-                         cmd, clip);
-    }
-
-    void draw(const RDPBrushCache & cmd) override { this->mod.draw(cmd); }
-    void draw(const RDPColCache   & cmd) override { this->mod.draw(cmd); }
-
-private:
-    void draw_bitmap_rect(Rect const & rect, Rect const & rectBmp, Bitmap const & bmp)
-    {
-        if (!rect.isempty()) {
-            this->mod.draw(RDPMemBlt(0, rect, 0xCC, rect.x - rectBmp.x, rect.y - rectBmp.y, 0), rect, bmp);
-        }
-    }
-
-public:
-    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
-                    , bitmap_data.dest_right - bitmap_data.dest_left + 1
-                    , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
-
-        if (rectBmp.has_intersection(this->fg_rect)) {
-            const subrect_t rect4 = this->subrect(rectBmp);
-            // TODO front.sync() ?
-            this->front.sync();
-            this->mod.begin_update();
-            this->draw_bitmap_rect(rect4.top, rectBmp, bmp);
-            this->draw_bitmap_rect(rect4.right, rectBmp, bmp);
-            this->draw_bitmap_rect(rect4.bottom, rectBmp, bmp);
-            this->draw_bitmap_rect(rect4.left, rectBmp, bmp);
-            this->mod.end_update();
-            this->front.sync();
-        }
-        else {
-            this->mod.draw(bitmap_data, bmp);
-        }
-    }
-
-    void draw(const RDP::FrameMarker& order) override {
-        this->mod.draw(order);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->mod.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->mod.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->mod.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->mod.draw(order);
-    }
-
     void begin_update() override {
         this->mod.begin_update();
     }

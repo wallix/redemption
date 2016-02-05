@@ -45,7 +45,6 @@ struct CaptureApi : private noncopyable
         bool ignore_frame_in_timeval
     ) = 0;
 
-    // TODO for rt_display in StaticCapture ... enable_realtime(bool)
     virtual void update_config(Inifile const & ini) = 0;
 
     virtual void pause_capture(timeval const & now) = 0;
@@ -63,6 +62,12 @@ namespace {
     struct CaptureCoreAccess
     {
         template<class Derived>
+        static auto get_capture_proxy(Derived & derived)
+        -> decltype(derived.get_capture_proxy_impl()) {
+            return derived.get_capture_proxy_impl();
+        }
+
+        template<class Derived>
         static auto get_capture_list(Derived & derived)
         -> decltype(derived.get_capture_list_impl()) {
             return derived.get_capture_list_impl();
@@ -75,6 +80,56 @@ namespace {
         }
     };
 }
+
+
+template<class Derived, class InterfaceBase = CaptureApi, class CoreAccess = CaptureCoreAccess>
+class CaptureProxy : public InterfaceBase
+{
+    static_assert(std::is_base_of<CaptureApi, InterfaceBase>::value, "InterfaceBase isn't a CaptureApi");
+
+    friend CoreAccess;
+
+protected:
+    using base_type = CaptureProxy;
+
+public:
+    using InterfaceBase::InterfaceBase;
+
+    std::chrono::microseconds snapshot(
+        timeval const & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    ) override {
+        return CoreAccess::get_capture_proxy(this->derived())
+            .snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    }
+
+    void update_config(Inifile const & ini) override {
+        return CoreAccess::get_capture_proxy(this->derived()).update_config(ini);
+    }
+
+    void pause_capture (timeval const & now) override {
+        return CoreAccess::get_capture_proxy(this->derived()).pause_capture(now);
+    }
+
+    void resume_capture(timeval const & now) override {
+        return CoreAccess::get_capture_proxy(this->derived()).resume_capture(now);
+    }
+
+    void external_breakpoint() override {
+        return CoreAccess::get_capture_proxy(this->derived()).external_breakpoint();
+    }
+
+    void external_time(const timeval& now) override {
+        return CoreAccess::get_capture_proxy(this->derived()).external_time(now);
+    }
+
+protected:
+    Derived & derived() {
+        return static_cast<Derived&>(*this);
+    }
+};
+
 
 template<class Derived, class InterfaceBase = CaptureApi, class CoreAccess = CaptureCoreAccess>
 class CaptureDispatcher : public InterfaceBase

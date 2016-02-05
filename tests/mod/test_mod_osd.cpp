@@ -33,15 +33,15 @@
 
 #include "transport/out_filename_sequence_transport.hpp"
 #include "staticcapture.hpp"
-#include "../front/fake_front.hpp"
+#include "RDP/RDPDrawable.hpp"
 #include "mod_osd.hpp"
 
-struct FakeMod : mod_api
+struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
 {
     RDPDrawable gd;
 
     FakeMod(const uint16_t front_width, const uint16_t front_height, Font const & font)
-    : mod_api(front_width, front_height)
+    : FakeMod::base_type(front_width, front_height)
     , gd(front_width, front_height, 24)
     {}
 
@@ -59,40 +59,12 @@ struct FakeMod : mod_api
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) override
     {}
 
-    using mod_api::draw;
+protected:
+    friend gdi::GraphicCoreAccess;
 
-    void draw(const RDPOpaqueRect      & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPScrBlt          & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPDestBlt         & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDP::RDPMultiPatBlt& cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDP::RDPMultiScrBlt& cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPPatBlt          & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) override
-    { this->gd.draw(cmd, clip, bmp); }
-    void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) override
-    { this->gd.draw(cmd, clip, bmp); }
-    void draw(const RDPLineTo          & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache & gly_cache) override
-    { this->gd.draw(cmd, clip, gly_cache); }
-    void draw(const RDPPolygonSC       & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPPolygonCB       & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPPolyline        & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPEllipseSC       & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDPEllipseCB       & cmd, const Rect & clip) override { this->gd.draw(cmd, clip); }
-    void draw(const RDP::FrameMarker   & order)                  override { this->gd.draw(order);     }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override { this->gd.draw(order); }
-    void draw(const RDP::RAIL::WindowIcon          & order) override { this->gd.draw(order); }
-    void draw(const RDP::RAIL::CachedIcon          & order) override { this->gd.draw(order); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) override { this->gd.draw(order); }
-
-    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        this->gd.draw(bitmap_data, bmp);
+    RDPDrawable & get_gd_proxy_impl() {
+        return this->gd;
     }
-
-    void set_pointer(const Pointer & cursor) override { this->gd.set_pointer(cursor); }
 };
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
@@ -127,11 +99,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH "."
 #endif
-        ClientInfo info;
-        info.width = 1;
-        info.height = 1;
-        FakeFront front(info, 0);
-        mod_osd osd(front, mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
+        mod_osd osd(mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
 
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);

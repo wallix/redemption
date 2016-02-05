@@ -104,10 +104,12 @@
 
 #include "utils/timeout.hpp"
 
+#include "gdi/clip_from_cmd.hpp"
+
 #include <memory>
 
 
-class Front : public FrontAPI, public ActivityChecker {
+class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -439,7 +441,7 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverted : gdi::GraphicWrapper<
+        struct GraphicConverted : gdi::GraphicProxy<
             GraphicConverted<ColorConverter>,
             gdi::GraphicApi,
             gdi::GraphicColorConverter
@@ -635,7 +637,7 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : Front::base_type(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , up_and_running(0)
@@ -901,8 +903,8 @@ public:
             return;
         }
 
-        this->capture->pause();
-        this->capture->capture_event.reset();
+        timeval now = tvtime();
+        this->capture->pause_capture(now);
         this->capture_state = CAPTURE_STATE_PAUSED;
         this->set_gd(this->orders.graphics_update_pdu());
     }
@@ -913,8 +915,8 @@ public:
             return;
         }
 
-        this->capture->resume();
-        this->capture->capture_event.set();
+        timeval now = tvtime();
+        this->capture->resume_capture(now);
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(*this->capture->get_graphic_api());
@@ -3976,52 +3978,74 @@ private:
         this->keymap.toggle_num_lock(LedFlags & SlowPath::TS_SYNC_NUM_LOCK);
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.intersect(cmd.rect).isempty()) {
+protected:
+    friend gdi::GraphicCoreAccess;
+
+    template<class Cmd>
+    void draw_impl(Cmd const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
             this->graphics_update->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        if (!!clip.intersect(cmd.rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
+    void draw_impl(RDPMemBlt const& cmd, Rect const & clip, Bitmap const & bitmap) {
+        this->priv_draw_memblt(cmd, clip, bitmap);
+    }
+
+    void draw_impl(RDPMem3Blt const & cmd, Rect const & clip, Bitmap const & bitmap) {
+        this->priv_draw_memblt(cmd, clip, bitmap);
+    }
+
+    void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDPGlyphIndex new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip, gly_cache);
+            }
+            else {
+                this->graphics_update->draw(cmd, clip, gly_cache);
+            }
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        if (!clip.intersect(cmd.rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
+    void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
+        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
+
+        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
+            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
+            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
+            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
+           ) {
+            Rect boundary(bitmap_data.dest_left,
+                          bitmap_data.dest_top,
+                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
+                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
+                         );
+
+            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
+        }
+        else {
+            this->graphics_update->draw(bitmap_data, bmp);
         }
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (!clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
+    template<class Cmd>
+    void draw_impl(Cmd const & cmd) {
+        this->graphics_update->draw(cmd);
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
+    void draw_impl(RDP::FrameMarker const & order) {
+        this->gd->draw(order);
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (!clip.intersect(cmd.rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
+    void draw_impl(RDPColCache const & cmd) {
+        this->orders.graphics_update_pdu().draw(cmd);
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (!clip.intersect(cmd.rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        if (!clip.intersect(cmd.rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
+    void draw_impl(RDPBrushCache const & cmd) {
+        // TODO
     }
 
 private:
@@ -4110,11 +4134,6 @@ private:
         }
     }
 
-public:
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        this->priv_draw_memblt(cmd, clip, bitmap);
-    }
-
     void draw_tile3(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64) {
@@ -4140,23 +4159,6 @@ public:
         this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        this->priv_draw_memblt(cmd, clip, bitmap);
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        const uint16_t minx = std::min(cmd.startx, cmd.endx);
-        const uint16_t miny = std::min(cmd.starty, cmd.endy);
-        const Rect rect(minx, miny,
-                        std::max(cmd.startx, cmd.endx) - minx + 1,
-                        std::max(cmd.starty, cmd.endy) - miny + 1);
-
-        if (!clip.intersect(rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
-    }
-
-private:
     bool updatable_cache_brush(RDPBrush const & brush) const {
         return brush.style == 3 && this->client_info.brush_cache_code == 1;
     }
@@ -4184,104 +4186,6 @@ private:
         brush.style = 0x81;
     }
 
-public:
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        if (!clip.intersect(cmd.bk).isempty()) {
-            if (this->updatable_cache_brush(cmd.brush)) {
-                RDPGlyphIndex new_cmd = cmd;
-                // this change the brush and send it to to remote cache
-                this->update_cache_brush(new_cmd.brush);
-                this->graphics_update->draw(new_cmd, clip, gly_cache);
-            }
-            else {
-                this->graphics_update->draw(cmd, clip, gly_cache);
-            }
-        }
-    }
-
-private:
-    template<class RngDeltaPoint>
-    static Rect delta_list_to_rect(int16_t minx, int16_t miny, const RngDeltaPoint & delta_points) {
-        int16_t maxx, maxy, previousx, previousy;
-
-        maxx = previousx = minx;
-        maxy = previousy = miny;
-
-        for (auto & delta_point : delta_points) {
-            previousx += delta_point.xDelta;
-            previousy += delta_point.yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        return Rect(minx, miny, maxx-minx+1, maxy-miny+1);
-    }
-
-public:
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        const Rect rect = this->delta_list_to_rect(
-            cmd.xStart, cmd.yStart,
-            make_array_view(cmd.deltaPoints, cmd.NumDeltaEntries)
-        );
-
-        if (!clip.intersect(rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        const Rect rect = this->delta_list_to_rect(
-            cmd.xStart, cmd.yStart,
-            make_array_view(cmd.deltaPoints, cmd.NumDeltaEntries)
-        );
-
-        if (!clip.intersect(rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        const Rect rect = this->delta_list_to_rect(
-            cmd.xStart, cmd.yStart,
-            make_array_view(cmd.deltaEncodedPoints, cmd.NumDeltaEntries)
-        );
-
-        if (!clip.intersect(rect).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (!clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (!clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->graphics_update->draw(cmd, clip);
-        }
-    }
-
-    void sync() override {
-        if (this->verbose & 64) {
-            LOG(LOG_INFO, "Front::flush");
-        }
-        this->gd->sync();
-    }
-
-    void draw(const RDPColCache & cmd) override {
-        this->orders.graphics_update_pdu().draw(cmd);
-    }
-
-    void draw(const RDPBrushCache & cmd) override {
-        // TODO
-    }
-
-private:
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
     // -------------------------------------------------------------------
 
@@ -4347,6 +4251,13 @@ private:
     }
 
 public:
+    void sync() override {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "Front::flush");
+        }
+        this->gd->sync();
+    }
+
     void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
 
@@ -4356,53 +4267,12 @@ public:
         this->send_palette();
     }
 
-    void draw(const RDP::FrameMarker & order) override {
-        this->gd->draw(order);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->graphics_update->draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->graphics_update->draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->graphics_update->draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->graphics_update->draw(order);
-    }
-
     void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const override {
         proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
     }
 
     void intersect_order_caps_ex(OrderCaps & order_caps) const override {
         order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
-
-        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
-            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
-            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
-            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
-           ) {
-            Rect boundary(bitmap_data.dest_left,
-                          bitmap_data.dest_top,
-                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
-                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
-                         );
-
-            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
-        }
-        else {
-            this->graphics_update->draw(bitmap_data, bmp);
-        }
     }
 
     bool check_and_reset_activity() override {

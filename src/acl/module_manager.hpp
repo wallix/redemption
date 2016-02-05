@@ -316,7 +316,7 @@ class ModuleManager : public MMIni
             ModuleManager & manager, const Rect & rect,
             std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
             bool external_deleting)
-        : mod_osd(manager.front, *manager.mod, rect, std::move(f))
+        : mod_osd(*manager.mod, rect, std::move(f))
         , external_deleting(external_deleting)
         , manager(manager)
         , old_mod(manager.mod)

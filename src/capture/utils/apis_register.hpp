@@ -34,7 +34,6 @@ namespace gdi {
 
 struct ApisRegister
 {
-    // TODO
     std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;

@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         24,
         bmp_cache, gly_cache, ptr_cache, dump_png, ini
     );
-    NativeCapture wrm_recorder(graphic_to_file, dump_png, player.record_now, ini);
+    NativeCapture wrm_recorder(graphic_to_file, player.record_now, ini);
 
     wrm_recorder.update_config(ini);
     player.add_consumer(&drawable, nullptr, nullptr, nullptr);

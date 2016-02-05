@@ -245,7 +245,6 @@ public:
     , capture_event{}
     , cctx(cctx)
     , mouse_info{now, width / 2, height / 2}
-    // TODO
     , capture_api(*this)
     {
         TODO("Remove that after change of capture interface")
@@ -344,21 +343,14 @@ public:
         }
     }
 
-    void pause() {
-        if (this->capture_png) {
-            timeval now = tvtime();
-            this->capture_api.pause_capture(now);
-        }
+    void pause_capture(timeval const & now) {
+        this->capture_api.pause_capture(now);
+        this->capture_event.reset();
     }
 
-    void resume() {
-        if (this->capture_wrm){
-            this->pnc->next_file();
-            timeval now = tvtime();
-            this->pnc->send_timestamp_chunk(now, true);
-
-            this->capture_api.resume_capture(now);
-        }
+    void resume_capture(timeval const & now) {
+        this->capture_api.resume_capture(now);
+        this->capture_event.set();
     }
 
     void update_config(const Inifile & ini) {
@@ -393,7 +385,6 @@ public:
         this->input_pointer_api.update_pointer_position(x, y);
     }
 
-    // TODO is not virtual
     void enable_keyboard_input_mask(bool enable) {
         if (this->pnc) {
             ApisRegister apis_register = this->get_apis_register();
@@ -602,10 +593,6 @@ public:
         this->capture_probe_api.possible_active_window_change();
     }
 
-    void pause_capture(const timeval& now) override {}
-    void resume_capture(const timeval& now) override {}
-
-    // TODO move to ctor
     void zoom(unsigned percent) {
         assert(this->psc);
         this->psc->zoom(percent);

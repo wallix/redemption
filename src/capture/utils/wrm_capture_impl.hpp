@@ -30,7 +30,7 @@
 #include "apis_register.hpp"
 
 
-class WrmCaptureImpl final : private gdi::InputKbdApi
+class WrmCaptureImpl final : private gdi::InputKbdApi, public gdi::CaptureProxy<WrmCaptureImpl>
 {
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
@@ -115,7 +115,9 @@ class WrmCaptureImpl final : private gdi::InputKbdApi
         }
     } graphic_to_file;
 
-    NativeCapture nc;
+    struct WrmCapture final : NativeCapture {
+        using NativeCapture::NativeCapture;
+    } nc;
 
     std::size_t idx_kbd = -1u;
 
@@ -141,12 +143,12 @@ public:
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache,
         this->dump_png24_api, ini, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
-    , nc(this->graphic_to_file, this->dump_png24_api, now, ini)
+    , nc(this->graphic_to_file, now, ini)
     {}
 
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         apis_register.graphic_list->push_back(this->graphic_to_file);
-        apis_register.capture_list.push_back(this->nc);
+        apis_register.capture_list.push_back(*this);
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
@@ -176,8 +178,15 @@ public:
         this->trans_variant.trans->request_full_cleaning();
     }
 
-    void next_file() {
+private:
+    friend gdi::CaptureCoreAccess;
+    WrmCapture & get_capture_proxy_impl() {
+        return this->nc;
+    }
+
+    void resume_capture(const timeval& now) override {
         this->trans_variant.trans->next();
+        this->send_timestamp_chunk(now, true);
     }
 
 private:

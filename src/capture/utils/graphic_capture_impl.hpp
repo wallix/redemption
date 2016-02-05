@@ -35,7 +35,65 @@ private:
     using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
     using GdRef = std::reference_wrapper<gdi::GraphicApi>;
 
-    // GraphicProxy::cmd_color_distributor
+    struct Graphic final
+    : gdi::GraphicDispatcher<Graphic>
+    {
+        friend gdi::GraphicCoreAccess;
+
+        PtrColorConverter cmd_color_distributor;
+        MouseTrace const & mouse;
+        std::vector<GdRef> gds;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
+
+        Graphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
+        : Graphic::base_type(depth)
+        , mouse(mouse)
+        {}
+
+        std::vector<GdRef> & get_gd_list_impl() {
+            return this->gds;
+        }
+
+        template<class Cmd, class... Ts>
+        void draw_impl(Cmd const & cmd, Ts const & ... args)
+        {
+            this->draw_impl2(1, cmd, args...);
+        }
+
+        template<class Cmd, class... Ts>
+        auto draw_impl2(int, Cmd const & cmd, Ts const & ... args)
+        // avoid some virtual call
+        -> decltype(void(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, std::declval<Cmd&>(cmd))))
+        {
+            assert(bool(this->cmd_color_distributor));
+            this->cmd_color_distributor->draw(cmd, args...);
+        }
+
+        template<class Cmd, class... Ts>
+        void draw_impl2(unsigned, Cmd const & cmd, Ts const & ... args)
+        {
+            Graphic::base_type::draw_impl(cmd, args...);
+        }
+
+        void draw_impl(RDP::FrameMarker const & cmd) {
+            for (gdi::GraphicApi & gd : this->gds) {
+                gd.draw(cmd);
+            }
+
+            if (cmd.action == RDP::FrameMarker::FrameEnd) {
+                for (gdi::CaptureApi & cap : this->snapshoters) {
+                    cap.snapshot(
+                        this->mouse.last_now,
+                        this->mouse.last_x,
+                        this->mouse.last_y,
+                        false
+                    );
+                }
+            }
+        }
+    };
+
+    // Graphic::cmd_color_distributor
     //@{
     struct RngByBpp
     {
@@ -132,71 +190,12 @@ private:
     }
     //@}
 
-
-    struct BasicGraphic final
-    : gdi::GraphicDispatcher<BasicGraphic>
-    {
-        friend gdi::GraphicCoreAccess;
-
-        PtrColorConverter cmd_color_distributor;
-        MouseTrace const & mouse;
-        std::vector<GdRef> gds;
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
-
-        BasicGraphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
-        : BasicGraphic::base_type(depth)
-        , mouse(mouse)
-        {}
-
-        std::vector<GdRef> & get_gd_list_impl() {
-            return this->gds;
-        }
-
-        template<class Cmd, class... Ts>
-        void draw_impl(Cmd const & cmd, Ts const & ... args)
-        {
-            this->draw_impl2(1, cmd, args...);
-        }
-
-        template<class Cmd, class... Ts>
-        auto draw_impl2(int, Cmd const & cmd, Ts const & ... args)
-        // avoid some virtual call
-        -> decltype(void(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, std::declval<Cmd&>(cmd))))
-        {
-            assert(bool(this->cmd_color_distributor));
-            this->cmd_color_distributor->draw(cmd, args...);
-        }
-
-        template<class Cmd, class... Ts>
-        void draw_impl2(unsigned, Cmd const & cmd, Ts const & ... args)
-        {
-            BasicGraphic::base_type::draw_impl(cmd, args...);
-        }
-
-        void draw_impl(RDP::FrameMarker const & cmd) {
-            for (gdi::GraphicApi & gd : this->gds) {
-                gd.draw(cmd);
-            }
-
-            if (cmd.action == RDP::FrameMarker::FrameEnd) {
-                for (gdi::CaptureApi & cap : this->snapshoters) {
-                    cap.snapshot(
-                        this->mouse.last_now,
-                        this->mouse.last_x,
-                        this->mouse.last_y,
-                        false
-                    );
-                }
-            }
-        }
-    };
-
-    BasicGraphic graphic_api;
+    Graphic graphic_api;
     RDPDrawable drawable;
     uint8_t order_bpp;
 
 public:
-    using GraphicApi = BasicGraphic;
+    using GraphicApi = Graphic;
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
     : graphic_api(gdi::GraphicDepth::depth24(), mouse)

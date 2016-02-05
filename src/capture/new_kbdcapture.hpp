@@ -438,7 +438,6 @@ public:
         this->send_session_data();
     }
 
-    // TODO
     void external_breakpoint() override {}
     void external_time(const timeval& /*now*/) override {}
     void pause_capture(const timeval& /*now*/) override {}

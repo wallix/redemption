@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
         now, trans, 800, 600, 24,
         bmp_cache, gly_cache, ptr_cache, dump_png, ini
     );
-    NativeCapture consumer(graphic_to_file, dump_png, now, ini);
+    NativeCapture consumer(graphic_to_file, now, ini);
 
     drawable.show_mouse_cursor(false);
 

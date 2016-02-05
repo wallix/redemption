@@ -29,7 +29,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-#define LOGPRINT
+// #define LOGPRINT
 
 #include "capture.hpp"
 #include "check_sig.hpp"
