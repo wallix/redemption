@@ -244,11 +244,8 @@ private:
                         TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                         this->raw.read_min(this->fd, ciphered_buf_size, ciphered_buf_size);
                         {
-                            const unsigned char *src_buf = reinterpret_cast<uint8_t*>(&this->raw.b[0]);
-                            uint32_t src_sz = ciphered_buf_size;
-                            unsigned char *dst_buf = compressed_buf;
                             uint32_t *dst_sz = &compressed_buf_size;
-                            int safe_size = *dst_sz;
+                            int safe_size = compressed_buf_size;
                             int remaining_size = 0;
 
                             /* allows reusing of ectx for multiple encryption cycles */
@@ -257,12 +254,18 @@ private:
                                 this->status = false;
                                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                             }
-                            if (EVP_DecryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
+                            if (EVP_DecryptUpdate(&this->ectx,
+                                                  compressed_buf,
+                                                  &safe_size,
+                                                  reinterpret_cast<uint8_t*>(&this->raw.b[0]),
+                                                  ciphered_buf_size) != 1){
                                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
                                 this->status = false;
                                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                             }
-                            if (EVP_DecryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
+                            if (EVP_DecryptFinal_ex(&this->ectx,
+                                                    compressed_buf + safe_size,
+                                                    &remaining_size) != 1){
                                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
                                 this->status = false;
                                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
