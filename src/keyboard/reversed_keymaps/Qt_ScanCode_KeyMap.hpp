@@ -1,9 +1,25 @@
 /*
- *
- */
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   Product name: redemption, a FLOSS RDP proxy
+   Copyright (C) Wallix 2010-2013
+   Author(s): Clément Moroldo
+*/          
 
 
-/************************************************************************************************************************************************************************************************
+/*********************************************************************************************************************************************************************************************************************
  * 
  *  =================
  *    DOCUMENTATION
@@ -12,42 +28,70 @@
  *  Qt_ScanCode_KeyMap matches Qt key codes you get when catching a QKeyEvent to standard scan codes. 
  * 
  * 
+ * 
  *  code example:
- *  ------------
+ *  -------------
  * 
  *     #include "Qt_ScanCode_KeyMap.hpp"
  *     
  *     
  *     
  *     
- *      void keyPressEvent(QKeyEvent * keyEvent) {            // standard Qt function to catch a key press event
+ *      void keyPressEvent(QKeyEvent * keyEvent) {                // standard Qt function to catch a key press event
  *      
- *           Qt_ScanCode_KeyMap qsckm();                      // construct a Qt_ScanCode_KeyMap.
+ *           Qt_ScanCode_KeyMap qsckm();                          // construct a Qt_ScanCode_KeyMap.
+ *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US);          // Keyboard language can be set using KEYBOARDS enum.
+ *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US, verbose); // verbose is an integer.
  *           
- *           qsckm.setKeyboardLayout(KEYBOARDS::EN_US);       // set keyboard type from KEYBOARDS::
+ *           qsckm.setKeyboardLayout(KEYBOARDS::EN_US);           // set keyboard type from KEYBOARDS::
  *                                           
- *           qsckm.keyQtEvent(0, keyEvent);                   // call keyEvent(uint16_t keyStatusFlag, QKeyEvent * keyEvent), 
- *                                                            // if key is pressed then keyStatusFlag = 0, if key is released keyStatusFlag = 0x8000.
+ *           qsckm.keyQtEvent(0, keyEvent);                       // call keyEvent(uint16_t keyStatusFlag, QKeyEvent * keyEvent), 
+ *                                                                // if key is pressed then keyStatusFlag = 0, if key is released keyStatusFlag = 0x8000.
  *                                                             
- *          int Scan_Code     = qsckm.scanCode;                  // retrieve the scan code (The Unicode character input code. ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
+ *          int Scan_Code     = qsckm.scanCode;                   // retrieve the scan code (The Unicode character input code. ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
  *          
- *          uint16_t Keyboard_Flag = qsckm.flag;                 // retrieve the 2 bytes keyboard flag (A 16-bit unsigned integer. The flags describing the Unicode keyboard event. 
- *                                                               //                                     ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
+ *          uint16_t Keyboard_Flag = qsckm.flag;                  // retrieve the 2 bytes keyboard flag (A 16-bit unsigned integer. The flags describing the Unicode keyboard event. 
+ *                                                                //                                     ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
  *     }
  *  
+ * 
  *  
  *  Customize:
- *  ---------
+ *  ----------
  * 
  *      Qt_ScanCode_KeyMap qsckm();
  * 
- *      qsckm.setCustomKeyCode(qt_key, ASCII_Code, scan_Code, extended);   // Call setCustomKeyCode(int qt_key, int ASCII_Code, int scan_Code, bool extended) to add new match between a Qt key 
- *                                                                         // code and an ASCII code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
+ *      qsckm.setCustomKeyCode(qt_key, scan_Code, ASCII8_Code, extended);  // Call setCustomKeyCode(int qt_key, int ASCII8_Code, int scan_Code, bool extended) to add new match between a Qt key 
+ *                                                                         // code and an ASCII8 code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
  *                                                                         // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
  * 
+ *      qsckm.clearCustomKeyCod()                                          // Call clearCustomKeyCod() to empty custom entries.
+ * 
+ * 
+ *  
+ *  Get data:
+ *  ---------
+ * 
+ *      const Keylayout_r * keylayoutsList[];                              // The keyboard language list is a static const variable.
+ * 
+ *      char * name = keylayoutsList[i]->locale_name;                      // keylayout IDs and names are public.
+ *      
+ *      int ID = keylayoutsList[i]->LCID;                           
+ * 
+ * 
+ * 
+ *  Error Messages:
+ *  ---------------
+ * 
+ *      # Error: Key(0x1001257) not recognized.                                                         // Qt didn't identify this key, its Qt key code can be add as custom match or improve the code.
+ * 
+ *      # Unknown key(0x1001257) to current layout 0x40c fr-FR.                                         // Qt identified this key as a character, but it didn't match inside the specific current character layout   
+ *                                                                                                      // change the current layout or improve current layout table
+ * 
+ *      # Unknown keyboard layout (0x1). Reverting to default (English - United States - International) // If you call the constructor setting an unknow layout ID, default layout is set instead
  * 
  *
- ************************************************************************************************************************************************************************************************/
+ ***********************************************************************************************************************************************************************************************************************/
  
  
 #ifndef QT_RDP_KEYMAPHPP
@@ -62,42 +106,49 @@
 
 
 
-static const Keylayout_r * keylayoutsList[] = { &keylayout_x80000405, &keylayout_x80000406, &keylayout_x80000407
-                                              , &keylayout_x80000408, &keylayout_x80000409, &keylayout_x8000040a
-                                              , &keylayout_x8000040b, &keylayout_x8000040c, &keylayout_x8000040f
-                                              , &keylayout_x80000410, &keylayout_x80000413, &keylayout_x80000414
-                                              , &keylayout_x80000415, &keylayout_x80000416, &keylayout_x80000418
-                                              , &keylayout_x80000419, &keylayout_x8000041a, &keylayout_x8000041b
-                                              , &keylayout_x8000041d, &keylayout_x8000041f, &keylayout_x80000422
-                                              , &keylayout_x80000424, &keylayout_x80000425, &keylayout_x80000426
-                                              , &keylayout_x80000427, &keylayout_x8000042f, &keylayout_x80000438
-                                              , &keylayout_x8000043a, &keylayout_x8000043b, &keylayout_x8000043f
-                                              , &keylayout_x80000440, &keylayout_x80000444, &keylayout_x80000450
-                                              , &keylayout_x80000452, &keylayout_x8000046e, &keylayout_x80000481
-                                              , &keylayout_x80000807, &keylayout_x80000809, &keylayout_x8000080a
-                                              , &keylayout_x8000080c, &keylayout_x80000813, &keylayout_x80000816
-                                              , &keylayout_x8000081a, &keylayout_x8000083b, &keylayout_x80000843
-                                              , &keylayout_x8000085d, &keylayout_x80000c0c, &keylayout_x80000c1a
-                                              , &keylayout_x80001009, &keylayout_x8000100c, &keylayout_x8000201a
-                                              , &keylayout_x80010402, &keylayout_x80010405, &keylayout_x80001809
-                                              , &keylayout_x80010407, &keylayout_x80010408, &keylayout_x8001040a
-                                              , &keylayout_x8001040e, &keylayout_x80010409, &keylayout_x80010410
-                                              , &keylayout_x80010415, &keylayout_x80010416, &keylayout_x80010419
-                                              , &keylayout_x8001041b, &keylayout_x8001041f, &keylayout_x80010426
-                                              , &keylayout_x80010427, &keylayout_x8001043a, &keylayout_x8001043b
-                                              , &keylayout_x8001080c, &keylayout_x8001083b, &keylayout_x80011009
-                                              , &keylayout_x80011809, &keylayout_x80020405, &keylayout_x80020408
-                                              , &keylayout_x80020409, &keylayout_x8002083b, &keylayout_x80030402
-                                              , &keylayout_x80030408, &keylayout_x80030409, &keylayout_x80040408
-                                              , &keylayout_x80040409, &keylayout_x80050408, &keylayout_x80060408
-                                              };                                    
+                                 
+static const Keylayout_r * keylayoutsList[] = {  &keylayout_x80030402 ,&keylayout_x80010402 ,&keylayout_x8000201a
+                                                ,&keylayout_x80000405 ,&keylayout_x80020405 ,&keylayout_x80010405
+                                                ,&keylayout_x80000452 ,&keylayout_x80000406 ,&keylayout_x80000807
+                                                ,&keylayout_x80000407 ,&keylayout_x80010407 ,&keylayout_x80000408
+                                                ,&keylayout_x80010408 ,&keylayout_x80030408 ,&keylayout_x80020408
+                                                ,&keylayout_x80040408 ,&keylayout_x80050408 ,&keylayout_x80060408
+                                                ,&keylayout_x80001009 ,&keylayout_x80011009 ,&keylayout_x80000809
+                                                ,&keylayout_x80011809 ,&keylayout_x80001809 ,&keylayout_x80000409
+                                                ,&keylayout_x80010409 ,&keylayout_x80030409 ,&keylayout_x80040409
+                                                ,&keylayout_x80020409 ,&keylayout_x8000040a ,&keylayout_x8001040a
+                                                ,&keylayout_x8000080a ,&keylayout_x80000425 ,&keylayout_x8000040b
+                                                ,&keylayout_x80000438 ,&keylayout_x8001080c ,&keylayout_x8000080c
+                                                ,&keylayout_x80000c0c ,&keylayout_x8000100c ,&keylayout_x8000040c
+                                                ,&keylayout_x8000041a ,&keylayout_x8001040e ,&keylayout_x8000040f
+                                                ,&keylayout_x80000410 ,&keylayout_x80010410 ,&keylayout_x8000085d
+                                                ,&keylayout_x8000043f ,&keylayout_x80000440 ,&keylayout_x8000046e
+                                                ,&keylayout_x80010427 ,&keylayout_x80000427 ,&keylayout_x80000426
+                                                ,&keylayout_x80010426 ,&keylayout_x80000481 ,&keylayout_x8000042f
+                                                ,&keylayout_x80000450 ,&keylayout_x8000043a ,&keylayout_x8001043a
+                                                ,&keylayout_x80000414 ,&keylayout_x80000813 ,&keylayout_x80000413
+                                                ,&keylayout_x80010415 ,&keylayout_x80000415 ,&keylayout_x80000416
+                                                ,&keylayout_x80010416 ,&keylayout_x80000816 ,&keylayout_x80000418
+                                                ,&keylayout_x80000419 ,&keylayout_x80010419 ,&keylayout_x8000043b
+                                                ,&keylayout_x8001043b ,&keylayout_x8000083b ,&keylayout_x8001083b
+                                                ,&keylayout_x8002083b ,&keylayout_x8000041b ,&keylayout_x8001041b
+                                                ,&keylayout_x80000424 ,&keylayout_x80000c1a ,&keylayout_x8000081a
+                                                ,&keylayout_x8000041d ,&keylayout_x8001041f ,&keylayout_x8000041f
+                                                ,&keylayout_x80000444 ,&keylayout_x80000422 ,&keylayout_x80000843
+                                              };
                                         
                                         
 
 class Qt_ScanCode_KeyMap
 {
-
+    
 public:
+    
+    enum : int {
+        KEYLAYOUTS_LIST_SIZE = 84
+    };
+
+
     
     enum KEYBOARDS : int {
         CS_CZ                     = 0x00405,     DA_DK                     = 0x00406,     DE_DE                     = 0x00407,     
@@ -194,9 +245,9 @@ private:
         int abc(e->text().toStdString()[0]);
         std::string keyStatus;
         if (keyStatusFlag == 0) {
-            std::cout << std::hex << "keyPressed=0x" << e->key() << " scanCode=0x" << this->scanCode << " text=\'" << e->text().toStdString() << "\' text(hexa)=0x" << abc << std::endl;
+            std::cout << std::hex << "keyPressed=0x" << e->key() << " scanCode=0x" << this->scanCode << " text=\'" << e->text().toStdString() << "\' text(hexa)=0x" << abc << "." << std::endl;
         } else {
-            std::cout << std::hex << "keyRelease=0x" << e->key() << " scanCode=0x" << this->scanCode << " text=\'" << e->text().toStdString() << "\' text(hexa)=0x" << abc << std::endl;
+            std::cout << std::hex << "keyRelease=0x" << e->key() << " scanCode=0x" << this->scanCode << " text=\'" << e->text().toStdString() << "\' text(hexa)=0x" << abc << "." << std::endl;
         }  
     }
     
@@ -495,8 +546,12 @@ private:
     //  Custom Key NOT EXTENDED
     //===========================
     bool getCustomKeysNoExtendedKeylayoutApplied() {
+        
+        if (this->scanCode == 0) {
+            return false;
+        }
         try {
-            this->scanCode = this->_customNoExtendedKeylayoutApplied.at(scanCode);
+            this->scanCode = this->_customNoExtendedKeylayoutApplied.at(this->scanCode);
             
             //-----------------------------
             //    Keyboard Layout apply
@@ -509,8 +564,12 @@ private:
     }//------------------------------------------------------------------------
     
     bool getCustomKeysNoExtended() {
+        if (this->scanCode == 0) {
+            return false;
+        }
         try {
-            this->scanCode = this->_customNoExtended.at(scanCode);
+            this->scanCode = this->_customNoExtended.at(this->scanCode);
+            std::cout << "loooool" << std::endl;
             return true;
         } catch (const std::exception & e) {
             return false;
@@ -522,8 +581,11 @@ private:
     //   Custom Key EXTENDED
     //==========================
      bool getCustomKeysExtendedKeylayoutApplied() {
+        if (this->scanCode == 0) {
+            return false;
+        }
         try {
-            this->scanCode = this->_customExtendedKeylayoutApplied.at(scanCode);
+            this->scanCode = this->_customExtendedKeylayoutApplied.at(this->scanCode);
             
             //-----------------------------
             //    Keyboard Layout apply
@@ -532,15 +594,17 @@ private:
             this->flag = this->flag | KBD_FLAGS_EXTENDED;
             return true;
         } catch (const std::exception & e) {
-            std::cerr << "Unknown key(0x" << std::hex << this->scanCode << ") to any Custom Key Map." << std::endl;
             this->scanCode = 0;
             return false;
         }
     }//------------------------------------------------------------------------------------------------------------
     
     bool getCustomKeysExtended() {
+        if (this->scanCode == 0) {
+            return false;
+        }
         try {
-            this->scanCode = this->_customExtended.at(scanCode);
+            this->scanCode = this->_customExtended.at(this->scanCode);
             this->flag = this->flag | KBD_FLAGS_EXTENDED;
             return true;
         } catch (const std::exception & e) {
@@ -578,7 +642,7 @@ public:
 
     void setKeyboardLayout(int LCID) {
         bool found = false;
-        for (uint8_t i = 0 ; i < sizeof(keylayoutsList)/sizeof(keylayoutsList[0]); i++) {
+        for (uint8_t i = 0 ; i < KEYLAYOUTS_LIST_SIZE; i++) {
             if (keylayoutsList[i]->LCID == LCID){
                 this->_keylayout_WORK = keylayoutsList[i];
                 found = true;
@@ -586,7 +650,8 @@ public:
             }
         }
         if (!found){
-            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)" << std::endl;
+            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
+            this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
         
         this->_layoutMods[NO_MOD]                               = this->_keylayout_WORK->getnoMod();
@@ -601,23 +666,23 @@ public:
         
         this->_layout = this->_layoutMods[0]; // noMod
     }
+ 
     
-    
-    void setCustomKeyCode(int qt_key, int ASCII_Code, int scan_Code, bool extended) {
+    void setCustomKeyCode(int qt_key, int scan_Code, int ASCII8_Code, bool extended) {
         if (qt_key != 0) {
-            if (ASCII_Code != 0) {
+            if (ASCII8_Code != 0) {
                 if (extended) {
-                    this->_customNoExtendedKeylayoutApplied.emplace(qt_key, ASCII_Code);
+                    this->_customExtendedKeylayoutApplied.emplace(qt_key, ASCII8_Code);
                 } else {
-                    this->_customExtendedKeylayoutApplied.emplace(qt_key, ASCII_Code);
+                    this->_customNoExtendedKeylayoutApplied.emplace(qt_key, ASCII8_Code);
                 }
             }
             
             if (scan_Code != 0) {
                 if (extended) {
-                    this->_customNoExtended.emplace(qt_key, scan_Code);
-                } else {
                     this->_customExtended.emplace(qt_key, scan_Code);
+                } else {
+                    this->_customNoExtended.emplace(qt_key, scan_Code);
                 }
             }
         }
@@ -686,7 +751,7 @@ public:
                             if (!this->getCustomKeysExtendedKeylayoutApplied()) {
                                 if (!this->getCustomKeysExtended()) {
                                     this->showkey(keyStatusFlag, keyEvent);
-                                    std::cout << "Error: Key unrecognized." << std::endl;
+                                    std::cout << "Error: Key(0x" << keyCode << ") not recognized." << std::endl;
                                 }
                             }
                         }
@@ -704,5 +769,6 @@ public:
     }
 
 };
+
     
 #endif

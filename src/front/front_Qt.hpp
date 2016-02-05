@@ -106,6 +106,7 @@ public:
     QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
+    Qt_ScanCode_KeyMap   _qtRDPKeymap;
     
     
     Front_Qt_API( bool param1
@@ -116,6 +117,7 @@ public:
     , _info()
     , _port(0)
     , _callback(nullptr)
+    , _qtRDPKeymap()
     {}
     
     
@@ -165,19 +167,14 @@ public:
     Connector_Qt       * _connector;
     int                  _timer;
     bool                 _connected;
-    
     ClipboardVirtualChannel  _clipboard_channel;
-     
-    
-    //uint16_t             _client_message_type;
 
     // Keyboard Controllers members
     Keymap2              _keymap;
     bool                 _ctrl_alt_delete; // currently not used and always false
     StaticOutStream<256> _decoded_data;    // currently not initialised
     uint8_t              _keyboardMods;    
-    Qt_ScanCode_KeyMap   _qtRDPKeymap;
-    
+
     
     
     enum : int {
@@ -272,6 +269,8 @@ public:
     
     void draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert);
     
+    void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy);
+    
     
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -340,20 +339,7 @@ public:
         std::cout << "RDPMultiScrBlt" << std::endl;
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        //std::cout << "RDPPatBlt" << std::endl;
-
-        /*RDPPatBlt new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);*/
-        //this->gd.draw(new_cmd24, clip);
-    }
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
@@ -450,7 +436,8 @@ public:
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
-
+        
+        std::cout << "FrameMarker" << std::endl;
         //this->gd.draw(order);
     }
 
@@ -461,6 +448,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        std::cout << "NewOrExistingWindow" << std::endl;
         //this->gd.draw(order);
     }
 
@@ -470,7 +458,8 @@ public:
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
-
+        
+        std::cout << "WindowIcon" << std::endl;
         //this->gd.draw(order);
     }
 
@@ -480,6 +469,8 @@ public:
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
+        
+         std::cout << "CachedIcon" << std::endl;
 
         //this->gd.draw(order);
     }
@@ -490,6 +481,8 @@ public:
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
+        
+        std::cout << "DeletedWindow" << std::endl;
 
         //this->gd.draw(order);
     }
@@ -574,6 +567,7 @@ public:
         }
     }
     
+    
     void keyPressEvent(QKeyEvent *e) override { 
         this->_qtRDPKeymap.keyEvent(0       ,      e);
         if (this->_qtRDPKeymap.scanCode != 0) {
@@ -605,7 +599,7 @@ public:
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
             //std::cout << "MouseMove " <<  mouseEvent->x() << " " <<  mouseEvent->y()<< std::endl;
             if (this->_callback != nullptr) {
-                this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
+                this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));  
             }
         }
         return false;
@@ -616,7 +610,7 @@ public:
     void connexionReleased() override;
 
     void RefreshPressed() override {
-        this->refresh();
+        this->refresh(0, 0, this->_info.width, this->_info.height);
     }
     
     void RefreshReleased() override {}
@@ -641,8 +635,8 @@ public:
     
     void disconnexionReleased() override;
  
-    void refresh() {
-        Rect rect(0, 0, this->_info.width, this->_info.height);
+    void refresh(int x, int y, int w, int h) {
+        Rect rect(x, y, w, h);
         this->_callback->rdp_input_invalidate(rect);
     }
     
