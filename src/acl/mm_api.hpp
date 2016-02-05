@@ -60,6 +60,7 @@ public:
         return res;
     }
     virtual void record(auth_api * acl) {}
+    virtual void stop_record() {}
     virtual void check_module() { }
 };
 
