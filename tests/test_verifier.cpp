@@ -431,7 +431,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     uint8_t hmac_key[32] = {};
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-    BOOST_CHECK(0 == cctx.compute_hmac(hmac_key, HASH_DERIVATOR));
+    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+    memcpy(tmp_derivation, HASH_DERIVATOR, DERIVATOR_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+    memcpy(hmac_key, derivated, HMAC_KEY_LENGTH);
+
     OpenSSL_add_all_digests();
 
     // Any iv key would do, we are checking round trip
@@ -445,9 +451,12 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char derivator[DERIVATOR_LENGTH];
     cctx.get_derivator(test_file_name, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (cctx.compute_hmac(trace_key, derivator) == -1){
-        BOOST_CHECK(false);
-    }
+    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, this->get_crypto_key(), CRYPTO_KEY_LENGTH);
+    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
     int system_fd = open(test_file_name, O_WRONLY|O_CREAT|O_TRUNC, 0600);
     if (system_fd == -1){

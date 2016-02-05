@@ -310,9 +310,13 @@ namespace transbuf {
                 unsigned char derivator[DERIVATOR_LENGTH];
 
                 this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-                if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
-                    return -1;
-                }
+                
+                unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+                unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+                memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+                memcpy(tmp_derivation + DERIVATOR_LENGTH, this->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+                SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+                memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
                 return this->cfb_decrypt_decrypt_open(trace_key);
             }
@@ -859,9 +863,14 @@ namespace detail {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
             this->cfb_cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == this->cfb_cctx->compute_hmac(trace_key, derivator)) {
-                return -1;
-            }
+            
+            unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+            unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+            memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+            memcpy(tmp_derivation + DERIVATOR_LENGTH, this->cfb_cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+            SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+            memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+
             return this->cfb_decrypt_decrypt_open(trace_key);
         }
 
@@ -985,11 +994,15 @@ namespace detail {
                 unsigned char derivator[DERIVATOR_LENGTH];
 
                 this->buf_meta_cctx->get_derivator(meta_filename, derivator, DERIVATOR_LENGTH);
-                if (-1 == this->buf_meta_cctx->compute_hmac(trace_key, derivator)) {
-                    LOG(LOG_WARNING, "read failed 4.0");
-                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-                }
-
+                
+                unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+                unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+                memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+                memcpy(tmp_derivation + DERIVATOR_LENGTH, 
+                       this->buf_meta_cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+                SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+                memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+                
                 int err = this->buf_meta_file_open(meta_filename, 0600);
                 if (err < 0) {
                     LOG(LOG_WARNING, "read failed 4.1");

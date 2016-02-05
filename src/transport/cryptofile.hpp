@@ -199,6 +199,16 @@ class CryptoContext {
         }
         memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
         this->crypto_key_loaded = true;
+        // compute hmac
+        const unsigned char HASH_DERIVATOR[] = {
+             0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
+        };                
+        unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+        unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+        memcpy(tmp_derivation, HASH_DERIVATOR, DERIVATOR_LENGTH);
+        memcpy(tmp_derivation + DERIVATOR_LENGTH, this->crypto_key, CRYPTO_KEY_LENGTH);
+        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+        memcpy(this->hmac_key, derivated, HMAC_KEY_LENGTH);
         return 0;
     }
 
@@ -249,10 +259,6 @@ class CryptoContext {
             case 0:
             {
                 this->get_crypto_key_from_shm();
-                const unsigned char HASH_DERIVATOR[] = {
-                     0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
-                };                
-                this->compute_hmac(this->hmac_key, HASH_DERIVATOR);
             }
             break;
             case 1:
@@ -284,6 +290,7 @@ class CryptoContext {
 
         return 0;
     }
+
 };
 
 #endif

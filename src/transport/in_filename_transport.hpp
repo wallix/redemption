@@ -128,8 +128,6 @@ public:
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
 
-            cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-
             size_t len = 0;
             const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
             SslSha256 sha256;
@@ -138,10 +136,12 @@ public:
             sha256.final(tmp, SHA256_DIGEST_LENGTH);
             memcpy(derivator, tmp, DERIVATOR_LENGTH);
 
-            if (-1 == cctx->compute_hmac(trace_key, derivator)) {
-                LOG(LOG_ERR, "failed opening=%s\n", filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
+            unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+            unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+            memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+            memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+            SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+            memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
             unsigned char * const iv = reinterpret_cast<uint8_t *>(&this->raw.b[8]);
             this->raw.start = this->raw.end = 0;

@@ -786,8 +786,13 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
     BOOST_CHECK(0 == memcmp("\xdc\x07\x64\x92\xda\x52\xfe\xa9", derivator, DERIVATOR_LENGTH));
 
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    int res = cctx.compute_hmac(trace_key, derivator);
-    BOOST_CHECK(0 == res);
+    
+    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
 /*    LOG(LOG_INFO, "Dumping trace_key");*/
 
@@ -899,7 +904,12 @@ BOOST_AUTO_TEST_CASE(TestCryptAndReadBack)
     unsigned char derivator[DERIVATOR_LENGTH];
     cctx.get_derivator(file, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    BOOST_CHECK(0 == cctx.compute_hmac(trace_key, derivator));
+    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
     int system_fd = open(file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
     if (system_fd == -1){

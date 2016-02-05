@@ -930,12 +930,13 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
     unsigned char derivator[DERIVATOR_LENGTH];
     get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    if (get_cctx()->compute_hmac(trace_key, derivator) == -1){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
+    
+    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, get_cctx()->get_crypto_key(), CRYPTO_KEY_LENGTH);
+    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
@@ -1176,15 +1177,17 @@ initredcryptofile(void)
 
     const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
 
-    uint8_t tmp[32] = {};
+    uint8_t trace_key[32] = {};
     CryptoContext * cctx = get_cctx();
-    cctx->compute_hmac(tmp, HASH_DERIVATOR);
-
-//    if (-1 == get_cctx()->compute_hmac(tmp, HASH_DERIVATOR)){
-//        //TODO: we should LOG something here
-//        printf("Error HMAC\n");
-//    }
-    get_ini()->set<cfg::crypto::key1>(tmp);
+    
+    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+    memcpy(tmp_derivation, HASH_DERIVATOR, DERIVATOR_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+    
+    get_ini()->set<cfg::crypto::key1>(trace_key);
     OpenSSL_add_all_digests();
 
     size_t idx = 0;
