@@ -43,7 +43,7 @@
 #include <QtGui/QRegion>
 #include <QtGui/QBitmap>
 
-Front_Qt::Front_Qt(const char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
+Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     : Front_Qt_API(false, false, verbose)
     , mod_bpp(24)
     , mod_palette(BGRPalette::classic_332())
@@ -273,9 +273,12 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
         qbitmap.invertPixels();
     }
     
-    const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-    this->_screen->paintCache().drawImage(trect, qbitmap.rgbSwapped());
+    if (bitmap.bpp() == 24) {
+        qbitmap = qbitmap.rgbSwapped();
+    }
     
+    const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
+    this->_screen->paintCache().drawImage(trect, qbitmap);//.rgbSwapped());
     this->_screen->repaint(); 
 }
 
@@ -307,8 +310,12 @@ void Front_Qt::draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert) 
             qbitmap.invertPixels();
         }
         
+        if (bitmap.bpp() == 24) {
+            qbitmap = qbitmap.rgbSwapped();
+        }
+        
         QRect trect(drect.x, rowYCoord, mincx, mincy);
-        this->_screen->paintCache().drawImage(trect, qbitmap.rgbSwapped());
+        this->_screen->paintCache().drawImage(trect, qbitmap);//.rgbSwapped());
 
         row += rowsize;
         rowYCoord--;
@@ -454,10 +461,10 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             case 0x55: // inversion
                 //this->invert_color(rect);
                 break;
-            // +------+-------------------------------+
-            // | 0x5A | ROP: 0x005A0049 (PATINVERT)   |
-            // |      | RPN: DPx                      |
-            // +------+-------------------------------+
+                // +------+-------------------------------+
+                // | 0x5A | ROP: 0x005A0049 (PATINVERT)   |
+                // |      | RPN: DPx                      |
+                // +------+-------------------------------+
             case 0x5A:
                 this->_screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
                 this->_screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -860,6 +867,6 @@ int main(int argc, char** argv){
     
     
     app.exec();
-   
-}*/
-
+  
+}
+*/

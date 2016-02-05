@@ -968,7 +968,7 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
 #explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
-explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
+explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
 using qt : /usr ;
 
@@ -977,7 +977,7 @@ obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt :
-    test_rdp_Qt.o
+    test_rdp_Qt.o #
     src/front/front_Qt.hpp
     src/front/front_widget_Qt.hpp
     src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp 

@@ -575,7 +575,9 @@ public:
     }
     
     ~Connector_Qt() {
+        this->_clipboard = nullptr;
         this->drop_connexion();
+        
     }
     
     void drop_connexion() {

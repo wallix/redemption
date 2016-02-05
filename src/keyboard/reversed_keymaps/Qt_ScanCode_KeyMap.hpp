@@ -29,30 +29,31 @@
  * 
  * 
  * 
- *  code example:
- *  -------------
+ *  Basic example:
+ *  --------------
  * 
- *     #include "Qt_ScanCode_KeyMap.hpp"
+ *      #include "Qt_ScanCode_KeyMap.hpp"
  *     
  *     
  *     
  *     
- *      void keyPressEvent(QKeyEvent * keyEvent) {                // standard Qt function to catch a key press event
+ *      void keyPressEvent(QKeyEvent * keyEvent) {                              // standard Qt function to catch a key press event
  *      
- *           Qt_ScanCode_KeyMap qsckm();                          // construct a Qt_ScanCode_KeyMap.
- *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US);          // Keyboard language can be set using KEYBOARDS enum.
- *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US, verbose); // verbose is an integer.
+ *           Qt_ScanCode_KeyMap qsckm();                                        // construct a Qt_ScanCode_KeyMap.
+ *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US);                        // Keyboard language can be set using KEYBOARDS enum.
+ *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US, verbose);               // verbose is an integer.
  *           
- *           qsckm.setKeyboardLayout(KEYBOARDS::EN_US);           // set keyboard type from KEYBOARDS::
+ *           qsckm.setKeyboardLayout(KEYBOARDS::EN_US);                         // set keyboard type from KEYBOARDS::
  *                                           
- *           qsckm.keyQtEvent(0, keyEvent);                       // call keyEvent(uint16_t keyStatusFlag, QKeyEvent * keyEvent), 
- *                                                                // if key is pressed then keyStatusFlag = 0, if key is released keyStatusFlag = 0x8000.
+ *           qsckm.keyQtEvent(Qt_ScanCode_KeyMap::KBD_FLAGS_PRESS, keyEvent);   // call keyEvent(uint16_t keyStatusFlag, QKeyEvent * keyEvent), 
+ *                                                                              // if key is pressed then keyStatusFlag = Qt_ScanCode_KeyMap::KBD_FLAGS_PRESS or 0, 
+ *                                                                              // if key is released keyStatusFlag = Qt_ScanCode_KeyMap::KBD_FLAGS_RELEASE or 0x8000 .
  *                                                             
- *          int Scan_Code     = qsckm.scanCode;                   // retrieve the scan code (The Unicode character input code. ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
+ *           int Scan_Code     = qsckm.scanCode;                                // retrieve the scan code (The Unicode character input code. ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
  *          
- *          uint16_t Keyboard_Flag = qsckm.flag;                  // retrieve the 2 bytes keyboard flag (A 16-bit unsigned integer. The flags describing the Unicode keyboard event. 
- *                                                                //                                     ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
- *     }
+ *           uint16_t Keyboard_Flag = qsckm.flag;                               // retrieve the 2 bytes keyboard flag (A 16-bit unsigned integer. The flags describing the Unicode keyboard event. 
+ *                                                                              //                                     ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
+ *       }
  *  
  * 
  *  
@@ -61,20 +62,20 @@
  * 
  *      Qt_ScanCode_KeyMap qsckm();
  * 
- *      qsckm.setCustomKeyCode(qt_key, scan_Code, ASCII8_Code, extended);  // Call setCustomKeyCode(int qt_key, int ASCII8_Code, int scan_Code, bool extended) to add new match between a Qt key 
- *                                                                         // code and an ASCII8 code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
- *                                                                         // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
+ *      qsckm.setCustomKeyCode(qt_key, scan_Code, ASCII8_Code, extended);       // Call setCustomKeyCode(int qt_key, int ASCII8_Code, int scan_Code, bool extended) to add new match between a Qt key 
+ *                                                                              // code and an ASCII8 code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
+ *                                                                              // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
  * 
- *      qsckm.clearCustomKeyCod()                                          // Call clearCustomKeyCod() to empty custom entries.
+ *      qsckm.clearCustomKeyCod()                                               // Call clearCustomKeyCod() to empty custom entries.
  * 
  * 
  *  
  *  Get data:
  *  ---------
  * 
- *      const Keylayout_r * keylayoutsList[];                              // The keyboard language list is a static const variable.
+ *      const Keylayout_r * keylayoutsList[];                                   // The keyboard language list is a static const variable.
  * 
- *      char * name = keylayoutsList[i]->locale_name;                      // keylayout IDs and names are public.
+ *      char * name = keylayoutsList[i]->locale_name;                           // keylayout IDs and names are public.
  *      
  *      int ID = keylayoutsList[i]->LCID;                           
  * 
@@ -217,7 +218,8 @@ private:
     };
     
     enum : int {
-           KBD_FLAGS_EXTENDED = 0x0100
+           KBD_FLAGS_PRESS    = 0x0000
+         , KBD_FLAGS_EXTENDED = 0x0100
          , KBD_FLAGS_DOWN     = 0x4000
          , KBD_FLAGS_RELEASE  = 0x8000
     };
@@ -278,9 +280,10 @@ private:
             case Qt::Key_Ugrave      : this->scanCode = 0xF9; break; /*ù*/
             case Qt::Key_Egrave      : this->scanCode = 0xE8; break; /*è*/
             case Qt::Key_section     : this->scanCode = 0xA7; break; /*§*/
-            case Qt::Key_twosuperior : this->scanCode = 0xB2; break; // œ or square
+            case Qt::Key_twosuperior : this->scanCode = 0xB2; break; // square
             case Qt::Key_sterling    : this->scanCode = 0xA3; break; // £
             case Qt::Key_currency    : this->scanCode = 0x1B; break; // 
+            case Qt::Key_degree      : this->scanCode = 0xB0; break; // °
             case Qt::Key_Slash    :
                 if (this->_keyboardMods == 0) {
                     scanCode = 0x21;
@@ -330,7 +333,7 @@ private:
             case Qt::Key_Q          : this->scanCode = 'q';  break; /*Q*/         case Qt::Key_multiply  : this->scanCode = '*';  break; /***/ 
             case Qt::Key_S          : this->scanCode = 's';  break; /*S*/         case Qt::Key_Space     : this->scanCode = ' ';  break; /* */ 
             case Qt::Key_W          : this->scanCode = 'w';  break; /*W*/         case Qt::Key_section   : this->scanCode = 0xA7; break; /*§*/
-            case Qt::Key_Eacute     : this->scanCode = 0xE;  break; /*é*/         //case Qt::Key_         : this->scanCode = '';  break; /**/ 
+            case Qt::Key_Eacute     : this->scanCode = 0xE;  break; /*é*/         case Qt::Key_degree    : this->scanCode = 0xB0; break; // °
             case Qt::Key_Ccedilla   : this->scanCode = 0xE7; break; /*ç*/         //case Qt::Key_         : this->scanCode = '';  break; /**/ 
             case Qt::Key_Agrave     : this->scanCode = 0xE0; break; /*à*/         //case Qt::Key_         : this->scanCode = '';  break; /**/ 
             case Qt::Key_Ugrave     : this->scanCode = 0xF9; break; /*ù*/
@@ -512,25 +515,25 @@ private:
     void getDeadKeys() {
         
         switch (scanCode) {
-            case Qt::Key_Dead_Circumflex       : this->scanCode = '^'; this->_deadKeys = true; break; //  ^ ¨
+            case Qt::Key_Dead_Circumflex       : this->scanCode = '^'; this->_deadKeys = true; break; //  ^
             case Qt::Key_Dead_Grave            : this->scanCode = '`'; this->_deadKeys = true; break; //  ` grave
-            //case Qt::Key_Dead_Acute            : this->scanCode = '´'; this->_deadKeys = true; break; //
             case Qt::Key_Dead_Tilde            : this->scanCode = '~'; this->_deadKeys = true; break; //
+            case Qt::Key_Dead_Diaeresis        : this->scanCode = 0xA8; this->_deadKeys = true; break; // ¨
+            //case Qt::Key_Dead_Acute            : this->scanCode = ''; this->_deadKeys = true; break; //
             //case Qt::Key_Dead_Macron           : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Breve            : this->scanCode = '˘'; this->_deadKeys = true; break; //
+            //case Qt::Key_Dead_Breve            : this->scanCode = ''; this->_deadKeys = true; break; //
             //case Qt::Key_Dead_Abovedot         : this->scanCode = ''; this->_deadKeys = true; break; // 
-            //case Qt::Key_Dead_Diaeresis        : this->scanCode = '¨'; this->_deadKeys = true; break; // 
-            //case Qt::Key_Dead_Abovering        : this->scanCode = '˚'; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Doubleacute      : this->scanCode = '˝'; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Caron            : this->scanCode = 'ˇ'; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Cedilla          : this->scanCode = '¸'; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Ogonek           : this->scanCode = '˛'; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Iota             : this->scanCode = 'ι'; this->_deadKeys = true; break;
+            //case Qt::Key_Dead_Abovering        : this->scanCode = ''; this->_deadKeys = true; break; //
+            //case Qt::Key_Dead_Doubleacute      : this->scanCode = ''; this->_deadKeys = true; break; //
+            //case Qt::Key_Dead_Caron            : this->scanCode = ''; this->_deadKeys = true; break;
+            //case Qt::Key_Dead_Cedilla          : this->scanCode = ''; this->_deadKeys = true; break;
+            //case Qt::Key_Dead_Ogonek           : this->scanCode = ''; this->_deadKeys = true; break;
+            //case Qt::Key_Dead_Iota             : this->scanCode = ''; this->_deadKeys = true; break;
             //Case Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Semivoiced_Sound : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Belowdot         : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Hook             : this->scanCode = ' ̡'; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Horn             : this->scanCode = ' ̛'; this->_deadKeys = true; break;
+            //case Qt::Key_Dead_Hook             : this->scanCode = ''; this->_deadKeys = true; break;
+            //case Qt::Key_Dead_Horn             : this->scanCode = ''; this->_deadKeys = true; break;
             
             default: break;
         }
@@ -654,15 +657,15 @@ public:
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
         
-        this->_layoutMods[NO_MOD]                               = this->_keylayout_WORK->getnoMod();
-        this->_layoutMods[SHIFT_MOD]                            = this->_keylayout_WORK->getshift();           
-        this->_layoutMods[ALTGR_MOD]                            = this->_keylayout_WORK->getaltGr();               
-        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD]             = this->_keylayout_WORK->getshiftAltGr();          
-        this->_layoutMods[CAPSLOCK_MOD + NO_MOD]                = this->_keylayout_WORK->getcapslock_noMod();      
-        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD]             = this->_keylayout_WORK->getcapslock_shift();      
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD]             = this->_keylayout_WORK->getcapslock_altGr();      
+        this->_layoutMods[NO_MOD                              ] = this->_keylayout_WORK->getnoMod();
+        this->_layoutMods[SHIFT_MOD                           ]  = this->_keylayout_WORK->getshift();           
+        this->_layoutMods[ALTGR_MOD                           ] = this->_keylayout_WORK->getaltGr();               
+        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = this->_keylayout_WORK->getshiftAltGr();          
+        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = this->_keylayout_WORK->getcapslock_noMod();      
+        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = this->_keylayout_WORK->getcapslock_shift();      
+        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = this->_keylayout_WORK->getcapslock_altGr();      
         this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = this->_keylayout_WORK->getcapslock_shiftAltGr(); 
-        this->_layoutMods[CTRL_MOD]                             = this->_keylayout_WORK->getctrl();
+        this->_layoutMods[CTRL_MOD                            ] = this->_keylayout_WORK->getctrl();
         
         this->_layout = this->_layoutMods[0]; // noMod
     }
