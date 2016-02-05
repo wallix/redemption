@@ -113,17 +113,6 @@ class CryptoContext {
                 HMAC_KEY_LENGTH);
         }
 
-    void get_derivator(const char *file, unsigned char * derivator, int derivator_len)
-    {
-        size_t len = 0;
-        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(file, len));
-        SslSha256 sha256;
-        sha256.update(base, len);
-        uint8_t tmp[SHA256_DIGEST_LENGTH];
-        sha256.final(tmp, SHA256_DIGEST_LENGTH);
-        memcpy(derivator, tmp, derivator_len);
-    }
-
     void random(void * dest, size_t size) 
     {
         this->gen.random(dest, size);
@@ -278,19 +267,6 @@ class CryptoContext {
         }
         return &(this->crypto_key[0]);
     }
-
-    int compute_hmac(unsigned char * hmac, const unsigned char * derivator)
-    {
-        unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-        unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-        memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-        memcpy(tmp_derivation + DERIVATOR_LENGTH, this->get_crypto_key(), CRYPTO_KEY_LENGTH);
-        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-        memcpy(hmac, derivated, HMAC_KEY_LENGTH);
-
-        return 0;
-    }
-
 };
 
 #endif

@@ -928,11 +928,16 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 #pragma GCC diagnostic pop
     }
     unsigned char derivator[DERIVATOR_LENGTH];
-    get_cctx()->get_derivator(path, derivator, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    
     unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
     unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+    size_t len = 0;
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(path, len));
+    SslSha256 sha256;
+    sha256.update(base, len);
+    uint8_t tmp[SHA256_DIGEST_LENGTH];
+    sha256.final(tmp, SHA256_DIGEST_LENGTH);
+    memcpy(derivator, tmp, DERIVATOR_LENGTH);
     memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
     memcpy(tmp_derivation + DERIVATOR_LENGTH, get_cctx()->get_crypto_key(), CRYPTO_KEY_LENGTH);
     SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);

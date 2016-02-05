@@ -449,7 +449,14 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     };
 
     unsigned char derivator[DERIVATOR_LENGTH];
-    cctx.get_derivator(test_file_name, derivator, DERIVATOR_LENGTH);
+    
+    size_t len = 0;
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name, len));
+    SslSha256 sha256;
+    sha256.update(base, len);
+    uint8_t tmp[SHA256_DIGEST_LENGTH];
+    sha256.final(tmp, SHA256_DIGEST_LENGTH);
+    memcpy(derivator, tmp, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
     unsigned char tmp_derivation2[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
     unsigned char derivated1[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
