@@ -45,8 +45,46 @@ namespace detail {
         struct cfb_t 
         {
             CryptoContext * cctx;
+            int            fd;
             int encryption;
-            int            file_fd;
+            
+            struct raw_t {
+                char b[32768];
+                int start;
+                int end;
+
+                raw_t() : start(0), end(0) {}
+
+                uint32_t get_uint32_le(size_t offset)
+                {
+                    return  this->b[0+offset]
+                          +(this->b[1+offset]<< 8)
+                          +(this->b[2+offset]<< 16)
+                          +(this->b[3+offset]<< 24);
+                }
+
+                void read_min(int fd, size_t to_read, size_t min_to_read)
+                {
+                    while ((size_t)(this->end - this->start) < min_to_read) {
+                        ssize_t ret = ::read(fd, &this->b[this->start], to_read - (this->end-this->start));
+                        if (ret <= 0){
+                            if (ret < 0 && errno == EINTR){
+                                continue;
+                            }
+                            LOG(LOG_ERR, "failed reading from file");
+                            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                        }
+                        this->end += ret;
+                    }
+                }
+            } raw;
+
+            struct {
+                uint8_t b[65536];
+                int start;
+                int end;
+            } decrypted;
+            
             char           buf[CRYPTO_BUFFER_SIZE]; //
             EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
             uint32_t       pos;                     // current position in buf
@@ -56,17 +94,23 @@ namespace detail {
 
             cfb_t(CryptoContext * cctx, int encryption) 
                 : cctx(cctx)
+                , fd(-1)
                 , encryption(encryption)
-                , file_fd(-1)
             {}
 
             bool is_open() const noexcept
-            { return -1 != this->file_fd; }
+            { return -1 != this->fd; }
 
 
             int open(const char * filename)
             {
-                int status = this->file_open(filename);
+                if (-1 != this->fd) {
+                    ::close(this->fd);
+                    this->fd = -1;
+                }
+                this->fd = ::open(filename, O_RDONLY);
+                int status = this->fd;
+
                 if (!this->encryption) {
                     return status;
                 }
@@ -92,7 +136,55 @@ namespace detail {
                 }
                 memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
 
-                return this->open(trace_key);
+                ::memset(this->buf, 0, sizeof(this->buf));
+                ::memset(&this->ectx, 0, sizeof(this->ectx));
+
+                this->pos = 0;
+                this->raw_size = 0;
+                this->state = 0;
+                const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
+                this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+
+                unsigned char tmp_buf[40];
+
+                if (const ssize_t err = this->raw_read(tmp_buf, 40)) {
+                    return err;
+                }
+
+                // Check magic
+                const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+                if (magic != WABCRYPTOFILE_MAGIC) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
+                        ::getpid(), magic, WABCRYPTOFILE_MAGIC);
+                    return -1;
+                }
+                const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
+                if (version > WABCRYPTOFILE_VERSION) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
+                        ::getpid(), version, WABCRYPTOFILE_VERSION);
+                    return -1;
+                }
+
+                unsigned char * const iv = tmp_buf + 8;
+
+                const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+                const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+                const int          nrounds = 5;
+                unsigned char      key[32];
+                const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                               trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+                if (i != 32) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                    return -1;
+                }
+
+                ::EVP_CIPHER_CTX_init(&this->ectx);
+                if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+                    return -1;
+                }
+
+                return 0;
             }
 
             ssize_t read(void * data, size_t len)
@@ -199,7 +291,7 @@ namespace detail {
                     TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                     size_t remaining_len = len;
                     while (remaining_len) {
-                        ssize_t ret = ::read(this->file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                        ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
                         if (ret < 0){
                             if (errno == EINTR){
                                 continue;
@@ -220,72 +312,11 @@ namespace detail {
                 }
             }
 
-            int open(unsigned char * trace_key)
-            {
-                ::memset(this->buf, 0, sizeof(this->buf));
-                ::memset(&this->ectx, 0, sizeof(this->ectx));
-
-                this->pos = 0;
-                this->raw_size = 0;
-                this->state = 0;
-                const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
-                this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-
-                unsigned char tmp_buf[40];
-
-                if (const ssize_t err = this->raw_read(tmp_buf, 40)) {
-                    return err;
-                }
-
-                // Check magic
-                const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-                if (magic != WABCRYPTOFILE_MAGIC) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
-                        ::getpid(), magic, WABCRYPTOFILE_MAGIC);
-                    return -1;
-                }
-                const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
-                if (version > WABCRYPTOFILE_VERSION) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
-                        ::getpid(), version, WABCRYPTOFILE_VERSION);
-                    return -1;
-                }
-
-                unsigned char * const iv = tmp_buf + 8;
-
-                const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-                const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-                const int          nrounds = 5;
-                unsigned char      key[32];
-                const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                               trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-                if (i != 32) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                    return -1;
-                }
-
-                ::EVP_CIPHER_CTX_init(&this->ectx);
-                if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
-                    return -1;
-                }
-
-                return 0;
-            }
-
-
-            int file_open(const char * filename)
-            {
-                this->file_close();
-                this->file_fd = ::open(filename, O_RDONLY);
-                return this->file_fd;
-            }
-
             int file_close()
             {
-                if (-1 != this->file_fd) {
-                    const int ret = ::close(this->file_fd);
-                    this->file_fd = -1;
+                if (-1 != this->fd) {
+                    const int ret = ::close(this->fd);
+                    this->fd = -1;
                     return ret;
                 }
                 return 0;
@@ -299,7 +330,7 @@ namespace detail {
                 TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                 size_t remaining_len = len;
                 while (remaining_len) {
-                    ssize_t ret = ::read(this->file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                    ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
                     if (ret < 0){
                         if (errno == EINTR){
                             continue;
@@ -549,14 +580,6 @@ namespace detail {
             return 0;
         }
 
-
-        int buf_meta_file_open(const char * filename)
-        {
-            this->buf_meta_file_close();
-            this->buf_meta_file_fd = ::open(filename, O_RDONLY);
-            return this->buf_meta_file_fd;
-        }
-
         int buf_meta_file_open(const char * filename, mode_t /*mode*/)
         {
             TODO("see why mode is ignored even if it's provided as a parameter?");
@@ -619,13 +642,8 @@ namespace detail {
                 ssize_t ret = this->buf_meta_decrypt_decrypt_read(
                     this->rl_buf, sizeof(this->rl_buf));
                 if (ret < 0 && errno != EINTR) {
-                    LOG(LOG_WARNING, "read failed");
                     return -ERR_TRANSPORT_READ_FAILED;
                 }
-                LOG(LOG_INFO, "reader_read: rl_buf=%s %d %d %d", this->rl_buf
-                    , static_cast<int>(this->rl_cur-this->rl_buf)
-                    , static_cast<int>(this->rl_eof-this->rl_buf)
-                    , static_cast<int>(ret));
 
                 if (ret == 0) {
                     return -err;
@@ -638,12 +656,10 @@ namespace detail {
                 ssize_t ret = this->buf_meta_file_read(this->rl_buf, sizeof(this->rl_buf));
                 TODO("test on EINTR suspicious here, check that");
                 if (ret < 0 && errno != EINTR) {
-                    LOG(LOG_WARNING, "read failed");
                     return -ERR_TRANSPORT_READ_FAILED;
                 }
 
                 if (ret == 0) {
-                    LOG(LOG_WARNING, "read failed xxx");
                     return -err;
                 }
                 this->rl_eof = this->rl_buf + ret;
@@ -730,18 +746,15 @@ namespace detail {
                 
                 int err = this->buf_meta_file_open(meta_filename, 0600);
                 if (err < 0) {
-                    LOG(LOG_WARNING, "read failed 4.1");
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
                 if (this->buf_meta_decrypt_decrypt_open(trace_key) < 0){
-                    LOG(LOG_WARNING, "read failed 4.2");
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
 
                 char line[32];
                 auto sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
                 if (sz < 0) {
-                    LOG(LOG_WARNING, "read failed 1");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
@@ -749,7 +762,6 @@ namespace detail {
                 if (line[0] == 'v') {
                     if (this->reader_next_line() 
                      || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0) {
-                        LOG(LOG_WARNING, "read failed 2");
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     this->meta_header_version = 2;
@@ -783,14 +795,12 @@ namespace detail {
                
                 int err = this->buf_meta_file_open(meta_filename, 0600);
                 if (err < 0) {
-                    LOG(LOG_WARNING, "Flat read failed 4.1");
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
 
                 char line[32];
                 auto sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
                 if (sz < 0) {
-                    LOG(LOG_WARNING, "read failed 1");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
@@ -799,7 +809,6 @@ namespace detail {
                     if (this->reader_next_line() 
                      || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
                     ) {
-                        LOG(LOG_WARNING, "read failed 2");
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     this->meta_header_version = 2;
@@ -807,12 +816,10 @@ namespace detail {
                 }
 
                 if (this->reader_next_line()) {
-                    LOG(LOG_WARNING, "read failed 3.0");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
                 if (this->reader_next_line()) {
-                    LOG(LOG_WARNING, "read failed 3.1");
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
