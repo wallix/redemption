@@ -118,7 +118,6 @@ public:
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
 
-            ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
 
             this->pos = 0;
