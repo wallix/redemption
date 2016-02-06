@@ -28,6 +28,323 @@
 
 #define QUICK_CHECK_LENGTH 4096
 
+namespace transbuf {
+
+    class ifile_buf
+    {
+    public:
+        CryptoContext * cctx;
+        int cfb_file_fd;
+        char           cfb_decrypt_buf[CRYPTO_BUFFER_SIZE]; //
+        EVP_CIPHER_CTX cfb_decrypt_ectx;                    // [en|de]cryption context
+        uint32_t       cfb_decrypt_pos;                     // current position in buf
+        uint32_t       cfb_decrypt_raw_size;                // the unciphered/uncompressed file size
+        uint32_t       cfb_decrypt_state;                   // enum crypto_file_state
+        unsigned int   cfb_decrypt_MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+
+        int encryption;
+
+        int cfb_decrypt_decrypt_open(unsigned char * trace_key)
+        {
+            ::memset(this->cfb_decrypt_buf, 0, sizeof(this->cfb_decrypt_buf));
+            ::memset(&this->cfb_decrypt_ectx, 0, sizeof(this->cfb_decrypt_ectx));
+
+            this->cfb_decrypt_pos = 0;
+            this->cfb_decrypt_raw_size = 0;
+            this->cfb_decrypt_state = 0;
+            const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
+            this->cfb_decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+
+            unsigned char tmp_buf[40];
+            const ssize_t err = this->cfb_file_read(tmp_buf, 40);
+            if (err != 40) {
+                return err < 0 ? err : -1;
+            }
+
+            // Check magic
+            const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+            if (magic != WABCRYPTOFILE_MAGIC) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
+                    ::getpid(), magic, WABCRYPTOFILE_MAGIC);
+                return -1;
+            }
+            const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
+            if (version > WABCRYPTOFILE_VERSION) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
+                    ::getpid(), version, WABCRYPTOFILE_VERSION);
+                return -1;
+            }
+
+            unsigned char * const iv = tmp_buf + 8;
+
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+            if (i != 32) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                return -1;
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->cfb_decrypt_ectx);
+            if(::EVP_DecryptInit_ex(&this->cfb_decrypt_ectx, cipher, nullptr, key, iv) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+                return -1;
+            }
+
+            return 0;
+        }
+
+        ssize_t cfb_decrypt_decrypt_read(void * data, size_t len)
+        {
+            if (this->cfb_decrypt_state & CF_EOF) {
+                //printf("cf EOF\n");
+                return 0;
+            }
+
+            unsigned int requested_size = len;
+
+            while (requested_size > 0) {
+                // Check how much we have decoded
+                if (!this->cfb_decrypt_raw_size) {
+                    // Buffer is empty. Read a chunk from file
+                    /*
+                     i f (-1 == ::do_chunk_read*(this)) {
+                         return -1;
+                }
+                */
+                    // TODO: avoid reading size directly into an integer, performance enhancement is minimal
+                    // and it's not portable because of endianness issue => read in a buffer and decode by hand
+                    unsigned char tmp_buf[4] = {};
+                    const int err = this->cfb_file_read(tmp_buf, 4);
+                    if (err != 4) {
+                        return err < 0 ? err : -1;
+                    }
+
+                    uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+
+                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                        this->cfb_decrypt_state |= CF_EOF;
+                        this->cfb_decrypt_pos = 0;
+                        this->cfb_decrypt_raw_size = 0;
+                    }
+                    else {
+                        if (ciphered_buf_size > this->cfb_decrypt_MAX_CIPHERED_SIZE) {
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                            return -1;
+                        }
+                        else {
+                            uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+                            //char ciphered_buf[ciphered_buf_size];
+                            unsigned char ciphered_buf[65536];
+                            //char compressed_buf[compressed_buf_size];
+                            unsigned char compressed_buf[65536];
+
+                            ssize_t err = this->cfb_file_read(
+                                                    ciphered_buf,
+                                                    ciphered_buf_size);
+                                                    
+                            if (err != ssize_t(len)){
+                                return err < 0 ? err : -1;
+                            }
+
+                            if (this->cfb_decrypt_xaes_decrypt(ciphered_buf,
+                                            ciphered_buf_size,
+                                            compressed_buf,
+                                            &compressed_buf_size)) {
+                                return -1;
+                            }
+
+                            size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                            const snappy_status status = snappy_uncompress(
+                                    reinterpret_cast<char *>(compressed_buf),
+                                    compressed_buf_size, this->cfb_decrypt_buf, &chunk_size);
+
+                            switch (status)
+                            {
+                                case SNAPPY_OK:
+                                    break;
+                                case SNAPPY_INVALID_INPUT:
+                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
+                                    return -1;
+                                case SNAPPY_BUFFER_TOO_SMALL:
+                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                                    return -1;
+                                default:
+                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
+                                    return -1;
+                            }
+
+                            this->cfb_decrypt_pos = 0;
+                            // When reading, raw_size represent the current chunk size
+                            this->cfb_decrypt_raw_size = chunk_size;
+                        }
+                    }
+
+                    // TODO: check that
+                    if (!this->cfb_decrypt_raw_size) { // end of file reached
+                        break;
+                    }
+                }
+                // remaining_size is the amount of data available in decoded buffer
+                unsigned int remaining_size = this->cfb_decrypt_raw_size - this->cfb_decrypt_pos;
+                // Check how much we can copy
+                unsigned int copiable_size = MIN(remaining_size, requested_size);
+                // Copy buffer to caller
+                ::memcpy(static_cast<char*>(data) + (len - requested_size), this->cfb_decrypt_buf + this->cfb_decrypt_pos, copiable_size);
+                this->cfb_decrypt_pos      += copiable_size;
+                requested_size -= copiable_size;
+                // Check if we reach the end
+                if (this->cfb_decrypt_raw_size == this->cfb_decrypt_pos) {
+                    this->cfb_decrypt_raw_size = 0;
+                }
+            }
+            return len - requested_size;
+        }
+
+    private:
+
+        int cfb_decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
+        {
+            int safe_size = *dst_sz;
+            int remaining_size = 0;
+
+            /* allows reusing of ectx for multiple encryption cycles */
+            if (EVP_DecryptInit_ex(&this->cfb_decrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+                return -1;
+            }
+            if (EVP_DecryptUpdate(&this->cfb_decrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+                return -1;
+            }
+            if (EVP_DecryptFinal_ex(&this->cfb_decrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+                return -1;
+            }
+            *dst_sz = safe_size + remaining_size;
+            return 0;
+        }
+
+        int cfb_file_open(const char * filename, mode_t /*mode*/)
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->cfb_file_close();
+            this->cfb_file_fd = ::open(filename, O_RDONLY);
+            return this->cfb_file_fd;
+        }
+
+        int cfb_file_close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->cfb_file_fd);
+                this->cfb_file_fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool cfb_file_is_open() const noexcept
+        { return -1 != this->cfb_file_fd; }
+
+        ssize_t cfb_file_read(void * data, size_t len)
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
+
+
+    public:
+        explicit ifile_buf(CryptoContext * cctx, int encryption)
+        : cctx(cctx)
+        , cfb_file_fd(-1)
+        , encryption(encryption)
+        {}
+
+        ~ifile_buf()
+        {
+            this->cfb_file_close();
+        }
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            if (this->encryption){
+
+                int err = this->cfb_file_open(filename, mode);
+                if (err < 0) {
+                    return err;
+                }
+
+                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+                unsigned char derivator[DERIVATOR_LENGTH];
+
+                size_t len = 0;
+                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
+                SslSha256 sha256;
+                sha256.update(base, len);
+                uint8_t tmp[SHA256_DIGEST_LENGTH];
+                sha256.final(tmp, SHA256_DIGEST_LENGTH);
+                memcpy(derivator, tmp, DERIVATOR_LENGTH);
+                
+                unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+                unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+                memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+                memcpy(tmp_derivation + DERIVATOR_LENGTH, this->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+                SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+                memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+
+                return this->cfb_decrypt_decrypt_open(trace_key);
+            }
+            else {
+                return this->cfb_file_open(filename, mode);
+            }
+        }
+
+        ssize_t read(void * data, size_t len)
+        {
+            if (this->encryption){
+                return this->cfb_decrypt_decrypt_read(data, len);
+            }
+            else {
+                return this->cfb_file_read(data, len);
+            }
+        }
+
+        int close()
+        {
+            return this->cfb_file_close();
+        }
+
+        bool is_open() const noexcept
+        { 
+            return this->cfb_file_is_open();
+        }
+    };
+}
+
+
 static inline bool check_file_hash_sha256(
     const char * file_path,
     uint8_t const * crypto_key,
