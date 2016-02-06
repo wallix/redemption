@@ -204,10 +204,7 @@ public:
         }
         return !0;
     }
-
 private:
-           
-
     void do_recv(char ** pbuffer, size_t requested_size) override {
         if (this->encryption) {
             if (this->state & CF_EOF) {
