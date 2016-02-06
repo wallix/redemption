@@ -338,9 +338,15 @@ namespace detail {
                         // Error should still be there next time we try to read
                         if (remaining_len != len){
                             ssize_t err = len - remaining_len;
-                            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+                            if (err < ssize_t(len)){
+                                return (err < 0 ? err : -1);
+                            }
+                            break;
                         }
-                        return ret < ssize_t(len) ? (ret < 0 ? ret : -1) : 0;
+                        if (ret < ssize_t(len)){
+                            return (ret < 0 ? ret : -1);
+                        }
+                        break;
                     }
                     // We must exit loop or we will enter infinite loop
                     if (ret == 0){
@@ -348,8 +354,10 @@ namespace detail {
                     }
                     remaining_len -= ret;
                 }
-                ssize_t err = len - remaining_len;
-                return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+                if (remaining_len > 0){
+                    return -1;
+                }
+                return 0;
             }
 
             int decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
@@ -373,7 +381,7 @@ namespace detail {
                 *dst_sz = safe_size + remaining_size;
                 return 0;
             }
-        } cfb;
+        } * cfb;
 
         CryptoContext * buf_meta_cctx;
         int buf_meta_file_fd;
@@ -631,7 +639,7 @@ namespace detail {
     public:
 
         int close()
-        { return this->cfb.file_close(); }
+        { return this->cfb->file_close(); }
 
         int reader_read(int err)
         {
@@ -712,7 +720,7 @@ namespace detail {
                                              CryptoContext * cctx_meta,
                                              int encryption,
                                              uint32_t verbose)
-        : cfb(cctx_buf, encryption)
+        : cfb(new cfb_t(cctx_buf, encryption))
         
         , buf_meta_cctx(cctx_meta)
         , buf_meta_file_fd(-1)
@@ -840,25 +848,25 @@ namespace detail {
         }
 
         ~in_meta_sequence_buf(){
-            this->cfb.file_close();
+            this->cfb->file_close();
             this->buf_meta_file_close();
         }
 
         ssize_t read(void * data, size_t len)
         {
-            if (!this->cfb.is_open()) {
+            if (!this->cfb->is_open()) {
                 if (const int e1 = this->next_line()) {
                     return e1 < 0 ? e1 : -1;
                 }
                 else {
-                    const int e2 = this->cfb.open(this->meta_line.filename);
+                    const int e2 = this->cfb->open(this->meta_line.filename);
                     if (e2 < 0) {
                         return e2;
                     }
                 }
             }
 
-            ssize_t res = this->cfb.read(data, len);
+            ssize_t res = this->cfb->read(data, len);
             if (res < 0) {
                 return res;
             }
@@ -873,13 +881,13 @@ namespace detail {
                         return res;
                     }
                     else {
-                        const int e = this->cfb.open(this->meta_line.filename);
+                        const int e = this->cfb->open(this->meta_line.filename);
                         if (e < 0) {
                             return res;
                         }
                     }
                     len -= res2;
-                    res2 = this->cfb.read(data, len);
+                    res2 = this->cfb->read(data, len);
                     if (res2 < 0) {
                         return res;
                     }
@@ -892,7 +900,7 @@ namespace detail {
         /// \return 0 if success
         int next()
         {
-            if (this->cfb.is_open()) {
+            if (this->cfb->is_open()) {
                 this->close();
             }
 
@@ -1071,7 +1079,7 @@ namespace detail {
             if (const int e = this->reader_next_line()) {
                 return e < 0 ? e : -1;
             }
-            const int e = this->cfb.open(this->meta_line.filename);
+            const int e = this->cfb->open(this->meta_line.filename);
             return (e < 0) ? e : 0;
         }
 
