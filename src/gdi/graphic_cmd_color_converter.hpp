@@ -232,8 +232,6 @@ struct GraphicCmdColorDistributor<RngByBpp, Dec, false, false, false, false>
 };
 
 
-namespace {
-
 template<class CoreAccess>
 struct GraphicColorConverterBase : CoreAccess
 {
@@ -267,8 +265,6 @@ struct GraphicColorConverter
 
 template<class Derived, class CoreAccess = GraphicColorConverter>
 using GraphicConverterBase = GraphicBase<Derived, GraphicApi, CoreAccess>;
-
-}
 
 }
 

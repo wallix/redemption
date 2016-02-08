@@ -620,6 +620,8 @@ public:
     }
 
     void possible_active_window_change() override {}
+
+    using RDPSerializer::set_pointer;
 };  // struct GraphicToFile
 
 #endif

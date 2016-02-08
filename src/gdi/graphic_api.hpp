@@ -187,44 +187,42 @@ protected:
 };
 
 
-namespace {
-    struct GraphicCoreAccess
-    {
-        template<class Derived, class... Ts>
-        static void draw(Derived & derived, Ts const & ... args) {
-            derived.draw_impl(args...);
-        }
+struct GraphicCoreAccess
+{
+    template<class Derived, class... Ts>
+    static void draw(Derived & derived, Ts const & ... args) {
+        derived.draw_impl(args...);
+    }
 
-        template<class Derived>
-        static auto color_converter(Derived const & derived)
-        -> decltype(derived.color_converter_impl()) {
-            return derived.color_converter_impl();
-        }
+    template<class Derived>
+    static auto color_converter(Derived const & derived)
+    -> decltype(derived.color_converter_impl()) {
+        return derived.color_converter_impl();
+    }
 
-        template<class Derived, class Tag, class... Ts>
-        static void graphic_proxy_func(Derived & derived, Tag tag, Ts const & ... args) {
-            derived.graphic_proxy_func_impl(tag, args...);
-        }
+    template<class Derived, class Tag, class... Ts>
+    static void graphic_proxy_func(Derived & derived, Tag tag, Ts const & ... args) {
+        derived.graphic_proxy_func_impl(tag, args...);
+    }
 
-        template<class Derived>
-        static auto get_gd_proxy(Derived & derived)
-        -> decltype(derived.get_gd_proxy_impl()) {
-            return derived.get_gd_proxy_impl();
-        }
+    template<class Derived>
+    static auto get_gd_proxy(Derived & derived)
+    -> decltype(derived.get_gd_proxy_impl()) {
+        return derived.get_gd_proxy_impl();
+    }
 
-        template<class Derived>
-        static auto get_gd_list(Derived & derived)
-        -> decltype(derived.get_gd_list_impl()) {
-            return derived.get_gd_list_impl();
-        }
+    template<class Derived>
+    static auto get_gd_list(Derived & derived)
+    -> decltype(derived.get_gd_list_impl()) {
+        return derived.get_gd_list_impl();
+    }
 
-        template<class Derived, class Gd>
-        static auto to_graphic_facade(Derived & derived, Gd & gd)
-        -> decltype(derived.to_graphic_facade_impl(gd)) {
-            return derived.to_graphic_facade_impl(gd);
-        }
-    };
-}
+    template<class Derived, class Gd>
+    static auto to_graphic_facade(Derived & derived, Gd & gd)
+    -> decltype(derived.to_graphic_facade_impl(gd)) {
+        return derived.to_graphic_facade_impl(gd);
+    }
+};
 
 template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
 class GraphicBase : public InterfaceBase

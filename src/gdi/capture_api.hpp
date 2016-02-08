@@ -58,28 +58,26 @@ struct CaptureApi : private noncopyable
 };
 
 
-namespace {
-    struct CaptureCoreAccess
-    {
-        template<class Derived>
-        static auto get_capture_proxy(Derived & derived)
-        -> decltype(derived.get_capture_proxy_impl()) {
-            return derived.get_capture_proxy_impl();
-        }
+struct CaptureCoreAccess
+{
+    template<class Derived>
+    static auto get_capture_proxy(Derived & derived)
+    -> decltype(derived.get_capture_proxy_impl()) {
+        return derived.get_capture_proxy_impl();
+    }
 
-        template<class Derived>
-        static auto get_capture_list(Derived & derived)
-        -> decltype(derived.get_capture_list_impl()) {
-            return derived.get_capture_list_impl();
-        }
+    template<class Derived>
+    static auto get_capture_list(Derived & derived)
+    -> decltype(derived.get_capture_list_impl()) {
+        return derived.get_capture_list_impl();
+    }
 
-        template<class Derived, class Gd>
-        static auto to_capture_facade(Derived & derived, Gd & cap)
-        -> decltype(derived.to_capture_facade_impl(cap)) {
-            return derived.to_capture_facade_impl(cap);
-        }
-    };
-}
+    template<class Derived, class Gd>
+    static auto to_capture_facade(Derived & derived, Gd & cap)
+    -> decltype(derived.to_capture_facade_impl(cap)) {
+        return derived.to_capture_facade_impl(cap);
+    }
+};
 
 
 template<class Derived, class InterfaceBase = CaptureApi, class CoreAccess = CaptureCoreAccess>
