@@ -377,8 +377,6 @@ struct GraphicProx : GraphicBase<Derived, InterfaceBase, CoreAccess>
     using base_type = GraphicProx;
     friend CoreAccess;
 
-    friend CoreAccess;
-
     struct draw_tag {};
     struct set_tag {};
     struct sync_tag {};

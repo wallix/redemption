@@ -28,6 +28,8 @@
 
 #include "array_view.hpp"
 
+#include <string>
+
 namespace {
 
 int test_ambiguous(array_const_char) { return 1; }
@@ -47,4 +49,7 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     BOOST_CHECK_EQUAL(test_ambiguous(au8), 3);
 
     BOOST_CHECK_EQUAL(make_array_view(a8).size(), 3);
+
+    std::string s;
+    BOOST_CHECK_EQUAL(test_ambiguous(s), 1);
 }

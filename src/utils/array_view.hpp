@@ -21,8 +21,10 @@
 #ifndef REDEMPTION_UTILS_ARRAY_VIEW_HPP
 #define REDEMPTION_UTILS_ARRAY_VIEW_HPP
 
-#include <cstddef>
 #include <type_traits>
+
+#include <cstddef>
+#include <cassert>
 
 template<class T>
 struct array_view
@@ -41,8 +43,8 @@ struct array_view
     {}
 
     template<class Cont, class = typename std::enable_if<
-        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::type
-    >>
+        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::value
+    >::type>
     constexpr array_view(Cont & cont)
     : array_view(cont.data(), cont.size())
     {}
@@ -63,6 +65,9 @@ struct array_view
     type * end() { return this->p + this->sz; }
     constexpr type const * begin() const { return this->p; }
     constexpr type const * end() const { return this->p + this->sz; }
+
+    type & operator[](std::size_t i) { assert(i < this->size()); return this->p[i]; }
+    type const & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
 
 private:
     type * p;
@@ -86,8 +91,8 @@ struct array_view<T const>
     {}
 
     template<class Cont, class = typename std::enable_if<
-        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::type
-    >>
+        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::value
+    >::type>
     constexpr array_view(Cont & cont)
     : array_view(cont.data(), cont.size())
     {}
@@ -122,6 +127,8 @@ struct array_view<T const>
 
     constexpr type * begin() const { return this->p; }
     constexpr type * end() const { return this->p + this->sz; }
+
+    type & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
 
 private:
     type * p;

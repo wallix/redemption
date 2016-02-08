@@ -101,15 +101,16 @@ class Capture final
         {}
 
         void attach_apis(ApisRegister & api_register, const Inifile & ini) {
-            api_register.capture_probe_list.push_back(this->kc);
             api_register.capture_list.push_back(this->kc);
             api_register.input_kbd_list.push_back(this->kc);
+            api_register.capture_probe_list.push_back(this->kc);
         }
 
         void enable_keyboard_input_mask(bool enable) {
             this->kc.enable_keyboard_input_mask(enable);
         }
     };
+
 
     struct NewCapture : gdi::CaptureDispatcher<NewCapture>
     {
