@@ -239,14 +239,6 @@ struct InMetaSequenceTransport : public Transport
                     while (requested_size > 0) {
                         // Check how much we have decoded
                         if (!this->raw_size) {
-                            // Buffer is empty. Read a chunk from file
-                            /*
-                             i f (-1 == ::do_chunk_read*(this)) {
-                                 return -1;
-                        }
-                        */
-                            // TODO: avoid reading size directly into an integer, performance enhancement is minimal
-                            // and it's not portable because of endianness issue => read in a buffer and decode by hand
                             unsigned char tmp_buf[4] = {};
                             if (const int err = this->raw_read(tmp_buf, 4)) {
                                 return err;
@@ -413,28 +405,6 @@ struct InMetaSequenceTransport : public Transport
                 }
                 return 0;
             }
-
-            int decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-            {
-                int safe_size = *dst_sz;
-                int remaining_size = 0;
-
-                /* allows reusing of ectx for multiple encryption cycles */
-                if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                    return -1;
-                }
-                if (EVP_DecryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                    return -1;
-                }
-                if (EVP_DecryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                    return -1;
-                }
-                *dst_sz = safe_size + remaining_size;
-                return 0;
-            }
         } * cfb;
 
         struct buf_meta_t {
@@ -480,8 +450,33 @@ struct InMetaSequenceTransport : public Transport
                 return len - remaining_len;
             }
                 
-            int decrypt_decrypt_open(unsigned char * trace_key)
+            int decrypt_decrypt_open(const char * meta_filename)
             {
+                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+                unsigned char derivator[DERIVATOR_LENGTH];
+                size_t len = 0;
+                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, len));
+                SslSha256 sha256;
+                sha256.update(base, len);
+                uint8_t tmp[SHA256_DIGEST_LENGTH];
+                sha256.final(tmp, SHA256_DIGEST_LENGTH);
+                memcpy(derivator, tmp, DERIVATOR_LENGTH);
+                
+                unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+                unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+                memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+                memcpy(tmp_derivation + DERIVATOR_LENGTH, 
+                       this->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+                SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+                memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+                
+                this->file_close();
+                this->file_fd = ::open(meta_filename, O_RDONLY);
+                int err = this->file_fd;
+                if (err < 0) {
+                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                }
+            
                 ::memset(this->decrypt_buf, 0, sizeof(this->decrypt_buf));
                 ::memset(&this->decrypt_ectx, 0, sizeof(this->decrypt_ectx));
 
@@ -492,11 +487,13 @@ struct InMetaSequenceTransport : public Transport
                 this->decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
                 unsigned char tmp_buf[40];
-                ssize_t err = this->file_read(tmp_buf, 40);
-                if (err < ssize_t(40)){
-                    return err < 0 ? err : -1;
+                {
+                
+                    ssize_t err = this->file_read(tmp_buf, 40);
+                    if (err < ssize_t(40)){
+                        return err < 0 ? err : -1;
+                    }
                 }
-
                 // Check magic
                 const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
                 if (magic != WABCRYPTOFILE_MAGIC) {
@@ -535,123 +532,139 @@ struct InMetaSequenceTransport : public Transport
                 return 0;
             }
 
-            ssize_t decrypt_decrypt_read(void * data, size_t len)
+            ssize_t read(void * data, size_t len)
             {
-                if (this->decrypt_state & CF_EOF) {
-                    //printf("cf EOF\n");
-                    return 0;
-                }
-
-                unsigned int requested_size = len;
-
-                while (requested_size > 0) {
-                    // Check how much we have decoded
-                    if (!this->decrypt_raw_size) {
-                        // Buffer is empty. Read a chunk from file
-                        /*
-                         i f (-1 == ::do_chunk_read*(this)) {
-                             return -1;
+                if (this->encryption){
+                    if (this->decrypt_state & CF_EOF) {
+                        //printf("cf EOF\n");
+                        return 0;
                     }
-                    */
-                        // TODO: avoid reading size directly into an integer, performance enhancement is minimal
-                        // and it's not portable because of endianness issue => read in a buffer and decode by hand
-                        unsigned char tmp_buf[4] = {};
-                        {
-                            ssize_t err = this->file_read(tmp_buf, 4);
-                            if (err < ssize_t(4)){
-                                return (err < 0 ? err : -1);
-                            }
-                        }
-                        uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
 
-                        if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                            this->decrypt_state |= CF_EOF;
-                            this->decrypt_pos = 0;
-                            this->decrypt_raw_size = 0;
+                    unsigned int requested_size = len;
+
+                    while (requested_size > 0) {
+                        // Check how much we have decoded
+                        if (!this->decrypt_raw_size) {
+                            // Buffer is empty. Read a chunk from file
+                            /*
+                             i f (-1 == ::do_chunk_read*(this)) {
+                                 return -1;
                         }
-                        else {
-                            if (ciphered_buf_size > this->decrypt_MAX_CIPHERED_SIZE) {
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
-                                return -1;
+                        */
+                            // TODO: avoid reading size directly into an integer, performance enhancement is minimal
+                            // and it's not portable because of endianness issue => read in a buffer and decode by hand
+                            unsigned char tmp_buf[4] = {};
+                            {
+                                ssize_t err = this->file_read(tmp_buf, 4);
+                                if (err < ssize_t(4)){
+                                    return (err < 0 ? err : -1);
+                                }
+                            }
+                            uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+
+                            if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                                this->decrypt_state |= CF_EOF;
+                                this->decrypt_pos = 0;
+                                this->decrypt_raw_size = 0;
                             }
                             else {
-                                uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-                                //char ciphered_buf[ciphered_buf_size];
-                                unsigned char ciphered_buf[65536];
-                                //char compressed_buf[compressed_buf_size];
-                                unsigned char compressed_buf[65536];
-                                {
-                                    ssize_t err = this->file_read(ciphered_buf, ciphered_buf_size);
-                                    if (err < ssize_t(ciphered_buf_size)){
-                                        return (err < 0 ? err : -1);
-                                    }
+                                if (ciphered_buf_size > this->decrypt_MAX_CIPHERED_SIZE) {
+                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                                    return -1;
                                 }
-                                
-                                {
-                                    int safe_size = compressed_buf_size;
-                                    int remaining_size = 0;
+                                else {
+                                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+                                    //char ciphered_buf[ciphered_buf_size];
+                                    unsigned char ciphered_buf[65536];
+                                    //char compressed_buf[compressed_buf_size];
+                                    unsigned char compressed_buf[65536];
+                                    {
+                                        ssize_t err = this->file_read(ciphered_buf, ciphered_buf_size);
+                                        if (err < ssize_t(ciphered_buf_size)){
+                                            return (err < 0 ? err : -1);
+                                        }
+                                    }
+                                    
+                                    {
+                                        int safe_size = compressed_buf_size;
+                                        int remaining_size = 0;
 
-                                    /* allows reusing of ectx for multiple encryption cycles */
-                                    if (EVP_DecryptInit_ex(&this->decrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                                        return -1;
+                                        /* allows reusing of ectx for multiple encryption cycles */
+                                        if (EVP_DecryptInit_ex(&this->decrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+                                            return -1;
+                                        }
+                                        if (EVP_DecryptUpdate(&this->decrypt_ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
+                                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+                                            return -1;
+                                        }
+                                        if (EVP_DecryptFinal_ex(&this->decrypt_ectx, compressed_buf + safe_size, &remaining_size) != 1){
+                                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+                                            return -1;
+                                        }
+                                        compressed_buf_size = safe_size + remaining_size;
                                     }
-                                    if (EVP_DecryptUpdate(&this->decrypt_ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
-                                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                                        return -1;
+
+                                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                                    const snappy_status status = snappy_uncompress(
+                                            reinterpret_cast<char *>(compressed_buf),
+                                            compressed_buf_size, this->decrypt_buf, &chunk_size);
+
+                                    switch (status)
+                                    {
+                                        case SNAPPY_OK:
+                                            break;
+                                        case SNAPPY_INVALID_INPUT:
+                                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
+                                            return -1;
+                                        case SNAPPY_BUFFER_TOO_SMALL:
+                                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                                            return -1;
+                                        default:
+                                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
+                                            return -1;
                                     }
-                                    if (EVP_DecryptFinal_ex(&this->decrypt_ectx, compressed_buf + safe_size, &remaining_size) != 1){
-                                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                                        return -1;
-                                    }
-                                    compressed_buf_size = safe_size + remaining_size;
+
+                                    this->decrypt_pos = 0;
+                                    // When reading, raw_size represent the current chunk size
+                                    this->decrypt_raw_size = chunk_size;
                                 }
+                            }
 
-                                size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                                const snappy_status status = snappy_uncompress(
-                                        reinterpret_cast<char *>(compressed_buf),
-                                        compressed_buf_size, this->decrypt_buf, &chunk_size);
-
-                                switch (status)
-                                {
-                                    case SNAPPY_OK:
-                                        break;
-                                    case SNAPPY_INVALID_INPUT:
-                                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
-                                        return -1;
-                                    case SNAPPY_BUFFER_TOO_SMALL:
-                                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                                        return -1;
-                                    default:
-                                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
-                                        return -1;
-                                }
-
-                                this->decrypt_pos = 0;
-                                // When reading, raw_size represent the current chunk size
-                                this->decrypt_raw_size = chunk_size;
+                            // TODO: check that
+                            if (!this->decrypt_raw_size) { // end of file reached
+                                break;
                             }
                         }
-
-                        // TODO: check that
-                        if (!this->decrypt_raw_size) { // end of file reached
-                            break;
+                        // remaining_size is the amount of data available in decoded buffer
+                        unsigned int remaining_size = this->decrypt_raw_size - this->decrypt_pos;
+                        // Check how much we can copy
+                        unsigned int copiable_size = MIN(remaining_size, requested_size);
+                        // Copy buffer to caller
+                        ::memcpy(static_cast<char*>(data) + (len - requested_size), this->decrypt_buf + this->decrypt_pos, copiable_size);
+                        this->decrypt_pos      += copiable_size;
+                        requested_size -= copiable_size;
+                        // Check if we reach the end
+                        if (this->decrypt_raw_size == this->decrypt_pos) {
+                            this->decrypt_raw_size = 0;
                         }
                     }
-                    // remaining_size is the amount of data available in decoded buffer
-                    unsigned int remaining_size = this->decrypt_raw_size - this->decrypt_pos;
-                    // Check how much we can copy
-                    unsigned int copiable_size = MIN(remaining_size, requested_size);
-                    // Copy buffer to caller
-                    ::memcpy(static_cast<char*>(data) + (len - requested_size), this->decrypt_buf + this->decrypt_pos, copiable_size);
-                    this->decrypt_pos      += copiable_size;
-                    requested_size -= copiable_size;
-                    // Check if we reach the end
-                    if (this->decrypt_raw_size == this->decrypt_pos) {
-                        this->decrypt_raw_size = 0;
-                    }
+                    return len - requested_size;
                 }
-                return len - requested_size;
+                else {
+                    return this->file_read(data, len);
+                }
+                return -1;
+            }
+
+            int file_close()
+            {
+                if (-1 != this->file_fd) {
+                    const int ret = ::close(this->file_fd);
+                    this->file_fd = -1;
+                    return ret;
+                }
+                return 0;
             }
                 
         } * buf_meta;
@@ -680,17 +693,6 @@ public:
     private:
 
 
-
-        int buf_meta_file_close()
-        {
-            if (-1 != this->buf_meta->file_fd) {
-                const int ret = ::close(this->buf_meta->file_fd);
-                this->buf_meta->file_fd = -1;
-                return ret;
-            }
-            return 0;
-        }
-
     public:
 
         int close()
@@ -698,14 +700,7 @@ public:
 
         int reader_read(int err)
         {
-            ssize_t ret = 0;
-            if (this->encryption){
-                ret = this->buf_meta->decrypt_decrypt_read(this->rl.buf, sizeof(this->rl.buf));
-            }
-            else {
-                ret = this->buf_meta->file_read(this->rl.buf, sizeof(this->rl.buf));
-
-            }
+            ssize_t ret = this->buf_meta->read(this->rl.buf, sizeof(this->rl.buf));
             TODO("test on EINTR suspicious here, check that");
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
@@ -771,32 +766,7 @@ public:
         , verbose(verbose)
         {
             if (encryption){
-                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-                unsigned char derivator[DERIVATOR_LENGTH];
-
-                size_t len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, len));
-                SslSha256 sha256;
-                sha256.update(base, len);
-                uint8_t tmp[SHA256_DIGEST_LENGTH];
-                sha256.final(tmp, SHA256_DIGEST_LENGTH);
-                memcpy(derivator, tmp, DERIVATOR_LENGTH);
-                
-                unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-                unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-                memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-                memcpy(tmp_derivation + DERIVATOR_LENGTH, 
-                       this->buf_meta->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-                SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-                memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
-                
-                this->buf_meta_file_close();
-                this->buf_meta->file_fd = ::open(meta_filename, O_RDONLY);
-                int err = this->buf_meta->file_fd;
-                if (err < 0) {
-                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-                }
-                if (this->buf_meta->decrypt_decrypt_open(trace_key) < 0){
+                if (this->buf_meta->decrypt_decrypt_open(meta_filename) < 0){
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
 
@@ -841,7 +811,7 @@ public:
             }
             else {
                
-                this->buf_meta_file_close();
+                this->buf_meta->file_close();
                 this->buf_meta->file_fd = ::open(meta_filename, O_RDONLY);
                 int err = this->buf_meta->file_fd;
                 if (err < 0) {
@@ -891,7 +861,7 @@ public:
 
         ~in_meta_sequence_buf(){
             this->cfb->file_close();
-            this->buf_meta_file_close();
+            this->buf_meta->file_close();
         }
 
         ssize_t read(void * data, size_t len)
