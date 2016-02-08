@@ -335,7 +335,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
                     LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
                 }
             }
-            if (groupid){
+            if (groupid >= 0) {
                 if (chown(directory, static_cast<uid_t>(-1), groupid) < 0){
                     if (verbose >= 255) {
                         LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);

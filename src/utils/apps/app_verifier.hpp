@@ -436,14 +436,15 @@ static inline bool check_file(const char * file_path, bool is_checksumed,
     return true;
 }
 
-static inline bool check_file(const char * file_path, bool is_status_enabled,
+static inline bool check_file(const char * file_path, bool is_checksumed, bool is_status_enabled,
         detail::MetaLine const & meta_line, size_t len_to_check,
         CryptoContext * cctx) {
-    const bool is_checksumed = true;
+//    const bool is_checksumed = true;
     return check_file(file_path, is_checksumed, cctx->get_hmac_key(),
         sizeof(cctx->get_hmac_key()), len_to_check, is_status_enabled, meta_line);
 }
 
+/*
 static inline bool check_file(const char * file_path, bool is_status_enabled,
         detail::MetaLine const & meta_line, size_t len_to_check) {
     const bool      is_checksumed = false;
@@ -452,6 +453,7 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
     return check_file(file_path, is_checksumed, crypto_key, key_len,
         len_to_check, is_status_enabled, meta_line);
 }
+*/
 
 bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
@@ -494,7 +496,7 @@ bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
 
         while (detail::read_meta_file(reader, meta_header, meta_line_wrm) !=
                ERR_TRANSPORT_NO_MORE_DATA) {
-            if (check_file(meta_line_wrm.filename, is_status_enabled,
+            if (check_file(meta_line_wrm.filename, is_checksumed, is_status_enabled,
                            meta_line_wrm, len_to_check, cctx) == false) {
                 result = false;
                 break;

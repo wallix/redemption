@@ -2123,6 +2123,8 @@ public:
                     LOG(LOG_INFO,
                         "FileSystemDriveManager::RemoveSessionProbeDrive: Drive removed.");
                 }
+
+                break;
             }
         }
     }

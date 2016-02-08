@@ -1,6 +1,23 @@
 /*
- * 
- */
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   Product name: redemption, a FLOSS RDP proxy
+   Copyright (C) Wallix 2010-2013
+   Author(s): Clément Moroldo
+
+*/
 
 #ifndef FORM_QT_HPP
 #define FORM_QT_HPP
@@ -26,7 +43,8 @@
 #include <QtGui/QClipboard>
 #include <QtGui/QTabWidget>
 #include <QtGui/QGridLayout>
-#include <QtGui/QDockWidget>
+#include <QtGui/QComboBox>
+#include <QtGui/QCheckBox>
 
 
 
@@ -47,6 +65,16 @@ public:
     QPushButton          _buttonSave;
     QPushButton          _buttonCancel;
     QTabWidget         * _tabs;
+    QComboBox            _bppComboBox;
+    QComboBox            _ResolutionComboBox;
+    QCheckBox            _perfCheckBox;
+    QComboBox            _languageComboBox;
+    QFormLayout        * _layoutView;
+    QFormLayout        * _layoutKeyboard;
+    QLabel               _labelBpp;
+    QLabel               _labelResolution;
+    QLabel               _labelPerf;
+    QLabel               _labelLanguage;
 
     
     DialogOptions_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -61,6 +89,15 @@ public:
         , _buttonSave("Save", this)
         , _buttonCancel("Cancel", this)
         , _tabs(nullptr)
+        , _bppComboBox(this)
+        , _ResolutionComboBox(this)
+        , _perfCheckBox(this)
+        , _languageComboBox(this)
+        , _layoutView(nullptr)
+        , _labelBpp("Color depth :", this)
+        , _labelResolution("Resolution :", this)
+        , _labelPerf("Disable wallaper :", this)
+        , _labelLanguage("Keyboard Language :", this)
     {
         this->setWindowTitle("Options");
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -75,11 +112,61 @@ public:
         this->_keyboardTab = new QWidget(this);
         this->_tabs = new QTabWidget(this);
         
+        
         const QString strView("View");
+        this->_layoutView = new QFormLayout(this->_viewTab);
+        
+        this->_bppComboBox.addItem("32", 32);
+        this->_bppComboBox.addItem("24", 24);
+        this->_bppComboBox.addItem("16", 16);
+        this->_bppComboBox.addItem("15", 15);
+        int indexBpp = this->_bppComboBox.findData(this->_front->_info.bpp);
+        if ( indexBpp != -1 ) { 
+            this->_bppComboBox.setCurrentIndex(indexBpp);
+        }
+        this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(new QLabel("", this));
+        this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
+        
+        this->_ResolutionComboBox.addItem( "640 * 480", 640);
+        this->_ResolutionComboBox.addItem( "800 * 600", 800);
+        this->_ResolutionComboBox.addItem("1024 * 768", 1024);
+        this->_ResolutionComboBox.addItem("1600 * 900", 1600);
+        int indexResolution = this->_ResolutionComboBox.findData(this->_front->_info.width);
+        if ( indexResolution != -1 ) { 
+            this->_ResolutionComboBox.setCurrentIndex(indexResolution);
+        }
+        this->_ResolutionComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(new QLabel("", this));
+        this->_layoutView->addRow(&(this->_labelResolution), &(this->_ResolutionComboBox));
+        
+        if (this->_front->_info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
+            this->_perfCheckBox.setCheckState(Qt::Checked);
+        }
+        this->_layoutView->addRow(new QLabel("", this));
+        this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
+        
+        this->_viewTab->setLayout(this->_layoutView);
         this->_tabs->addTab(this->_viewTab, strView);
         
+        
         const QString strKeyboard("Keyboard");
+        this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
+        for (int i = 0; i < Qt_ScanCode_KeyMap::KEYLAYOUTS_LIST_SIZE; i++) {
+            this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
+        }
+        int indexLanguage = this->_languageComboBox.findData(this->_front->_info.keylayout);
+        if ( indexLanguage != -1 ) { 
+            this->_languageComboBox.setCurrentIndex(indexLanguage);
+        }
+        this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutKeyboard->addRow(new QLabel("", this));
+        this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
+        
+        this->_keyboardTab->setLayout(this->_layoutKeyboard);
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
+        
+        
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
         
         
@@ -95,8 +182,8 @@ public:
  
         this->_buttonCancel.setToolTip(this->_buttonCancel.text());
         this->_buttonCancel.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
-        this->QObject::connect(&(this->_buttonCancel)   , SIGNAL (released()), this, SLOT (cancelReleased()));
+        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
+        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (released()), this, SLOT (cancelReleased()));
         this->_buttonCancel.setFocusPolicy(Qt::StrongFocus);
         this->_layout->addWidget(&(this->_buttonCancel), 11, 3);
         
@@ -118,6 +205,23 @@ public Q_SLOTS:
     void savePressed() {}
     
     void saveReleased() {
+        //this->_front->_info.console_session = 0;
+        //this->_front->_info.brush_cache_code = 0;
+        this->_front->_info.bpp = this->_bppComboBox.currentText().toInt();
+        this->_front->_imageFormatRGB  = this->_front->bpp_to_QFormat(this->_front->_info.bpp, false);
+        this->_front->_imageFormatARGB = this->_front->bpp_to_QFormat(this->_front->_info.bpp, true);
+        std::string delimiter = " * ";
+        std::string resolution( this->_ResolutionComboBox.currentText().toStdString());
+        int pos(resolution.find(delimiter));
+        this->_front->_info.width  = std::stoi(resolution.substr(0, pos));
+        this->_front->_info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        if (this->_perfCheckBox.isChecked()) {
+            this->_front->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        } else {
+            this->_front->_info.rdp5_performanceflags = 0;
+        }
+        this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        
         this->close();
     }
     
@@ -164,7 +268,7 @@ public:
         , _IPField("", this)
         , _PWDField("", this)
         , _portField("", this)
-        , _errorLabel(   QString(""), this)
+        , _errorLabel(   QString(""            ), this)
         , _userNameLabel(QString("User name : "), this)         
         , _IPLabel(      QString("IP serveur :"), this)   
         , _PWDLabel(     QString("Password :  "), this)   
@@ -172,7 +276,7 @@ public:
         , _buttonConnexion("Connexion", this)
         , _buttonOptions("Options", this)
     {
-        this->setWindowTitle("Desktop Linker");
+        this->setWindowTitle("Client RDP");
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
         
@@ -207,9 +311,7 @@ public:
         this->move(centerW, centerH);
     }
     
-    ~Form_Qt() {
-        this->_front->closeFromForm();
-    }
+    ~Form_Qt() {}
     
     void set_ErrorMsg(std::string str) {
         this->_errorLabel.clear();
@@ -288,6 +390,10 @@ public:
     QColor               _penColor;
     QPixmap              _cache;
     QPainter             _cache_painter;
+    const int            _width;
+    const int            _height;
+    bool                 _connexionLasted;
+    const int            _buttonHeight;
     
     
     Screen_Qt (Front_Qt_API * front)
@@ -299,15 +405,21 @@ public:
     , _penColor(Qt::black)
     , _cache(this->_front->_info.width, this->_front->_info.height)
     , _cache_painter(&(this->_cache))
+    , _width(this->_front->_info.width)
+    , _height(this->_front->_info.height)
+    , _connexionLasted(false)
+    , _buttonHeight(20)
     {
-        this->_cache_painter.fillRect(0, 0, this->_front->_info.width, this->_front->_info.height, QColor(0, 0, 0, 0));
-        this->setUpdate();
+        this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
+        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
         this->setMouseTracking(true);
         this->installEventFilter(this);
-        this->setAttribute(Qt::WA_NoSystemBackground, true);
+        //this->setAttribute(Qt::WA_NoSystemBackground, true);
         this->setAttribute(Qt::WA_DeleteOnClose);
+        std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
+        this->setWindowTitle(QString(title.c_str())); 
     
-        QRect rectCtrlAltDel(QPoint(0, this->_front->_info.height+1),QSize(this->_front->_info.width/3, 20));
+        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
@@ -315,7 +427,7 @@ public:
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectRefresh(QPoint(this->_front->_info.width/3, this->_front->_info.height+1),QSize(this->_front->_info.width/3, 20));
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
         this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
         this->_buttonRefresh.setGeometry(rectRefresh);
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
@@ -323,7 +435,7 @@ public:
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
         this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
         
-        QRect rectDisconnexion(QPoint(((this->_front->_info.width/3)*2), this->_front->_info.height+1),QSize(this->_front->_info.width-((this->_front->_info.width/3)*2), 20));
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), this->_buttonHeight));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
         this->_buttonDisconnexion.setGeometry(rectDisconnexion);
         this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
@@ -332,10 +444,21 @@ public:
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
         
         this->setFocusPolicy(Qt::StrongFocus);
+        
+        QDesktopWidget* desktop = QApplication::desktop();
+        int centerW = (desktop->width()/2)  - (this->_width/2);
+        int centerH = (desktop->height()/2) - ((this->_height+20)/2);
+        this->move(centerW, centerH);
     }
     
     ~Screen_Qt() {
-        this->_front->closeFromScreen();
+        if (!this->_connexionLasted) {
+            this->_front->closeFromScreen();
+        }
+    }
+    
+    void errorConnexion() {
+        this->_connexionLasted = true;
     }
     
     QPainter & paintCache() {
@@ -361,15 +484,6 @@ public:
         return &(this->_cache);
     }
     
-    void setUpdate() {
-        std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
-        this->setWindowTitle(QString(title.c_str()));
-        this->setFixedSize(this->_front->_info.width, this->_front->_info.height+20);   
-        QDesktopWidget* desktop = QApplication::desktop();
-        int centerW = (desktop->width()/2)  - (this->_front->_info.width/2);
-        int centerH = (desktop->height()/2) - ((this->_front->_info.height+20)/2);
-        this->move(centerW, centerH);
-    }
     
     void setPenColor(QColor color) {
         this->_penColor = color; 
@@ -443,6 +557,7 @@ public:
     SocketTransport * _sck;
     int               _client_sck;
     QClipboard      * _clipboard;
+    bool              _toUpDateLocalClipboard;
      
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -453,13 +568,16 @@ public:
     , _sck(nullptr)
     , _client_sck(0)
     , _clipboard(nullptr)
+    , _toUpDateLocalClipboard(true)
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(send_clipboard()));
     }
     
     ~Connector_Qt() {
+        this->_clipboard = nullptr;
         this->drop_connexion();
+        
     }
     
     void drop_connexion() {
@@ -537,9 +655,9 @@ public:
         //mod_rdp_params.enable_krb                      = false;
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false; 
-        mod_rdp_params.enable_mem3blt                  = false;
+        mod_rdp_params.enable_mem3blt                  = true;
         mod_rdp_params.enable_bitmap_update            = true;
-        mod_rdp_params.enable_new_pointer              = false;
+        mod_rdp_params.enable_new_pointer              = true;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;
         //mod_rdp_params.disconnect_on_logon_user_change = false;
@@ -547,11 +665,13 @@ public:
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
-        
+        std::string allow_channels = "*";
+        mod_rdp_params.allow_channels                    = &allow_channels;        
         LCGRandom gen(0); // To always get the same client random, in tests
 
         try {
             this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+            this->_front->_to_server_sender._callback = this->_callback;
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
@@ -560,7 +680,7 @@ public:
             const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is closed.");
             std::cout << errorMsg << std::endl;
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-            
+            this->_front->dropScreen();
             this->_front->disconnect(labelErrorMsg);
         }
     }
@@ -573,7 +693,7 @@ public Q_SLOTS:
     
     void send_clipboard() {
         std::cout << "modifying clipboard" << std::endl;
-        if (this->_callback != nullptr) {
+        if (this->_callback != nullptr && this->_toUpDateLocalClipboard) {
             //this->_front->send_Cliboard(front_channel_name, chunk, length, flags);
         }
         
