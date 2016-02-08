@@ -515,18 +515,18 @@ private:
     void getDeadKeys() {
         
         switch (scanCode) {
-            case Qt::Key_Dead_Circumflex       : this->scanCode = '^'; this->_deadKeys = true; break; //  ^
-            case Qt::Key_Dead_Grave            : this->scanCode = '`'; this->_deadKeys = true; break; //  ` grave
-            case Qt::Key_Dead_Tilde            : this->scanCode = '~'; this->_deadKeys = true; break; //
+            case Qt::Key_Dead_Circumflex       : this->scanCode = '^';  this->_deadKeys = true; break; //  ^
+            case Qt::Key_Dead_Grave            : this->scanCode = '`';  this->_deadKeys = true; break; //  ` grave
+            case Qt::Key_Dead_Tilde            : this->scanCode = '~';  this->_deadKeys = true; break; //
             case Qt::Key_Dead_Diaeresis        : this->scanCode = 0xA8; this->_deadKeys = true; break; // ¨
-            //case Qt::Key_Dead_Acute            : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Macron           : this->scanCode = ''; this->_deadKeys = true; break; //
+            case Qt::Key_Dead_Acute            : this->scanCode = 0xB4; this->_deadKeys = true; break; //
+            case Qt::Key_Dead_Macron           : this->scanCode = 0xAF; this->_deadKeys = true; break; //
+            case Qt::Key_Dead_Cedilla          : this->scanCode = 0xB8; this->_deadKeys = true; break; //
             //case Qt::Key_Dead_Breve            : this->scanCode = ''; this->_deadKeys = true; break; //
             //case Qt::Key_Dead_Abovedot         : this->scanCode = ''; this->_deadKeys = true; break; // 
             //case Qt::Key_Dead_Abovering        : this->scanCode = ''; this->_deadKeys = true; break; //
             //case Qt::Key_Dead_Doubleacute      : this->scanCode = ''; this->_deadKeys = true; break; //
             //case Qt::Key_Dead_Caron            : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Cedilla          : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Ogonek           : this->scanCode = ''; this->_deadKeys = true; break;
             //case Qt::Key_Dead_Iota             : this->scanCode = ''; this->_deadKeys = true; break;
             //Case Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
@@ -572,7 +572,6 @@ private:
         }
         try {
             this->scanCode = this->_customNoExtended.at(this->scanCode);
-            std::cout << "loooool" << std::endl;
             return true;
         } catch (const std::exception & e) {
             return false;
@@ -658,7 +657,7 @@ public:
         }
         
         this->_layoutMods[NO_MOD                              ] = this->_keylayout_WORK->getnoMod();
-        this->_layoutMods[SHIFT_MOD                           ]  = this->_keylayout_WORK->getshift();           
+        this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout_WORK->getshift();           
         this->_layoutMods[ALTGR_MOD                           ] = this->_keylayout_WORK->getaltGr();               
         this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = this->_keylayout_WORK->getshiftAltGr();          
         this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = this->_keylayout_WORK->getcapslock_noMod();      

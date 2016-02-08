@@ -45,6 +45,10 @@
 #include <QtGui/QGridLayout>
 #include <QtGui/QComboBox>
 #include <QtGui/QCheckBox>
+#include <QtGui/QScrollArea>
+#include <QtGui/QTableWidget>
+#include <QtCore/QList>
+#include <QtCore/QStringList>
 
 
 
@@ -64,6 +68,7 @@ public:
     QGridLayout        * _layout;
     QPushButton          _buttonSave;
     QPushButton          _buttonCancel;
+    QPushButton        * _buttonDeleteKey;
     QTabWidget         * _tabs;
     QComboBox            _bppComboBox;
     QComboBox            _ResolutionComboBox;
@@ -75,6 +80,7 @@ public:
     QLabel               _labelResolution;
     QLabel               _labelPerf;
     QLabel               _labelLanguage;
+    QTableWidget       * _tableKeySetting;
 
     
     DialogOptions_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -88,6 +94,7 @@ public:
         , _layout(nullptr)
         , _buttonSave("Save", this)
         , _buttonCancel("Cancel", this)
+        , _buttonDeleteKey(nullptr)
         , _tabs(nullptr)
         , _bppComboBox(this)
         , _ResolutionComboBox(this)
@@ -98,6 +105,7 @@ public:
         , _labelResolution("Resolution :", this)
         , _labelPerf("Disable wallaper :", this)
         , _labelLanguage("Keyboard Language :", this)
+        , _tableKeySetting(nullptr)
     {
         this->setWindowTitle("Options");
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -113,6 +121,7 @@ public:
         this->_tabs = new QTabWidget(this);
         
         
+        // View tab
         const QString strView("View");
         this->_layoutView = new QFormLayout(this->_viewTab);
         
@@ -147,11 +156,14 @@ public:
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
         
         this->_viewTab->setLayout(this->_layoutView);
+        
         this->_tabs->addTab(this->_viewTab, strView);
         
         
+        // Keyboard tab
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
+
         for (int i = 0; i < Qt_ScanCode_KeyMap::KEYLAYOUTS_LIST_SIZE; i++) {
             this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
         }
@@ -160,12 +172,61 @@ public:
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
+        
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
+
+        const int columnNumber(4);
+        const int tableKeySettingMaxHeight((20*6)+11);
+        int rowNumber(9);
+        this->_tableKeySetting = new QTableWidget(0, columnNumber, this);
+        QList<QString> columnTitles;
+        columnTitles << "Qt key ID" << "Scan Code" << "ASCII8" << "Extended";
+        this->_tableKeySetting->setHorizontalHeaderLabels({columnTitles});
+        this->_tableKeySetting->setColumnWidth(0 ,85);
+        this->_tableKeySetting->setColumnWidth(1 ,84);
+        this->_tableKeySetting->setColumnWidth(2 ,84);
+        this->_tableKeySetting->setColumnWidth(3 ,74);
+        
+        
+        for (int i = 0; i < rowNumber; i++) {
+            this->_tableKeySetting->insertRow(i);
+            this->_tableKeySetting->setRowHeight(i ,20);
+            QComboBox * combo = new QComboBox(this->_tableKeySetting);
+            combo->addItem("No" , 0);
+            combo->addItem("Yes", 1);
+            this->_tableKeySetting->setCellWidget(i, 3, combo);
+        }
+        
+        this->_tableKeySetting->insertRow(rowNumber);
+        this->_tableKeySetting->setRowHeight(rowNumber ,20);
+        QComboBox * combo = new QComboBox(this->_tableKeySetting);
+        combo->addItem("No" , 0);
+        combo->addItem("Yes", 1);
+        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
+        
+        int tableKeySettingHeight((20*(rowNumber+2))+11);
+        
+        if (tableKeySettingHeight > tableKeySettingMaxHeight) {
+            tableKeySettingHeight = tableKeySettingMaxHeight;
+        }
+        
+        this->_tableKeySetting->setFixedSize((80*columnNumber)+40, tableKeySettingHeight);
+
+        this->_layoutKeyboard->addRow(this->_tableKeySetting);
         
         this->_keyboardTab->setLayout(this->_layoutKeyboard);
+        
+        
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
         
+        this->_buttonDeleteKey = new QPushButton("Delete Key", this->_keyboardTab);
+        QRect rectCtrlAltDel(QPoint(280, 226),QSize(90, 24));
+        this->_buttonDeleteKey->setToolTip(this->_buttonDeleteKey->text());
+        this->_buttonDeleteKey->setGeometry(rectCtrlAltDel);
+        this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(this->_buttonDeleteKey   , SIGNAL (pressed()) , this, SLOT (savePressed()));
+        this->QObject::connect(this->_buttonDeleteKey   , SIGNAL (released()), this, SLOT (savePressed()));
         
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
         
@@ -301,8 +362,8 @@ public:
         this->_buttonOptions.setToolTip(this->_buttonOptions.text());
         this->_buttonOptions.setGeometry(rectOptions);
         this->_buttonOptions.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonOptions)   , SIGNAL (pressed()),  this, SLOT (optionsPressed()));
-        this->QObject::connect(&(this->_buttonOptions)   , SIGNAL (released()), this, SLOT (optionsReleased()));
+        this->QObject::connect(&(this->_buttonOptions)     , SIGNAL (pressed()),  this, SLOT (optionsPressed()));
+        this->QObject::connect(&(this->_buttonOptions)     , SIGNAL (released()), this, SLOT (optionsReleased()));
         this->_buttonOptions.setFocusPolicy(Qt::StrongFocus);
         
         QDesktopWidget* desktop = QApplication::desktop();
@@ -575,9 +636,8 @@ public:
     }
     
     ~Connector_Qt() {
-        this->_clipboard = nullptr;
         this->drop_connexion();
-        
+        this->_clipboard = nullptr;
     }
     
     void drop_connexion() {

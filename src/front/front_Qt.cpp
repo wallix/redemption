@@ -278,7 +278,7 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
     }
     
     const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-    this->_screen->paintCache().drawImage(trect, qbitmap);//.rgbSwapped());
+    this->_screen->paintCache().drawImage(trect, qbitmap);
     this->_screen->repaint(); 
 }
 
@@ -315,7 +315,7 @@ void Front_Qt::draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert) 
         }
         
         QRect trect(drect.x, rowYCoord, mincx, mincy);
-        this->_screen->paintCache().drawImage(trect, qbitmap);//.rgbSwapped());
+        this->_screen->paintCache().drawImage(trect, qbitmap);
 
         row += rowsize;
         rowYCoord--;
@@ -595,12 +595,12 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
     //std::cout << "RDPScrBlt" << std::endl;
     
     const Rect drect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
-    if (drect.isempty()){ return; }
+    if (drect.isempty()) { 
+        return;
+    }
 
-    const signed int deltax = cmd.srcx - cmd.rect.x;
-    const signed int deltay = cmd.srcy - cmd.rect.y;
-    int srcx(drect.x + deltax);
-    int srcy(drect.y + deltay);
+    int srcx(drect.x + cmd.srcx - cmd.rect.x);
+    int srcy(drect.y + cmd.srcy - cmd.rect.y);
     
     switch (cmd.rop) {
             // +------+-------------------------------+
@@ -612,7 +612,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             this->_screen->repaint();
             break;
             // +------+-------------------------------+
-            // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
+            // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |        
             // |      | RPN: DSon                     |
             // +------+-------------------------------+
 
@@ -757,10 +757,10 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
     switch (cmd.rop) {
         case 0xB8: 
             {
-                uint8_t b(cmd.fore_color >> 16);
-                uint8_t g(cmd.fore_color >> 8);
-                uint8_t r(cmd.fore_color);
-                QColor fore(r, b, g);
+                //uint8_t b(cmd.fore_color >> 16);
+                //uint8_t g(cmd.fore_color >> 8);
+                //uint8_t r(cmd.fore_color);
+                QColor fore(this->u32_to_qcolor(cmd.fore_color));
 
                 const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
                 const int16_t mincy = 1;

@@ -287,6 +287,10 @@ public:
     
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
     
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
+
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
+    
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override;
     
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
@@ -338,10 +342,6 @@ public:
 
         std::cout << "RDPMultiScrBlt" << std::endl;
     }
-
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
-
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->verbose > 10) {
@@ -529,7 +529,7 @@ public:
 
     //SSL_library_init();
     
-    ~Front_Qt() ;
+    ~Front_Qt();
     
     
     
@@ -566,7 +566,6 @@ public:
             this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
         }
     }
-    
     
     void keyPressEvent(QKeyEvent *e) override { 
         this->_qtRDPKeymap.keyEvent(0       ,      e);
