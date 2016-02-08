@@ -431,9 +431,13 @@ struct InMetaSequenceTransport : public Transport
         uint32_t       buf_meta_decrypt_state;                   // enum crypto_file_state
         unsigned int   buf_meta_decrypt_MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
-        char rl_buf[1024];
-        char * rl_eof;
-        char * rl_cur;
+        struct rl_t {
+            char buf[1024];
+            char * eof;
+            char * cur;
+            rl_t() : eof(this->buf), cur(this->buf) {}
+        } rl;
+        
         unsigned meta_header_version;
         bool meta_header_has_checksum;
 
@@ -458,9 +462,9 @@ public:
             this->buf_meta_decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
             unsigned char tmp_buf[40];
-
-            if (const ssize_t err = this->buf_meta_decrypt_decrypt_raw_read(tmp_buf, 40)) {
-                return err;
+            ssize_t err = this->buf_meta_file_read(tmp_buf, 40);
+            if (err < ssize_t(40)){
+                return err < 0 ? err : -1;
             }
 
             // Check magic
@@ -499,6 +503,7 @@ public:
             return 0;
         }
 
+
         ssize_t buf_meta_decrypt_decrypt_read(void * data, size_t len)
         {
             if (this->buf_meta_decrypt_state & CF_EOF) {
@@ -520,10 +525,12 @@ public:
                     // TODO: avoid reading size directly into an integer, performance enhancement is minimal
                     // and it's not portable because of endianness issue => read in a buffer and decode by hand
                     unsigned char tmp_buf[4] = {};
-                    if (const int err = this->buf_meta_decrypt_decrypt_raw_read(tmp_buf, 4)) {
-                        return err;
+                    {
+                        ssize_t err = this->buf_meta_file_read(tmp_buf, 4);
+                        if (err < ssize_t(4)){
+                            return (err < 0 ? err : -1);
+                        }
                     }
-
                     uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
 
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
@@ -542,11 +549,12 @@ public:
                             unsigned char ciphered_buf[65536];
                             //char compressed_buf[compressed_buf_size];
                             unsigned char compressed_buf[65536];
-
-                            if (const ssize_t err = this->buf_meta_decrypt_decrypt_raw_read(ciphered_buf, ciphered_buf_size)) {
-                                return err;
+                            {
+                                ssize_t err = this->buf_meta_file_read(ciphered_buf, ciphered_buf_size);
+                                if (err < ssize_t(ciphered_buf_size)){
+                                    return (err < 0 ? err : -1);
+                                }
                             }
-
                             if (this->buf_meta_decrypt_xaes_decrypt(ciphered_buf, ciphered_buf_size, compressed_buf, &compressed_buf_size)) {
                                 return -1;
                             }
@@ -598,13 +606,8 @@ public:
             return len - requested_size;
         }
 
+
     private:
-        ///\return 0 if success, otherwise a negatif number
-        ssize_t buf_meta_decrypt_decrypt_raw_read(void * data, size_t len)
-        {
-            ssize_t err = this->buf_meta_file_read(data, len);
-            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
-        }
 
         int buf_meta_decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
         {
@@ -628,6 +631,7 @@ public:
             return 0;
         }
 
+
         int buf_meta_file_open(const char * filename, mode_t /*mode*/)
         {
             TODO("see why mode is ignored even if it's provided as a parameter?");
@@ -648,6 +652,7 @@ public:
 
         bool buf_meta_file_is_open() const noexcept
         { return -1 != this->buf_meta_file_fd; }
+
 
         ssize_t buf_meta_file_read(void * data, size_t len)
         {
@@ -683,55 +688,42 @@ public:
 
         int reader_read(int err)
         {
+            ssize_t ret = 0;
             if (this->encryption){
-                LOG(LOG_INFO, "reader_read");
-     
-                TODO("test on EINTR suspicious here, check that");
-                ssize_t ret = this->buf_meta_decrypt_decrypt_read(
-                    this->rl_buf, sizeof(this->rl_buf));
-                if (ret < 0 && errno != EINTR) {
-                    return -ERR_TRANSPORT_READ_FAILED;
-                }
-
-                if (ret == 0) {
-                    return -err;
-                }
-                this->rl_eof = this->rl_buf + ret;
-                this->rl_cur = this->rl_buf;
-                return 0;
+                ret = this->buf_meta_decrypt_decrypt_read(this->rl.buf, sizeof(this->rl.buf));
             }
             else {
-                ssize_t ret = this->buf_meta_file_read(this->rl_buf, sizeof(this->rl_buf));
-                TODO("test on EINTR suspicious here, check that");
-                if (ret < 0 && errno != EINTR) {
-                    return -ERR_TRANSPORT_READ_FAILED;
-                }
+                ret = this->buf_meta_file_read(this->rl.buf, sizeof(this->rl.buf));
 
-                if (ret == 0) {
-                    return -err;
-                }
-                this->rl_eof = this->rl_buf + ret;
-                this->rl_cur = this->rl_buf;
-                return 0;
             }
+            TODO("test on EINTR suspicious here, check that");
+            if (ret < 0 && errno != EINTR) {
+                return -ERR_TRANSPORT_READ_FAILED;
+            }
+            if (ret == 0) {
+                return -err;
+            }
+            this->rl.eof = this->rl.buf + ret;
+            this->rl.cur = this->rl.buf;
+            return 0;
         }
 
         ssize_t reader_read_line(char * dest, size_t len, int err)
         {
             ssize_t total_read = 0;
             while (1) {
-                char * pos = std::find(this->rl_cur, this->rl_eof, '\n');
-                if (len < static_cast<size_t>(pos - this->rl_cur)) {
+                char * pos = std::find(this->rl.cur, this->rl.eof, '\n');
+                if (len < static_cast<size_t>(pos - this->rl.cur)) {
                     total_read += len;
-                    memcpy(dest, this->rl_cur, len);
-                    this->rl_cur += len;
+                    memcpy(dest, this->rl.cur, len);
+                    this->rl.cur += len;
                     break;
                 }
-                total_read += pos - this->rl_cur;
-                memcpy(dest, this->rl_cur, pos - this->rl_cur);
-                dest += pos - this->rl_cur;
-                this->rl_cur = pos + 1;
-                if (pos != this->rl_eof) {
+                total_read += pos - this->rl.cur;
+                memcpy(dest, this->rl.cur, pos - this->rl.cur);
+                dest += pos - this->rl.cur;
+                this->rl.cur = pos + 1;
+                if (pos != this->rl.eof) {
                     break;
                 }
                 if (int e = this->reader_read(err)) {
@@ -744,12 +736,12 @@ public:
         int reader_next_line()
         {
             char * pos;
-            while ((pos = std::find(this->rl_cur, this->rl_eof, '\n')) == this->rl_eof) {
+            while ((pos = std::find(this->rl.cur, this->rl.eof, '\n')) == this->rl.eof) {
                 if (int e = this->reader_read(ERR_TRANSPORT_READ_FAILED)) {
                     return e;
                 }
             }
-            this->rl_cur = pos+1;
+            this->rl.cur = pos+1;
             return 0;
         }
 
@@ -764,9 +756,7 @@ public:
         
         , buf_meta_cctx(cctx_meta)
         , buf_meta_file_fd(-1)
-
-        , rl_eof(rl_buf)
-        , rl_cur(rl_buf)
+//        , rl()
         , meta_header_version(1)
         , meta_header_has_checksum(false)
         , encryption(encryption)
@@ -966,6 +956,9 @@ public:
             //
             // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
             //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+            
+            TODO("Code below looks much too complicated for what it's doing");
+            
             typedef std::reverse_iterator<char*> reverse_iterator;
 
             using std::begin;
@@ -1071,26 +1064,32 @@ public:
             err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
             err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
             if (read_start_stop_time) {
-            err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
-            err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+                err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
+                err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
             }
 
             TODO("Why do this with lambda ? Is it so important to avoid typing 3 lines of code two times ?");
-            if (has_checksum
-             && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
-            ) {
-                auto local_read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
-                    auto phash = std::begin(hash);
-                    for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
-                        *phash = (chex_to_int(*pend, err) << 4);
-                        *phash |= chex_to_int(*++pend, err);
+            if (has_checksum){
+                err |= len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2;
+                if (!err)
+                {
+                    {
+                        auto phash = std::begin(meta_line.hash1);
+                        for (auto e = ++pend + sizeof(meta_line.hash1) * 2u; pend != e; ++pend, ++phash) {
+                            *phash = (chex_to_int(*pend, err) << 4);
+                            *phash |= chex_to_int(*++pend, err);
+                        }
                     }
-                };
-                local_read(meta_line.hash1);
-                err |= (*pend != ' ');
-                local_read(meta_line.hash2);
+                    err |= (*pend != ' ');
+                    {
+                        auto phash = std::begin(meta_line.hash2);
+                        for (auto e = ++pend + sizeof(meta_line.hash2) * 2u; pend != e; ++pend, ++phash) {
+                            *phash = (chex_to_int(*pend, err) << 4);
+                            *phash |= chex_to_int(*++pend, err);
+                        }
+                    }
+                }
             }
-
             err |= bool(*pend);
 
             if (err) {
@@ -1098,7 +1097,6 @@ public:
             }
             return 0;
         }
-
 
         int read_meta_file_v2(MetaLine & meta_line) {
             return read_meta_file_v2_impl<true>(this->meta_header_has_checksum, meta_line);
@@ -1153,7 +1151,6 @@ public:
     public:
         const char * current_path() const noexcept
         { return this->meta_line.filename; }
-
 
     } buf;
 
