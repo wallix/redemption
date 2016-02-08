@@ -32,14 +32,53 @@
 #include "transport/detail/meta_opener.hpp"
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
-
 #include "transport/cryptofile.hpp"
-
 #include "urandom_read.hpp"
 
+char chex_to_int(char c, int & err) {
+    return
+        '0' <= c && c <= '9' ? c-'0'
+      : 'a' <= c && c <= 'f' ? c-'a' + 10
+      : 'A' <= c && c <= 'F' ? c-'A' + 10
+      : ((err |= 1), '\0');
+}
 
-// =============================================================================
-namespace detail {
+inline time_t meta_parse_sec(const char * first, const char * last)
+{
+    time_t sec = 0;
+    for (; first != last; ++first) {
+        if (*first < '0' || '9' < *first) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        unsigned old_sec = sec;
+        sec *= 10;
+        sec += *first - '0';
+        if (old_sec > sec) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+    }
+    return sec;
+}
+
+struct MetaLine
+{
+    char    filename[PATH_MAX + 1];
+    off_t   size;
+    mode_t  mode;
+    uid_t   uid;
+    gid_t   gid;
+    dev_t   dev;
+    ino_t   ino;
+    time_t  mtime;
+    time_t  ctime;
+    time_t  start_time;
+    time_t  stop_time;
+    unsigned char hash1[MD_HASH_LENGTH];
+    unsigned char hash2[MD_HASH_LENGTH];
+};
+
+struct InMetaSequenceTransport : public Transport
+{
     class in_meta_sequence_buf
     {
         struct cfb_t 
@@ -398,6 +437,7 @@ namespace detail {
         unsigned meta_header_version;
         bool meta_header_has_checksum;
 
+public:
         MetaLine meta_line;
         char meta_path[2048];
         int encryption;
@@ -1114,20 +1154,14 @@ namespace detail {
         const char * current_path() const noexcept
         { return this->meta_line.filename; }
 
-        time_t get_begin_chunk_time() const noexcept
-        { return this->meta_line.start_time; }
 
-        time_t get_end_chunk_time() const noexcept
-        { return this->meta_line.stop_time; }
-    };
+    } buf;
 
-}
-
-struct InMetaSequenceTransport : public Transport
-{
-    detail::in_meta_sequence_buf buf;
-
-    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, int encryption, uint32_t verbose)
+    InMetaSequenceTransport(CryptoContext * cctx,
+        const char * filename,
+        const char * extension,
+        int encryption,
+        uint32_t verbose)
     : buf(detail::temporary_concat(filename, extension).c_str(), cctx, cctx, encryption, verbose)
     {
         this->verbose = verbose;
@@ -1144,19 +1178,23 @@ struct InMetaSequenceTransport : public Transport
     }
 
     time_t begin_chunk_time() const noexcept
-    { return this->buffer().get_begin_chunk_time(); }
+    {
+        return this->buf.meta_line.start_time;
+    }
 
     time_t end_chunk_time() const noexcept
-    { return this->buffer().get_end_chunk_time(); }
+    {
+        return this->buf.meta_line.stop_time;
+    }
 
     const char * path() const noexcept
-    { return this->buffer().current_path(); }
+    { return this->buf.current_path(); }
 
     bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buffer().next();
+        const ssize_t res = this->buf.next();
         if (res){
             this->status = false;
             if (res < 0) {
@@ -1167,12 +1205,6 @@ struct InMetaSequenceTransport : public Transport
         ++this->seqno;
         return true;
     }
-
-    detail::in_meta_sequence_buf & buffer() noexcept
-    { return this->buf; }
-
-    const detail::in_meta_sequence_buf & buffer() const noexcept
-    { return this->buf; }
 
     void do_recv(char ** pbuffer, size_t len) override {
         const ssize_t res = this->buf.read(*pbuffer, len);
