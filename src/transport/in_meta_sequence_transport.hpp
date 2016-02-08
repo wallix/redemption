@@ -79,7 +79,7 @@ struct MetaLine
 
 struct InMetaSequenceTransport : public Transport
 {
-    class in_meta_sequence_buf
+    class buf_in_meta_sequence_buf
     {
         struct cfb_t 
         {
@@ -450,86 +450,94 @@ struct InMetaSequenceTransport : public Transport
                 return len - remaining_len;
             }
                 
-            int decrypt_decrypt_open(const char * meta_filename)
+            void open(const char * meta_filename)
             {
-                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-                unsigned char derivator[DERIVATOR_LENGTH];
-                size_t len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, len));
-                SslSha256 sha256;
-                sha256.update(base, len);
-                uint8_t tmp[SHA256_DIGEST_LENGTH];
-                sha256.final(tmp, SHA256_DIGEST_LENGTH);
-                memcpy(derivator, tmp, DERIVATOR_LENGTH);
+                if (encryption){
+                    unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+                    unsigned char derivator[DERIVATOR_LENGTH];
+                    size_t len = 0;
+                    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, len));
+                    SslSha256 sha256;
+                    sha256.update(base, len);
+                    uint8_t tmp[SHA256_DIGEST_LENGTH];
+                    sha256.final(tmp, SHA256_DIGEST_LENGTH);
+                    memcpy(derivator, tmp, DERIVATOR_LENGTH);
+                    
+                    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+                    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+                    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+                    memcpy(tmp_derivation + DERIVATOR_LENGTH, 
+                           this->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+                    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+                    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+                    
+                    this->file_close();
+                    this->file_fd = ::open(meta_filename, O_RDONLY);
+                    int err = this->file_fd;
+                    if (err < 0) {
+                        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                    }
                 
-                unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-                unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-                memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-                memcpy(tmp_derivation + DERIVATOR_LENGTH, 
-                       this->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-                SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-                memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
-                
-                this->file_close();
-                this->file_fd = ::open(meta_filename, O_RDONLY);
-                int err = this->file_fd;
-                if (err < 0) {
-                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-                }
-            
-                ::memset(this->decrypt_buf, 0, sizeof(this->decrypt_buf));
-                ::memset(&this->decrypt_ectx, 0, sizeof(this->decrypt_ectx));
+                    ::memset(this->decrypt_buf, 0, sizeof(this->decrypt_buf));
+                    ::memset(&this->decrypt_ectx, 0, sizeof(this->decrypt_ectx));
 
-                this->decrypt_pos = 0;
-                this->decrypt_raw_size = 0;
-                this->decrypt_state = 0;
-                const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
-                this->decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+                    this->decrypt_pos = 0;
+                    this->decrypt_raw_size = 0;
+                    this->decrypt_state = 0;
+                    const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
+                    this->decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
-                unsigned char tmp_buf[40];
-                {
-                
-                    ssize_t err = this->file_read(tmp_buf, 40);
-                    if (err < ssize_t(40)){
-                        return err < 0 ? err : -1;
+                    unsigned char tmp_buf[40];
+                    {
+                    
+                        ssize_t err = this->file_read(tmp_buf, 40);
+                        if (err < ssize_t(40)){
+                            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                        }
+                    }
+                    // Check magic
+                    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+                    if (magic != WABCRYPTOFILE_MAGIC) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
+                            ::getpid(), magic, WABCRYPTOFILE_MAGIC);
+                        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                    }
+                    const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
+                    if (version > WABCRYPTOFILE_VERSION) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
+                            ::getpid(), version, WABCRYPTOFILE_VERSION);
+                        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                    }
+
+                    unsigned char * const iv = tmp_buf + 8;
+
+                    const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+                    const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+                    const int          nrounds = 5;
+                    unsigned char      key[32];
+                    const int i = ::EVP_BytesToKey(cipher, 
+                                        ::EVP_sha1(),
+                                        reinterpret_cast<const unsigned char *>(salt),
+                                        trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+                    if (i != 32) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                    }
+
+                    ::EVP_CIPHER_CTX_init(&this->decrypt_ectx);
+                    if(::EVP_DecryptInit_ex(&this->decrypt_ectx, cipher, nullptr, key, iv) != 1) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+                        throw Error(ERR_TRANSPORT_OPEN_FAILED);
                     }
                 }
-                // Check magic
-                const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-                if (magic != WABCRYPTOFILE_MAGIC) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
-                        ::getpid(), magic, WABCRYPTOFILE_MAGIC);
-                    return -1;
+                else {
+                    this->file_close();
+                    this->file_fd = ::open(meta_filename, O_RDONLY);
+                    int err = this->file_fd;
+                    if (err < 0) {
+                        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                    }
                 }
-                const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
-                if (version > WABCRYPTOFILE_VERSION) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
-                        ::getpid(), version, WABCRYPTOFILE_VERSION);
-                    return -1;
-                }
-
-                unsigned char * const iv = tmp_buf + 8;
-
-                const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-                const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-                const int          nrounds = 5;
-                unsigned char      key[32];
-                const int i = ::EVP_BytesToKey(cipher, 
-                                    ::EVP_sha1(),
-                                    reinterpret_cast<const unsigned char *>(salt),
-                                    trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-                if (i != 32) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                    return -1;
-                }
-
-                ::EVP_CIPHER_CTX_init(&this->decrypt_ectx);
-                if(::EVP_DecryptInit_ex(&this->decrypt_ectx, cipher, nullptr, key, iv) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
-                    return -1;
-                }
-
-                return 0;
             }
 
             ssize_t read(void * data, size_t len)
@@ -679,41 +687,17 @@ struct InMetaSequenceTransport : public Transport
         unsigned meta_header_version;
         bool meta_header_has_checksum;
 
-public:
+    public:
         MetaLine meta_line;
         char meta_path[2048];
         int encryption;
         uint32_t verbose;
 
-
-    public:
-
-
-
-    private:
-
-
-    public:
-
-        int close()
+        int buf_close()
         { return this->cfb->file_close(); }
 
-        int reader_read(int err)
-        {
-            ssize_t ret = this->buf_meta->read(this->rl.buf, sizeof(this->rl.buf));
-            TODO("test on EINTR suspicious here, check that");
-            if (ret < 0 && errno != EINTR) {
-                return -ERR_TRANSPORT_READ_FAILED;
-            }
-            if (ret == 0) {
-                return -err;
-            }
-            this->rl.eof = this->rl.buf + ret;
-            this->rl.cur = this->rl.buf;
-            return 0;
-        }
-
-        ssize_t reader_read_line(char * dest, size_t len, int err)
+    public:
+        ssize_t buf_reader_read_line(char * dest, size_t len, int err)
         {
             ssize_t total_read = 0;
             while (1) {
@@ -731,20 +715,35 @@ public:
                 if (pos != this->rl.eof) {
                     break;
                 }
-                if (int e = this->reader_read(err)) {
-                    return e;
+
+                ssize_t ret = this->buf_meta->read(this->rl.buf, sizeof(this->rl.buf));
+                TODO("test on EINTR suspicious here, check that");
+                if (ret < 0 && errno != EINTR) {
+                    return -ERR_TRANSPORT_READ_FAILED;
                 }
+                if (ret == 0) {
+                    return -err;
+                }
+                this->rl.eof = this->rl.buf + ret;
+                this->rl.cur = this->rl.buf;
             }
             return total_read;
         }
 
-        int reader_next_line()
+        int buf_reader_next_line()
         {
             char * pos;
             while ((pos = std::find(this->rl.cur, this->rl.eof, '\n')) == this->rl.eof) {
-                if (int e = this->reader_read(ERR_TRANSPORT_READ_FAILED)) {
-                    return e;
+                ssize_t ret = this->buf_meta->read(this->rl.buf, sizeof(this->rl.buf));
+                TODO("test on EINTR suspicious here, check that");
+                if (ret < 0 && errno != EINTR) {
+                    return -ERR_TRANSPORT_READ_FAILED;
                 }
+                if (ret == 0) {
+                    return -ERR_TRANSPORT_READ_FAILED;
+                }
+                this->rl.eof = this->rl.buf + ret;
+                this->rl.cur = this->rl.buf;
             }
             this->rl.cur = pos+1;
             return 0;
@@ -752,7 +751,7 @@ public:
 
 
     public:
-        explicit in_meta_sequence_buf(const char * meta_filename,
+        explicit buf_in_meta_sequence_buf(const char * meta_filename,
                                              CryptoContext * cctx_buf,
                                              CryptoContext * cctx_meta,
                                              int encryption,
@@ -765,109 +764,59 @@ public:
         , encryption(encryption)
         , verbose(verbose)
         {
-            if (encryption){
-                if (this->buf_meta->decrypt_decrypt_open(meta_filename) < 0){
-                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-                }
+            this->buf_meta->open(meta_filename);
 
-                char line[32];
-                auto sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-                if (sz < 0) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
-                // v2
-                if (line[0] == 'v') {
-                    if (this->reader_next_line() 
-                     || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0) {
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    this->meta_header_version = 2;
-                    this->meta_header_has_checksum = (line[0] == 'c');
-                }
-                // else v1
-
-                if (this->reader_next_line()) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
-                if (this->reader_next_line()) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
-                this->meta_line.start_time = 0;
-                this->meta_line.stop_time = 0;
-
-                this->meta_path[0] = 0;
-
-                char basename[1024] = {};
-                char extension[256] = {};
-
-                canonical_path( meta_filename
-                              , this->meta_path, sizeof(this->meta_path)
-                              , basename, sizeof(basename)
-                              , extension, sizeof(extension)
-                              , this->verbose);
+            char line[32];
+            auto sz = this->buf_reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
+            if (sz < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
-            else {
-               
-                this->buf_meta->file_close();
-                this->buf_meta->file_fd = ::open(meta_filename, O_RDONLY);
-                int err = this->buf_meta->file_fd;
-                if (err < 0) {
-                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
-                }
 
-                char line[32];
-                auto sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-                if (sz < 0) {
+            // v2
+            if (line[0] == 'v') {
+                if (this->buf_reader_next_line() 
+                 || (sz = this->buf_reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
+                ) {
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
-
-                // v2
-                if (line[0] == 'v') {
-                    if (this->reader_next_line() 
-                     || (sz = this->reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
-                    ) {
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    this->meta_header_version = 2;
-                    this->meta_header_has_checksum = (line[0] == 'c');
-                }
-
-                if (this->reader_next_line()) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
-                if (this->reader_next_line()) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
-                this->meta_line.start_time = 0;
-                this->meta_line.stop_time = 0;
-
-                this->meta_path[0] = 0;
-
-                char basename[1024] = {};
-                char extension[256] = {};
-
-                canonical_path( meta_filename
-                              , this->meta_path, sizeof(this->meta_path)
-                              , basename, sizeof(basename)
-                              , extension, sizeof(extension)
-                              , this->verbose);
+                this->meta_header_version = 2;
+                this->meta_header_has_checksum = (line[0] == 'c');
             }
+            // else v1
+
+            if (this->buf_reader_next_line()) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+
+            if (this->buf_reader_next_line()) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+
+            this->meta_line.start_time = 0;
+            this->meta_line.stop_time = 0;
+
+            this->meta_path[0] = 0;
+
+            char basename[1024] = {};
+            char extension[256] = {};
+
+            canonical_path( meta_filename
+                          , this->meta_path, sizeof(this->meta_path)
+                          , basename, sizeof(basename)
+                          , extension, sizeof(extension)
+                          , this->verbose);
+
         }
 
-        ~in_meta_sequence_buf(){
+        ~buf_in_meta_sequence_buf(){
             this->cfb->file_close();
             this->buf_meta->file_close();
         }
 
-        ssize_t read(void * data, size_t len)
+        ssize_t buf_read(void * data, size_t len)
         {
             if (!this->cfb->is_open()) {
-                if (const int e1 = this->next_line()) {
+                if (const int e1 = this->buf_next_line()) {
                     return e1 < 0 ? e1 : -1;
                 }
                 else {
@@ -885,11 +834,11 @@ public:
             if (size_t(res) != len) {
                 ssize_t res2 = res;
                 do {
-                    if (/*const ssize_t err = */this->close()) {
+                    if (/*const ssize_t err = */this->buf_close()) {
                         return res;
                     }
                     data = static_cast<char*>(data) + res2;
-                    if (this->next_line()) {
+                    if (this->buf_next_line()) {
                         return res;
                     }
                     else {
@@ -910,18 +859,18 @@ public:
         }
 
         /// \return 0 if success
-        int next()
+        int buf_next()
         {
             if (this->cfb->is_open()) {
-                this->close();
+                this->buf_close();
             }
 
-            return this->next_line();
+            return this->buf_next_line();
         }
 
-        int read_meta_file_v1(MetaLine & meta_line) {
+        int buf_read_meta_file_v1(MetaLine & meta_line) {
             char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
-            ssize_t len = this->reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+            ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
             if (len < 0) {
                 return -len;
             }
@@ -992,7 +941,7 @@ public:
             return 0;
         }
 
-        char const * sread_filename(char * p, char const * e, char const * pline)
+        char const * buf_sread_filename(char * p, char const * e, char const * pline)
         {
             e -= 1;
             for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
@@ -1003,7 +952,7 @@ public:
         }
 
         template<bool read_start_stop_time>
-        int read_meta_file_v2_impl(bool has_checksum, MetaLine & meta_line) {
+        int buf_read_meta_file_v2_impl(bool has_checksum, MetaLine & meta_line) {
             char line[
                 PATH_MAX + 1 + 1 +
                 (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -1011,7 +960,7 @@ public:
                 (1 + MD_HASH_LENGTH*2) * 2 +
                 2
             ];
-            ssize_t len = this->reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+            ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
             if (len < 0) {
                 return -len;
             }
@@ -1032,7 +981,7 @@ public:
             //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
             //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
 
-            auto pline = line + (this->sread_filename(std::begin(meta_line.filename), std::end(meta_line.filename), line) - line);
+            auto pline = line + (this->buf_sread_filename(std::begin(meta_line.filename), std::end(meta_line.filename), line) - line);
 
             LOG(LOG_INFO, "meta_line.filename=%s", meta_line.filename);
 
@@ -1080,32 +1029,32 @@ public:
             return 0;
         }
 
-        int read_meta_file_v2(MetaLine & meta_line) {
-            return read_meta_file_v2_impl<true>(this->meta_header_has_checksum, meta_line);
+        int buf_read_meta_file_v2(MetaLine & meta_line) {
+            return buf_read_meta_file_v2_impl<true>(this->meta_header_has_checksum, meta_line);
         }
 
-        int read_meta_file(MetaLine & meta_line)
+        int buf_read_meta_file(MetaLine & meta_line)
         {
             if (this->meta_header_version == 1) {
-                return this->read_meta_file_v1(meta_line);
+                return this->buf_read_meta_file_v1(meta_line);
             }
             else {
-                return this->read_meta_file_v2(meta_line);
+                return this->buf_read_meta_file_v2(meta_line);
             }
         }
 
     private:
-        int open_next() {
-            if (const int e = this->reader_next_line()) {
+        int buf_open_next() {
+            if (const int e = this->buf_reader_next_line()) {
                 return e < 0 ? e : -1;
             }
             const int e = this->cfb->open(this->meta_line.filename);
             return (e < 0) ? e : 0;
         }
 
-        int next_line()
+        int buf_next_line()
         {
-            if (auto err = this->read_meta_file(this->meta_line)) {
+            if (auto err = this->buf_read_meta_file(this->meta_line)) {
                 return err;
             }
 
@@ -1131,7 +1080,7 @@ public:
         }
 
     public:
-        const char * current_path() const noexcept
+        const char * buf_current_path() const noexcept
         { return this->meta_line.filename; }
 
     } buf;
@@ -1153,7 +1102,7 @@ public:
     }
 
     bool disconnect() override {
-        return !this->buf.close();
+        return !this->buf.buf_close();
     }
 
     time_t begin_chunk_time() const noexcept
@@ -1167,13 +1116,13 @@ public:
     }
 
     const char * path() const noexcept
-    { return this->buf.current_path(); }
+    { return this->buf.buf_current_path(); }
 
     bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buf.next();
+        const ssize_t res = this->buf.buf_next();
         if (res){
             this->status = false;
             if (res < 0) {
@@ -1186,7 +1135,7 @@ public:
     }
 
     void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf.read(*pbuffer, len);
+        const ssize_t res = this->buf.buf_read(*pbuffer, len);
         if (res < 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
