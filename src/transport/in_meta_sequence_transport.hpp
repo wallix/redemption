@@ -1021,8 +1021,6 @@ private:
     }
 
 public:
-    const char * buf_current_path() const noexcept
-    { return this->meta_line.filename; }
 
     InMetaSequenceTransport(CryptoContext * cctx,
         const char * filename,
@@ -1109,7 +1107,7 @@ public:
     }
 
     const char * path() const noexcept
-    { return this->buf_current_path(); }
+    { return this->meta_line.filename; }
 
     bool next() override {
         if (this->status == false) {
