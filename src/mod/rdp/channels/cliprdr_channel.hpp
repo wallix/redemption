@@ -27,6 +27,8 @@
 #include "make_unique.hpp"
 #include "RDP/clipboard.hpp"
 
+#include "mod/rdp/channels/sespro_launcher.hpp"
+
 #include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
@@ -58,6 +60,10 @@ private:
     OutStream                  file_descriptor_stream;
 
     FrontAPI& front;
+
+    SessionProbeLauncher* clipboard_initialize_notifier = nullptr;
+    SessionProbeLauncher* format_list_response_notifier = nullptr;
+    SessionProbeLauncher* format_data_request_notifier  = nullptr;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -839,6 +845,19 @@ public:
     bool process_server_format_data_request_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+
+        this->requestedFormatId = chunk.in_uint32_le();
+
+        if (this->format_data_request_notifier &&
+            (this->requestedFormatId == RDPECLIP::CF_TEXT)) {
+            if (!this->format_data_request_notifier->on_server_format_data_request()) {
+                this->format_data_request_notifier = nullptr;
+            }
+
+            return false;
+        }
+
         if (!this->param_clipboard_up_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                 LOG(LOG_INFO,
@@ -851,10 +870,6 @@ public:
 
             return false;
         }
-
-        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
-
-        this->requestedFormatId = chunk.in_uint32_le();
 
         if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
             LOG(LOG_INFO,
@@ -1249,6 +1264,25 @@ public:
                         total_length, flags, chunk);
             break;
 
+            case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "Format List Response PDU");
+                }
+
+                if (this->clipboard_initialize_notifier) {
+                    if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
+                        this->clipboard_initialize_notifier = nullptr;
+                    }
+                }
+                if (this->format_list_response_notifier) {
+                    if (!this->format_list_response_notifier->on_server_format_list_response()) {
+                        this->format_list_response_notifier = nullptr;
+                    }
+                }
+            break;
+
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
@@ -1318,6 +1352,12 @@ public:
                 chunk_data_length);
         }   // switch (this->server_message_type)
     }   // process_server_message
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->clipboard_initialize_notifier = launcher;
+        this->format_list_response_notifier = launcher;
+        this->format_data_request_notifier  = launcher;
+    }
 };  // class ClipboardVirtualChannel
 
 #endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP

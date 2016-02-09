@@ -869,6 +869,9 @@ public:
 
                 mod_rdp_params.enable_session_probe                = this->ini.get<cfg::mod_rdp::enable_session_probe>();
                 mod_rdp_params.enable_session_probe_loading_mask   = this->ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>();
+
+                mod_rdp_params.session_probe_use_clipboard_based_launcher
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
                 mod_rdp_params.session_probe_launch_timeout        = this->ini.get<cfg::mod_rdp::session_probe_launch_timeout>();
                 mod_rdp_params.session_probe_launch_fallback_timeout
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>();

@@ -88,6 +88,7 @@
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 
 #include "utils/splitter.hpp"
 #include "utils/algostring.hpp"
@@ -625,6 +626,8 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     } server_notifier;
 
+    std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -906,6 +909,10 @@ public:
             }
         }
 
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "enable_session_probe=%s",
+                (this->enable_session_probe ? "yes" : "no"));
+        }
         if (this->enable_session_probe) {
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = tmp_working_dir;
@@ -937,7 +944,6 @@ public:
             this->session_probe_target_informations += ":";
             this->session_probe_target_informations += mod_rdp_params.auth_user;
 
-
             char proxy_managed_connection_cookie[9];
             get_proxy_managed_connection_cookie(
                 this->session_probe_target_informations.c_str(),
@@ -946,13 +952,20 @@ public:
             replace_tag(this->session_probe_alternate_shell, "${COOKIE_VAR}",
                 proxy_managed_connection_cookie);
 
-            strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
-            this->program[sizeof(this->program) - 1] = 0;
-            //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+            if (mod_rdp_params.session_probe_use_clipboard_based_launcher) {
+                this->session_probe_launcher =
+                    std::make_unique<SessionProbeClipboardBasedLauncher>(
+                        *this, this->verbose);
+            }
+            else {
+                strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
+                this->program[sizeof(this->program) - 1] = 0;
+                //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
 
-            const char * session_probe_working_dir = "%TMP%";
-            strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
-            this->directory[sizeof(this->directory) - 1] = 0;
+                const char * session_probe_working_dir = "%TMP%";
+                strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
+                this->directory[sizeof(this->directory) - 1] = 0;
+            }
         }
         else {
             strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
@@ -1011,15 +1024,19 @@ public:
             }
         }
 
-        if (this->verbose & 1) {
-            LOG(LOG_INFO, "enable_session_probe=%s",
-                (this->enable_session_probe ? "yes" : "no"));
-        }
-        if (this->enable_session_probe) {
-            SessionProbeVirtualChannel& channel =
-                this->get_session_probe_virtual_channel();
+        if (enable_session_probe) {
+            ClipboardVirtualChannel& cvc =
+                this->get_clipboard_virtual_channel();
+            cvc.set_session_probe_launcher(
+                this->session_probe_launcher.get());
 
-            this->session_probe_virtual_channel_p = &channel;
+            this->file_system_drive_manager.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
+            SessionProbeVirtualChannel& spvc =
+                this->get_session_probe_virtual_channel();
+            spvc.set_session_probe_launcher(this->session_probe_launcher.get());
+            this->session_probe_virtual_channel_p = &spvc;
         }
 
         if (this->acl) {
@@ -1374,7 +1391,6 @@ public:
             }
             this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
         }
-
     }   // configure_proxy_managed_drives
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time
@@ -1432,6 +1448,20 @@ public:
 
         if (!this->asynchronous_tasks.empty()) {
             this->asynchronous_tasks.front()->configure_wait_object(this->asynchronous_task_event);
+        }
+    }
+
+    virtual wait_obj * get_session_probe_launcher_event() override {
+        if (this->session_probe_launcher) {
+            return this->session_probe_launcher->get_event();
+        }
+
+        return nullptr;
+    }
+
+    virtual void process_session_probe_launcher() override {
+        if (this->session_probe_launcher) {
+            this->session_probe_launcher->on_event();
         }
     }
 

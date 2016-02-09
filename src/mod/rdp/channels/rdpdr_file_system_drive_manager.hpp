@@ -29,7 +29,6 @@
 
 #include "channel_list.hpp"
 #include "fileutils.hpp"
-#include "rdpdr_asynchronous_task.hpp"
 #include "RDP/channels/rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
@@ -38,7 +37,10 @@
 #include "SMB2/MessageSyntax.hpp"
 #include "virtual_channel_data_sender.hpp"
 #include "winpr/pattern.hpp"
-#include "rdp/rdp_log.hpp"
+
+#include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
+#include "mod/rdp/channels/sespro_launcher.hpp"
+#include "mod/rdp/rdp_log.hpp"
 
 #define EPOCH_DIFF 11644473600LL
 
@@ -1581,6 +1583,8 @@ class FileSystemDriveManager {
 
     uint32_t session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
+    SessionProbeLauncher* session_probe_drive_access_notifier = nullptr;
+
 public:
     void AnnounceDrive(bool device_capability_version_02_supported,
             VirtualChannelDataSender& to_server_sender, uint32_t verbose) {
@@ -1856,6 +1860,14 @@ public:
                     LOG(LOG_INFO,
                         "FileSystemDriveManager::ProcessDeviceIORequest: "
                             "Server Create Drive Request");
+                }
+
+                if (this->session_probe_drive_access_notifier) {
+                    if (DeviceId == this->session_probe_drive_id) {
+                        if (!this->session_probe_drive_access_notifier->on_drive_access()) {
+                            this->session_probe_drive_access_notifier = nullptr;
+                        }
+                    }
                 }
 
                 this->ProcessServerCreateDriveRequest(device_io_request,
@@ -2159,6 +2171,10 @@ public:
             LOG(LOG_INFO,
                 "FileSystemDriveManager::DisableSessionProbeDrive: Remove request sent.");
         }
+    }
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->session_probe_drive_access_notifier = launcher;
     }
 };  // FileSystemDriveManager
 

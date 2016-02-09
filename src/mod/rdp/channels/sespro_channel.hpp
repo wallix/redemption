@@ -72,6 +72,8 @@ private:
 
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
+    SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool session_probe_loading_mask_enabled;
@@ -207,6 +209,11 @@ public:
                  LOG_ERR : LOG_WARNING),
                 "SessionProbeVirtualChannel::process_event: "
                     "Session Probe is not ready yet!");
+
+            if (this->session_probe_stop_launch_sequence_notifier) {
+                this->session_probe_stop_launch_sequence_notifier->stop();
+                this->session_probe_stop_launch_sequence_notifier = nullptr;
+            }
 
             const bool need_full_screen_update =
                 (this->param_session_probe_loading_mask_enabled ?
@@ -349,6 +356,11 @@ public:
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe is ready.");
+            }
+
+            if (this->session_probe_stop_launch_sequence_notifier) {
+                this->session_probe_stop_launch_sequence_notifier->stop();
+                this->session_probe_stop_launch_sequence_notifier = nullptr;
             }
 
             this->session_probe_ready = true;
@@ -820,6 +832,10 @@ public:
         }
 
     }   // process_server_message
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->session_probe_stop_launch_sequence_notifier = launcher;
+    }
 };  // class SessionProbeVirtualChannel
 
 #endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCHANNEL_HPP

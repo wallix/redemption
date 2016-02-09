@@ -54,6 +54,7 @@ struct ModRDPParams {
     bool disable_file_system_log_syslog;
     bool disable_file_system_log_wrm;
 
+    bool                                  session_probe_use_clipboard_based_launcher;
     unsigned                              session_probe_launch_timeout;
     unsigned                              session_probe_launch_fallback_timeout;
     configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
@@ -155,6 +156,7 @@ struct ModRDPParams {
         , disable_file_system_log_syslog(false)
         , disable_file_system_log_wrm(false)
 
+        , session_probe_use_clipboard_based_launcher(false)
         , session_probe_launch_timeout(0)
         , session_probe_launch_fallback_timeout(0)
         , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
@@ -265,6 +267,9 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams enable_session_probe_loading_mask=%s",   (this->enable_session_probe_loading_mask ? "yes" : "no"));
 
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_use_clipboard_based_launcher=%s",
+                                                                   (this->session_probe_use_clipboard_based_launcher ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_timeout=%u",        this->session_probe_launch_timeout);
         LOG(LOG_INFO,
