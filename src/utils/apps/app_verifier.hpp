@@ -455,14 +455,14 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
 }
 */
 
-bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
+bool check_mwrm_file_ifile_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
         CryptoContext * cctx, int infile_is_encrypted)
 {
     TODO("Add unit test for this function")
     bool result = false;
 
-    if (check_file(file_path, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
+    if (check_file(file_path, is_checksumed, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         if (ifile.open(file_path) < 0) {
             LOG(LOG_ERR, "failed opening=%s", file_path);
@@ -672,7 +672,7 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
     ******************/
 
     const bool is_status_enabled = (infile_version > 1);
-    if (!check_mwrm_file_ifile_buf(fullfilename, is_status_enabled, hash_line,
+    if (!check_mwrm_file_ifile_buf(fullfilename, infile_is_checksumed, is_status_enabled, hash_line,
             (quick_check ? QUICK_CHECK_LENGTH : 0), cctx, infile_is_encrypted)) {
         std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 
