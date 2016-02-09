@@ -104,8 +104,8 @@ public:
         REDASSERT(this->file_size != nosize);
         this->hmac.update(data, len);
         if (this->file_size < quick_size) {
-            auto const remaining = std::min(this->file_size - quick_size, len);
-            this->quick_hmac.update(data, len);
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(data, remaining);
             this->file_size += remaining;
         }
         return this->Buf::write(data, len);

@@ -499,7 +499,7 @@ public:
     //      CONSTRUCTOR
     //------------------------
     
-    Front_Qt(const char* argv[], int argc, uint32_t verbose);
+    Front_Qt(char* argv[], int argc, uint32_t verbose);
     
     // -------- Start of system wide SSL_Ctx option ------------------------------
 

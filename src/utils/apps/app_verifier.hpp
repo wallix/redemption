@@ -119,14 +119,15 @@ static inline bool check_file(const char * file_path, bool is_checksumed,
     return true;
 }
 
-static inline bool check_file(const char * file_path, bool is_status_enabled,
+static inline bool check_file(const char * file_path, bool is_checksumed, bool is_status_enabled,
         detail::MetaLine const & meta_line, size_t len_to_check,
         CryptoContext * cctx) {
-    const bool is_checksumed = true;
+//    const bool is_checksumed = true;
     return check_file(file_path, is_checksumed, cctx->get_hmac_key(),
         sizeof(cctx->get_hmac_key()), len_to_check, is_status_enabled, meta_line);
 }
 
+/*
 static inline bool check_file(const char * file_path, bool is_status_enabled,
         detail::MetaLine const & meta_line, size_t len_to_check) {
     const bool      is_checksumed = false;
@@ -135,15 +136,16 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
     return check_file(file_path, is_checksumed, crypto_key, key_len,
         len_to_check, is_status_enabled, meta_line);
 }
+*/
 
-bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_status_enabled,
+bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
         CryptoContext * cctx)
     {
     TODO("Add unit test for this function")
     bool result = false;
 
-    if (check_file(file_path, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
+    if (check_file(file_path, is_checksumed, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
         transbuf::icrypto_filename_buf ifile(cctx);
         if (ifile.open(file_path) < 0) {
             LOG(LOG_ERR, "failed opening=%s", file_path);
@@ -177,7 +179,7 @@ bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_status
 
         while (detail::read_meta_file(reader, meta_header, meta_line_wrm) !=
                ERR_TRANSPORT_NO_MORE_DATA) {
-            if (check_file(meta_line_wrm.filename, is_status_enabled,
+            if (check_file(meta_line_wrm.filename, is_checksumed, is_status_enabled,
                            meta_line_wrm, len_to_check, cctx) == false) {
                 result = false;
                 break;
@@ -188,13 +190,13 @@ bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_status
     return result;
 }
 
-bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
+bool check_mwrm_file_ifile_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
         CryptoContext * cctx) {
     TODO("Add unit test for this function")
     bool result = false;
 
-    if (check_file(file_path, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
+    if (check_file(file_path, is_checksumed, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
         transbuf::ifile_buf ifile(cctx);
         if (ifile.open(file_path) < 0) {
             LOG(LOG_ERR, "failed opening=%s", file_path);
@@ -224,7 +226,7 @@ bool check_mwrm_file_ifile_buf(const char * file_path, bool is_status_enabled,
 
         while (detail::read_meta_file(reader, meta_header, meta_line_wrm) !=
                ERR_TRANSPORT_NO_MORE_DATA) {
-            if (check_file(meta_line_wrm.filename, is_status_enabled,
+            if (check_file(meta_line_wrm.filename, is_checksumed, is_status_enabled,
                            meta_line_wrm, len_to_check, cctx) == false) {
                 result = false;
                 break;
@@ -412,7 +414,7 @@ int check_encrypted_or_checksumed_file_icrypto_filename_buf(std::string const & 
     ******************/
 
     const bool is_status_enabled = (infile_version > 1);
-    if (!check_mwrm_file_icrypto_filename_buf(fullfilename, is_status_enabled, hash_line,
+    if (!check_mwrm_file_icrypto_filename_buf(fullfilename, infile_is_checksumed, is_status_enabled, hash_line,
             (quick_check ? QUICK_CHECK_LENGTH : 0), cctx)) {
         std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 
@@ -430,7 +432,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
                                        const char * fullfilename,
                                        bool quick_check,
                                        uint32_t verbose,
-                                       CryptoContext * cctx) 
+                                       CryptoContext * cctx)
 {
     unsigned infile_version = 1;
     bool infile_is_checksumed = false;
@@ -595,7 +597,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
     ******************/
 
     const bool is_status_enabled = (infile_version > 1);
-    if (!check_mwrm_file_ifile_buf(fullfilename, is_status_enabled, hash_line,
+    if (!check_mwrm_file_ifile_buf(fullfilename, infile_is_checksumed, is_status_enabled, hash_line,
             (quick_check ? QUICK_CHECK_LENGTH : 0), cctx)) {
         std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 

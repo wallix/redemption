@@ -22,6 +22,7 @@
 #ifndef CAPTURE_NEW_KBDCAPTURE_HPP
 #define CAPTURE_NEW_KBDCAPTURE_HPP
 
+#include "transport/transport.hpp"
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
 #include "stream.hpp"
@@ -301,10 +302,14 @@ public:
         }
     }
 
-    std::chrono::microseconds snapshot(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) override {
+    std::chrono::microseconds snapshot(
+        const timeval& now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    ) override {
         std::chrono::microseconds const ret {uint64_t(this->time_to_wait)};
 
-        if ((difftimeval(now, this->last_snapshot) < 1000000) &&
+        if ((difftimeval(now, this->last_snapshot) < this->time_to_wait) &&
             (this->unlogged_data.get_offset() < 8 * sizeof(uint32_t))) {
             return ret;
         }
@@ -395,6 +400,10 @@ public:
 
     void send_data(Transport & trans) {
         REDASSERT(!this->unlogged_data.get_offset());
+
+        if (this->keyboard_input_mask_enabled) {
+            ::memset(this->data.get_data(), '*', this->data.get_offset());
+        }
 
         trans.send(this->data.get_data(), this->data.get_offset());
 

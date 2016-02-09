@@ -687,12 +687,20 @@ unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp libboost_unit_test
 unit-test test_authentifier : tests/acl/test_authentifier.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
 unit-test test_module_manager : tests/acl/test_module_manager.cpp crypto libboost_unit_test png : $(TEST_DEPENDENCIES) ;
 unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+
+## Capture tests
+## @{
+unit-test test_image_capture : tests/capture/test_image_capture.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_capture : tests/capture/test_capture.cpp bitmap crypto dl png z snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp bitmap png z crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_nativecapture : tests/capture/test_nativecapture.cpp bitmap png z crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_new_kbdcapture : tests/capture/test_new_kbdcapture.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+## @}
+
 unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_sound : tests/channels/sound/test_sound.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_callback : tests/core/test_callback.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -833,9 +841,7 @@ unit-test test_checksum_buf : tests/transport/buffer/test_checksum_buf.cpp crypt
 
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_image_capture : tests/capture/test_image_capture.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 #unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryMemBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -985,7 +991,7 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
 #explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
-explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
+explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
 using qt : /usr ;
 
@@ -994,7 +1000,7 @@ obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt :
-    test_rdp_Qt.o
+    test_rdp_Qt.o #
     src/front/front_Qt.hpp
     src/front/front_widget_Qt.hpp
     src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
