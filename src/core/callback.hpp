@@ -63,7 +63,9 @@ enum {
     MOUSE_FLAG_BUTTON3             = 0x4000,
     MOUSE_FLAG_BUTTON4             = 0x0280,
     MOUSE_FLAG_BUTTON5             = 0x0380,
-    MOUSE_FLAG_DOWN                = 0x8000
+    MOUSE_FLAG_DOWN                = 0x8000,
+    MOUSE_FLAG_HWHEEL              = 0x0400,
+    MOUSE_FLAG_WHEEL_NEGATIVE      = 0x0100
 };
 
 struct RdpInput
@@ -91,6 +93,8 @@ struct Callback : RdpInput
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
     virtual void send_auth_channel_data(const char * data) {}
+    
+    virtual void send_disconnect_ultimatum() {}
 };
 
 #endif

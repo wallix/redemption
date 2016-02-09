@@ -25,7 +25,7 @@
 #include "image_capture.hpp"
 #include "difftimeval.hpp"
 #include "config.hpp"
-#include "sequence_generator.hpp"
+#include "transport/sequence_generator.hpp"
 #include "CaptureDevice.hpp"
 
 struct StaticCaptureConfig {

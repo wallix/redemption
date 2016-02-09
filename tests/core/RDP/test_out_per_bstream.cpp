@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
     BOOST_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.get_offset()));
 }
 
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "RDP/gcc.hpp"
 
 

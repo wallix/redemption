@@ -25,7 +25,7 @@
 #define _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 
 #include "stream.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 
 #include "RDP/mcs.hpp"
 #include "RDP/sec.hpp"
@@ -67,6 +67,17 @@ namespace CHANNELS {
         , chanid(0)
         {
             this->name[0] = 0;
+        }
+
+        ChannelDef(const char * name, uint32_t flags, int chanid)
+        : flags(flags)
+        , chanid(chanid)
+        {
+            size_t i = 0;
+            for (; i < max_size_name && name[i]; i++) {
+                this->name[i] = name[i];
+            }
+            this->name[i] = 0;
         }
 
         void log(unsigned index) const {

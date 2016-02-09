@@ -33,7 +33,7 @@
 #include "RDP/channels/rdpdr.hpp"
 #include "defines.hpp"
 #include "FSCC/FileInformation.hpp"
-#include "in_file_transport.hpp"
+#include "transport/in_file_transport.hpp"
 #include "make_unique.hpp"
 #include "SMB2/MessageSyntax.hpp"
 #include "virtual_channel_data_sender.hpp"
@@ -1082,11 +1082,7 @@ public:
 
                     out_stream.out_uint32_le(file_full_directory_information.size());   // Length(4)
 
-auto out_stream_p = out_stream.get_current();
                     file_full_directory_information.emit(out_stream);
-LOG(LOG_INFO, "FileFullDirectoryInformation: size=%u",
-    (unsigned int)(out_stream.get_current() - out_stream_p));
-hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
                 }
                 break;
 
@@ -1175,7 +1171,7 @@ hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
 };  // ManagedDirectory
 
 class ManagedFile : public ManagedFileSystemObject {
-    std::unique_ptr<InFileTransport> in_file_transport; // For read operations only.
+    std::unique_ptr<InFileSeekableTransport> in_file_transport; // For read operations only.
 
 public:
     //ManagedFile() {
@@ -1287,7 +1283,7 @@ public:
            this, verbose, this->fd);
 
         if (this->fd > -1) {
-            this->in_file_transport = std::make_unique<InFileTransport>(this->fd);
+            this->in_file_transport = std::make_unique<InFileSeekableTransport>(this->fd);
         }
 
         if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
@@ -1653,7 +1649,7 @@ private:
 
             drive_id = this->next_managed_drive_id++;
 
-            managed_drives.push_back(
+            this->managed_drives.push_back(
                     std::make_tuple(drive_id,
                                     drive_name,
                                     absolute_directory_path.c_str(),
@@ -2108,7 +2104,7 @@ public:
         }
     }
 
-    void DisableSessionProbeDrive(VirtualChannelDataSender & to_server_sender, uint32_t verbose = 0) {
+    void RemoveSessionProbeDrive(uint32_t verbose) {
         if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
             return;
         }
@@ -2117,15 +2113,31 @@ public:
 
         this->session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
-        //managed_drive_collection_type::iterator iter;
-        //for (iter = this->managed_drives.begin();
-        //     iter != this->managed_drives.end(); ++iter) {
-        //    if (old_session_probe_drive_id == std::get<0>(*iter)) {
-        //        this->managed_drives.erase(iter);
-        //
-        //        break;
-        //    }
-        //}
+        managed_drive_collection_type::iterator iter;
+        for (iter = this->managed_drives.begin();
+            iter != this->managed_drives.end(); ++iter) {
+            if (old_session_probe_drive_id == std::get<0>(*iter)) {
+                this->managed_drives.erase(iter);
+
+                if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
+                    LOG(LOG_INFO,
+                        "FileSystemDriveManager::RemoveSessionProbeDrive: Drive removed.");
+                }
+
+                break;
+            }
+        }
+    }
+
+    void DisableSessionProbeDrive(VirtualChannelDataSender & to_server_sender,
+            uint32_t verbose) {
+        if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
+            return;
+        }
+
+        const uint32_t old_session_probe_drive_id = this->session_probe_drive_id;
+
+        this->session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
         StaticOutStream<1024> out_stream;
 
@@ -2136,17 +2148,17 @@ public:
         out_stream.out_uint32_le(1);                            // DeviceCount(4)
         out_stream.out_uint32_le(old_session_probe_drive_id);   // DeviceIds(variable)
 
-        if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
-            LOG(LOG_INFO,
-                "FileSystemDriveManager::DisableSessionProbeDrive");
-        }
-
         to_server_sender(
                 out_stream.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                 out_stream.get_data(),
                 out_stream.get_offset()
             );
+
+        if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
+            LOG(LOG_INFO,
+                "FileSystemDriveManager::DisableSessionProbeDrive: Remove request sent.");
+        }
     }
 };  // FileSystemDriveManager
 

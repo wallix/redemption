@@ -23,7 +23,7 @@
 
 #include <map>
 #include "bmpcache.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 
 namespace RDP {
 struct BitmapCachePersistentListEntry;

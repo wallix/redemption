@@ -34,7 +34,7 @@
 
 #include "config.hpp"
 //#include "socket_transport.hpp"
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
 
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         mod->draw_event(time(nullptr));
     }
 
-    front.dump_png("trace_w2008_");
+    //front.dump_png("trace_w2008_");
 }
 
 /*

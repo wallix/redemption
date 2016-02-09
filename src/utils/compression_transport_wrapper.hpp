@@ -21,8 +21,8 @@
 #ifndef REDEMPTION_UTILS_COMPRESSION_TRANSPORT_WRAPPER_HPP
 #define REDEMPTION_UTILS_COMPRESSION_TRANSPORT_WRAPPER_HPP
 
-#include "gzip_compression_transport.hpp"
-#include "snappy_compression_transport.hpp"
+#include "transport/gzip_compression_transport.hpp"
+#include "transport/snappy_compression_transport.hpp"
 
 struct CompressionTransportBase
 {

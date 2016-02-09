@@ -25,111 +25,356 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRDPQt
 #include <boost/test/auto_unit_test.hpp>
+#include <unistd.h>
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINTlibboost_unit_test
 #include "config.hpp"
-//#include "socket_transport.hpp"
 //#include "test_transport.hpp"
 
 //#include "rdp/rdp.hpp"
-#include "../src/front/front_Qt_cmpl.hpp"
+#include "../src/front/front_widget_Qt.hpp"
 
+
+//#define TARGET_IP "10.10.46.73"
+#define TARGET_IP "10.10.46.88"
 
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
-    int argc(0);
-    //char chartab[] = " -name QA\\administrateur -pwd S3cur3!1nux -ip 10.10.46.88 -p 3389";
-    char *argv[] {chartab};
-    QApplication app(argc, argv);
-/*
-    snprintf(info.hostname,sizeof(info.hostname),"test");*/
-    int verbose = 511;
+    bool test_boost(false);
+    std::string targetIP(TARGET_IP); // 10.10.46.73
+    int verbose(511);
+    int argc(8);
+    char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
+    // test_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
 
-    //const char * name = "RDP W2008 Target";
-   /* const char * name = "QA\\administrateur";
-
-    int client_sck = ip_connect("10.10.46.88", 3389, 3, 1000, verbose);*/
     
-    Front_Qt front(argv, verbose);
+    QApplication app(argc, const_cast<char**>(argv));
     
-    /*std::string error_message;
-    SocketTransport t( name
-                     , client_sck
-                     , "10.10.46.88"
-                     , 3389
-                     , verbose
-                     , &error_message
-                     );
+    //=====================
+    // test connexion init
+    //=====================
+    std::cout << std::endl;
+    std::cout << "FRONT TEST" << std::endl;
+    
+    Front_Qt front(argv, argc, verbose);
+    
+    if (front._screen    != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._form      != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    if (front._callback            != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    if (test_boost) {
+        BOOST_CHECK_EQUAL(front._callback->get_front_width(), 800);
+        BOOST_CHECK_EQUAL(front._callback->get_front_height(), 600);
+    }
+    test_boost = false;
+    if (front._connector->_sckRead != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sck     != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
+    BOOST_CHECK_EQUAL(front._port,     3389);
+    
+    BOOST_CHECK_EQUAL(front._connected, true);
+    
+    
+    
+    //=====================
+    //  test disconnexion
+    //=====================
+    std::cout <<  std::endl << "Test  disconnexion" <<  std::endl;
+    front.disconnexionReleased();
+    
+    if (front._screen    == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._form      != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
 
-    //#include "fixtures/dump_w2008.hpp"
-    //TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    if (front._callback             == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_callback == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sckRead  == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sck      == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "");
+    
+    BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP);
+    BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),          3389);
+    
+    BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
+    BOOST_CHECK_EQUAL(front._port,     3389);
+    
+    BOOST_CHECK_EQUAL(front._connected, false);
+    
+    
+    
+    //======================
+    // test connexion error
+    //======================
+    std::cout <<  std::endl << "Test connexion error" <<  std::endl;
+    front._form->set_IPField(targetIP+"0");
+    front.connexionReleased();
+    
+    if (front._screen    == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._form      != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
 
-    if (verbose > 2){
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
+    if (front._callback             == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_callback == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sckRead  == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sck      == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP+"0");
+    BOOST_CHECK_EQUAL(front._port,     3389);
+    
+    BOOST_CHECK_EQUAL(front._connected, false);
+    
+    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "<font color='Red'>Cannot connect to ["+targetIP+"0].</font>");
+    
+    BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP+"0");
+    BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),           3389);
+    
+
+    
+    //=====================
+    //  test reconnexion
+    //=====================
+    std::cout <<  std::endl << "Test reconnexion" <<  std::endl;
+    front._form->set_IPField(targetIP);
+    
+    BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP);
+    BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),           3389);
+    
+    front.connexionReleased();
+    
+    BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
+    BOOST_CHECK_EQUAL(front._port,     3389);
+    
+    if (front._screen    != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._form      != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    if (front._callback            != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    if (test_boost) {
+        BOOST_CHECK_EQUAL(front._callback->get_front_width(), 800);
+        BOOST_CHECK_EQUAL(front._callback->get_front_height(), 600);
+    }
+    test_boost = false;
+    if (front._connector->_sckRead != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sck     != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    BOOST_CHECK_EQUAL(front._connected, true);
+    
+    
+    
+    //====================
+    //    test options
+    //====================
+    std::cout <<  std::endl << "Test options" <<  std::endl;
+    front.disconnect("");
+    
+    BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._form->_PWDField.text().toStdString(),      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._form->_IPField.text().toStdString(),       targetIP);
+    BOOST_CHECK_EQUAL(front._form->_portField.text().toInt(),           3389);
+    
+    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "");
+    
+    BOOST_CHECK_EQUAL(front._connected, false);
+    
+    for (int i = 0; i < 50; i++) {
+        DialogOptions_Qt * dia = new DialogOptions_Qt(&front, front._form);
+        dia->close();
     }
     
     
-
-    Inifile ini;
-
-    ModRDPParams mod_rdp_params( "qa\\administrateur"
-                               , "S3cur3!1nux"
-                               , "10.10.46.88"
-                               , "10.10.43.46"
-                               , 2
-                               , 0
-                               );
-    mod_rdp_params.device_id                       = "device_id";
-    mod_rdp_params.enable_tls                      = false;
-    mod_rdp_params.enable_nla                      = false;
-    //mod_rdp_params.enable_krb                      = false;
-    //mod_rdp_params.enable_clipboard                = true;
-    mod_rdp_params.enable_fastpath                 = false;
-    mod_rdp_params.enable_mem3blt                  = false;
-    mod_rdp_params.enable_bitmap_update            = true;
-    mod_rdp_params.enable_new_pointer              = false;
-    //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = nullptr;
-    //mod_rdp_params.disconnect_on_logon_user_change = false;
-    //mod_rdp_params.open_session_timeout            = 0;
-    //mod_rdp_params.certificate_change_action       = 0;
-    //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.server_redirection_support        = true;
-
-    // To always get the same client random, in tests
-    LCGRandom gen(0);
     
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
-    mod_api * mod = &mod_;*/
+    //======================
+    // test drop connexion
+    //======================
+    std::cout <<  std::endl << "Test drop connexion" <<  std::endl;
+    front.connexionReleased();
     
-    if (verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-    /*BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);*/
+    BOOST_CHECK_EQUAL(front._connected, true);
+    
+    if (front._screen    != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._form      != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    if (front._callback             != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_callback != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sckRead  != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sck      != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    
+    front._connector->drop_connexion();
+    
+    if (front._screen    != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._form      != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector != nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
 
-    //front.setCallback_And_StartListening(mod);
+    if (front._callback             == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_callback == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sckRead  == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
+    if (front._connector->_sck      == nullptr) { test_boost = true;}
+    BOOST_CHECK_EQUAL(test_boost, true);
+    test_boost = false;
     
+    BOOST_CHECK_EQUAL(front._userName, "QA\\administrateur");
+    BOOST_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
+    BOOST_CHECK_EQUAL(front._targetIP, targetIP);
+    BOOST_CHECK_EQUAL(front._port,     3389);
+    
+    BOOST_CHECK_EQUAL(front._connected, true);
+    
+    BOOST_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "");
+    
+    
+    
+    //========================
+    //       test show
+    //========================
+    std::cout <<  std::endl << "Test show window" <<  std::endl;
+    front.connexionReleased();;
+    front.disconnect("");
     app.exec();
     
-/*
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-
-    while (res == BACK_EVENT_NONE){
-        //QCoreApplication::processEvents();
+    std::cout <<  std::endl << "Test close" <<  std::endl;
+    if (front._connected) {
         
-        LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 38) break;
-        front.gd.reInitView();
-        mod->draw_event(time(nullptr));
-        front.gd.flush();
-    }*/
-    
+        //========================
+        // test close from screen
+        //========================
+        
+        BOOST_CHECK_EQUAL(front._connected, true);
+        
+        if (front._callback  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_callback == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sckRead  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sck      == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        
+        //************************************************************************
+        
+    } else { 
+
+        //========================
+        // test close from form
+        //========================
+
+        BOOST_CHECK_EQUAL(front._connected, false);
+
+        if (front._callback  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_callback == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sckRead  == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+        if (front._connector->_sck      == nullptr) { test_boost = true;}
+        BOOST_CHECK_EQUAL(test_boost, true);
+        test_boost = false;
+
+        //************************************************************************
+    }
     
     
 }

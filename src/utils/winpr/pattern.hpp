@@ -38,8 +38,12 @@ typedef unsigned int DWORD;
 
 typedef int BOOL;
 
-#define FALSE 0
-#define TRUE  1
+#ifndef FALSE
+# define FALSE 0
+#endif
+#ifndef TRUE
+# define TRUE  1
+#endif
 
 
 #define WILDCARD_STAR       0x00000001
@@ -102,6 +106,7 @@ static LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
 static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
         LPCSTR lpX, size_t cchX, LPCSTR lpY, size_t cchY, LPCSTR lpWildcard, LPSTR* ppMatchEnd)
 {
+    TODO("compiler warn that parameters passed as ppMatchEnd mays not be initialized");
     LPSTR lpMatch;
 
     if (*lpWildcard == '*')
@@ -332,7 +337,8 @@ static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
         LPSTR lpY;
         size_t cchX;
         size_t cchY;
-        LPSTR lpMatchEnd;
+        TODO("initialisation below used to mute compiler warning, not a real solution, rewrite this code to match redemption coding style without macros, etc. And of course add unit tests.")
+        LPSTR lpMatchEnd = nullptr;
         LPSTR lpSubPattern;
         size_t cchSubPattern;
         LPSTR lpSubFileName;

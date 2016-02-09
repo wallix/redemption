@@ -36,17 +36,19 @@ private:
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
 
+    const unsigned session_probe_effective_launch_timeout;
+
     const bool     param_session_probe_loading_mask_enabled;
 
-    const unsigned param_session_probe_launch_timeout;
     const unsigned param_session_probe_keepalive_timeout;
+    const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
 
     const ::configs::SessionProbeOnLaunchFailure
                    param_session_probe_on_launch_failure;
 
     const bool     param_session_probe_end_disconnected_session;
 
-    std::string    param_auth_user;
+    std::string    param_target_informations;
 
     const uint16_t param_front_width;
     const uint16_t param_front_height;
@@ -62,9 +64,7 @@ private:
 
     mod_api& mod;
 
-    FileSystemDriveManager& file_system_drive_manager;
-
-    VirtualChannelDataSender& file_system_virtual_channel_to_server_sender;
+    FileSystemVirtualChannel& file_system_virtual_channel;
 
     wait_obj session_probe_event;
 
@@ -77,13 +77,15 @@ public:
         bool session_probe_loading_mask_enabled;
 
         unsigned session_probe_launch_timeout;
+        unsigned session_probe_launch_fallback_timeout;
         unsigned session_probe_keepalive_timeout;
+        bool     session_probe_on_keepalive_timeout_disconnect_user;
 
         ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
 
         bool session_probe_end_disconnected_session;
 
-        const char* auth_user;
+        const char* target_informations;
 
         uint16_t front_width;
         uint16_t front_height;
@@ -101,25 +103,30 @@ public:
 
     SessionProbeVirtualChannel(
         VirtualChannelDataSender* to_server_sender_,
-        FileSystemDriveManager& file_system_drive_manager,
         FrontAPI& front,
         mod_api& mod,
-        VirtualChannelDataSender& file_system_virtual_channel_to_server_sender,
+        FileSystemVirtualChannel& file_system_virtual_channel,
         const Params& params)
     : BaseVirtualChannel(nullptr,
                          to_server_sender_,
                          params)
+    , session_probe_effective_launch_timeout(
+            (params.session_probe_on_launch_failure ==
+             ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?
+            params.session_probe_launch_timeout :
+            params.session_probe_launch_fallback_timeout
+        )
     , param_session_probe_loading_mask_enabled(
           params.session_probe_loading_mask_enabled)
-    , param_session_probe_launch_timeout(
-          params.session_probe_launch_timeout)
     , param_session_probe_keepalive_timeout(
           params.session_probe_keepalive_timeout)
+    , param_session_probe_on_keepalive_timeout_disconnect_user(
+          params.session_probe_on_keepalive_timeout_disconnect_user)
     , param_session_probe_on_launch_failure(
           params.session_probe_on_launch_failure)
     , param_session_probe_end_disconnected_session(
           params.session_probe_end_disconnected_session)
-    , param_auth_user(params.auth_user)
+    , param_target_informations(params.target_informations)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
     , param_real_alternate_shell(params.real_alternate_shell)
@@ -128,9 +135,7 @@ public:
     , param_acl(params.acl)
     , front(front)
     , mod(mod)
-    , file_system_drive_manager(file_system_drive_manager)
-    , file_system_virtual_channel_to_server_sender(
-          file_system_virtual_channel_to_server_sender)
+    , file_system_virtual_channel(file_system_virtual_channel)
     , outbound_connection_monitor_rules(
           params.outbound_connection_notifying_rules,
           params.outbound_connection_killing_rules)
@@ -138,14 +143,16 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                    "timeout=%u on_launch_failure=%d",
-                this->param_session_probe_launch_timeout,
+                    "timeout=%u fallback_timeout=%u effective_timeout=%u on_launch_failure=%d",
+                params.session_probe_launch_timeout,
+                params.session_probe_launch_fallback_timeout,
+                this->session_probe_effective_launch_timeout,
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
 
         this->session_probe_event.object_and_time = true;
 
-        if (this->param_session_probe_launch_timeout > 0) {
+        if (this->session_probe_effective_launch_timeout > 0) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
@@ -153,7 +160,7 @@ public:
             }
 
             this->session_probe_event.set(
-                this->param_session_probe_launch_timeout * 1000);
+                this->session_probe_effective_launch_timeout * 1000);
         }
     }
 
@@ -193,7 +200,7 @@ public:
         this->session_probe_event.reset();
         this->session_probe_event.waked_up_by_time = false;
 
-        if (this->param_session_probe_launch_timeout &&
+        if (this->session_probe_effective_launch_timeout &&
             !this->session_probe_ready) {
             LOG(((this->param_session_probe_on_launch_failure ==
                   ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?
@@ -241,7 +248,12 @@ public:
                         throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
                     }
 
-                    throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                    if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
+                        throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                    }
+                    else {
+                        this->front.session_probe_started(false);
+                    }
                 }
             }
             else {
@@ -333,8 +345,6 @@ public:
         const char request_hello[] = "Request=Hello";
 
         if (!session_probe_message.compare(request_hello)) {
-            REDASSERT(!this->session_probe_ready);
-
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
@@ -343,7 +353,7 @@ public:
 
             this->session_probe_ready = true;
 
-            this->front.session_probe_started();
+            this->front.session_probe_started(true);
 
             if (this->param_session_probe_loading_mask_enabled &&
                 this->front.disable_input_event_and_graphics_update(false)) {
@@ -357,9 +367,7 @@ public:
                     this->param_front_width, this->param_front_height));
             }
 
-            this->file_system_drive_manager.DisableSessionProbeDrive(
-                file_system_virtual_channel_to_server_sender,
-                this->verbose);
+            this->file_system_virtual_channel.disable_session_probe_drive();
 
             this->session_probe_event.reset();
 
@@ -430,19 +438,19 @@ public:
             }
         }
         else if (!session_probe_message.compare(
-                     "Request=Get authenticated user")) {
+                     "Request=Get target informations")) {
             StaticOutStream<1024> out_s;
 
             const size_t message_length_offset = out_s.get_offset();
             out_s.out_skip_bytes(sizeof(uint16_t));
 
             {
-                const char cstr[] = "AuthenticatedUser=";
+                const char cstr[] = "TargetInformations=";
                 out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
             }
 
-            out_s.out_copy_bytes(this->param_auth_user.data(),
-                this->param_auth_user.size());
+            out_s.out_copy_bytes(this->param_target_informations.data(),
+                this->param_target_informations.size());
 
             out_s.out_clear_bytes(1);   // Null-terminator.
 

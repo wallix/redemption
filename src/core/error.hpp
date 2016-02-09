@@ -77,6 +77,7 @@ enum error_type {
     ERR_X224_SENDING_UNKNOWN_PDU_TYPE,
     ERR_X224_EXPECTED_DATA_PDU,
     ERR_X224_EXPECTED_CONNECTION_CONFIRM,
+    ERR_X224_RECV_ID_IS_RD_TPDU,    // Disconnect Request - Transport Protocol Data Unit
 
     ERR_ISO_INCOMING_CODE_NOT_PDU_CR = 4000,
     ERR_ISO_INCOMING_BAD_PDU_CR_LENGTH,
@@ -183,6 +184,7 @@ enum error_type {
     ERR_RDP_PROTOCOL,
     ERR_RDP_SERVER_REDIR,
     ERR_RDP_OPEN_SESSION_TIMEOUT,
+    ERR_RDP_HANDSHAKE_TIMEOUT,
 
     ERR_WM_PASSWORD = 9000,
     ERR_WM_USERNAME,
@@ -359,9 +361,15 @@ public:
         case ERR_VNC_CONNECTION_ERROR:
             return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
-            return "Composite Widget Destroyed without child list not empty.";
+            return "Composite Widget Destroyed without child list not empty";
+
+        case ERR_SESSION_PROBE_LAUNCH:
+            return "Could not launch Session Probe";
+        case ERR_SESSION_PROBE_KEEPALIVE:
+            return "Keep alive has been missed, connection may be dead or slow";
         case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
+
         default:
             {
                 int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);

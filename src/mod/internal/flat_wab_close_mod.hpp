@@ -32,11 +32,13 @@
 
 
 using FlatWabCloseModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,      vcfg::wait | vcfg::read>,
-    vcfg::var<cfg::globals::target_device,  vcfg::wait | vcfg::read>,
+    vcfg::var<cfg::globals::auth_user,       vcfg::wait | vcfg::read>,
+    vcfg::var<cfg::globals::target_device,   vcfg::wait | vcfg::read | vcfg::ask>,
+    vcfg::var<cfg::globals::target_user,     vcfg::ask | vcfg::read>,
+    vcfg::var<cfg::context::selector,        vcfg::ask>,
+    vcfg::var<cfg::context::target_protocol, vcfg::ask>,
     vcfg::var<cfg::globals::close_timeout>,
     vcfg::var<cfg::globals::target_application>,
-    vcfg::var<cfg::globals::target_user>,
     vcfg::var<cfg::context::auth_error_message>,
     vcfg::var<cfg::context::module>,
     vcfg::var<cfg::translation::language>,
@@ -48,6 +50,7 @@ class FlatWabCloseMod : public InternalMod, public NotifyApi
 {
     FlatWabClose     close_widget;
     Timeout timeout;
+    FlatWabCloseModVariables vars;
 
 private:
     bool showtimer;
@@ -76,7 +79,8 @@ private:
 
 public:
     FlatWabCloseMod(FlatWabCloseModVariables vars,
-                    FrontAPI & front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
+                    FrontAPI & front, uint16_t width, uint16_t height, time_t now,
+                    bool showtimer = false, bool back_selector = false)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , close_widget(*this, width, height, this->screen, this,
                        vars.get<cfg::context::auth_error_message>().c_str(), 0,
@@ -89,11 +93,15 @@ public:
                        showtimer,
                        vars.get<cfg::font>(),
                        vars.get<cfg::theme>(),
-                       language(vars))
+                       language(vars),
+                       back_selector)
         , timeout(now, vars.get<cfg::globals::close_timeout>())
+        , vars(vars)
         , showtimer(showtimer)
     {
-        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", vars.get<cfg::globals::close_timeout>());
+        if (vars.get<cfg::globals::close_timeout>()) {
+            LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", vars.get<cfg::globals::close_timeout>());
+        }
         this->front.set_mod_palette(BGRPalette::classic_332());
 
         this->screen.add_widget(&this->close_widget);
@@ -110,6 +118,15 @@ public:
     void notify(Widget2* sender, notify_event_t event) override {
         if (NOTIFY_CANCEL == event) {
             this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
+        }
+        else if (NOTIFY_SUBMIT == event) {
+            LOG(LOG_INFO, "asking for selector");
+            this->vars.ask<cfg::context::selector>();
+            this->vars.ask<cfg::globals::target_user>();
+            this->vars.ask<cfg::globals::target_device>();
+            this->vars.ask<cfg::context::target_protocol>();
+            this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
         }
     }

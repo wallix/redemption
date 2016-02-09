@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_TRANSPORT_BUFFER_CHECKSUM_BUF_HPP
 #define REDEMPTION_TRANSPORT_BUFFER_CHECKSUM_BUF_HPP
 
-#include "cryptofile.hpp"
+#include "transport/cryptofile.hpp"
 #include "ssl_calls.hpp"
 
 #include <memory>
@@ -104,8 +104,8 @@ public:
         REDASSERT(this->file_size != nosize);
         this->hmac.update(data, len);
         if (this->file_size < quick_size) {
-            auto const remaining = std::min(this->file_size - quick_size, len);
-            this->quick_hmac.update(data, len);
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(data, remaining);
             this->file_size += remaining;
         }
         return this->Buf::write(data, len);

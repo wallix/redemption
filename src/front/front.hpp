@@ -32,7 +32,7 @@
 #include <string.h>
 #include "openssl_tls.hpp"
 #include "stream.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"
@@ -64,8 +64,8 @@
 #include "colors.hpp"
 #include "bitfu.hpp"
 #include "confdescriptor.hpp"
-#include "in_file_transport.hpp"
-#include "out_file_transport.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/out_file_transport.hpp"
 #include "pattutils.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
@@ -103,6 +103,8 @@
 #include "RDP/mppc_50.hpp"
 #include "RDP/mppc_60.hpp"
 #include "RDP/mppc_61.hpp"
+
+#include "utils/timeout.hpp"
 
 #include <memory>
 
@@ -422,6 +424,10 @@ private:
 
     bool session_probe_started_ = false;
 
+    Timeout timeout;
+
+    bool is_client_disconnected = false;
+
 public:
     Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -430,6 +436,7 @@ public:
           , CryptoContext & cctx
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
+          , time_t now
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
@@ -461,7 +468,8 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
     , authentifier(nullptr)
-    , auth_info_sent(false) {
+    , auth_info_sent(false)
+    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>()) {
         // init TLS
         // --------------------------------------------------------
 
@@ -523,6 +531,8 @@ public:
             this->encrypt.encryptionMethod = 2; /* 128 bits */
         break;
         }
+
+        this->event.set(0);
     }
 
     ~Front() override {
@@ -668,8 +678,14 @@ public:
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
+        TODO("remove this after unifying capture interface");
+        bool full_video = false;
+        TODO("remove this after unifying capture interface");
+        bool extract_meta_data = false;
         this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
-                                   , true, false, authentifier, ini, this->gen, this->cctx);
+                                   , true, false, authentifier
+                                   , ini, this->gen, this->cctx
+                                   , full_video, extract_meta_data);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
@@ -899,13 +915,15 @@ public:
             LOG(LOG_INFO, "Front::disconnect");
         }
 
-        write_packets(
-            this->trans,
-            [](StreamSize<256>, OutStream & mcs_data) {
-                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-            },
-            write_x224_dt_tpdu_fn{}
-        );
+        if (!this->is_client_disconnected) {
+            write_packets(
+                this->trans,
+                [](StreamSize<256>, OutStream & mcs_data) {
+                    MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+                },
+                write_x224_dt_tpdu_fn{}
+            );
+        }
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -999,8 +1017,23 @@ public:
         }
     }
 
-    void incoming(Callback & cb)
+    void incoming(Callback & cb, time_t now)
     {
+        switch(this->timeout.check(now)) {
+        case Timeout::TIMEOUT_REACHED:
+            LOG(LOG_ERR, "RDP handshake timeout reached!");
+            throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+            break;
+        case Timeout::TIMEOUT_NOT_REACHED:
+            this->event.set(200000);
+            break;
+        default:
+            this->event.reset();
+            break;
+        }
+
+        if (this->event.waked_up_by_time) return;
+
         unsigned expected;
 
         if (this->verbose & 4) {
@@ -1234,6 +1267,24 @@ public:
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MCS_MSGCHANNEL:
+                    {
+                        GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+                        cs_mcs_msgchannel.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_mcs_msgchannel.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MULTITRANSPORT:
+                    {
+                        GCC::UserData::CSMultiTransport cs_multitransport;
+                        cs_multitransport.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_multitransport.log("Receiving from Client");
                         }
                     }
                     break;
@@ -1532,7 +1583,8 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1606,7 +1658,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1801,7 +1854,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -2118,7 +2172,8 @@ public:
                     TODO("What is the clean way to actually disconnect ?")
                     X224::DR_TPDU_Recv x224(stream);
                     LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
-                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
                 }
                 else if (fx224.type != X224::DT_TPDU) {
                     LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
@@ -2133,7 +2188,8 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -2431,10 +2487,14 @@ private:
         return true;
     }
 
-    void session_probe_started() override {
-        this->session_probe_started_ = true;
+    void session_probe_started(bool started) override {
+        this->session_probe_started_ = started;
 
         this->update_keyboard_input_mask_state();
+
+        if (!started) {
+            this->session_update("Probe.Status=Unknown");
+        }
     }
 
     void set_keylayout(int LCID) override {
@@ -3601,6 +3661,7 @@ private:
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
                 this->up_and_running = 1;
+                this->timeout.cancel_timeout();
                 cb.rdp_input_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);

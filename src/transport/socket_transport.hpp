@@ -24,7 +24,7 @@
 #define REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 
 #include "defines.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "netutils.hpp"
 #include "fileutils.hpp"
 #include "openssl_crypto.hpp"
@@ -1001,7 +1001,7 @@ public:
             }
         }
 
-        if (!certificate_matches) {
+        if (!certificate_matches && server_cert_store) {
             ::unlink(filename);
 
             LOG(LOG_INFO, "Dumping X509 peer certificate: \"%s\"\n", filename);

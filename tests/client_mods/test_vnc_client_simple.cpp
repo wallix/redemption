@@ -31,7 +31,7 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "client_info.hpp"
 #include "vnc/vnc.hpp"
 #include "front/fake_front.hpp"

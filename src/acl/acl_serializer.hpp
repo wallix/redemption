@@ -32,7 +32,7 @@
 #include "stream.hpp"
 #include "config.hpp"
 #include "authid.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "translation.hpp"
 #include "get_printable_password.hpp"
 

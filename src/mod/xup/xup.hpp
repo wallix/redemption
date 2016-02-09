@@ -37,7 +37,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "front_api.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "stream.hpp"
 #include "bitmap.hpp"
 

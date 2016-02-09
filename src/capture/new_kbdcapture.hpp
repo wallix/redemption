@@ -422,7 +422,7 @@ public:
     virtual void session_update(const timeval & now, const char * message)
             override {
         this->is_driven_by_ocr          = true;
-        this->is_probe_enabled_session  = true;
+        this->is_probe_enabled_session  = (::strcmp(message, "Probe.Status=Unknown") != 0);
 
         if (!this->session_data.get_offset()) return;
 

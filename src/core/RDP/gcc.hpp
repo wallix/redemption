@@ -37,7 +37,7 @@
 #include <cinttypes>
 
 enum DATA_BLOCK_TYPE {
-    //  The data block that follows contains Client Core Data (section 2.2.1.3.2).
+    // The data block that follows contains Client Core Data (section 2.2.1.3.2).
     CS_CORE = 0xC001,
     // The data block that follows contains Client Security Data (section 2.2.1.3.3).
     CS_SECURITY = 0xC002,
@@ -47,6 +47,10 @@ enum DATA_BLOCK_TYPE {
     CS_CLUSTER = 0xC004,
     // The data block that follows contains Client Monitor Data (section 2.2.1.3.6).
     CS_MONITOR = 0xC005,
+    // The data block that follows contains Client Message Channel Data (section 2.2.1.3.7).
+    CS_MCS_MSGCHANNEL = 0xC006,
+    // The data block that follows contains Client Multitransport Channel Data (section 2.2.1.3.8).
+    CS_MULTITRANSPORT = 0xC00A,
     // The data block that follows contains Server Core Data (section 2.2.1.4.2).
     SC_CORE = 0x0C01,
     // The data block that follows contains Server Security Data (section 2.2.1.4.3).
@@ -2816,8 +2820,55 @@ namespace GCC
 // (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MCS_MSGCHANNEL
 // (0xC006).
 
-//   flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
+//    flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
 // future use. It MUST be set to zero.
+
+struct CSMCSMsgChannel {
+    uint16_t userDataType;
+    uint16_t length;
+
+    uint32_t flags;
+
+    CSMCSMsgChannel()
+    : userDataType(CS_MCS_MSGCHANNEL)
+    , length(8)
+    , flags(0)
+    {
+    }
+
+    void emit(OutStream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->flags);
+    }
+
+    void recv(InStream & stream)
+    {
+        //LOG(LOG_INFO, "CSMCSMsgChannel");
+        //hexdump_c(stream.get_current(), 8);
+        if (!stream.in_check_rem(8)){
+            LOG(LOG_ERR, "CS_MCS_MSGCHANNEL short header");
+            throw Error(ERR_GCC);
+        }
+        this->userDataType         = stream.in_uint16_le();
+        this->length               = stream.in_uint16_le();
+
+        if (this->length != 8){
+            LOG(LOG_ERR, "CS_MCS_MSGCHANNEL bad header length=%d", this->length);
+            throw Error(ERR_GCC);
+        }
+
+        this->flags = stream.in_uint32_le();
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_MCS_MSGCHANNEL (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "CSMCSMsgChannel::flags %u", this->flags);
+    }
+};
 
 // 2.2.1.3.8 Client Multitransport Channel Data (TS_UD_CS_MULTITRANSPORT)
 // ======================================================================
@@ -2844,6 +2895,60 @@ namespace GCC
 // |TRANSPORTTYPE_UDP_PREFERRED | Indicates that tunneling of static virtual channel traffic |
 // | 0x100                      | over UDP is supported.                                     |
 // +----------------------------+------------------------------------------------------------+
+
+struct CSMultiTransport {
+    enum {
+          TRANSPORTTYPE_UDPFECR       = 0x01
+        , TRANSPORTTYPE_UDPFECL       = 0x04
+        , TRANSPORTTYPE_UDP_PREFERRED = 0x100
+        , SOFTSYNC_TCP_TO_UDP         = 0x200
+    };
+
+    uint16_t userDataType;
+    uint16_t length;
+
+    uint32_t flags;
+
+    CSMultiTransport()
+    : userDataType(CS_MULTITRANSPORT)
+    , length(8)
+    , flags(0)
+    {
+    }
+
+    void emit(OutStream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->flags);
+    }
+
+    void recv(InStream & stream)
+    {
+        //LOG(LOG_INFO, "CSMultiTransport");
+        //hexdump_c(stream.get_current(), 8);
+        if (!stream.in_check_rem(8)){
+            LOG(LOG_ERR, "CS_MULTITRANSPORT short header");
+            throw Error(ERR_GCC);
+        }
+        this->userDataType         = stream.in_uint16_le();
+        this->length               = stream.in_uint16_le();
+
+        if (this->length != 8){
+            LOG(LOG_ERR, "CS_MULTITRANSPORT bad header length=%d", this->length);
+            throw Error(ERR_GCC);
+        }
+
+        this->flags = stream.in_uint32_le();
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_MULTITRANSPORT (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "CSMultiTransport::flags %u", this->flags);
+    }
+};
 
 // 2.2.1.3.9 Client Monitor Extended Data (TS_UD_CS_MONITOR_EX)
 // ============================================================

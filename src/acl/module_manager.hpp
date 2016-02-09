@@ -25,7 +25,7 @@
 #ifndef _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
-#include "socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "config.hpp"
 #include "netutils.hpp"
 #include "mod_api.hpp"
@@ -60,6 +60,7 @@
 #define STRMODULE_VALID            "valid"
 #define STRMODULE_TRANSITORY       "transitory"
 #define STRMODULE_CLOSE            "close"
+#define STRMODULE_CLOSE_BACK       "close_back"
 #define STRMODULE_CONNECTION       "connection"
 #define STRMODULE_TARGET           "interactive_target"
 #define STRMODULE_MESSAGE          "message"
@@ -78,6 +79,7 @@ enum {
     MODULE_XUP,
     MODULE_INTERNAL,
     MODULE_INTERNAL_CLOSE,
+    MODULE_INTERNAL_CLOSE_BACK,
     MODULE_INTERNAL_WIDGET2_DIALOG,
     MODULE_INTERNAL_WIDGET2_MESSAGE,
     MODULE_INTERNAL_WIDGET2_LOGIN,
@@ -109,6 +111,7 @@ const char * get_module_name(int module_id) {
         case MODULE_XUP:                                return "MODULE_XUP";
         case MODULE_INTERNAL:                           return "MODULE_INTERNAL";
         case MODULE_INTERNAL_CLOSE:                     return "MODULE_INTERNAL_CLOSE";
+        case MODULE_INTERNAL_CLOSE_BACK:                return "MODULE_INTERNAL_CLOSE_BACK";
         case MODULE_INTERNAL_WIDGET2_DIALOG:            return "MODULE_INTERNAL_WIDGET2_DIALOG";
         case MODULE_INTERNAL_WIDGET2_MESSAGE:           return "MODULE_INTERNAL_WIDGET2_MESSAGE";
         case MODULE_INTERNAL_WIDGET2_LOGIN:             return "MODULE_INTERNAL_WIDGET2_LOGIN";
@@ -178,15 +181,6 @@ public:
         LOG(LOG_INFO, "----------> ACL next_module <--------");
         auto & module_cstr = this->ini.get<cfg::context::module>();
 
-        if (this->connected &&
-            (module_cstr == STRMODULE_RDP ||
-             module_cstr == STRMODULE_VNC)) {
-            LOG(LOG_INFO, "===========> MODULE_CLOSE");
-            if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", language(this->ini)));
-            }
-            return MODULE_INTERNAL_CLOSE;
-        }
         if (module_cstr == STRMODULE_LOGIN) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET2_LOGIN;
@@ -225,6 +219,19 @@ public:
         }
         else if (module_cstr == STRMODULE_CLOSE) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
+            return MODULE_INTERNAL_CLOSE;
+        }
+        else if (module_cstr == STRMODULE_CLOSE_BACK) {
+            LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
+            return MODULE_INTERNAL_CLOSE_BACK;
+        }
+        if (this->connected &&
+            (module_cstr == STRMODULE_RDP ||
+             module_cstr == STRMODULE_VNC)) {
+            LOG(LOG_INFO, "===========> MODULE_CLOSE");
+            if (this->ini.get<cfg::context::auth_error_message>().empty()) {
+                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", language(this->ini)));
+            }
             return MODULE_INTERNAL_CLOSE;
         }
         else if (module_cstr == STRMODULE_RDP) {
@@ -510,6 +517,7 @@ public:
     void new_mod(int target_module, time_t now, auth_api * acl) override {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
+        this->connected = false;
         if (this->last_module) this->front.stop_capture();
         switch (target_module)
         {
@@ -590,6 +598,23 @@ public:
                                             );
             }
             LOG(LOG_INFO, "ModuleManager::internal module Close ready");
+            break;
+        case MODULE_INTERNAL_CLOSE_BACK:
+            {
+                if (this->ini.get<cfg::context::auth_error_message>().empty()) {
+                    this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
+                }
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::CloseBack'");
+                this->mod = new FlatWabCloseMod(this->ini,
+                                                this->front,
+                                                this->front.client_info.width,
+                                                this->front.client_info.height,
+                                                now,
+                                                true,
+                                                true
+                                                );
+            }
+            LOG(LOG_INFO, "ModuleManager::internal module Close Back ready");
             break;
         case MODULE_INTERNAL_TARGET:
             {
@@ -723,7 +748,8 @@ public:
                                          accounts.password,
                                          this->front,
                                          this->front.client_info.width,
-                                         this->front.client_info.height
+                                         this->front.client_info.height,
+                                         now
             );
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
@@ -771,16 +797,6 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
 
-                // REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.");
-                // char hostname[255];
-
-                // TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
-                // hostname[0] = 0;
-                // if (this->front.client_info.hostname[0]){
-                //     memcpy(hostname, this->front.client_info.hostname, 31);
-                //     hostname[31] = 0;
-                // }
-
                 ClientInfo client_info = this->front.client_info;
 
                 if (ini.get<cfg::context::mode_console>() == "force") {
@@ -791,9 +807,9 @@ public:
                     client_info.console_session = false;
                     LOG(LOG_INFO, "Session::mode console : forbid");
                 }
-                else {
-                    // default is "allow", do nothing special
-                }
+                //else {
+                //    // default is "allow", do nothing special
+                //}
 
                 static const char * name = "RDP Target";
 
@@ -819,9 +835,9 @@ public:
 
                 // BEGIN READ PROXY_OPT
                 if (!this->ini.get<cfg::globals::disable_proxy_opt>()) {
-                    update_authorized_channels(this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
-                                               this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
-                                               this->ini.get<cfg::context::proxy_opt>());
+                    AuthorizationChannels::update_authorized_channels(this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
+                                                                      this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
+                                                                      this->ini.get<cfg::context::proxy_opt>());
                 }
                 // END READ PROXY_OPT
 
@@ -835,8 +851,7 @@ public:
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
                 mod_rdp_params.auth_user                           = this->ini.get<cfg::globals::auth_user>().c_str();
-
-                mod_rdp_params.client_name                         = this->front.client_info.hostname;
+                mod_rdp_params.target_application                  = this->ini.get<cfg::globals::target_application>().c_str();
 
                 //mod_rdp_params.enable_tls                          = true;
                 if (!mod_rdp_params.target_password[0]) {
@@ -855,8 +870,12 @@ public:
                 mod_rdp_params.enable_session_probe                = this->ini.get<cfg::mod_rdp::enable_session_probe>();
                 mod_rdp_params.enable_session_probe_loading_mask   = this->ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>();
                 mod_rdp_params.session_probe_launch_timeout        = this->ini.get<cfg::mod_rdp::session_probe_launch_timeout>();
+                mod_rdp_params.session_probe_launch_fallback_timeout
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>();
                 mod_rdp_params.session_probe_on_launch_failure     = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
+                mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user =
+                                                                     this->ini.get<cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user>();
                 mod_rdp_params.session_probe_end_disconnected_session
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
                 mod_rdp_params.session_probe_customize_executable_name
@@ -873,7 +892,8 @@ public:
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-                mod_rdp_params.shell_working_directory             = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+                mod_rdp_params.working_dir                         = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+                mod_rdp_params.use_client_provided_alternate_shell = this->ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
                 mod_rdp_params.target_application_account          = this->ini.get<cfg::globals::target_application_account>().c_str();
                 mod_rdp_params.target_application_password         = this->ini.get<cfg::globals::target_application_password>().c_str();
                 mod_rdp_params.rdp_compression                     = this->ini.get<cfg::mod_rdp::rdp_compression>();
@@ -889,6 +909,8 @@ public:
                 mod_rdp_params.server_cert_failure_message         = this->ini.get<cfg::mod_rdp::server_cert_failure_message>();
                 mod_rdp_params.server_cert_error_message           = this->ini.get<cfg::mod_rdp::server_cert_error_message>();
 
+                mod_rdp_params.hide_client_name                    = this->ini.get<cfg::mod_rdp::hide_client_name>();
+
                 mod_rdp_params.enable_persistent_disk_bitmap_cache = this->ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
                 mod_rdp_params.enable_cache_waiting_list           = this->ini.get<cfg::mod_rdp::cache_waiting_list>();
                 mod_rdp_params.persist_bitmap_cache_on_disk        = this->ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>();
@@ -900,12 +922,9 @@ public:
                 mod_rdp_params.allow_channels                      = &(this->ini.get<cfg::mod_rdp::allow_channels>());
                 mod_rdp_params.deny_channels                       = &(this->ini.get<cfg::mod_rdp::deny_channels>());
 
-                mod_rdp_params.remote_program                      = this->front.client_info.remote_program;
                 mod_rdp_params.server_redirection_support          = this->ini.get<cfg::mod_rdp::server_redirection_support>();
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.get<cfg::mod_rdp::bogus_sc_net_size>();
-
-                mod_rdp_params.client_device_announce_timeout      = this->ini.get<cfg::mod_rdp::client_device_announce_timeout>();
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
 
@@ -938,9 +957,6 @@ public:
                     throw;
                 }
 
-                // DArray<Rect> rects(1);
-                // rects[0] = Rect(0, 0, this->front.client_info.width, this->front.client_info.height);
-                // this->mod->rdp_input_invalidate2(rects);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
@@ -1056,8 +1072,11 @@ public:
             this->front.pause_capture();
         }
     }
-
+    void stop_record() override {
+        if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
+            this->front.stop_capture();
+        }
+    }
 };
 
 #endif
-

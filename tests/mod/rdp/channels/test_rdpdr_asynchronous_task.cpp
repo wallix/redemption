@@ -28,12 +28,12 @@
 //#define LOGPRINT
 
 #include "fdbuf.hpp"
-#include "in_file_transport.hpp"
+#include "transport/in_file_transport.hpp"
 #include "log.hpp"
 #include "make_unique.hpp"
 #include "rdp/channels/rdpdr_asynchronous_task.hpp"
-#include "socket_transport_utility.hpp"
-#include "test_transport.hpp"
+#include "utils/socket_transport_utility.hpp"
+#include "transport/test_transport.hpp"
 
 class TestToServerSender : public VirtualChannelDataSender {
     Transport & transport;
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     io::posix::fdbuf fd_wrapper(fd);
 
-    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
 
     fd_wrapper.release();
 
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     io::posix::fdbuf fd_wrapper(fd);
 
-    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
 
     fd_wrapper.release();
 

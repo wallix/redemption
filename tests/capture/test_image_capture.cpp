@@ -31,9 +31,9 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "out_file_transport.hpp"
-#include "out_filename_sequence_transport.hpp"
-#include "test_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
 #include "RDP/RDPDrawable.hpp"

@@ -25,6 +25,7 @@ class CryptoTrace:
     """ New crypto trace format writer """
     def __init__(self, path, mode):
         self._fd = redcryptofile.open(path, mode)
+
         if self._fd == -1:
             raise TraceIntegrityError("Invalid CryptoTrace")
     def flush(self):

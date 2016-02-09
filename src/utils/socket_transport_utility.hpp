@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_UTILS_SOCKET_TRANSPORT_UTILITY_HPP
 #define REDEMPTION_UTILS_SOCKET_TRANSPORT_UTILITY_HPP
 
-#include "socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "wait_obj.hpp"
 
 inline

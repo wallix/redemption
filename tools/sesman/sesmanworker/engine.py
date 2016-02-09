@@ -139,7 +139,7 @@ class Engine(object):
         self.displaytargets = []
         self.proxyrightsinput = None
         self.pidhandler = None
-        self.subprotocol = None
+
 
         self.session_result = True
         self.session_diag = u'Success'
@@ -538,12 +538,15 @@ class Engine(object):
                     protocol = u"APP"
                     host = None
                     alias = None
+                    subprotocols = []
                 else:
                     target_name = right.resource.device.cn
                     service_name = right.resource.service.cn
                     protocol = right.resource.service.protocol.cn
                     host = right.resource.device.host
                     alias = right.resource.device.deviceAlias
+                    subprotocols = right.subprotocols
+                    # subprotocols = right.resource.device.service.subprotocols
                 if target_context is not None:
                     if host is None:
                         continue
@@ -552,6 +555,7 @@ class Engine(object):
                         host != target_context.dnsname):
                         continue
                     if (target_context.login and
+                        account_login and
                         account_login != target_context.login):
                         continue
                     if (target_context.service and
@@ -594,7 +598,7 @@ class Engine(object):
                                                        service_name,
                                                        protocol,
                                                        target_groups,
-                                                       right.subprotocols,
+                                                       subprotocols,
                                                        host))
 
     def get_selected_target(self, target_login, target_device, target_service,
@@ -681,34 +685,21 @@ class Engine(object):
         return None
 
     def checkout_target(self, target):
+        """
+        Checkout target and get credentials object
+        """
         if self.target_credentials.get(target) is None:
-            Logger().debug("checkout_target")
             try:
-                try:
-                    creds = self.wabengine.checkout_target(target)
-                except AccountLocked:
-                    Logger().info("Engine checkout_target failed: account locked")
-                    return False
-                except Exception, e:
-                    Logger().info(">>> Engine checkout_target does not exist")
-                    creds = self.wabengine.get_target_credentials(target)
+                Logger().debug("** CALL checkout_target")
+                creds = self.wabengine.checkout_target(target)
                 self.target_credentials[target] = creds
-            except AccountLocked:
+            except AccountLocked as m:
                 Logger().info("Engine checkout_target failed: account locked")
-                return False
-            Logger().debug("checkout_target done")
+                return False, "%s" % m
+            Logger().debug("** END checkout_target")
         else:
             Logger().info("checkout_target: target already checked out")
-        return True
-
-    # def get_target_credentials(self, target_device):
-    #     if self.target_credentials.get(target_device) is None:
-    #         Logger().debug("get_target_credentials")
-    #         self.target_credentials[target_device] = self.wabengine.get_target_credentials(target_device)
-    #         Logger().debug("get_target_credentials done")
-    #         # Logger().info("GET_TARGET_CREDENTIALS = '%s'" % self.target_credentials)
-    #     target_credentials = self.target_credentials.get(target_device, {})
-    #     return target_credentials
+        return True, "OK"
 
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
@@ -792,9 +783,6 @@ class Engine(object):
             self.session_id = self.wabengine.start_session(
                 auth, self.get_pidhandler(pid), effective_login=effective_login,
                 **kwargs)
-        except AccountLocked:
-            self.session_id = None
-            Logger().info("Engine start_session failed: account locked")
         except Exception, e:
             import traceback
             self.session_id = None
@@ -834,11 +822,14 @@ class Engine(object):
         if proxytype == "RDP":
             separator = u"\x01"
             matchproto = lambda x: x == u"RDP"
-        elif proxytype == "SSH":
+        elif proxytype == u"SSH":
             separator = u"|"
-            matchproto = lambda x: (x == self.subprotocol
-                                    or (x == u'SSH_SHELL_SESSION'
-                                        and self.subprotocol == u'SSH_X11_SESSION'))
+            matchproto = lambda x: x in ["SSH_SHELL_SESSION",
+                                         "SSH_REMOTE_COMMAND",
+                                         "SSH_SCP_UP",
+                                         "SSH_SCP_DOWN",
+                                         "SFTP_SESSION",
+                                         "RLOGIN", "TELNET"]
         else:
             return None, None
         try:
@@ -908,6 +899,7 @@ class Engine(object):
         if not target:
             return None
         proto = target.resource.service.protocol.cn
+        # subproto = [x.cn for x in target.resource.service.subprotocols]
         subproto = [x.cn for x in target.subprotocols]
         return ProtocolInfo(proto, subproto)
 

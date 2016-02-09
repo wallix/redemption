@@ -21,15 +21,25 @@
 #ifndef REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
 #define REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
 
+#include <cerrno>
+#include <fcntl.h>
+#include <snappy-c.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <algorithm>
+#include <cerrno>
+#include <cstdio>
+
+#include <memory>
+
+
 #include "log.hpp"
 #include "error.hpp"
 #include "no_param.hpp"
 #include "fileutils.hpp"
-#include "filter/crypto_filter.hpp"
-
-#include <algorithm>
-#include <cerrno>
-#include <cstdio>
+#include "log.hpp"
+#include "openssl_crypto.hpp"
+#include "transport/cryptofile.hpp"
 
 namespace detail
 {
@@ -51,7 +61,7 @@ namespace detail
 
         int read(int err)
         {
-            ssize_t ret = this->reader(this->buf, sizeof(this->buf));
+            ssize_t ret = this->reader.read(this->buf, sizeof(this->buf));
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
             }
@@ -161,8 +171,8 @@ namespace detail
         time_t  ctime;
         time_t  start_time;
         time_t  stop_time;
-        unsigned char hash1[HASH_LEN / 2];
-        unsigned char hash2[HASH_LEN / 2];
+        unsigned char hash1[MD_HASH_LENGTH];
+        unsigned char hash2[MD_HASH_LENGTH];
     };
 
     inline time_t meta_parse_sec(const char * first, const char * last)
@@ -317,7 +327,7 @@ namespace detail
         if (has_checksum
          && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
         ) {
-            auto read = [&](unsigned char (&hash)[HASH_LEN / 2]) {
+            auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
                 auto phash = begin(hash);
                 for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
                     *phash = (chex_to_int(*pend, err) << 4);
@@ -357,170 +367,6 @@ namespace detail
         }
     }
 
-
-    template<class BufParam = no_param, class BufMetaParam = no_param>
-    struct in_meta_sequence_buf_param
-    {
-        const char * meta_filename;
-        BufParam buf_param;
-        BufMetaParam meta_param;
-        uint32_t verbose;
-
-        explicit in_meta_sequence_buf_param(
-            const char * meta_filename,
-            uint32_t verbose = 0,
-            const BufParam & buf_param = BufParam(),
-            const BufMetaParam & meta_param = BufMetaParam())
-        : meta_filename(meta_filename)
-        , buf_param(buf_param)
-        , meta_param(meta_param)
-        , verbose(verbose)
-        {}
-    };
-
-
-    template<class Buf, class BufMeta>
-    class in_meta_sequence_buf
-    : public Buf
-    {
-        struct ReaderBuf
-        {
-            BufMeta & buf;
-
-            explicit ReaderBuf(BufMeta & buf)
-            : buf(buf)
-            {}
-
-            ssize_t operator()(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
-            }
-        };
-
-        BufMeta buf_meta;
-        ReaderLine<ReaderBuf> reader;
-        MetaHeader meta_header;
-        MetaLine meta_line;
-        char meta_path[2048];
-        uint32_t verbose;
-
-    public:
-        template<class BufParam, class BufMetaParam>
-        explicit in_meta_sequence_buf(const in_meta_sequence_buf_param<BufParam, BufMetaParam> & params)
-        : Buf(params.buf_param)
-        , buf_meta(params.meta_param)
-        , reader([&]() {
-            if (this->buf_meta.open(params.meta_filename) < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-            return ReaderBuf{this->buf_meta};
-        }())
-        , meta_header(read_meta_headers(this->reader))
-        , verbose(params.verbose)
-        {
-            this->meta_line.start_time = 0;
-            this->meta_line.stop_time = 0;
-
-            this->meta_path[0] = 0;
-
-            char basename[1024] = {};
-            char extension[256] = {};
-
-            canonical_path( params.meta_filename
-                          , this->meta_path, sizeof(this->meta_path)
-                          , basename, sizeof(basename)
-                          , extension, sizeof(extension)
-                          , this->verbose);
-        }
-
-        ssize_t read(void * data, size_t len)
-        {
-            if (!this->is_open()) {
-                if (const int e = this->open_next()) {
-                    return e;
-                }
-            }
-
-            ssize_t res = this->Buf::read(data, len);
-            if (res < 0) {
-                return res;
-            }
-            if (size_t(res) != len) {
-                ssize_t res2 = res;
-                do {
-                    if (/*const ssize_t err = */this->Buf::close()) {
-                        return res;
-                    }
-                    data = static_cast<char*>(data) + res2;
-                    if (/*const int err = */this->open_next()) {
-                        return res;
-                    }
-                    len -= res2;
-                    res2 = this->Buf::read(data, len);
-                    if (res2 < 0) {
-                        return res;
-                    }
-                    res += res2;
-                } while (size_t(res2) != len);
-            }
-            return res;
-        }
-
-        /// \return 0 if success
-        int next()
-        {
-            if (this->is_open()) {
-                this->close();
-            }
-
-            return this->next_line();
-        }
-
-    private:
-        int open_next() {
-            if (const int e = this->next_line()) {
-                return e < 0 ? e : -1;
-            }
-            const int e = this->Buf::open(this->meta_line.filename);
-            return (e < 0) ? e : 0;
-        }
-
-        int next_line()
-        {
-            if (auto err = read_meta_file(this->reader, this->meta_header, this->meta_line)) {
-                return err;
-            }
-
-            if (!file_exist(this->meta_line.filename)) {
-                char original_path[1024] = {};
-                char basename[1024] = {};
-                char extension[256] = {};
-                char filename[2048] = {};
-
-                canonical_path( this->meta_line.filename
-                              , original_path, sizeof(original_path)
-                              , basename, sizeof(basename)
-                              , extension, sizeof(extension)
-                              , this->verbose);
-                snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
-
-                if (file_exist(filename)) {
-                    strcpy(this->meta_line.filename, filename);
-                }
-            }
-
-            return 0;
-        }
-
-    public:
-        const char * current_path() const noexcept
-        { return this->meta_line.filename; }
-
-        time_t get_begin_chunk_time() const noexcept
-        { return this->meta_line.start_time; }
-
-        time_t get_end_chunk_time() const noexcept
-        { return this->meta_line.stop_time; }
-    };
 
     struct temporary_concat
     {

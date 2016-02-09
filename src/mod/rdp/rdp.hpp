@@ -83,12 +83,11 @@
 #include "channel_names.hpp"
 #include "finally.hpp"
 #include "timeout.hpp"
-//#include "outbound_connection_monitor_rules.hpp"
 
-#include "channels/cliprdr_channel.hpp"
-#include "channels/rdpdr_channel.hpp"
-#include "channels/rdpdr_file_system_drive_manager.hpp"
-#include "channels/sespro_channel.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
 
 #include "utils/splitter.hpp"
 #include "utils/algostring.hpp"
@@ -269,10 +268,9 @@ public:
             this->session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
                     this->session_probe_to_server_sender.get(),
-                    this->file_system_drive_manager,
                     this->front,
                     *this,
-                    file_system_virtual_channel.to_server_sender,
+                    file_system_virtual_channel,
                     this->get_session_probe_virtual_channel_params());
         }
 
@@ -312,7 +310,7 @@ class mod_rdp : public RDPChannelManagerMod {
     int      share_id;
     uint16_t userid;
 
-    char hostname[16];
+    char hostname[HOST_NAME_MAX + 1];
     char username[128];
     char password[2048];
     char domain[256];
@@ -390,14 +388,17 @@ class mod_rdp : public RDPChannelManagerMod {
     const int  rdp_compression;
 
     const unsigned                               session_probe_launch_timeout;
+    const unsigned                               session_probe_launch_fallback_timeout;
     const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
     const unsigned                               session_probe_keepalive_timeout;
+    const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
     const bool                                   session_probe_end_disconnected_session;
           std::string                            session_probe_alternate_shell;
 
+    std::string session_probe_target_informations;
+
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
-    std::string auth_user;
     std::string outbound_connection_killing_rules;
 
     size_t recv_bmp_update;
@@ -451,16 +452,10 @@ class mod_rdp : public RDPChannelManagerMod {
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-//    wait_obj    session_probe_event;
-//    bool        session_probe_is_ready            = false;
-//    bool        session_probe_keep_alive_received = true;
-
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
     Translation::language_t lang;
-
-//    OutboundConnectionMonitorRules outbound_connection_monitor_rules;
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -687,11 +682,12 @@ public:
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
+        , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
         , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+        , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
-        , auth_user(mod_rdp_params.auth_user)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -723,7 +719,7 @@ public:
         , enable_multiopaquerect(false)
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
-        , remote_program(mod_rdp_params.remote_program)
+        , remote_program(info.remote_program)
         , server_redirection_support(mod_rdp_params.server_redirection_support)
         , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
@@ -733,7 +729,6 @@ public:
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , lang(mod_rdp_params.lang)
-//        , outbound_connection_monitor_rules("", mod_rdp_params.outbound_connection_blocking_rules)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
@@ -821,8 +816,13 @@ public:
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
             LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(info.hostname), sizeof(this->hostname));
         }
-        strncpy(this->hostname, info.hostname, 15);
-        this->hostname[15] = 0;
+        if (mod_rdp_params.hide_client_name) {
+            ::gethostname(this->hostname, sizeof(this->hostname));
+        }
+        else{
+            ::strncpy(this->hostname, info.hostname, sizeof(this->hostname) - 1);
+        }
+        this->hostname[sizeof(this->hostname) - 1] = 0;
 
 
         const char * domain_pos   = nullptr;
@@ -879,9 +879,18 @@ public:
         //  characters are both null terminators.
         SOHSeparatedStringsToMultiSZ(this->password, sizeof(this->password), mod_rdp_params.target_password);
 
-        snprintf(this->client_name, sizeof(this->client_name), "%s", mod_rdp_params.client_name);
+        snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
-        std::string alternate_shell(mod_rdp_params.alternate_shell);
+        const char * tmp_alternate_shell =
+            (((mod_rdp_params.alternate_shell && (*mod_rdp_params.alternate_shell)) ||
+              !mod_rdp_params.use_client_provided_alternate_shell) ?
+             mod_rdp_params.alternate_shell : info.alternate_shell);
+        const char * tmp_working_dir     =
+            (((mod_rdp_params.working_dir && (*mod_rdp_params.working_dir)) ||
+              !mod_rdp_params.use_client_provided_alternate_shell) ?
+             mod_rdp_params.working_dir : info.working_dir);
+
+        std::string alternate_shell(tmp_alternate_shell);
         if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
             const char * user_marker = "${USER}";
             size_t pos = alternate_shell.find(user_marker, 0);
@@ -899,28 +908,47 @@ public:
 
         if (this->enable_session_probe) {
             this->real_alternate_shell = std::move(alternate_shell);
-            this->real_working_dir     = mod_rdp_params.shell_working_directory;
+            this->real_working_dir     = tmp_working_dir;
 
-            char var_str[16];
+            auto replace_tag = [](std::string & str, const char * tag,
+                                  const char * replacement_text) {
+                const size_t replacement_text_len = ::strlen(replacement_text);
+                const size_t tag_len              = ::strlen(tag);
+
+                size_t pos = 0;
+                while ((pos = str.find(tag, pos)) != std::string::npos) {
+                    str.replace(pos, tag_len, replacement_text);
+                    pos += replacement_text_len;
+                }
+            };
+
+            // Executable file name of SP.
+            char exe_var_str[16];
             if (mod_rdp_params.session_probe_customize_executable_name) {
-                ::snprintf(var_str, sizeof(var_str), "-%d", ::getpid());
+                ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
             }
             else {
-                ::memset(var_str, 0, sizeof(var_str));
+                ::memset(exe_var_str, 0, sizeof(exe_var_str));
             }
-            const size_t var_str_len = ::strlen(var_str);
+            replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}", exe_var_str);
 
-            const char * var_tag ="${VAR}";
-            const size_t var_tag_len = ::strlen(var_tag);
+            // Target informations
+            this->session_probe_target_informations  = mod_rdp_params.target_application;
+            this->session_probe_target_informations += ":";
+            this->session_probe_target_informations += mod_rdp_params.auth_user;
 
-            size_t pos = 0;
-            while ((pos = this->session_probe_alternate_shell.find(var_tag, pos)) != std::string::npos) {
-                this->session_probe_alternate_shell.replace(pos, var_tag_len, var_str);
-                pos += var_str_len;
-            }
+
+            char proxy_managed_connection_cookie[9];
+            get_proxy_managed_connection_cookie(
+                this->session_probe_target_informations.c_str(),
+                this->session_probe_target_informations.length(),
+                proxy_managed_connection_cookie);
+            replace_tag(this->session_probe_alternate_shell, "${COOKIE_VAR}",
+                proxy_managed_connection_cookie);
 
             strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
+            //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
 
             const char * session_probe_working_dir = "%TMP%";
             strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
@@ -929,7 +957,7 @@ public:
         else {
             strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
-            strncpy(this->directory, mod_rdp_params.shell_working_directory, sizeof(this->directory) - 1);
+            strncpy(this->directory, tmp_working_dir, sizeof(this->directory) - 1);
             this->directory[sizeof(this->directory) - 1] = 0;
         }
 
@@ -984,10 +1012,6 @@ public:
         }
 
         if (this->verbose & 1) {
-//            LOG(LOG_INFO,
-//                "enable_session_probe=%s session_probe_launch_timeout=%u session_probe_on_launch_failure=%d",
-//                (this->enable_session_probe ? "yes" : "no"), this->session_probe_launch_timeout,
-//                static_cast<int>(this->session_probe_on_launch_failure));
             LOG(LOG_INFO, "enable_session_probe=%s",
                 (this->enable_session_probe ? "yes" : "no"));
         }
@@ -1190,8 +1214,12 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
+        session_probe_virtual_channel_params.session_probe_launch_fallback_timeout  =
+            this->session_probe_launch_fallback_timeout;
         session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
             this->session_probe_keepalive_timeout;
+        session_probe_virtual_channel_params.session_probe_on_keepalive_timeout_disconnect_user =
+            this->session_probe_on_keepalive_timeout_disconnect_user;
 
         session_probe_virtual_channel_params.session_probe_on_launch_failure        =
             this->session_probe_on_launch_failure;
@@ -1199,8 +1227,8 @@ protected:
         session_probe_virtual_channel_params.session_probe_end_disconnected_session =
             this->session_probe_end_disconnected_session;
 
-        session_probe_virtual_channel_params.auth_user                              =
-            this->auth_user.c_str();
+        session_probe_virtual_channel_params.target_informations                    =
+            this->session_probe_target_informations.c_str();
 
         session_probe_virtual_channel_params.front_width                            =
             this->front_width;
@@ -1227,6 +1255,24 @@ protected:
     }
 
 public:
+    static void get_proxy_managed_connection_cookie(const char * target_informations,
+            size_t target_informations_length, char (&cookie)[9]) {
+        SslSha1 sha1;
+        sha1.update(byte_ptr_cast(target_informations), target_informations_length);
+        uint8_t sig[20];
+        sha1.final(sig, sizeof(sig));
+
+        static_assert(((sizeof(cookie) % 2) == 1), "Buffer size must be an odd number");
+
+        char * temp = cookie;
+        ::memset(cookie, 0, sizeof(cookie));
+        for (unsigned i = 0, c = std::min<unsigned>(sizeof(cookie) / 2, sizeof(sig) / 2);
+             i < c; ++i) {
+            snprintf(temp, 3, "%02X", sig[i]);
+            temp += 2;
+        }
+    }
+
     void configure_extra_orders(const char * extra_orders) {
         if (verbose) {
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
@@ -1700,6 +1746,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
+
     void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started
@@ -1820,7 +1867,6 @@ private:
 public:
     void draw_event(time_t now) override {
         if (!this->event.waked_up_by_time &&
-//            (!this->enable_session_probe || !this->session_probe_event.set_state || !this->session_probe_event.waked_up_by_time)) {
             (!this->session_probe_virtual_channel_p || !this->session_probe_virtual_channel_p->is_event_signaled())) {
             try{
                 char * hostname = this->hostname;
@@ -2923,6 +2969,7 @@ public:
                                 this->end_session_reason.clear();
                                 this->end_session_message.clear();
 
+                                this->acl->disconnect_target();
                                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
                                 this->acl->log4(false, "SESSION_DISCONNECTED_BY_TARGET");
