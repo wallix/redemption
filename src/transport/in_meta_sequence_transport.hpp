@@ -808,7 +808,7 @@ public:
         }
         return res;
     }
-
+ 
     int buf_read_meta_file_v1(MetaLine & meta_line) {
         char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
         ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
