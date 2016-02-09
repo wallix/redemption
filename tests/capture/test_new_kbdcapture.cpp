@@ -90,14 +90,14 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
 
     {
         kbd_capture.input_kbd({}, input);
+        kbd_capture.enable_keyboard_input_mask(true);
+        kbd_capture.input_kbd({}, input);
         kbd_capture.flush();
 
-        kbd_capture.send_session_data();
-        BOOST_CHECK_EQUAL(auth.s.size(), 8);
-        BOOST_CHECK_EQUAL("data=\"a\"", auth.s);
         trans.out_stream.rewind();
         kbd_capture.send_data(trans);
-        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 1);
-        BOOST_CHECK_EQUAL('a', *trans.out_stream.get_data());
+        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 2);
+        BOOST_CHECK_EQUAL('a', trans.out_stream.get_data()[0]);
+        BOOST_CHECK_EQUAL('*', trans.out_stream.get_data()[1]);
     }
 }
