@@ -352,8 +352,15 @@ public:
             }
 
             if (this->data.has_room(unlogged_data_length)) {
-                this->data.out_copy_bytes(unlogged_data_p,
-                    unlogged_data_length);
+                if (this->keyboard_input_mask_enabled) {
+                    ::memset(this->data.get_current(), '*',
+                        unlogged_data_length);
+                    this->data.out_skip_bytes(unlogged_data_length);
+                }
+                else {
+                    this->data.out_copy_bytes(unlogged_data_p,
+                        unlogged_data_length);
+                }
             }
 
             size_t stream_tail_room = this->session_data.tailroom();
@@ -387,10 +394,6 @@ public:
 
     void send_data(Transport & trans) {
         REDASSERT(!this->unlogged_data.get_offset());
-
-        if (this->keyboard_input_mask_enabled) {
-            ::memset(this->data.get_data(), '*', this->data.get_offset());
-        }
 
         trans.send(this->data.get_data(), this->data.get_offset());
 
