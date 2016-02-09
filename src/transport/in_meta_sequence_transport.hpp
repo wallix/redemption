@@ -809,16 +809,6 @@ public:
         return res;
     }
 
-    /// \return 0 if success
-    int buf_next()
-    {
-        if (this->cfb->is_open()) {
-            this->buf_close();
-        }
-
-        return this->buf_next_line();
-    }
-
     int buf_read_meta_file_v1(MetaLine & meta_line) {
         char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
         ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
@@ -1125,7 +1115,12 @@ public:
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buf_next();
+
+        if (this->cfb->is_open()) {
+            this->buf_close();
+        }
+
+        const ssize_t res = this->buf_next_line();
         if (res){
             this->status = false;
             if (res < 0) {
