@@ -26,11 +26,102 @@ typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
+#include <cerrno>
+#include <cstddef>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <snappy-c.h>
 
-#include "fdbuf.hpp"
-
 #include "transport/cryptofile.hpp"
+
+class fdbuf
+{
+    int fd;
+
+public:
+    explicit fdbuf(int fd) noexcept
+    : fd(fd)
+    {}
+
+    ~fdbuf()
+    {
+        this->close();
+    }
+
+    int open(int fd)
+    {
+        this->close();
+        this->fd = fd;
+        return fd;
+    }
+
+    int close()
+    {
+        if (-1 != this->fd) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+    ssize_t read(void * data, size_t len) const
+    {
+        return this->read_all(data, len);
+    }
+
+    ssize_t read_all(void * data, size_t len) const
+    {
+        size_t remaining_len = len;
+        while (remaining_len) {
+            ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+            if (ret < 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                // Error should still be there next time we try to read
+                if (remaining_len != len){
+                    return len - remaining_len;
+                }
+                return ret;
+            }
+            // We must exit loop or we will enter infinite loop
+            if (ret == 0){
+                break;
+            }
+            remaining_len -= ret;
+        }
+        return len - remaining_len;
+    }
+
+
+    ssize_t write(const void * data, size_t len) const
+    {
+        return this->write_all(data, len);
+    }
+
+    ssize_t write_all(const void * data, size_t len) const
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
+};
+
 
 namespace transfil {
 
@@ -51,7 +142,7 @@ namespace transfil {
         //, MAX_CIPHERED_SIZE(0)
         //{}
 
-        int open(io::posix::fdbuf & src, unsigned char * trace_key)
+        int open(fdbuf & src, unsigned char * trace_key)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -65,7 +156,7 @@ namespace transfil {
             unsigned char tmp_buf[40];
 
             if (src.read(tmp_buf, 40) < 40) {
-                return err < 0 ? err :-1;
+                return -1;
             }
 
             // Check magic
@@ -104,7 +195,7 @@ namespace transfil {
             return 0;
         }
 
-        ssize_t read(io::posix::fdbuf & src, void * data, size_t len)
+        ssize_t read(fdbuf & src, void * data, size_t len)
         {
             if (this->state & CF_EOF) {
                 //printf("cf EOF\n");
@@ -126,7 +217,7 @@ namespace transfil {
                     // and it's not portable because of endianness issue => read in a buffer and decode by hand
                     unsigned char tmp_buf[4] = {};
                     if (src.read(tmp_buf, 4) < 4) {
-                        return err < 0 ? err : -1;
+                        return -1;
                     }
 
                     uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
@@ -149,12 +240,26 @@ namespace transfil {
                             unsigned char compressed_buf[65536];
 
                             if (src.read(ciphered_buf, ciphered_buf_size) < ciphered_buf_size) {
-                                return err < 0 ? err :-1;
-                            }
-
-                            if (this->xaes_decrypt(ciphered_buf, ciphered_buf_size, compressed_buf, &compressed_buf_size)) {
                                 return -1;
                             }
+
+                            int safe_size = compressed_buf_size;
+                            int remaining_size = 0;
+
+                            /* allows reusing of ectx for multiple encryption cycles */
+                            if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+                                return -1;
+                            }
+                            if (EVP_DecryptUpdate(&this->ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
+                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+                                return -1;
+                            }
+                            if (EVP_DecryptFinal_ex(&this->ectx, compressed_buf + safe_size, &remaining_size) != 1){
+                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+                                return -1;
+                            }
+                            compressed_buf_size = safe_size + remaining_size;
 
                             size_t chunk_size = CRYPTO_BUFFER_SIZE;
                             const snappy_status status = snappy_uncompress(reinterpret_cast<char *>(compressed_buf),
@@ -204,33 +309,12 @@ namespace transfil {
 
     private:
         ///\return 0 if success, otherwise a negatif number
-        ssize_t raw_read(io::posix::fdbuf & src, void * data, size_t len)
+        ssize_t raw_read(fdbuf & src, void * data, size_t len)
         {
             ssize_t err = src.read(data, len);
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
         }
 
-        int xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-        {
-            int safe_size = *dst_sz;
-            int remaining_size = 0;
-
-            /* allows reusing of ectx for multiple encryption cycles */
-            if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                return -1;
-            }
-            if (EVP_DecryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                return -1;
-            }
-            if (EVP_DecryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                return -1;
-            }
-            *dst_sz = safe_size + remaining_size;
-            return 0;
-        }
     };
 
 }
@@ -617,14 +701,14 @@ namespace transfil {
 struct crypto_file_read
 {
   transfil::decrypt_filter3 decrypt;
-  io::posix::fdbuf file;
+  fdbuf file;
   crypto_file_read(int fd) : file(fd) {}
 };
 
 struct crypto_file_write
 {
   transfil::encrypt_filter3 encrypt;
-  io::posix::fdbuf file;
+  fdbuf file;
   crypto_file_write(int fd) : file(fd) {}
 };
 

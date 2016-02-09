@@ -357,18 +357,47 @@ static inline bool check_file_hash_sha256(
 
     SslHMAC_Sha256 hmac(crypto_key, key_len);
 
-    io::posix::fdbuf file;
-    file.open(file_path, O_RDONLY);
-    if (!file.is_open()) {
+    int fd = ::open(file_path, O_RDONLY);
+    if (fd < 0) {
         LOG(LOG_ERR, "failed opening=%s", file_path);
         return false;
     }
+
+    struct fdbuf
+    {
+        int fd;
+        explicit fdbuf(int fd) noexcept : fd(fd) {}
+        ~fdbuf() { ::close(this->fd);}
+        ssize_t read_all(void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;
+        }
+    } file(fd);
 
     uint8_t buf[4096];
     size_t  number_of_bytes_read = 0;
     int len_read = 0;
     do {
-        len_read = file.read(buf,
+        len_read = file.read_all(buf,
                 ((len_to_check == 0) ||(number_of_bytes_read + sizeof(buf) < len_to_check))
                 ? sizeof(buf)
                 : len_to_check - number_of_bytes_read);
@@ -384,14 +413,12 @@ static inline bool check_file_hash_sha256(
         return false;
     }
 
-    file.close();
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
 
     if (memcmp(hash, hash_buf, hash_len)) {
         LOG(LOG_ERR, "failed checking hash=%s", file_path);
     }
-
     return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 

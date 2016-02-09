@@ -63,6 +63,12 @@ enum {
 
 #define CRYPTO_BUFFER_SIZE ((4096 * 4))
 
+extern "C" {
+    typedef int get_crypto_key_from_cb_prototype(uint8_t * buffer);
+}
+
+
+
 /* 256 bits key size */
 #define CRYPTO_KEY_LENGTH 32
 #define HMAC_KEY_LENGTH   CRYPTO_KEY_LENGTH
@@ -72,7 +78,10 @@ class CryptoContext {
     bool crypto_key_loaded;
     unsigned char crypto_key[CRYPTO_KEY_LENGTH];
 
+
     public:
+    get_crypto_key_from_cb_prototype * get_crypto_key_from_cb;
+
     Random & gen;
     const Inifile & ini;
     int key_source; // 0: key from shm, 1: key from Ini file, 2: key in place
@@ -240,6 +249,8 @@ class CryptoContext {
         memcpy(this->hmac_key, key, sizeof(this->hmac_key));
     }
 
+    
+
     const unsigned char * get_crypto_key()
     {
         if (not this->crypto_key_loaded)
@@ -256,6 +267,11 @@ class CryptoContext {
             case 2:
                 this->get_crypto_key_from_ini_derivated_hmac();
             break;
+            case 4:
+                if (this->get_crypto_key_from_cb){
+                    this->get_crypto_key_from_cb(this->crypto_key);
+                    break;
+                }
             default:
             {
                 LOG(LOG_ERR, "Failed to get cryptographic key, using default key\n");
