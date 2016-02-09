@@ -90,17 +90,26 @@ struct InFilenameTransport : public Transport
 
 
 public:
-    InFilenameTransport(CryptoContext * cctx, const char * filename)
-        : fd(-1)
+    // TODO: rename that class InRedfileTransport as it is a special type of file used by redemption
+    // that can be either stored as clear text or compressed/encrypted text following a special
+    // purpose format defined by redemption. These files are also non-seekable to make
+    // it possible to send them over wires or in non block devices..
+    InFilenameTransport(CryptoContext * cctx, int fd, const uint8_t * base, size_t base_len)
+        : fd(fd)
         , pos(0)
         , raw_size(0)
         , state(0)
     {
-        this->fd = ::open(filename, O_RDONLY);
-        if (this->fd < 0) {
-            LOG(LOG_ERR, "failed opening=%s\n", filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
+    
+        printf("InFilenameTransport\n");
+//        size_t base_len = 0;
+//        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+    
+//        this->fd = ::open(filename, O_RDONLY);
+//        if (this->fd < 0) {
+//            LOG(LOG_ERR, "failed opening=%s\n", filename);
+//            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+//        }
 
         this->raw.read_min(this->fd, 40, 4);
         const uint32_t magic = this->raw.get_uint32_le(0);
@@ -115,6 +124,7 @@ public:
             if (version > WABCRYPTOFILE_VERSION) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
                     ::getpid(), version, WABCRYPTOFILE_VERSION);
+                printf("InFilenameTransport A\n");
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
 
@@ -129,10 +139,8 @@ public:
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             uint8_t tmp[SHA256_DIGEST_LENGTH];
             {
-                size_t len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
                 SslSha256 sha256;
-                sha256.update(base, len);
+                sha256.update(base, base_len);
                 sha256.final(tmp, SHA256_DIGEST_LENGTH);
             }
             {
@@ -171,14 +179,14 @@ public:
                                            , nullptr);
             if (i != 32) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                LOG(LOG_ERR, "failed opening=%s\n", filename);
+                printf("InFilenameTransport B\n");
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
 
             ::EVP_CIPHER_CTX_init(&this->ectx);
             if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
-                LOG(LOG_ERR, "failed opening=%s\n", filename);
+                printf("InFilenameTransport C\n");
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
         }
@@ -209,6 +217,7 @@ private:
         if (this->encryption) {
             if (this->state & CF_EOF) {
                 this->status = false;
+                printf("InFilenameTransport D\n");
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
             }
 
@@ -229,6 +238,7 @@ private:
                     if (ciphered_buf_size > ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE) + AES_BLOCK_SIZE) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
                         this->status = false;
+                        printf("InFilenameTransport E\n");
                         throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                     }
                     else {
@@ -248,6 +258,7 @@ private:
                         if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
                             this->status = false;
+                            printf("InFilenameTransport F\n");
                             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                         }
                         if (EVP_DecryptUpdate(&this->ectx,
@@ -257,6 +268,7 @@ private:
                                               ciphered_buf_size) != 1){
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
                             this->status = false;
+                            printf("InFilenameTransport G\n");
                             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                         }
                         if (EVP_DecryptFinal_ex(&this->ectx,
@@ -264,6 +276,7 @@ private:
                                                 &ciph_remaining_size) != 1){
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
                             this->status = false;
+                            printf("InFilenameTransport H %d %d\n", safe_size, ciph_remaining_size);
                             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                         }
                         compressed_buf_size = safe_size + ciph_remaining_size;
@@ -281,14 +294,17 @@ private:
                             case SNAPPY_INVALID_INPUT:
                                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
                                 this->status = false;
+                                printf("InFilenameTransport I\n");
                                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                             case SNAPPY_BUFFER_TOO_SMALL:
                                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
                                 this->status = false;
+                                printf("InFilenameTransport J\n");
                                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                             default:
                                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
                                 this->status = false;
+                                printf("InFilenameTransport K\n");
                                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
                         }
 
@@ -322,6 +338,7 @@ private:
             
             if (remaining_requested_size != 0){
                 this->status = false;
+                printf("InFilenameTransport L\n");
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
             }
         } // else encryption
@@ -337,6 +354,7 @@ private:
                 this->last_quantum_received += requested_size;
             } catch (...) {
                 this->status = false;
+                printf("InFilenameTransport M\n");
                 throw;
             }
         }

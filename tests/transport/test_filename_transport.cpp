@@ -59,7 +59,16 @@ BOOST_AUTO_TEST_CASE(TestFilename)
 
         CryptoContext cctx(rnd, ini, 1);
 
-        InFilenameTransport in(&cctx, filename);
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+    
+        int fd = ::open(filename, O_RDONLY);
+        if (fd < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            BOOST_CHECK(false);
+        }
+
+        InFilenameTransport in(&cctx, fd, base, base_len);
         char s[5];
         char * sp = s;
         char ** p = &sp;
@@ -106,7 +115,16 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     }
 
     {
-        InFilenameTransport in(&cctx, filename);
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+    
+        int fd = ::open(filename, O_RDONLY);
+        if (fd < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            BOOST_CHECK(false);
+        }
+
+        InFilenameTransport in(&cctx, fd, base, base_len);
         char s[5];
         char * sp = s;
         char ** p = &sp;

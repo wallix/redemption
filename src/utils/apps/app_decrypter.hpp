@@ -64,16 +64,19 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, CryptoC
         return -1;
     }
 
-    // This should move to InFilenameTransport
     int fd  = open(input_filename.c_str(), O_RDONLY);
     if (fd == -1) {
-        std::cerr << "Input file is absent.\n\n";
+        std::cerr << "can't open file " << input_filename << "\n\n";
         return -1;
     }
 
     OpenSSL_add_all_digests();
 
-    InFilenameTransport in_t(&cctx, input_filename.c_str());
+    size_t base_len = 0;
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(
+                    basename_len(input_filename.c_str(), base_len));
+
+    InFilenameTransport in_t(&cctx, fd, base, base_len);
     if (!in_t.is_encrypted()){
         std::cout << "Input file is unencrypted.\n\n";
         return 0;

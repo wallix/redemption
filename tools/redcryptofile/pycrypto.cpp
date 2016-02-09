@@ -36,6 +36,7 @@ typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include <snappy-c.h>
 
 #include "transport/cryptofile.hpp"
+#include "transport/in_filename_transport.hpp"
 
 class fdbuf
 {
@@ -122,202 +123,6 @@ public:
     }
 };
 
-
-namespace transfil {
-
-    class decrypt_filter3
-    {
-        char           buf[CRYPTO_BUFFER_SIZE]; //
-        EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
-        uint32_t       pos;                     // current position in buf
-        uint32_t       raw_size;                // the unciphered/uncompressed file size
-        uint32_t       state;                   // enum crypto_file_state
-        unsigned int   MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-
-    public:
-        decrypt_filter3() = default;
-        //: pos(0)
-        //, raw_size(0)
-        //, state(0)
-        //, MAX_CIPHERED_SIZE(0)
-        //{}
-
-        int open(fdbuf & src, unsigned char * trace_key)
-        {
-            ::memset(this->buf, 0, sizeof(this->buf));
-            ::memset(&this->ectx, 0, sizeof(this->ectx));
-
-            this->pos = 0;
-            this->raw_size = 0;
-            this->state = 0;
-            const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
-            this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-
-            unsigned char tmp_buf[40];
-
-            if (src.read(tmp_buf, 40) < 40) {
-                return -1;
-            }
-
-            // Check magic
-            const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-            if (magic != WABCRYPTOFILE_MAGIC) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
-                    ::getpid(), magic, WABCRYPTOFILE_MAGIC);
-                return -1;
-            }
-            const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
-            if (version > WABCRYPTOFILE_VERSION) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
-                    ::getpid(), version, WABCRYPTOFILE_VERSION);
-                return -1;
-            }
-
-            unsigned char * const iv = tmp_buf + 8;
-
-            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-            const int          nrounds = 5;
-            unsigned char      key[32];
-            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-            if (i != 32) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                return -1;
-            }
-
-            ::EVP_CIPHER_CTX_init(&this->ectx);
-            if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
-                return -1;
-            }
-
-            return 0;
-        }
-
-        ssize_t read(fdbuf & src, void * data, size_t len)
-        {
-            if (this->state & CF_EOF) {
-                //printf("cf EOF\n");
-                return 0;
-            }
-
-            unsigned int requested_size = len;
-
-            while (requested_size > 0) {
-                // Check how much we have decoded
-                if (!this->raw_size) {
-                    // Buffer is empty. Read a chunk from file
-                    /*
-                     i f (-1 == ::do_chunk_read*(this)) {
-                         return -1;
-                }
-                */
-                    // TODO: avoid reading size directly into an integer, performance enhancement is minimal
-                    // and it's not portable because of endianness issue => read in a buffer and decode by hand
-                    unsigned char tmp_buf[4] = {};
-                    if (src.read(tmp_buf, 4) < 4) {
-                        return -1;
-                    }
-
-                    uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-
-                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                        this->state |= CF_EOF;
-                        this->pos = 0;
-                        this->raw_size = 0;
-                    }
-                    else {
-                        if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
-                            return -1;
-                        }
-                        else {
-                            uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-                            //char ciphered_buf[ciphered_buf_size];
-                            unsigned char ciphered_buf[65536];
-                            //char compressed_buf[compressed_buf_size];
-                            unsigned char compressed_buf[65536];
-
-                            if (src.read(ciphered_buf, ciphered_buf_size) < ciphered_buf_size) {
-                                return -1;
-                            }
-
-                            int safe_size = compressed_buf_size;
-                            int remaining_size = 0;
-
-                            /* allows reusing of ectx for multiple encryption cycles */
-                            if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                                return -1;
-                            }
-                            if (EVP_DecryptUpdate(&this->ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                                return -1;
-                            }
-                            if (EVP_DecryptFinal_ex(&this->ectx, compressed_buf + safe_size, &remaining_size) != 1){
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                                return -1;
-                            }
-                            compressed_buf_size = safe_size + remaining_size;
-
-                            size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                            const snappy_status status = snappy_uncompress(reinterpret_cast<char *>(compressed_buf),
-                                                                           compressed_buf_size, this->buf, &chunk_size);
-
-                            switch (status)
-                            {
-                                case SNAPPY_OK:
-                                    break;
-                                case SNAPPY_INVALID_INPUT:
-                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
-                                    return -1;
-                                case SNAPPY_BUFFER_TOO_SMALL:
-                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                                    return -1;
-                                default:
-                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
-                                    return -1;
-                            }
-
-                            this->pos = 0;
-                            // When reading, raw_size represent the current chunk size
-                            this->raw_size = chunk_size;
-                        }
-                    }
-
-                    // TODO: check that
-                    if (!this->raw_size) { // end of file reached
-                        break;
-                    }
-                }
-                // remaining_size is the amount of data available in decoded buffer
-                unsigned int remaining_size = this->raw_size - this->pos;
-                // Check how much we can copy
-                unsigned int copiable_size = MIN(remaining_size, requested_size);
-                // Copy buffer to caller
-                ::memcpy(static_cast<char*>(data) + (len - requested_size), this->buf + this->pos, copiable_size);
-                this->pos      += copiable_size;
-                requested_size -= copiable_size;
-                // Check if we reach the end
-                if (this->raw_size == this->pos) {
-                    this->raw_size = 0;
-                }
-            }
-            return len - requested_size;
-        }
-
-    private:
-        ///\return 0 if success, otherwise a negatif number
-        ssize_t raw_read(fdbuf & src, void * data, size_t len)
-        {
-            ssize_t err = src.read(data, len);
-            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
-        }
-
-    };
-
-}
 
 namespace transfil {
 
@@ -700,9 +505,12 @@ namespace transfil {
 
 struct crypto_file_read
 {
-  transfil::decrypt_filter3 decrypt;
-  fdbuf file;
-  crypto_file_read(int fd) : file(fd) {}
+  InFilenameTransport ft;
+  crypto_file_read(CryptoContext * cctx, int fd, const uint8_t * base, size_t base_len) 
+    : ft(cctx, fd, base, base_len) 
+  {
+    
+  }
 };
 
 struct crypto_file_write
@@ -735,14 +543,14 @@ struct crypto_file
     crypto_file(): type(CRYPTO_DECRYPT_TYPE), idx(-1) {}
 
 
-    crypto_file(crypto_type t, int fd)
+    crypto_file(crypto_type t, CryptoContext * cctx, int fd, const uint8_t * base, size_t base_len)
     : type(t)
     , idx(-1)
     {
         switch (t){
         case CRYPTO_DECRYPT_TYPE:
         {
-            auto cf = new crypto_file_read(fd);
+            auto cf = new crypto_file_read(cctx, fd, base, base_len);
             int idx = 0;
             for (; idx < gl_read_nb_files ; idx++){
                 if (gl_file_store_read[idx] == nullptr){
@@ -1011,21 +819,6 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         Py_RETURN_NONE;
 #pragma GCC diagnostic pop
     }
-    unsigned char derivator[DERIVATOR_LENGTH];
-    unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-    size_t len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(path, len));
-    SslSha256 sha256;
-    sha256.update(base, len);
-    uint8_t tmp[SHA256_DIGEST_LENGTH];
-    sha256.final(tmp, SHA256_DIGEST_LENGTH);
-    memcpy(derivator, tmp, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation + DERIVATOR_LENGTH, get_cctx()->get_crypto_key(), CRYPTO_KEY_LENGTH);
-    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
@@ -1037,21 +830,40 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 #pragma GCC diagnostic pop
         }
 
-        auto result = crypto_file(CRYPTO_DECRYPT_TYPE, system_fd);
-        auto cfr = gl_file_store_read[result.idx];
-        cfr->decrypt.open(cfr->file, trace_key);
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(path, base_len));
 
-        int fd = 0;
-        for (; fd < gl_nb_files ; fd++){
-            if (gl_file_store[fd].idx == -1){
+        auto result = crypto_file(CRYPTO_DECRYPT_TYPE, get_cctx(), system_fd, base, base_len);
+        int fdi = 0;
+        for (; fdi < gl_nb_files ; fdi++){
+            if (gl_file_store[fdi].idx == -1){
                 break;
             }
         }
         gl_nb_files += 1;
-        gl_file_store[fd] = result;
-        return Py_BuildValue("i", fd);
+        gl_file_store[fdi] = result;
+        return Py_BuildValue("i", fdi);
 
     } else if (omode[0] == 'w') {
+
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(path, base_len));
+        
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        uint8_t tmp[SHA256_DIGEST_LENGTH];
+        {
+            SslSha256 sha256;
+            sha256.update(base, base_len);
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        }
+        {
+            SslSha256 sha256;
+            sha256.update(tmp, DERIVATOR_LENGTH);
+            sha256.update(get_cctx()->get_crypto_key(), CRYPTO_KEY_LENGTH);
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        }
+        memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+
         unsigned i = 0;
         for (i = 0; i < sizeof(iv) ; i++){ iv[i] = i; }
 
@@ -1064,7 +876,7 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 #pragma GCC diagnostic pop
         }
 
-        auto result = crypto_file(CRYPTO_ENCRYPT_TYPE, system_fd);
+        auto result = crypto_file(CRYPTO_ENCRYPT_TYPE, get_cctx(), system_fd, base, base_len);
         auto cfw = gl_file_store_write[result.idx];
         cfw->encrypt.open(cfw->file, trace_key, get_cctx(), iv);
 
@@ -1218,34 +1030,54 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
     int fd;
     int buf_len;
 
-    if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len))
+    printf("python_redcryptofile_read\n");
+
+    if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len)){
+        printf("python_redcryptofile_read A\n");
         return nullptr;
+    }
+    printf("python_redcryptofile_read B\n");
+
     if (buf_len > 2147483647 || buf_len <= 0){
+        printf("python_redcryptofile_read C\n");
+        printf("Buf Len = %d\n", unsigned(buf_len));
         return Py_BuildValue("i", -1);
     }
+        printf("python_redcryptofile_read D\n");
 
     if (fd >= gl_nb_files){
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wuseless-cast"
+        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: fd=%d > gl_nb_files=%d\n", ::getpid(), fd, gl_nb_files);
+        printf("python_redcryptofile_read E\n");
+
         Py_RETURN_NONE;
 #pragma GCC diagnostic pop
     }
+
+    printf("[CRYPTO][%d]: reading\n", ::getpid());
+
+    printf("python_redcryptofile_read F\n");
 
     std::unique_ptr<char[]> buf(new char[buf_len]);
+    char * pbuffer = buf.get();
 
     auto & cf = gl_file_store[fd];
-    int result = -1;
     if (cf.type ==  CRYPTO_DECRYPT_TYPE) {
         auto & cfr = gl_file_store_read[cf.idx];
-        result = cfr->decrypt.read(cfr->file, buf.get(), buf_len);
+        try {
+            cfr->ft.recv(&pbuffer, buf_len);
+        } catch (...) {
+            printf("[CRYPTO_ERROR][%d]: Exception raised\n", ::getpid());
+
+            #pragma GCC diagnostic push 
+            #pragma GCC diagnostic ignored "-Wuseless-cast"
+                    Py_RETURN_NONE;
+            #pragma GCC diagnostic pop
+        }
     }
-    if (result < 0){
-#pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-        Py_RETURN_NONE;
-#pragma GCC diagnostic pop
-    }
-    return PyString_FromStringAndSize(buf.get(), result);
+    printf("[CRYPTO_ERROR][%d]: Exception raised %d\n", ::getpid(), (unsigned)(pbuffer-buf.get()));
+    return PyString_FromStringAndSize(buf.get(), pbuffer-buf.get());
 }
 
 static PyMethodDef redcryptoFileMethods[] = {
@@ -1263,20 +1095,6 @@ initredcryptofile(void)
     PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
                            "redcryptofile module");
 
-
-    const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-
-    uint8_t trace_key[32] = {};
-    CryptoContext * cctx = get_cctx();
-    
-    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-    memcpy(tmp_derivation, HASH_DERIVATOR, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
-    
-    get_ini()->set<cfg::crypto::key1>(trace_key);
     OpenSSL_add_all_digests();
 
     size_t idx = 0;

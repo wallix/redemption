@@ -117,6 +117,8 @@ class TestCryptoTrace(unittest.TestCase):
         self.assertEquals('06345B901BF761E14EEA841D322CA2E1', 
             hashfile(os.path.join(PATH,"long.bin.crypted.trc")))
 
+        print "test_cryptlongfile 2"
+
         # check round trip
         t2 = CryptoTrace(os.path.join(PATH,"long.bin.crypted.trc"), "r")
         with open(os.path.join(PATH,"long.bin.roundtrip"), 'w') as f:
@@ -127,9 +129,13 @@ class TestCryptoTrace(unittest.TestCase):
                 f.write(data)
             t2.close()
 
+        print "test_cryptlongfile 3"
+
         # check decrypted file on disk same as original
         self.assertEquals('36209641806DB628D04F239192CD8E8C', 
             hashfile(os.path.join(PATH,"long.bin.roundtrip")))
+
+        print "test_cryptlongfile 4"
 
     def test_flattextfile(self):
         print "test_flattextfile"
