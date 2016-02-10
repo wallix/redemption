@@ -279,7 +279,6 @@ project redemption
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 
-    <cxxflags>-fpie
     <cxxflags>-fPIC
 
 
@@ -297,11 +296,12 @@ project redemption
 
 ;
 
-explicit install instexe install-bin install-etc install-etc-themes install-share check_coverage exe ;
+explicit install instexe install-bin install-etc install-etc-themes install-share install-lib check_coverage exe ;
 
 alias instexe : install-bin ;
-alias install : install-bin install-etc install-etc-themes install-share ;
+alias install : install-bin install-etc install-etc-themes install-share install-lib ;
 alias exe     : rdpproxy redrec reddec redver rdptproxy rdptanalyzer rdpclient ;
+alias libs    : libredver ;
 
 
 install install-bin
@@ -326,6 +326,12 @@ install install-etc-themes
     : [ glob sys/etc/rdpproxy/themes/HOWTO ]
     :
     : <location>$(INSTALLDIR)/etc/rdpproxy/themes
+    ;
+
+install install-lib
+    : libs
+    :
+    : <location>$(INSTALLDIR)/usr/lib
     ;
 
 actions gen_redcryptofile {
@@ -419,7 +425,7 @@ if ! [ os.environ NO_MAKE_CONFIG ]
 
     constant CONFIG_DEPENDENCY : <implicit-dependency>generate_configs ;
 
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
+    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) <cxxflags>-fpie ;
     constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
 }
 else
@@ -494,6 +500,21 @@ exe reddec
 #         <link>static
         $(EXE_DEPENDENCIES)
     ;
+
+lib libredver
+    :
+        src/main/do_verifier.cpp
+
+        openssl
+        crypto
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fvisibility=hidden
+    ;
+
 
 exe redver
     :

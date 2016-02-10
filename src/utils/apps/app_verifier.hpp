@@ -482,7 +482,7 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
 }
 */
 
-bool check_mwrm_file_ifile_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
+static inline bool check_mwrm_file_ifile_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
         CryptoContext * cctx, int infile_is_encrypted)
 {
@@ -534,7 +534,7 @@ bool check_mwrm_file_ifile_buf(const char * file_path, bool is_checksumed, bool 
     return result;
 }
 
-void make_file_path(const char * directory_name, const char * file_name,  char * file_path_buf, size_t file_path_len) {
+static inline void make_file_path(const char * directory_name, const char * file_name,  char * file_path_buf, size_t file_path_len) {
     snprintf(file_path_buf, file_path_len, "%s%s%s", directory_name,
         ((directory_name[strlen(directory_name) - 1] == '/') ? "" : "/"),
         file_name);
@@ -542,7 +542,7 @@ void make_file_path(const char * directory_name, const char * file_name,  char *
     file_path_buf[file_path_len - 1] = '\0';
 }
 
-int check_encrypted_or_checksumed(std::string const & input_filename,
+static inline int check_encrypted_or_checksumed(std::string const & input_filename,
                                        std::string const & hash_path,
                                        const char * fullfilename,
                                        bool quick_check,
@@ -711,7 +711,7 @@ int check_encrypted_or_checksumed(std::string const & input_filename,
     return 0;
 }
 
-int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
+static inline int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
 {
     openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
 
