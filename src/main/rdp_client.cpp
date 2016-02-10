@@ -182,7 +182,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(new_cmd24, clip);
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -192,8 +192,7 @@ class ClientFront : public FrontAPI {
         RDPGlyphIndex new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        assert(gly_cache);
-        this->gd.draw(new_cmd24, clip, *gly_cache);
+        this->gd.draw(new_cmd24, clip, gly_cache);
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
@@ -324,8 +323,7 @@ class ClientFront : public FrontAPI {
         this->gd.draw(order);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             bitmap_data.log(LOG_INFO, "ClientFront");
@@ -336,10 +334,10 @@ class ClientFront : public FrontAPI {
 
     }
 
-    void send_global_palette() override {
+    void set_palette(const BGRPalette&) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
-            LOG(LOG_INFO, "send_global_palette()");
+            LOG(LOG_INFO, "set_palette()");
             LOG(LOG_INFO, "========================================\n");
         }
     }
@@ -355,14 +353,14 @@ class ClientFront : public FrontAPI {
         return 1;
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "server_set_pointer");
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(cursor);
+        this->gd.set_pointer(cursor);
     }
 
     void begin_update() override {
@@ -408,6 +406,7 @@ class ClientFront : public FrontAPI {
         SSL_library_init();
     }
 
+    void update_pointer_position(uint16_t, uint16_t) override {}
 };
 
 void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);

@@ -18,23 +18,18 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_EXTERNAL_EVENT_HPP
-#define REDEMPTION_GDI_EXTERNAL_EVENT_HPP
+#ifndef REDEMPTION_GDI_INPUT_POINTER_API_HPP
+#define REDEMPTION_GDI_INPUT_POINTER_API_HPP
 
-#include "utils/virtual_deleter.hpp"
-
-#include "noncopyable.hpp"
-
-struct timeval;
+#include "utils/noncopyable.hpp"
 
 namespace gdi {
 
-struct ExternalEventApi : private noncopyable
+struct InputPointer : private noncopyable
 {
-    virtual ~ExternalEventApi() = default;
+    virtual ~InputPointer() = default;
 
-    virtual void external_breakpoint() = 0;
-    virtual void external_time(const timeval & now) = 0;
+    virtual void update_pointer_position(uint16_t x, uint16_t y) = 0;
 };
 
 }

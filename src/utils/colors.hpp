@@ -24,10 +24,13 @@
 #ifndef _REDEMPTION_UTILS_COLORS_HPP_
 #define _REDEMPTION_UTILS_COLORS_HPP_
 
-#include <stdint.h>
-#include <assert.h>
-#include <stdlib.h>
+#include <iterator>
+
+#include <cstdint>
+#include <cassert>
+#include <cstdlib>
 #include <cstddef>
+
 #include "log.hpp"
 
 typedef uint32_t BGRColor;
@@ -66,6 +69,12 @@ struct BGRPalette
 
     BGRColor operator[](std::size_t i) const noexcept
     { return this->palette[i]; }
+
+    BGRColor const * begin() const
+    { using std::begin; return begin(this->palette); }
+    
+    BGRColor const * end() const
+    { using std::end; return end(this->palette); }
 
     void set_color(std::size_t i, BGRColor c) noexcept
     { this->palette[i] = c; }
@@ -203,12 +212,16 @@ inline unsigned color_from_cstr(const char * str) {
 
 
 struct decode_color8 {
+    static constexpr const uint8_t bpp = 8;
+
     RGBColor operator()(BGRColor c, BGRPalette const & palette) const noexcept {
         return palette[static_cast<uint8_t>(c)];
     }
 };
 
 struct decode_color15 {
+    static constexpr const uint8_t bpp = 15;
+
     RGBColor operator()(BGRColor c) const noexcept {
         // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
         const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
@@ -219,6 +232,8 @@ struct decode_color15 {
 };
 
 struct decode_color16 {
+    static constexpr const uint8_t bpp = 16;
+
     RGBColor operator()(BGRColor c) const noexcept {
         // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
         const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
@@ -229,6 +244,8 @@ struct decode_color16 {
 };
 
 struct decode_color24 {
+    static constexpr const uint8_t bpp = 24;
+
     RGBColor operator()(BGRColor c) const noexcept {
         return c & 0xFFFFFF;
     }
@@ -270,12 +287,16 @@ inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const BGRPa
 
 
 struct decode_color8_opaquerect {
+    static constexpr const uint8_t bpp = 8;
+
     RGBColor operator()(BGRColor c, BGRPalette const & palette) const noexcept {
         return RGBtoBGR(palette[static_cast<uint8_t>(c)]);
     }
 };
 
 struct decode_color15_opaquerect {
+    static constexpr const uint8_t bpp = 15;
+
     RGBColor operator()(BGRColor c) const noexcept {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         const BGRColor b = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
@@ -286,6 +307,8 @@ struct decode_color15_opaquerect {
 };
 
 struct decode_color16_opaquerect {
+    static constexpr const uint8_t bpp = 16;
+
     RGBColor operator()(BGRColor c) const noexcept {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         const BGRColor b = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
@@ -296,6 +319,8 @@ struct decode_color16_opaquerect {
 };
 
 struct decode_color24_opaquerect {
+    static constexpr const uint8_t bpp = 24;
+
     RGBColor operator()(BGRColor c) const noexcept {
         return c & 0xFFFFFF;
     }
@@ -387,13 +412,31 @@ inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
     return 0;
 }
 
-template<class Fn>
-struct to_color8_palette
+template<class Converter>
+struct with_color8_palette
 {
+    static constexpr const uint8_t bpp = Converter::bpp;
+
     RGBColor operator()(BGRColor c) const noexcept {
-        return Fn()(c, this->palette);
+        return Converter()(c, this->palette);
     }
     BGRPalette const & palette;
+};
+
+
+template<class Dec, class Enc>
+struct color_converter : Dec, Enc
+{
+    color_converter() = default;
+
+    color_converter(Dec const & dec, Enc const & enc)
+    : Dec(dec)
+    , Enc(enc)
+    {}
+
+    BGRColor operator()(BGRColor c) const noexcept {
+        return static_cast<Enc const&>(*this)(static_cast<Dec const&>(*this)(c));
+    }
 };
 
 #endif

@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Raphael Zhou
 
-   RDPSerializer is an implementation of RDPGraphicDevice that know how to serialize RDP Orders
+   RDPSerializer is an implementation of GraphicApi that know how to serialize RDP Orders
    and send them on the wire or store them in a file (actual storage will be provided as a Transport class).
    Serialized RDP orders are put in a chunk and sent when flush is called (either explicit call or because
    the provided buffer is full).
@@ -90,7 +90,6 @@
 
 #include "config.hpp"
 
-#include "RDPGraphicDevice.hpp"
 #include "bitmapupdate.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
@@ -125,12 +124,10 @@
 #include "finally.hpp"
 #include "stream.hpp"
 
-#include "gdi/railgraphic_api.hpp"
 #include "gdi/graphic_api.hpp"
 
 struct RDPSerializer
-: public gdi::RAILGraphicApi
-, public gdi::GraphicApi
+: public gdi::GraphicApi
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
     enum { MAX_ORDERS_SIZE = 16384,
@@ -196,7 +193,8 @@ public:
                  , size_t max_bitmap_size
                  , const Inifile & ini
                  , uint32_t verbose = 0)
-    : stream_orders(stream_orders)
+    : GraphicApi(gdi::GraphicDepth::unspecified())
+    , stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
     , capture_bpp(bpp)
     , ini(ini)
@@ -228,7 +226,9 @@ public:
     , bmp_cache(bmp_cache)
     , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)
-    , verbose(verbose) {}
+    , verbose(verbose) {
+
+    }
 
     ~RDPSerializer() override {}
 
@@ -711,7 +711,7 @@ public:
         }
     }
 
-    void draw(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -731,7 +731,7 @@ public:
     }
 
     // TODO
-    void draw(const BGRPalette& palette) override {}
+    void set_palette(const BGRPalette& palette) override {}
 };
 
 #endif

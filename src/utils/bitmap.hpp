@@ -51,10 +51,8 @@
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
-#include "fdbuf.hpp"
 #include "bitmap_data_allocator.hpp"
 
-#include "fdbuf.hpp"
 #include "array_view.hpp"
 
 using std::size_t;
@@ -481,14 +479,51 @@ public:
 
             TODO(" reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?");
             {
-                io::posix::fdbuf file;
-                int const fd_ = file.open(filename, O_RDONLY);
+                int const fd_ = ::open(filename, O_RDONLY);
                 if (fd_ == -1) {
                     LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
                     this->load_error_bitmap();
                     // throw Error(ERR_BITMAP_LOAD_FAILED);
                     return ;
                 }
+
+                class fdbuf
+                {
+                    int fd;
+                public:
+                    explicit fdbuf(int fd = -1) noexcept : fd(fd){}
+
+                    ~fdbuf(){::close(this->fd);}
+                    ssize_t read(void * data, size_t len) const
+                    {
+                        size_t remaining_len = len;
+                        while (remaining_len) {
+                            ssize_t ret = ::read(this->fd, static_cast<char*>(data)
+                                                +(len - remaining_len), remaining_len);
+                            if (ret < 0){
+                                if (errno == EINTR){
+                                    continue;
+                                }
+                                // Error should still be there next time we try to read
+                                if (remaining_len != len){
+                                    return len - remaining_len;
+                                }
+                                return ret;
+                            }
+                            // We must exit loop or we will enter infinite loop
+                            if (ret == 0){
+                                break;
+                            }
+                            remaining_len -= ret;
+                        }
+                        return len - remaining_len;
+                    }
+
+                    off64_t seek(off64_t offset, int whence) const
+                    {
+                        return lseek64(this->fd, offset, whence);
+                    }
+                } file(fd_);
 
                 char type1[2];
 
@@ -519,7 +554,7 @@ public:
                 }
 
                 // skip some bytes to set file pointer to bmp header
-                lseek(fd_, 14, SEEK_SET);
+                file.seek(14, SEEK_SET);
                 if (file.read(stream_data, 40) < 40){
                     LOG(LOG_ERR, "Widget_load: error read file size (2)");
                     throw Error(ERR_BITMAP_LOAD_FAILED);
@@ -544,7 +579,7 @@ public:
                 header.clr_important = stream.in_uint32_le();
 
                 // skip header (including more fields that we do not read if any)
-                lseek(fd_, 14 + header.size, SEEK_SET);
+                file.seek(14 + header.size, SEEK_SET);
 
                 // compute pixel size (in Quartet) and read palette if needed
                 int file_Qpp = 1;
@@ -658,32 +693,72 @@ public:
     };
 
     static openfile_t check_file_type(const char * filename) {
-        openfile_t res = OPEN_FILE_UNKNOWN;
         char type1[8];
-        io::posix::fdbuf fd(open(filename, O_RDONLY));
-        if (!fd) {
-            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
-            return res;
-        }
-        else if (fd.read(type1, 2) != 2) {
-            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
-        }
-        else if ((type1[0] == 'B') && (type1[1] == 'M')) {
-            LOG(LOG_INFO, "Widget_load: image file [%s] is BMP file\n", filename);
-            res = OPEN_FILE_BMP;
-        }
-        else if (fd.read(&type1[2], 6) != 6) {
-            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
-        }
-        else if (png_check_sig(reinterpret_cast<png_bytep>(type1), 8)) {
-            LOG(LOG_INFO, "Widget_load: image file [%s] is PNG file\n", filename);
-            res = OPEN_FILE_PNG;
-        }
-        else {
-            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP or PNG file\n", filename);
+
+        int fd_ = open(filename, O_RDONLY);
+        if (!fd_) {
+            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n",
+                filename, strerror(errno), errno);
+            TODO("see value returned, maybe we should return open error");
+            return OPEN_FILE_UNKNOWN;
         }
 
-        return res;
+        class fdbuf
+        {
+            int fd;
+        public:
+            explicit fdbuf(int fd = -1) noexcept : fd(fd){}
+
+            ~fdbuf(){::close(this->fd);}
+            ssize_t read(void * data, size_t len) const
+            {
+                size_t remaining_len = len;
+                while (remaining_len) {
+                    ssize_t ret = ::read(this->fd, static_cast<char*>(data)
+                                        +(len - remaining_len), remaining_len);
+                    if (ret < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Error should still be there next time we try to read
+                        if (remaining_len != len){
+                            return len - remaining_len;
+                        }
+                        return ret;
+                    }
+                    // We must exit loop or we will enter infinite loop
+                    if (ret == 0){
+                        break;
+                    }
+                    remaining_len -= ret;
+                }
+                return len - remaining_len;
+            }
+
+            off64_t seek(off64_t offset, int whence) const
+            {
+                return lseek64(this->fd, offset, whence);
+            }
+        } file(fd_);
+
+        if (file.read(type1, 2) != 2) {
+            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
+            return OPEN_FILE_UNKNOWN;
+        }
+        if ((type1[0] == 'B') && (type1[1] == 'M')) {
+            LOG(LOG_INFO, "Widget_load: image file [%s] is BMP file\n", filename);
+            return OPEN_FILE_BMP;
+        }
+        if (file.read(&type1[2], 6) != 6) {
+            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
+            return OPEN_FILE_BMP;
+        }
+        if (png_check_sig(reinterpret_cast<png_bytep>(type1), 8)) {
+            LOG(LOG_INFO, "Widget_load: image file [%s] is PNG file\n", filename);
+            return OPEN_FILE_PNG;
+        }
+        LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP or PNG file\n", filename);
+        return OPEN_FILE_UNKNOWN;
     }
 
     const uint8_t* data() const noexcept {

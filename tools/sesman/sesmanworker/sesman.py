@@ -1096,20 +1096,23 @@ class Sesman():
                 extra_info.is_recorded,
                 mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
 
+            if not _status:
+                self.send_data({u'rejected': _error})
+
             Logger().info(u"Fetching protocol")
 
             kv = {}
+            if _status:
+                target_login_info = self.engine.get_target_login_info(selected_target)
+                proto_info = self.engine.get_target_protocols(selected_target)
+                kv[u'proto_dest'] = proto_info.protocol
+                if proto_info.protocol == u'RDP':
+                    kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
+                    kv[u'timezone'] = str(altzone if daylight else timezone)
 
-            target_login_info = self.engine.get_target_login_info(selected_target)
-            proto_info = self.engine.get_target_protocols(selected_target)
-            kv[u'proto_dest'] = proto_info.protocol
-            if proto_info.protocol == u'RDP':
-                kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
-            kv[u'timezone'] = str(altzone if daylight else timezone)
-
-            if not self.engine.checkout_target(selected_target):
-                _status, _error = False, TR(u"account_locked")
-                self.send_data({u'rejected': TR(u'account_locked')})
+                _status, _error = self.engine.checkout_target(selected_target)
+                if not _status:
+                    self.send_data({u'rejected': _error})
 
             if _status:
                 kv['password'] = 'pass'
@@ -1183,9 +1186,10 @@ class Sesman():
                         physical_target = None
                         break
 
-                    if not self.engine.checkout_target(physical_target):
+                    _status, _error = self.engine.checkout_target(physical_target)
+                    if not _status:
                         try_next = True
-                        Logger().info("Account locked on jump server, try another one.")
+                        Logger().info("Account locked on jump server, %s." % _error)
                         continue
 
                     application = self.engine.get_application(selected_target)
@@ -1207,6 +1211,7 @@ class Sesman():
                             connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')
                             connectionpolicy_kv[u'session_probe_launch_fallback_timeout'] = session_probe_section.get('launch_fallback_timeout')
                             connectionpolicy_kv[u'session_probe_keepalive_timeout']       = session_probe_section.get('keepalive_timeout')
+                            connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user'] = session_probe_section.get('on_keepalive_timeout_disconnect_user')
 
                             connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
 
@@ -1248,17 +1253,19 @@ class Sesman():
                         kv[u'disable_tsk_switch_shortcuts'] = u'yes'
                     self.cn = target_login_info.target_name
 
+                    if not self.passthrough_mode:
+                        kv[u'target_login'] = physical_info.account_login
+
                     if self.target_context:
                         kv[u'target_host'] = self.target_context.host
                         kv[u'target_device'] = self.target_context.showname()
+                        if not kv.get(u'target_login') and self.target_context.login:
+                            kv[u'target_login'] = self.target_context.login
                     else:
                         kv[u'target_host'] = physical_info.device_host
 
                     kv[u'target_port'] = physical_info.service_port
                     kv[u'device_id'] = physical_info.device_id
-
-                    if not self.passthrough_mode:
-                        kv[u'target_login'] = physical_info.account_login
 
                     release_reason = u''
 

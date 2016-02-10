@@ -21,7 +21,10 @@
 #ifndef REDEMPTION_UTILS_ARRAY_VIEW_HPP
 #define REDEMPTION_UTILS_ARRAY_VIEW_HPP
 
+#include <type_traits>
+
 #include <cstddef>
+#include <cassert>
 
 template<class T>
 struct array_view
@@ -39,10 +42,16 @@ struct array_view
     , sz(sz)
     {}
 
+    template<class Cont, class = typename std::enable_if<
+        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::value
+    >::type>
+    constexpr array_view(Cont & cont)
+    : array_view(cont.data(), cont.size())
+    {}
+
     template<std::size_t N>
     constexpr array_view(type (&a)[N])
-    : p(a)
-    , sz(N)
+    : array_view(a, N)
     {}
 
     constexpr explicit operator bool () const noexcept { return this->p; }
@@ -56,6 +65,9 @@ struct array_view
     type * end() { return this->p + this->sz; }
     constexpr type const * begin() const { return this->p; }
     constexpr type const * end() const { return this->p + this->sz; }
+
+    type & operator[](std::size_t i) { assert(i < this->size()); return this->p[i]; }
+    type const & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
 
 private:
     type * p;
@@ -78,10 +90,21 @@ struct array_view<T const>
     , sz(sz)
     {}
 
+    template<class Cont, class = typename std::enable_if<
+        std::is_convertible<decltype(std::declval<Cont&>().data()), type*>::value
+    >::type>
+    constexpr array_view(Cont & cont)
+    : array_view(cont.data(), cont.size())
+    {}
+
+    template<std::size_t N>
+    constexpr array_view(T (&a)[N])
+    : array_view(a, N)
+    {}
+
     template<std::size_t N>
     constexpr array_view(type (&a)[N])
-    : p(a)
-    , sz(N)
+    : array_view(a, N)
     {}
 
     constexpr array_view(array_view const &) = default;
@@ -105,6 +128,8 @@ struct array_view<T const>
     constexpr type * begin() const { return this->p; }
     constexpr type * end() const { return this->p + this->sz; }
 
+    type & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
+
 private:
     type * p;
     std::size_t sz;
@@ -118,6 +143,10 @@ array_view<T> make_array_view(T * x, std::size_t n)
 template<class T, std::size_t N>
 array_view<T> make_array_view(T (&arr)[N])
 { return {arr, N}; }
+
+template<class Cont>
+auto make_array_view(Cont & cont) -> array_view<decltype(cont.data())>
+{ return {cont.data(), cont.size()}; }
 
 
 template<class T>
@@ -155,5 +184,8 @@ using array_const_s8 = array_view<int8_t const>;
 using array_const_s16 = array_view<int16_t const>;
 using array_const_s32 = array_view<int32_t const>;
 using array_const_s64 = array_view<int64_t const>;
+
+using array_char = array_view<char>;
+using array_const_char = array_view<char const>;
 
 #endif

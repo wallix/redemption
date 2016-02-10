@@ -73,8 +73,6 @@
 #include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/remote_programs.hpp"
 
-#include "RDP/compress_and_draw_bitmap_update.hpp"
-
 #include "RDP/capabilities/bmpcache.hpp"
 #include "RDP/capabilities/offscreencache.hpp"
 #include "RDP/capabilities/bmpcache2.hpp"
@@ -106,10 +104,12 @@
 
 #include "utils/timeout.hpp"
 
+#include "gdi/clip_from_cmd.hpp"
+
 #include <memory>
 
 
-class Front : public FrontAPI, public ActivityChecker {
+class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -131,11 +131,85 @@ private:
         BrushCache brush_cache;
         PointerCache pointer_cache;
         GlyphCache glyph_cache;
-        GraphicsUpdatePDU graphics_update_pdu;
+
+        struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU {
+            PrivateGraphicsUpdatePDU(
+                OrderCaps & client_order_caps
+              , Transport & trans
+              , uint16_t & userid
+              , int & shareid
+              , int & encryptionLevel
+              , CryptContext & encrypt
+              , const Inifile & ini
+              , const uint8_t bpp
+              , BmpCache & bmp_cache
+              , GlyphCache & gly_cache
+              , PointerCache & pointer_cache
+              , const int bitmap_cache_version
+              , const int use_bitmap_comp
+              , const int op2
+              , size_t max_bitmap_size
+              , bool fastpath_support
+              , rdp_mppc_enc * mppc_enc
+              , bool compression
+              , uint32_t verbose
+            )
+            : GraphicsUpdatePDU(
+                trans
+              , userid
+              , shareid
+              , encryptionLevel
+              , encrypt
+              , ini
+              , bpp
+              , bmp_cache
+              , gly_cache
+              , pointer_cache
+              , bitmap_cache_version
+              , use_bitmap_comp
+              , op2
+              , max_bitmap_size
+              , fastpath_support
+              , mppc_enc
+              , compression
+              , verbose
+            )
+            , client_order_caps(client_order_caps)
+            {}
+
+            using GraphicsUpdatePDU::draw;
+
+            void draw(const RDP::FrameMarker & order) override {
+                if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
+                    GraphicsUpdatePDU::draw(order);
+                }
+            }
+
+            void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+                StaticOutStream<65535> bmp_stream;
+                Bitmap new_bmp(this->capture_bpp, bmp);
+
+                new_bmp.compress(this->capture_bpp, bmp_stream);
+
+                RDPBitmapData target_bitmap_data = bitmap_data;
+
+                target_bitmap_data.bits_per_pixel = new_bmp.bpp();
+                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+                GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
+            }
+
+            void set_palette(const BGRPalette&) override {
+            }
+
+            OrderCaps & client_order_caps;
+        } graphics_update_pdu;
 
         Graphics(
-            ClientInfo const & client_info
-          , Transport * trans
+            OrderCaps & client_order_caps
+          , ClientInfo const & client_info
+          , Transport & trans
           , uint16_t & userid
           , int & shareid
           , int & encryptionLevel
@@ -208,7 +282,8 @@ private:
         , pointer_cache(client_info.pointer_cache_entries)
         , glyph_cache(client_info.number_of_entries_in_glyph_cache)
         , graphics_update_pdu(
-            trans
+            client_order_caps
+          , trans
           , userid
           , shareid
           , encryptionLevel
@@ -226,16 +301,16 @@ private:
           , mppc_enc
           , ini.get<cfg::client::rdp_compression>() ? client_info.rdp_compression : 0
           , verbose
-          )
+        )
         {}
-
-        ~Graphics() = default;
     };
 
     struct GraphicsPointer
     {
         Graphics * p = nullptr;
         bool is_initialized = false;
+        gdi::GraphicApi * gd = nullptr;
+        std::unique_ptr<gdi::GraphicApi> gd_converted;
 
         ~GraphicsPointer() {
             if (this->is_initialized) {
@@ -245,8 +320,9 @@ private:
         }
 
         void initialize(
-            ClientInfo const & client_info
-          , Transport * trans
+            OrderCaps & client_order_caps
+          , ClientInfo const & client_info
+          , Transport & trans
           , uint16_t & userid
           , int & shareid
           , int & encryptionLevel
@@ -257,6 +333,9 @@ private:
           , rdp_mppc_enc * mppc_enc
           , uint32_t verbose
         ) {
+            this->gd_converted.reset();
+            this->gd = nullptr;
+
             if (this->p) {
                 this->is_initialized = false;
                 this->p->~Graphics();
@@ -266,7 +345,7 @@ private:
             }
 
             new (this->p) Graphics(
-                client_info, trans, userid, shareid, encryptionLevel, encrypt,
+                client_order_caps, client_info, trans, userid, shareid, encryptionLevel, encrypt,
                 ini, max_bitmap_size, fastpath_support, mppc_enc, verbose
             );
             this->is_initialized = true;
@@ -292,10 +371,116 @@ private:
         brush_item const & brush_at(int cache_idx) const
         { return this->p->brush_cache.brush_items[cache_idx]; }
 
-        GraphicsUpdatePDU & graphics_update_pdu()
+        Graphics::PrivateGraphicsUpdatePDU & graphics_update_pdu()
         { return this->p->graphics_update_pdu; }
 
-        GraphicsUpdatePDU * operator->() const { return &this->p->graphics_update_pdu; }
+        gdi::GraphicApi & get_graphics_api() {
+            if (this->gd) {
+                return *this->gd;
+            }
+            return this->graphics_update_pdu();
+        }
+
+        gdi::GraphicApi& initialize_drawable(uint8_t mod_bpp, uint8_t client_bpp, BGRPalette const & palette) {
+            using dec8 = with_color8_palette<decode_color8_opaquerect>;
+            using dec15 = decode_color15_opaquerect;
+            using dec16 = decode_color16_opaquerect;
+            using dec24 = decode_color24_opaquerect;
+            using enc8 = encode_color8;
+            using enc15 = encode_color15;
+            using enc16 = encode_color16;
+            using enc24 = encode_color24;
+
+            assert(this->is_initialized);
+
+            this->gd_converted.reset();
+
+            if ( (client_bpp == 24 && (mod_bpp == 24 || mod_bpp == 32))
+              || (client_bpp == 32 && (mod_bpp == 24 || mod_bpp == 32))
+              || (client_bpp == mod_bpp)
+            ) {
+                this->gd = &this->graphics_update_pdu();
+            }
+            else if (mod_bpp == 8) {
+                switch (client_bpp) {
+                    case 15: this->build_graphics(dec8{palette}, enc15{}); break;
+                    case 16: this->build_graphics(dec8{palette}, enc16{}); break;
+                    case 24:
+                    case 32: this->build_graphics(dec8{palette}, enc24{}); break;
+                }
+
+            }
+            else if (mod_bpp == 15) {
+                switch (client_bpp) {
+                    case 8 : this->build_graphics(dec15{}, enc8{}); break;
+                    case 16: this->build_graphics(dec15{}, enc16{}); break;
+                    case 24:
+                    case 32: this->build_graphics(dec15{}, enc24{}); break;
+                }
+
+            }
+            else if (mod_bpp == 16) {
+                switch (client_bpp) {
+                    case 8 : this->build_graphics(dec16{}, enc8{}); break;
+                    case 15: this->build_graphics(dec16{}, enc15{}); break;
+                    case 24:
+                    case 32: this->build_graphics(dec16{}, enc24{}); break;
+                }
+
+            }
+            else if (mod_bpp == 24 || mod_bpp == 32) {
+                switch (client_bpp) {
+                    case 8 : this->build_graphics(dec24{}, enc8{}); break;
+                    case 15: this->build_graphics(dec24{}, enc15{}); break;
+                    case 16: this->build_graphics(dec24{}, enc16{}); break;
+                }
+            }
+
+            assert(this->gd);
+            return *this->gd;
+        }
+
+        template<class ColorConverter>
+        struct GraphicConverted : gdi::GraphicProxy<
+            GraphicConverted<ColorConverter>,
+            gdi::GraphicApi,
+            gdi::GraphicColorConverter
+        > {
+            friend gdi::GraphicCoreAccess;
+
+            GraphicConverted(
+                gdi::GraphicDepth depth,
+                Graphics::PrivateGraphicsUpdatePDU & graphics,
+                ColorConverter const & color_converter
+            )
+            : GraphicConverted::base_type(depth)
+            , color_converter(color_converter)
+            , graphics(graphics)
+            {}
+
+            ColorConverter const & color_converter_impl() const {
+                return this->color_converter;
+            }
+
+            Graphics::PrivateGraphicsUpdatePDU & get_gd_proxy_impl() {
+                return this->graphics;
+            }
+
+            ColorConverter color_converter;
+            Graphics::PrivateGraphicsUpdatePDU & graphics;
+        };
+
+        template<class Dec, class Enc>
+        void build_graphics(Dec const & dec, Enc const & enc) {
+            using color_converter_t = color_converter<Dec, Enc>;
+            using Drawable = GraphicConverted<color_converter_t>;
+            this->gd_converted = std::make_unique<Drawable>(
+                gdi::GraphicDepth::from_bpp(Dec::bpp),
+                this->graphics_update_pdu(),
+                color_converter_t(dec, enc)
+            );
+            this->gd = this->gd_converted.get();
+        }
     } orders;
 
     struct write_x224_dt_tpdu_fn
@@ -333,6 +518,22 @@ private:
         );
     }
 
+    static gdi::GraphicApi & null_gd() {
+        struct NullGd final
+        : gdi::GraphicBase<NullGd>
+        {};
+        static NullGd gd;
+        return gd;
+    }
+
+    gdi::utils::non_null<gdi::GraphicApi*> gd = &null_gd();
+    gdi::utils::non_null<gdi::GraphicApi*> graphics_update = &null_gd();
+
+    void set_gd(gdi::GraphicApi & new_gd) {
+        this->gd = &new_gd;
+        this->graphics_update = this->input_event_and_graphics_update_disabled ? &null_gd() : &new_gd;
+    }
+
 public:
     Keymap2 keymap;
 
@@ -367,13 +568,11 @@ private:
 
     Font font;
 
-    bool palette_sent;
     bool palette_memblt_sent[6];
 
-    BGRPalette palette332_rgb = BGRPalette::classic_332_rgb();
+    BGRPalette mod_palette_rgb {BGRPalette::classic_332_rgb()};
 
 public:
-    BGRPalette mod_palette_rgb {BGRPalette::no_init()};
     uint8_t mod_bpp;
 
 private:
@@ -426,6 +625,8 @@ private:
 
     Timeout timeout;
 
+    bool is_client_disconnected = false;
+
 public:
     Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -438,7 +639,7 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : Front::base_type(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , up_and_running(0)
@@ -502,7 +703,6 @@ public:
 
         // --------------------------------------------------------
 
-        this->palette_sent = false;
         for (size_t i = 0; i < 6 ; i++) {
             this->palette_memblt_sent[i] = false;
         }
@@ -558,10 +758,14 @@ public:
         uint32_t res = 0;
 
         this->mod_bpp = bpp;
+
+        this->set_gd(this->orders.initialize_drawable(
+            this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb));
+
         if (bpp == 8) {
             this->palette_sent = false;
-            for (size_t i = 0; i < 6 ; i++) {
-                this->palette_memblt_sent[i] = false;
+            for (bool & b : this->palette_memblt_sent) {
+                b = false;
             }
         }
 
@@ -592,7 +796,7 @@ public:
 
                 TODO("Why are we not calling this->flush() instead ? Looks dubious.")
                 // send buffered orders
-                this->orders->flush();
+                this->orders.graphics_update_pdu().sync();
 
                 // clear all pending orders, caches data, and so on and
                 // start a send_deactive, send_deman_active process with
@@ -613,17 +817,13 @@ public:
         return res;
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
-        this->orders->draw(cursor);
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->server_set_pointer(cursor);
-        }
+    void set_pointer(const Pointer & cursor) override {
+        this->graphics_update->set_pointer(cursor);
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override
     {
-        this->orders->update_pointer_position(xPos, yPos);
+        this->orders.graphics_update_pdu().update_pointer_position(xPos, yPos);
         //if (  this->capture
         //   && (this->capture_state == CAPTURE_STATE_STARTED)) {
         //    this->capture->update_pointer_position(xPos, yPos);
@@ -689,6 +889,10 @@ public:
         }
         this->capture->capture_event.set();
         this->capture_state = CAPTURE_STATE_STARTED;
+        if (this->capture->get_graphic_api()) {
+            this->set_gd(*this->capture->get_graphic_api());
+            this->capture->add_graphic(this->orders.graphics_update_pdu());
+        }
 
         this->update_keyboard_input_mask_state();
 
@@ -701,9 +905,10 @@ public:
             return;
         }
 
-        this->capture->pause();
-        this->capture->capture_event.reset();
+        timeval now = tvtime();
+        this->capture->pause_capture(now);
         this->capture_state = CAPTURE_STATE_PAUSED;
+        this->set_gd(this->orders.graphics_update_pdu());
     }
 
     void resume_capture() {
@@ -712,9 +917,15 @@ public:
             return;
         }
 
-        this->capture->resume();
-        this->capture->capture_event.set();
+        timeval now = tvtime();
+        this->capture->resume_capture(now);
         this->capture_state = CAPTURE_STATE_STARTED;
+        if (this->capture->get_graphic_api()) {
+            this->set_gd(*this->capture->get_graphic_api());
+        }
+        else {
+            this->set_gd(null_gd());
+        }
     }
 
     void stop_capture()
@@ -726,6 +937,8 @@ public:
             this->capture = nullptr;
 
             this->capture_state = CAPTURE_STATE_STOPED;
+
+            this->set_gd(this->orders.get_graphics_api());
         }
     }
 
@@ -742,11 +955,10 @@ public:
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
-            bool requested_to_stop = false;
-            this->capture->snapshot( now, this->mouse_x, this->mouse_y
-                                   , false  // ignore frame in time interval
-                                   , requested_to_stop
-                                   );
+            this->capture->snapshot(
+                now, this->mouse_x, this->mouse_y
+              , false  // ignore frame in time interval
+            );
         }
     }
     // ===========================================================================
@@ -870,9 +1082,11 @@ private:
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
+
         this->orders.initialize(
-            this->client_info
-          , &this->trans
+            this->client_order_caps
+          , this->client_info
+          , this->trans
           , this->userid
           , this->share_id
           , this->encryptionLevel
@@ -883,6 +1097,7 @@ private:
           , this->mppc_enc
           , this->verbose
         );
+        this->set_gd(this->orders.graphics_update_pdu());
     }
 
 public:
@@ -903,7 +1118,7 @@ public:
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }
         if (this->order_level == 0) {
-            this->flush();
+            this->sync();
         }
     }
 
@@ -913,13 +1128,15 @@ public:
             LOG(LOG_INFO, "Front::disconnect");
         }
 
-        write_packets(
-            this->trans,
-            [](StreamSize<256>, OutStream & mcs_data) {
-                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-            },
-            write_x224_dt_tpdu_fn{}
-        );
+        if (!this->is_client_disconnected) {
+            write_packets(
+                this->trans,
+                [](StreamSize<256>, OutStream & mcs_data) {
+                    MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+                },
+                write_x224_dt_tpdu_fn{}
+            );
+        }
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -947,70 +1164,6 @@ public:
         virtual_channel_pdu.send_to_client( this->trans, this->encrypt
                                           , this->encryptionLevel, userid, channel.chanid
                                           , length, flags, chunk, chunk_size);
-    }
-
-private:
-    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
-    // -------------------------------------------------------------------
-
-    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
-    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
-
-    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
-    // Values in this field are ignored.
-
-    // numberColors (4 bytes): A 32-bit, unsigned integer.
-    // The number of RGB triplets in the paletteData field.
-    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
-
-    void GeneratePaletteUpdateData(OutStream & stream) {
-        const BGRPalette & palette = (this->mod_bpp == 8) ? this->mod_palette_rgb : this->palette332_rgb;
-
-        // Payload
-        stream.out_uint16_le(RDP_UPDATE_PALETTE);
-        stream.out_uint16_le(0);
-
-        stream.out_uint32_le(256); /* # of colors */
-        for (int i = 0; i < 256; i++) {
-            int color = palette[i];
-            // Palette entries is in BGR triplet format.
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
-            stream.out_uint8(b);
-        }
-    }
-
-public:
-    void send_global_palette() override {
-        if (!this->palette_sent && (this->client_info.bpp == 8)) {
-            if (this->verbose & 4) {
-                LOG(LOG_INFO, "Front::send_global_palette");
-            }
-
-            this->flush();
-
-            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-            GeneratePaletteUpdateData(stream.get_data_stream());
-
-            ::send_server_update( this->trans
-                                , this->server_fastpath_update_support
-                                , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
-                                , this->mppc_enc
-                                , this->share_id
-                                , this->encryptionLevel
-                                , this->encrypt
-                                , this->userid
-                                , SERVER_UPDATE_GRAPHICS_PALETTE
-                                , 0
-                                , stream
-                                , this->verbose
-                                );
-
-            this->palette_sent = true;
-        }
     }
 
     void incoming(Callback & cb, time_t now)
@@ -1263,6 +1416,24 @@ public:
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MCS_MSGCHANNEL:
+                    {
+                        GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+                        cs_mcs_msgchannel.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_mcs_msgchannel.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MULTITRANSPORT:
+                    {
+                        GCC::UserData::CSMultiTransport cs_multitransport;
+                        cs_multitransport.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_multitransport.log("Receiving from Client");
                         }
                     }
                     break;
@@ -1561,7 +1732,8 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1635,7 +1807,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1830,7 +2003,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -2147,7 +2321,8 @@ public:
                     TODO("What is the clean way to actually disconnect ?")
                     X224::DR_TPDU_Recv x224(stream);
                     LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
-                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
                 }
                 else if (fx224.type != X224::DT_TPDU) {
                     LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
@@ -2162,7 +2337,8 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -2261,7 +2437,7 @@ public:
                             // resizing done
                             {
                                 RDPColCache cmd(0, BGRPalette::classic_332());
-                                this->orders->draw(cmd);
+                                this->orders.graphics_update_pdu().draw(cmd);
                             }
                             if (this->verbose & 1) {
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
@@ -2460,10 +2636,14 @@ private:
         return true;
     }
 
-    void session_probe_started() override {
-        this->session_probe_started_ = true;
+    void session_probe_started(bool started) override {
+        this->session_probe_started_ = started;
 
         this->update_keyboard_input_mask_state();
+
+        if (!started) {
+            this->session_update("Probe.Status=Unknown");
+        }
     }
 
     void set_keylayout(int LCID) override {
@@ -2486,7 +2666,7 @@ private:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(const char * message) override {
+    void session_update(array_const_char const & message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
@@ -2499,12 +2679,13 @@ private:
         bool need_full_screen_update =
             (this->input_event_and_graphics_update_disabled && !disable);
 
-            if (this->input_event_and_graphics_update_disabled != disable) {
-                LOG(LOG_INFO, "Front: %s graphics update.",
-                    (disable ? "Disable" : "Enable"));
-            }
+        if (this->input_event_and_graphics_update_disabled != disable) {
+            LOG(LOG_INFO, "Front: %s graphics update.",
+                (disable ? "Disable" : "Enable"));
 
-        this->input_event_and_graphics_update_disabled = disable;
+            this->input_event_and_graphics_update_disabled = disable;
+            this->set_gd(*this->gd);
+        }
 
         return need_full_screen_update;
     }
@@ -3623,7 +3804,7 @@ private:
 
                 if (this->client_info.bpp == 8) {
                     RDPColCache cmd(0, BGRPalette::classic_332());
-                    this->orders->draw(cmd);
+                    this->orders.graphics_update_pdu().draw(cmd);
                 }
 
                 if (this->verbose & (8|1)) {
@@ -3660,6 +3841,10 @@ private:
                     }
 
                     this->auth_info_sent = true;
+                }
+
+                if (8 != this->mod_bpp) {
+                    this->send_palette();
                 }
             }
         }
@@ -3824,206 +4009,77 @@ private:
         this->keymap.toggle_num_lock(LedFlags & SlowPath::TS_SYNC_NUM_LOCK);
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
+protected:
+    friend gdi::GraphicCoreAccess;
 
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPOpaqueRect new_cmd = cmd;
+    template<class Cmd>
+    void draw_impl(Cmd const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            this->graphics_update->draw(cmd, clip);
+        }
+    }
 
-                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.color = color_encode(color24, this->client_info.bpp);
+    void draw_impl(RDPMemBlt const& cmd, Rect const & clip, Bitmap const & bitmap) {
+        this->priv_draw_memblt(cmd, clip, bitmap);
+    }
 
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
+    void draw_impl(RDPMem3Blt const & cmd, Rect const & clip, Bitmap const & bitmap) {
+        this->priv_draw_memblt(cmd, clip, bitmap);
+    }
 
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPOpaqueRect capture_cmd = cmd;
-
-                        const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.color = color_encode(color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
+    void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDPGlyphIndex new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip, gly_cache);
+            }
+            else {
+                this->graphics_update->draw(cmd, clip, gly_cache);
             }
         }
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
+    void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
+        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
-            }
+        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
+            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
+            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
+            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
+           ) {
+            Rect boundary(bitmap_data.dest_left,
+                          bitmap_data.dest_top,
+                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
+                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
+                         );
+
+            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
+        }
+        else {
+            this->graphics_update->draw(bitmap_data, bmp);
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
-            }
-        }
+    template<class Cmd>
+    void draw_impl(Cmd const & cmd) {
+        this->graphics_update->draw(cmd);
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() &&
-            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
-            }
-        }
+    void draw_impl(RDP::FrameMarker const & order) {
+        this->gd->draw(order);
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.isempty() &&
-            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPMultiOpaqueRect new_cmd = cmd;
-
-                    const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd._Color = color_encode(color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPMultiOpaqueRect capture_cmd = cmd;
-
-                        const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd._Color = color_encode(color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
+    void draw_impl(RDPColCache const & cmd) {
+        this->orders.graphics_update_pdu().draw(cmd);
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                RDP::RDPMultiPatBlt new_cmd = cmd;
-                if (this->client_info.bpp != this->mod_bpp) {
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.BackColor = color_encode(back_color24, this->client_info.bpp);
-                    new_cmd.ForeColor = color_encode(fore_color24, this->client_info.bpp);
-                    // this may change the brush add send it to to remote cache
-                }
-                this->cache_brush(new_cmd.brush);
-                this->orders->draw(new_cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDP::RDPMultiPatBlt capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.BackColor = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.ForeColor = color_encode(fore_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
+    void draw_impl(RDPBrushCache const & cmd) {
+        // TODO
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
-            }
-        }
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                RDPPatBlt new_cmd = cmd;
-                if (this->client_info.bpp != this->mod_bpp) {
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-                    // this may change the brush add send it to to remote cache
-                }
-                this->cache_brush(new_cmd.brush);
-                this->orders->draw(new_cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPatBlt capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
+private:
     void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64) {
@@ -4035,17 +4091,9 @@ private:
         const Bitmap tiled_bmp(bitmap, src_tile);
         const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
 
-        if (!this->input_event_and_graphics_update_disabled) {
-            this->orders->draw(cmd2, clip, tiled_bmp);
-
-            if (  this->capture
-                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                this->capture->draw(cmd2, clip, Bitmap(this->capture_bpp, tiled_bmp));
-            }
-        }
+        this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-private:
     void priv_draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
@@ -4063,13 +4111,11 @@ private:
             return;
         }
 
-        this->send_global_palette();
-
         const uint8_t palette_id = 0;
         if (this->client_info.bpp == 8) {
             if (!this->palette_memblt_sent[palette_id]) {
                 RDPColCache cmd(palette_id, bitmap.palette());
-                this->orders->draw(cmd);
+                this->orders.graphics_update_pdu().draw(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
         }
@@ -4119,11 +4165,6 @@ private:
         }
     }
 
-public:
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        this->priv_draw_memblt(cmd, clip, bitmap);
-    }
-
     void draw_tile3(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64) {
@@ -4141,424 +4182,120 @@ public:
 
             cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
             cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
-            // this may change the brush add send it to to remote cache
         }
 
-        if (!this->input_event_and_graphics_update_disabled) {
-            this->orders->draw(cmd2, clip, tiled_bmp);
+        // this may change the brush add send it to to remote cache
+        //this->cache_brush(cmd2.brush);
 
-            if (  this->capture
-                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                if (this->capture_bpp != this->mod_bpp) {
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                    cmd2.back_color= color_encode(back_color24, this->capture_bpp);
-                    cmd2.fore_color= color_encode(fore_color24, this->capture_bpp);
-                    // this may change the brush add send it to to remote cache
-                }
-                else {
-                    cmd2.back_color= cmd.back_color;
-                    cmd2.fore_color= cmd.fore_color;
-                }
-                this->capture->draw(cmd2, clip, tiled_bmp);
-            }
-        }
+        this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        this->priv_draw_memblt(cmd, clip, bitmap);
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        const uint16_t minx = std::min(cmd.startx, cmd.endx);
-        const uint16_t miny = std::min(cmd.starty, cmd.endy);
-        const Rect rect(minx, miny,
-                        std::max(cmd.startx, cmd.endx) - minx + 1,
-                        std::max(cmd.starty, cmd.endy) - miny + 1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPLineTo new_cmd = cmd;
-
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor pen_color24  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                    new_cmd.pen.color  = color_encode(pen_color24,  this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPLineTo capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor pen_color24 = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.pen.color = color_encode(pen_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()) {
-            this->send_global_palette();
-
-            RDPGlyphIndex new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp) {
-                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-            }
-
-            // this may change the brush and send it to to remote cache
-            this->cache_brush(new_cmd.brush);
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                assert(gly_cache);
-                this->orders->draw(new_cmd, clip, *gly_cache);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-                        new_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        new_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
-                    }
-                    else {
-                        new_cmd.back_color = cmd.back_color;
-                        new_cmd.fore_color = cmd.fore_color;
-                    }
-                    this->capture->draw(new_cmd, clip, gly_cache);
-                }
-            }
-        }
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaPoints[i].xDelta;
-            previousy += cmd.deltaPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                RDPPolygonSC new_cmd = cmd;
-                if (this->client_info.bpp != this->mod_bpp) {
-                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.BrushColor = color_encode(pen_color24, this->client_info.bpp);
-                }
-
-                this->orders->draw(new_cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPolygonSC capture_cmd = cmd;
-                        const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.BrushColor = color_encode(pen_color24, this->capture_bpp);
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaPoints[i].xDelta;
-            previousy += cmd.deltaPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPPolygonCB new_cmd = cmd;
-
-                    const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.foreColor = color_encode(fore_pen_color24, this->client_info.bpp);
-                    new_cmd.backColor = color_encode(back_pen_color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPolygonCB capture_cmd = cmd;
-
-                        const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.foreColor = color_encode(fore_pen_color24, this->capture_bpp);
-                        capture_cmd.backColor = color_encode(back_pen_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaEncodedPoints[i].xDelta;
-            previousy += cmd.deltaEncodedPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPPolyline new_cmd = cmd;
-
-                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.PenColor = color_encode(pen_color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPolyline capture_cmd = cmd;
-
-                        const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.PenColor = color_encode(pen_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPEllipseSC new_cmd = cmd;
-                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.color = color_encode(color24, this->client_info.bpp);
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPEllipseSC capture_cmd = cmd;
-
-                        const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.color = color_encode(color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPEllipseCB new_cmd = cmd;
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPEllipseCB capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void flush() override {
-        this->orders->flush();
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->flush();
-        }
+    bool updatable_cache_brush(RDPBrush const & brush) const {
+        return brush.style == 3 && this->client_info.brush_cache_code == 1;
     }
 
     void cache_brush(RDPBrush & brush)
     {
-        if ((brush.style == 3) && (this->client_info.brush_cache_code == 1)) {
-            uint8_t pattern[8];
-            pattern[0] = brush.hatch;
-            memcpy(pattern+1, brush.extra, 7);
-            int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->orders.add_brush(pattern, cache_idx)) {
-                RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
-                    sizeof(this->orders.brush_at(cache_idx).pattern),
-                    this->orders.brush_at(cache_idx).pattern);
-                this->orders->draw(cmd);
-            }
-            brush.hatch = cache_idx;
-            brush.style = 0x81;
+        if (this->updatable_cache_brush(brush)) {
+            this->update_cache_brush(brush);
         }
     }
 
-    void draw(const RDPColCache & cmd) override {
-        this->orders->draw(cmd);
+    void update_cache_brush(RDPBrush & brush)
+    {
+        uint8_t pattern[8];
+        pattern[0] = brush.hatch;
+        memcpy(pattern+1, brush.extra, 7);
+        int cache_idx = 0;
+        if (BRUSH_TO_SEND == this->orders.add_brush(pattern, cache_idx)) {
+            RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
+                sizeof(this->orders.brush_at(cache_idx).pattern),
+                this->orders.brush_at(cache_idx).pattern);
+            this->orders.graphics_update_pdu().draw(cmd);
+        }
+        brush.hatch = cache_idx;
+        brush.style = 0x81;
     }
 
-    void set_mod_palette(const BGRPalette & palette) override {
+    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
+    // -------------------------------------------------------------------
+
+    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
+    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
+
+    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
+    // Values in this field are ignored.
+
+    // numberColors (4 bytes): A 32-bit, unsigned integer.
+    // The number of RGB triplets in the paletteData field.
+    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
+
+    void GeneratePaletteUpdateData(OutStream & stream) {
+        // Payload
+        stream.out_uint16_le(RDP_UPDATE_PALETTE);
+        stream.out_uint16_le(0);
+
+        stream.out_uint32_le(256); /* # of colors */
+        for (auto color : this->mod_palette_rgb) {
+            // Palette entries is in BGR triplet format.
+            uint8_t r = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t b = color;
+            stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
+        }
+    }
+
+    bool palette_sent = false;
+
+    void send_palette() {
+        if (8 != this->client_info.bpp || this->palette_sent) {
+            return ;
+        }
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "Front::send_palette");
+        }
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        GeneratePaletteUpdateData(stream.get_data_stream());
+
+        ::send_server_update(
+            this->trans
+          , this->server_fastpath_update_support
+          , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
+          , this->mppc_enc
+          , this->share_id
+          , this->encryptionLevel
+          , this->encrypt
+          , this->userid
+          , SERVER_UPDATE_GRAPHICS_PALETTE
+          , 0
+          , stream
+          , this->verbose
+        );
+
+        this->sync();
+
+        this->palette_sent = true;
+    }
+
+public:
+    void sync() override {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "Front::flush");
+        }
+        this->gd->sync();
+    }
+
+    void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
+
+        this->gd->set_palette(palette);
+
         this->palette_sent = false;
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->set_mod_palette(palette);
-        }
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
-            this->orders->draw(order);
-        }
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
+        this->send_palette();
     }
 
     void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const override {
@@ -4567,54 +4304,6 @@ public:
 
     void intersect_order_caps_ex(OrderCaps & order_caps) const override {
         order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) override {
-        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
-
-        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
-            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
-            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
-            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
-           ) {
-            Rect boundary(bitmap_data.dest_left,
-                          bitmap_data.dest_top,
-                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
-                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
-                         );
-
-            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
-            return;
-        }
-
-        if (!this->input_event_and_graphics_update_disabled) {
-            StaticOutStream<65535> bmp_stream;
-            Bitmap new_bmp(this->client_info.bpp, bmp);
-
-            new_bmp.compress(this->client_info.bpp, bmp_stream);
-
-            RDPBitmapData target_bitmap_data = bitmap_data;
-
-            target_bitmap_data.bits_per_pixel = new_bmp.bpp();
-            target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-            target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
-
-            this->orders->draw(target_bitmap_data, new_bmp);
-
-            //bitmap_data.log(LOG_INFO, "Front");
-            //hexdump_d(data, size);
-
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                if (this->client_info.bpp == this->capture_bpp) {
-                    this->capture->draw(bitmap_data, bmp_stream.get_data(), bmp_stream.get_offset(), new_bmp);
-                }
-                else {
-                    this->capture->draw(bitmap_data, data, size, bmp);
-                }
-            }
-        }
     }
 
     bool check_and_reset_activity() override {
@@ -4647,7 +4336,10 @@ private:
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
             && decoded_data.get_offset()) {
-            send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.get_offset());
+            send_to_mod = this->capture->input_kbd(
+                tvtime(),
+                {decoded_data.get_data(), decoded_data.get_offset()}
+            );
         }
 
         if (this->up_and_running) {

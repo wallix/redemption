@@ -243,17 +243,157 @@ namespace transfil {
 
 }
 
-
 namespace transbuf {
-    class icrypto_filename_buf
+
+    class ifile_buf
+    {
+        int fd;
+    public:
+        ifile_buf(CryptoContext * cctx) : fd(-1) {}
+        
+        ~ifile_buf()
+        {
+            this->close();
+        }
+
+        int open(const char * filename)
+        {
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int open(const char * filename, mode_t /*mode*/)
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        ssize_t read(void * data, size_t len)
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return lseek64(this->fd, offset, whence); }
+    };
+
+    class ifile_buf_meta
+    {
+        int fd;
+    public:
+        ifile_buf_meta(CryptoContext * cctx) : fd(-1) {}
+        
+        ~ifile_buf_meta()
+        {
+            this->close();
+        }
+
+        int open(const char * filename)
+        {
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int open(const char * filename, mode_t /*mode*/)
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->close();
+            this->fd = ::open(filename, O_RDONLY);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        ssize_t read(void * data, size_t len)
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return lseek64(this->fd, offset, whence); }
+    };
+
+
+    class icrypto_filename_buf_meta
     {
         transfil::decrypt_filter decrypt;
         CryptoContext * cctx;
-        ifile_buf file;
+        ifile_buf_meta file;
 
     public:
-        explicit icrypto_filename_buf(CryptoContext * cctx)
+        explicit icrypto_filename_buf_meta(CryptoContext * cctx)
         : cctx(cctx)
+        , file(cctx)
         {}
 
         int open(const char * filename, mode_t mode = 0600)
@@ -286,25 +426,383 @@ namespace transbuf {
         off64_t seek(off64_t offset, int whence) const
         { return this->file.seek(offset, whence); }
     };
+
+
+    class icrypto_filename_buf
+    {
+        transfil::decrypt_filter decrypt;
+        CryptoContext * cctx;
+        ifile_buf file;
+
+    public:
+        explicit icrypto_filename_buf(CryptoContext * cctx)
+        : cctx(cctx)
+        , file(cctx)
+        {}
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            unsigned char derivator[DERIVATOR_LENGTH];
+
+            this->cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
+            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
+                return -1;
+            }
+
+            int err = this->file.open(filename, mode);
+            if (err < 0) {
+                return err;
+            }
+
+            return this->decrypt.open(this->file, trace_key);
+        }
+
+        ssize_t read(void * data, size_t len)
+        { return this->decrypt.read(this->file, data, len); }
+
+        int close()
+        { return this->file.close(); }
+
+        bool is_open() const noexcept
+        { return this->file.is_open(); }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return this->file.seek(offset, whence); }
+    };
+
 }
 
-struct InMetaSequenceTransport
-: InputNextTransport<detail::in_meta_sequence_buf<
-    detail::empty_ctor</*transbuf::ibuffering_buf<*/transbuf::ifile_buf/*> */>,
-    detail::empty_ctor<transbuf::ifile_buf>
-> >
+
+namespace detail {
+    struct in_meta_sequence_buf_param
+    {
+        const char * meta_filename;
+        CryptoContext * cctx_buf;
+        CryptoContext * cctx_meta;
+        uint32_t verbose;
+
+        explicit in_meta_sequence_buf_param(const char * meta_filename, uint32_t verbose, CryptoContext * cctx_buf, CryptoContext * cctx_meta)
+        : meta_filename(meta_filename)
+        , cctx_buf(cctx_buf)
+        , cctx_meta(cctx_meta)
+        , verbose(verbose)
+        {}
+    };
+
+    class in_meta_sequence_buf_crypto
+    : public transbuf::icrypto_filename_buf
+    {
+        struct ReaderBuf
+        {
+            transbuf::icrypto_filename_buf_meta & buf;
+
+            explicit ReaderBuf(transbuf::icrypto_filename_buf_meta & buf)
+            : buf(buf)
+            {}
+
+            ssize_t read(char * buf, size_t len) const {
+                return this->buf.read(buf, len);
+            }
+        };
+
+        transbuf::icrypto_filename_buf_meta buf_meta;
+        ReaderLine<ReaderBuf> reader;
+        MetaHeader meta_header;
+        MetaLine meta_line;
+        char meta_path[2048];
+        uint32_t verbose;
+
+    public:
+        explicit in_meta_sequence_buf_crypto(const in_meta_sequence_buf_param & params)
+        : transbuf::icrypto_filename_buf(params.cctx_buf)
+        , buf_meta(params.cctx_meta)
+        , reader([&]() {
+            if (this->buf_meta.open(params.meta_filename) < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            return ReaderBuf{this->buf_meta};
+        }())
+        , meta_header(read_meta_headers(this->reader))
+        , verbose(params.verbose)
+        {
+            this->meta_line.start_time = 0;
+            this->meta_line.stop_time = 0;
+
+            this->meta_path[0] = 0;
+
+            char basename[1024] = {};
+            char extension[256] = {};
+
+            canonical_path( params.meta_filename
+                          , this->meta_path, sizeof(this->meta_path)
+                          , basename, sizeof(basename)
+                          , extension, sizeof(extension)
+                          , this->verbose);
+        }
+
+        ssize_t read(void * data, size_t len)
+        {
+            if (!this->is_open()) {
+                if (const int e = this->open_next()) {
+                    return e;
+                }
+            }
+
+            ssize_t res = this->transbuf::icrypto_filename_buf::read(data, len);
+            if (res < 0) {
+                return res;
+            }
+            if (size_t(res) != len) {
+                ssize_t res2 = res;
+                do {
+                    if (/*const ssize_t err = */this->transbuf::icrypto_filename_buf::close()) {
+                        return res;
+                    }
+                    data = static_cast<char*>(data) + res2;
+                    if (/*const int err = */this->open_next()) {
+                        return res;
+                    }
+                    len -= res2;
+                    res2 = this->transbuf::icrypto_filename_buf::read(data, len);
+                    if (res2 < 0) {
+                        return res;
+                    }
+                    res += res2;
+                } while (size_t(res2) != len);
+            }
+            return res;
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->is_open()) {
+                this->close();
+            }
+
+            return this->next_line();
+        }
+
+    private:
+        int open_next() {
+            if (const int e = this->next_line()) {
+                return e < 0 ? e : -1;
+            }
+            const int e = this->transbuf::icrypto_filename_buf::open(this->meta_line.filename);
+            return (e < 0) ? e : 0;
+        }
+
+        int next_line()
+        {
+            if (auto err = read_meta_file(this->reader, this->meta_header, this->meta_line)) {
+                return err;
+            }
+
+            if (!file_exist(this->meta_line.filename)) {
+                char original_path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path( this->meta_line.filename
+                              , original_path, sizeof(original_path)
+                              , basename, sizeof(basename)
+                              , extension, sizeof(extension)
+                              , this->verbose);
+                snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
+
+                if (file_exist(filename)) {
+                    strcpy(this->meta_line.filename, filename);
+                }
+            }
+
+            return 0;
+        }
+
+    public:
+        const char * current_path() const noexcept
+        { return this->meta_line.filename; }
+
+        time_t get_begin_chunk_time() const noexcept
+        { return this->meta_line.start_time; }
+
+        time_t get_end_chunk_time() const noexcept
+        { return this->meta_line.stop_time; }
+    };
+    
+    class in_meta_sequence_buf_flat
+    : public transbuf::ifile_buf
+    {
+        struct ReaderBuf
+        {
+            transbuf::ifile_buf_meta & buf;
+
+            explicit ReaderBuf(transbuf::ifile_buf_meta & buf)
+            : buf(buf)
+            {}
+
+            ssize_t read(char * buf, size_t len) const {
+                return this->buf.read(buf, len);
+            }
+        };
+
+        transbuf::ifile_buf_meta buf_meta;
+        ReaderLine<ReaderBuf> reader;
+        MetaHeader meta_header;
+        MetaLine meta_line;
+        char meta_path[2048];
+        uint32_t verbose;
+
+    public:
+        explicit in_meta_sequence_buf_flat(const in_meta_sequence_buf_param & params)
+        : transbuf::ifile_buf(params.cctx_buf)
+        , buf_meta(params.cctx_meta)
+        , reader([&]() {
+            if (this->buf_meta.open(params.meta_filename) < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            return ReaderBuf{this->buf_meta};
+        }())
+        , meta_header(read_meta_headers(this->reader))
+        , verbose(params.verbose)
+        {
+            this->meta_line.start_time = 0;
+            this->meta_line.stop_time = 0;
+
+            this->meta_path[0] = 0;
+
+            char basename[1024] = {};
+            char extension[256] = {};
+
+            canonical_path( params.meta_filename
+                          , this->meta_path, sizeof(this->meta_path)
+                          , basename, sizeof(basename)
+                          , extension, sizeof(extension)
+                          , this->verbose);
+        }
+
+        ssize_t read(void * data, size_t len)
+        {
+            if (!this->is_open()) {
+                if (const int e = this->open_next()) {
+                    return e;
+                }
+            }
+
+            ssize_t res = this->transbuf::ifile_buf::read(data, len);
+            if (res < 0) {
+                return res;
+            }
+            if (size_t(res) != len) {
+                ssize_t res2 = res;
+                do {
+                    if (/*const ssize_t err = */this->transbuf::ifile_buf::close()) {
+                        return res;
+                    }
+                    data = static_cast<char*>(data) + res2;
+                    if (/*const int err = */this->open_next()) {
+                        return res;
+                    }
+                    len -= res2;
+                    res2 = this->transbuf::ifile_buf::read(data, len);
+                    if (res2 < 0) {
+                        return res;
+                    }
+                    res += res2;
+                } while (size_t(res2) != len);
+            }
+            return res;
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->is_open()) {
+                this->close();
+            }
+
+            return this->next_line();
+        }
+
+    private:
+        int open_next() {
+            if (const int e = this->next_line()) {
+                return e < 0 ? e : -1;
+            }
+            const int e = this->transbuf::ifile_buf::open(this->meta_line.filename);
+            return (e < 0) ? e : 0;
+        }
+
+        int next_line()
+        {
+            if (auto err = read_meta_file(this->reader, this->meta_header, this->meta_line)) {
+                return err;
+            }
+
+            if (!file_exist(this->meta_line.filename)) {
+                char original_path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path( this->meta_line.filename
+                              , original_path, sizeof(original_path)
+                              , basename, sizeof(basename)
+                              , extension, sizeof(extension)
+                              , this->verbose);
+                snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
+
+                if (file_exist(filename)) {
+                    strcpy(this->meta_line.filename, filename);
+                }
+            }
+
+            return 0;
+        }
+
+    public:
+        const char * current_path() const noexcept
+        { return this->meta_line.filename; }
+
+        time_t get_begin_chunk_time() const noexcept
+        { return this->meta_line.start_time; }
+
+        time_t get_end_chunk_time() const noexcept
+        { return this->meta_line.stop_time; }
+    };    
+}
+
+struct InMetaSequenceTransport : InputTransport<detail::in_meta_sequence_buf_flat>
 {
     InMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
-    : InMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<>(detail::temporary_concat(filename, extension).str, verbose))
+    : InputTransport<detail::in_meta_sequence_buf_flat>(
+        detail::in_meta_sequence_buf_param(detail::temporary_concat(filename, extension).str, verbose, cctx, cctx))
     {
         this->verbose = verbose;
     }
 
     explicit InMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
-    : InMetaSequenceTransport::TransportType(detail::in_meta_sequence_buf_param<>(filename, verbose))
+    : InputTransport<detail::in_meta_sequence_buf_flat>(
+            detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
     {
         this->verbose = verbose;
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res){
+            this->status = false;
+            if (res < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+        ++this->seqno;
+        return true;
     }
 
     unsigned begin_chunk_time() const noexcept
@@ -317,21 +815,46 @@ struct InMetaSequenceTransport
     { return this->buffer().current_path(); }
 };
 
-struct CryptoInMetaSequenceTransport
-: InputNextTransport<detail::in_meta_sequence_buf<
-    transbuf::icrypto_filename_buf,
-    transbuf::icrypto_filename_buf
-> >
+struct InputNextTransport_crypto : InputTransport<detail::in_meta_sequence_buf_crypto>
 {
-    CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
-    : CryptoInMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(
-            detail::temporary_concat(filename, extension).c_str(), 0, crypto_ctx, crypto_ctx))
+    InputNextTransport_crypto() = default;
+
+    template<class T>
+    explicit InputNextTransport_crypto(const T & buf_params)
+    : InputTransport<detail::in_meta_sequence_buf_crypto>(buf_params)
     {}
 
-    CryptoInMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename)
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res){
+            this->status = false;
+            if (res < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+protected:
+    typedef InputNextTransport_crypto TransportType;
+};
+
+struct CryptoInMetaSequenceTransport : InputNextTransport_crypto
+{
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, const char * extension, uint32_t verbose = 0)
     : CryptoInMetaSequenceTransport::TransportType(
-        detail::in_meta_sequence_buf_param<CryptoContext*,CryptoContext*>(filename, 0, crypto_ctx, crypto_ctx))
+        detail::in_meta_sequence_buf_param(
+            detail::temporary_concat(filename, extension).c_str(), verbose, cctx, cctx))
+    {}
+
+    CryptoInMetaSequenceTransport(CryptoContext * cctx, const char * filename, uint32_t verbose = 0)
+    : CryptoInMetaSequenceTransport::TransportType(
+        detail::in_meta_sequence_buf_param(filename, verbose, cctx, cctx))
     {}
 
     time_t begin_chunk_time() const noexcept

@@ -23,7 +23,7 @@
 
 #include <sys/time.h>
 
-struct MouseTrace 
+struct MouseTrace
 {
     timeval last_now;
     int     last_x;

@@ -24,7 +24,6 @@
 
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
-#include "CaptureDevice.hpp"
 #include "stream.hpp"
 #include "cast.hpp"
 
@@ -424,9 +423,9 @@ public:
         this->data.rewind();
     }
 
-    void session_update(const timeval& now, const array_const_u8 & message) override {
+    void session_update(const timeval& /*now*/, const array_const_char & message) override {
         this->is_driven_by_ocr          = true;
-        this->is_probe_enabled_session  = true;
+        this->is_probe_enabled_session  = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
 
         if (!this->session_data.get_offset()) return;
 
@@ -439,12 +438,11 @@ public:
         this->send_session_data();
     }
 
-    // TODO
     void external_breakpoint() override {}
-    void external_time(const timeval& now) override {}
-    void pause_capture(const timeval& now) override {}
-    void resume_capture(const timeval& now) override {}
-    void update_config(const Inifile& ini) override {}
+    void external_time(const timeval& /*now*/) override {}
+    void pause_capture(const timeval& /*now*/) override {}
+    void resume_capture(const timeval& /*now*/) override {}
+    void update_config(const Inifile& /*ini*/) override {}
 };
 
 #endif

@@ -5,7 +5,7 @@
 
 namespace x80030408{ 
 
-const static int LCID = 0x80030408;
+const static int LCID = 0x30408;
 
 const static char * const locale_name = "el-GR.220_latin";
 

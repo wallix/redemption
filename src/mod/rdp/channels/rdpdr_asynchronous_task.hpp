@@ -21,15 +21,15 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
 
+#include "transport/in_file_transport.hpp"
 #include "asynchronous_task_manager.hpp"
 #include "channel_list.hpp"
 #include "virtual_channel_data_sender.hpp"
 #include "RDP/channels/rdpdr.hpp"
-#include "transport/transport.hpp"
 #include "wait_obj.hpp"
 
 class RdpdrDriveReadTask : public AsynchronousTask {
-    Transport * transport;
+    InFileSeekableTransport * transport;
 
     const int file_descriptor;
 
@@ -48,7 +48,7 @@ class RdpdrDriveReadTask : public AsynchronousTask {
     const uint32_t verbose;
 
 public:
-    RdpdrDriveReadTask(Transport * transport,
+    RdpdrDriveReadTask(InFileSeekableTransport * transport,
                        int file_descriptor,
                        uint32_t DeviceId,
                        uint32_t CompletionId,

@@ -21,8 +21,6 @@
 #ifndef REDEMPTION_GDI_INPUT_KBD_API_HPP
 #define REDEMPTION_GDI_INPUT_KBD_API_HPP
 
-#include "utils/virtual_deleter.hpp"
-
 #include "utils/noncopyable.hpp"
 #include "utils/array_view.hpp"
 

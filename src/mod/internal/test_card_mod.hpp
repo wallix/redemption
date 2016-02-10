@@ -161,7 +161,7 @@ public:
 
         if (!unit_test) {
             //this->front.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip);
-            this->front.flush();
+            this->front.sync();
 
             Bitmap wab_logo_blue(SHARE_PATH "/" "wablogoblue.png");
 
@@ -193,7 +193,7 @@ public:
 
                     bitmap_data.log(LOG_INFO, "replay");
 
-                    this->front.draw(bitmap_data, tile.data(), tile.bmp_size(), tile);
+                    this->front.draw(bitmap_data, tile);
                 }
             }
         }

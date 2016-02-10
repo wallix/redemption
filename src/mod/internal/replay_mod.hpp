@@ -26,7 +26,6 @@
 #define REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
 
 #include "FileToGraphic.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
@@ -79,8 +78,8 @@ public:
         snprintf(prefix,  sizeof(prefix), "%s%s", path, basename);
 
         this->in_trans = new InMetaSequenceTransport(static_cast<CryptoContext*>(nullptr), prefix, extension);
-        
-        
+
+
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
         this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true, debug_capture);
@@ -107,8 +106,7 @@ public:
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
 
-        this->reader->add_consumer(&this->front, nullptr);
-        this->front.send_global_palette();
+        this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr);
     }
 
     ~ReplayMod() override {
@@ -154,7 +152,7 @@ public:
                     this->event.set(1);
                 }
                 else {
-                    this->front.flush();
+                    this->front.sync();
 
                     if (!this->wait_for_escape) {
                         this->event.signal = BACK_EVENT_STOP;

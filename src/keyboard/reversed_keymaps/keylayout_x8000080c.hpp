@@ -5,7 +5,7 @@
 
 namespace x8000080c{ 
 
-const static int LCID = 0x8000080c;
+const static int LCID = 0x80c;
 
 const static char * const locale_name = "fr-BE.fr";
 

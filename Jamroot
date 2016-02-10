@@ -130,7 +130,6 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wnarrowing
     <cxxflags>-Wvolatile-register-var
     <cxxflags>-Wdisabled-optimization
-    <cxxflags>-Woverlength-strings
     <cxxflags>-Warray-bounds
 ;
 
@@ -143,7 +142,7 @@ constant CXXFLAGS-CLANG :
     <cxxflags>-Wno-char-subscripts
     <cxxflags>-Wno-unused-variable
 #     <cxxflags>-Wno-unused-private-field
-    <cxxflags>-Woverlength-strings
+    <cxxflags>-Wno-overlength-strings
 ;
 
 
@@ -645,6 +644,7 @@ explicit test_trace.py.unittest ;
 ## Test facility functions or classes
 ## @{
 unit-test test_iter : tests/utils/test_iter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_array_view : tests/utils/test_array_view.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_noncopyable : tests/utils/test_noncopyable.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_splitter : tests/utils/test_splitter.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_algostring : tests/utils/test_algostring.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -984,12 +984,12 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
-#explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
+#explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ;
 
 using qt : /usr ;
 
-obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ;
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/qt4 ; #
 obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/qt4 ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 

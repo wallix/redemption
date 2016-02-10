@@ -25,10 +25,19 @@
 #include "channel_list.hpp"
 #include "client_info.hpp"
 #include "RDP/RDPDrawable.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "gdi/graphic_cmd_color_converter.hpp"
 
 //#include <openssl/ssl.h>
 
-class FakeFront : public FrontAPI {
+class FakeFront;
+namespace {
+    using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverter>;
+}
+
+class FakeFront : public FakeFrontBase
+{
 public:
     uint32_t                    verbose;
     ClientInfo                & info;
@@ -44,260 +53,21 @@ public:
 
     RDPDrawable gd;
 
-    virtual void flush() override {
-        if (this->verbose > 10) {
-             LOG(LOG_INFO, "--------- FRONT ------------------------");
-             LOG(LOG_INFO, "flush()");
-             LOG(LOG_INFO, "========================================\n");
+private:
+    struct ColorDecoder {
+        uint8_t    mod_bpp;
+        uint32_t operator()(uint32_t c) const {
+            return color_decode_opaquerect(c, this->mod_bpp, BGRPalette::classic_332());
         }
+    };
+
+    friend gdi::GraphicCoreAccess;
+
+    ColorDecoder color_converter_impl() const {
+        return {this->mod_bpp};
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPOpaqueRect new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPPatBlt new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip, bitmap);
-    }
-
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip, bitmap);
-    }
-
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPLineTo new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.pen.color  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPGlyphIndex new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        assert(gly_cache);
-        this->gd.draw(new_cmd24, clip, *gly_cache);
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPPolygonSC new_cmd24 = cmd;
-        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPPolygonCB new_cmd24 = cmd;
-        new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
-        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPPolyline new_cmd24 = cmd;
-        new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPEllipseSC new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        RDPEllipseCB new_cmd24 = cmd;
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
-    }
-
-    virtual void draw(const RDP::FrameMarker & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(order);
-    }
-
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(order);
-    }
-
-    virtual void draw(const RDP::RAIL::WindowIcon & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(order);
-    }
-
-    virtual void draw(const RDP::RAIL::CachedIcon & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(order);
-    }
-
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(order);
-    }
-
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override {
+    void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             bitmap_data.log(LOG_INFO, "FakeFront");
@@ -307,12 +77,59 @@ public:
         this->gd.draw(bitmap_data, bmp);
     }
 
-    using FrontAPI::draw;
+    template<class Cmd, class... Ts>
+    void draw_impl(Cmd const & cmd, Rect const & clip, Ts const & ... args) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
+        this->gd.draw(cmd, clip, args...);
+    }
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
-                                , size_t chunk_size, int flags) override {
+    template<class Cmd, class... Ts>
+    void draw_impl(Cmd const & cmd) {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd);
+    }
+
+public:
+    void set_palette(const BGRPalette & palette) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_palette");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    void set_pointer(const Pointer & cursor) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_pointer");
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.set_pointer(cursor);
+    }
+
+    void sync() override {
+        if (this->verbose > 10) {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+             LOG(LOG_INFO, "sync()");
+             LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
+
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
+                        , size_t chunk_size, int flags) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "send_to_channel");
@@ -320,15 +137,7 @@ public:
         }
     }
 
-    virtual void send_global_palette() override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_global_palette()");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
-
-    virtual void begin_update() override {
+    void begin_update() override {
         //if (this->verbose > 10) {
         //    LOG(LOG_INFO, "--------- FRONT ------------------------");
         //    LOG(LOG_INFO, "begin_update");
@@ -336,7 +145,7 @@ public:
         //}
     }
 
-    virtual void end_update() override {
+    void end_update() override {
         //if (this->verbose > 10) {
         //    LOG(LOG_INFO, "--------- FRONT ------------------------");
         //    LOG(LOG_INFO, "end_update");
@@ -344,25 +153,7 @@ public:
         //}
     }
 
-    virtual void set_mod_palette(const BGRPalette & palette) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "set_mod_palette");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
-
-    virtual void server_set_pointer(const Pointer & cursor) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "server_set_pointer");
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cursor);
-    }
-
-    virtual int server_resize(int width, int height, int bpp) override {
+    int server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
         if (this->verbose > 10) {
@@ -391,7 +182,7 @@ public:
     }
 
     FakeFront(ClientInfo & info, uint32_t verbose)
-    : FrontAPI(false, false)
+    : FakeFrontBase(false, false)
     , verbose(verbose)
     , info(info)
     , mod_bpp(info.bpp)
@@ -404,6 +195,7 @@ public:
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
+        this->set_depths(gdi::GraphicDepth::from_bpp(this->mod_bpp));
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto
@@ -432,4 +224,6 @@ public:
 
         //SSL_library_init();
     }
+
+    void update_pointer_position(uint16_t, uint16_t) override {}
 };

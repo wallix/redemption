@@ -312,7 +312,7 @@ enum {
                         cursor.y = stream.in_sint16_le();
                         stream.in_copy_bytes(cursor.data, 32 * (32 * 3));
                         stream.in_copy_bytes(cursor.mask, 32 * (32 / 8));
-                        this->front.server_set_pointer(cursor);
+                        this->front.set_pointer(cursor);
                     }
                     break;
                     default:
@@ -378,7 +378,7 @@ enum {
         this->front.draw(cmd, clip);
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         this->front.draw(cmd, clip, gly_cache);
     }
 
@@ -422,16 +422,15 @@ enum {
         this->front.draw(order);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override {
-        this->front.draw(bitmap_data, data, size, bmp);
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        this->front.draw(bitmap_data, bmp);
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
-        this->front.server_set_pointer(cursor);
+    void set_pointer(const Pointer & cursor) override {
+        this->front.set_pointer(cursor);
     }
 
-    using RDPGraphicDevice::draw;
+    using gdi::GraphicApi::draw;
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
     }

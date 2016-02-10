@@ -628,3 +628,55 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
 
     ct.send(out_stream.get_data(), out_stream.get_offset());
 }
+
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
+{
+    const char indata[] =
+        "\x06\xc0"         // CS_MCS_MSGCHANNEL
+        "\x08\x00"         // 8 bytes user Data
+
+        "\x00\x00\x00\x00" // TS_UD_CS_MCS_MSGCHANNEL::flags
+    ;
+
+    constexpr auto sz = sizeof(indata) - 1u;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+    InStream stream(buf);
+    cs_mcs_msgchannel.recv(stream);
+    BOOST_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
+    BOOST_CHECK_EQUAL(8, cs_mcs_msgchannel.length);
+    BOOST_CHECK_EQUAL(0, cs_mcs_msgchannel.flags);
+
+    cs_mcs_msgchannel.log("Client Received");
+}
+
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
+{
+    const char indata[] =
+        "\x0a\xc0"         // CS_MULTITRANSPORT
+        "\x08\x00"         // 8 bytes user Data
+
+        "\x05\x03\x00\x00" // TS_UD_CS_MULTITRANSPORT::flags
+    ;
+
+    constexpr auto sz = sizeof(indata) - 1u;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    GCC::UserData::CSMultiTransport cs_multitransport;
+    InStream stream(buf);
+    cs_multitransport.recv(stream);
+    BOOST_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
+    BOOST_CHECK_EQUAL(8, cs_multitransport.length);
+    BOOST_CHECK_EQUAL(GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
+                      GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECL |
+                      GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDP_PREFERRED |
+                      GCC::UserData::CSMultiTransport::SOFTSYNC_TCP_TO_UDP,
+                      cs_multitransport.flags);
+
+    cs_multitransport.log("Client Received");
+}

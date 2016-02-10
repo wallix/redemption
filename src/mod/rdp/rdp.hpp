@@ -84,10 +84,10 @@
 #include "finally.hpp"
 #include "timeout.hpp"
 
-#include "channels/cliprdr_channel.hpp"
-#include "channels/rdpdr_channel.hpp"
-#include "channels/rdpdr_file_system_drive_manager.hpp"
-#include "channels/sespro_channel.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
 
 #include "utils/splitter.hpp"
 #include "utils/algostring.hpp"
@@ -268,10 +268,9 @@ public:
             this->session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
                     this->session_probe_to_server_sender.get(),
-                    this->file_system_drive_manager,
                     this->front,
                     *this,
-                    file_system_virtual_channel.to_server_sender,
+                    file_system_virtual_channel,
                     this->get_session_probe_virtual_channel_params());
         }
 
@@ -289,7 +288,10 @@ protected:
         get_session_probe_virtual_channel_params() const = 0;
 };  // RDPChannelManagerMod
 
-class mod_rdp : public RDPChannelManagerMod {
+class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
+{
+    friend gdi::GraphicCoreAccess;
+
     CHANNELS::ChannelDefArray mod_channel_list;
 
     const AuthorizationChannels authorization_channels;
@@ -392,6 +394,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const unsigned                               session_probe_launch_fallback_timeout;
     const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
     const unsigned                               session_probe_keepalive_timeout;
+    const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
     const bool                                   session_probe_end_disconnected_session;
           std::string                            session_probe_alternate_shell;
 
@@ -633,7 +636,7 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : RDPChannelManagerMod(info.width - (info.width % 4), info.height, front)
+        : mod_rdp::base_type(info.width - (info.width % 4), info.height, front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -685,6 +688,7 @@ public:
         , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
         , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+        , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
@@ -1217,6 +1221,8 @@ protected:
             this->session_probe_launch_fallback_timeout;
         session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
             this->session_probe_keepalive_timeout;
+        session_probe_virtual_channel_params.session_probe_on_keepalive_timeout_disconnect_user =
+            this->session_probe_on_keepalive_timeout_disconnect_user;
 
         session_probe_virtual_channel_params.session_probe_on_launch_failure        =
             this->session_probe_on_launch_failure;
@@ -1743,6 +1749,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
+
     void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started
@@ -2899,7 +2906,7 @@ public:
                                         if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL"); }
                                         struct Pointer cursor;
                                         memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                                        this->front.server_set_pointer(cursor);
+                                        this->front.set_pointer(cursor);
                                     }
                                     break;
 
@@ -2907,7 +2914,7 @@ public:
                                     {
                                         if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT"); }
                                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
-                                        this->front.server_set_pointer(cursor);
+                                        this->front.set_pointer(cursor);
                                     }
                                     break;
 
@@ -2965,6 +2972,7 @@ public:
                                 this->end_session_reason.clear();
                                 this->end_session_message.clear();
 
+                                this->acl->disconnect_target();
                                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
                                 this->acl->log4(false, "SESSION_DISCONNECTED_BY_TARGET");
@@ -3851,7 +3859,7 @@ public:
         }
 
         RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
-        this->front.set_mod_palette(this->orders.global_palette);
+        this->front.set_palette(this->orders.global_palette);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_palette done");
@@ -5633,7 +5641,7 @@ public:
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
 
-        this->front.server_set_pointer(cursor);
+        this->front.set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
@@ -5668,14 +5676,14 @@ public:
         }
         struct Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
-            this->front.server_set_pointer(cursor);
+            this->front.set_pointer(cursor);
         }
         else {
             LOG(LOG_WARNING,
                 "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u",
                 pointer_idx);
             Pointer cursor(Pointer::POINTER_NORMAL);
-            this->front.server_set_pointer(cursor);
+            this->front.set_pointer(cursor);
         }
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -5706,13 +5714,13 @@ public:
             {
                 Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
             }
             break;
         default:
             {
                 Pointer cursor(Pointer::POINTER_NORMAL);
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
             }
             break;
         }
@@ -5920,7 +5928,7 @@ public:
             stream.in_skip_bytes(mlen);
         }
 
-        this->front.server_set_pointer(cursor);
+        this->front.set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
@@ -6116,7 +6124,7 @@ public:
                      );
             }
 
-            this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+            this->gd->draw(bmpdata, bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
@@ -6183,115 +6191,12 @@ public:
         this->front.end_update();
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
+protected:
+    FrontAPI & get_gd_proxy_impl() {
+        return this->front;
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip,
-                      const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip,
-                      const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-                      const GlyphCache * gly_cache) override {
-        this->front.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-
-    void draw(const RDPPolyline& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void server_set_pointer(const Pointer & cursor) override {
-        this->front.server_set_pointer(cursor);
-    }
-
-    void draw(const RDPColCache & cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp) override {
-        this->front.draw(bitmap_data, data, size, bmp);
-    }
-
-    void draw(const RDPBrushCache & cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->front.draw(order);
-    }
-
+public:
     bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }

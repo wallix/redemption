@@ -415,7 +415,7 @@ private:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    this->front.session_update(message.c_str());
+                    this->front.session_update(message);
                 }
 
                 this->file_descriptor_stream.rewind();
@@ -458,7 +458,7 @@ private:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    this->front.session_update(message.c_str());
+                    this->front.session_update(message);
                 }
             }
 
@@ -1007,7 +1007,7 @@ public:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    this->front.session_update(message.c_str());
+                    this->front.session_update(message);
                 }
 
                 this->file_descriptor_stream.rewind();
@@ -1041,7 +1041,7 @@ public:
                     message += std::to_string(fd.file_size());
                     message += ">";
 
-                    this->front.session_update(message.c_str());
+                    this->front.session_update(message);
                 }
             }
 

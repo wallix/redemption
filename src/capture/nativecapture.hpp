@@ -22,7 +22,6 @@
 #ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 
-#include "CaptureDevice.hpp"
 #include "difftimeval.hpp"
 #include "GraphicToFile.hpp"
 #include "gdi/capture_api.hpp"
@@ -31,8 +30,6 @@
 class NativeCapture
 : public gdi::CaptureApi
 {
-// TODO private
-public:
     uint64_t frame_interval;
     timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
@@ -41,15 +38,12 @@ public:
     timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
-    gdi::DumpPng24Api & dump_png24_api;
     GraphicToFile & recorder;
-    uint32_t nb_file;
     uint64_t time_to_wait;
 
-    NativeCapture( GraphicToFile & recorder, gdi::DumpPng24Api & png_dumper, const timeval & now, const Inifile & ini)
-    : dump_png24_api{png_dumper}
-    , recorder(recorder)
-    , nb_file(0)
+public:
+    NativeCapture( GraphicToFile & recorder, const timeval & now, const Inifile & ini)
+    : recorder(recorder)
     , time_to_wait(0)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
