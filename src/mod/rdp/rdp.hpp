@@ -395,6 +395,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
     const bool                                   session_probe_end_disconnected_session;
           std::string                            session_probe_alternate_shell;
+    const bool                                   session_probe_use_clipboard_based_launcher;
 
     std::string session_probe_target_informations;
 
@@ -691,6 +692,7 @@ public:
         , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
+        , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher)
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -937,31 +939,40 @@ public:
             else {
                 ::memset(exe_var_str, 0, sizeof(exe_var_str));
             }
-            replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}", exe_var_str);
+            replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}",
+                exe_var_str);
 
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
             this->session_probe_target_informations += mod_rdp_params.auth_user;
 
-            char proxy_managed_connection_cookie[9];
-            get_proxy_managed_connection_cookie(
-                this->session_probe_target_informations.c_str(),
-                this->session_probe_target_informations.length(),
-                proxy_managed_connection_cookie);
-            std::string param = " /";
-            param += proxy_managed_connection_cookie;
-            replace_tag(this->session_probe_alternate_shell, " /${COOKIE_VAR}",
-                param.c_str());
-
-            replace_tag(this->session_probe_alternate_shell, "${CBSPL_VAR} ", "");
-
             if (mod_rdp_params.session_probe_use_clipboard_based_launcher) {
+                replace_tag(this->session_probe_alternate_shell,
+                    " /${COOKIE_VAR}", "");
+
+                replace_tag(this->session_probe_alternate_shell,
+                    "${CBSPL_VAR} ", "CD %TMP%&");
+
                 this->session_probe_launcher =
                     std::make_unique<SessionProbeClipboardBasedLauncher>(
-                        *this, this->verbose);
+                        *this, this->session_probe_alternate_shell,
+                        this->verbose);
             }
             else {
+                char proxy_managed_connection_cookie[9];
+                get_proxy_managed_connection_cookie(
+                    this->session_probe_target_informations.c_str(),
+                    this->session_probe_target_informations.length(),
+                    proxy_managed_connection_cookie);
+                std::string param = " /";
+                param += proxy_managed_connection_cookie;
+                replace_tag(this->session_probe_alternate_shell,
+                    " /${COOKIE_VAR}", param.c_str());
+
+                replace_tag(this->session_probe_alternate_shell,
+                    "${CBSPL_VAR} ", "");
+
                 strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
                 this->program[sizeof(this->program) - 1] = 0;
                 //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
@@ -2029,8 +2040,9 @@ public:
                                     from client to server passing through the "proxy" */
                                     GCC::UserData::CSNet cs_net;
                                     cs_net.channelCount = num_channels;
-                                    bool has_rdpdr_channel  = false;
-                                    bool has_rdpsnd_channel = false;
+                                    bool has_cliprdr_channel = false;
+                                    bool has_rdpdr_channel   = false;
+                                    bool has_rdpsnd_channel  = false;
                                     for (size_t index = 0; index < num_channels; index++) {
                                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                         if (this->authorization_channels.is_authorized(channel_item.name) ||
@@ -2038,7 +2050,10 @@ public:
                                               !strcmp(channel_item.name, channel_names::rdpsnd)) &&
                                             this->file_system_drive_manager.HasManagedDrive())
                                         ) {
-                                            if (!strcmp(channel_item.name, channel_names::rdpdr)) {
+                                            if (!strcmp(channel_item.name, channel_names::cliprdr)) {
+                                                has_cliprdr_channel = true;
+                                            }
+                                            else if (!strcmp(channel_item.name, channel_names::rdpdr)) {
                                                 has_rdpdr_channel = true;
                                             }
                                             else if (!strcmp(channel_item.name, channel_names::rdpsnd)) {
@@ -2065,7 +2080,7 @@ public:
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpdr);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                                         CHANNELS::ChannelDef def;
                                         ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
@@ -2077,15 +2092,34 @@ public:
                                         cs_net.channelCount++;
                                     }
 
+                                    // Inject a new channel for clipboard channel (cliprdr)
+                                    if (!has_cliprdr_channel && this->session_probe_use_clipboard_based_launcher) {
+                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                                "%s", channel_names::cliprdr);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
+                                        CHANNELS::ChannelDef def;
+                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::cliprdr);
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                        if (this->verbose & 16){
+                                            def.log(cs_net.channelCount);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
+                                    }
+
                                     // The RDPDR channel advertised by the client is ONLY accepted by the RDP
                                     //  server 2012 if the RDPSND channel is also advertised.
-                                    if (this->file_system_drive_manager.HasManagedDrive() &&
-                                        !has_rdpsnd_channel) {
+                                    if (!has_rdpsnd_channel &&
+                                        this->file_system_drive_manager.HasManagedDrive()) {
                                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpsnd);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                                         CHANNELS::ChannelDef def;
                                         ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);

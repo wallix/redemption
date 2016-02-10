@@ -65,6 +65,8 @@ private:
     SessionProbeLauncher* format_list_response_notifier = nullptr;
     SessionProbeLauncher* format_data_request_notifier  = nullptr;
 
+    const bool proxy_managed;   // Has not client.
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -95,7 +97,8 @@ public:
           std::make_unique<uint8_t[]>(RDPECLIP::FileDescriptor::size()))
     , file_descriptor_stream(
           file_descriptor_data.get(), RDPECLIP::FileDescriptor::size())
-    , front(front) {}
+    , front(front)
+    , proxy_managed(to_client_sender_ == nullptr) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -822,6 +825,10 @@ public:
             }
         }
 
+        if (this->proxy_managed) {
+            return false;
+        }
+
         return true;
     }
 
@@ -1201,6 +1208,64 @@ public:
         }
 
         return true;
+    }   // process_server_format_list_pdu
+
+    bool process_server_monitor_ready_pdu(uint32_t total_length, uint32_t flags,
+        InStream& chunk)
+    {
+        if (this->proxy_managed) {
+            // Client Clipboard Capabilities PDU.
+            {
+                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
+                    RDPECLIP::GeneralCapabilitySet::size());
+                RDPECLIP::GeneralCapabilitySet general_cap_set(
+                    RDPECLIP::CB_CAPS_VERSION_1,
+                    RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+
+                StaticOutStream<1024> out_stream;
+
+                clipboard_caps_pdu.emit(out_stream);
+                general_cap_set.emit(out_stream);
+
+                const uint32_t total_length      = out_stream.get_offset();
+                const uint32_t flags             =
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+                const uint8_t* chunk_data        = out_stream.get_data();
+                const uint32_t chunk_data_length = total_length;
+
+                this->send_message_to_server(
+                    total_length,
+                    flags,
+                    chunk_data,
+                    chunk_data_length);
+            }
+
+            // Format List PDU.
+            {
+                RDPECLIP::FormatListPDU format_list_pdu;
+                StaticOutStream<1024> out_stream;
+
+                const bool unicodetext = false;
+
+                format_list_pdu.emit_ex(out_stream, unicodetext);
+
+                const uint32_t total_length      = out_stream.get_offset();
+                const uint32_t flags             =
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+                const uint8_t* chunk_data        = out_stream.get_data();
+                const uint32_t chunk_data_length = total_length;
+
+                this->send_message_to_server(
+                    total_length,
+                    flags,
+                    chunk_data,
+                    chunk_data_length);
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     void process_server_message(uint32_t total_length,
@@ -1252,6 +1317,59 @@ public:
                         total_length, flags, chunk);
             break;
 
+            case RDPECLIP::CB_FILECONTENTS_REQUEST:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "File Contents Request PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_file_contents_request_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "File Contents Response PDU");
+                }
+
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    this->update_exchanged_data(total_length);
+                }
+            break;
+
+            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "Format Data Request PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_format_data_request_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
+                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "Format Data Response PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_format_data_response_pdu(
+                        total_length, flags, chunk);
+
+                if (send_message_to_client &&
+                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    this->update_exchanged_data(total_length);
+                }
+            break;
+
             case RDPECLIP::CB_FORMAT_LIST:
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
@@ -1283,57 +1401,16 @@ public:
                 }
             break;
 
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+            case RDPECLIP::CB_MONITOR_READY:
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
-                            "Format Data Request PDU");
+                            "Monitor Ready PDU");
                 }
 
                 send_message_to_client =
-                    this->process_server_format_data_request_pdu(
+                    this->process_server_monitor_ready_pdu(
                         total_length, flags, chunk);
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "File Contents Request PDU");
-                }
-
-                send_message_to_client =
-                    this->process_server_file_contents_request_pdu(
-                        total_length, flags, chunk);
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Format Data Response PDU");
-                }
-
-                send_message_to_client =
-                    this->process_server_format_data_response_pdu(
-                        total_length, flags, chunk);
-
-                if (send_message_to_client &&
-                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-                    this->update_exchanged_data(total_length);
-                }
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "File Contents Response PDU");
-                }
-
-                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                    this->update_exchanged_data(total_length);
-                }
             break;
 
             default:

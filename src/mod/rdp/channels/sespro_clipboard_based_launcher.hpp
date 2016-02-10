@@ -57,6 +57,8 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
 private:
     mod_api& mod;
 
+    const std::string& alternate_shell;
+
     bool drive_ready = false;
     bool clipboard_initialized = false;
 
@@ -67,8 +69,10 @@ private:
     uint32_t verbose;
 
 public:
-    SessionProbeClipboardBasedLauncher(mod_api& mod, uint32_t verbose)
+    SessionProbeClipboardBasedLauncher(mod_api& mod,
+        const std::string& alternate_shell, uint32_t verbose)
     : mod(mod)
+    , alternate_shell(alternate_shell)
     , verbose(verbose) {}
 
     wait_obj* get_event() override {
@@ -421,22 +425,10 @@ private:
         const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(
             response_ok);
 
-        const char * shell =
-                "CMD /C "
-                "CD %TMP%&"
-                "ECHO @SET X=SesProbe.exe>S&"
-                "ECHO @SET P=\\\\TSCLIENT\\SESPRO\\BIN>>S&"
-                "ECHO :B>>S&"
-                "ECHO @PING 1 -n 1 -w 1000>>S&"
-                "ECHO @IF NOT EXIST %P% GOTO B>>S&"
-                "ECHO @COPY %P% %X%>>S&"
-                "ECHO @START %X%>>S&"
-                "MOVE /Y S S.BAT&"
-                "S"
-            ;
-        size_t shell_length = ::strlen(shell) + 1;
-        format_data_response_pdu.emit_ex(out_s, shell_length);
-        out_s.out_copy_bytes(shell, shell_length);
+        size_t alternate_shell_length = this->alternate_shell.length() + 1;
+        format_data_response_pdu.emit_ex(out_s, alternate_shell_length);
+        out_s.out_copy_bytes(this->alternate_shell.c_str(),
+            alternate_shell_length);
 
         const size_t totalLength = out_s.get_offset();
 
