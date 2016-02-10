@@ -22,7 +22,10 @@
 #ifndef CAPTURE_NEW_KBDCAPTURE_HPP
 #define CAPTURE_NEW_KBDCAPTURE_HPP
 
+#include "capture/CaptureDevice.hpp"
+#include "transport/transport.hpp"
 #include "utils/match_finder.hpp"
+#include "utils/difftimeval.hpp"
 #include "stream.hpp"
 #include "cast.hpp"
 
@@ -295,7 +298,7 @@ public:
 
     virtual void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
                           bool const & requested_to_stop) override {
-        if ((difftimeval(now, this->last_snapshot) < 1000000) &&
+        if ((difftimeval(now, this->last_snapshot) < this->time_to_wait) &&
             (this->unlogged_data.get_offset() < 8 * sizeof(uint32_t))) {
             return;
         }
@@ -349,8 +352,15 @@ public:
             }
 
             if (this->data.has_room(unlogged_data_length)) {
-                this->data.out_copy_bytes(unlogged_data_p,
-                    unlogged_data_length);
+                if (this->keyboard_input_mask_enabled) {
+                    ::memset(this->data.get_current(), '*',
+                        unlogged_data_length);
+                    this->data.out_skip_bytes(unlogged_data_length);
+                }
+                else {
+                    this->data.out_copy_bytes(unlogged_data_p,
+                        unlogged_data_length);
+                }
             }
 
             size_t stream_tail_room = this->session_data.tailroom();
