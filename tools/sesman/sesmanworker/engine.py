@@ -602,11 +602,12 @@ class Engine(object):
                                                        host))
 
     def get_selected_target(self, target_login, target_device, target_service,
-                            target_group):
+                            target_group, target_context=None):
         # Logger().info(">>==GET_SELECTED_TARGET %s@%s:%s:%s" % (target_device, target_login, target_service, target_group))
         right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
-                              check_timeframes=False)
+                              check_timeframes=False,
+                              target_context=target_context)
         try:
             results = self.targetsdom.get((target_login, target_device), [])
             if not results:

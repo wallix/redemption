@@ -49,7 +49,6 @@ from engine import TargetContext
 from engine import parse_auth
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
-GENERICLOGIN = u'UNLIKELYVALUEWORKSASGENERICLOGIN'
 def mundane(value):
     if value == MAGICASK:
         return u'Unknown'
@@ -112,7 +111,7 @@ class Sesman():
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
         self.target_group = None
-        self.target_context = None
+        self.target_context = TargetContext()
 
         self.shared[u'module']                  = u'login'
         self.shared[u'selector_group_filter']   = u''
@@ -155,7 +154,7 @@ class Sesman():
         self.target_group = None
         self.internal_target = False
         self.passthrough_target_login = None
-        self.target_context = None
+        self.target_context = TargetContext()
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
@@ -392,8 +391,7 @@ class Sesman():
             if (not extkv[u'target_password'] and
                 allow_interactive_password):
                 interactive_data[u'target_password'] = MAGICASK
-            if (extkv.get(u'target_login') == GENERICLOGIN or
-                not extkv.get(u'target_login')):
+            if not extkv.get(u'target_login'):
                 interactive_data[u'target_login'] = MAGICASK
                 if allow_interactive_password:
                     interactive_data[u'target_password'] = MAGICASK
@@ -411,7 +409,7 @@ class Sesman():
                 if not target_subnet:
                     interactive_data[u'target_host'] = extkv.get(u'target_host')
                     interactive_data[u'target_device'] = kv.get(u'target_device') \
-                        if self.target_context else self.shared.get(u'target_device')
+                        if self.target_context.host else self.shared.get(u'target_device')
                 if not interactive_data.get(u'target_password'):
                     interactive_data[u'target_password'] = ''
                 if not interactive_data.get(u'target_login'):
@@ -874,7 +872,8 @@ class Sesman():
         selected_target = self.engine.get_selected_target(target_login,
                                                           target_device,
                                                           target_service,
-                                                          target_group)
+                                                          target_group,
+                                                          self.target_context)
         if not selected_target:
             _target = u"%s@%s:%s (%s)" % (
                 target_login, target_device, target_service, target_group)
@@ -1239,13 +1238,14 @@ class Sesman():
                         kv[u'shell_working_directory'] = app_params.workingdir
 
                         kv[u'target_application'] = "%s@%s" % \
-                            (target_login_info.account_login,
+                            (target_login_info.account_name,
                              target_login_info.target_name)
                         if app_params.params is not None:
-                            if app_params.params.find(u'${USER}') != -1:
+                            if u'${USER}' in app_params.params:
                                 kv[u'target_application_account'] = \
-                                    target_login_info.account_login
-                            if app_params.params.find(u'${PASSWORD}') != -1:
+                                    target_login_info.account_login or \
+                                    self.target_context.login or ""
+                            if u'${PASSWORD}' in app_params.params:
                                 kv[u'target_application_password'] = \
                                     self.engine.get_target_password(selected_target)
 
@@ -1253,16 +1253,19 @@ class Sesman():
                         kv[u'disable_tsk_switch_shortcuts'] = u'yes'
                     self.cn = target_login_info.target_name
 
-                    if not self.passthrough_mode:
-                        kv[u'target_login'] = physical_info.account_login
-
-                    if self.target_context:
+                    if self.target_context.host:
                         kv[u'target_host'] = self.target_context.host
                         kv[u'target_device'] = self.target_context.showname()
-                        if not kv.get(u'target_login') and self.target_context.login:
-                            kv[u'target_login'] = self.target_context.login
                     else:
                         kv[u'target_host'] = physical_info.device_host
+
+                    kv[u'target_login'] = physical_info.account_login
+                    if (not kv.get(u'target_login') and
+                        self.target_context.login and
+                        not application):
+                        # on application,
+                        # login in target_context is the login of application
+                        kv[u'target_login'] = self.target_context.login
 
                     kv[u'target_port'] = physical_info.service_port
                     kv[u'device_id'] = physical_info.device_id
@@ -1301,7 +1304,7 @@ class Sesman():
                             kv, allow_interactive_password)
                         kv.update(extra_kv)
 
-                        if self.target_context:
+                        if self.target_context.host:
                             self._physical_target_host = self.target_context.host
                         elif ('/' in physical_info.device_host and
                               extra_kv.get(u'target_host') != MAGICASK):

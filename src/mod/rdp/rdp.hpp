@@ -949,8 +949,12 @@ public:
                 this->session_probe_target_informations.c_str(),
                 this->session_probe_target_informations.length(),
                 proxy_managed_connection_cookie);
-            replace_tag(this->session_probe_alternate_shell, "${COOKIE_VAR}",
-                proxy_managed_connection_cookie);
+            std::string param = " /";
+            param += proxy_managed_connection_cookie;
+            replace_tag(this->session_probe_alternate_shell, " /${COOKIE_VAR}",
+                param.c_str());
+
+            replace_tag(this->session_probe_alternate_shell, "${CBSPL_VAR} ", "");
 
             if (mod_rdp_params.session_probe_use_clipboard_based_launcher) {
                 this->session_probe_launcher =
