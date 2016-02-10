@@ -234,7 +234,9 @@ namespace re {
 
             bool finish()
             {
-                this->res = this->re.sm.part_of_text_finish(&this->re.pos);
+                if (this->res == match_undetermined) {
+                  this->res = this->re.sm.part_of_text_finish(&this->re.pos);
+                }
                 return this->res;
             }
         };
