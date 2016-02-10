@@ -66,7 +66,7 @@
  *                                                                              // code and an ASCII8 code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
  *                                                                              // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
  * 
- *      qsckm.clearCustomKeyCod()                                               // Call clearCustomKeyCod() to empty custom entries.
+ *      qsckm.clearCustomKeyCod();                                              // Call clearCustomKeyCod() to empty custom entries.
  * 
  * 
  *  

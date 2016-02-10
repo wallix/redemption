@@ -49,8 +49,9 @@
 #include <QtGui/QTableWidget>
 #include <QtCore/QList>
 #include <QtCore/QStringList>
+//QTableWidgetItem
 
-
+#define KEY_SETTING_PATH "keySetting.config"
 
 
 class DialogOptions_Qt : public QDialog
@@ -69,6 +70,7 @@ public:
     QPushButton          _buttonSave;
     QPushButton          _buttonCancel;
     QPushButton        * _buttonDeleteKey;
+    QPushButton        * _buttonAddKey;
     QTabWidget         * _tabs;
     QComboBox            _bppComboBox;
     QComboBox            _ResolutionComboBox;
@@ -81,6 +83,8 @@ public:
     QLabel               _labelPerf;
     QLabel               _labelLanguage;
     QTableWidget       * _tableKeySetting;
+    const int            _columnNumber;
+    const int            _tableKeySettingMaxHeight;
 
     
     DialogOptions_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -95,6 +99,7 @@ public:
         , _buttonSave("Save", this)
         , _buttonCancel("Cancel", this)
         , _buttonDeleteKey(nullptr)
+        , _buttonAddKey(nullptr)
         , _tabs(nullptr)
         , _bppComboBox(this)
         , _ResolutionComboBox(this)
@@ -106,6 +111,8 @@ public:
         , _labelPerf("Disable wallaper :", this)
         , _labelLanguage("Keyboard Language :", this)
         , _tableKeySetting(nullptr)
+        , _columnNumber(4)
+        , _tableKeySettingMaxHeight((20*6)+11)
     {
         this->setWindowTitle("Options");
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -176,10 +183,8 @@ public:
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
 
-        const int columnNumber(4);
-        const int tableKeySettingMaxHeight((20*6)+11);
-        int rowNumber(9);
-        this->_tableKeySetting = new QTableWidget(0, columnNumber, this);
+        
+        this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
         QList<QString> columnTitles;
         columnTitles << "Qt key ID" << "Scan Code" << "ASCII8" << "Extended";
         this->_tableKeySetting->setHorizontalHeaderLabels({columnTitles});
@@ -188,31 +193,45 @@ public:
         this->_tableKeySetting->setColumnWidth(2 ,84);
         this->_tableKeySetting->setColumnWidth(3 ,74);
         
-        
-        for (int i = 0; i < rowNumber; i++) {
-            this->_tableKeySetting->insertRow(i);
-            this->_tableKeySetting->setRowHeight(i ,20);
-            QComboBox * combo = new QComboBox(this->_tableKeySetting);
-            combo->addItem("No" , 0);
-            combo->addItem("Yes", 1);
-            this->_tableKeySetting->setCellWidget(i, 3, combo);
-        }
-        
-        this->_tableKeySetting->insertRow(rowNumber);
-        this->_tableKeySetting->setRowHeight(rowNumber ,20);
-        QComboBox * combo = new QComboBox(this->_tableKeySetting);
-        combo->addItem("No" , 0);
-        combo->addItem("Yes", 1);
-        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
-        
-        int tableKeySettingHeight((20*(rowNumber+2))+11);
-        
-        if (tableKeySettingHeight > tableKeySettingMaxHeight) {
-            tableKeySettingHeight = tableKeySettingMaxHeight;
-        }
-        
-        this->_tableKeySetting->setFixedSize((80*columnNumber)+40, tableKeySettingHeight);
+        std::ifstream ifichier(KEY_SETTING_PATH, std::ios::in);
+        if(ifichier) {
+            
+            std::string ligne;
+            std::string delimiter = " ";
+            
+            while(getline(ifichier, ligne)) {
 
+                int pos(ligne.find(delimiter));
+                
+                if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
+                    
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int qtKeyID  = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int scanCode = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+;
+                    int ASCII8   = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int extended = std::stoi(ligne.substr(0, pos));
+                    
+                    this->_front->_qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+                    
+                    this->addRow();
+                    this->setRowValues(qtKeyID, scanCode, ASCII8, extended);
+                }
+            }
+        }
+        this->addRow();
+        
+        
         this->_layoutKeyboard->addRow(this->_tableKeySetting);
         
         this->_keyboardTab->setLayout(this->_layoutKeyboard);
@@ -220,18 +239,25 @@ public:
         
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
         
-        this->_buttonDeleteKey = new QPushButton("Delete Key", this->_keyboardTab);
-        QRect rectCtrlAltDel(QPoint(280, 226),QSize(90, 24));
+        this->_buttonAddKey = new QPushButton("Add row", this->_keyboardTab);
+        QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
+        this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
+        this->_buttonAddKey->setGeometry(rectAddKey);
+        this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (addRow()));
+        
+        this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
+        QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
         this->_buttonDeleteKey->setToolTip(this->_buttonDeleteKey->text());
-        this->_buttonDeleteKey->setGeometry(rectCtrlAltDel);
+        this->_buttonDeleteKey->setGeometry(rectDeleteKey);
         this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(this->_buttonDeleteKey   , SIGNAL (pressed()) , this, SLOT (savePressed()));
-        this->QObject::connect(this->_buttonDeleteKey   , SIGNAL (released()), this, SLOT (savePressed()));
+        this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
+        this->QObject::connect(this->_buttonDeleteKey , SIGNAL (released()), this, SLOT (deleteReleased()));
         
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
         
         
-        // Bottons
+        // Buttons
         this->_layout->addWidget(&(this->_emptyPanel), 11, 0, 1, 2);
  
         this->_buttonSave.setToolTip(this->_buttonSave.text());
@@ -260,6 +286,42 @@ public:
     }
     
     ~DialogOptions_Qt() {}
+    
+    
+private:
+    void setRowValues(int qtKeyID, int scanCode, int ASCII8, int extended) {
+        int row(this->_tableKeySetting->rowCount() - 1);
+        
+        QTableWidgetItem * item1 = new QTableWidgetItem;
+        item1->setText(std::to_string(qtKeyID).c_str());
+        this->_tableKeySetting->setItem(row, 0, item1);
+        
+        QTableWidgetItem * item2 = new QTableWidgetItem;
+        item2->setText(std::to_string(scanCode).c_str());
+        this->_tableKeySetting->setItem(row, 1, item2);
+        
+        QTableWidgetItem * item3 = new QTableWidgetItem;
+        item3->setText(std::to_string(ASCII8).c_str());
+        this->_tableKeySetting->setItem(row, 2, item3);
+        
+        static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended);
+        
+    }
+    
+    void updateKeySetting() {
+        int tableKeySettingHeight((20*(this->_tableKeySetting->rowCount()+1))+11);
+        if (tableKeySettingHeight > this->_tableKeySettingMaxHeight) {
+            tableKeySettingHeight = this->_tableKeySettingMaxHeight;
+        }
+        this->_tableKeySetting->setFixedSize((80*this->_columnNumber)+40, tableKeySettingHeight);
+        if (this->_tableKeySetting->rowCount() > 5) {
+            this->_tableKeySetting->setColumnWidth(3 ,74);
+        } else {
+            this->_tableKeySetting->setColumnWidth(3 ,87);
+        }
+        
+        this->update();
+    }
 
     
 public Q_SLOTS:
@@ -282,7 +344,46 @@ public Q_SLOTS:
             this->_front->_info.rdp5_performanceflags = 0;
         }
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->_front->writeClientInfo();
         
+        remove(KEY_SETTING_PATH);
+        this->_front->_qtRDPKeymap.clearCustomKeyCod();
+        
+        std::ofstream ofichier(KEY_SETTING_PATH, std::ios::out | std::ios::trunc);
+        if(ofichier) {
+            
+            ofichier << "Key Setting" << std::endl << std::endl;
+
+            for (int i = 0; i < this->_tableKeySetting->rowCount(); i++) {
+
+                int qtKeyID(0);
+                if (this->_tableKeySetting->item(i, 0)) {
+                    qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
+                }
+
+                if (qtKeyID != 0) {
+                    int scanCode(0);
+                    if (this->_tableKeySetting->item(i, 0)) {
+                        scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
+                    }
+                    int ASCII8(0);
+                    if (this->_tableKeySetting->item(i, 0)) {
+                        ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
+                    }
+                    int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
+                    
+                    this->_front->_qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+                    
+                    ofichier << "- ";
+                    ofichier << qtKeyID  << " ";
+                    ofichier << scanCode << " ";
+                    ofichier << ASCII8   << " ";
+                    ofichier << extended << std::endl;
+                }
+            }
+            ofichier.close();
+        }
+
         this->close();
     }
     
@@ -291,6 +392,34 @@ public Q_SLOTS:
     void cancelReleased() {
         this->close();
     }
+   
+    void addRow() {
+        int rowNumber(this->_tableKeySetting->rowCount());
+        this->_tableKeySetting->insertRow(rowNumber);
+        this->_tableKeySetting->setRowHeight(rowNumber ,20);
+        QComboBox * combo = new QComboBox(this->_tableKeySetting);
+        combo->addItem("No" , 0);
+        combo->addItem("Yes", 1);
+        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo); 
+    
+        this->updateKeySetting();
+    }
+    
+    void deletePressed() {
+       QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
+       for (int i = 0; i < indexes.count(); ++i) {
+           QModelIndex index = indexes.at(i);
+           this->_tableKeySetting->removeRow(index.row());
+       }
+       
+       if (this->_tableKeySetting->rowCount() == 0) {
+           this->addRow();
+       }
+       
+       this->updateKeySetting();     
+    }
+    
+    void deleteReleased() {}
     
 };
 

@@ -86,9 +86,7 @@ int main () {
         if (i != 0) {
          std::cout << " ,";   
         }
-        
-        
-        
+
         std::cout << "&keylayout_x800";
         
         if (vecKeylayouts[i]->LCID < 0x00010000) {
