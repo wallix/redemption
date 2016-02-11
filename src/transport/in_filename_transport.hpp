@@ -123,7 +123,6 @@ public:
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
 
-
             this->pos = 0;
             this->raw_size = 0;
             this->state = 0;
@@ -144,6 +143,17 @@ public:
                 sha256.final(tmp, SHA256_DIGEST_LENGTH);
             }
             memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+
+            {
+            auto p = trace_key;
+            printf("p=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+                p[0], p[1], p[2], p[3], p[4],
+                p[5], p[6], p[7], p[8], p[9],
+                p[10], p[11], p[12], p[13], p[14],
+                p[15], p[16], p[17], p[18]
+
+            );
+            }
 
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
             const uint8_t salt[]  = { 0x39, 0x30, 0, 0, 0x31, 0xd4, 0, 0 };
@@ -174,6 +184,17 @@ public:
             if (i != 32) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+
+            {
+            auto p = key;
+            printf("key=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+                p[0], p[1], p[2], p[3], p[4],
+                p[5], p[6], p[7], p[8], p[9],
+                p[10], p[11], p[12], p[13], p[14],
+                p[15], p[16], p[17], p[18]
+
+            );
             }
 
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -219,6 +240,7 @@ private:
                 if (!this->raw_size) {
                     this->raw.read_min(this->fd, 4, 4);
                     uint32_t ciphered_buf_size = this->raw.get_uint32_le(0);
+                    printf("ciphered_buf_size=%d", ciphered_buf_size);
                     this->raw.end = 0;
 
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
@@ -241,6 +263,16 @@ private:
                         TODO("this is blocking read, add support for timeout reading");
                         TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                         this->raw.read_min(this->fd, ciphered_buf_size, ciphered_buf_size);
+                        {
+                        auto p = reinterpret_cast<uint8_t*>(&this->raw.b[0]);
+                        printf("raw_size=%d %d raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n", this->raw.end, ciphered_buf_size,
+                            p[0], p[1], p[2], p[3], p[4],
+                            p[5], p[6], p[7], p[8], p[9],
+                            p[10], p[11], p[12], p[13], p[14],
+                            p[15], p[16], p[17], p[18]
+
+                        );
+                        }
 
                         int safe_size = compressed_buf_size;
                         int ciph_remaining_size = 0;

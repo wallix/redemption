@@ -1075,7 +1075,7 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
             #pragma GCC diagnostic pop
         }
     }
-    printf("[CRYPTO_ERROR][%d]: Exception raised %d\n", ::getpid(), (unsigned)(pbuffer-buf.get()));
+    printf("[%d]: return %d bytes\n", ::getpid(), (unsigned)(pbuffer-buf.get()));
     return PyString_FromStringAndSize(buf.get(), pbuffer-buf.get());
 }
 
@@ -1089,10 +1089,10 @@ static PyMethodDef redcryptoFileMethods[] = {
 };
 
 PyMODINIT_FUNC 
-initredcryptofile(void)
+initredcryptofile_bad(void)
 {
-    PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
-                           "redcryptofile module");
+    PyObject* module = Py_InitModule3("redcryptofile_bad", redcryptoFileMethods,
+                           "redcryptofile_bad module");
 
     OpenSSL_add_all_digests();
 

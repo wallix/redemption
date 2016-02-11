@@ -145,7 +145,6 @@ namespace transfil {
         int open(fdbuf & src, unsigned char * trace_key)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
-            ::memset(&this->ectx, 0, sizeof(this->ectx));
 
             this->pos = 0;
             this->raw_size = 0;
@@ -186,6 +185,18 @@ namespace transfil {
                 return -1;
             }
 
+            {
+            auto p = key;
+            printf("key=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+                p[0], p[1], p[2], p[3], p[4],
+                p[5], p[6], p[7], p[8], p[9],
+                p[10], p[11], p[12], p[13], p[14],
+                p[15], p[16], p[17], p[18]
+
+            );
+            }
+
+            ::memset(&this->ectx, 0, sizeof(this->ectx));
             ::EVP_CIPHER_CTX_init(&this->ectx);
             if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
@@ -221,6 +232,7 @@ namespace transfil {
                     }
 
                     uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+                    printf("ciphered_buf_size=%d\n", (int)ciphered_buf_size);
 
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
                         this->state |= CF_EOF;
@@ -242,6 +254,19 @@ namespace transfil {
                             if (src.read(ciphered_buf, ciphered_buf_size) < ciphered_buf_size) {
                                 return -1;
                             }
+
+                        {
+                        auto p = reinterpret_cast<uint8_t*>(ciphered_buf);
+                        printf("raw_size=%d raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x"
+                               " %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x"
+                               " %.2x %.2x\n", ciphered_buf_size,
+                            p[0], p[1], p[2], p[3], p[4],
+                            p[5], p[6], p[7], p[8], p[9],
+                            p[10], p[11], p[12], p[13], p[14],
+                            p[15], p[16], p[17], p[18]
+
+                        );
+                        }
 
                             int safe_size = compressed_buf_size;
                             int remaining_size = 0;
@@ -1011,21 +1036,36 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         Py_RETURN_NONE;
 #pragma GCC diagnostic pop
     }
-    unsigned char derivator[DERIVATOR_LENGTH];
+
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-    size_t len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(path, len));
-    SslSha256 sha256;
-    sha256.update(base, len);
     uint8_t tmp[SHA256_DIGEST_LENGTH];
-    sha256.final(tmp, SHA256_DIGEST_LENGTH);
-    memcpy(derivator, tmp, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation + DERIVATOR_LENGTH, get_cctx()->get_crypto_key(), CRYPTO_KEY_LENGTH);
-    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+
+    size_t base_len = 0;
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(path, base_len));
+
+    {
+        SslSha256 sha256;
+        sha256.update(base, base_len);
+        sha256.final(tmp, SHA256_DIGEST_LENGTH);
+    }
+    {
+        SslSha256 sha256;
+        sha256.update(tmp, DERIVATOR_LENGTH);
+        sha256.update(get_cctx()->get_crypto_key(), CRYPTO_KEY_LENGTH);
+        sha256.final(tmp, SHA256_DIGEST_LENGTH);
+    }
+    memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+
+    {
+    auto p = trace_key;
+    printf("p=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+        p[0], p[1], p[2], p[3], p[4],
+        p[5], p[6], p[7], p[8], p[9],
+        p[10], p[11], p[12], p[13], p[14],
+        p[15], p[16], p[17], p[18]
+
+    );
+    }
 
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
@@ -1218,11 +1258,22 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
     int fd;
     int buf_len;
 
-    if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len))
+    printf("python_redcryptofile_read\n");
+
+    if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len)){
+        printf("python_redcryptofile_read A\n");
         return nullptr;
+    }
+
+    printf("python_redcryptofile_read B\n");
+
     if (buf_len > 2147483647 || buf_len <= 0){
+        printf("python_redcryptofile_read C\n");
+        printf("Buf Len = %d\n", unsigned(buf_len));
         return Py_BuildValue("i", -1);
     }
+
+    printf("python_redcryptofile_read D\n");
 
     if (fd >= gl_nb_files){
 #pragma GCC diagnostic push 
@@ -1230,6 +1281,8 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
         Py_RETURN_NONE;
 #pragma GCC diagnostic pop
     }
+
+    printf("python_redcryptofile_read F\n");
 
     std::unique_ptr<char[]> buf(new char[buf_len]);
 
@@ -1263,20 +1316,6 @@ initredcryptofile(void)
     PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
                            "redcryptofile module");
 
-
-    const unsigned char HASH_DERIVATOR[] = { 0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b };
-
-    uint8_t trace_key[32] = {};
-    CryptoContext * cctx = get_cctx();
-    
-    unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-    unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-    memcpy(tmp_derivation, HASH_DERIVATOR, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-    SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-    memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
-    
-    get_ini()->set<cfg::crypto::key1>(trace_key);
     OpenSSL_add_all_digests();
 
     size_t idx = 0;

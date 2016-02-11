@@ -340,7 +340,13 @@ actions gen_redcryptofile {
     cp "$(<)" tools/redcryptofile/redcryptofile.so
 }
 
-explicit pycryptofile redcryptofile.so ;
+actions gen_redcryptofile_bad {
+    echo "$(>)" "$(<)" ;
+    cp "$(>)" "$(<)"
+    cp "$(<)" tools/redcryptofile/redcryptofile_bad.so
+}
+
+explicit pycryptofile redcryptofile.so redcryptofile_bad.so ;
 
 lib pycryptofile :
         tools/redcryptofile/pycrypto.cpp
@@ -355,12 +361,31 @@ lib pycryptofile :
         <link>shared
     ;
 
+lib pycryptofile_bad :
+        tools/redcryptofile/pycrypto.bad.cpp
+        snappy
+        python2
+        crypto
+    :
+        <define>REDPYTHON_BINDING
+        <include>$(PYTHON_INCLUDE)
+        <cxxflags>-fPIC
+        <cflags>-fPIC
+        <link>shared
+    ;
 
 make redcryptofile.so
     :
         pycryptofile
     :
         @gen_redcryptofile
+    ;
+
+make redcryptofile_bad.so
+    :
+        pycryptofile_bad
+    :
+        @gen_redcryptofile_bad
     ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
@@ -648,7 +673,16 @@ make test_trace.py.unittest
     :
     ;
 
-explicit test_trace.py.unittest ;
+make test_trace_bad.py.unittest
+    :
+        tools/redcryptofile/test_trace_bad.py
+        redcryptofile_bad.so
+    :
+        run-python-test
+    :
+    ;
+
+explicit test_trace_bad.py.unittest ;
 
 
 ## Test facility functions or classes
