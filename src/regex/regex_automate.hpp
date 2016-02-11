@@ -1208,7 +1208,7 @@ namespace re {
                 count_consume_is_one = seq.len == 1;
                 return (*s && consumer.valid())
                 ? 0
-                : s - (seq.s + pos) + (size_t(s - seq.s) == seq.len ? 0 : 1);
+                : s - (seq.s + pos) + ((size_t(s - seq.s) == seq.len) ? 0 : 1);
             }
             return 0;
         }
@@ -1359,6 +1359,15 @@ namespace re {
                             }
                         }
                     }
+                    else if (active_part_of_text && ifirst->real_count_consume) {
+                        const StateList & stl = *ifirst->stl;
+                        unsigned pos = ifirst->real_count_consume;
+                        const Sequence & seq = stl.st->data.sequence;
+                        if (c != seq.s[pos]) {
+                            continue;
+                        }
+                        ++ifirst->real_count_consume;
+                    }
 
                     RE_SHOW(std::cout << "\t\033[35mreinsert (" << ifirst->consume << ")");
                     if (active_capture) {
@@ -1415,7 +1424,7 @@ namespace re {
                         sr.stl = first;
                         sr.consume = count_consume - 1;
                         if (active_part_of_text) {
-                            sr.real_count_consume = count_consume - 1;
+                            sr.real_count_consume = 1;
                         }
 
                         if (active_capture) {
@@ -1428,7 +1437,11 @@ namespace re {
                                 l2.pop();
                                 continue ;
                             }
-                            if (count_consume_is_one && !this->set_trace_close(idx, first->num_close, tracer)){
+                            if ((
+                                count_consume_is_one ||
+                                (first->st->type == SEQUENCE &&
+                                 first->st->data.sequence.len == count_consume)
+                            ) && !this->set_trace_close(idx, first->num_close, tracer)) {
                                 l2.pop();
                                 continue ;
                             }

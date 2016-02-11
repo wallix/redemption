@@ -705,6 +705,15 @@ BOOST_AUTO_TEST_CASE(TestRegexPartOfText)
     regex.reset("abc");
 
     {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        BOOST_CHECK_EQUAL(Regex::match_undetermined, part_rgx.state());
+        BOOST_CHECK_EQUAL(Regex::match_undetermined, part_rgx.next("a"));
+        BOOST_CHECK_EQUAL(Regex::match_undetermined, part_rgx.next("b"));
+        BOOST_CHECK_EQUAL(Regex::match_fail, part_rgx.next("h"));
+        BOOST_CHECK_EQUAL(Regex::match_fail, part_rgx.finish());
+    }
+
+    {
         Regex::PartOfText part_rgx = regex.part_of_text_search(!*"a");
         if (Regex::match_undetermined == part_rgx.state()) {
             if (Regex::match_undetermined == part_rgx.next("w")
@@ -748,15 +757,11 @@ BOOST_AUTO_TEST_CASE(TestRegexPartOfText)
 
     {
         Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
-        if (Regex::match_undetermined == part_rgx.state()) {
-            if (Regex::match_undetermined == part_rgx.next("ab")
-             && Regex::match_undetermined == part_rgx.next("c")
-             && Regex::match_undetermined == part_rgx.next("0")
-            ) {
-                part_rgx.finish();
-            }
-        }
-        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+        BOOST_CHECK_EQUAL(Regex::match_undetermined, part_rgx.state());
+        BOOST_CHECK_EQUAL(Regex::match_undetermined, part_rgx.next("ab"));
+        BOOST_CHECK_EQUAL(Regex::match_undetermined, part_rgx.next("c"));
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.next("0"));
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.finish());
     }
 
     {
