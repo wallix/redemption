@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP
 
 #include "core/wait_obj.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
 
 class SessionProbeLauncher {
 public:
@@ -35,9 +36,14 @@ public:
 
     virtual bool on_event() = 0;
 
+    virtual bool on_image_read(uint64_t offset, uint32_t length) = 0;
+
     virtual bool on_server_format_data_request() = 0;
 
     virtual bool on_server_format_list_response() = 0;
+
+    virtual void set_session_probe_virtual_channel(
+        BaseVirtualChannel* channel) = 0;
 
     virtual void stop() = 0;
 };

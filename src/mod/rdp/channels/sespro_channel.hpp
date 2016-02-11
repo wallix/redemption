@@ -22,10 +22,10 @@
 #define REDEMPTION_MOD_RDP_CHANNELS_SESPROCHANNEL_HPP
 
 #include "core/front_api.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
 #include "utils/outbound_connection_monitor_rules.hpp"
 #include "utils/stream.hpp"
-
-#include "base_channel.hpp"
+#include "utils/translation.hpp"
 
 #include <memory>
 
@@ -58,7 +58,7 @@ private:
 
     Translation::language_t param_lang;
 
-    auth_api* param_acl;
+    auth_api* param_acl = nullptr;
 
     FrontAPI& front;
 
@@ -194,7 +194,14 @@ public:
     }
 
     void give_additional_launch_time() {
-        this->has_additional_launch_time = true;
+        if (!this->session_probe_ready) {
+            this->has_additional_launch_time = true;
+
+            if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                LOG(LOG_INFO,
+                    "SessionProbeVirtualChannel::give_additional_launch_time");
+            }
+        }
     }
 
     bool is_event_signaled() {

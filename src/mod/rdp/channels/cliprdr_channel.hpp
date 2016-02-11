@@ -21,13 +21,12 @@
 #ifndef REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP
 #define REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP
 
-#include "base_channel.hpp"
-#include "front_api.hpp"
-#include "stream.hpp"
-#include "make_unique.hpp"
-#include "RDP/clipboard.hpp"
-
+#include "core/front_api.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
+#include "utils/make_unique.hpp"
+#include "utils/stream.hpp"
 
 #include <memory>
 
@@ -54,7 +53,7 @@ private:
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
 
-    auth_api*  param_acl;
+    auth_api*  param_acl = nullptr;
 
     std::unique_ptr<uint8_t[]> file_descriptor_data;
     OutStream                  file_descriptor_stream;

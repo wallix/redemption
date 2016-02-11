@@ -23,6 +23,7 @@
 
 #include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
@@ -51,6 +52,7 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
         ENTER,
         ENTER_DOWN,                     // 20
         ENTER_UP,
+        WAIT,
         STOP
     } state = State::START;
 
@@ -65,6 +67,8 @@ private:
     bool format_data_requested = false;
 
     wait_obj event;
+
+    SessionProbeVirtualChannel* channel = nullptr;
 
     uint32_t verbose;
 
@@ -95,6 +99,10 @@ public:
 
         this->clipboard_initialized = true;
 
+        if (this->channel) {
+            this->channel->give_additional_launch_time();
+        }
+
         this->do_state_start();
 
         return false;
@@ -108,6 +116,10 @@ public:
 
         if (this->state != State::START) {
             return false;
+        }
+
+        if (this->channel) {
+            this->channel->give_additional_launch_time();
         }
 
         this->drive_ready = true;
@@ -137,6 +149,8 @@ public:
                                              keymap);
 
                 this->state = State::RUN_WIN_D_D_DOWN;
+
+                this->event.set(250000);
             break;
 
             case State::RUN_WIN_D_D_DOWN:
@@ -148,6 +162,8 @@ public:
                                              keymap);
 
                 this->state = State::RUN_WIN_D_D_UP;
+
+                this->event.set(250000);
             break;
 
             case State::RUN_WIN_D_D_UP:
@@ -160,6 +176,8 @@ public:
                                              keymap);
 
                 this->state = State::RUN_WIN_D_WIN_UP;
+
+                this->event.set(250000);
             break;
 
             case State::RUN_WIN_D_WIN_UP:
@@ -173,6 +191,8 @@ public:
                                              keymap);
 
                 this->state = State::RUN_WIN_R_WIN_DOWN;
+
+                this->event.set(250000);
             break;
 
             case State::RUN_WIN_R_WIN_DOWN:
@@ -184,6 +204,8 @@ public:
                                              keymap);
 
                 this->state = State::RUN_WIN_R_R_DOWN;
+
+                this->event.set(250000);
             break;
 
             case State::RUN_WIN_R_R_DOWN:
@@ -195,6 +217,8 @@ public:
                                              keymap);
 
                 this->state = State::RUN_WIN_R_R_UP;
+
+                this->event.set(250000);
             break;
 
             case State::RUN_WIN_R_R_UP:
@@ -207,6 +231,8 @@ public:
                                              keymap);
 
                 this->state = State::RUN_WIN_R_WIN_UP;
+
+                this->event.set(250000);
             break;
 
             case State::RUN_WIN_R_WIN_UP:
@@ -226,8 +252,6 @@ public:
 
             case State::CLIPBOARD:
                 this->do_state_clipboard();
-
-                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_A_CTRL_DOWN:
@@ -239,6 +263,8 @@ public:
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_A_A_DOWN;
+
+                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_A_A_DOWN:
@@ -250,6 +276,8 @@ public:
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_A_A_UP;
+
+                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_A_A_UP:
@@ -262,6 +290,8 @@ public:
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_A_CTRL_UP;
+
+                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_A_CTRL_UP:
@@ -274,6 +304,8 @@ public:
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_DOWN;
+
+                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_V_CTRL_DOWN:
@@ -285,6 +317,8 @@ public:
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_V_V_DOWN;
+
+                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_V_V_DOWN:
@@ -296,6 +330,8 @@ public:
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_V_V_UP;
+
+                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_V_V_UP:
@@ -308,6 +344,8 @@ public:
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_UP;
+
+                this->event.set(250000);
             break;
 
             case State::CLIPBOARD_CTRL_V_CTRL_UP:
@@ -339,6 +377,8 @@ public:
                                              keymap);
 
                 this->state = State::ENTER_UP;
+
+                this->event.set(250000);
             break;
 
             case State::ENTER_UP:
@@ -352,18 +392,38 @@ public:
 
                 this->event.object_and_time = false;
 
-                this->state = State::STOP;
+                this->state = State::WAIT;
+
+                this->event.set(250000);
             break;
 
             case State::START:
             case State::RUN:
+            case State::WAIT:
             case State::STOP:
             default:
                 REDASSERT(false);
             break;
+        }   // switch (this->state)
+
+        return (this->state >= State::WAIT);
+    }   // bool on_event() override
+
+    bool on_image_read(uint64_t offset, uint32_t length) override {
+        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+            LOG(LOG_INFO,
+                "SessionProbeClipboardBasedLauncher :=> on_image_read");
         }
 
-        return (this->state != State::STOP);
+        if (this->state == State::STOP) {
+            return false;
+        }
+
+        if (this->channel) {
+            this->channel->give_additional_launch_time();
+        }
+
+        return true;
     }
 
     bool on_server_format_data_request() override {
@@ -373,6 +433,10 @@ public:
         }
 
         this->format_data_requested = true;
+
+        if (this->channel) {
+            this->channel->give_additional_launch_time();
+        }
 
         if (this->state == State::CLIPBOARD) {
             this->do_state_clipboard();
@@ -388,16 +452,21 @@ public:
         }
 
         if (this->state != State::RUN) {
-            return (this->state != State::STOP);
+            return (this->state < State::WAIT);
         }
+
+        this->state = State::RUN_WIN_D_WIN_DOWN;
 
         this->event.object_and_time = true;
 
         this->event.set(250000);
 
-        this->state = State::RUN_WIN_D_WIN_DOWN;
-
         return false;
+    }
+
+    void set_session_probe_virtual_channel(
+            BaseVirtualChannel* channel) override {
+        this->channel = static_cast<SessionProbeVirtualChannel*>(channel);
     }
 
     virtual void stop() override {
@@ -406,15 +475,17 @@ public:
                 "SessionProbeClipboardBasedLauncher :=> stop");
         }
 
-        this->event.object_and_time = false;
-
         this->state = State::STOP;
+
+        this->event.object_and_time = false;
     }
 
 private:
     void do_state_clipboard() {
         if (!this->format_data_requested) {
             this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
+
+            this->event.set(250000);
 
             return;
         }
@@ -470,7 +541,9 @@ private:
                                       | CHANNELS::CHANNEL_FLAG_LAST);
 
         this->state = State::RUN;
+
+        this->event.set(250000);
     }
-};
+};  // class SessionProbeClipboardBasedLauncher
 
 #endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCLIPBOARDBASEDLAUNCHER_HPP

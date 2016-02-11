@@ -1115,7 +1115,7 @@ public:
 
     uint32_t Length() const { return this->Length_; }
 
-    uint32_t Offset() const { return this->Offset_; }
+    uint64_t Offset() const { return this->Offset_; }
 
 private:
     size_t str(char * buffer, size_t size) const {

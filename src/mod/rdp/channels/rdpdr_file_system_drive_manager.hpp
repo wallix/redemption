@@ -21,26 +21,25 @@
 #ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
 #define REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
 
+#include "core/channel_list.hpp"
+#include "core/defines.hpp"
+#include "core/FSCC/FileInformation.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
+#include "core/SMB2/MessageSyntax.hpp"
+#include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
+#include "mod/rdp/channels/sespro_launcher.hpp"
+#include "mod/rdp/rdp_log.hpp"
+#include "transport/in_file_transport.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/make_unique.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
+#include "utils/winpr/pattern.hpp"
+
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/inotify.h>
 #include <sys/statvfs.h>
-
-#include "channel_list.hpp"
-#include "fileutils.hpp"
-#include "RDP/channels/rdpdr.hpp"
-#include "defines.hpp"
-#include "FSCC/FileInformation.hpp"
-#include "transport/in_file_transport.hpp"
-#include "make_unique.hpp"
-#include "SMB2/MessageSyntax.hpp"
-#include "virtual_channel_data_sender.hpp"
-#include "winpr/pattern.hpp"
-
-#include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
-#include "mod/rdp/channels/sespro_launcher.hpp"
-#include "mod/rdp/rdp_log.hpp"
 
 #define EPOCH_DIFF 11644473600LL
 
@@ -79,6 +78,8 @@ public:
 
     virtual bool IsDirectory() const = 0;
 
+    virtual bool IsSessionProbeImage() const { return false; }
+
     virtual void ProcessServerCreateDriveRequest(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::DeviceCreateRequest const & device_create_request,
@@ -86,6 +87,7 @@ public:
         bool & out_drive_created,
         VirtualChannelDataSender & to_server_sender,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        bool is_session_probe_image,
         uint32_t verbose) = 0;
 
     virtual void ProcessServerCloseDriveRequest(
@@ -819,6 +821,7 @@ public:
             bool & out_drive_created,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            bool is_session_probe_image,
             uint32_t verbose) override {
         REDASSERT(!this->dir);
 
@@ -1175,6 +1178,8 @@ hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
 class ManagedFile : public ManagedFileSystemObject {
     std::unique_ptr<InFileSeekableTransport> in_file_transport; // For read operations only.
 
+    bool is_session_probe_image = false;
+
 public:
     //ManagedFile() {
     //    LOG(LOG_INFO, "ManagedFile::ManagedFile(): <%p>", this);
@@ -1195,6 +1200,8 @@ public:
 
     bool IsDirectory() const override { return false; }
 
+    virtual bool IsSessionProbeImage() const { return this->is_session_probe_image; }
+
     void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
@@ -1202,10 +1209,13 @@ public:
             bool & out_drive_created,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+            bool is_session_probe_image,
             uint32_t verbose) override {
         REDASSERT(this->fd == -1);
 
         out_drive_created = false;
+
+        this->is_session_probe_image = is_session_probe_image;
 
         this->full_path = path;
         this->full_path += device_create_request.Path();
@@ -1584,6 +1594,7 @@ class FileSystemDriveManager {
     uint32_t session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
     SessionProbeLauncher* session_probe_drive_access_notifier = nullptr;
+    SessionProbeLauncher* session_probe_image_read_notifier   = nullptr;
 
 public:
     void AnnounceDrive(bool device_capability_version_02_supported,
@@ -1791,18 +1802,24 @@ private:
                  smb2::FILE_DIRECTORY_FILE);
         }
 
+        bool is_session_probe_image = false;
+
         std::unique_ptr<ManagedFileSystemObject> managed_file_system_object;
         if (is_directory) {
             managed_file_system_object = std::make_unique<ManagedDirectory>();
         }
         else {
+            is_session_probe_image =
+                ((device_io_request.DeviceId() == this->session_probe_drive_id) &&
+                 !::strcmp(device_create_request.Path(), "/BIN"));
+
             managed_file_system_object = std::make_unique<ManagedFile>();
         }
         bool drive_created = false;
         managed_file_system_object->ProcessServerCreateDriveRequest(
                 device_io_request, device_create_request, drive_access_mode,
                 path, in_stream, drive_created, to_server_sender,
-                out_asynchronous_task, verbose);
+                out_asynchronous_task, is_session_probe_image, verbose);
         if (drive_created) {
             this->managed_file_system_objects.push_back(std::make_tuple(
                     static_cast<uint32_t>(managed_file_system_object->FileDescriptor()),
@@ -1901,6 +1918,15 @@ public:
                     device_read_request.receive(in_stream);
                     if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
                         device_read_request.log(LOG_INFO);
+                    }
+                    if (this->session_probe_image_read_notifier) {
+                        if (std::get<1>(*file_iter)->IsSessionProbeImage()) {
+                            if (!this->session_probe_image_read_notifier->on_image_read(
+                                    device_read_request.Offset(),
+                                    device_read_request.Length())) {
+                                this->session_probe_image_read_notifier = nullptr;
+                            }
+                        }
                     }
 
                     std::get<1>(*file_iter)->ProcessServerDriveReadRequest(
@@ -2175,6 +2201,7 @@ public:
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->session_probe_drive_access_notifier = launcher;
+        this->session_probe_image_read_notifier   = launcher;
     }
 };  // FileSystemDriveManager
 

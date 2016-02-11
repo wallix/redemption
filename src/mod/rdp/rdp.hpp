@@ -71,27 +71,26 @@
 #include "RDP/capabilities/window.hpp"
 #include "RDP/channels/rdpdr.hpp"
 #include "RDP/remote_programs.hpp"
-#include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
-#include "FSCC/FileInformation.hpp"
 
-#include "cast.hpp"
 #include "client_info.hpp"
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
 #include "parser.hpp"
 #include "channel_names.hpp"
-#include "finally.hpp"
-#include "timeout.hpp"
 
+#include "core/FSCC/FileInformation.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
-
-#include "utils/splitter.hpp"
+#include "mod/rdp/rdp_params.hpp"
 #include "utils/algostring.hpp"
+#include "utils/cast.hpp"
+#include "utils/finally.hpp"
+#include "utils/splitter.hpp"
+#include "utils/timeout.hpp"
 
 #include <cstdlib>
 
@@ -1052,6 +1051,11 @@ public:
                 this->get_session_probe_virtual_channel();
             spvc.set_session_probe_launcher(this->session_probe_launcher.get());
             this->session_probe_virtual_channel_p = &spvc;
+
+            if (this->session_probe_launcher) {
+                this->session_probe_launcher->set_session_probe_virtual_channel(
+                    this->session_probe_virtual_channel_p);
+            }
         }
 
         if (this->acl) {
