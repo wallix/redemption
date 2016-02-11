@@ -40,7 +40,7 @@ struct InFilenameTransport : public Transport
     int encryption;
     
     struct raw_t {
-        char b[32768];
+        uint8_t b[32768];
         int start;
         int end;
 
@@ -127,7 +127,7 @@ public:
             this->raw_size = 0;
             this->state = 0;
             unsigned char * const iv = reinterpret_cast<uint8_t *>(&this->raw.b[8]);
-            this->raw.start = this->raw.end = 0;
+            this->raw.end = 0;
 
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             uint8_t tmp[SHA256_DIGEST_LENGTH];
@@ -239,6 +239,18 @@ private:
                 // Check how much we have decoded
                 if (!this->raw_size) {
                     this->raw.read_min(this->fd, 4, 4);
+                    
+                {
+                auto p = reinterpret_cast<uint8_t *>(&this->raw.b[0]);
+                printf("raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+                    p[0], p[1], p[2], p[3], p[4],
+                    p[5], p[6], p[7], p[8], p[9],
+                    p[10], p[11], p[12], p[13], p[14],
+                    p[15], p[16], p[17], p[18]
+
+                );
+                }
+                    
                     uint32_t ciphered_buf_size = this->raw.get_uint32_le(0);
                     printf("ciphered_buf_size=%d", ciphered_buf_size);
                     this->raw.end = 0;
