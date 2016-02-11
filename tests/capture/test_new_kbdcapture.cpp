@@ -34,30 +34,30 @@
 #include "capture/new_kbdcapture.hpp"
 #include "transport/test_transport.hpp"
 
-struct MyAuth : auth_api
-{
-    mutable std::string s;
-
-    void log4(bool duplicate_with_pid, const char* type, const char* extra = nullptr) const override {
-        BOOST_REQUIRE(extra);
-        s += extra;
-    }
-
-    void report(const char*, const char*) {}
-    void set_auth_channel_target(const char*) {}
-    void set_auth_error_message(const char*) {}
-};
 
 BOOST_AUTO_TEST_CASE(TestKbdCapture)
 {
-    MyAuth auth;
-    NewKbdCapture kbd_capture({0, 0}, &auth, nullptr, nullptr, false, false);
+    struct : auth_api {
+        mutable std::string s;
+
+        void log4(bool duplicate_with_pid, const char* type, const char* extra = nullptr) const override {
+            BOOST_REQUIRE(extra);
+            s += extra;
+        }
+
+        void report(const char*, const char*) override {}
+        void set_auth_channel_target(const char*) override {}
+        void set_auth_error_message(const char*) override {}
+    } auth;
+
+    timeval const time = {0, 0};
+    NewKbdCapture kbd_capture(time, &auth, nullptr, nullptr, false, false);
 
     const unsigned char input[] = {'a', 0, 0, 0};
     MemoryTransport trans;
 
     {
-        kbd_capture.input_kbd({}, input);
+        kbd_capture.input_kbd(time, input);
         kbd_capture.flush();
 
         kbd_capture.send_session_data();
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     auth.s.clear();
 
     {
-        kbd_capture.input_kbd({}, input);
+        kbd_capture.input_kbd(time, input);
         kbd_capture.flush();
 
         kbd_capture.send_session_data();
@@ -89,9 +89,9 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     auth.s.clear();
 
     {
-        kbd_capture.input_kbd({}, input);
+        kbd_capture.input_kbd(time, input);
         kbd_capture.enable_keyboard_input_mask(true);
-        kbd_capture.input_kbd({}, input);
+        kbd_capture.input_kbd(time, input);
         kbd_capture.flush();
 
         trans.out_stream.rewind();
@@ -100,4 +100,41 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         BOOST_CHECK_EQUAL('a', trans.out_stream.get_data()[0]);
         BOOST_CHECK_EQUAL('*', trans.out_stream.get_data()[1]);
     }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
+{
+    struct : auth_api {
+        mutable std::string s;
+
+        void report(const char* reason, const char* message) override {
+            s += reason;
+            s += " -- ";
+            s += message;
+            s += "\n";
+        }
+
+        void set_auth_channel_target(const char*) override {}
+        void set_auth_error_message(const char*) override {}
+        void log4(bool, const char*, const char*) const override {}
+    } auth;
+
+    timeval const time = {0, 0};
+    NewKbdCapture kbd_capture(time, &auth, nullptr, "$kbd:abcd", false, false);
+
+    unsigned char input[] = {0, 0, 0, 0};
+    char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
+    for (auto c : str) {
+        input[0] = c;
+        kbd_capture.input_kbd(time, input);
+    }
+    kbd_capture.flush();
+    BOOST_CHECK_EQUAL(
+        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
+        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
+        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
+        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
+      , auth.s
+    );
 }

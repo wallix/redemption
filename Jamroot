@@ -237,6 +237,7 @@ variant strict : :
 
 variant asan : debug :
     <cxxflags>-fsanitize=address
+    <cxxflags>-fsanitize=leak
     <cxxflags>-fno-omit-frame-pointer
     <linkflags>-lasan
     <define>CXX_ENABLE_ASAN
