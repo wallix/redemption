@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Clément Moroldo
-
 */
 
 
@@ -42,6 +41,9 @@
 #include <QtGui/QRgb>
 #include <QtGui/QRegion>
 #include <QtGui/QBitmap>
+
+#define USER_CONF_PATH "userConfig.config"
+
 
 Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     : Front_Qt_API(false, false, verbose)
@@ -73,19 +75,11 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     , _keymap() 
     , _ctrl_alt_delete(false)
 {
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-    this->_info.console_session = 0;
-    this->_info.brush_cache_code = 0;
-    this->_info.bpp = 24;
-    this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
-    this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
-    this->_info.width = 800;
-    this->_info.height = 600;
-    this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    char * localIPtmp = "unknow_local_IP"; //"10.10.43.46";
+    if(this->setClientInfo()) {
+        this->writeClientInfo();
+    } 
+    
+    char * localIPtmp = "unknow_local_IP"; 
     /*union
     {
         struct sockaddr s;
@@ -134,8 +128,8 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->mod_palette = BGRPalette::classic_332();
     }
     this->_qtRDPKeymap.setKeyboardLayout(this->_info.keylayout);
-    this->_qtRDPKeymap.setCustomKeyCode(0x152, 0, 0xB2, false); // squared
-    this->_qtRDPKeymap.setCustomKeyCode(0x39c, 0, 0xB5, false); // µ
+    //this->_qtRDPKeymap.setCustomKeyCode(0x152, 0, 0xB2, false); // squared
+    //this->_qtRDPKeymap.setCustomKeyCode(0x39c, 0, 0xB5, false); // µ
     this->_keymap.init_layout(this->_info.keylayout);
 
 
@@ -167,6 +161,78 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     }
     
     
+}
+
+bool Front_Qt::setClientInfo() {
+    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
+    if(ifichier) {
+        
+        std::string ligne;
+        std::string delimiter = " ";
+        
+        while(getline(ifichier, ligne)) {
+            
+            int pos(ligne.find(delimiter));
+            std::string tag  = ligne.substr(0, pos);
+            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+            if (strcmp(tag.c_str(), "keylayout") == 0) {
+                this->_info.keylayout = std::stoi(info);
+            } else 
+            if (strcmp(tag.c_str(), "console_session") == 0) {
+                this->_info.console_session = std::stoi(info);
+            } else 
+            if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
+                this->_info.brush_cache_code = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "bpp") == 0) {
+                this->_info.bpp = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "width") == 0) {
+                this->_info.width = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "height") == 0) {
+                this->_info.height = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
+                this->_info.rdp5_performanceflags = std::stoi(info);
+            }
+        }
+        ifichier.close();
+        
+        return false;
+        
+    } else {
+        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+        this->_info.console_session = 0;
+        this->_info.brush_cache_code = 0;
+        this->_info.bpp = 24;
+        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+        this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        this->_info.width = 800;
+        this->_info.height = 600;
+        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        
+        return true;
+    }
+}
+    
+void Front_Qt::writeClientInfo() {
+    std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
+    if(ofichier) {
+        
+        ofichier << "User Info" << std::endl << std::endl;
+        
+        ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
+        ofichier << "console_session "       << this->_info.console_session       << std::endl;
+        ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
+        ofichier << "bpp "                   << this->_info.bpp                   << std::endl;
+        ofichier << "width "                 << this->_info.width                 << std::endl;
+        ofichier << "height "                << this->_info.height                << std::endl;
+        ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
+        
+        ofichier.close();
+    }
 }
 
 
@@ -278,7 +344,7 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
     }
     
     const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-    this->_screen->paintCache().drawImage(trect, qbitmap);//.rgbSwapped());
+    this->_screen->paintCache().drawImage(trect, qbitmap);
     this->_screen->repaint(); 
 }
 
@@ -315,7 +381,7 @@ void Front_Qt::draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert) 
         }
         
         QRect trect(drect.x, rowYCoord, mincx, mincy);
-        this->_screen->paintCache().drawImage(trect, qbitmap);//.rgbSwapped());
+        this->_screen->paintCache().drawImage(trect, qbitmap);
 
         row += rowsize;
         rowYCoord--;
@@ -431,6 +497,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
         
     } else {
          switch (cmd.rop) {
+             
                 // +------+-------------------------------+
                 // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
                 // |      | RPN: 0                        |
@@ -595,12 +662,12 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
     //std::cout << "RDPScrBlt" << std::endl;
     
     const Rect drect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
-    if (drect.isempty()){ return; }
+    if (drect.isempty()) { 
+        return;
+    }
 
-    const signed int deltax = cmd.srcx - cmd.rect.x;
-    const signed int deltay = cmd.srcy - cmd.rect.y;
-    int srcx(drect.x + deltax);
-    int srcy(drect.y + deltay);
+    int srcx(drect.x + cmd.srcx - cmd.rect.x);
+    int srcy(drect.y + cmd.srcy - cmd.rect.y);
     
     switch (cmd.rop) {
             // +------+-------------------------------+
@@ -612,7 +679,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             this->_screen->repaint();
             break;
             // +------+-------------------------------+
-            // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
+            // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |        
             // |      | RPN: DSon                     |
             // +------+-------------------------------+
 
@@ -757,10 +824,10 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
     switch (cmd.rop) {
         case 0xB8: 
             {
-                uint8_t b(cmd.fore_color >> 16);
-                uint8_t g(cmd.fore_color >> 8);
-                uint8_t r(cmd.fore_color);
-                QColor fore(r, b, g);
+                //uint8_t b(cmd.fore_color >> 16);
+                //uint8_t g(cmd.fore_color >> 8);
+                //uint8_t r(cmd.fore_color);
+                QColor fore(this->u32_to_qcolor(cmd.fore_color));
 
                 const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
                 const int16_t mincy = 1;

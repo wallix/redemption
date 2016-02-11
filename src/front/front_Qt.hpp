@@ -50,6 +50,13 @@
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/orders/AlternateSecondaryWindowing.hpp"
 
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <boost/algorithm/string.hpp>
+
 #include "core/RDP/pointer.hpp"
 #include "front_api.hpp"
 #include "channel_list.hpp"
@@ -140,15 +147,14 @@ public:
     virtual void disconnect(std::string txt) = 0;
     virtual QImage::Format bpp_to_QFormat(int bpp, bool alpha) = 0;
     virtual void dropScreen() = 0;
+    virtual bool setClientInfo() = 0;
+    virtual void writeClientInfo() = 0;
     virtual void send_Cliboard(uint32_t total_length,
                        uint32_t flags, 
                        const uint8_t* chunk_data,
                        uint32_t chunk_data_length) = 0;
 };
-
-
-
-    
+ 
     
     
 class Front_Qt : public Front_Qt_API
@@ -184,8 +190,10 @@ public:
       , IP_GOTTEN     =  4
       , PORT_GOTTEN   =  8
     };
-
     
+    bool setClientInfo() override;
+    
+    void writeClientInfo() override;
   
     virtual void flush() override {
         if (this->verbose > 10) {
@@ -203,8 +211,7 @@ public:
             LOG(LOG_INFO, "send_to_channel");
             LOG(LOG_INFO, "========================================\n");
         }
-        
-        
+
         const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
         if (!mod_channel) {
             return;
@@ -287,6 +294,10 @@ public:
     
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
     
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
+
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
+    
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override;
     
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
@@ -338,10 +349,6 @@ public:
 
         std::cout << "RDPMultiScrBlt" << std::endl;
     }
-
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
-
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
         if (this->verbose > 10) {
@@ -529,7 +536,7 @@ public:
 
     //SSL_library_init();
     
-    ~Front_Qt() ;
+    ~Front_Qt();
     
     
     
@@ -566,7 +573,6 @@ public:
             this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
         }
     }
-    
     
     void keyPressEvent(QKeyEvent *e) override { 
         this->_qtRDPKeymap.keyEvent(0       ,      e);

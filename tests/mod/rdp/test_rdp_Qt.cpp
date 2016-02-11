@@ -38,8 +38,8 @@
 #include "../src/front/front_widget_Qt.hpp"
 
 
-//#define TARGET_IP "10.10.46.73"
-#define TARGET_IP "10.10.46.88"
+#define TARGET_IP "10.10.46.73"
+//#define TARGET_IP "10.10.46.88"
 
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
