@@ -279,7 +279,7 @@ project redemption
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 
-    <cxxflags>-fpie
+#    <cxxflags>-fpie
     <cxxflags>-fPIC
 
 
@@ -976,11 +976,23 @@ unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_
 #explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
-using qt5 : /usr ;
+using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : : : : : : /usr/include/x86_64-linux-gnu/qt5 : ;
 
-obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/x86_64-linux-gnu/qt5 ; 
-obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/x86_64-linux-gnu/qt5 ;
-obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp 
+    :
+        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <cxxflags>-fPIC
+    ; 
+obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/x86_64-linux-gnu/qt5  
+    :
+        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <cxxflags>-fPIC
+    ; 
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp  
+    :
+        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <cxxflags>-fPIC
+    ; 
 
 exe test_rdp_Qt :
     test_rdp_Qt.o #
@@ -1001,5 +1013,6 @@ exe test_rdp_Qt :
     libboost_unit_test
     :
     <include>/usr/include/x86_64-linux-gnu/qt5
+    <cxxflags>-fPIC
     ;
 
