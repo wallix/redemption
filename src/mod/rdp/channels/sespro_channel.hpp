@@ -72,6 +72,8 @@ private:
 
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
+    bool has_additional_launch_time = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool session_probe_loading_mask_enabled;
@@ -175,10 +177,22 @@ public:
     wait_obj* get_event()
     {
         if (this->session_probe_event.set_state) {
+            if (this->has_additional_launch_time) {
+                if (!this->session_probe_ready) {
+                    this->session_probe_event.set(
+                        this->session_probe_effective_launch_timeout * 1000);
+                }
+
+                this->has_additional_launch_time = false;
+            }
             return &this->session_probe_event;
         }
 
         return nullptr;
+    }
+
+    void give_additional_launch_time() {
+        this->has_additional_launch_time = true;
     }
 
     bool is_event_signaled() {
@@ -201,7 +215,8 @@ public:
         this->session_probe_event.waked_up_by_time = false;
 
         if (this->session_probe_effective_launch_timeout &&
-            !this->session_probe_ready) {
+            !this->session_probe_ready &&
+            !this->has_additional_launch_time) {
             LOG(((this->param_session_probe_on_launch_failure ==
                   ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?
                  LOG_ERR : LOG_WARNING),
@@ -818,7 +833,6 @@ public:
                     message);
             }
         }
-
     }   // process_server_message
 };  // class SessionProbeVirtualChannel
 
