@@ -147,16 +147,6 @@ public:
             }
             memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
 
-            {
-            auto p = trace_key;
-            printf("p=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
-                p[0], p[1], p[2], p[3], p[4],
-                p[5], p[6], p[7], p[8], p[9],
-                p[10], p[11], p[12], p[13], p[14],
-                p[15], p[16], p[17], p[18]
-            );
-            }
-
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
             const uint8_t salt[]  = { 0x39, 0x30, 0, 0, 0x31, 0xd4, 0, 0 };
             const int          nrounds = 5;
@@ -186,17 +176,6 @@ public:
             if (i != 32) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
-            }
-
-            {
-            auto p = key;
-            printf("key=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
-                p[0], p[1], p[2], p[3], p[4],
-                p[5], p[6], p[7], p[8], p[9],
-                p[10], p[11], p[12], p[13], p[14],
-                p[15], p[16], p[17], p[18]
-
-            );
             }
 
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -246,17 +225,6 @@ private:
                 if (!this->raw_size) {
                     this->raw.read_min(this->fd, 4, 4);
                     
-                    {
-                    auto p = &this->raw.b[0];
-                    printf("raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
-                        p[0], p[1], p[2], p[3], p[4],
-                        p[5], p[6], p[7], p[8], p[9],
-                        p[10], p[11], p[12], p[13], p[14],
-                        p[15], p[16], p[17], p[18]
-
-                    );
-                    }
-
                     uint32_t ciphered_buf_size = this->raw.get_uint32_le(0);
                     this->raw.end = 0;
 
@@ -266,8 +234,6 @@ private:
                         this->raw_size = 0;
                         break;
                     }
-
-                    printf("ciphered_buf_size=%d", ciphered_buf_size);
 
                     if (ciphered_buf_size > ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE) + AES_BLOCK_SIZE) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
@@ -283,16 +249,16 @@ private:
                         TODO("this is blocking read, add support for timeout reading");
                         TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                         this->raw.read_min(this->fd, ciphered_buf_size, ciphered_buf_size);
-                        {
-                        auto p = reinterpret_cast<uint8_t*>(&this->raw.b[0]);
-                        printf("raw_size=%d %d raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n", this->raw.end, ciphered_buf_size,
-                            p[0], p[1], p[2], p[3], p[4],
-                            p[5], p[6], p[7], p[8], p[9],
-                            p[10], p[11], p[12], p[13], p[14],
-                            p[15], p[16], p[17], p[18]
+//                        {
+//                        auto p = reinterpret_cast<uint8_t*>(&this->raw.b[0]);
+//                        printf("raw_size=%d %d raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n", this->raw.end, ciphered_buf_size,
+//                            p[0], p[1], p[2], p[3], p[4],
+//                            p[5], p[6], p[7], p[8], p[9],
+//                            p[10], p[11], p[12], p[13], p[14],
+//                            p[15], p[16], p[17], p[18]
 
-                        );
-                        }
+//                        );
+//                        }
 
                         int safe_size = compressed_buf_size;
                         int ciph_remaining_size = 0;
@@ -387,14 +353,19 @@ private:
             TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
             TODO("The best way would probably be to use the usual read API ?");
 
+            printf("Not encrypted read %d\n", this->raw.end);
             size_t end = 0;
             if (this->raw.end > 0 && this->raw.end > requested_size){
+                printf("case 1 Not encrypted read %d\n", this->raw.end);
                 ::memcpy(&(*pbuffer)[end], &this->raw.b[0], requested_size);
                 ::memmove(&this->raw.b[0], &this->raw.b[requested_size], requested_size-this->raw.end);
                 this->raw.end -= requested_size;
+                this->last_quantum_received += requested_size;
+                *pbuffer += requested_size;
                 return;
             }            
             if (this->raw.end > 0 && this->raw.end <= requested_size){
+                printf("case 2 Not encrypted read %d\n", this->raw.end);
                 memcpy(&(*pbuffer)[end], &this->raw.b[0], this->raw.end);
                 end = this->raw.end;
                 this->raw.end = 0;
