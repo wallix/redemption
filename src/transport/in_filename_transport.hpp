@@ -40,9 +40,9 @@ struct InFilenameTransport : public Transport
     int encryption;
     
     struct raw_t {
-        uint8_t b[32768];
-        int start;
-        int end;
+        uint8_t b[65536];
+        size_t start;
+        size_t end;
 
         raw_t() : start(0), end(0) {}
 
@@ -56,11 +56,14 @@ struct InFilenameTransport : public Transport
 
         void read_min(int fd, size_t to_read, size_t min_to_read)
         {
-            while ((size_t)(this->end - this->start) < min_to_read) {
+            while ((this->end - this->start) < min_to_read) {
                 ssize_t ret = ::read(fd, &this->b[this->end], to_read - (this->end-this->start));
                 if (ret <= 0){
                     if (ret < 0 && errno == EINTR){
                         continue;
+                    }
+                    if (ret == 0){
+                        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
                     }
                     LOG(LOG_ERR, "failed reading from file");
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
@@ -77,7 +80,7 @@ struct InFilenameTransport : public Transport
     } decrypted;
 
     struct {
-        char b[32768];
+        uint8_t b[65536];
         int start;
         int end;
     } decompressed;
@@ -126,7 +129,7 @@ public:
             this->pos = 0;
             this->raw_size = 0;
             this->state = 0;
-            unsigned char * const iv = reinterpret_cast<uint8_t *>(&this->raw.b[8]);
+            unsigned char * const iv = &this->raw.b[8];
             this->raw.end = 0;
 
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
@@ -151,7 +154,6 @@ public:
                 p[5], p[6], p[7], p[8], p[9],
                 p[10], p[11], p[12], p[13], p[14],
                 p[15], p[16], p[17], p[18]
-
             );
             }
 
@@ -228,6 +230,10 @@ public:
     }
 private:
     void do_recv(char ** pbuffer, size_t requested_size) override {
+        if (!this->status){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+
         if (this->encryption) {
             if (this->state & CF_EOF) {
                 this->status = false;
@@ -240,19 +246,18 @@ private:
                 if (!this->raw_size) {
                     this->raw.read_min(this->fd, 4, 4);
                     
-                {
-                auto p = reinterpret_cast<uint8_t *>(&this->raw.b[0]);
-                printf("raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
-                    p[0], p[1], p[2], p[3], p[4],
-                    p[5], p[6], p[7], p[8], p[9],
-                    p[10], p[11], p[12], p[13], p[14],
-                    p[15], p[16], p[17], p[18]
+                    {
+                    auto p = &this->raw.b[0];
+                    printf("raw=%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+                        p[0], p[1], p[2], p[3], p[4],
+                        p[5], p[6], p[7], p[8], p[9],
+                        p[10], p[11], p[12], p[13], p[14],
+                        p[15], p[16], p[17], p[18]
 
-                );
-                }
-                    
+                    );
+                    }
+
                     uint32_t ciphered_buf_size = this->raw.get_uint32_le(0);
-                    printf("ciphered_buf_size=%d", ciphered_buf_size);
                     this->raw.end = 0;
 
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
@@ -261,6 +266,9 @@ private:
                         this->raw_size = 0;
                         break;
                     }
+
+                    printf("ciphered_buf_size=%d", ciphered_buf_size);
+
                     if (ciphered_buf_size > ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE) + AES_BLOCK_SIZE) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
                         this->status = false;
@@ -298,7 +306,7 @@ private:
                         if (EVP_DecryptUpdate(&this->ectx,
                                               &this->decrypted.b[0],
                                               &safe_size,
-                                              reinterpret_cast<uint8_t*>(&this->raw.b[0]),
+                                              &this->raw.b[0],
                                               ciphered_buf_size) != 1){
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
                             this->status = false;
@@ -367,24 +375,48 @@ private:
             *pbuffer += requested_size - remaining_requested_size;
             this->last_quantum_received += requested_size - remaining_requested_size;
             
-            if (remaining_requested_size != 0){
+            if (remaining_requested_size > 0){
                 this->status = false;
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
             }
+            return;
+            //return requested_size - remaining_requested_size;
         } // else encryption
         else {
             TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
             TODO("this is blocking read, add support for timeout reading");
             TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-            try {
-                this->raw.read_min(this->fd, requested_size, requested_size);
-                ::memcpy(&(*pbuffer)[0], this->raw.b, requested_size);
-                *pbuffer += requested_size;
+            TODO("The best way would probably be to use the usual read API ?");
+
+            size_t end = 0;
+            if (this->raw.end > 0 && this->raw.end > requested_size){
+                ::memcpy(&(*pbuffer)[end], &this->raw.b[0], requested_size);
+                ::memmove(&this->raw.b[0], &this->raw.b[requested_size], requested_size-this->raw.end);
+                this->raw.end -= requested_size;
+                return;
+            }            
+            if (this->raw.end > 0 && this->raw.end <= requested_size){
+                memcpy(&(*pbuffer)[end], &this->raw.b[0], this->raw.end);
+                end = this->raw.end;
                 this->raw.end = 0;
-                this->last_quantum_received += requested_size;
-            } catch (...) {
+            }
+            while (end < requested_size) {
+                ssize_t ret = ::read(fd, &(*pbuffer)[end], requested_size - end);
+                if (ret <= 0){
+                    if (ret < 0 && errno == EINTR){
+                        continue;
+                    }
+                    if (ret == 0){
+                        *pbuffer += end;
+                        break;
+                    }
+                    LOG(LOG_ERR, "failed reading from file");
+                    throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                }
+                end += ret;
+            }
+            this->last_quantum_received += end;
+            if (end != requested_size){
                 this->status = false;
-                throw;
             }
         }
     }

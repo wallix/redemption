@@ -708,14 +708,12 @@ typedef struct {
 } PyORandom;
 
 static void Random_dealloc(PyORandom* self) {
-    printf("Random dealloc\n");
     delete self->rnd;
     self->ob_type->tp_free((PyObject*)self);
 }
 
 static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    printf("Random new\n");
     PyORandom *self = (PyORandom *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->rnd = new UdevRandom;
@@ -725,7 +723,6 @@ static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
 {
-    printf("Random init\n");
     if (self != nullptr) {
         if (self->rnd == nullptr){
             self->rnd = new UdevRandom;
@@ -737,7 +734,6 @@ static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
 static PyObject *
 Random_rand(PyORandom* self)
 {
-    printf("Random rand\n");
     long val = (long)self->rnd->rand64();
     PyObject * result = PyInt_FromLong(val);
     return result;
@@ -821,7 +817,6 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
     if (omode[0] == 'r') {
         int system_fd = open(path, O_RDONLY, 0600);
         if (system_fd == -1){
-            printf("failed opening=%s\n", path);
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
@@ -867,7 +862,6 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 
         int system_fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
         if (system_fd == -1){
-            printf("failed opening=%s\n", path);
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wuseless-cast"
         Py_RETURN_NONE;
@@ -1027,35 +1021,19 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
 {
     int fd;
     int buf_len;
-
-    printf("python_redcryptofile_read\n");
-
     if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len)){
-        printf("python_redcryptofile_read A\n");
         return nullptr;
     }
-    printf("python_redcryptofile_read B\n");
-
     if (buf_len > 2147483647 || buf_len <= 0){
-        printf("python_redcryptofile_read C\n");
-        printf("Buf Len = %d\n", unsigned(buf_len));
         return Py_BuildValue("i", -1);
     }
-        printf("python_redcryptofile_read D\n");
-
     if (fd >= gl_nb_files){
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wuseless-cast"
         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: fd=%d > gl_nb_files=%d\n", ::getpid(), fd, gl_nb_files);
-        printf("python_redcryptofile_read E\n");
-
         Py_RETURN_NONE;
 #pragma GCC diagnostic pop
     }
-
-    printf("[CRYPTO][%d]: reading\n", ::getpid());
-
-    printf("python_redcryptofile_read F\n");
 
     std::unique_ptr<char[]> buf(new char[buf_len]);
     char * pbuffer = buf.get();
@@ -1064,18 +1042,11 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
     if (cf.type ==  CRYPTO_DECRYPT_TYPE) {
         auto & cfr = gl_file_store_read[cf.idx];
         try {
-        printf("python_redcryptofile_read (%d)\n", buf_len);
             cfr->ft.recv(&pbuffer, buf_len);
         } catch (...) {
-            printf("[CRYPTO_ERROR][%d]: Exception raised\n", ::getpid());
-
-            #pragma GCC diagnostic push 
-            #pragma GCC diagnostic ignored "-Wuseless-cast"
-                    Py_RETURN_NONE;
-            #pragma GCC diagnostic pop
+            return PyString_FromStringAndSize("", 0);
         }
     }
-    printf("[%d]: return %d bytes\n", ::getpid(), (unsigned)(pbuffer-buf.get()));
     return PyString_FromStringAndSize(buf.get(), pbuffer-buf.get());
 }
 
