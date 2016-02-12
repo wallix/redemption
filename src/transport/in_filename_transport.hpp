@@ -353,10 +353,8 @@ private:
             TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
             TODO("The best way would probably be to use the usual read API ?");
 
-            printf("Not encrypted read %d\n", this->raw.end);
             size_t end = 0;
             if (this->raw.end > 0 && this->raw.end > requested_size){
-                printf("case 1 Not encrypted read %d\n", this->raw.end);
                 ::memcpy(&(*pbuffer)[end], &this->raw.b[0], requested_size);
                 ::memmove(&this->raw.b[0], &this->raw.b[requested_size], requested_size-this->raw.end);
                 this->raw.end -= requested_size;
@@ -365,7 +363,6 @@ private:
                 return;
             }            
             if (this->raw.end > 0 && this->raw.end <= requested_size){
-                printf("case 2 Not encrypted read %d\n", this->raw.end);
                 memcpy(&(*pbuffer)[end], &this->raw.b[0], this->raw.end);
                 end = this->raw.end;
                 this->raw.end = 0;
@@ -377,7 +374,6 @@ private:
                         continue;
                     }
                     if (ret == 0){
-                        *pbuffer += end;
                         break;
                     }
                     LOG(LOG_ERR, "failed reading from file");
@@ -385,6 +381,7 @@ private:
                 }
                 end += ret;
             }
+            *pbuffer += end;
             this->last_quantum_received += end;
             if (end != requested_size){
                 this->status = false;
