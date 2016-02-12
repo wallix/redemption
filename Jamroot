@@ -976,20 +976,28 @@ unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_
 #explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
+import qt5 ;
+
 using qt5 : /usr ;
 
-obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : <include>/usr/include/x86_64-linux-gnu/qt5 ; 
-obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/x86_64-linux-gnu/qt5 ;
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : ; 
+obj front_Qt.o : src/front/front_Qt.cpp : ;
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt :
+    src/utils/bitmap_data_allocator.cpp
+    tests/mod/rdp/test_rdp_Qt.cpp
     test_rdp_Qt.o #
     src/front/front_Qt.hpp
     src/front/front_widget_Qt.hpp
+    src/front/front_Qt.cpp
     src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
     front_Qt.o
     bitmap_data_allocator.o
-    /qt5//QtGui /qt5//QtNetwork 
+    /qt5//QtGui 
+    /qt5//QtCore 
+    /qt5//QtWidgets
+    /qt5//QtNetwork
     krb5
     openssl
     crypto
