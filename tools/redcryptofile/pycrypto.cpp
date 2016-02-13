@@ -39,16 +39,6 @@ typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include "transport/in_filename_transport.hpp"
 
 
-struct crypto_file_read
-{
-  InFilenameTransport ft;
-  crypto_file_read(CryptoContext * cctx, int fd, const uint8_t * base, size_t base_len) 
-    : ft(cctx, fd, base, base_len) 
-  {
-    
-  }
-};
-
 struct crypto_file_write
 {
     class fdbuf
@@ -515,7 +505,7 @@ enum crypto_type {
 extern "C" {
 
 int gl_read_nb_files = 0;
-struct crypto_file_read * gl_file_store_read[1024];
+struct InFilenameTransport * gl_file_store_read[1024];
 int gl_write_nb_files = 0;
 struct crypto_file_write * gl_file_store_write[1024];
 
@@ -536,7 +526,7 @@ struct crypto_file
         switch (t){
         case CRYPTO_DECRYPT_TYPE:
         {
-            auto cf = new crypto_file_read(cctx, fd, base, base_len);
+            auto cf = new InFilenameTransport(cctx, fd, base, base_len);
             int idx = 0;
             for (; idx < gl_read_nb_files ; idx++){
                 if (gl_file_store_read[idx] == nullptr){
@@ -1030,7 +1020,7 @@ static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
     if (cf.type ==  CRYPTO_DECRYPT_TYPE) {
         auto & cfr = gl_file_store_read[cf.idx];
         try {
-            cfr->ft.recv(&pbuffer, buf_len);
+            cfr->recv(&pbuffer, buf_len);
         } catch (...) {
             return PyString_FromStringAndSize("", 0);
         }
