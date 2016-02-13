@@ -261,10 +261,12 @@ struct crypto_file_write
 
         ciphered_buf_sz += 4;
 
-        if (const ssize_t err = this->encrypt_filter3_raw_write(ciphered_buf, ciphered_buf_sz)) {
+        ssize_t err = this->fdbuf_write(ciphered_buf, ciphered_buf_sz);
+        if (err < ssize_t(ciphered_buf_sz)){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
-            return err;
+            return (err < 0 ? err : -1);
         }
+
         if (-1 == this->encrypt_filter3_xmd_update(&ciphered_buf, ciphered_buf_sz)) {
             return -1;
         }
@@ -384,13 +386,6 @@ struct crypto_file_write
         }
 
         return result;
-    }
-
-    ///\return 0 if success, otherwise a negatif number
-    ssize_t encrypt_filter3_raw_write(void * data, size_t len)
-    {
-        ssize_t err = this->fdbuf_write(data, len);
-        return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
     }
 
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
