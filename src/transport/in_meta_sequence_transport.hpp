@@ -86,9 +86,9 @@ struct InMetaSequenceTransport : public Transport
         int encryption;
         
         struct raw_t {
-            char b[32768];
-            int start;
-            int end;
+            uint8_t b[65536];
+            size_t start;
+            size_t end;
 
             raw_t() : start(0), end(0) {}
 
@@ -102,11 +102,14 @@ struct InMetaSequenceTransport : public Transport
 
             void read_min(int fd, size_t to_read, size_t min_to_read)
             {
-                while ((size_t)(this->end - this->start) < min_to_read) {
-                    ssize_t ret = ::read(fd, &this->b[this->start], to_read - (this->end-this->start));
+                while ((this->end - this->start) < min_to_read) {
+                    ssize_t ret = ::read(fd, &this->b[this->end], to_read - (this->end-this->start));
                     if (ret <= 0){
                         if (ret < 0 && errno == EINTR){
                             continue;
+                        }
+                        if (ret == 0){
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
                         }
                         LOG(LOG_ERR, "failed reading from file");
                         throw Error(ERR_TRANSPORT_OPEN_FAILED);
