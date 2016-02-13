@@ -38,7 +38,6 @@ typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include "transport/cryptofile.hpp"
 #include "transport/in_filename_transport.hpp"
 
-
 struct crypto_file_write
 {
     class fdbuf
@@ -72,42 +71,7 @@ struct crypto_file_write
             return 0;
         }
 
-        ssize_t read(void * data, size_t len) const
-        {
-            return this->read_all(data, len);
-        }
-
-        ssize_t read_all(void * data, size_t len) const
-        {
-            size_t remaining_len = len;
-            while (remaining_len) {
-                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                if (ret < 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    // Error should still be there next time we try to read
-                    if (remaining_len != len){
-                        return len - remaining_len;
-                    }
-                    return ret;
-                }
-                // We must exit loop or we will enter infinite loop
-                if (ret == 0){
-                    break;
-                }
-                remaining_len -= ret;
-            }
-            return len - remaining_len;
-        }
-
-
         ssize_t write(const void * data, size_t len) const
-        {
-            return this->write_all(data, len);
-        }
-
-        ssize_t write_all(const void * data, size_t len) const
         {
             size_t remaining_len = len;
             size_t total_sent = 0;
