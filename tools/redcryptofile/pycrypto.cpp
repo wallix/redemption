@@ -39,8 +39,102 @@ typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include "transport/in_filename_transport.hpp"
 
 
+struct crypto_file_read
+{
+  InFilenameTransport ft;
+  crypto_file_read(CryptoContext * cctx, int fd, const uint8_t * base, size_t base_len) 
+    : ft(cctx, fd, base, base_len) 
+  {
+    
+  }
+};
 
-namespace transfil {
+struct crypto_file_write
+{
+    class fdbuf
+    {
+        int fd;
+
+    public:
+        explicit fdbuf(int fd) noexcept
+        : fd(fd)
+        {}
+
+        ~fdbuf()
+        {
+            this->close();
+        }
+
+        int open(int fd)
+        {
+            this->close();
+            this->fd = fd;
+            return fd;
+        }
+
+        int close()
+        {
+            if (-1 != this->fd) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        ssize_t read(void * data, size_t len) const
+        {
+            return this->read_all(data, len);
+        }
+
+        ssize_t read_all(void * data, size_t len) const
+        {
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;
+        }
+
+
+        ssize_t write(const void * data, size_t len) const
+        {
+            return this->write_all(data, len);
+        }
+
+        ssize_t write_all(const void * data, size_t len) const
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+    } file;
 
     class encrypt_filter3
     {
@@ -59,8 +153,7 @@ namespace transfil {
         //, file_size(0)
         //{}
 
-        template<class Sink>
-        int open(Sink & snk, const unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
+        int open(fdbuf & snk, const unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -162,8 +255,7 @@ namespace transfil {
             return this->xmd_update(tmp_buf, 40);
         }
 
-        template<class Sink>
-        ssize_t write(Sink & snk, const void * data, size_t len)
+        ssize_t write(fdbuf & snk, const void * data, size_t len)
         {
             unsigned int remaining_size = len;
             while (remaining_size > 0) {
@@ -188,8 +280,7 @@ namespace transfil {
         /* Flush procedure (compression, encryption, effective file writing)
          * Return 0 on success, negatif on error
          */
-        template<class Sink>
-        int flush(Sink & snk)
+        int flush(fdbuf & snk)
         {
             // No data to flush
             if (!this->pos) {
@@ -250,8 +341,7 @@ namespace transfil {
             return 0;
         }
 
-        template<class Sink>
-        int close(Sink & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+        int close(fdbuf & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
         {
             int result = this->flush(snk);
 
@@ -363,8 +453,7 @@ namespace transfil {
 
     private:
         ///\return 0 if success, otherwise a negatif number
-        template<class Sink>
-        ssize_t raw_write(Sink & snk, void * data, size_t len)
+        ssize_t raw_write(fdbuf & snk, void * data, size_t len)
         {
             ssize_t err = snk.write(data, len);
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
@@ -414,108 +503,7 @@ namespace transfil {
             }
             return 0;
         }
-    };
-}
-
-
-
-struct crypto_file_read
-{
-  InFilenameTransport ft;
-  crypto_file_read(CryptoContext * cctx, int fd, const uint8_t * base, size_t base_len) 
-    : ft(cctx, fd, base, base_len) 
-  {
-    
-  }
-};
-
-struct crypto_file_write
-{
-    transfil::encrypt_filter3 encrypt;
-    class fdbuf
-    {
-        int fd;
-
-    public:
-        explicit fdbuf(int fd) noexcept
-        : fd(fd)
-        {}
-
-        ~fdbuf()
-        {
-            this->close();
-        }
-
-        int open(int fd)
-        {
-            this->close();
-            this->fd = fd;
-            return fd;
-        }
-
-        int close()
-        {
-            if (-1 != this->fd) {
-                const int ret = ::close(this->fd);
-                this->fd = -1;
-                return ret;
-            }
-            return 0;
-        }
-
-        ssize_t read(void * data, size_t len) const
-        {
-            return this->read_all(data, len);
-        }
-
-        ssize_t read_all(void * data, size_t len) const
-        {
-            size_t remaining_len = len;
-            while (remaining_len) {
-                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                if (ret < 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    // Error should still be there next time we try to read
-                    if (remaining_len != len){
-                        return len - remaining_len;
-                    }
-                    return ret;
-                }
-                // We must exit loop or we will enter infinite loop
-                if (ret == 0){
-                    break;
-                }
-                remaining_len -= ret;
-            }
-            return len - remaining_len;
-        }
-
-
-        ssize_t write(const void * data, size_t len) const
-        {
-            return this->write_all(data, len);
-        }
-
-        ssize_t write_all(const void * data, size_t len) const
-        {
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    return -1;
-                }
-                remaining_len -= ret;
-                total_sent += ret;
-            }
-            return total_sent;
-        }
-    } file;
+    } encrypt;
     crypto_file_write(int fd) : file(fd) {}
 };
 
