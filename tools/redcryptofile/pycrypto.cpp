@@ -291,11 +291,12 @@ struct crypto_file_write
             uint8_t((this->encrypt_filter3_raw_size >> 24) & 0xFF),
         };
 
-        int write_ret1 = this->encrypt_filter3_raw_write(tmp_buf, 8);
-        if (write_ret1){
-            // TOOD: actual error code could help
+        ssize_t err = this->fdbuf_write(tmp_buf, 8);
+        if (err < ssize_t(8)){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+//            return (err < 0 ? err : -1);
         }
+
         this->encrypt_filter3_file_size += 8;
 
         this->encrypt_filter3_xmd_update(tmp_buf, 8);
