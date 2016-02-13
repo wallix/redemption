@@ -177,10 +177,12 @@ struct crypto_file_write
         ::memcpy(tmp_buf + 8, iv, 32);
 
         // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
-        if (const ssize_t write_ret = this->encrypt_filter3_raw_write(tmp_buf, 40)){
+        ssize_t err = this->fdbuf_write(tmp_buf, 40);
+        if (err < ssize_t(40)){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
-            return write_ret;
+            return (err < 0 ? err : -1);
         }
+        
         // update file_size
         this->encrypt_filter3_file_size += 40;
 
