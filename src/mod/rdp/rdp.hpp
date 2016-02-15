@@ -375,7 +375,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
     const bool enable_session_probe;
-    const bool enable_session_probe_loading_mask;
+    const bool enable_session_probe_launch_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -674,7 +674,7 @@ public:
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_session_probe(mod_rdp_params.enable_session_probe)
-        , enable_session_probe_loading_mask(mod_rdp_params.enable_session_probe_loading_mask)
+        , enable_session_probe_launch_mask(mod_rdp_params.enable_session_probe_launch_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -1077,7 +1077,7 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
             this->front.disable_input_event_and_graphics_update(false);
         }
 
@@ -1256,7 +1256,7 @@ protected:
             this->verbose;
 
         session_probe_virtual_channel_params.session_probe_loading_mask_enabled     =
-            this->enable_session_probe_loading_mask;
+            this->enable_session_probe_launch_mask;
 
         session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
@@ -3495,7 +3495,7 @@ public:
 
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3522,7 +3522,7 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -5091,7 +5091,7 @@ public:
             this->event.reset();
         }
 
-        if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
             this->front.disable_input_event_and_graphics_update(true);
         }
     }
@@ -5123,7 +5123,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
-            if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+            if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                 this->front.disable_input_event_and_graphics_update(true);
             }
         }

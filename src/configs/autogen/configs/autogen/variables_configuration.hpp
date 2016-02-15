@@ -1404,8 +1404,8 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LOADING_MASK
-        struct enable_session_probe_loading_mask {
+        // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
+        struct enable_session_probe_launch_mask {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -2079,7 +2079,7 @@ struct mod_rdp
 , cfg::mod_rdp::use_client_provided_alternate_shell
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
-, cfg::mod_rdp::enable_session_probe_loading_mask
+, cfg::mod_rdp::enable_session_probe_launch_mask
 , cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
@@ -2192,7 +2192,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::use_client_provided_alternate_shell
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
-, cfg::mod_rdp::enable_session_probe_loading_mask
+, cfg::mod_rdp::enable_session_probe_launch_mask
 , cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout

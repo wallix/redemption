@@ -1205,12 +1205,14 @@ class Sesman():
                         session_probe_section = conn_opts.get('session_probe')
                         if session_probe_section is not None:
                             connectionpolicy_kv[u'session_probe']                         = session_probe_section.get('enable_session_probe')
-                            connectionpolicy_kv[u'enable_session_probe_loading_mask']     = session_probe_section.get('enable_loading_mask')
+                            connectionpolicy_kv[u'session_probe_use_clipboard_based_launcher']                = session_probe_section.get('use_clipboard_based_launcher')
+                            connectionpolicy_kv[u'enable_session_probe_launch_mask']      = session_probe_section.get('enable_launch_mask')
                             connectionpolicy_kv[u'session_probe_on_launch_failure']       = session_probe_section.get('on_launch_failure')
                             connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')
                             connectionpolicy_kv[u'session_probe_launch_fallback_timeout'] = session_probe_section.get('launch_fallback_timeout')
+                            connectionpolicy_kv[u'session_probe_start_launch_timeout_timer_only_after_logon'] = session_probe_section.get('start_launch_timeout_timer_only_after_logon')
                             connectionpolicy_kv[u'session_probe_keepalive_timeout']       = session_probe_section.get('keepalive_timeout')
-                            connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user'] = session_probe_section.get('on_keepalive_timeout_disconnect_user')
+                            connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user']        = session_probe_section.get('on_keepalive_timeout_disconnect_user')
 
                             connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
 

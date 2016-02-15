@@ -313,7 +313,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
         W.member(V, type_<bool>(), "session_probe_use_clipboard_based_launcher", str_authid{"use_clipboard_based_launcher"}, set(false), r);
-        W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
+        W.member(A, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
         W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
             "Behavior on failure to launch Session Probe.\n"
             "  0: ignore failure and continue.\n"

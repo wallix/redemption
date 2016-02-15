@@ -47,7 +47,7 @@ struct ModRDPParams {
     bool enable_new_pointer;
     bool enable_glyph_cache;
     bool enable_session_probe;
-    bool enable_session_probe_loading_mask;
+    bool enable_session_probe_launch_mask;
 
     bool disable_clipboard_log_syslog;
     bool disable_clipboard_log_wrm;
@@ -149,7 +149,7 @@ struct ModRDPParams {
         , enable_new_pointer(true)
         , enable_glyph_cache(false)
         , enable_session_probe(false)
-        , enable_session_probe_loading_mask(true)
+        , enable_session_probe_launch_mask(true)
 
         , disable_clipboard_log_syslog(false)
         , disable_clipboard_log_wrm(false)
@@ -267,7 +267,7 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams enable_session_probe=%s",                (this->enable_session_probe ? "yes" : "no"));
         LOG(LOG_INFO,
-            "ModRDPParams enable_session_probe_loading_mask=%s",   (this->enable_session_probe_loading_mask ? "yes" : "no"));
+            "ModRDPParams enable_session_probe_launch_mask=%s",   (this->enable_session_probe_launch_mask ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams session_probe_use_clipboard_based_launcher=%s",
