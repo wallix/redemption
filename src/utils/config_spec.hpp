@@ -328,6 +328,7 @@ void config_spec_definition(Writer && W)
             "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
             "In milliseconds, 0 to disable timeout."
         }, set(7000), r);
+        W.member(A, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(V, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
         W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));

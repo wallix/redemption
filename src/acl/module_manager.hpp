@@ -875,6 +875,8 @@ public:
                 mod_rdp_params.session_probe_launch_timeout        = this->ini.get<cfg::mod_rdp::session_probe_launch_timeout>();
                 mod_rdp_params.session_probe_launch_fallback_timeout
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>();
+                mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>();
                 mod_rdp_params.session_probe_on_launch_failure     = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
                 mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user =

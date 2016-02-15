@@ -83,6 +83,7 @@
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -389,6 +390,7 @@ class mod_rdp : public RDPChannelManagerMod {
 
     const unsigned                               session_probe_launch_timeout;
     const unsigned                               session_probe_launch_fallback_timeout;
+    const bool                                   session_probe_start_launch_timeout_timer_only_after_logon;
     const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
     const unsigned                               session_probe_keepalive_timeout;
     const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
@@ -686,6 +688,7 @@ public:
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
         , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
+        , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
         , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
@@ -979,6 +982,10 @@ public:
                 const char * session_probe_working_dir = "%TMP%";
                 strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
                 this->directory[sizeof(this->directory) - 1] = 0;
+
+                this->session_probe_launcher =
+                    std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                        this->verbose);
             }
         }
         else {
@@ -1051,6 +1058,9 @@ public:
                 this->get_session_probe_virtual_channel();
             spvc.set_session_probe_launcher(this->session_probe_launcher.get());
             this->session_probe_virtual_channel_p = &spvc;
+            if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                spvc.start_launch_timeout_timer();
+            }
 
             if (this->session_probe_launcher) {
                 this->session_probe_launcher->set_session_probe_virtual_channel(
@@ -5061,6 +5071,11 @@ public:
                 ((domain && (*domain)) ? "\\" : ""),
                 username);
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
+        }
+
+        if (this->session_probe_virtual_channel_p &&
+            this->session_probe_start_launch_timeout_timer_only_after_logon) {
+            this->session_probe_virtual_channel_p->start_launch_timeout_timer();
         }
 
         if (this->acl)

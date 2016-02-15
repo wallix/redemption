@@ -325,6 +325,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "session_probe_launch_fallback_timeout")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_launch_fallback_timeout&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "session_probe_start_launch_timeout_timer_only_after_logon")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "session_probe_keepalive_timeout")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables).value, value);
         }

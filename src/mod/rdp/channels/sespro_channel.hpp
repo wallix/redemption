@@ -155,12 +155,14 @@ public:
         }
 
         this->session_probe_event.object_and_time = true;
+    }
 
-        if (this->session_probe_effective_launch_timeout > 0) {
+    void start_launch_timeout_timer() {
+        if ((this->session_probe_effective_launch_timeout > 0) &&
+            !this->session_probe_ready) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                        "Enable Session Probe launch timer");
+                    "SessionProbeVirtualChannel::start_launch_timeout_timer");
             }
 
             this->session_probe_event.set(

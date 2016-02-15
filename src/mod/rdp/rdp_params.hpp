@@ -57,6 +57,7 @@ struct ModRDPParams {
     bool                                  session_probe_use_clipboard_based_launcher;
     unsigned                              session_probe_launch_timeout;
     unsigned                              session_probe_launch_fallback_timeout;
+    bool                                  session_probe_start_launch_timeout_timer_only_after_logon;
     configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
     unsigned                              session_probe_keepalive_timeout;
     bool                                  session_probe_on_keepalive_timeout_disconnect_user;
@@ -159,6 +160,7 @@ struct ModRDPParams {
         , session_probe_use_clipboard_based_launcher(false)
         , session_probe_launch_timeout(0)
         , session_probe_launch_fallback_timeout(0)
+        , session_probe_start_launch_timeout_timer_only_after_logon(true)
         , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
         , session_probe_on_keepalive_timeout_disconnect_user(true)
@@ -275,6 +277,9 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_fallback_timeout=%u",
                                                                    this->session_probe_launch_fallback_timeout);
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_start_launch_timeout_timer_only_after_logon=%s",
+                                                                   (this->session_probe_start_launch_timeout_timer_only_after_logon ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams session_probe_on_launch_failure=%d",     static_cast<int>(this->session_probe_on_launch_failure));
         LOG(LOG_INFO,
