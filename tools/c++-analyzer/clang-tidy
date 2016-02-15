@@ -6,6 +6,6 @@ bjam debug --toolset=clang rdpproxy -n -a \
 | grep -m1 src/main/main.cpp \
 | sed s'/ -o .*//' \
 | while read cc o ; do
-  eval clang-tidy -checks='*,-llvm-namespace-comment,-llvm-include-order,-google-readability-function' \
+  eval clang-tidy "$@" -checks='*,-llvm-namespace-comment,-llvm-include-order,-google-readability-function' \
    -header-filter='.*' src/main/*.cpp -- $o
 done
