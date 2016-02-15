@@ -27,29 +27,31 @@
 #include "rdp/rdp.hpp"
 #include "../src/front/front_Qt.hpp"
 
-#include <QtGui/QWidget>
-#include <QtGui/QLabel>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QLabel>
 #include <QtGui/QPainter>
 #include <QtGui/QColor>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QApplication>
+#include <QtWidgets/QDesktopWidget>
+#include <QtWidgets/QApplication>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QWheelEvent>
 #include <QtCore/QSocketNotifier>
-#include <QtGui/QLineEdit>
-#include <QtGui/QFormLayout>
-#include <QtGui/QDialog>
-#include <QtGui/QPushButton>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QFormLayout>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QPushButton>
 #include <QtGui/QClipboard>
-#include <QtGui/QTabWidget>
-#include <QtGui/QGridLayout>
-#include <QtGui/QComboBox>
-#include <QtGui/QCheckBox>
-#include <QtGui/QScrollArea>
-#include <QtGui/QTableWidget>
+#include <QtWidgets/QTabWidget>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QTableWidget>
 #include <QtCore/QList>
 #include <QtCore/QStringList>
-//QTableWidgetItem
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QGraphicsView>
+#include <QtCore/QTimer>
 
 #define KEY_SETTING_PATH "keySetting.config"
 
@@ -73,15 +75,17 @@ public:
     QPushButton        * _buttonAddKey;
     QTabWidget         * _tabs;
     QComboBox            _bppComboBox;
-    QComboBox            _ResolutionComboBox;
+    QComboBox            _resolutionComboBox;
     QCheckBox            _perfCheckBox;
     QComboBox            _languageComboBox;
+    QComboBox            _fpsComboBox;
     QFormLayout        * _layoutView;
     QFormLayout        * _layoutKeyboard;
     QLabel               _labelBpp;
     QLabel               _labelResolution;
     QLabel               _labelPerf;
     QLabel               _labelLanguage;
+    QLabel               _labelFps;
     QTableWidget       * _tableKeySetting;
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
@@ -102,14 +106,17 @@ public:
         , _buttonAddKey(nullptr)
         , _tabs(nullptr)
         , _bppComboBox(this)
-        , _ResolutionComboBox(this)
+        , _resolutionComboBox(this)
         , _perfCheckBox(this)
         , _languageComboBox(this)
+        , _fpsComboBox(this)
         , _layoutView(nullptr)
+        , _layoutKeyboard(nullptr)
         , _labelBpp("Color depth :", this)
         , _labelResolution("Resolution :", this)
         , _labelPerf("Disable wallaper :", this)
         , _labelLanguage("Keyboard Language :", this)
+        , _labelFps("Refresh per second :", this)
         , _tableKeySetting(nullptr)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
@@ -144,17 +151,30 @@ public:
         this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
         
-        this->_ResolutionComboBox.addItem( "640 * 480", 640);
-        this->_ResolutionComboBox.addItem( "800 * 600", 800);
-        this->_ResolutionComboBox.addItem("1024 * 768", 1024);
-        this->_ResolutionComboBox.addItem("1600 * 900", 1600);
-        int indexResolution = this->_ResolutionComboBox.findData(this->_front->_info.width);
+        this->_resolutionComboBox.addItem( "640 * 480", 640);
+        this->_resolutionComboBox.addItem( "800 * 600", 800);
+        this->_resolutionComboBox.addItem("1024 * 768", 1024);
+        this->_resolutionComboBox.addItem("1600 * 900", 1600);
+        int indexResolution = this->_resolutionComboBox.findData(this->_front->_info.width);
         if ( indexResolution != -1 ) { 
-            this->_ResolutionComboBox.setCurrentIndex(indexResolution);
+            this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
-        this->_ResolutionComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(new QLabel("", this));
-        this->_layoutView->addRow(&(this->_labelResolution), &(this->_ResolutionComboBox));
+        this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+        
+        this->_fpsComboBox.addItem("20", 20);
+        this->_fpsComboBox.addItem("30", 30);
+        this->_fpsComboBox.addItem("40", 40);
+        this->_fpsComboBox.addItem("50", 50);
+        this->_fpsComboBox.addItem("60", 60);
+        int indexFps = this->_fpsComboBox.findData(this->_front->_fps);
+        if ( indexFps != -1 ) { 
+            this->_fpsComboBox.setCurrentIndex(indexFps); 
+        }
+        this->_fpsComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(new QLabel("", this));
+        this->_layoutView->addRow(&(this->_labelFps), &(this->_fpsComboBox));
         
         if (this->_front->_info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
             this->_perfCheckBox.setCheckState(Qt::Checked);
@@ -179,10 +199,8 @@ public:
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
-        
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
-
         
         this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
         QList<QString> columnTitles;
@@ -334,10 +352,11 @@ public Q_SLOTS:
         this->_front->_imageFormatRGB  = this->_front->bpp_to_QFormat(this->_front->_info.bpp, false);
         this->_front->_imageFormatARGB = this->_front->bpp_to_QFormat(this->_front->_info.bpp, true);
         std::string delimiter = " * ";
-        std::string resolution( this->_ResolutionComboBox.currentText().toStdString());
+        std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
         this->_front->_info.width  = std::stoi(resolution.substr(0, pos));
         this->_front->_info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->_front->_fps = this->_fpsComboBox.currentText().toInt();
         if (this->_perfCheckBox.isChecked()) {
             this->_front->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         } else {
@@ -446,7 +465,7 @@ public:
     QLabel               _portLabel;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
-    
+      
     
     Form_Qt(Front_Qt_API * front)
         : QWidget()
@@ -579,11 +598,14 @@ public:
     QPushButton          _buttonDisconnexion;
     QColor               _penColor;
     QPixmap              _cache;
+    //QGraphicsScene       _scene;
+    //QGraphicsView        _view;
     QPainter             _cache_painter;
     const int            _width;
     const int            _height;
     bool                 _connexionLasted;
     const int            _buttonHeight;
+    QTimer               _timer;
     
     
     Screen_Qt (Front_Qt_API * front)
@@ -594,17 +616,19 @@ public:
     , _buttonDisconnexion("Disconnexion", this)
     , _penColor(Qt::black)
     , _cache(this->_front->_info.width, this->_front->_info.height)
+    //, _scene(0, 0, this->_front->_info.width, this->_front->_info.height, this)
+    //, _view(&(this->_scene), this)
     , _cache_painter(&(this->_cache))
     , _width(this->_front->_info.width)
     , _height(this->_front->_info.height)
     , _connexionLasted(false)
     , _buttonHeight(20)
+    , _timer(this)
     {
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
         this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
         this->setMouseTracking(true);
         this->installEventFilter(this);
-        //this->setAttribute(Qt::WA_NoSystemBackground, true);
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str())); 
@@ -633,12 +657,15 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
         
-        this->setFocusPolicy(Qt::StrongFocus);
+        this->setFocusPolicy(Qt::StrongFocus); 
         
         QDesktopWidget* desktop = QApplication::desktop();
         int centerW = (desktop->width()/2)  - (this->_width/2);
         int centerH = (desktop->height()/2) - ((this->_height+20)/2);
         this->move(centerW, centerH);
+        
+        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        this->_timer.start(1000/this->_front->_fps);
     }
     
     ~Screen_Qt() {
@@ -665,16 +692,14 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        const QPixmap pxmp(this->_cache);
-        painter.drawPixmap(0, 0, pxmp);
+        painter.drawPixmap(0, 0, this->_cache);
         painter.end();
     }
     
     QPixmap * getCache() {
         return &(this->_cache);
     }
-    
-    
+
     void setPenColor(QColor color) {
         this->_penColor = color; 
     }
@@ -708,6 +733,10 @@ private:
     
     
 private Q_SLOTS:
+    void slotRepaint() {
+        this->repaint();
+    }
+    
     void RefreshPressed() {
         this->_front->RefreshPressed();
     }
@@ -758,7 +787,7 @@ public:
     , _sck(nullptr)
     , _client_sck(0)
     , _clipboard(nullptr)
-    , _toUpDateLocalClipboard(true)
+    , _toUpDateLocalClipboard(true) 
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(send_clipboard()));
@@ -766,15 +795,14 @@ public:
     
     ~Connector_Qt() {
         this->drop_connexion();
-        this->_clipboard = nullptr;
     }
     
-    void drop_connexion() {
+    void drop_connexion() { 
         if (this->_callback != nullptr) {
             this->_callback->send_disconnect_ultimatum();
             delete (this->_callback);
             this->_callback = nullptr;
-            this->_front->_callback = nullptr;
+            this->_front->_callback = nullptr; 
         }
         if (this->_sckRead != nullptr) {
             delete (this->_sckRead);

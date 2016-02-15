@@ -674,16 +674,20 @@ public:
         if (qt_key != 0) {
             if (ASCII8_Code != 0) {
                 if (extended) {
+                    this->_customExtendedKeylayoutApplied.erase(qt_key);
                     this->_customExtendedKeylayoutApplied.emplace(qt_key, ASCII8_Code);
                 } else {
+                    this->_customNoExtendedKeylayoutApplied.erase(qt_key);
                     this->_customNoExtendedKeylayoutApplied.emplace(qt_key, ASCII8_Code);
                 }
             }
             
             if (scan_Code != 0) {
                 if (extended) {
+                    this->_customExtended.erase(qt_key);
                     this->_customExtended.emplace(qt_key, scan_Code);
                 } else {
+                    this->_customNoExtended.erase(qt_key);
                     this->_customNoExtended.emplace(qt_key, scan_Code);
                 }
             }

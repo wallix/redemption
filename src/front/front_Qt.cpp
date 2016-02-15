@@ -159,9 +159,8 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         
         this->disconnect("");
     }
-    
-    
 }
+
 
 bool Front_Qt::setClientInfo() {
     std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
@@ -197,6 +196,9 @@ bool Front_Qt::setClientInfo() {
             if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
                 this->_info.rdp5_performanceflags = std::stoi(info);
             }
+            if (strcmp(tag.c_str(), "fps") == 0) {
+                this->_fps = std::stoi(info);
+            }
         }
         ifichier.close();
         
@@ -212,11 +214,13 @@ bool Front_Qt::setClientInfo() {
         this->_info.width = 800;
         this->_info.height = 600;
         this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        this->_fps = 30;
         
         return true;
     }
 }
-    
+ 
+ 
 void Front_Qt::writeClientInfo() {
     std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
     if(ofichier) {
@@ -230,6 +234,7 @@ void Front_Qt::writeClientInfo() {
         ofichier << "width "                 << this->_info.width                 << std::endl;
         ofichier << "height "                << this->_info.height                << std::endl;
         ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
+        ofichier << "fps "                   << this->_fps                        << std::endl;
         
         ofichier.close();
     }
@@ -265,7 +270,6 @@ void Front_Qt::closeFromScreen() {
     }
 }
   
-    
 void Front_Qt::connect() {
     if (this->_connector->connect()) {
         this->_connected = true;
@@ -277,7 +281,6 @@ void Front_Qt::connect() {
     
     this->_form->setCursor(Qt::ArrowCursor);;
 }
-
 
 void Front_Qt::disconnect(std::string error) {
     
@@ -294,8 +297,7 @@ void Front_Qt::disconnect(std::string error) {
     
     this->_connected = false;
 }
-
-    
+ 
 void Front_Qt::connexionReleased(){
     this->_form->setCursor(Qt::WaitCursor);
     this->_userName =  this->_form->get_userNameField();
@@ -314,8 +316,8 @@ void Front_Qt::connexionReleased(){
 //---------------------------------------
 
 void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy) {
-    const int16_t mincx = bitmap.cx();// std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-    const int16_t mincy = bitmap.cy(); //std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.width - drect.y, drect.cy));
+    const int16_t mincx = bitmap.cx();
+    const int16_t mincy = bitmap.cy();
 
     if (mincx <= 0 || mincy <= 0) {
         return;
@@ -345,13 +347,14 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
     
     const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
     this->_screen->paintCache().drawImage(trect, qbitmap);
-    this->_screen->repaint(); 
+
+    //this->_screen->_scene.addPixmap(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
 }
 
 
 void Front_Qt::draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert) {
     const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-    const int16_t mincy = 1;//std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
+    const int16_t mincy = 1;
 
     if (mincx <= 0) {
         return;
@@ -386,7 +389,6 @@ void Front_Qt::draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert) 
         row += rowsize;
         rowYCoord--;
     }
-    this->_screen->repaint();
 }
 
 
@@ -397,7 +399,6 @@ void Front_Qt::draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool inver
     }
     const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
     this->_screen->paintCache().drawImage(trect, qbitmap);
-    this->_screen->repaint();
 }
 
 
@@ -472,8 +473,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                     this->_screen->paintCache().setBrush(brush);
                     this->_screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
                     this->_screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    this->_screen->repaint();
-                    
                     this->_screen->paintCache().setBrush(Qt::SolidPattern);
                     this->_screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
                 }
@@ -487,7 +486,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 {
                     this->_screen->paintCache().setBrush(backColor);
                     this->_screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    this->_screen->repaint();
                 }
                 break;
             default:
@@ -504,7 +502,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // +------+-------------------------------+
             case 0x00: // blackness
                 this->_screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                this->_screen->repaint();
                 break;
                 // +------+-------------------------------+
                 // | 0x05 | ROP: 0x000500A9               |
@@ -535,8 +532,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             case 0x5A:
                 this->_screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
                 this->_screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                this->_screen->repaint();
-                
                 this->_screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
                 break;
                 // +------+-------------------------------+
@@ -586,7 +581,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // +------+-------------------------------+
             case 0xFF: // whiteness
                 this->_screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                this->_screen->repaint();
                 break;
             default:
                 std::cout << "RDPPatBlt " << (int) cmd.rop << std::endl;
@@ -608,7 +602,7 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
     new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
     Rect rect(new_cmd24.rect.intersect(clip));
     this->_screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
-    this->_screen->repaint();
+    //this->_screen->_scene.addRect(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
 }
 
 
@@ -648,7 +642,6 @@ void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip) {
     // TO DO clipping
     this->_screen->setPenColor(this->u32_to_qcolor(new_cmd24.back_color));
     this->_screen->paintCache().drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
-    this->_screen->repaint();
 }
 
 
@@ -674,9 +667,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
             // |      | RPN: 0                        |
             // +------+-------------------------------+
-        case 0x00:
-            this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
-            this->_screen->repaint();
+        case 0x00: this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
             break;
             // +------+-------------------------------+
             // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |        
@@ -757,7 +748,6 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             // +------+-------------------------------+
         case 0xFF:
             this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
-            this->_screen->repaint();
             break;
         default: std::cout << "RDPScrBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
             break;
@@ -782,7 +772,6 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
 
         case 0x00:
             this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
-            this->_screen->repaint();
             break;
             
         case 0x55: this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
@@ -801,7 +790,6 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             
         case 0xFF:
             this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
-            this->_screen->repaint();
             break;
         default: std::cout << "RDPMemBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
             break;
@@ -871,8 +859,6 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
                     row += rowsize;
                     rowYCoord--;
                 }
-                
-                this->_screen->repaint();
             }
             break;
 

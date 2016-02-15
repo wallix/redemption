@@ -70,7 +70,7 @@
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
 #include <QtGui/QImage>
-
+ 
 
 
 
@@ -102,18 +102,19 @@ private:
 public:
     uint32_t          verbose;
     ClientInfo        _info;
-    std::string       _userName;     //     = "QA\\administrateur";
-    std::string       _pwd;          //     = "S3cur3!1nux";
-    std::string       _targetIP;     //     = "10.10.46.88";
-    int               _port;         //     = 3389; 
+    std::string       _userName;     
+    std::string       _pwd;          
+    std::string       _targetIP;     
+    int               _port;         
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
     mod_api         * _callback;
-    QImage::Format    _imageFormatRGB;
+    QImage::Format    _imageFormatRGB;  
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
-    Qt_ScanCode_KeyMap   _qtRDPKeymap;
+    Qt_ScanCode_KeyMap   _qtRDPKeymap;  
+    int                  _fps;
     
     
     Front_Qt_API( bool param1
@@ -125,6 +126,7 @@ public:
     , _port(0)
     , _callback(nullptr)
     , _qtRDPKeymap()
+    , _fps(30)
     {}
     
     
@@ -199,7 +201,7 @@ public:
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "flush()");
-            LOG(LOG_INFO, "========================================\n");
+            LOG(LOG_INFO, "========================================\n"); 
         }
     }
 
