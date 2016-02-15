@@ -79,7 +79,7 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->writeClientInfo();
     } 
     
-    char * localIPtmp = "unknow_local_IP"; 
+    const char * localIPtmp = "unknow_local_IP"; 
     /*union
     {
         struct sockaddr s;

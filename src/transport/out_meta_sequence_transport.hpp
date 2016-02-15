@@ -437,11 +437,20 @@ namespace detail
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
 
-//            printf("ocrypto_filter: cctx.get_derivator\n");
-            cctx.get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == cctx.compute_hmac(trace_key, derivator)) {
-                return -1;
-            }
+            size_t len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
+            SslSha256 sha256;
+            sha256.update(base, len);
+            uint8_t tmp[SHA256_DIGEST_LENGTH];
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+            memcpy(derivator, tmp, DERIVATOR_LENGTH);
+
+            unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+            unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+            memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+            memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+            SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+            memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
             unsigned char iv[32];
             cctx.random(iv, 32);
@@ -452,6 +461,32 @@ namespace detail
 
 namespace detail
 {
+
+    template<class FilterParams = no_param>
+    struct out_hash_meta_sequence_filename_buf_param
+    {
+        out_meta_sequence_filename_buf_param<CryptoContext&> meta_sq_params;
+        FilterParams filter_params;
+        CryptoContext & cctx;
+
+        out_hash_meta_sequence_filename_buf_param(
+            CryptoContext & cctx,
+            time_t start_sec,
+            FilenameGenerator::Format format,
+            const char * const hash_prefix,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid,
+            FilterParams const & filter_params = FilterParams(),
+            uint32_t verbose = 0)
+        : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, verbose, cctx)
+        , filter_params(filter_params)
+        , cctx(cctx)
+        {}
+    };
+
+
     template<class Buf, class Params>
     struct OutHashedMetaSequenceTransport
     : // FlushingTransport<
@@ -496,6 +531,83 @@ namespace detail
         }
     };
 
+    template<class Buf, class BufFilter, class BufMeta, class BufHash>
+    class out_hash_meta_sequence_filename_buf_impl
+    : public out_meta_sequence_filename_buf_impl<Buf, BufMeta>
+    {
+        CryptoContext & cctx;
+        BufFilter wrm_filter;
+
+        using sequence_base_type = out_meta_sequence_filename_buf_impl<Buf, BufMeta>;
+
+    public:
+        template<class FilterParams>
+        explicit out_hash_meta_sequence_filename_buf_impl(
+            out_hash_meta_sequence_filename_buf_param<FilterParams> const & params
+        )
+        : sequence_base_type(params.meta_sq_params)
+        , cctx(params.cctx)
+        , wrm_filter(params.filter_params)
+        {}
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (!this->buf().is_open()) {
+                const char * filename = this->get_filename_generate();
+                const int res = this->open_filename(filename);
+                if (res < 0) {
+                    return res;
+                }
+                if (int err = this->wrm_filter.open(this->buf(), this->cctx, filename)) {
+                    return err;
+                }
+            }
+            return this->wrm_filter.write(this->buf(), data, len);
+        }
+
+        int close()
+        {
+            if (this->buf().is_open()) {
+                if (this->next()) {
+                    return 1;
+                }
+            }
+
+            BufHash hash_buf(this->cctx);
+
+            if (!this->meta_buf().is_open()) {
+                return 1;
+            }
+
+            hash_type hash;
+
+            if (this->meta_buf().close(hash)) {
+                return 1;
+            }
+
+            return write_meta_hash(this->hash_filename(), this->meta_filename(), hash_buf, &hash, this->verbose);
+        }
+
+        int next()
+        {
+            if (this->buf().is_open()) {
+                hash_type hash;
+                {
+                    const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                    const int res2 = this->buf().close();
+                    if (res1) {
+                        return res1;
+                    }
+                    if (res2) {
+                        return res2;
+                    }
+                }
+
+                return this->next_meta_file(&hash);
+            }
+            return 1;
+        }
+    };
 
     class ochecksum_filter
     {
@@ -571,10 +683,19 @@ namespace transbuf {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             unsigned char derivator[DERIVATOR_LENGTH];
 
-            cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
-                return -1;
-            }
+            size_t len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
+            SslSha256 sha256;
+            sha256.update(base, len);
+            uint8_t tmp[SHA256_DIGEST_LENGTH];
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+            memcpy(derivator, tmp, DERIVATOR_LENGTH);
+            unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+            unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+            memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
+            memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+            SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+            memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
             int err = this->file.open(filename, mode);
             if (err < 0) {

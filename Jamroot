@@ -279,7 +279,7 @@ project redemption
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 
-    <cxxflags>-fpie
+#    <cxxflags>-fpie
     <cxxflags>-fPIC
 
 
@@ -297,11 +297,12 @@ project redemption
 
 ;
 
-explicit install instexe install-bin install-etc install-etc-themes install-share check_coverage exe ;
+explicit install instexe install-bin install-etc install-etc-themes install-share install-lib check_coverage exe ;
 
 alias instexe : install-bin ;
-alias install : install-bin install-etc install-etc-themes install-share ;
+alias install : install-bin install-etc install-etc-themes install-share install-lib ;
 alias exe     : rdpproxy redrec reddec redver rdptproxy rdptanalyzer rdpclient ;
+alias libs    : libredver ;
 
 
 install install-bin
@@ -328,6 +329,12 @@ install install-etc-themes
     : <location>$(INSTALLDIR)/etc/rdpproxy/themes
     ;
 
+install install-lib
+    : libs
+    :
+    : <location>$(INSTALLDIR)/usr/lib
+    ;
+
 actions gen_redcryptofile {
     echo "$(>)" "$(<)" ;
     cp "$(>)" "$(<)"
@@ -348,7 +355,6 @@ lib pycryptofile :
         <cflags>-fPIC
         <link>shared
     ;
-
 
 make redcryptofile.so
     :
@@ -419,7 +425,7 @@ if ! [ os.environ NO_MAKE_CONFIG ]
 
     constant CONFIG_DEPENDENCY : <implicit-dependency>generate_configs ;
 
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
+    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) <cxxflags>-fpie ;
     constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) ;
 }
 else
@@ -494,6 +500,21 @@ exe reddec
 #         <link>static
         $(EXE_DEPENDENCIES)
     ;
+
+lib libredver
+    :
+        src/main/do_verifier.cpp
+
+        openssl
+        crypto
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fvisibility=hidden
+    ;
+
 
 exe redver
     :
@@ -626,8 +647,6 @@ make test_trace.py.unittest
         run-python-test
     :
     ;
-
-explicit test_trace.py.unittest ;
 
 
 ## Test facility functions or classes
@@ -973,20 +992,33 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
+
+
 #explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
-import qt5 ;
+using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ;
 
-using qt5 : /usr ;
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp 
+    :
+        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <cxxflags>-fPIC
+    ; 
+obj front_Qt.o : src/front/front_Qt.cpp : <include>/usr/include/x86_64-linux-gnu/qt5  
+    :
+        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <cxxflags>-fPIC
+    ; 
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp  
+    :
+        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <cxxflags>-fPIC
+    ; 
 
-obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp : ; 
-obj front_Qt.o : src/front/front_Qt.cpp : ;
-obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe test_rdp_Qt :
     src/utils/bitmap_data_allocator.cpp
-    tests/mod/rdp/test_rdp_Qt.cpp
+    tests/mod/rdp/test_rdp_Qt.cpp #
     test_rdp_Qt.o #
     src/front/front_Qt.hpp
     src/front/front_widget_Qt.hpp
@@ -995,9 +1027,8 @@ exe test_rdp_Qt :
     front_Qt.o
     bitmap_data_allocator.o
     /qt5//QtGui 
-    /qt5//QtCore 
-    /qt5//QtWidgets
-    /qt5//QtNetwork
+    /qt5//QtNetwork 
+    /qt5//QtWidgets 
     krb5
     openssl
     crypto
@@ -1009,5 +1040,6 @@ exe test_rdp_Qt :
     libboost_unit_test
     :
     <include>/usr/include/x86_64-linux-gnu/qt5
+    <cxxflags>-fPIC
     ;
 

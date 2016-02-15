@@ -21,27 +21,73 @@
 #ifndef REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 
-// #include "buffer/buffering_buf.hpp"
-#include "mixin_transport.hpp"
-#include "fdbuf.hpp"
+#include "error.hpp"
+#include "transport/transport.hpp"
 
-struct InFileTransport
-: InputTransport<io::posix::fdbuf>
+class InFileTransport : public Transport
 {
-    explicit InFileTransport(int fd) noexcept
-    : InFileTransport::TransportType(fd)
+protected:
+    int fd;
+
+public:
+    explicit InFileTransport(int fd)
+    : fd(fd)
     {}
+
+    ~InFileTransport()
+    {
+        this->disconnect();
+    }
+
+    bool disconnect() {
+        if (-1 != this->fd) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return !ret;
+        }
+        return !0;
+    }
+
+private:
+    void do_recv(char ** pbuffer, size_t len) {
+        TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
+        ssize_t res = -1;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            res = ::read(this->fd, *pbuffer + (len - remaining_len), remaining_len);
+            if (res <= 0){
+                if ((res == 0)
+                ||  ((errno != EINTR) && (remaining_len != len))){
+                    break;
+                }
+                if (errno == EINTR){
+                    continue;
+                }
+                this->status = false;
+                throw Error(ERR_TRANSPORT_READ_FAILED, res);
+            }
+            remaining_len -= res;
+        }
+        res = len - remaining_len;
+        *pbuffer += res;
+        this->last_quantum_received += res;
+        if (remaining_len != 0){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
 };
 
-struct InFileSeekableTransport
-: InputTransport<io::posix::fdbuf>
+
+
+struct InFileSeekableTransport : public InFileTransport
 {
+    public:
     explicit InFileSeekableTransport(int fd) noexcept
-    : InFileSeekableTransport::TransportType(fd)
+    : InFileTransport(fd)
     {}
     
     void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
+        if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
