@@ -5,5 +5,5 @@ cd "$(dirname "$0")"/../..
 bjam debug --toolset=clang exe -n -a \
 | grep src/main/'[_a-z]\+\.cpp' \
 | while read l ; do
-  eval scan-build $l
+  eval scan-build "$@" $l
 done

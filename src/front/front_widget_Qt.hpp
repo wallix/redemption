@@ -27,26 +27,33 @@
 #include "rdp/rdp.hpp"
 #include "../src/front/front_Qt.hpp"
 
-#include <QtGui/QWidget>
-#include <QtGui/QLabel>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QLabel>
 #include <QtGui/QPainter>
 #include <QtGui/QColor>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QApplication>
+#include <QtWidgets/QDesktopWidget>
+#include <QtWidgets/QApplication>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QWheelEvent>
 #include <QtCore/QSocketNotifier>
-#include <QtGui/QLineEdit>
-#include <QtGui/QFormLayout>
-#include <QtGui/QDialog>
-#include <QtGui/QPushButton>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QFormLayout>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QPushButton>
 #include <QtGui/QClipboard>
-#include <QtGui/QTabWidget>
-#include <QtGui/QGridLayout>
-#include <QtGui/QComboBox>
-#include <QtGui/QCheckBox>
+#include <QtWidgets/QTabWidget>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QTableWidget>
+#include <QtCore/QList>
+#include <QtCore/QStringList>
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QGraphicsView>
+#include <QtCore/QTimer>
 
-
+#define KEY_SETTING_PATH "keySetting.config"
 
 
 class DialogOptions_Qt : public QDialog
@@ -64,17 +71,24 @@ public:
     QGridLayout        * _layout;
     QPushButton          _buttonSave;
     QPushButton          _buttonCancel;
+    QPushButton        * _buttonDeleteKey;
+    QPushButton        * _buttonAddKey;
     QTabWidget         * _tabs;
     QComboBox            _bppComboBox;
-    QComboBox            _ResolutionComboBox;
+    QComboBox            _resolutionComboBox;
     QCheckBox            _perfCheckBox;
     QComboBox            _languageComboBox;
+    QComboBox            _fpsComboBox;
     QFormLayout        * _layoutView;
     QFormLayout        * _layoutKeyboard;
     QLabel               _labelBpp;
     QLabel               _labelResolution;
     QLabel               _labelPerf;
     QLabel               _labelLanguage;
+    QLabel               _labelFps;
+    QTableWidget       * _tableKeySetting;
+    const int            _columnNumber;
+    const int            _tableKeySettingMaxHeight;
 
     
     DialogOptions_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -88,16 +102,24 @@ public:
         , _layout(nullptr)
         , _buttonSave("Save", this)
         , _buttonCancel("Cancel", this)
+        , _buttonDeleteKey(nullptr)
+        , _buttonAddKey(nullptr)
         , _tabs(nullptr)
         , _bppComboBox(this)
-        , _ResolutionComboBox(this)
+        , _resolutionComboBox(this)
         , _perfCheckBox(this)
         , _languageComboBox(this)
+        , _fpsComboBox(this)
         , _layoutView(nullptr)
+        , _layoutKeyboard(nullptr)
         , _labelBpp("Color depth :", this)
         , _labelResolution("Resolution :", this)
         , _labelPerf("Disable wallaper :", this)
         , _labelLanguage("Keyboard Language :", this)
+        , _labelFps("Refresh per second :", this)
+        , _tableKeySetting(nullptr)
+        , _columnNumber(4)
+        , _tableKeySettingMaxHeight((20*6)+11)
     {
         this->setWindowTitle("Options");
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -113,6 +135,7 @@ public:
         this->_tabs = new QTabWidget(this);
         
         
+        // View tab
         const QString strView("View");
         this->_layoutView = new QFormLayout(this->_viewTab);
         
@@ -128,17 +151,30 @@ public:
         this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
         
-        this->_ResolutionComboBox.addItem( "640 * 480", 640);
-        this->_ResolutionComboBox.addItem( "800 * 600", 800);
-        this->_ResolutionComboBox.addItem("1024 * 768", 1024);
-        this->_ResolutionComboBox.addItem("1600 * 900", 1600);
-        int indexResolution = this->_ResolutionComboBox.findData(this->_front->_info.width);
+        this->_resolutionComboBox.addItem( "640 * 480", 640);
+        this->_resolutionComboBox.addItem( "800 * 600", 800);
+        this->_resolutionComboBox.addItem("1024 * 768", 1024);
+        this->_resolutionComboBox.addItem("1600 * 900", 1600);
+        int indexResolution = this->_resolutionComboBox.findData(this->_front->_info.width);
         if ( indexResolution != -1 ) { 
-            this->_ResolutionComboBox.setCurrentIndex(indexResolution);
+            this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
-        this->_ResolutionComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(new QLabel("", this));
-        this->_layoutView->addRow(&(this->_labelResolution), &(this->_ResolutionComboBox));
+        this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+        
+        this->_fpsComboBox.addItem("20", 20);
+        this->_fpsComboBox.addItem("30", 30);
+        this->_fpsComboBox.addItem("40", 40);
+        this->_fpsComboBox.addItem("50", 50);
+        this->_fpsComboBox.addItem("60", 60);
+        int indexFps = this->_fpsComboBox.findData(this->_front->_fps);
+        if ( indexFps != -1 ) { 
+            this->_fpsComboBox.setCurrentIndex(indexFps); 
+        }
+        this->_fpsComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(new QLabel("", this));
+        this->_layoutView->addRow(&(this->_labelFps), &(this->_fpsComboBox));
         
         if (this->_front->_info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
             this->_perfCheckBox.setCheckState(Qt::Checked);
@@ -147,11 +183,14 @@ public:
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
         
         this->_viewTab->setLayout(this->_layoutView);
+        
         this->_tabs->addTab(this->_viewTab, strView);
         
         
+        // Keyboard tab
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
+
         for (int i = 0; i < Qt_ScanCode_KeyMap::KEYLAYOUTS_LIST_SIZE; i++) {
             this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
         }
@@ -163,14 +202,80 @@ public:
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
         
+        this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
+        QList<QString> columnTitles;
+        columnTitles << "Qt key ID" << "Scan Code" << "ASCII8" << "Extended";
+        this->_tableKeySetting->setHorizontalHeaderLabels({columnTitles});
+        this->_tableKeySetting->setColumnWidth(0 ,85);
+        this->_tableKeySetting->setColumnWidth(1 ,84);
+        this->_tableKeySetting->setColumnWidth(2 ,84);
+        this->_tableKeySetting->setColumnWidth(3 ,74);
+        
+        std::ifstream ifichier(KEY_SETTING_PATH, std::ios::in);
+        if(ifichier) {
+            
+            std::string ligne;
+            std::string delimiter = " ";
+            
+            while(getline(ifichier, ligne)) {
+
+                int pos(ligne.find(delimiter));
+                
+                if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
+                    
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int qtKeyID  = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int scanCode = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+;
+                    int ASCII8   = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int extended = std::stoi(ligne.substr(0, pos));
+                    
+                    this->_front->_qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+                    
+                    this->addRow();
+                    this->setRowValues(qtKeyID, scanCode, ASCII8, extended);
+                }
+            }
+        }
+        this->addRow();
+        
+        
+        this->_layoutKeyboard->addRow(this->_tableKeySetting);
+        
         this->_keyboardTab->setLayout(this->_layoutKeyboard);
+        
+        
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
         
+        this->_buttonAddKey = new QPushButton("Add row", this->_keyboardTab);
+        QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
+        this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
+        this->_buttonAddKey->setGeometry(rectAddKey);
+        this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (addRow()));
+        
+        this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
+        QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
+        this->_buttonDeleteKey->setToolTip(this->_buttonDeleteKey->text());
+        this->_buttonDeleteKey->setGeometry(rectDeleteKey);
+        this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
+        this->QObject::connect(this->_buttonDeleteKey , SIGNAL (released()), this, SLOT (deleteReleased()));
         
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
         
         
-        // Bottons
+        // Buttons
         this->_layout->addWidget(&(this->_emptyPanel), 11, 0, 1, 2);
  
         this->_buttonSave.setToolTip(this->_buttonSave.text());
@@ -199,6 +304,42 @@ public:
     }
     
     ~DialogOptions_Qt() {}
+    
+    
+private:
+    void setRowValues(int qtKeyID, int scanCode, int ASCII8, int extended) {
+        int row(this->_tableKeySetting->rowCount() - 1);
+        
+        QTableWidgetItem * item1 = new QTableWidgetItem;
+        item1->setText(std::to_string(qtKeyID).c_str());
+        this->_tableKeySetting->setItem(row, 0, item1);
+        
+        QTableWidgetItem * item2 = new QTableWidgetItem;
+        item2->setText(std::to_string(scanCode).c_str());
+        this->_tableKeySetting->setItem(row, 1, item2);
+        
+        QTableWidgetItem * item3 = new QTableWidgetItem;
+        item3->setText(std::to_string(ASCII8).c_str());
+        this->_tableKeySetting->setItem(row, 2, item3);
+        
+        static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended);
+        
+    }
+    
+    void updateKeySetting() {
+        int tableKeySettingHeight((20*(this->_tableKeySetting->rowCount()+1))+11);
+        if (tableKeySettingHeight > this->_tableKeySettingMaxHeight) {
+            tableKeySettingHeight = this->_tableKeySettingMaxHeight;
+        }
+        this->_tableKeySetting->setFixedSize((80*this->_columnNumber)+40, tableKeySettingHeight);
+        if (this->_tableKeySetting->rowCount() > 5) {
+            this->_tableKeySetting->setColumnWidth(3 ,74);
+        } else {
+            this->_tableKeySetting->setColumnWidth(3 ,87);
+        }
+        
+        this->update();
+    }
 
     
 public Q_SLOTS:
@@ -211,17 +352,57 @@ public Q_SLOTS:
         this->_front->_imageFormatRGB  = this->_front->bpp_to_QFormat(this->_front->_info.bpp, false);
         this->_front->_imageFormatARGB = this->_front->bpp_to_QFormat(this->_front->_info.bpp, true);
         std::string delimiter = " * ";
-        std::string resolution( this->_ResolutionComboBox.currentText().toStdString());
+        std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
         this->_front->_info.width  = std::stoi(resolution.substr(0, pos));
         this->_front->_info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->_front->_fps = this->_fpsComboBox.currentText().toInt();
         if (this->_perfCheckBox.isChecked()) {
             this->_front->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         } else {
             this->_front->_info.rdp5_performanceflags = 0;
         }
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->_front->writeClientInfo();
         
+        remove(KEY_SETTING_PATH);
+        this->_front->_qtRDPKeymap.clearCustomKeyCod();
+        
+        std::ofstream ofichier(KEY_SETTING_PATH, std::ios::out | std::ios::trunc);
+        if(ofichier) {
+            
+            ofichier << "Key Setting" << std::endl << std::endl;
+
+            for (int i = 0; i < this->_tableKeySetting->rowCount(); i++) {
+
+                int qtKeyID(0);
+                if (this->_tableKeySetting->item(i, 0)) {
+                    qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
+                }
+
+                if (qtKeyID != 0) {
+                    int scanCode(0);
+                    if (this->_tableKeySetting->item(i, 0)) {
+                        scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
+                    }
+                    int ASCII8(0);
+                    if (this->_tableKeySetting->item(i, 0)) {
+                        ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
+                    }
+                    int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
+                    
+                    this->_front->_qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+                    
+                    ofichier << "- ";
+                    ofichier << qtKeyID  << " ";
+                    ofichier << scanCode << " ";
+                    ofichier << ASCII8   << " ";
+                    ofichier << extended << std::endl;
+                }
+            }
+            ofichier.close();
+        }
+
         this->close();
     }
     
@@ -230,6 +411,34 @@ public Q_SLOTS:
     void cancelReleased() {
         this->close();
     }
+   
+    void addRow() {
+        int rowNumber(this->_tableKeySetting->rowCount());
+        this->_tableKeySetting->insertRow(rowNumber);
+        this->_tableKeySetting->setRowHeight(rowNumber ,20);
+        QComboBox * combo = new QComboBox(this->_tableKeySetting);
+        combo->addItem("No" , 0);
+        combo->addItem("Yes", 1);
+        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo); 
+    
+        this->updateKeySetting();
+    }
+    
+    void deletePressed() {
+       QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
+       for (int i = 0; i < indexes.count(); ++i) {
+           QModelIndex index = indexes.at(i);
+           this->_tableKeySetting->removeRow(index.row());
+       }
+       
+       if (this->_tableKeySetting->rowCount() == 0) {
+           this->addRow();
+       }
+       
+       this->updateKeySetting();     
+    }
+    
+    void deleteReleased() {}
     
 };
 
@@ -256,7 +465,7 @@ public:
     QLabel               _portLabel;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
-    
+      
     
     Form_Qt(Front_Qt_API * front)
         : QWidget()
@@ -301,8 +510,8 @@ public:
         this->_buttonOptions.setToolTip(this->_buttonOptions.text());
         this->_buttonOptions.setGeometry(rectOptions);
         this->_buttonOptions.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonOptions)   , SIGNAL (pressed()),  this, SLOT (optionsPressed()));
-        this->QObject::connect(&(this->_buttonOptions)   , SIGNAL (released()), this, SLOT (optionsReleased()));
+        this->QObject::connect(&(this->_buttonOptions)     , SIGNAL (pressed()),  this, SLOT (optionsPressed()));
+        this->QObject::connect(&(this->_buttonOptions)     , SIGNAL (released()), this, SLOT (optionsReleased()));
         this->_buttonOptions.setFocusPolicy(Qt::StrongFocus);
         
         QDesktopWidget* desktop = QApplication::desktop();
@@ -389,11 +598,14 @@ public:
     QPushButton          _buttonDisconnexion;
     QColor               _penColor;
     QPixmap              _cache;
+    //QGraphicsScene       _scene;
+    //QGraphicsView        _view;
     QPainter             _cache_painter;
     const int            _width;
     const int            _height;
     bool                 _connexionLasted;
     const int            _buttonHeight;
+    QTimer               _timer;
     
     
     Screen_Qt (Front_Qt_API * front)
@@ -404,17 +616,19 @@ public:
     , _buttonDisconnexion("Disconnexion", this)
     , _penColor(Qt::black)
     , _cache(this->_front->_info.width, this->_front->_info.height)
+    //, _scene(0, 0, this->_front->_info.width, this->_front->_info.height, this)
+    //, _view(&(this->_scene), this)
     , _cache_painter(&(this->_cache))
     , _width(this->_front->_info.width)
     , _height(this->_front->_info.height)
     , _connexionLasted(false)
     , _buttonHeight(20)
+    , _timer(this)
     {
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
         this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
         this->setMouseTracking(true);
         this->installEventFilter(this);
-        //this->setAttribute(Qt::WA_NoSystemBackground, true);
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str())); 
@@ -443,12 +657,15 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
         
-        this->setFocusPolicy(Qt::StrongFocus);
+        this->setFocusPolicy(Qt::StrongFocus); 
         
         QDesktopWidget* desktop = QApplication::desktop();
         int centerW = (desktop->width()/2)  - (this->_width/2);
         int centerH = (desktop->height()/2) - ((this->_height+20)/2);
         this->move(centerW, centerH);
+        
+        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        this->_timer.start(1000/this->_front->_fps);
     }
     
     ~Screen_Qt() {
@@ -475,16 +692,14 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        const QPixmap pxmp(this->_cache);
-        painter.drawPixmap(0, 0, pxmp);
+        painter.drawPixmap(0, 0, this->_cache);
         painter.end();
     }
     
     QPixmap * getCache() {
         return &(this->_cache);
     }
-    
-    
+
     void setPenColor(QColor color) {
         this->_penColor = color; 
     }
@@ -518,6 +733,10 @@ private:
     
     
 private Q_SLOTS:
+    void slotRepaint() {
+        this->repaint();
+    }
+    
     void RefreshPressed() {
         this->_front->RefreshPressed();
     }
@@ -568,24 +787,22 @@ public:
     , _sck(nullptr)
     , _client_sck(0)
     , _clipboard(nullptr)
-    , _toUpDateLocalClipboard(true)
+    , _toUpDateLocalClipboard(true) 
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(send_clipboard()));
     }
     
     ~Connector_Qt() {
-        this->_clipboard = nullptr;
         this->drop_connexion();
-        
     }
     
-    void drop_connexion() {
+    void drop_connexion() { 
         if (this->_callback != nullptr) {
             this->_callback->send_disconnect_ultimatum();
             delete (this->_callback);
             this->_callback = nullptr;
-            this->_front->_callback = nullptr;
+            this->_front->_callback = nullptr; 
         }
         if (this->_sckRead != nullptr) {
             delete (this->_sckRead);

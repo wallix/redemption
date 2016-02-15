@@ -148,7 +148,6 @@ template<class Cont>
 constexpr auto make_array_view(Cont & cont) -> array_view<decltype(cont.data())>
 { return {cont.data(), cont.size()}; }
 
-
 template<class T>
 constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n)
 { return {x, n}; }

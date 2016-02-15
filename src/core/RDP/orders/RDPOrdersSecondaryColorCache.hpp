@@ -132,7 +132,7 @@ public:
         }
     }
 
-    #define warning remove printf in operator== and show palette differences in test code
+    //TODO remove printf in operator== and show palette differences in test code
     bool operator==(const RDPColCache & other) const {
         if (this->cacheIndex != other.cacheIndex) {
             return false;

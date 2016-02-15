@@ -32,6 +32,7 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
+#include "array_view.hpp"
 #include "make_unique.hpp"
 
 #include <algorithm>
