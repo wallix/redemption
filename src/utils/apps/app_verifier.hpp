@@ -28,6 +28,323 @@
 
 #define QUICK_CHECK_LENGTH 4096
 
+namespace transbuf {
+
+    class ifile_buf
+    {
+    public:
+        CryptoContext * cctx;
+        int cfb_file_fd;
+        char           cfb_decrypt_buf[CRYPTO_BUFFER_SIZE]; //
+        EVP_CIPHER_CTX cfb_decrypt_ectx;                    // [en|de]cryption context
+        uint32_t       cfb_decrypt_pos;                     // current position in buf
+        uint32_t       cfb_decrypt_raw_size;                // the unciphered/uncompressed file size
+        uint32_t       cfb_decrypt_state;                   // enum crypto_file_state
+        unsigned int   cfb_decrypt_MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+
+        int encryption;
+
+        int cfb_decrypt_decrypt_open(unsigned char * trace_key)
+        {
+            ::memset(this->cfb_decrypt_buf, 0, sizeof(this->cfb_decrypt_buf));
+            ::memset(&this->cfb_decrypt_ectx, 0, sizeof(this->cfb_decrypt_ectx));
+
+            this->cfb_decrypt_pos = 0;
+            this->cfb_decrypt_raw_size = 0;
+            this->cfb_decrypt_state = 0;
+            const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
+            this->cfb_decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+
+            unsigned char tmp_buf[40];
+            const ssize_t err = this->cfb_file_read(tmp_buf, 40);
+            if (err != 40) {
+                return err < 0 ? err : -1;
+            }
+
+            // Check magic
+            const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+            if (magic != WABCRYPTOFILE_MAGIC) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
+                    ::getpid(), magic, WABCRYPTOFILE_MAGIC);
+                return -1;
+            }
+            const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
+            if (version > WABCRYPTOFILE_VERSION) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
+                    ::getpid(), version, WABCRYPTOFILE_VERSION);
+                return -1;
+            }
+
+            unsigned char * const iv = tmp_buf + 8;
+
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+            if (i != 32) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                return -1;
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->cfb_decrypt_ectx);
+            if(::EVP_DecryptInit_ex(&this->cfb_decrypt_ectx, cipher, nullptr, key, iv) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+                return -1;
+            }
+
+            return 0;
+        }
+
+        ssize_t cfb_decrypt_decrypt_read(void * data, size_t len)
+        {
+            if (this->cfb_decrypt_state & CF_EOF) {
+                //printf("cf EOF\n");
+                return 0;
+            }
+
+            unsigned int requested_size = len;
+
+            while (requested_size > 0) {
+                // Check how much we have decoded
+                if (!this->cfb_decrypt_raw_size) {
+                    // Buffer is empty. Read a chunk from file
+                    /*
+                     i f (-1 == ::do_chunk_read*(this)) {
+                         return -1;
+                }
+                */
+                    // TODO: avoid reading size directly into an integer, performance enhancement is minimal
+                    // and it's not portable because of endianness issue => read in a buffer and decode by hand
+                    unsigned char tmp_buf[4] = {};
+                    const int err = this->cfb_file_read(tmp_buf, 4);
+                    if (err != 4) {
+                        return err < 0 ? err : -1;
+                    }
+
+                    uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+
+                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                        this->cfb_decrypt_state |= CF_EOF;
+                        this->cfb_decrypt_pos = 0;
+                        this->cfb_decrypt_raw_size = 0;
+                    }
+                    else {
+                        if (ciphered_buf_size > this->cfb_decrypt_MAX_CIPHERED_SIZE) {
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                            return -1;
+                        }
+                        else {
+                            uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+                            //char ciphered_buf[ciphered_buf_size];
+                            unsigned char ciphered_buf[65536];
+                            //char compressed_buf[compressed_buf_size];
+                            unsigned char compressed_buf[65536];
+
+                            ssize_t err = this->cfb_file_read(
+                                                    ciphered_buf,
+                                                    ciphered_buf_size);
+                                                    
+                            if (err != ssize_t(len)){
+                                return err < 0 ? err : -1;
+                            }
+
+                            if (this->cfb_decrypt_xaes_decrypt(ciphered_buf,
+                                            ciphered_buf_size,
+                                            compressed_buf,
+                                            &compressed_buf_size)) {
+                                return -1;
+                            }
+
+                            size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                            const snappy_status status = snappy_uncompress(
+                                    reinterpret_cast<char *>(compressed_buf),
+                                    compressed_buf_size, this->cfb_decrypt_buf, &chunk_size);
+
+                            switch (status)
+                            {
+                                case SNAPPY_OK:
+                                    break;
+                                case SNAPPY_INVALID_INPUT:
+                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
+                                    return -1;
+                                case SNAPPY_BUFFER_TOO_SMALL:
+                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                                    return -1;
+                                default:
+                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
+                                    return -1;
+                            }
+
+                            this->cfb_decrypt_pos = 0;
+                            // When reading, raw_size represent the current chunk size
+                            this->cfb_decrypt_raw_size = chunk_size;
+                        }
+                    }
+
+                    // TODO: check that
+                    if (!this->cfb_decrypt_raw_size) { // end of file reached
+                        break;
+                    }
+                }
+                // remaining_size is the amount of data available in decoded buffer
+                unsigned int remaining_size = this->cfb_decrypt_raw_size - this->cfb_decrypt_pos;
+                // Check how much we can copy
+                unsigned int copiable_size = MIN(remaining_size, requested_size);
+                // Copy buffer to caller
+                ::memcpy(static_cast<char*>(data) + (len - requested_size), this->cfb_decrypt_buf + this->cfb_decrypt_pos, copiable_size);
+                this->cfb_decrypt_pos      += copiable_size;
+                requested_size -= copiable_size;
+                // Check if we reach the end
+                if (this->cfb_decrypt_raw_size == this->cfb_decrypt_pos) {
+                    this->cfb_decrypt_raw_size = 0;
+                }
+            }
+            return len - requested_size;
+        }
+
+    private:
+
+        int cfb_decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
+        {
+            int safe_size = *dst_sz;
+            int remaining_size = 0;
+
+            /* allows reusing of ectx for multiple encryption cycles */
+            if (EVP_DecryptInit_ex(&this->cfb_decrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+                return -1;
+            }
+            if (EVP_DecryptUpdate(&this->cfb_decrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+                return -1;
+            }
+            if (EVP_DecryptFinal_ex(&this->cfb_decrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+                return -1;
+            }
+            *dst_sz = safe_size + remaining_size;
+            return 0;
+        }
+
+        int cfb_file_open(const char * filename, mode_t /*mode*/)
+        {
+            TODO("see why mode is ignored even if it's provided as a parameter?");
+            this->cfb_file_close();
+            this->cfb_file_fd = ::open(filename, O_RDONLY);
+            return this->cfb_file_fd;
+        }
+
+        int cfb_file_close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->cfb_file_fd);
+                this->cfb_file_fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool cfb_file_is_open() const noexcept
+        { return -1 != this->cfb_file_fd; }
+
+        ssize_t cfb_file_read(void * data, size_t len)
+        {
+            TODO("this is blocking read, add support for timeout reading");
+            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;        
+        }
+
+
+    public:
+        explicit ifile_buf(CryptoContext * cctx, int encryption)
+        : cctx(cctx)
+        , cfb_file_fd(-1)
+        , encryption(encryption)
+        {}
+
+        ~ifile_buf()
+        {
+            this->cfb_file_close();
+        }
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            if (this->encryption){
+
+                int err = this->cfb_file_open(filename, mode);
+                if (err < 0) {
+                    return err;
+                }
+
+                size_t base_len = 0;
+                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+                
+                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+                uint8_t tmp[SHA256_DIGEST_LENGTH];
+                {
+                    SslSha256 sha256;
+                    sha256.update(base, base_len);
+                    sha256.final(tmp, SHA256_DIGEST_LENGTH);
+                }
+                {
+                    SslSha256 sha256;
+                    sha256.update(tmp, DERIVATOR_LENGTH);
+                    sha256.update(cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
+                    sha256.final(tmp, SHA256_DIGEST_LENGTH);
+                }
+                memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+                
+                return this->cfb_decrypt_decrypt_open(trace_key);
+            }
+            else {
+                return this->cfb_file_open(filename, mode);
+            }
+        }
+
+        ssize_t read(void * data, size_t len)
+        {
+            if (this->encryption){
+                return this->cfb_decrypt_decrypt_read(data, len);
+            }
+            else {
+                return this->cfb_file_read(data, len);
+            }
+        }
+
+        int close()
+        {
+            return this->cfb_file_close();
+        }
+
+        bool is_open() const noexcept
+        { 
+            return this->cfb_file_is_open();
+        }
+    };
+}
+
+
 static inline bool check_file_hash_sha256(
     const char * file_path,
     uint8_t const * crypto_key,
@@ -40,18 +357,47 @@ static inline bool check_file_hash_sha256(
 
     SslHMAC_Sha256 hmac(crypto_key, key_len);
 
-    io::posix::fdbuf file;
-    file.open(file_path, O_RDONLY);
-    if (!file.is_open()) {
+    int fd = ::open(file_path, O_RDONLY);
+    if (fd < 0) {
         LOG(LOG_ERR, "failed opening=%s", file_path);
         return false;
     }
+
+    struct fdbuf
+    {
+        int fd;
+        explicit fdbuf(int fd) noexcept : fd(fd) {}
+        ~fdbuf() { ::close(this->fd);}
+        ssize_t read_all(void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;
+        }
+    } file(fd);
 
     uint8_t buf[4096];
     size_t  number_of_bytes_read = 0;
     int len_read = 0;
     do {
-        len_read = file.read(buf,
+        len_read = file.read_all(buf,
                 ((len_to_check == 0) ||(number_of_bytes_read + sizeof(buf) < len_to_check))
                 ? sizeof(buf)
                 : len_to_check - number_of_bytes_read);
@@ -67,14 +413,12 @@ static inline bool check_file_hash_sha256(
         return false;
     }
 
-    file.close();
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
 
     if (memcmp(hash, hash_buf, hash_len)) {
         LOG(LOG_ERR, "failed checking hash=%s", file_path);
     }
-
     return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 
@@ -138,15 +482,15 @@ static inline bool check_file(const char * file_path, bool is_status_enabled,
 }
 */
 
-bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
+static inline bool check_mwrm_file_ifile_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
         detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
-        CryptoContext * cctx)
-    {
+        CryptoContext * cctx, int infile_is_encrypted)
+{
     TODO("Add unit test for this function")
     bool result = false;
 
     if (check_file(file_path, is_checksumed, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
-        transbuf::icrypto_filename_buf ifile(cctx);
+        transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         if (ifile.open(file_path) < 0) {
             LOG(LOG_ERR, "failed opening=%s", file_path);
             return false;
@@ -155,13 +499,13 @@ bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_checks
         struct ReaderBuf
         {
             private:
-            transbuf::icrypto_filename_buf & buf;
+            transbuf::ifile_buf & buf;
 
             public:
 
-            ReaderBuf(transbuf::icrypto_filename_buf & buf) : buf(buf) {}
+            ReaderBuf(transbuf::ifile_buf & buf) : buf(buf) {}
 
-            ssize_t read(char * buf, size_t len) const {
+            ssize_t reader_read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
 
@@ -190,55 +534,7 @@ bool check_mwrm_file_icrypto_filename_buf(const char * file_path, bool is_checks
     return result;
 }
 
-bool check_mwrm_file_ifile_buf(const char * file_path, bool is_checksumed, bool is_status_enabled,
-        detail::MetaLine const & meta_line_mwrm, size_t len_to_check,
-        CryptoContext * cctx) {
-    TODO("Add unit test for this function")
-    bool result = false;
-
-    if (check_file(file_path, is_checksumed, is_status_enabled, meta_line_mwrm, len_to_check, cctx) == true) {
-        transbuf::ifile_buf ifile(cctx);
-        if (ifile.open(file_path) < 0) {
-            LOG(LOG_ERR, "failed opening=%s", file_path);
-            return false;
-        }
-
-        struct ReaderBuf
-        {
-            transbuf::ifile_buf & buf;
-
-//            ssize_t operator()(char * buf, size_t len) const {
-//                return this->buf.read(buf, len);
-//            }
-
-            ssize_t read(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
-            }
-
-        };
-
-        detail::ReaderLine<ReaderBuf> reader({ifile});
-        auto meta_header = detail::read_meta_headers(reader);
-
-        detail::MetaLine meta_line_wrm;
-
-        result = true;
-
-        while (detail::read_meta_file(reader, meta_header, meta_line_wrm) !=
-               ERR_TRANSPORT_NO_MORE_DATA) {
-            if (check_file(meta_line_wrm.filename, is_checksumed, is_status_enabled,
-                           meta_line_wrm, len_to_check, cctx) == false) {
-                result = false;
-                break;
-            }
-        }
-    }
-
-    return result;
-}
-
-
-void make_file_path(const char * directory_name, const char * file_name,  char * file_path_buf, size_t file_path_len) {
+static inline void make_file_path(const char * directory_name, const char * file_name,  char * file_path_buf, size_t file_path_len) {
     snprintf(file_path_buf, file_path_len, "%s%s%s", directory_name,
         ((directory_name[strlen(directory_name) - 1] == '/') ? "" : "/"),
         file_name);
@@ -246,33 +542,31 @@ void make_file_path(const char * directory_name, const char * file_name,  char *
     file_path_buf[file_path_len - 1] = '\0';
 }
 
-
-
-int check_encrypted_or_checksumed_file_icrypto_filename_buf(std::string const & input_filename,
+static inline int check_encrypted_or_checksumed(std::string const & input_filename,
                                        std::string const & hash_path,
                                        const char * fullfilename,
                                        bool quick_check,
                                        uint32_t verbose,
-                                       CryptoContext * cctx) {
+                                       CryptoContext * cctx,
+                                       bool infile_is_encrypted) {
     unsigned infile_version = 1;
     bool infile_is_checksumed = false;
 
+    if (infile_is_encrypted){
+        OpenSSL_add_all_digests();
+    }
+
     {
-        transbuf::icrypto_filename_buf ifile(cctx);
+        transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         ifile.open(fullfilename);
 
         struct ReaderBuf
         {
-            transbuf::icrypto_filename_buf & buf;
+            transbuf::ifile_buf & buf;
 
-//            ssize_t operator()(char * buf, size_t len) const {
-//                return this->buf.read(buf, len);
-//            }
-
-            ssize_t read(char * buf, size_t len) const {
+            ssize_t reader_read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);
             }
-
         };
 
         detail::ReaderLine<ReaderBuf> reader({ifile});
@@ -287,185 +581,7 @@ int check_encrypted_or_checksumed_file_icrypto_filename_buf(std::string const & 
             (infile_is_checksumed ? "yes" : "no"));
     }
 
-
-    /*****************
-    * Load file hash *
-    *****************/
-
-    detail::MetaLine hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
-
-    {
-        char file_path[PATH_MAX + 1] = {};
-
-        ssize_t filename_len = input_filename.length();
-
-        bool hash_ok = false;
-
-        make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
-        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
-
-        try {
-            transbuf::icrypto_filename_buf in_hash_fb(cctx);
-            in_hash_fb.open(file_path);
-            if (verbose) {
-                LOG(LOG_INFO, "File buffer created");
-            }
-
-            char temp_buffer[8192];
-            memset(temp_buffer, 0, sizeof(temp_buffer));
-
-            ssize_t number_of_bytes_read = in_hash_fb.read(temp_buffer, sizeof(temp_buffer));
-            if (verbose) {
-                LOG(LOG_INFO, "Hash data received. Length=%zd", number_of_bytes_read);
-            }
-
-            if (infile_version == 1) {
-                if (verbose) {
-                    LOG(LOG_INFO, "Hash data v1");
-                }
-
-                // Filename HASH_64_BYTES
-                //         ^
-                //         |
-                //     separator
-                if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
-                    // Separator
-                    (temp_buffer[filename_len] == ' ')) {
-
-                    if (verbose) {
-                        LOG(LOG_INFO, "Copy hash");
-                    }
-
-                    memcpy(hash_line.hash1, temp_buffer + filename_len + 1, sizeof(hash_line.hash1));
-                    memcpy(hash_line.hash2, temp_buffer + filename_len + 1 + sizeof(hash_line.hash1), sizeof(hash_line.hash2));
-
-                    hash_ok = true;
-                }
-                else {
-                    std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
-                }
-            }
-            else {
-                if (verbose) {
-                    LOG(LOG_INFO, "Hash data v2 or plus");
-                }
-
-                struct ReaderBuf
-                {
-                    char    * remaining_data_buf;
-                    ssize_t   remaining_data_length;
-
-                    ssize_t read(char * buf, size_t len) {
-                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-                        if (number_of_bytes_to_read == 0) {
-                            return -1;
-                        }
-
-                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-                        this->remaining_data_buf    += number_of_bytes_to_read;
-                        this->remaining_data_length -= number_of_bytes_to_read;
-
-                        return number_of_bytes_to_read;
-                    }
-
-//                    ssize_t operator()(char * buf, size_t len) {
-//                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-//                        if (number_of_bytes_to_read == 0) {
-//                            return -1;
-//                        }
-
-//                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-//                        this->remaining_data_buf    += number_of_bytes_to_read;
-//                        this->remaining_data_length -= number_of_bytes_to_read;
-
-//                        return number_of_bytes_to_read;
-//                    }
-                };
-
-                detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
-                auto hash_header = detail::read_hash_headers(reader);
-
-                if (detail::read_hash_file_v2(reader, hash_header, infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
-                    if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
-                        hash_ok = true;
-                    }
-                    else {
-                        std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
-                    }
-                }
-            }
-        }
-        catch (Error const & e) {
-            std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
-        }
-        catch (...) {
-            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
-        }
-
-        if (hash_ok == false) {
-            return 1;
-        }
-    }
-
-    /******************
-    * Check mwrm file *
-    ******************/
-
-    const bool is_status_enabled = (infile_version > 1);
-    if (!check_mwrm_file_icrypto_filename_buf(fullfilename, infile_is_checksumed, is_status_enabled, hash_line,
-            (quick_check ? QUICK_CHECK_LENGTH : 0), cctx)) {
-        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
-
-        return 1;
-    }
-
-    std::cout << "No error detected during the data verification." << std::endl << std::endl;
-
-    return 0;
-}
-
-
-int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_filename,
-                                       std::string const & hash_path,
-                                       const char * fullfilename,
-                                       bool quick_check,
-                                       uint32_t verbose,
-                                       CryptoContext * cctx)
-{
-    unsigned infile_version = 1;
-    bool infile_is_checksumed = false;
-
-    {
-        transbuf::ifile_buf_meta ifile(cctx);
-        ifile.open(fullfilename);
-
-        struct ReaderBuf
-        {
-            transbuf::ifile_buf_meta & buf;
-
-            ssize_t read(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
-            }
-
-//            ssize_t operator()(char * buf, size_t len) const {
-//                return this->buf.read(buf, len);
-//            }
-        };
-
-        detail::ReaderLine<ReaderBuf> reader({ifile});
-        auto meta_header = detail::read_meta_headers(reader);
-
-        infile_version       = meta_header.version;
-        infile_is_checksumed = meta_header.has_checksum;
-    }
-
-    if (verbose) {
-        LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
-            (infile_is_checksumed ? "yes" : "no"));
-    }
-
+    // TODO: check compatibility of version and encryption
     if (infile_version < 2) {
         std::cout << "Input file is unencrypted.\n";
         return 0;
@@ -488,7 +604,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
         std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
 
         try {
-            transbuf::ifile_buf_meta in_hash_fb(cctx);
+            transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
             in_hash_fb.open(file_path);
             if (verbose) {
                 LOG(LOG_INFO, "File buffer created");
@@ -511,9 +627,9 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
                 //         ^
                 //         |
                 //     separator
-                if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) &&
-                    // Separator
-                    (temp_buffer[filename_len] == ' ')) {
+                if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) 
+                // Separator
+                &&  (temp_buffer[filename_len] == ' ')) {
 
                     if (verbose) {
                         LOG(LOG_INFO, "Copy hash");
@@ -530,7 +646,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
             }
             else {
                 if (verbose) {
-                    LOG(LOG_INFO, "Hash data v2 or plus");
+                    LOG(LOG_INFO, "Hash data v2 or higher");
                 }
 
                 struct ReaderBuf
@@ -538,7 +654,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
                     char    * remaining_data_buf;
                     ssize_t   remaining_data_length;
 
-                    ssize_t read(char * buf, size_t len) {
+                    ssize_t reader_read(char * buf, size_t len) {
                         ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
                         if (number_of_bytes_to_read == 0) {
                             return -1;
@@ -551,20 +667,6 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
 
                         return number_of_bytes_to_read;
                     }
-
-//                    ssize_t operator()(char * buf, size_t len) {
-//                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-//                        if (number_of_bytes_to_read == 0) {
-//                            return -1;
-//                        }
-
-//                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-//                        this->remaining_data_buf    += number_of_bytes_to_read;
-//                        this->remaining_data_length -= number_of_bytes_to_read;
-
-//                        return number_of_bytes_to_read;
-//                    }
                 };
 
                 detail::ReaderLine<ReaderBuf> reader({temp_buffer, number_of_bytes_read});
@@ -598,7 +700,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
 
     const bool is_status_enabled = (infile_version > 1);
     if (!check_mwrm_file_ifile_buf(fullfilename, infile_is_checksumed, is_status_enabled, hash_line,
-            (quick_check ? QUICK_CHECK_LENGTH : 0), cctx)) {
+            (quick_check ? QUICK_CHECK_LENGTH : 0), cctx, infile_is_encrypted)) {
         std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
 
         return 1;
@@ -609,7 +711,7 @@ int check_encrypted_or_checksumed_file_ifile_buf_meta(std::string const & input_
     return 0;
 }
 
-int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
+static inline int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
 {
     openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
 
@@ -713,15 +815,7 @@ int app_verifier(int argc, char ** argv, const char * copyright_notice, CryptoCo
         return 1;
     }
 
-    if (infile_is_encrypted) {
-        OpenSSL_add_all_digests();
-
-       return check_encrypted_or_checksumed_file_icrypto_filename_buf(
-            input_filename, hash_path, fullfilename, quick_check, verbose,
-            &cctx);
-    }
-    else {
-        return check_encrypted_or_checksumed_file_ifile_buf_meta(
-            input_filename, hash_path, fullfilename, quick_check, verbose, &cctx);
-    }
+    return check_encrypted_or_checksumed(
+                input_filename, hash_path, fullfilename,
+                quick_check, verbose, &cctx, infile_is_encrypted);
 }

@@ -63,6 +63,12 @@ enum {
 
 #define CRYPTO_BUFFER_SIZE ((4096 * 4))
 
+extern "C" {
+    typedef int get_crypto_key_from_cb_prototype(uint8_t * buffer);
+}
+
+
+
 /* 256 bits key size */
 #define CRYPTO_KEY_LENGTH 32
 #define HMAC_KEY_LENGTH   CRYPTO_KEY_LENGTH
@@ -72,7 +78,10 @@ class CryptoContext {
     bool crypto_key_loaded;
     unsigned char crypto_key[CRYPTO_KEY_LENGTH];
 
+
     public:
+    get_crypto_key_from_cb_prototype * get_crypto_key_from_cb;
+
     Random & gen;
     const Inifile & ini;
     int key_source; // 0: key from shm, 1: key from Ini file, 2: key in place
@@ -112,20 +121,6 @@ class CryptoContext {
                 "\x01\x02\x03\x04\x05\x06\x07\x08",
                 HMAC_KEY_LENGTH);
         }
-
-    void get_derivator(const char *const_file, unsigned char * derivator, int derivator_len)
-    {
-         // generate key derivator as SHA256(basename)
-         TODO("We should be able to get basename without using strdupa"
-              ", for instance start and ends pointers would do");
-        char * file = strdupa(const_file);
-        char * file_basename = basename(file);
-        SslSha256 sha256;
-        sha256.update(byte_ptr_cast(file_basename), strlen(file_basename));
-        uint8_t tmp[SHA256_DIGEST_LENGTH];
-        sha256.final(tmp, SHA256_DIGEST_LENGTH);
-        memcpy(derivator, tmp, derivator_len);
-    }
 
     void random(void * dest, size_t size) 
     {
@@ -202,6 +197,16 @@ class CryptoContext {
         }
         memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
         this->crypto_key_loaded = true;
+        // compute hmac
+        const unsigned char HASH_DERIVATOR[] = {
+             0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
+        };                
+        unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
+        unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
+        memcpy(tmp_derivation, HASH_DERIVATOR, DERIVATOR_LENGTH);
+        memcpy(tmp_derivation + DERIVATOR_LENGTH, this->crypto_key, CRYPTO_KEY_LENGTH);
+        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
+        memcpy(this->hmac_key, derivated, HMAC_KEY_LENGTH);
         return 0;
     }
 
@@ -244,6 +249,8 @@ class CryptoContext {
         memcpy(this->hmac_key, key, sizeof(this->hmac_key));
     }
 
+    
+
     const unsigned char * get_crypto_key()
     {
         if (not this->crypto_key_loaded)
@@ -252,10 +259,6 @@ class CryptoContext {
             case 0:
             {
                 this->get_crypto_key_from_shm();
-                const unsigned char HASH_DERIVATOR[] = {
-                     0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
-                };                
-                this->compute_hmac(this->hmac_key, HASH_DERIVATOR);
             }
             break;
             case 1:
@@ -264,6 +267,11 @@ class CryptoContext {
             case 2:
                 this->get_crypto_key_from_ini_derivated_hmac();
             break;
+            case 4:
+                if (this->get_crypto_key_from_cb){
+                    this->get_crypto_key_from_cb(this->crypto_key);
+                    break;
+                }
             default:
             {
                 LOG(LOG_ERR, "Failed to get cryptographic key, using default key\n");
@@ -274,18 +282,6 @@ class CryptoContext {
             this->crypto_key_loaded = true;
         }
         return &(this->crypto_key[0]);
-    }
-
-    int compute_hmac(unsigned char * hmac, const unsigned char * derivator)
-    {
-        unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-        unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-        memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-        memcpy(tmp_derivation + DERIVATOR_LENGTH, this->get_crypto_key(), CRYPTO_KEY_LENGTH);
-        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-        memcpy(hmac, derivated, HMAC_KEY_LENGTH);
-
-        return 0;
     }
 };
 

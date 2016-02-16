@@ -78,7 +78,13 @@ public:
         }
         snprintf(prefix,  sizeof(prefix), "%s%s", path, basename);
 
-        this->in_trans = new InMetaSequenceTransport(static_cast<CryptoContext*>(nullptr), prefix, extension);
+        TODO("We don't know yet how to manage encryption for replay. For now its just not supported, rnd and ini will never be used");
+        LCGRandom rnd(0);
+        Inifile ini;
+        TODO("This use of cctx for replay will lead to memory leak because the object is never deallocated, fix that");
+        CryptoContext * cctx = new CryptoContext(rnd, ini, 1); // cctx will not be really used
+        this->in_trans = new InMetaSequenceTransport(cctx, prefix, extension, 0, 0);
+        
         
         
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;

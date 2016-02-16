@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     std::string targetIP(TARGET_IP); // 10.10.46.73
     int verbose(511);
     int argc(8);
-    char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
+    const char *argv[] = {"-n", "QA\\administrateur", "-pwd", "S3cur3!1nux", "-ip", TARGET_IP, "-p", "3389"}; 
     // test_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
 
     
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     std::cout << std::endl;
     std::cout << "FRONT TEST" << std::endl;
     
-    Front_Qt front(argv, argc, verbose);
+    Front_Qt front(const_cast<char**>(argv), argc, verbose);
     
     if (front._screen    != nullptr) { test_boost = true;}
     BOOST_CHECK_EQUAL(test_boost, true);

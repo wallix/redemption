@@ -22,7 +22,6 @@
 #ifndef REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
 #define REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
 
-#include "read_and_write.hpp"
 #include "exchange.hpp"
 
 #include <cerrno>
@@ -112,12 +111,55 @@ public:
 
     ssize_t read(void * data, size_t len) const
     {
-        return read_all(this->fd, data, len);
+        return this->read_all(data, len);
     }
+
+    ssize_t read_all(void * data, size_t len) const
+    {
+        size_t remaining_len = len;
+        while (remaining_len) {
+            ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+            if (ret < 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                // Error should still be there next time we try to read
+                if (remaining_len != len){
+                    return len - remaining_len;
+                }
+                return ret;
+            }
+            // We must exit loop or we will enter infinite loop
+            if (ret == 0){
+                break;
+            }
+            remaining_len -= ret;
+        }
+        return len - remaining_len;
+    }
+
 
     ssize_t write(const void * data, size_t len) const
     {
-        return write_all(this->fd, data, len);
+        return this->write_all(data, len);
+    }
+
+    ssize_t write_all(const void * data, size_t len) const
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
     }
 
     off64_t seek(off64_t offset, int whence) const
