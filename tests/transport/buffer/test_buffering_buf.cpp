@@ -62,39 +62,44 @@ BOOST_AUTO_TEST_CASE(TestOBufferingBuf)
     BOOST_CHECK_EQUAL("abcdefghijklmnopqrst01234567890123456789\n", os.str());
 }
 
-BOOST_AUTO_TEST_CASE(TestIBufferingBuf)
-{
-    const char * filename = "./test_buffering_buf.test";
-    char buf[11+10+6+5+4+3+2 + 1] = {0};
-    {
-        typedef transbuf::ibuffering_buf<transbuf::ifile_buf, 10> ibuffering_file;
+// Note: buffering_buf is not used and the test is not specific to "buffering"
+// this is a generic test that could apply to any buffer object.
+// Not very usefull (testing all possible implementations of buffer in another
+// that way test would be more interesting)
 
-        Inifile ini;
-        ini.set<cfg::crypto::key0>(cstr_array_view(
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        ));
-        ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+//BOOST_AUTO_TEST_CASE(TestIBufferingBuf)
+//{
+//    const char * filename = "./test_buffering_buf.test";
+//    char buf[11+10+6+5+4+3+2 + 1] = {0};
+//    {
+//        typedef transbuf::ibuffering_buf<transbuf::ifile_buf, 10> ibuffering_file;
 
-        LCGRandom rnd(0);
+//        Inifile ini;
+//        ini.set<cfg::crypto::key0>(cstr_array_view(
+//            "\x00\x01\x02\x03\x04\x05\x06\x07"
+//            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+//            "\x10\x11\x12\x13\x14\x15\x16\x17"
+//            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+//        ));
+//        ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
 
-        CryptoContext cctx(rnd, ini, 1);
+//        LCGRandom rnd(0);
 
-        ibuffering_file file(&cctx);
-        BOOST_CHECK(file.open(filename, 0644) > 0);
-        BOOST_CHECK_EQUAL(file.read(buf, 2), 2);
-        BOOST_CHECK_EQUAL(file.read(buf+2, 3), 3);
-        BOOST_CHECK_EQUAL(file.read(buf+2+3, 4), 4);
-        BOOST_CHECK_EQUAL(file.read(buf+2+3+4, 5), 5);
-        BOOST_CHECK_EQUAL(file.read(buf+2+3+4+5, 6), 6);
-        BOOST_CHECK_EQUAL(file.read(buf+2+3+4+5+6, 10), 10);
-        BOOST_CHECK_EQUAL(file.read(buf+2+3+4+5+6+10, 11), 11);
-        BOOST_CHECK_EQUAL(file.close(), 0);
-    }
+//        CryptoContext cctx(rnd, ini, 1);
 
-    BOOST_CHECK_EQUAL("abcdefghijklmnopqrst01234567890123456789\n", std::string(buf));
+//        ibuffering_file file(&cctx);
+//        BOOST_CHECK(file.open(filename, 0644) > 0);
+//        BOOST_CHECK_EQUAL(file.read(buf, 2), 2);
+//        BOOST_CHECK_EQUAL(file.read(buf+2, 3), 3);
+//        BOOST_CHECK_EQUAL(file.read(buf+2+3, 4), 4);
+//        BOOST_CHECK_EQUAL(file.read(buf+2+3+4, 5), 5);
+//        BOOST_CHECK_EQUAL(file.read(buf+2+3+4+5, 6), 6);
+//        BOOST_CHECK_EQUAL(file.read(buf+2+3+4+5+6, 10), 10);
+//        BOOST_CHECK_EQUAL(file.read(buf+2+3+4+5+6+10, 11), 11);
+//        BOOST_CHECK_EQUAL(file.close(), 0);
+//    }
 
-    unlink(filename);
-}
+//    BOOST_CHECK_EQUAL("abcdefghijklmnopqrst01234567890123456789\n", std::string(buf));
+
+//    unlink(filename);
+//}

@@ -19,6 +19,11 @@
 
     rdp transparent analyzer module main header file
 */
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <string>

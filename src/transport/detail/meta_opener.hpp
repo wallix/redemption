@@ -43,7 +43,7 @@
 
 namespace detail
 {
-    char chex_to_int(char c, int & err) {
+    inline char chex_to_int(char c, int & err) {
         return
             '0' <= c && c <= '9' ? c-'0'
           : 'a' <= c && c <= 'f' ? c-'a' + 10
@@ -61,7 +61,7 @@ namespace detail
 
         int read(int err)
         {
-            ssize_t ret = this->reader.read(this->buf, sizeof(this->buf));
+            ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
             }
@@ -263,7 +263,7 @@ namespace detail
         return 0;
     }
 
-    char const * sread_filename(char * p, char const * e, char const * pline)
+    static inline char const * sread_filename(char * p, char const * e, char const * pline)
     {
         e -= 1;
         for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {

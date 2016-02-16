@@ -515,9 +515,9 @@ private:
     void getDeadKeys() {
         
         switch (scanCode) {
-            case Qt::Key_Dead_Circumflex       : this->scanCode = '^';  this->_deadKeys = true; break; //  ^
-            case Qt::Key_Dead_Grave            : this->scanCode = '`';  this->_deadKeys = true; break; //  ` grave
-            case Qt::Key_Dead_Tilde            : this->scanCode = '~';  this->_deadKeys = true; break; //
+            case Qt::Key_Dead_Circumflex       : this->scanCode = 0x5E; this->_deadKeys = true; break; //  ^
+            case Qt::Key_Dead_Grave            : this->scanCode = 0x60; this->_deadKeys = true; break; //  ` grave
+            case Qt::Key_Dead_Tilde            : this->scanCode = 0x7E; this->_deadKeys = true; break; //
             case Qt::Key_Dead_Diaeresis        : this->scanCode = 0xA8; this->_deadKeys = true; break; // ¨
             case Qt::Key_Dead_Acute            : this->scanCode = 0xB4; this->_deadKeys = true; break; //
             case Qt::Key_Dead_Macron           : this->scanCode = 0xAF; this->_deadKeys = true; break; //

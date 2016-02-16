@@ -69,7 +69,7 @@
 #include "client_info.hpp"
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
-#include <QtGui/QImage>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QImage>
  
 
 

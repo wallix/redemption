@@ -27,31 +27,31 @@
 #include "rdp/rdp.hpp"
 #include "../src/front/front_Qt.hpp"
 
-#include <QtWidgets/QWidget>
-#include <QtWidgets/QLabel>
-#include <QtGui/QPainter>
-#include <QtGui/QColor>
-#include <QtWidgets/QDesktopWidget>
-#include <QtWidgets/QApplication>
-#include <QtGui/QMouseEvent>
-#include <QtGui/QWheelEvent>
-#include <QtCore/QSocketNotifier>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QFormLayout>
-#include <QtWidgets/QDialog>
-#include <QtWidgets/QPushButton>
-#include <QtGui/QClipboard>
-#include <QtWidgets/QTabWidget>
-#include <QtWidgets/QGridLayout>
-#include <QtWidgets/QComboBox>
-#include <QtWidgets/QCheckBox>
-#include <QtWidgets/QScrollArea>
-#include <QtWidgets/QTableWidget>
-#include <QtCore/QList>
-#include <QtCore/QStringList>
-#include <QtWidgets/QGraphicsScene>
-#include <QtWidgets/QGraphicsView>
-#include <QtCore/QTimer>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QLabel>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QPainter>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QColor>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QDesktopWidget>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QApplication>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QMouseEvent>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QWheelEvent>
+#include </usr/include/x86_64-linux-gnu/qt5/QtCore/QSocketNotifier>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QLineEdit>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QFormLayout>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QDialog>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QPushButton>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QClipboard>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QTabWidget>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGridLayout>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QComboBox>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QCheckBox>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QScrollArea>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QTableWidget>
+#include </usr/include/x86_64-linux-gnu/qt5/QtCore/QList>
+#include </usr/include/x86_64-linux-gnu/qt5/QtCore/QStringList>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGraphicsScene>
+#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGraphicsView>
+#include </usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer>
 
 #define KEY_SETTING_PATH "keySetting.config"
 

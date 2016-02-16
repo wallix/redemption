@@ -34,7 +34,9 @@ class CryptoTrace:
             raise TraceIntegrityError("Flush failed")
         return flush_ret
     def write(self, data):
+#        print "CryptoTrace.write"
         write_ret = redcryptofile.write(self._fd, data)
+#        print "CryptoTrace.write ->", write_ret
         if write_ret == -1:
             raise TraceIntegrityError("Write failed")
         return write_ret
