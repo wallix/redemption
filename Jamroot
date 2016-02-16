@@ -994,16 +994,16 @@ unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_
 
 
 
-explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
-#explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
+#explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
+explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
 using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ;
 
-#obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp 
-#    :
-#        <include>/usr/include/x86_64-linux-gnu/qt5 
-#        <cxxflags>-fPIC
-#    ; 
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp 
+    :
+        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <cxxflags>-fPIC
+    ; 
 obj front_Qt.o : src/front/front_Qt.cpp :  
     :
         <include>/usr/include/x86_64-linux-gnu/qt5 
@@ -1020,8 +1020,7 @@ exe test_rdp_Qt :
     src/utils/bitmap_data_allocator.cpp
     src/front/front_widget_Qt.hpp
     src/front/front_Qt.cpp
-    #tests/mod/rdp/test_rdp_Qt.cpp #
-    #test_rdp_Qt.o #
+    tests/mod/rdp/test_rdp_Qt.cpp #
     /qt5//QtGui 
     /qt5//QtNetwork 
     /qt5//QtWidgets 
