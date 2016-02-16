@@ -694,7 +694,8 @@ public:
         , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
-        , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher)
+        , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
+                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)))
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -762,6 +763,8 @@ public:
 
             mod_rdp_params.log();
         }
+
+
 
         if (this->enable_session_probe) {
             this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
@@ -944,12 +947,22 @@ public:
             replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}",
                 exe_var_str);
 
+            if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
+                (mod_rdp_params.target_application && (*mod_rdp_params.target_application))) {
+                REDASSERT(!this->session_probe_use_clipboard_based_launcher);
+
+                LOG(LOG_WARNING,
+                    "mod_rdp: "
+                        "Clipboard based Session Probe launcher is not compatible with application."
+                        "Falled back to using AlternateShell based launcher.");
+            }
+
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
             this->session_probe_target_informations += mod_rdp_params.auth_user;
 
-            if (mod_rdp_params.session_probe_use_clipboard_based_launcher) {
+            if (this->session_probe_use_clipboard_based_launcher) {
                 replace_tag(this->session_probe_alternate_shell,
                     " /${COOKIE_VAR}", "");
 
