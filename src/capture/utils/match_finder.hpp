@@ -43,14 +43,10 @@ public:
 
     class NamedRegexArray {
         std::unique_ptr<NamedRegex[]> regexes;
-        size_t                        len;
+        size_t                        len = 0;
 
     public:
         typedef NamedRegex * iterator;
-
-        NamedRegexArray()
-        : len(0)
-        {}
 
         void resize(size_t newlen)
         {
@@ -60,6 +56,7 @@ public:
 
         void shrink(size_t newlen)
         {
+            assert(newlen <= this->len);
             if (!newlen) {
                 this->regexes.reset();
             }
@@ -71,6 +68,12 @@ public:
 
         NamedRegex * end() const
         { return this->regexes.get() + this->len; }
+
+        size_t size() const
+        { return this->len; }
+
+        bool empty() const
+        { return !this->len; }
     };
 
     enum ConfigureRegexes {
@@ -79,7 +82,8 @@ public:
     };
 
     static void configure_regexes(ConfigureRegexes conf_regex, const char * filters_list,
-                                  NamedRegexArray & regexes_filter_ref, int verbose)
+                                  NamedRegexArray & regexes_filter_ref, int verbose,
+                                  bool is_capturing = false)
     {
         char * tmp_filters = new(std::nothrow) char[strlen(filters_list) + 1];
         if (!tmp_filters) {
@@ -150,6 +154,7 @@ public:
         }
 
         if (filter_number) {
+            std::string capturing_regex;
             regexes_filter_ref.resize(filter_number);
             NamedRegex * pregex = regexes_filter_ref.begin();
             for (unsigned i = 0; i < filter_number; i++) {
@@ -157,7 +162,15 @@ public:
                     LOG(LOG_INFO, "Regex=\"%s\"", filters[i]);
                 }
                 pregex->name = filters[i];
-                pregex->regex.reset(filters[i]);
+                if (is_capturing) {
+                    capturing_regex = '(';
+                    capturing_regex += filters[i];
+                    capturing_regex += ')';
+                    pregex->regex.reset(capturing_regex.c_str());
+                }
+                else {
+                    pregex->regex.reset(filters[i]);
+                }
                 if (pregex->regex.message_error()) {
                     TODO("notification that the regex is too complex for us");
                     LOG(LOG_ERR, "Regex: %s err %s at position %zu" , filters[i],

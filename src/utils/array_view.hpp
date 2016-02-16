@@ -104,25 +104,28 @@ private:
 
 
 template<class T>
-array_view<T> make_array_view(T * x, std::size_t n)
+constexpr array_view<T> make_array_view(T * x, std::size_t n)
 { return {x, n}; }
 
 template<class T, std::size_t N>
-array_view<T> make_array_view(T (&arr)[N])
+constexpr array_view<T> make_array_view(T (&arr)[N])
 { return {arr, N}; }
 
+template<class Cont>
+constexpr auto make_array_view(Cont & cont) -> array_view<decltype(cont.data())>
+{ return {cont.data(), cont.size()}; }
 
 template<class T>
-array_view<T const> make_const_array_view(T const * x, std::size_t n)
+constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n)
 { return {x, n}; }
 
 template<class T, std::size_t N>
-array_view<T const> make_const_array_view(T const (&arr)[N])
+constexpr array_view<T const> make_const_array_view(T const (&arr)[N])
 { return {arr, N}; }
 
 
 template<std::size_t N>
-array_view<char const> cstr_array_view(char const (&str)[N])
+constexpr array_view<char const> cstr_array_view(char const (&str)[N])
 { return {str, N-1}; }
 
 template<std::size_t N>

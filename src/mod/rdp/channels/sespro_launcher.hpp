@@ -18,19 +18,34 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_LOG_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_LOG_HPP_
+#ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP
+#define REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP
 
-#define MODRDP_LOGLEVEL_FSDRVMGR            0x00002000
-#define MODRDP_LOGLEVEL_SESPROBE_LAUNCHER   0x00004000
-#define MODRDP_LOGLEVEL_SESPROBE_REPETITIVE 0x00008000
+#include "core/wait_obj.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
 
-#define MODRDP_LOGLEVEL_SESPROBE            0x02000000
-#define MODRDP_LOGLEVEL_CLIPRDR             0x04000000
-#define MODRDP_LOGLEVEL_RDPDR               0x08000000
+class SessionProbeLauncher {
+public:
+    virtual ~SessionProbeLauncher() = default;
 
-#define MODRDP_LOGLEVEL_SESPROBE_DUMP       0x20000000
-#define MODRDP_LOGLEVEL_CLIPRDR_DUMP        0x40000000
-#define MODRDP_LOGLEVEL_RDPDR_DUMP          0x80000000
+    virtual wait_obj* get_event() = 0;
 
-#endif  // #ifndef _REDEMPTION_MOD_RDP_RDP_LOG_HPP_
+    virtual bool on_clipboard_initialize() = 0;
+
+    virtual bool on_drive_access() = 0;
+
+    virtual bool on_event() = 0;
+
+    virtual bool on_image_read(uint64_t offset, uint32_t length) = 0;
+
+    virtual bool on_server_format_data_request() = 0;
+
+    virtual bool on_server_format_list_response() = 0;
+
+    virtual void set_session_probe_virtual_channel(
+        BaseVirtualChannel* channel) = 0;
+
+    virtual void stop() = 0;
+};
+
+#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP

@@ -868,10 +868,15 @@ public:
                 mod_rdp_params.enable_glyph_cache                  = this->ini.get<cfg::globals::glyph_cache>();
 
                 mod_rdp_params.enable_session_probe                = this->ini.get<cfg::mod_rdp::enable_session_probe>();
-                mod_rdp_params.enable_session_probe_loading_mask   = this->ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>();
+                mod_rdp_params.enable_session_probe_launch_mask    = this->ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>();
+
+                mod_rdp_params.session_probe_use_clipboard_based_launcher
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
                 mod_rdp_params.session_probe_launch_timeout        = this->ini.get<cfg::mod_rdp::session_probe_launch_timeout>();
                 mod_rdp_params.session_probe_launch_fallback_timeout
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>();
+                mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>();
                 mod_rdp_params.session_probe_on_launch_failure     = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
                 mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user =

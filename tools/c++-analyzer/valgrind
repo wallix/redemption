@@ -3,7 +3,7 @@
 cd "$(dirname "$0")"/../..
 
 TEMP=`getopt -o hd: --long help -n "$0" -- "$@"`
-[ $? != 0 ] && exit 1
+[ $? -ne 0 ] && exit 1
 
 eval set -- "$TEMP"
 
