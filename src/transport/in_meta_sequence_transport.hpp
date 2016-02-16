@@ -159,22 +159,9 @@ struct InMetaSequenceTransport : public Transport
             }
 
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            uint8_t tmp[SHA256_DIGEST_LENGTH];
-
-            {
-                size_t len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, len));
-                SslSha256 sha256;
-                sha256.update(base, len);
-                sha256.final(tmp, SHA256_DIGEST_LENGTH);
-            }
-            {
-                SslSha256 sha256;
-                sha256.update(tmp, DERIVATOR_LENGTH);
-                sha256.update(this->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-                sha256.final(tmp, SHA256_DIGEST_LENGTH);
-            }
-            memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+            this->cctx->get_derived_key(trace_key, base, base_len);
 
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -455,22 +442,9 @@ struct InMetaSequenceTransport : public Transport
         {
             if (encryption){
                 unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-                unsigned char derivator[DERIVATOR_LENGTH];
-                size_t len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, len));
-                SslSha256 sha256;
-                sha256.update(base, len);
-                uint8_t tmp[SHA256_DIGEST_LENGTH];
-                sha256.final(tmp, SHA256_DIGEST_LENGTH);
-                memcpy(derivator, tmp, DERIVATOR_LENGTH);
-                
-                unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-                unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-                memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-                memcpy(tmp_derivation + DERIVATOR_LENGTH, 
-                       this->cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-                SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-                memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
+                size_t base_len = 0;
+                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, base_len));
+                this->cctx->get_derived_key(trace_key, base, base_len);
                 
                 this->file_close();
                 this->file_fd = ::open(meta_filename, O_RDONLY);

@@ -249,7 +249,23 @@ class CryptoContext {
         memcpy(this->hmac_key, key, sizeof(this->hmac_key));
     }
 
-    
+    void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
+    {
+        uint8_t tmp[SHA256_DIGEST_LENGTH];
+        {
+            SslSha256 sha256;
+            sha256.update(derivator, derivator_len);
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        }
+        {
+            SslSha256 sha256;
+            sha256.update(tmp, DERIVATOR_LENGTH);
+            sha256.update(this->get_crypto_key(), CRYPTO_KEY_LENGTH);
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        }
+        memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+    }
+
 
     const unsigned char * get_crypto_key()
     {

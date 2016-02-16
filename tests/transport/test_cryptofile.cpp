@@ -780,19 +780,17 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
     const char * file = "tests/fixtures/encrypted_video/"
         "x@10.10.43.13,qaadministrateur@win78,20131211-085926,wab2-4-0-0.yourdomain,5423.rdptrc";
 
+    unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
     unsigned char derivator[DERIVATOR_LENGTH];
-    size_t len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(file, len));
+    size_t base_len = 0;
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(file, base_len));
     SslSha256 sha256;
-    sha256.update(base, len);
+    sha256.update(base, base_len);
     uint8_t tmp[SHA256_DIGEST_LENGTH];
     sha256.final(tmp, SHA256_DIGEST_LENGTH);
     memcpy(derivator, tmp, DERIVATOR_LENGTH);
 
     BOOST_CHECK(0 == memcmp("\xdc\x07\x64\x92\xda\x52\xfe\xa9", derivator, DERIVATOR_LENGTH));
-
-    unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-    
     unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
     unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
     memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
@@ -802,7 +800,10 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
 
 /*    LOG(LOG_INFO, "Dumping trace_key");*/
 
-    BOOST_CHECK(true);
+    unsigned char trace_key2[CRYPTO_KEY_LENGTH]; // derived key for cipher
+    cctx.get_derived_key(trace_key2, base, base_len);
+    BOOST_CHECK(0 == memcmp(trace_key, trace_key2, HMAC_KEY_LENGTH));
+
 /*    hexdump_c(trace_key, CRYPTO_KEY_LENGTH);*/
 
     BOOST_CHECK(true);
