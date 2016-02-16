@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -415,7 +415,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -656,7 +656,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -737,7 +737,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
                           "shell_working_directory=C:\\WINDOWS\\\n"
                           "enable_session_probe=true\n"
-                          "enable_session_probe_loading_mask=false\n"
+                          "enable_session_probe_launch_mask=false\n"
                           "session_probe_launch_timeout=0\n"
                           "session_probe_keepalive_timeout=0\n"
                           "\n"
@@ -900,7 +900,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1118,7 +1118,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1309,7 +1309,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1507,7 +1507,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1679,7 +1679,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1851,7 +1851,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::ignore_and_continue,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -2011,7 +2011,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -2171,7 +2171,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_loading_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
     BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
