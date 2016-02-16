@@ -203,6 +203,11 @@ public:
                     add_to_fd_set(*asynchronous_task_event, asynchronous_task_fd, rfds, max, timeout);
                 }
 
+                wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
+                if (session_probe_launcher_event) {
+                    add_to_fd_set(*session_probe_launcher_event, -1, rfds, max, timeout);
+                }
+
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.allocated_ssl));
                 if (has_pending_data)
                     memset(&timeout, 0, sizeof(timeout));
@@ -273,6 +278,15 @@ public:
                                                                             rfds));
                         if (asynchronous_task_event_is_set) {
                             mm.mod->process_asynchronous_task();
+                        }
+
+                        session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
+                        const bool session_probe_launcher_event_is_set = (session_probe_launcher_event &&
+                                                                          is_set(*session_probe_launcher_event,
+                                                                                 asynchronous_task_fd,
+                                                                                 rfds));
+                        if (session_probe_launcher_event_is_set) {
+                            mm.mod->process_session_probe_launcher();
                         }
 
                         // Process incoming module trafic

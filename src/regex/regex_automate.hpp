@@ -1208,7 +1208,7 @@ namespace re {
                 count_consume_is_one = seq.len == 1;
                 return (*s && consumer.valid())
                 ? 0
-                : s - (seq.s + pos) + (size_t(s - seq.s) == seq.len ? 0 : 1);
+                : s - (seq.s + pos) + ((size_t(s - seq.s) == seq.len) ? 0 : 1);
             }
             return 0;
         }
@@ -1286,9 +1286,17 @@ namespace re {
                         const StateList & stl = *ifirst->stl;
 
                         if (active_part_of_text && ifirst->real_count_consume != stl.st->data.sequence.len) {
-                            count_consume = this->part_of_text_search_check(*stl.st,
-                                                                            ifirst->real_count_consume,
-                                                                            c, consumer, count_consume_is_one);
+                            {
+                                unsigned pos = ifirst->real_count_consume;
+                                const Sequence & seq = stl.st->data.sequence;
+                                if (c == seq.s[pos]) {
+                                    count_consume = 1;
+                                    count_consume_is_one = seq.len == 1;
+                                }
+                                else {
+                                    count_consume = 0;
+                                }
+                            }
 
                             if (!count_consume || (count_consume_is_one && !stl.next && consumer.valid() && (exact_match || stl.is_terminate))) {
                                 if (g_trace_active && stl.next) {
@@ -1299,8 +1307,11 @@ namespace re {
 
                             RE_SHOW(this->display_elem_state_list(stl, active_capture ? ifirst->idx : 0));
 
-                            ifirst->consume = count_consume - 1;
-                            ifirst->real_count_consume += count_consume - 1;
+                            ifirst->consume = count_consume;
+                            ifirst->real_count_consume += count_consume;
+                            if (stl.st->data.sequence.len == ifirst->real_count_consume) {
+                                ifirst->consume = 0;
+                            }
 
                             if (active_capture && count_consume_is_one) {
                                 if (!this->set_trace_close(ifirst->idx, ifirst->num_close, tracer)) {
@@ -1310,7 +1321,7 @@ namespace re {
 
                             if (((exact_match ? stl.next_is_finish && !consumer.valid() : stl.next_is_finish)
                                 && (stl.st->type != SEQUENCE
-                                 || stl.st->data.sequence.len+1 == ifirst->real_count_consume))
+                                 || stl.st->data.sequence.len == ifirst->real_count_consume))
                             || (stl.is_terminate && count_consume_is_one)) {
                                 const unsigned ret = (active_capture ? ifirst->idx : 0);
                                 if (ret != -1u) {
@@ -1347,6 +1358,15 @@ namespace re {
                                 ifirst->consume = 0;
                             }
                         }
+                    }
+                    else if (active_part_of_text && ifirst->real_count_consume) {
+                        const StateList & stl = *ifirst->stl;
+                        unsigned pos = ifirst->real_count_consume;
+                        const Sequence & seq = stl.st->data.sequence;
+                        if (c != seq.s[pos]) {
+                            continue;
+                        }
+                        ++ifirst->real_count_consume;
                     }
 
                     RE_SHOW(std::cout << "\t\033[35mreinsert (" << ifirst->consume << ")");
@@ -1404,7 +1424,7 @@ namespace re {
                         sr.stl = first;
                         sr.consume = count_consume - 1;
                         if (active_part_of_text) {
-                            sr.real_count_consume = count_consume - 1;
+                            sr.real_count_consume = 1;
                         }
 
                         if (active_capture) {
@@ -1417,7 +1437,11 @@ namespace re {
                                 l2.pop();
                                 continue ;
                             }
-                            if (count_consume_is_one && !this->set_trace_close(idx, first->num_close, tracer)){
+                            if ((
+                                count_consume_is_one ||
+                                (first->st->type == SEQUENCE &&
+                                 first->st->data.sequence.len == count_consume)
+                            ) && !this->set_trace_close(idx, first->num_close, tracer)) {
                                 l2.pop();
                                 continue ;
                             }

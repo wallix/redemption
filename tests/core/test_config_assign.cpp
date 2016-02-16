@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::enable_kerberos>(true);
     ini.set<cfg::mod_rdp::enable_nla>(true);
     ini.set<cfg::mod_rdp::enable_session_probe>(true);
-    ini.set<cfg::mod_rdp::enable_session_probe_loading_mask>(true);
+    ini.set<cfg::mod_rdp::enable_session_probe_launch_mask>(true);
     ini.set<cfg::mod_rdp::extra_orders>(cslist);
     ini.set<cfg::mod_rdp::extra_orders>(slist);
     ini.set<cfg::mod_rdp::fast_path>(true);
