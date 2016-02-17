@@ -817,8 +817,13 @@ class Sesman():
                     else:   # localfile_hashed
                         data_to_send[u"trace_type"] = u'1'
 
+                    derivator = os.path.basename(self.full_path) + u".mwrm"
+                    Logger().info(u"derivator='%s'" % derivator)
+                    encryption_key = self.engine.get_trace_encryption_key(derivator, True)
+                    data_to_send[u"crypto_key"] = "".join("{:02x}".format(ord(c)) for c in encryption_key)
+
                     sign_key = self.engine.get_trace_sign_key()
-                    #data_to_send[u"crypto_key"] = "".join("{:02x}".format(ord(c)) for c in sign_key)
+                    data_to_send[u"hmac_key"] = "".join("{:02x}".format(ord(c)) for c in sign_key)
 
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
                     data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)

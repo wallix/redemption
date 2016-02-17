@@ -98,6 +98,7 @@ enum authid_t {
     AUTHID_CONTEXT_OPT_MESSAGE,
     AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES,
     AUTHID_CONTEXT_CRYPTO_KEY,
+    AUTHID_CONTEXT_HMAC_KEY,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -201,5 +202,6 @@ constexpr char const * const authstr[] = {
     "opt_message",
     "outbound_connection_blocking_rules",
     "crypto_key",
+    "hmac_key",
 };
 
