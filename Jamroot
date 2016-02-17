@@ -513,6 +513,7 @@ lib libredver
 
         snappy
     :
+        <cxxflags>-fPIC
         <cxxflags>-fvisibility=hidden
     ;
 
