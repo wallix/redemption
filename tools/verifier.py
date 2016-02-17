@@ -3,19 +3,27 @@
 import ctypes
 import ctypes.util
 
-GETKEY = ctypes.CFUNCTYPE(ctypes.c_char_p)
+GETHMACKEY = ctypes.CFUNCTYPE(ctypes.c_char_p)
 
-def get_key():
+GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int)
+
+def get_hmac_key():
     return "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F"
 
-get_key_func = GETKEY(get_key)
+def get_trace_key(base, lg):
+    return "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F"
+
+
+get_hmac_key_func = GETKEY(get_hmac_key)
+
+get_trace_key_func = GETKEY(get_trace_key)
 
 try:
 #    libpath = ctypes.util.find_library('libredver')
     libredver = ctypes.CDLL('/usr/lib/libredver.so')
 
     # int do_main(int argc, char ** argv)
-    libredver.do_main.argtypes = [ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETKEY]
+    libredver.do_main.argtypes = [ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
     libredver.do_main.restype = ctypes.c_int
 
     #myargv = ctypes.c_char_p * 2
