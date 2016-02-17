@@ -821,7 +821,7 @@ public:
         const std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
         
         //std::cout << name << " " << this->_front->_pwd << " " << this->_front->_targetIP.c_str() << " " << this->_front->_port << std::endl;
-
+        
         this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay, this->_front->verbose);
 
         if (this->_client_sck > 0) {
@@ -852,13 +852,15 @@ public:
     }
     
     void listen() {
+        std::cout << "1" << std::endl;
         const char * name(this->_front->_userName.c_str());      
         const char * pwd(this->_front->_pwd.c_str()); 
         const char * targetIP(this->_front->_targetIP.c_str());         
         const char * localIP(this->_front->_localIP.c_str());
         
-        
+        std::cout << "2" << std::endl;
         Inifile ini;
+        std::cout << "3" << std::endl;
         ModRDPParams mod_rdp_params( name
                                     , pwd
                                     , targetIP
@@ -883,15 +885,19 @@ public:
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
         std::string allow_channels = "*";
-        mod_rdp_params.allow_channels                    = &allow_channels;        
+        mod_rdp_params.allow_channels                    = &allow_channels;    
+        std::cout << "4" << std::endl;
         LCGRandom gen(0); // To always get the same client random, in tests
+        std::cout << "5" << std::endl;
 
         try {
+            std::cout << "6" << std::endl;
             this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             this->_front->_to_server_sender._callback = this->_callback;
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
+            std::cout << "listen" << std::endl;
             
         } catch (const Error & e) {
             const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is closed.");

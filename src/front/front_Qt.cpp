@@ -302,7 +302,113 @@ void Front_Qt::connexionReleased(){
     this->_targetIP =  this->_form->get_IPField();
     this->_pwd      =  this->_form->get_PWDField();
     this->_port     =  this->_form->get_portField();
-    this->connect();
+    
+    if (strcmp(this->_targetIP.c_str(), "") != 0){
+        this->connect();
+    }
+}
+
+void Front_Qt::mousePressEvent(QMouseEvent *e) {
+    if (this->_callback != nullptr) {
+        int flag(0); 
+        switch (e->button()) {
+            case 1: flag = MOUSE_FLAG_BUTTON1; break;
+            case 2: flag = MOUSE_FLAG_BUTTON2; break; 
+            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            default: break; 
+        }
+        //std::cout << "mousePressed" << std::endl;
+        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &(this->_keymap));
+    } 
+}
+    
+void Front_Qt::mouseReleaseEvent(QMouseEvent *e) {
+    if (this->_callback != nullptr) {
+        int flag(0); 
+        switch (e->button()) {
+            case 1: flag = MOUSE_FLAG_BUTTON1; break; 
+            case 2: flag = MOUSE_FLAG_BUTTON2; break; 
+            case 4: flag = MOUSE_FLAG_BUTTON4; break; 
+            default: break;
+        }
+        //std::cout << "mouseRelease" << std::endl;
+        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
+    }
+}
+    
+void Front_Qt::keyPressEvent(QKeyEvent *e) { 
+    this->_qtRDPKeymap.keyEvent(0       ,      e);
+    if (this->_qtRDPKeymap.scanCode != 0) {
+        this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
+    }
+}
+    
+void Front_Qt::keyReleaseEvent(QKeyEvent *e) {
+    this->_qtRDPKeymap.keyEvent(0x8000, e);
+    if (this->_qtRDPKeymap.scanCode != 0) {
+        this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
+    }
+}
+    
+void Front_Qt::wheelEvent(QWheelEvent *e) {
+    //std::cout << "wheel " << " delta=" << e->delta() << std::endl;
+    int flag(MOUSE_FLAG_HWHEEL);
+    if (e->delta() < 0) {
+        flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
+    }
+    if (this->_callback != nullptr) {
+        //this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
+    }
+}
+    
+bool Front_Qt::eventFilter(QObject *obj, QEvent *e)  {
+    if (e->type() == QEvent::MouseMove)
+    {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
+        //std::cout << "MouseMove " <<  mouseEvent->x() << " " <<  mouseEvent->y()<< std::endl;
+        if (this->_callback != nullptr) {
+            this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));  
+        }
+    }
+    return false;
+}
+    
+void Front_Qt::connexionPressed() {}
+
+void Front_Qt::RefreshPressed() {
+    this->refresh(0, 0, this->_info.width, this->_info.height);
+}
+    
+void Front_Qt::RefreshReleased() {}
+    
+void Front_Qt::CtrlAltDelPressed() {
+    int flag = Keymap2::KBDFLAGS_EXTENDED;
+
+    this->send_rdp_scanCode(0x38, flag);  // ALT
+    this->send_rdp_scanCode(0x1D, flag);  // CTRL
+    this->send_rdp_scanCode(0x53, flag);  // DELETE       
+}
+    
+void Front_Qt::CtrlAltDelReleased() {
+    int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
+    
+    this->send_rdp_scanCode(0x38, flag);  // ALT
+    this->send_rdp_scanCode(0x1D, flag);  // CTRL
+    this->send_rdp_scanCode(0x53, flag);  // DELETE  
+}
+    
+void Front_Qt::disconnexionPressed() {}
+    
+void Front_Qt::refresh(int x, int y, int w, int h) {
+    Rect rect(x, y, w, h);
+    this->_callback->rdp_input_invalidate(rect);
+}
+
+void Front_Qt::send_rdp_scanCode(int keyCode, int flag) {
+    this->_keymap.event(flag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
+    if (this->_callback != nullptr) {
+        this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap)); 
+    }
 }
 
 
@@ -865,7 +971,205 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
     }
 }
     
-   
+void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "RDPDestBlt" << std::endl;
+}
+
+void Front_Qt::draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "RDPMultiDstBlt" << std::endl;
+}
+
+void Front_Qt::draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "RDPMultiOpaqueRect" << std::endl;
+}
+
+void Front_Qt::draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "RDPMultiPatBlt" << std::endl;
+}
+
+void Front_Qt::draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "RDPMultiScrBlt" << std::endl;
+}
+
+void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "RDPGlyphIndex" << std::endl;
+
+    /* RDPGlyphIndex new_cmd24 = cmd;
+    new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+    new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);*/
+    //this->gd.draw(new_cmd24, clip, gly_cache);
+}
+
+void Front_Qt::draw(const RDPPolygonSC & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "RDPPolygonSC" << std::endl;
+
+    /*RDPPolygonSC new_cmd24 = cmd;
+    new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);*/
+    //this->gd.draw(new_cmd24, clip);
+}
+
+void Front_Qt::draw(const RDPPolygonCB & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "RDPPolygonCB" << std::endl;
+
+    /*RDPPolygonCB new_cmd24 = cmd;
+    new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
+    new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);*/
+    //this->gd.draw(new_cmd24, clip);
+}
+
+void Front_Qt::draw(const RDPPolyline & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "RDPPolyline" << std::endl;
+
+    /*RDPPolyline new_cmd24 = cmd;
+    new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);*/
+    //this->gd.draw(new_cmd24, clip);
+}
+
+void Front_Qt::draw(const RDPEllipseSC & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "RDPEllipseSC" << std::endl;
+
+    /*RDPEllipseSC new_cmd24 = cmd;
+    new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);*/
+    //this->gd.draw(new_cmd24, clip);
+}
+
+void Front_Qt::draw(const RDPEllipseCB & cmd, const Rect & clip) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        cmd.log(LOG_INFO, clip);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "RDPEllipseCB" << std::endl;
+/*
+    RDPEllipseCB new_cmd24 = cmd;
+    new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+    new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);*/
+    //this->gd.draw(new_cmd24, clip);
+}
+
+void Front_Qt::draw(const RDP::FrameMarker & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "FrameMarker" << std::endl;
+    //this->gd.draw(order);
+}
+
+void Front_Qt::draw(const RDP::RAIL::NewOrExistingWindow & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "NewOrExistingWindow" << std::endl;
+    //this->gd.draw(order);
+}
+
+void Front_Qt::draw(const RDP::RAIL::WindowIcon & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "WindowIcon" << std::endl;
+    //this->gd.draw(order);
+}
+
+void Front_Qt::draw(const RDP::RAIL::CachedIcon & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+        std::cout << "CachedIcon" << std::endl;
+
+    //this->gd.draw(order);
+}
+
+void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+    
+    std::cout << "DeletedWindow" << std::endl;
+
+    //this->gd.draw(order);
+}
+    
+void Front_Qt::draw(const RDPColCache   & cmd) {}
+    
+void Front_Qt::draw(const RDPBrushCache & cmd) {}
+    
+    
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
     
@@ -902,7 +1206,69 @@ void Front_Qt::server_set_pointer(const Pointer & cursor) {
 
 }
 
+void Front_Qt::flush() {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        LOG(LOG_INFO, "flush()");
+        LOG(LOG_INFO, "========================================\n"); 
+    }
+}
+
+const CHANNELS::ChannelDefArray & Front_Qt::get_channel_list(void) const { return cl; }
+
+void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        LOG(LOG_INFO, "send_to_channel");
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
+    if (!mod_channel) {
+        return;
+    }
     
+    if (!strcmp(channel.name, channel_names::cliprdr)) {
+        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+        std::cout << channel.name << " send_to_channel" << std::endl;
+        this->_clipboard_channel.process_server_message(length, flags, data, chunk_size, out_asynchronous_task);
+    }
+}  
+
+void Front_Qt::send_global_palette() {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        LOG(LOG_INFO, "send_global_palette()");
+        LOG(LOG_INFO, "========================================\n");
+    }
+}
+
+void Front_Qt::begin_update() {
+    //if (this->verbose > 10) {
+    //    LOG(LOG_INFO, "--------- FRONT ------------------------");
+    //    LOG(LOG_INFO, "begin_update");
+    //    LOG(LOG_INFO, "========================================\n");
+    //}
+}
+
+void Front_Qt::end_update() {
+    //if (this->verbose > 10) {
+    //    LOG(LOG_INFO, "--------- FRONT ------------------------");
+    //    LOG(LOG_INFO, "end_update");
+    //    LOG(LOG_INFO, "========================================\n");
+    //}
+}
+
+void Front_Qt::set_mod_palette(const BGRPalette & palette) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        LOG(LOG_INFO, "set_mod_palette");
+        LOG(LOG_INFO, "========================================\n");
+    }
+}    
+
+
+
 /*
 ///////////////////////////////
 // APPLICATION 
@@ -919,5 +1285,5 @@ int main(int argc, char** argv){
     
     app.exec();
   
-}
-*/
+}*/
+

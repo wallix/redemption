@@ -41,6 +41,9 @@
 #define TARGET_IP "10.10.46.73"
 //#define TARGET_IP "10.10.46.88"
 
+
+//./bin/gcc-5.2.1/release/threading-multi/test_rdp_Qt -n QA\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.73 -p 3389
+
 BOOST_AUTO_TEST_CASE(TestRDPQt)
 {
     bool test_boost(false);
