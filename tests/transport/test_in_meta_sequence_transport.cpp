@@ -150,7 +150,7 @@
                             ssize_t err = this->cfb_file_read(
                                                     ciphered_buf,
                                                     ciphered_buf_size);
-                                                    
+
                             if (err != ssize_t(len)){
                                 return err < 0 ? err : -1;
                             }
@@ -277,7 +277,7 @@
                 }
                 remaining_len -= ret;
             }
-            return len - remaining_len;        
+            return len - remaining_len;
         }
 
 
@@ -330,7 +330,7 @@
         }
 
         bool is_open() const noexcept
-        { 
+        {
             return this->cfb_file_is_open();
         }
     };
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
     CryptoContext cctx(rnd, ini, 1);
 
     ifile_buf ifile(&cctx, 0);
-    
+
     ifile.open("./tests/fixtures/sample_v2.mwrm");
 
     struct ReaderBuf
@@ -661,6 +661,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 //        "/var/rdpproxy/recorded/sample2.wrm 1352304930 1352304990\n",
 
     // This is what we are actually testing, chaining of several files content
+
     {
         InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/moved_sample", ".mwrm", 0, 0);
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
@@ -714,7 +715,6 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
-
 }
 
 BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
@@ -776,7 +776,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         try {
             crypto_trans.recv(pbuffer, 15);
         } catch (Error & e){
-            BOOST_CHECK(false);               
+            BOOST_CHECK(false);
         };
 
         BOOST_CHECK(true);

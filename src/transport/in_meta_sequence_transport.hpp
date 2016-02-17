@@ -79,12 +79,12 @@ struct MetaLine
 
 struct InMetaSequenceTransport : public Transport
 {
-    struct cfb_t 
+    struct cfb_t
     {
         CryptoContext * cctx;
         int            fd;
         int encryption;
-        
+
         struct raw_t {
             uint8_t b[65536];
             size_t start;
@@ -124,7 +124,7 @@ struct InMetaSequenceTransport : public Transport
             int start;
             int end;
         } decrypted;
-        
+
         char           buf[CRYPTO_BUFFER_SIZE]; //
         EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
         uint32_t       pos;                     // current position in buf
@@ -132,7 +132,7 @@ struct InMetaSequenceTransport : public Transport
         uint32_t       state;                   // enum crypto_file_state
         unsigned int   MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
-        cfb_t(CryptoContext * cctx, int encryption) 
+        cfb_t(CryptoContext * cctx, int encryption)
             : cctx(cctx)
             , fd(-1)
             , encryption(encryption)
@@ -215,7 +215,7 @@ struct InMetaSequenceTransport : public Transport
         }
 
         ssize_t read(void * data, size_t len)
-        { 
+        {
             if (this->encryption){
                 if (this->state & CF_EOF) {
                     //printf("cf EOF\n");
@@ -405,13 +405,13 @@ struct InMetaSequenceTransport : public Transport
         uint32_t       decrypt_raw_size;                // the unciphered/uncompressed file size
         uint32_t       decrypt_state;                   // enum crypto_file_state
         unsigned int   decrypt_MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-        
+
         buf_meta_t(CryptoContext * cctx, int encryption)
             : cctx(cctx)
             , file_fd(-1)
             , encryption(encryption)
             {}
-            
+
         ssize_t file_read(void * data, size_t len)
         {
             TODO("this is blocking read, add support for timeout reading");
@@ -437,7 +437,7 @@ struct InMetaSequenceTransport : public Transport
             }
             return len - remaining_len;
         }
-            
+
         void open(const char * meta_filename)
         {
             if (encryption){
@@ -445,14 +445,14 @@ struct InMetaSequenceTransport : public Transport
                 size_t base_len = 0;
                 const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, base_len));
                 this->cctx->get_derived_key(trace_key, base, base_len);
-                
+
                 this->file_close();
                 this->file_fd = ::open(meta_filename, O_RDONLY);
                 int err = this->file_fd;
                 if (err < 0) {
                     throw Error(ERR_TRANSPORT_OPEN_FAILED);
                 }
-            
+
                 ::memset(this->decrypt_buf, 0, sizeof(this->decrypt_buf));
                 ::memset(&this->decrypt_ectx, 0, sizeof(this->decrypt_ectx));
 
@@ -464,7 +464,7 @@ struct InMetaSequenceTransport : public Transport
 
                 unsigned char tmp_buf[40];
                 {
-                
+
                     ssize_t err = this->file_read(tmp_buf, 40);
                     if (err < ssize_t(40)){
                         throw Error(ERR_TRANSPORT_OPEN_FAILED);
@@ -490,7 +490,7 @@ struct InMetaSequenceTransport : public Transport
                 const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
                 const int          nrounds = 5;
                 unsigned char      key[32];
-                const int i = ::EVP_BytesToKey(cipher, 
+                const int i = ::EVP_BytesToKey(cipher,
                                     ::EVP_sha1(),
                                     reinterpret_cast<const unsigned char *>(salt),
                                     trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
@@ -567,7 +567,7 @@ struct InMetaSequenceTransport : public Transport
                                         return (err < 0 ? err : -1);
                                     }
                                 }
-                                
+
                                 {
                                     int safe_size = compressed_buf_size;
                                     int remaining_size = 0;
@@ -649,7 +649,7 @@ struct InMetaSequenceTransport : public Transport
             }
             return 0;
         }
-            
+
     } * buf_meta;
 
     struct rl_t {
@@ -658,7 +658,7 @@ struct InMetaSequenceTransport : public Transport
         char * cur;
         rl_t() : eof(this->buf), cur(this->buf) {}
     } rl;
-    
+
     unsigned meta_header_version;
     bool meta_header_has_checksum;
 
@@ -724,9 +724,7 @@ public:
         return 0;
     }
 
-
 public:
-
     ssize_t buf_read(void * data, size_t len)
     {
         if (!this->cfb->is_open()) {
@@ -785,7 +783,7 @@ public:
         }
         return res;
     }
- 
+
     int buf_read_meta_file_v1(MetaLine & meta_line) {
         char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
         ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
@@ -805,9 +803,9 @@ public:
         //
         // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-        
+
         TODO("Code below looks much too complicated for what it's doing");
-        
+
         typedef std::reverse_iterator<char*> reverse_iterator;
 
         using std::begin;
@@ -998,7 +996,6 @@ private:
     }
 
 public:
-
     InMetaSequenceTransport(CryptoContext * cctx,
         const char * filename,
         const char * extension,
@@ -1011,7 +1008,8 @@ public:
     , encryption(encryption)
     , verbose(verbose)
     {
-        const char * meta_filename = detail::temporary_concat(filename, extension).c_str();
+        detail::temporary_concat tmp(filename, extension);
+        const char * meta_filename = tmp.c_str();
         this->buf_meta->open(meta_filename);
 
         char line[32];
@@ -1022,7 +1020,7 @@ public:
 
         // v2
         if (line[0] == 'v') {
-            if (this->buf_reader_next_line() 
+            if (this->buf_reader_next_line()
              || (sz = this->buf_reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
             ) {
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
@@ -1053,6 +1051,7 @@ public:
                       , basename, sizeof(basename)
                       , extension2, sizeof(extension2)
                       , this->verbose);
+
         this->verbose = verbose;
     }
 
@@ -1061,7 +1060,6 @@ public:
 //    {
 //        this->verbose = verbose;
 //    }
-
 
     ~InMetaSequenceTransport(){
         this->cfb->file_close();
@@ -1120,7 +1118,6 @@ public:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
-   
 };
 
 #endif
