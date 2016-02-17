@@ -129,23 +129,21 @@ public:
             this->pos = 0;
             this->raw_size = 0;
             this->state = 0;
-            unsigned char * const iv = &this->raw.b[8];
+            const uint8_t * const &r = &this->raw.b[8];
+            const uint8_t iv[32] = {
+                r[0x00], r[0x01], r[0x02], r[0x03], r[0x04],
+                r[0x05], r[0x06], r[0x07], r[0x08], r[0x09],
+                r[0x0A], r[0x0B], r[0x0C], r[0x0D], r[0x0E], r[0x0F],
+                r[0x10], r[0x11], r[0x12], r[0x13], r[0x14],
+                r[0x15], r[0x16], r[0x17], r[0x18], r[0x19],
+                r[0x1A], r[0x1B], r[0x1C], r[0x1D], r[0x1E], r[0x1F],
+                }
+                ;
             this->raw.end = 0;
 
-            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            uint8_t tmp[SHA256_DIGEST_LENGTH];
-            {
-                SslSha256 sha256;
-                sha256.update(base, base_len);
-                sha256.final(tmp, SHA256_DIGEST_LENGTH);
-            }
-            {
-                SslSha256 sha256;
-                sha256.update(tmp, DERIVATOR_LENGTH);
-                sha256.update(cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-                sha256.final(tmp, SHA256_DIGEST_LENGTH);
-            }
-            memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+            uint8_t trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+
+            cctx->get_derived_key(trace_key, base, base_len);
 
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
             const uint8_t salt[]  = { 0x39, 0x30, 0, 0, 0x31, 0xd4, 0, 0 };

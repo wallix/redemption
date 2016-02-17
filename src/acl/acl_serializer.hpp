@@ -236,7 +236,8 @@ public:
                     if (this->verbose & 0x02) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
-                        if (cfg::context::password::index() == authid ||
+                        if (cfg::context::crypto_key::index() == authid ||
+                            cfg::context::password::index() == authid ||
                             cfg::context::target_password::index() == authid ||
                             cfg::globals::target_application_password::index() == authid ||
                             (cfg::context::auth_channel_answer::index() == authid &&

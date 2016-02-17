@@ -301,20 +301,7 @@ namespace transbuf {
                 const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
                 
                 unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-                uint8_t tmp[SHA256_DIGEST_LENGTH];
-                {
-                    SslSha256 sha256;
-                    sha256.update(base, base_len);
-                    sha256.final(tmp, SHA256_DIGEST_LENGTH);
-                }
-                {
-                    SslSha256 sha256;
-                    sha256.update(tmp, DERIVATOR_LENGTH);
-                    sha256.update(cctx->get_crypto_key(), CRYPTO_KEY_LENGTH);
-                    sha256.final(tmp, SHA256_DIGEST_LENGTH);
-                }
-                memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
-                
+                cctx->get_derived_key(trace_key, base, base_len);
                 return this->cfb_decrypt_decrypt_open(trace_key);
             }
             else {
