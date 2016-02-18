@@ -819,7 +819,7 @@ class Sesman():
 
                     derivator = os.path.basename(self.full_path) + u".mwrm"
                     Logger().info(u"derivator='%s'" % derivator)
-                    encryption_key = self.engine.get_trace_encryption_key(derivator, True)
+                    encryption_key = self.engine.get_trace_encryption_key(derivator, False)
                     data_to_send[u"encryption_key"] = "".join("{:02x}".format(ord(c)) for c in encryption_key)
 
                     sign_key = self.engine.get_trace_sign_key()
