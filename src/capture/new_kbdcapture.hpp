@@ -255,7 +255,7 @@ public:
 
                 if (char_len > 0) {
                     if (this->authentifier) {
-                        can_be_sent_to_server |= !this->check_filter(
+                        can_be_sent_to_server &= !this->check_filter(
                             "FINDPATTERN_KILL",
                             this->regexes_filter_kill,
                             this->regexes_searcher.get(),

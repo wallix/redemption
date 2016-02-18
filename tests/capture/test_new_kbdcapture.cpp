@@ -122,20 +122,24 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
     } auth;
 
     timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, nullptr, "$kbd:abcd", false, false);
+    NewKbdCapture kbd_capture(time, &auth, "$kbd:abcd", nullptr, false, false);
 
     unsigned char input[] = {0, 0, 0, 0};
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
+    unsigned count_ok = 0;
     for (auto c : str) {
         input[0] = c;
-        kbd_capture.input(time, input, 4);
+        if (!kbd_capture.input(time, input, 4)) {
+            ++count_ok;
+        }
     }
     kbd_capture.flush();
+    BOOST_CHECK_EQUAL(4, count_ok);
     BOOST_CHECK_EQUAL(
-        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
-        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
-        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
-        "FINDPATTERN_NOTIFY -- $kbd:abcd|abcd\n"
+        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
+        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
+        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
+        "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
       , auth.s
     );
 }
