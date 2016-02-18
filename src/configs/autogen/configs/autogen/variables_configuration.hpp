@@ -1404,6 +1404,8 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+        // Minimum supported server : Windows Server 2008.
+        // Clipboard redirection should be remain enabled on Terminal Server.
         // AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER
         struct session_probe_use_clipboard_based_launcher {
             static constexpr ::configs::VariableProperties properties() {
@@ -1411,7 +1413,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 22; }
             using type = bool;
-            type value{0};
+            type value{1};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
         struct enable_session_probe_launch_mask {
@@ -1457,6 +1459,7 @@ namespace cfg {
             using type = unsigned;
             type value{7000};
         };
+        // Minimum supported server : Windows Server 2008.
         // AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON
         struct session_probe_start_launch_timeout_timer_only_after_logon {
             static constexpr ::configs::VariableProperties properties() {

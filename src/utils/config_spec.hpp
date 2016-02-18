@@ -312,7 +312,10 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
         W.sep();
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
-        W.member(V, type_<bool>(), "session_probe_use_clipboard_based_launcher", set(false), r);
+        W.member(V, type_<bool>(), "session_probe_use_smart_launcher", desc{
+            "Minimum supported server : Windows Server 2008.\n"
+            "Clipboard redirection should be remain enabled on Terminal Server."
+        }, real_name{"session_probe_use_clipboard_based_launcher"}, set(true), r);
         W.member(A, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
         W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
             "Behavior on failure to launch Session Probe.\n"
@@ -328,7 +331,9 @@ void config_spec_definition(Writer && W)
             "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
             "In milliseconds, 0 to disable timeout."
         }, set(7000), r);
-        W.member(A, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", set(true), r);
+        W.member(V, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", desc{
+            "Minimum supported server : Windows Server 2008."
+        }, set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(V, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
         W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));

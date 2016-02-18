@@ -1210,7 +1210,7 @@ class Sesman():
                         session_probe_section = conn_opts.get('session_probe')
                         if session_probe_section is not None:
                             connectionpolicy_kv[u'session_probe']                         = session_probe_section.get('enable_session_probe')
-                            connectionpolicy_kv[u'session_probe_use_clipboard_based_launcher']                = session_probe_section.get('use_clipboard_based_launcher')
+                            connectionpolicy_kv[u'session_probe_use_smart_launcher']      = session_probe_section.get('use_smart_launcher')
                             connectionpolicy_kv[u'enable_session_probe_launch_mask']      = session_probe_section.get('enable_launch_mask')
                             connectionpolicy_kv[u'session_probe_on_launch_failure']       = session_probe_section.get('on_launch_failure')
                             connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')
