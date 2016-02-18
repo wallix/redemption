@@ -24,8 +24,8 @@ extern "C" {
         { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
         UdevRandom rnd;
         CryptoContext cctx(rnd, ini, 1);
-        cctx.set_hmac_key_cb(hmac_fn);
-        cctx.set_trace_key_cb(trace_fn);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
         
         return app_verifier(
             argc, argv

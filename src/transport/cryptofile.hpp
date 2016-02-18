@@ -325,6 +325,16 @@ class CryptoContext {
         this->hmac_key_loaded = true;
     }
 
+    void set_get_hmac_key_cb(get_hmac_key_prototype * get_hmac_key_cb)
+    {
+        this->get_hmac_key_cb = get_hmac_key_cb;
+    }
+        
+    void set_get_trace_key_cb(get_trace_key_prototype * get_trace_key_cb)
+    {
+        this->get_trace_key_cb = get_trace_key_cb;
+    }
+        
     const unsigned char * get_crypto_key() 
     {
         return get_master_key();
