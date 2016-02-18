@@ -679,6 +679,15 @@ namespace cfg {
             using type = ::configs::StaticKeyString<32>;
             type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
         };
+        // AUTHID_CONTEXT_HMAC_KEY
+        struct hmac_key {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 99; }
+            using type = ::configs::StaticKeyString<32>;
+            type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
+        };
     };
 
     struct crypto {
@@ -1395,6 +1404,8 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+        // Minimum supported server : Windows Server 2008.
+        // Clipboard redirection should be remain enabled on Terminal Server.
         // AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER
         struct session_probe_use_clipboard_based_launcher {
             static constexpr ::configs::VariableProperties properties() {
@@ -1402,7 +1413,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 22; }
             using type = bool;
-            type value{0};
+            type value{1};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
         struct enable_session_probe_launch_mask {
@@ -1448,6 +1459,7 @@ namespace cfg {
             using type = unsigned;
             type value{7000};
         };
+        // Minimum supported server : Windows Server 2008.
         // AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON
         struct session_probe_start_launch_timeout_timer_only_after_logon {
             static constexpr ::configs::VariableProperties properties() {
@@ -1978,6 +1990,7 @@ struct context
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
 , cfg::context::crypto_key
+, cfg::context::hmac_key
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -2268,5 +2281,6 @@ using VariablesAclPack = Pack<
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
 , cfg::context::crypto_key
+, cfg::context::hmac_key
 >;
 }
