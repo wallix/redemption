@@ -375,7 +375,7 @@ lib krb5 : : <name>krb5 <link>shared ;
 lib gssglue : : <name>gssglue <link>shared ;
 
 lib crypto : : <name>crypto <link>shared ;
-lib z : : <name>z <link>static ;
+lib z : : <name>z <link>shared ;
 lib snappy : : <name>snappy <link>shared ;
 # lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
@@ -513,6 +513,7 @@ lib libredver
 
         snappy
     :
+        <cxxflags>-fPIC
         <cxxflags>-fvisibility=hidden
     ;
 
