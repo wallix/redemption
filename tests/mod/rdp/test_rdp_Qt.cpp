@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     //=====================
     //  test disconnexion
     //=====================
-    std::cout <<  std::endl << "Test  disconnexion" <<  std::endl;
+    std::cout <<  std::endl << "Test  disconnection" <<  std::endl;
     front.disconnexionReleased();
     
     if (front._screen    == nullptr) { test_boost = true;}
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     //======================
     // test connexion error
     //======================
-    std::cout <<  std::endl << "Test connexion error" <<  std::endl;
+    std::cout <<  std::endl << "Test connection error" <<  std::endl;
     front._form->set_IPField(targetIP+"0");
     front.connexionReleased();
     
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     //=====================
     //  test reconnexion
     //=====================
-    std::cout <<  std::endl << "Test reconnexion" <<  std::endl;
+    std::cout <<  std::endl << "Test reconnection" <<  std::endl;
     front._form->set_IPField(targetIP);
     
     BOOST_CHECK_EQUAL(front._form->_userNameField.text().toStdString(), "QA\\administrateur");
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TestRDPQt)
     //======================
     // test drop connexion
     //======================
-    std::cout <<  std::endl << "Test drop connexion" <<  std::endl;
+    std::cout <<  std::endl << "Test drop connection" <<  std::endl;
     front.connexionReleased();
     
     BOOST_CHECK_EQUAL(front._connected, true);

@@ -38,9 +38,16 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
+#ifdef qt5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRgb>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRegion>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QBitmap>
+#endif
+#ifdef qt4
+#include </QtGui/QRgb>
+#include </QtGui/QRegion>
+#include </QtGui/QBitmap>
+#endif
 
 #define USER_CONF_PATH "userConfig.config"
 
@@ -1193,7 +1200,6 @@ int Front_Qt::server_resize(int width, int height, int bpp) {
     
     return 1;
 }
-
 
 void Front_Qt::server_set_pointer(const Pointer & cursor) {
     if (this->verbose > 10) {

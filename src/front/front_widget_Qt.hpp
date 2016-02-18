@@ -27,6 +27,7 @@
 #include "rdp/rdp.hpp"
 #include "../src/front/front_Qt.hpp"
 
+#ifdef qt5
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget>
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QLabel>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QPainter>
@@ -49,9 +50,33 @@
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QTableWidget>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QList>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QStringList>
-#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGraphicsScene>
-#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGraphicsView>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer>
+#endif
+#ifdef qt4
+#include </QtGui/QWidget>
+#include </QtGui/QLabel>
+#include </QtGui/QPainter>
+#include </QtGui/QColor>
+#include </QtGui/QDesktopWidget>
+#include </QtGui/QApplication>
+#include </QtGui/QMouseEvent>
+#include </QtGui/QWheelEvent>
+#include </QtCore/QSocketNotifier>
+#include </QtGui/QLineEdit>
+#include </QtGuiQFormLayout>
+#include </QtGui/QDialog>
+#include </QtGui/QPushButton>
+#include </QtGui/QClipboard>
+#include </QtGui/QTabWidget>
+#include </QtGui/QGridLayout>
+#include </QtGui/QComboBox>
+#include </QtGui/QCheckBox>
+#include </QtGui/QScrollArea>
+#include </QtGui/QTableWidget>
+#include </QtCore/QList>
+#include </QtCore/QStringList>
+#include </QtCore/QTimer>
+#endif
 
 #define KEY_SETTING_PATH "keySetting.config"
 
@@ -454,15 +479,15 @@ public:
     const int            _width;
     const int            _height;
     QFormLayout          _formLayout;
-    QLineEdit            _userNameField;
     QLineEdit            _IPField; 
+    QLineEdit            _userNameField;
     QLineEdit            _PWDField;
     QLineEdit            _portField;
-    QLabel               _errorLabel;
-    QLabel               _userNameLabel;           
-    QLabel               _IPLabel;  
+    QLabel               _IPLabel; 
+    QLabel               _userNameLabel;            
     QLabel               _PWDLabel;  
     QLabel               _portLabel;
+    QLabel               _errorLabel;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
       
@@ -473,15 +498,15 @@ public:
         , _width(400)
         , _height(300)
         , _formLayout(this)
-        , _userNameField("", this)
         , _IPField("", this)
+        , _userNameField("", this)
         , _PWDField("", this)
         , _portField("", this)
-        , _errorLabel(   QString(""            ), this)
+        , _IPLabel(      QString("IP serveur :"), this) 
         , _userNameLabel(QString("User name : "), this)         
-        , _IPLabel(      QString("IP serveur :"), this)   
         , _PWDLabel(     QString("Password :  "), this)   
         , _portLabel(    QString("Port :      "), this) 
+        , _errorLabel(   QString(""            ), this)
         , _buttonConnexion("Connexion", this)
         , _buttonOptions("Options", this)
     {
@@ -580,7 +605,7 @@ private Q_SLOTS:
     void optionsPressed() {}
     
     void optionsReleased() {
-        DialogOptions_Qt * dia = new DialogOptions_Qt(this->_front, this);
+        new DialogOptions_Qt(this->_front, this);
     }
 };
 
@@ -625,13 +650,14 @@ public:
     , _buttonHeight(20)
     , _timer(this)
     {
-        this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
-        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str())); 
+        
+        this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
+        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
     
         QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
@@ -647,7 +673,7 @@ public:
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
-        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
+        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);    
         
         QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), this->_buttonHeight));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
@@ -656,9 +682,7 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
-        
-        this->setFocusPolicy(Qt::StrongFocus); 
-        
+
         QDesktopWidget* desktop = QApplication::desktop();
         int centerW = (desktop->width()/2)  - (this->_width/2);
         int centerH = (desktop->height()/2) - ((this->_height+20)/2);
@@ -666,6 +690,8 @@ public:
         
         this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
         this->_timer.start(1000/this->_front->_fps);
+        
+        this->setFocusPolicy(Qt::StrongFocus);
     }
     
     ~Screen_Qt() {
@@ -776,7 +802,6 @@ public:
     SocketTransport * _sck;
     int               _client_sck;
     QClipboard      * _clipboard;
-    bool              _toUpDateLocalClipboard;
      
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -787,7 +812,6 @@ public:
     , _sck(nullptr)
     , _client_sck(0)
     , _clipboard(nullptr)
-    , _toUpDateLocalClipboard(true) 
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(send_clipboard()));
@@ -852,15 +876,13 @@ public:
     }
     
     void listen() {
-        std::cout << "1" << std::endl;
         const char * name(this->_front->_userName.c_str());      
         const char * pwd(this->_front->_pwd.c_str()); 
         const char * targetIP(this->_front->_targetIP.c_str());         
         const char * localIP(this->_front->_localIP.c_str());
         
-        std::cout << "2" << std::endl;
         Inifile ini;
-        std::cout << "3" << std::endl;
+
         ModRDPParams mod_rdp_params( name
                                     , pwd
                                     , targetIP
@@ -886,18 +908,16 @@ public:
         mod_rdp_params.server_redirection_support        = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                    = &allow_channels;    
-        std::cout << "4" << std::endl;
+
         LCGRandom gen(0); // To always get the same client random, in tests
-        std::cout << "5" << std::endl;
+
 
         try {
-            std::cout << "6" << std::endl;
             this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             this->_front->_to_server_sender._callback = this->_callback;
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
-            std::cout << "listen" << std::endl;
             
         } catch (const Error & e) {
             const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is closed.");
@@ -915,9 +935,14 @@ public Q_SLOTS:
     }
     
     void send_clipboard() {
-        std::cout << "modifying clipboard" << std::endl;
-        if (this->_callback != nullptr && this->_toUpDateLocalClipboard) {
-            //this->_front->send_Cliboard(front_channel_name, chunk, length, flags);
+        ;
+        if (this->_callback != nullptr) {
+            std::cout << "modifying clipboard" << std::endl;
+            std::string str(this->_clipboard->text(QClipboard::Clipboard).toStdString());
+            int length(str.length());
+            const char * dataStr(str.c_str());
+            const uint8_t * data = reinterpret_cast<const uint8_t *>(dataStr);
+            this->_front->send_Cliboard(length, 0, data, length);
         }
         
         /*const char * const front_channel_name
@@ -926,9 +951,7 @@ public Q_SLOTS:
                     , uint32_t           flags
                     */
     }
-    
-
-    
 };
+
 
 #endif

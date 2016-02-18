@@ -22,6 +22,8 @@
 #ifndef FRONT_QT_HPP
 #define FRONT_QT_HPP
 
+#define qt5
+
 #include <stdio.h>
 #include <openssl/ssl.h>
 #include <iostream>
@@ -69,9 +71,12 @@
 #include "client_info.hpp"
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
+#ifdef qt5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QImage>
- 
-
+#endif
+#ifdef qt4
+#include </QtGui/QImage>
+#endif
 
 
 class Form_Qt;
@@ -92,7 +97,7 @@ private:
 
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            std::cout << "operator()  call" << std::endl;
+            std::cout << "operator()  call " << (int)flags  << std::endl;
             InStream chunk(chunk_data, chunk_data_length);
             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, chunk_data_length, flags);
         }
