@@ -71,26 +71,27 @@
 #include "RDP/capabilities/window.hpp"
 #include "RDP/channels/rdpdr.hpp"
 #include "RDP/remote_programs.hpp"
-#include "rdp_params.hpp"
 #include "transparentrecorder.hpp"
-#include "FSCC/FileInformation.hpp"
 
-#include "cast.hpp"
 #include "client_info.hpp"
 #include "genrandom.hpp"
 #include "authorization_channels.hpp"
 #include "parser.hpp"
 #include "channel_names.hpp"
-#include "finally.hpp"
-#include "timeout.hpp"
 
+#include "core/FSCC/FileInformation.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
-
-#include "utils/splitter.hpp"
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
+#include "mod/rdp/rdp_params.hpp"
 #include "utils/algostring.hpp"
+#include "utils/cast.hpp"
+#include "utils/finally.hpp"
+#include "utils/splitter.hpp"
+#include "utils/timeout.hpp"
 
 #include <cstdlib>
 
@@ -377,7 +378,7 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
     const bool enable_session_probe;
-    const bool enable_session_probe_loading_mask;
+    const bool enable_session_probe_launch_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -392,11 +393,13 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
 
     const unsigned                               session_probe_launch_timeout;
     const unsigned                               session_probe_launch_fallback_timeout;
+    const bool                                   session_probe_start_launch_timeout_timer_only_after_logon;
     const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
     const unsigned                               session_probe_keepalive_timeout;
     const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
     const bool                                   session_probe_end_disconnected_session;
           std::string                            session_probe_alternate_shell;
+    const bool                                   session_probe_use_clipboard_based_launcher;
 
     std::string session_probe_target_informations;
 
@@ -628,6 +631,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
         }
     } server_notifier;
 
+    std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -672,7 +677,7 @@ public:
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_session_probe(mod_rdp_params.enable_session_probe)
-        , enable_session_probe_loading_mask(mod_rdp_params.enable_session_probe_loading_mask)
+        , enable_session_probe_launch_mask(mod_rdp_params.enable_session_probe_launch_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -686,11 +691,14 @@ public:
         , rdp_compression(mod_rdp_params.rdp_compression)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
         , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
+        , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
         , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
+        , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
+                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)))
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -758,6 +766,8 @@ public:
 
             mod_rdp_params.log();
         }
+
+
 
         if (this->enable_session_probe) {
             this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
@@ -909,6 +919,10 @@ public:
             }
         }
 
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "enable_session_probe=%s",
+                (this->enable_session_probe ? "yes" : "no"));
+        }
         if (this->enable_session_probe) {
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = tmp_working_dir;
@@ -933,33 +947,62 @@ public:
             else {
                 ::memset(exe_var_str, 0, sizeof(exe_var_str));
             }
-            replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}", exe_var_str);
+            replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}",
+                exe_var_str);
+
+            if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
+                (mod_rdp_params.target_application && (*mod_rdp_params.target_application))) {
+                REDASSERT(!this->session_probe_use_clipboard_based_launcher);
+
+                LOG(LOG_WARNING,
+                    "mod_rdp: "
+                        "Clipboard based Session Probe launcher is not compatible with application."
+                        "Falled back to using AlternateShell based launcher.");
+            }
 
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
             this->session_probe_target_informations += mod_rdp_params.auth_user;
 
+            if (this->session_probe_use_clipboard_based_launcher) {
+                replace_tag(this->session_probe_alternate_shell,
+                    " /${COOKIE_VAR}", "");
 
-            char proxy_managed_connection_cookie[9];
-            get_proxy_managed_connection_cookie(
-                this->session_probe_target_informations.c_str(),
-                this->session_probe_target_informations.length(),
-                proxy_managed_connection_cookie);
-            std::string param = " /";
-            param += proxy_managed_connection_cookie;
-            replace_tag(this->session_probe_alternate_shell, " /${COOKIE_VAR}",
-                param.c_str());
+                replace_tag(this->session_probe_alternate_shell,
+                    "${CBSPL_VAR} ", "CD %TMP%&");
 
-            replace_tag(this->session_probe_alternate_shell, "${CBSPL_VAR} ", "");
+                this->session_probe_launcher =
+                    std::make_unique<SessionProbeClipboardBasedLauncher>(
+                        *this, this->session_probe_alternate_shell,
+                        this->verbose);
+            }
+            else {
+                char proxy_managed_connection_cookie[9];
+                get_proxy_managed_connection_cookie(
+                    this->session_probe_target_informations.c_str(),
+                    this->session_probe_target_informations.length(),
+                    proxy_managed_connection_cookie);
+                std::string param = " /";
+                param += proxy_managed_connection_cookie;
+                replace_tag(this->session_probe_alternate_shell,
+                    " /${COOKIE_VAR}", param.c_str());
 
-            strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
-            this->program[sizeof(this->program) - 1] = 0;
-            //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+                replace_tag(this->session_probe_alternate_shell,
+                    "${CBSPL_VAR} ", "");
 
-            const char * session_probe_working_dir = "%TMP%";
-            strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
-            this->directory[sizeof(this->directory) - 1] = 0;
+                strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
+                this->program[sizeof(this->program) - 1] = 0;
+                //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                const char * session_probe_working_dir = "%TMP%";
+                strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
+                this->directory[sizeof(this->directory) - 1] = 0;
+
+                this->session_probe_launcher =
+                    std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                        this->verbose);
+            }
         }
         else {
             strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
@@ -1018,15 +1061,27 @@ public:
             }
         }
 
-        if (this->verbose & 1) {
-            LOG(LOG_INFO, "enable_session_probe=%s",
-                (this->enable_session_probe ? "yes" : "no"));
-        }
-        if (this->enable_session_probe) {
-            SessionProbeVirtualChannel& channel =
-                this->get_session_probe_virtual_channel();
+        if (enable_session_probe) {
+            ClipboardVirtualChannel& cvc =
+                this->get_clipboard_virtual_channel();
+            cvc.set_session_probe_launcher(
+                this->session_probe_launcher.get());
 
-            this->session_probe_virtual_channel_p = &channel;
+            this->file_system_drive_manager.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
+            SessionProbeVirtualChannel& spvc =
+                this->get_session_probe_virtual_channel();
+            spvc.set_session_probe_launcher(this->session_probe_launcher.get());
+            this->session_probe_virtual_channel_p = &spvc;
+            if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                spvc.start_launch_timeout_timer();
+            }
+
+            if (this->session_probe_launcher) {
+                this->session_probe_launcher->set_session_probe_virtual_channel(
+                    this->session_probe_virtual_channel_p);
+            }
         }
 
         if (this->acl) {
@@ -1038,7 +1093,7 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
             this->front.disable_input_event_and_graphics_update(false);
         }
 
@@ -1217,7 +1272,7 @@ protected:
             this->verbose;
 
         session_probe_virtual_channel_params.session_probe_loading_mask_enabled     =
-            this->enable_session_probe_loading_mask;
+            this->enable_session_probe_launch_mask;
 
         session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
@@ -1381,7 +1436,6 @@ public:
             }
             this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
         }
-
     }   // configure_proxy_managed_drives
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time
@@ -1439,6 +1493,20 @@ public:
 
         if (!this->asynchronous_tasks.empty()) {
             this->asynchronous_tasks.front()->configure_wait_object(this->asynchronous_task_event);
+        }
+    }
+
+    virtual wait_obj * get_session_probe_launcher_event() override {
+        if (this->session_probe_launcher) {
+            return this->session_probe_launcher->get_event();
+        }
+
+        return nullptr;
+    }
+
+    virtual void process_session_probe_launcher() override {
+        if (this->session_probe_launcher) {
+            this->session_probe_launcher->on_event();
         }
     }
 
@@ -2002,8 +2070,9 @@ public:
                                     from client to server passing through the "proxy" */
                                     GCC::UserData::CSNet cs_net;
                                     cs_net.channelCount = num_channels;
-                                    bool has_rdpdr_channel  = false;
-                                    bool has_rdpsnd_channel = false;
+                                    bool has_cliprdr_channel = false;
+                                    bool has_rdpdr_channel   = false;
+                                    bool has_rdpsnd_channel  = false;
                                     for (size_t index = 0; index < num_channels; index++) {
                                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                         if (this->authorization_channels.is_authorized(channel_item.name) ||
@@ -2011,7 +2080,10 @@ public:
                                               !strcmp(channel_item.name, channel_names::rdpsnd)) &&
                                             this->file_system_drive_manager.HasManagedDrive())
                                         ) {
-                                            if (!strcmp(channel_item.name, channel_names::rdpdr)) {
+                                            if (!strcmp(channel_item.name, channel_names::cliprdr)) {
+                                                has_cliprdr_channel = true;
+                                            }
+                                            else if (!strcmp(channel_item.name, channel_names::rdpdr)) {
                                                 has_rdpdr_channel = true;
                                             }
                                             else if (!strcmp(channel_item.name, channel_names::rdpsnd)) {
@@ -2038,7 +2110,7 @@ public:
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpdr);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                                         CHANNELS::ChannelDef def;
                                         ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
@@ -2050,15 +2122,34 @@ public:
                                         cs_net.channelCount++;
                                     }
 
+                                    // Inject a new channel for clipboard channel (cliprdr)
+                                    if (!has_cliprdr_channel && this->session_probe_use_clipboard_based_launcher) {
+                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                                "%s", channel_names::cliprdr);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
+                                        CHANNELS::ChannelDef def;
+                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::cliprdr);
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                        if (this->verbose & 16){
+                                            def.log(cs_net.channelCount);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
+                                    }
+
                                     // The RDPDR channel advertised by the client is ONLY accepted by the RDP
                                     //  server 2012 if the RDPSND channel is also advertised.
-                                    if (this->file_system_drive_manager.HasManagedDrive() &&
-                                        !has_rdpsnd_channel) {
+                                    if (!has_rdpsnd_channel &&
+                                        this->file_system_drive_manager.HasManagedDrive()) {
                                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpsnd);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                                         CHANNELS::ChannelDef def;
                                         ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
@@ -3420,7 +3511,7 @@ public:
 
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -3447,7 +3538,7 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
                 }
 
@@ -4998,6 +5089,11 @@ public:
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
 
+        if (this->session_probe_virtual_channel_p &&
+            this->session_probe_start_launch_timeout_timer_only_after_logon) {
+            this->session_probe_virtual_channel_p->start_launch_timeout_timer();
+        }
+
         if (this->acl)
         {
             this->acl->report("OPEN_SESSION_SUCCESSFUL", "OK.");
@@ -5011,7 +5107,7 @@ public:
             this->event.reset();
         }
 
-        if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
             this->front.disable_input_event_and_graphics_update(true);
         }
     }
@@ -5043,7 +5139,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
-            if (this->enable_session_probe && this->enable_session_probe_loading_mask) {
+            if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                 this->front.disable_input_event_and_graphics_update(true);
             }
         }

@@ -21,13 +21,12 @@
 #ifndef REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
 #define REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
 
+#include "core/front_api.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
+#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "utils/strutils.hpp"
+
 #include <deque>
-
-#include "base_channel.hpp"
-#include "front_api.hpp"
-#include "rdpdr_file_system_drive_manager.hpp"
-
-#include "strutils.hpp"
 
 class FileSystemVirtualChannel : public BaseVirtualChannel
 {

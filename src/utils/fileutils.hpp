@@ -36,6 +36,29 @@
 #include "log.hpp"
 #include "error.hpp"
 
+// two flavors of basename_len to make it const agnostic
+static inline const char * basename_len(const char * path, size_t & len)
+{
+    const char * tmp = strrchr(path, '/');
+    if (tmp){
+        len = strlen(tmp+1);
+        return tmp+1;
+    }
+    len = strlen(path);
+    return path;
+}
+
+static inline char * basename_len(char * path, size_t & len)
+{
+    char * tmp = strrchr(path, '/');
+    if (tmp){
+        len = strlen(tmp+1);
+        return tmp+1;
+    }
+    len = strlen(path);
+    return path;
+}
+
 static inline int filesize(const char * path)
 {
     struct stat sb;

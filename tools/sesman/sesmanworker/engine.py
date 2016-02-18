@@ -200,7 +200,7 @@ class Engine(object):
         return u'localfile_hashed'
 
     def get_trace_encryption_key(self, path, old_scheme=False):
-        return self.wabengine.get_trace_sign_key(path, old_scheme)
+        return self.wabengine.get_trace_encryption_key(path, old_scheme)
 
     def get_trace_sign_key(self):
         return self.wabengine.get_trace_sign_key()

@@ -441,19 +441,15 @@ namespace transbuf {
 
         int open(const char * filename, mode_t mode = 0600)
         {
-            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            unsigned char derivator[DERIVATOR_LENGTH];
-
-            cctx->get_derivator(filename, derivator, DERIVATOR_LENGTH);
-            if (-1 == this->cctx->compute_hmac(trace_key, derivator)) {
-                return -1;
-            }
-
             int err = this->file.open(filename, mode);
             if (err < 0) {
                 return err;
             }
 
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+            this->cctx->get_derived_key(trace_key, base, base_len);
             unsigned char iv[32];
             this->cctx->random(iv, 32);
 //            if (-1 == urandom_read(iv, 32)) {

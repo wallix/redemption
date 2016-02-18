@@ -59,12 +59,13 @@ public:
     ~mod_api() override {}
 
     virtual wait_obj& get_event() { return this->event; }
-
     virtual wait_obj * get_secondary_event() { return nullptr; }
 
     virtual wait_obj * get_asynchronous_task_event(int & out_fd) { out_fd = -1; return nullptr; }
-
     virtual void process_asynchronous_task() {}
+
+    virtual wait_obj * get_session_probe_launcher_event() { return nullptr; }
+    virtual void process_session_probe_launcher() {}
 
     uint16_t get_front_width() const { return this->front_width; }
     uint16_t get_front_height() const { return this->front_height; }

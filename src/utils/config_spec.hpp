@@ -312,7 +312,11 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
         W.sep();
         W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
-        W.member(A, type_<bool>(), "enable_session_probe_loading_mask", set(true), r);
+        W.member(V, type_<bool>(), "session_probe_use_smart_launcher", desc{
+            "Minimum supported server : Windows Server 2008.\n"
+            "Clipboard redirection should be remain enabled on Terminal Server."
+        }, real_name{"session_probe_use_clipboard_based_launcher"}, set(true), r);
+        W.member(A, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
         W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
             "Behavior on failure to launch Session Probe.\n"
             "  0: ignore failure and continue.\n"
@@ -327,6 +331,9 @@ void config_spec_definition(Writer && W)
             "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
             "In milliseconds, 0 to disable timeout."
         }, set(7000), r);
+        W.member(V, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", desc{
+            "Minimum supported server : Windows Server 2008."
+        }, set(true), r);
         W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(V, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
         W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
@@ -602,6 +609,12 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "outbound_connection_blocking_rules", r);
         W.sep();
         W.member(type_<StaticKeyString<32>>(), "crypto_key", set(
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+        ), r);
+       W.member(type_<StaticKeyString<32>>(), "hmac_key", set(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"

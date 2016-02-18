@@ -47,15 +47,17 @@ struct ModRDPParams {
     bool enable_new_pointer;
     bool enable_glyph_cache;
     bool enable_session_probe;
-    bool enable_session_probe_loading_mask;
+    bool enable_session_probe_launch_mask;
 
     bool disable_clipboard_log_syslog;
     bool disable_clipboard_log_wrm;
     bool disable_file_system_log_syslog;
     bool disable_file_system_log_wrm;
 
+    bool                                  session_probe_use_clipboard_based_launcher;
     unsigned                              session_probe_launch_timeout;
     unsigned                              session_probe_launch_fallback_timeout;
+    bool                                  session_probe_start_launch_timeout_timer_only_after_logon;
     configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
     unsigned                              session_probe_keepalive_timeout;
     bool                                  session_probe_on_keepalive_timeout_disconnect_user;
@@ -147,7 +149,7 @@ struct ModRDPParams {
         , enable_new_pointer(true)
         , enable_glyph_cache(false)
         , enable_session_probe(false)
-        , enable_session_probe_loading_mask(true)
+        , enable_session_probe_launch_mask(true)
 
         , disable_clipboard_log_syslog(false)
         , disable_clipboard_log_wrm(false)
@@ -155,8 +157,10 @@ struct ModRDPParams {
         , disable_file_system_log_syslog(false)
         , disable_file_system_log_wrm(false)
 
+        , session_probe_use_clipboard_based_launcher(false)
         , session_probe_launch_timeout(0)
         , session_probe_launch_fallback_timeout(0)
+        , session_probe_start_launch_timeout_timer_only_after_logon(true)
         , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
         , session_probe_on_keepalive_timeout_disconnect_user(true)
@@ -263,13 +267,19 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams enable_session_probe=%s",                (this->enable_session_probe ? "yes" : "no"));
         LOG(LOG_INFO,
-            "ModRDPParams enable_session_probe_loading_mask=%s",   (this->enable_session_probe_loading_mask ? "yes" : "no"));
+            "ModRDPParams enable_session_probe_launch_mask=%s",   (this->enable_session_probe_launch_mask ? "yes" : "no"));
 
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_use_clipboard_based_launcher=%s",
+                                                                   (this->session_probe_use_clipboard_based_launcher ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_timeout=%u",        this->session_probe_launch_timeout);
         LOG(LOG_INFO,
             "ModRDPParams session_probe_launch_fallback_timeout=%u",
                                                                    this->session_probe_launch_fallback_timeout);
+        LOG(LOG_INFO,
+            "ModRDPParams session_probe_start_launch_timeout_timer_only_after_logon=%s",
+                                                                   (this->session_probe_start_launch_timeout_timer_only_after_logon ? "yes" : "no"));
         LOG(LOG_INFO,
             "ModRDPParams session_probe_on_launch_failure=%d",     static_cast<int>(this->session_probe_on_launch_failure));
         LOG(LOG_INFO,

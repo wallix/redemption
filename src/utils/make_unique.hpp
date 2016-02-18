@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_UTILS_MAKE_UNIQUE_HPP
-#define REDEMPTION_PUBLIC_UTILS_MAKE_UNIQUE_HPP
+#ifndef REDEMPTION_SRC_UTILS_MAKE_UNIQUE_HPP
+#define REDEMPTION_SRC_UTILS_MAKE_UNIQUE_HPP
 
 #include <memory>
 

@@ -103,9 +103,10 @@ class LCGRand : public Random
 
 class UdevRandom : public Random
 {
-    public:
+   public:
     UdevRandom()
     {
+        TODO("See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.")
     }
     ~UdevRandom() override {}
 

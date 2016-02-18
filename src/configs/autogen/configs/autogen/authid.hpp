@@ -21,10 +21,12 @@ enum authid_t {
     AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY,
     AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL,
     AUTHID_MOD_RDP_ENABLE_SESSION_PROBE,
-    AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LOADING_MASK,
+    AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER,
+    AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK,
     AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE,
     AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT,
     AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT,
+    AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON,
     AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT,
     AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER,
     AUTHID_MOD_RDP_SERVER_CERT_STORE,
@@ -96,6 +98,7 @@ enum authid_t {
     AUTHID_CONTEXT_OPT_MESSAGE,
     AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES,
     AUTHID_CONTEXT_CRYPTO_KEY,
+    AUTHID_CONTEXT_HMAC_KEY,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -122,10 +125,12 @@ constexpr char const * const authstr[] = {
     "shell_working_directory",
     "use_client_provided_alternate_shell",
     "session_probe",
-    "enable_session_probe_loading_mask",
+    "session_probe_use_clipboard_based_launcher",
+    "enable_session_probe_launch_mask",
     "session_probe_on_launch_failure",
     "session_probe_launch_timeout",
     "session_probe_launch_fallback_timeout",
+    "session_probe_start_launch_timeout_timer_only_after_logon",
     "session_probe_keepalive_timeout",
     "session_probe_on_keepalive_timeout_disconnect_user",
     "server_cert_store",
@@ -197,5 +202,6 @@ constexpr char const * const authstr[] = {
     "opt_message",
     "outbound_connection_blocking_rules",
     "crypto_key",
+    "hmac_key",
 };
 

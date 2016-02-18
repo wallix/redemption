@@ -38,9 +38,9 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
-#include <QtGui/QRgb>
-#include <QtGui/QRegion>
-#include <QtGui/QBitmap>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRgb>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRegion>
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QBitmap>
 
 #define USER_CONF_PATH "userConfig.config"
 
@@ -79,7 +79,7 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->writeClientInfo();
     } 
     
-    char * localIPtmp = "unknow_local_IP"; 
+    const char * localIPtmp = "unknow_local_IP"; 
     /*union
     {
         struct sockaddr s;
@@ -128,8 +128,6 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
         this->mod_palette = BGRPalette::classic_332();
     }
     this->_qtRDPKeymap.setKeyboardLayout(this->_info.keylayout);
-    //this->_qtRDPKeymap.setCustomKeyCode(0x152, 0, 0xB2, false); // squared
-    //this->_qtRDPKeymap.setCustomKeyCode(0x39c, 0, 0xB5, false); // µ
     this->_keymap.init_layout(this->_info.keylayout);
 
 

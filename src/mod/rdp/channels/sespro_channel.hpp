@@ -22,10 +22,10 @@
 #define REDEMPTION_MOD_RDP_CHANNELS_SESPROCHANNEL_HPP
 
 #include "core/front_api.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
 #include "utils/outbound_connection_monitor_rules.hpp"
 #include "utils/stream.hpp"
-
-#include "base_channel.hpp"
+#include "utils/translation.hpp"
 
 #include <memory>
 
@@ -58,7 +58,7 @@ private:
 
     Translation::language_t param_lang;
 
-    auth_api* param_acl;
+    auth_api* param_acl = nullptr;
 
     FrontAPI& front;
 
@@ -71,6 +71,8 @@ private:
     OutboundConnectionMonitorRules outbound_connection_monitor_rules;
 
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
+
+    SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
 
     bool has_additional_launch_time = false;
 
@@ -153,12 +155,14 @@ public:
         }
 
         this->session_probe_event.object_and_time = true;
+    }
 
-        if (this->session_probe_effective_launch_timeout > 0) {
+    void start_launch_timeout_timer() {
+        if ((this->session_probe_effective_launch_timeout > 0) &&
+            !this->session_probe_ready) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                        "Enable Session Probe launch timer");
+                    "SessionProbeVirtualChannel::start_launch_timeout_timer");
             }
 
             this->session_probe_event.set(
@@ -192,7 +196,14 @@ public:
     }
 
     void give_additional_launch_time() {
-        this->has_additional_launch_time = true;
+        if (!this->session_probe_ready) {
+            this->has_additional_launch_time = true;
+
+            if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                LOG(LOG_INFO,
+                    "SessionProbeVirtualChannel::give_additional_launch_time");
+            }
+        }
     }
 
     bool is_event_signaled() {
@@ -222,6 +233,11 @@ public:
                  LOG_ERR : LOG_WARNING),
                 "SessionProbeVirtualChannel::process_event: "
                     "Session Probe is not ready yet!");
+
+            if (this->session_probe_stop_launch_sequence_notifier) {
+                this->session_probe_stop_launch_sequence_notifier->stop();
+                this->session_probe_stop_launch_sequence_notifier = nullptr;
+            }
 
             const bool need_full_screen_update =
                 (this->param_session_probe_loading_mask_enabled ?
@@ -364,6 +380,11 @@ public:
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe is ready.");
+            }
+
+            if (this->session_probe_stop_launch_sequence_notifier) {
+                this->session_probe_stop_launch_sequence_notifier->stop();
+                this->session_probe_stop_launch_sequence_notifier = nullptr;
             }
 
             this->session_probe_ready = true;
@@ -834,6 +855,10 @@ public:
             }
         }
     }   // process_server_message
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->session_probe_stop_launch_sequence_notifier = launcher;
+    }
 };  // class SessionProbeVirtualChannel
 
 #endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCHANNEL_HPP
