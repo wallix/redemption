@@ -50,55 +50,79 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         void set_auth_error_message(const char*) override {}
     } auth;
 
+    struct Translog : KbdNotifyFlushApi {
+        MemoryTransport trans;
+        bool enable_mask = false;
+
+        void notify_flush(const array_const_char& data, bool enable_mask) override {
+            BOOST_CHECK_EQUAL(this->enable_mask, enable_mask);
+            trans.send(data.data(), data.size());
+        }
+
+        void rewind() { this->trans.out_stream.rewind(); }
+        size_t get_offset() { return this->trans.out_stream.get_offset(); }
+        char * get_data() { return reinterpret_cast<char*>(this->trans.out_stream.get_data()); }
+    } trans;
+
     timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, nullptr, nullptr, false, false);
+    NewKbdCapture kbd_capture(time, &auth, nullptr, nullptr);
+    KbdSessionLogNotify session_log(auth);
+
+    kbd_capture.attach_flusher(session_log);
+    kbd_capture.attach_flusher(trans);
 
     const unsigned char input[] = {'a', 0, 0, 0};
-    MemoryTransport trans;
 
     {
         kbd_capture.input_kbd(time, input);
         kbd_capture.flush();
 
-        kbd_capture.send_session_data();
+        session_log.send_session_data();
         BOOST_CHECK_EQUAL(auth.s.size(), 8);
         BOOST_CHECK_EQUAL("data=\"a\"", auth.s);
-        trans.out_stream.rewind();
-        kbd_capture.send_data(trans);
-        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 1);
-        BOOST_CHECK_EQUAL('a', *trans.out_stream.get_data());
+        BOOST_CHECK_EQUAL(trans.get_offset(), 1);
+        BOOST_CHECK_EQUAL('a', *trans.get_data());
     }
 
     kbd_capture.enable_keyboard_input_mask(true);
+    trans.enable_mask = true;
+    trans.rewind();
     auth.s.clear();
 
     {
         kbd_capture.input_kbd(time, input);
         kbd_capture.flush();
 
-        kbd_capture.send_session_data();
+        session_log.send_session_data();
         // prob is not enabled
         BOOST_CHECK_EQUAL(auth.s.size(), 0);
-        trans.out_stream.rewind();
-        kbd_capture.send_data(trans);
-        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 1);
-        BOOST_CHECK_EQUAL('*', *trans.out_stream.get_data());
+        BOOST_CHECK_EQUAL(trans.get_offset(), 1);
+        BOOST_CHECK_EQUAL('*', *trans.get_data());
     }
 
     kbd_capture.enable_keyboard_input_mask(false);
+    trans.enable_mask = false;
+    trans.rewind();
     auth.s.clear();
 
     {
         kbd_capture.input_kbd(time, input);
         kbd_capture.enable_keyboard_input_mask(true);
+
+        session_log.send_session_data();
+        BOOST_CHECK_EQUAL(auth.s.size(), 8);
+        BOOST_CHECK_EQUAL(trans.get_offset(), 1);
+        trans.enable_mask = true;
+
         kbd_capture.input_kbd(time, input);
         kbd_capture.flush();
 
-        trans.out_stream.rewind();
-        kbd_capture.send_data(trans);
-        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 2);
-        BOOST_CHECK_EQUAL('a', trans.out_stream.get_data()[0]);
-        BOOST_CHECK_EQUAL('*', trans.out_stream.get_data()[1]);
+        session_log.send_session_data();
+        BOOST_CHECK_EQUAL(auth.s.size(), 8);
+        BOOST_CHECK_EQUAL("data=\"a\"", auth.s);
+        BOOST_CHECK_EQUAL(trans.get_offset(), 2);
+        BOOST_CHECK_EQUAL('a', trans.get_data()[0]);
+        BOOST_CHECK_EQUAL('*', trans.get_data()[1]);
     }
 }
 
@@ -121,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
     } auth;
 
     timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, nullptr, "$kbd:abcd", false, false);
+    NewKbdCapture kbd_capture(time, &auth, nullptr, "$kbd:abcd");
 
     unsigned char input[] = {0, 0, 0, 0};
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";

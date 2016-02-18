@@ -781,7 +781,7 @@ public:
         this->p = this->begin + offset;
     }
 
-    void out_copy_bytes(const uint8_t * v, size_t n) {
+    void out_copy_bytes(const void * v, size_t n) {
         REDASSERT(this->has_room(n));
         memcpy(this->p, v, n);
         this->p += n;
@@ -789,15 +789,11 @@ public:
 
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
-        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), strlen(v));
+        this->out_copy_bytes(v, strlen(v));
     }
 
     void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
         memcpy(this->get_data()+offset, v, n);
-    }
-
-    void out_copy_bytes(const char * v, size_t n) {
-        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
     }
 
     void set_out_copy_bytes(const char * v, size_t n, size_t offset) {

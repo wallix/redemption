@@ -41,35 +41,8 @@
 #include <ctime>
 
 
-struct NewKbdCapture
-: public gdi::CaptureApi
-, public gdi::CaptureProbeApi
-, public gdi::InputKbdApi
+class PatternSearcher
 {
-private:
-    StaticOutStream<49152> unlogged_data;
-    StaticOutStream<24576> data;
-    StaticOutStream<64> session_data;
-
-    timeval last_snapshot;
-
-    bool wait_until_next_snapshot;
-
-    auth_api * authentifier;
-
-    bool enable_keyboard_log_syslog;
-
-    bool is_driven_by_ocr         = false;
-    bool is_probe_enabled_session = false;
-
-    bool keyboard_input_mask_enabled = false;
-
-    uint32_t verbose;
-
-
-    utils::MatchFinder::NamedRegexArray regexes_filter_kill;
-    utils::MatchFinder::NamedRegexArray regexes_filter_notify;
-
     struct TextSearcher
     {
         using StreamSearcher = re::Regex::PartOfText;
@@ -89,7 +62,6 @@ private:
             return rgx.match_result(this->matches, false);
         }
     };
-    std::unique_ptr<TextSearcher[]> regexes_searcher;
 
     class Utf8KbdData
     {
@@ -160,180 +132,360 @@ private:
             return this->beg <= this->p;
         }
     };
-    Utf8KbdData utf8_kbd_data_kill;
-    Utf8KbdData utf8_kbd_data_notify;
+
+    utils::MatchFinder::NamedRegexArray regexes_filter;
+    std::unique_ptr<TextSearcher[]> regexes_searcher;
+    Utf8KbdData utf8_kbd_data;
 
 public:
-    static const uint64_t time_to_wait = 1000000L;
-
-    NewKbdCapture( const timeval & now, auth_api * authentifier
-                 , char const * const filters_kill
-                 , char const * const filters_notify
-                 , bool enable_keyboard_log_syslog
-                 , bool is_driven_by_ocr
-                 , int verbose = 0)
-    : last_snapshot(now)
-    , wait_until_next_snapshot(false)
-    , authentifier(authentifier)
-    , enable_keyboard_log_syslog(enable_keyboard_log_syslog)
-    , is_driven_by_ocr(is_driven_by_ocr)
-    , verbose(verbose) {
-        if (filters_kill) {
-            utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                filters_kill, this->regexes_filter_kill, verbose, true);
+    PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, int verbose = 0) {
+        if (!filters) {
+            return ;
         }
-
-        if (filters_notify) {
-            utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                filters_notify, this->regexes_filter_notify, verbose, true);
-        }
-
-        auto count_regex = this->regexes_filter_kill.size() + this->regexes_filter_notify.size();
+        utils::MatchFinder::configure_regexes(conf_regex, filters, this->regexes_filter, verbose, true);
+        auto const count_regex = this->regexes_filter.size();
         if (count_regex) {
             this->regexes_searcher = std::make_unique<TextSearcher[]>(count_regex);
             auto searcher_it = this->regexes_searcher.get();
-            for (auto & named_regex : this->regexes_filter_kill) {
-                searcher_it->reset(named_regex.regex);
-                ++searcher_it;
-            }
-            for (auto & named_regex : this->regexes_filter_notify) {
+            for (auto & named_regex : this->regexes_filter) {
                 searcher_it->reset(named_regex.regex);
                 ++searcher_it;
             }
         }
     }
 
-    ~NewKbdCapture() {
-        this->send_session_data();
-    }
-
-public:
-    bool input_kbd(const timeval& now, array_const_u8 const & input_data_32) override
+    template<class Report>
+    bool test_uchar(uint8_t const * const utf8_char, size_t const char_len, Report report)
     {
-        constexpr struct {
-            uint32_t uchar;
-            array_const_char str;
-            // for std::sort and std::lower_bound
-            operator uint32_t () const { return this->uchar; }
-        } noprint_table[] = {
-            {0x00000008, cstr_array_view("/<backspace>")},
-            {0x00000009, cstr_array_view("/<tab>")},
-            {0x0000000D, cstr_array_view("/<enter>")},
-            {0x0000001B, cstr_array_view("/<escape>")},
-            {0x0000002F, cstr_array_view("//")},
-            {0x0000007F, cstr_array_view("/<delete>")},
-            {0x00002190, cstr_array_view("/<left>")},
-            {0x00002191, cstr_array_view("/<up>")},
-            {0x00002192, cstr_array_view("/<right>")},
-            {0x00002193, cstr_array_view("/<down>")},
-            {0x00002196, cstr_array_view("/<home>")},
-            {0x00002198, cstr_array_view("/<end>")},
-        };
-        using std::begin;
-        using std::end;
-        assert(std::is_sorted(begin(noprint_table), end(noprint_table)));
-
-        bool can_be_sent_to_server = true;
-
-        InStream in_raw_kbd_data(input_data_32);
-        uint32_t uchar;
-
-        for (size_t i = 0, count = in_raw_kbd_data.get_capacity() / sizeof(uint32_t); i < count; ++i) {
-            uchar = in_raw_kbd_data.in_uint32_le();
-
-            auto p = std::lower_bound(begin(noprint_table), end(noprint_table), uchar);
-            if (p != end(noprint_table) && *p == uchar) {
-                if (this->unlogged_data.has_room(p->str.size())) {
-                    this->unlogged_data.out_string(p->str.data());
-                }
-                else {
-                    break;
-                }
-            }
-            else {
-                uint8_t buf_char[5]{};
-                size_t const char_len = UTF32toUTF8(
-                    in_raw_kbd_data.get_current() - 4,
-                    1,
-                    buf_char,
-                    this->unlogged_data.tailroom()
-                );
-                this->unlogged_data.out_copy_bytes(buf_char, char_len);
-
-                if (char_len > 0) {
-                    if (this->authentifier) {
-                        can_be_sent_to_server |= !this->check_filter(
-                            "FINDPATTERN_KILL",
-                            this->regexes_filter_kill,
-                            this->regexes_searcher.get(),
-                            this->utf8_kbd_data_kill,
-                            buf_char, char_len
-                        );
-                        this->check_filter(
-                            "FINDPATTERN_NOTIFY",
-                            this->regexes_filter_notify,
-                            this->regexes_searcher.get() + this->regexes_filter_kill.size(),
-                            this->utf8_kbd_data_notify,
-                            buf_char, char_len
-                        );
-                    }
-                }
-                else {
-                    break;
-                }
-            }
+        if (char_len == 0) {
+            return false;
         }
 
-        return can_be_sent_to_server;
-    }   // bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz)
-
-private:
-    bool check_filter(
-        char const * reason,
-        utils::MatchFinder::NamedRegexArray const & regexes_filter,
-        TextSearcher * test_searcher_it,
-        Utf8KbdData & utf8_kbd_data,
-        uint8_t const * utf8_char,
-        std::size_t utf8_len
-    ) {
         bool has_notify = false;
-        if (!regexes_filter.empty()) {
-            utf8_kbd_data.push_utf8_char(utf8_char, utf8_len);
-            char const * char_kbd_data = ::char_ptr_cast(utf8_kbd_data.get_data());
 
-            for (utils::MatchFinder::NamedRegex & named_regex : regexes_filter) {
-                if (test_searcher_it->next(utf8_char)) {
-                    utf8_kbd_data.linearize();
-                    char_kbd_data = ::char_ptr_cast(utf8_kbd_data.get_data());
-                    test_searcher_it->reset(named_regex.regex);
+        utf8_kbd_data.push_utf8_char(utf8_char, char_len);
+        TextSearcher * test_searcher_it = this->regexes_searcher.get();
 
-                    if (named_regex.regex.search_with_matches(char_kbd_data)) {
-                        this->flush();
+        for (utils::MatchFinder::NamedRegex & named_regex : regexes_filter) {
+            if (test_searcher_it->next(utf8_char)) {
+                utf8_kbd_data.linearize();
+                char const * char_kbd_data = ::char_ptr_cast(utf8_kbd_data.get_data());
+                test_searcher_it->reset(named_regex.regex);
 
-                        auto & match_result = test_searcher_it->match_result(named_regex.regex);
-                        auto str = (!match_result.empty() && match_result[0].first)
-                          ? match_result[0].first
-                          : char_kbd_data;
-                        utils::MatchFinder::report(
-                            this->authentifier,
-                            reason,
-                            utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                            named_regex.name.c_str(), str
-                        );
-                        has_notify = true;
-                    }
+                if (named_regex.regex.search_with_matches(char_kbd_data)) {
+                    auto & match_result = test_searcher_it->match_result(named_regex.regex);
+                    auto str = (!match_result.empty() && match_result[0].first)
+                        ? match_result[0].first
+                        : char_kbd_data;
+                    report(named_regex.name.c_str(), str);
+                    has_notify = true;
                 }
+            }
 
-                ++test_searcher_it;
-            }
-            if (has_notify) {
-                utf8_kbd_data.reset();
-            }
+            ++test_searcher_it;
         }
+        if (has_notify) {
+            utf8_kbd_data.reset();
+        }
+
         return has_notify;
     }
 
+    template<class Report>
+    bool test_uchar(uint32_t uchar, Report report)
+    {
+        uint8_t utf8_char[5];
+        size_t const char_len = UTF32toUTF8(uchar, utf8_char, 4u);
+        this->test_uchar(utf8_char, char_len, report);
+    }
+
+    bool is_empty() const {
+        return this->regexes_filter.empty();
+    }
+};
+
+
+
+struct KbdNotifyFlushApi {
+    virtual void notify_flush(array_const_char const & data, bool enable_mask) = 0;
+    virtual ~KbdNotifyFlushApi() {}
+};
+
+struct KbdSyslogNotify
+: KbdNotifyFlushApi
+{
+    void notify_flush(array_const_char const & data, bool enable_mask) override {
+        LOG(LOG_INFO, "type=\"KBD input\" data=\"%*s\"", static_cast<int>(data.size()), data.data());
+    }
+};
+
+namespace {
+    constexpr array_const_char session_log_prefix() { return cstr_array_view("data=\""); }
+    constexpr array_const_char session_log_suffix() { return cstr_array_view("\""); }
+}
+
+class KbdSessionLogNotify
+: public KbdNotifyFlushApi
+, public gdi::CaptureProbeApi
+{
+    char buffer[64 + session_log_prefix().size() + session_log_suffix().size()];
+    OutStream ostream;
+    auth_api & authentifier;
+    bool is_probe_enabled_session = false;
+
 public:
+    KbdSessionLogNotify(auth_api & authentifier)
+    : authentifier(authentifier)
+    {
+        memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
+        this->ostream = OutStream(
+            this->buffer + session_log_prefix().size(),
+            sizeof(buffer) - session_log_prefix().size() - session_log_suffix().size() - 1
+        );
+    }
+
+    void notify_flush(const array_const_char & data, bool enable_mask) override {
+        size_t stream_tail_room = this->ostream.tailroom();
+        if (stream_tail_room < data.size()) {
+            this->send_session_data();
+            stream_tail_room = this->ostream.tailroom();
+        }
+
+        if (stream_tail_room >= data.size()
+            && (!enable_mask || this->is_probe_enabled_session)
+        ) {
+            this->ostream.out_copy_bytes(data.data(), data.size());
+        }
+    }
+
+    void send_session_data() {
+        if (!this->ostream.get_offset()) {
+            return;
+        }
+
+        memcpy(this->ostream.get_current(), session_log_suffix().data(), session_log_suffix().size() + 1);
+        this->authentifier.log4(false, "KBD input", this->buffer);
+
+        this->ostream.rewind();
+    }
+
+    void session_update(const timeval& /*now*/, const array_const_char & message) override {
+        this->is_probe_enabled_session  = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        this->send_session_data();
+    }
+
+    void possible_active_window_change() override {
+        this->send_session_data();
+    }
+};
+
+
+template<class Utf8CharFn, class NoPrintableFn>
+void filtering_input_kbd(InStream in_raw_kbd_data, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
+{
+    constexpr struct {
+        uint32_t uchar;
+        array_const_char str;
+        // for std::sort and std::lower_bound
+        operator uint32_t () const { return this->uchar; }
+    } noprintable_table[] = {
+        {0x00000008, cstr_array_view("/<backspace>")},
+        {0x00000009, cstr_array_view("/<tab>")},
+        {0x0000000D, cstr_array_view("/<enter>")},
+        {0x0000001B, cstr_array_view("/<escape>")},
+        {0x0000002F, cstr_array_view("//")},
+        {0x0000007F, cstr_array_view("/<delete>")},
+        {0x00002190, cstr_array_view("/<left>")},
+        {0x00002191, cstr_array_view("/<up>")},
+        {0x00002192, cstr_array_view("/<right>")},
+        {0x00002193, cstr_array_view("/<down>")},
+        {0x00002196, cstr_array_view("/<home>")},
+        {0x00002198, cstr_array_view("/<end>")},
+    };
+    using std::begin;
+    using std::end;
+    // TODO used static_assert
+    assert(std::is_sorted(begin(noprintable_table), end(noprintable_table)));
+
+    uint32_t uchar;
+
+    for (size_t i = 0, count = in_raw_kbd_data.get_capacity() / sizeof(uint32_t); i < count; ++i) {
+        uchar = in_raw_kbd_data.in_uint32_le();
+
+        auto p = std::lower_bound(begin(noprintable_table), end(noprintable_table), uchar);
+        if (p != end(noprintable_table) && *p == uchar) {
+            if (!no_printable_fn(p->str)) {
+                break;
+            }
+        }
+        else {
+            if (!utf32_char_fn(uchar)) {
+                break;
+            }
+        }
+    }
+}
+
+/** TODO
+ * KbdFilter< Filters... > Filter{ [bool|void] push_char(uchar, char_len), push_no_printable(av_cont_char) }
+ * KbdCapture< NotifyFlushContainer > : gdi::CaptureApi { Cont & container(); }
+ */
+class NewKbdCapture
+: public gdi::CaptureApi
+, public gdi::InputKbdApi
+{
+    auth_api * authentifier;
+
+    StaticOutStream<48*1024> kbd_buffer;
+
+    PatternSearcher pattern_kill;
+    PatternSearcher pattern_notify;
+
+    timeval last_snapshot;
+
+    bool keyboard_input_mask_enabled = false;
+
+    std::vector<std::reference_wrapper<KbdNotifyFlushApi>> notify_flush_apis;
+
+public:
+    NewKbdCapture(
+        timeval const & now, auth_api * authentifier,
+        char const * str_pattern_kill, char const * str_pattern_notify,
+        int verbose = 0)
+    : authentifier(authentifier)
+    , pattern_kill(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
+                   str_pattern_kill && authentifier ? str_pattern_kill : nullptr, verbose)
+    , pattern_notify(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
+                     str_pattern_notify && authentifier ? str_pattern_notify : nullptr, verbose)
+    , last_snapshot(now)
+    {}
+
+    void attach_flusher(KbdNotifyFlushApi & flusher) {
+        this->notify_flush_apis.push_back(flusher);
+    }
+
+    std::size_t count_flusher() const {
+        return this->notify_flush_apis.size();
+    }
+
+    bool input_kbd(const timeval& now, array_const_u8 const & input_data_32) override {
+        bool can_be_sent_to_server = true;
+        // TODO replace by this->kbd_buffer.get_data()
+        uint8_t buf_char[5];
+
+        filtering_input_kbd(
+            InStream(input_data_32),
+            [this, &buf_char, &can_be_sent_to_server](uint32_t uchar) {
+                size_t const char_len = UTF32toUTF8(
+                    uchar, buf_char, this->kbd_buffer.tailroom()
+                );
+
+                if (char_len > 0) {
+                    buf_char[char_len] = '\0';
+                    this->copy_input(buf_char, char_len);
+                    if (!this->pattern_kill.is_empty()) {
+                        can_be_sent_to_server &= !this->test_pattern(
+                            buf_char, char_len, this->pattern_kill, "FINDPATTERN_KILL"
+                        );
+                    }
+                    if (!this->pattern_notify.is_empty()) {
+                        this->test_pattern(
+                            buf_char, char_len, this->pattern_notify, "FINDPATTERN_NOTIFY"
+                        );
+                    }
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            },
+            [this](array_const_char no_printable_str) {
+                if (no_printable_str.size() > this->kbd_buffer.tailroom()) {
+                    return false;
+                }
+                this->copy_input(no_printable_str.data(), no_printable_str.size());
+                return true;
+            }
+        );
+
+        return can_be_sent_to_server;
+    }
+
+private:
+    void copy_input(void const * data, size_t len) {
+        if (this->keyboard_input_mask_enabled) {
+            static const char shadow_buf[] =
+                "****************************************************************"
+                "****************************************************************"
+                "****************************************************************"
+                "****************************************************************"
+            ;
+            assert(this->kbd_buffer.tailroom() >= len);
+            while (len) {
+                size_t const n = std::min(len, sizeof(shadow_buf)-1u);
+                this->kbd_buffer.out_copy_bytes(shadow_buf, n);
+                len -= n;
+            }
+        }
+        else {
+            this->kbd_buffer.out_copy_bytes(data, len);
+        }
+    }
+
+    bool test_pattern(
+        uint8_t const * uchar, size_t char_len,
+        PatternSearcher & searcher, char const * reason
+    ) {
+        return searcher.test_uchar(
+            uchar, char_len,
+            [&, this](std::string const & pattern, char const * str) {
+                this->flush();
+                assert(this->authentifier);
+                utils::MatchFinder::report(
+                    *this->authentifier,
+                    reason,
+                    utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
+                    pattern.c_str(),
+                    str
+                );
+            }
+        );
+    }
+
+public:
+    std::chrono::microseconds snapshot(
+        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+    ) override {
+        std::chrono::microseconds const time_to_wait = std::chrono::seconds{1};
+
+        if ((difftimeval(now, this->last_snapshot) < static_cast<uint64_t>(time_to_wait.count())) &&
+            (this->kbd_buffer.get_offset() < 8 * sizeof(uint32_t))) {
+            return time_to_wait;
+        }
+
+        this->flush();
+
+        this->last_snapshot = now;
+
+        return time_to_wait;
+    }
+
+    void flush() {
+        if (!this->kbd_buffer.get_offset()) {
+            return ;
+        }
+
+        array_const_char data{
+            reinterpret_cast<char const *>(this->kbd_buffer.get_data()),
+            this->kbd_buffer.get_offset()
+        };
+        for (KbdNotifyFlushApi & x : notify_flush_apis) {
+            x.notify_flush(data, this->keyboard_input_mask_enabled);
+        }
+
+        this->kbd_buffer.rewind();
+    }
+
     void enable_keyboard_input_mask(bool enable) {
         if (this->keyboard_input_mask_enabled != enable) {
             this->flush();
@@ -342,159 +494,11 @@ public:
         }
     }
 
-    std::chrono::microseconds snapshot(
-        const timeval& now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval
-    ) override {
-        std::chrono::microseconds const ret {uint64_t(this->time_to_wait)};
-
-        if ((difftimeval(now, this->last_snapshot) < this->time_to_wait) &&
-            (this->unlogged_data.get_offset() < 8 * sizeof(uint32_t))) {
-            return ret;
-        }
-
-        if (this->wait_until_next_snapshot) {
-            this->wait_until_next_snapshot = false;
-
-            return ret;
-        }
-
-        this->flush();
-
-        this->last_snapshot = now;
-
-        return ret;
-    }
-
-private:
-    template<std::size_t N, class LogMgr>
-    void log_input_data(LogMgr log_mgr, bool enable_mask, uint8_t const * data, size_t data_len) {
-        const char prefix[] = "data=\"";
-        const char suffix[] = "\"";
-
-        char extra[N + sizeof(prefix) + sizeof(suffix) + 1];
-        ::snprintf(extra, sizeof(extra), "%s%.*s%s",
-            prefix,
-            (unsigned)data_len,
-            data,
-            suffix);
-        if (enable_mask) {
-            ::memset(&extra[0] + sizeof(prefix) - 1, '*', data_len);
-        }
-
-        log_mgr(extra);
-    }
-
-public:
-    void flush() {
-        const uint8_t * unlogged_data_p      = this->unlogged_data.get_data();
-        const size_t    unlogged_data_length = this->unlogged_data.get_offset();
-
-        if (unlogged_data_length) {
-            if (this->enable_keyboard_log_syslog) {
-                using Buffer = decltype(this->unlogged_data);
-                this->log_input_data<Buffer::original_capacity()>(
-                          [] (char const * data) {
-                              LOG(LOG_INFO, "type=\"KBD input\" %s", data);
-                          }
-                        , this->keyboard_input_mask_enabled
-                        , unlogged_data_p
-                        , unlogged_data_length
-                    );
-            }
-
-            if (this->data.has_room(unlogged_data_length)) {
-                if (this->keyboard_input_mask_enabled) {
-                    ::memset(this->data.get_current(), '*',
-                        unlogged_data_length);
-                    this->data.out_skip_bytes(unlogged_data_length);
-                }
-                else {
-                    this->data.out_copy_bytes(unlogged_data_p,
-                        unlogged_data_length);
-                }
-            }
-
-            size_t stream_tail_room = this->session_data.tailroom();
-            if (stream_tail_room < unlogged_data_length) {
-                this->send_session_data();
-                stream_tail_room = this->session_data.tailroom();
-            }
-            if (stream_tail_room >= unlogged_data_length) {
-                if (this->keyboard_input_mask_enabled) {
-                    if (this->is_probe_enabled_session) {
-                        ::memset(this->session_data.get_current(), '*',
-                            unlogged_data_length);
-                        this->session_data.out_skip_bytes(unlogged_data_length);
-                    }
-                }
-                else {
-                    this->session_data.out_copy_bytes(unlogged_data_p,
-                        unlogged_data_length);
-                }
-            }
-
-            this->unlogged_data.rewind();
-        }
-
-        this->wait_until_next_snapshot = true;
-    }
-
-    bool has_data() {
-        return (this->unlogged_data.get_offset() != 0) || (this->data.get_offset() != 0);
-    }
-
-    void send_data(Transport & trans) {
-        REDASSERT(!this->unlogged_data.get_offset());
-
-        trans.send(this->data.get_data(), this->data.get_offset());
-
-        this->data.rewind();
-    }
-
-    void send_session_data() {
-        if (!this->session_data.get_offset()) return;
-
-        if (this->authentifier) {
-            using Buffer = decltype(this->session_data);
-            this->log_input_data<Buffer::original_capacity()>(
-                      [this] (char const * data) {
-                          this->authentifier->log4(false,
-                              "KBD input", data);
-                      }
-                    , false
-                    , this->session_data.get_data()
-                    , this->session_data.get_offset()
-                );
-        }
-        this->session_data.rewind();
-    }
-
-    void reset_data() {
-        this->data.rewind();
-    }
-
-    void session_update(const timeval& /*now*/, const array_const_char & message) override {
-        this->is_driven_by_ocr          = true;
-        this->is_probe_enabled_session  = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
-
-        if (!this->session_data.get_offset()) return;
-
-        this->send_session_data();
-    }
-
-    void possible_active_window_change() override {
-        if (this->is_driven_by_ocr) return;
-
-        this->send_session_data();
-    }
-
     void external_breakpoint() override {}
-    void external_time(const timeval& /*now*/) override {}
-    void pause_capture(const timeval& /*now*/) override {}
-    void resume_capture(const timeval& /*now*/) override {}
-    void update_config(const Inifile& /*ini*/) override {}
+    void external_time(const timeval&) override {}
+    void pause_capture(const timeval&) override {}
+    void resume_capture(const timeval&) override {}
+    void update_config(const Inifile&) override {}
 };
 
 #endif

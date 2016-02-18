@@ -42,9 +42,10 @@
 
 #include "utils/graphic_capture_impl.hpp"
 #include "utils/wrm_capture_impl.hpp"
+#include "utils/kbd_capture_impl.hpp"
 
 class Capture final
-: public gdi::GraphicApi
+: public gdi::GraphicBase<Capture>
 , public gdi::CaptureApi
 , public gdi::InputKbdApi
 , public gdi::InputPointer
@@ -86,30 +87,7 @@ class Capture final
 
     using Native = WrmCaptureImpl;
 
-
-    class Kbd
-    {
-        NewKbdCapture kc;
-
-    public:
-        Kbd(const timeval & now, auth_api * authentifier, const Inifile & ini)
-        : kc(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(),
-            ini.get<cfg::context::pattern_notify>().c_str(),
-            !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog),
-            /*is_kc_driven_by_ocr=*/false,
-            ini.get<cfg::debug::capture>())
-        {}
-
-        void attach_apis(ApisRegister & api_register, const Inifile & ini) {
-            api_register.capture_list.push_back(this->kc);
-            api_register.input_kbd_list.push_back(this->kc);
-            api_register.capture_probe_list.push_back(this->kc);
-        }
-
-        void enable_keyboard_input_mask(bool enable) {
-            this->kc.enable_keyboard_input_mask(enable);
-        }
-    };
+    using Kbd = KbdCaptureImpl;
 
 
     struct NewCapture : gdi::CaptureDispatcher<NewCapture>
@@ -192,7 +170,6 @@ class Capture final
 
         std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> cds;
     };
-
 
 
 public:
@@ -358,24 +335,12 @@ public:
         this->capture_api.update_config(ini);
     }
 
-    void set_row(size_t rownum, const uint8_t * data) override {
-        if (this->gd){
-            this->gd->rdp_drawable().set_row(rownum, data);
-        }
-    }
-
     std::chrono::microseconds snapshot(
         const timeval & now,
         int x, int y,
         bool ignore_frame_in_timeval
     ) override {
         return this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
-    }
-
-    void sync() override {
-        if (this->graphic_api) {
-            this->graphic_api->sync();
-        }
     }
 
     bool input_kbd(const timeval & now, array_const_u8 const & input_data_32) override {
@@ -397,153 +362,38 @@ public:
         }
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
+private:
+    friend gdi::GraphicCoreAccess;
+
+    template<class... Ts>
+    void draw_impl(Ts const & ... args) {
         if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
+            this->graphic_api->draw(args...);
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
+public:
+    void set_pointer(const Pointer & cursor) override {
         if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
+            this->graphic_api->set_pointer(cursor);
         }
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
+    void set_palette(const BGRPalette & palette) override {
         if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
+            this->graphic_api->set_palette(palette);
         }
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
+    void sync() override {
         if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
+            this->graphic_api->sync();
         }
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip, bmp);
-        }
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip, bmp);
-        }
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPBrushCache & cmd) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd);
-        }
-    }
-
-    void draw(const RDPColCache & cmd) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd);
-        }
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip, gly_cache);
-        }
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(bitmap_data, bmp);
-        }
-    }
-
-    void draw(const RDP::FrameMarker & cmd) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd);
-        }
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        if (this->graphic_api) {
-            this->graphic_api->draw(order);
+    void set_row(size_t rownum, const uint8_t * data) override {
+        if (this->gd){
+            this->gd->rdp_drawable().set_row(rownum, data);
         }
     }
 
@@ -556,18 +406,6 @@ public:
             this->get_apis_register().graphic_list->push_back(gd);
             // TODO
             this->gd->start();
-        }
-    }
-
-    void set_pointer(const Pointer & cursor) override {
-        if (this->graphic_api) {
-            this->graphic_api->set_pointer(cursor);
-        }
-    }
-
-    void set_palette(const BGRPalette & palette) override {
-        if (this->graphic_api) {
-            this->graphic_api->set_palette(palette);
         }
     }
 

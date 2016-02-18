@@ -369,10 +369,10 @@ protected:
 };
 
 template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
-struct GraphicProx : GraphicBase<Derived, InterfaceBase, CoreAccess>
+struct GraphicUniFormProxy : GraphicBase<Derived, InterfaceBase, CoreAccess>
 {
     using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
-    using base_type = GraphicProx;
+    using base_type = GraphicUniFormProxy;
     friend CoreAccess;
 
     struct draw_tag {};

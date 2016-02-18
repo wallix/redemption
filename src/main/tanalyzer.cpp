@@ -52,7 +52,7 @@
 #include "program_options/program_options.hpp"
 
 
-class Analyzer : public gdi::GraphicProx<Analyzer, FrontAPI>
+class Analyzer : public gdi::GraphicUniFormProxy<Analyzer, FrontAPI>
 {
     friend gdi::GraphicCoreAccess;
 

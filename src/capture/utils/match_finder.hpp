@@ -184,14 +184,14 @@ public:
         }
     }
 
-    static void report(auth_api * authentifier, const char * reason,
+    static void report(auth_api & authentifier, const char * reason,
         ConfigureRegexes conf_regex, const char * pattern, const char * data) {
         char message[4096];
 
         snprintf(message, sizeof(message), "$%s:%s|%s",
             ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
 
-        authentifier->report(reason, message);
+        authentifier.report(reason, message);
     }
 };
 
