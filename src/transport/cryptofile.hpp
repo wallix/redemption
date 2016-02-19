@@ -64,8 +64,8 @@ enum {
 #define CRYPTO_BUFFER_SIZE ((4096 * 4))
 
 extern "C" {
-    typedef char * get_hmac_key_prototype();
-    typedef char * get_trace_key_prototype(char * base, int len);
+    typedef int get_hmac_key_prototype(char * buffer);
+    typedef int get_trace_key_prototype(char * base, int len, char * buffer);
 }
 
 
@@ -98,8 +98,7 @@ class CryptoContext {
         }
         else if (this->get_hmac_key_cb != nullptr){
             // if we have a callback ask key
-            char * tmp = this->get_hmac_key_cb();
-            memcpy(this->hmac_key, tmp, HMAC_KEY_LENGTH);
+            this->get_hmac_key_cb(reinterpret_cast<char*>(this->hmac_key));
             this->hmac_key_loaded = true;
         }
         else {
@@ -166,9 +165,11 @@ class CryptoContext {
         if (!this->master_key_loaded){
             if (this->get_trace_key_cb != nullptr){
                 // if we have a callback ask key
-                char * tmp = this->get_trace_key_cb(
-                    reinterpret_cast<char*>(const_cast<uint8_t*>(derivator)), static_cast<int>(derivator_len));
-                memcpy(this->master_key, tmp, CRYPTO_KEY_LENGTH);
+                this->get_trace_key_cb(
+                      reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
+                    , static_cast<int>(derivator_len)
+                    , reinterpret_cast<char*>(this->master_key)
+                    );
                 this->master_key_loaded = true;
             }
             else {

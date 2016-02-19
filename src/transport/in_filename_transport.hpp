@@ -103,15 +103,8 @@ public:
         , raw_size(0)
         , state(0)
     {
-    
-//        size_t base_len = 0;
-//        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-    
-//        this->fd = ::open(filename, O_RDONLY);
-//        if (this->fd < 0) {
-//            LOG(LOG_ERR, "failed opening=%s\n", filename);
-//            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-//        }
+
+        printf("InFilenameTransport\n"); 
 
         this->raw.read_min(this->fd, 40, 4);
         const uint32_t magic = this->raw.get_uint32_le(0);
