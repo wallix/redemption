@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)DESTBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(DESTBLT), common_cmd.order);
 
         RDPDestBlt cmd(Rect(), 0);
 

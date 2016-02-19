@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     MemoryTransport trans;
 
     {
-        kbd_capture.input({}, input, input_sz);
+        kbd_capture.input(time, input, input_sz);
         kbd_capture.flush();
 
         kbd_capture.send_session_data();
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     auth.s.clear();
 
     {
-        kbd_capture.input({}, input, input_sz);
+        kbd_capture.input(time, input, input_sz);
         kbd_capture.flush();
 
         kbd_capture.send_session_data();
@@ -90,9 +90,9 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     auth.s.clear();
 
     {
-        kbd_capture.input({}, input, input_sz);
+        kbd_capture.input(time, input, input_sz);
         kbd_capture.enable_keyboard_input_mask(true);
-        kbd_capture.input({}, input, input_sz);
+        kbd_capture.input(time, input, input_sz);
         kbd_capture.flush();
 
         trans.out_stream.rewind();

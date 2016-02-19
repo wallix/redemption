@@ -51,8 +51,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE_HOSTSUPPORT));
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.len, static_cast<uint16_t>(CAPLEN_BITMAPCACHE_HOSTSUPPORT));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BITMAPCACHE_HOSTSUPPORT, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BITMAPCACHE_HOSTSUPPORT, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE_HOSTSUPPORT), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_BITMAPCACHE_HOSTSUPPORT), stream.in_uint16_le());
     bitmapcachehostsupport_caps2.recv(stream, CAPLEN_BITMAPCACHE_HOSTSUPPORT);
 
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.cacheVersion, static_cast<uint8_t>(255));

@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
     BOOST_CHECK_EQUAL(pointer_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_POINTER));
     BOOST_CHECK_EQUAL(pointer_caps2.len, static_cast<uint16_t>(CAPLEN_POINTER));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_POINTER, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_POINTER, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_POINTER), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_POINTER), stream.in_uint16_le());
     pointer_caps2.recv(stream, CAPLEN_POINTER);
 
     BOOST_CHECK_EQUAL(pointer_caps2.colorPointerFlag, static_cast<uint16_t>(0));

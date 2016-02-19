@@ -19,6 +19,10 @@
 
 #include "transport/socket_transport.hpp"
 
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {
     TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL");
@@ -120,10 +124,10 @@ int main(int argc, char **argv)
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+        struct sockaddr s;
+        struct sockaddr_storage ss;
+        struct sockaddr_in s4;
+        struct sockaddr_in6 s6;
     } ucs;
     memset(&ucs, 0, sizeof(ucs));
 
@@ -149,22 +153,24 @@ int main(int argc, char **argv)
     listen(sock,5);
 
     while(1){
-      int s = accept(sock,nullptr,nullptr);
-      if(s < 0){
-        fprintf(stderr,"Problem accepting\n");
-        exit(0);
-      }
+        int s = accept(sock,nullptr,nullptr);
+        if(s < 0){
+            fprintf(stderr,"Problem accepting\n");
+            exit(0);
+        }
 
-     pid_t pid = fork();
+        pid_t pid = fork();
 
-     if(pid){
-       close(s);
-     }
-     else {
-        rdp_serve(ctx, s, bio_err);
-        exit(0);
-      }
+        if(pid){
+            close(s);
+        }
+        else {
+            rdp_serve(ctx, s, bio_err);
+            exit(0);
+        }
     }
     SSL_CTX_free(ctx);
     exit(0);
-  }
+}
+
+#pragma GCC diagnostic pop

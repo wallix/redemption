@@ -629,16 +629,16 @@ typedef struct {
 
 static void Random_dealloc(PyORandom* self) {
     delete self->rnd;
-    self->ob_type->tp_free((PyObject*)self);
+    self->ob_type->tp_free(reinterpret_cast<PyObject*>(self));
 }
 
 static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    PyORandom *self = (PyORandom *)type->tp_alloc(type, 0);
-    if (self != NULL) {
+    PyORandom *self = reinterpret_cast<PyORandom *>(type->tp_alloc(type, 0));
+    if (self != nullptr) {
         self->rnd = new UdevRandom;
     }
-    return (PyObject *)self;
+    return reinterpret_cast<PyObject*>(self);
 }
 
 static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
@@ -654,7 +654,7 @@ static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
 static PyObject *
 Random_rand(PyORandom* self)
 {
-    long val = (long)self->rnd->rand64();
+    long val = static_cast<long>(self->rnd->rand64());
     PyObject * result = PyInt_FromLong(val);
     return result;
 }
@@ -665,7 +665,7 @@ static PyMemberDef Random_members[] = {
 
 
 static PyMethodDef Random_methods[] = {
-    {"rand", (PyCFunction)Random_rand, METH_NOARGS, "Return a new random int"},
+    {"rand", reinterpret_cast<PyCFunction>(Random_rand), METH_NOARGS, "Return a new random int"},
     {nullptr, nullptr, 0, nullptr}
   /* Sentinel */
 };
@@ -679,7 +679,7 @@ t_PyTyOb PyTyRandom = {
     "redcryptofile.Random",    /*tp_name*/
     sizeof(PyORandom), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
-    (destructor)Random_dealloc,/*tp_dealloc*/
+    reinterpret_cast<destructor>(Random_dealloc),/*tp_dealloc*/
     nullptr,                   /*tp_print*/
     nullptr,                   /*tp_getattr*/
     nullptr,                   /*tp_setattr*/
@@ -710,7 +710,7 @@ t_PyTyOb PyTyRandom = {
     nullptr,                   /* tp_descr_get */
     nullptr,                   /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    (initproc)Random_init,     /* tp_init */
+    reinterpret_cast<initproc>(Random_init),     /* tp_init */
     nullptr,                   /* tp_alloc */
     Random_new,                /* tp_new */
     nullptr,                   /* tp_free */
@@ -726,12 +726,15 @@ t_PyTyOb PyTyRandom = {
 
 namespace {
     inline PyObject * py_return_none() {
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__clang__)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
+#elif defined(__GNUC__)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
         Py_RETURN_NONE;
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
 # pragma GCC diagnostic pop
 #endif
     }
@@ -948,8 +951,15 @@ static PyMethodDef redcryptoFileMethods[] = {
 PyMODINIT_FUNC
 initredcryptofile(void)
 {
+#if defined(__clang__)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
     PyObject* module = Py_InitModule3("redcryptofile", redcryptoFileMethods,
                            "redcryptofile module");
+#if defined(__clang__)
+# pragma GCC diagnostic pop
+#endif
 
     OpenSSL_add_all_digests();
 
@@ -969,7 +979,10 @@ initredcryptofile(void)
         gl_file_store_write[idxw] = nullptr;
     }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__clang__)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
+#elif defined(__GNUC__)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
@@ -984,7 +997,7 @@ initredcryptofile(void)
         Py_INCREF(&PyTyRandom.po);
         PyModule_AddObject(module, "Random", &PyTyRandom.po);
     }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
 # pragma GCC diagnostic pop
 #endif
 }

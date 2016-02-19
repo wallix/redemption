@@ -76,7 +76,7 @@ protected:
 
 struct GeneratorTransport : public InputTransportDynarray
 {
-    GeneratorTransport(const char * data, size_t len, uint32_t verbose = 0)
+    GeneratorTransport(const void * data, size_t len, uint32_t verbose = 0)
     {
         if (this->buffer().open(len, data)) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);

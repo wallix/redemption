@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
     BOOST_CHECK_EQUAL(largepointer_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER));
     BOOST_CHECK_EQUAL(largepointer_caps2.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_LARGE_POINTER, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_LARGE_POINTER, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_LARGE_POINTER), stream.in_uint16_le());
     largepointer_caps2.recv(stream, CAPLEN_LARGE_POINTER);
 
     BOOST_CHECK_EQUAL(largepointer_caps2.largePointerSupportFlags, static_cast<uint16_t>(1));

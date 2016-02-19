@@ -135,7 +135,7 @@ public:
                 }
 
                 int nodelay = 1;
-                if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
+                if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))){
                     // Create session file
                     int child_pid = getpid();
                     char session_file[256];
@@ -157,8 +157,8 @@ public:
                     if (0 != strcmp(source_ip, "127.0.0.1")){
                         // do not log early messages for localhost (to avoid tracing in watchdog)
                         LOG(LOG_INFO,
-                            "New session on %u (pid=%u) from %s to %s",
-                            (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
+                            "New session on %d (pid=%d) from %s to %s",
+                            sck, child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                     }
                     ini.set_acl<cfg::globals::host>(source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);

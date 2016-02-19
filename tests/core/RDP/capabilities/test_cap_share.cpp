@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
     BOOST_CHECK_EQUAL(share_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_SHARE));
     BOOST_CHECK_EQUAL(share_caps2.len, static_cast<uint16_t>(CAPLEN_SHARE));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_SHARE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_SHARE, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_SHARE), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_SHARE), stream.in_uint16_le());
     share_caps2.recv(stream, CAPLEN_SHARE);
 
     BOOST_CHECK_EQUAL(share_caps2.nodeId, static_cast<uint16_t>(0));

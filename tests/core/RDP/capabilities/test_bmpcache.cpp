@@ -69,8 +69,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
     BOOST_CHECK_EQUAL(bmpcache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE));
     BOOST_CHECK_EQUAL(bmpcache_caps2.len, static_cast<uint16_t>(CAPLEN_BITMAPCACHE));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BITMAPCACHE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BITMAPCACHE, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_BITMAPCACHE), stream.in_uint16_le());
     bmpcache_caps2.recv(stream, CAPLEN_BITMAPCACHE);
 
     BOOST_CHECK_EQUAL(bmpcache_caps2.pad1, static_cast<uint32_t>(1));

@@ -22,6 +22,11 @@
 
 #include "openssl_tls.hpp"
 
+
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 static void rdp_request(SocketTransport & sockettransport)
 {
     const char *request = "REDEMPTION\r\n\r\n";
@@ -225,3 +230,4 @@ int main(int argc, char ** argv)
     return 0;
 }
 
+#pragma GCC diagnostic pop

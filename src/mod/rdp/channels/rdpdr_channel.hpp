@@ -493,7 +493,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         ((DeviceType == rdpdr::RDPDR_DTYP_SMARTCARD) &&
                          this->param_smart_card_authorized))
                     {
-                        REDASSERT(!(bool)this->current_device_announce_data);
+                        REDASSERT(!bool(this->current_device_announce_data));
 
                         const uint32_t current_device_announce_data_length =
                               rdpdr::SharedHeader::size()
@@ -1182,7 +1182,7 @@ public:
                         file_names_information.receive(chunk);
 
                         LOG(LOG_INFO, "FileNamesInformation: size=%u",
-                            (unsigned int)(chunk.get_current() - chunk_p));
+                            static_cast<unsigned>(chunk.get_current() - chunk_p));
                         hexdump(chunk_p, chunk.get_current() - chunk_p);
 
                         file_names_information.log(LOG_INFO);

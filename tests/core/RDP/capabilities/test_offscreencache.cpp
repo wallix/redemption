@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
     BOOST_CHECK_EQUAL(offscreencache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE));
     BOOST_CHECK_EQUAL(offscreencache_caps2.len, static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_OFFSCREENCACHE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_OFFSCREENCACHE, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE), stream.in_uint16_le());
     offscreencache_caps2.recv(stream, CAPLEN_OFFSCREENCACHE);
 
     BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenSupportLevel, static_cast<uint16_t>(1));

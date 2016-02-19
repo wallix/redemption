@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
     char message[1024];
-    if (!check_sig(to_send3, message, (const char *)sig)){
+    if (!check_sig(to_send3, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

@@ -42,6 +42,10 @@
 #define INVALID_SOCKET -1
 #endif  // #ifndef INVALID_SOCKET
 
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
 // Each line (for multiline formats) is indented by indent spaces.
 // The output format can be extensively customised by use of the flags parameter.
@@ -90,12 +94,13 @@ static inline char* crypto_cert_fingerprint(X509* xcert)
 static inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
 {
     const char * pass = static_cast<const char*>(userdata);
-    if(num < (int)strlen(pass)+1){
-      return(0);
+    size_t pass_len = strlen(pass);
+    if(num < static_cast<int>(pass_len+1u)) {
+      return 0;
     }
 
     strcpy(buf, pass);
-    return strlen(pass);
+    return pass_len;
 }
 
 
@@ -1432,5 +1437,7 @@ private:
         return len;
     }
 };
+
+#pragma GCC diagnostic pop
 
 #endif

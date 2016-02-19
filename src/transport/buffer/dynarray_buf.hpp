@@ -35,7 +35,7 @@ namespace transbuf {
     public:
         dynarray_buf() = default;
 
-        int open(size_t len, const char * data = nullptr)
+        int open(size_t len, const void * data = nullptr)
         {
             this->data.reset(new(std::nothrow) uint8_t[len]);
             if (!this->data) {

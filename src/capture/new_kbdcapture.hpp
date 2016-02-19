@@ -65,12 +65,11 @@ private:
 
     struct TextSearcher
     {
-        using StreamSearcher = re::Regex::PartOfText;
-        StreamSearcher searcher;
+        re::Regex::PartOfText searcher;
         re::Regex::range_matches matches;
 
         void reset(re::Regex & rgx) {
-            this->searcher = StreamSearcher(rgx.part_of_text_search(false));
+            this->searcher = rgx.part_of_text_search(false);
         }
 
         bool next(uint8_t const * uchar) {
@@ -362,7 +361,7 @@ private:
         char extra[N + sizeof(prefix) + sizeof(suffix) + 1];
         ::snprintf(extra, sizeof(extra), "%s%.*s%s",
             prefix,
-            (unsigned)data_len,
+            static_cast<unsigned>(data_len),
             data,
             suffix);
         if (enable_mask) {
