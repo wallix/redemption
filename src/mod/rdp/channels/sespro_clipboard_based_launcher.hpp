@@ -150,7 +150,7 @@ public:
 
                 this->state = State::RUN_WIN_D_D_DOWN;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::RUN_WIN_D_D_DOWN:
@@ -163,7 +163,7 @@ public:
 
                 this->state = State::RUN_WIN_D_D_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::RUN_WIN_D_D_UP:
@@ -177,7 +177,7 @@ public:
 
                 this->state = State::RUN_WIN_D_WIN_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::RUN_WIN_D_WIN_UP:
@@ -192,7 +192,7 @@ public:
 
                 this->state = State::RUN_WIN_R_WIN_DOWN;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::RUN_WIN_R_WIN_DOWN:
@@ -205,7 +205,7 @@ public:
 
                 this->state = State::RUN_WIN_R_R_DOWN;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::RUN_WIN_R_R_DOWN:
@@ -218,7 +218,7 @@ public:
 
                 this->state = State::RUN_WIN_R_R_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::RUN_WIN_R_R_UP:
@@ -232,7 +232,7 @@ public:
 
                 this->state = State::RUN_WIN_R_WIN_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::RUN_WIN_R_WIN_UP:
@@ -264,7 +264,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_A_DOWN;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::CLIPBOARD_CTRL_A_A_DOWN:
@@ -277,7 +277,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_A_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::CLIPBOARD_CTRL_A_A_UP:
@@ -291,7 +291,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_CTRL_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::CLIPBOARD_CTRL_A_CTRL_UP:
@@ -305,7 +305,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_DOWN;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::CLIPBOARD_CTRL_V_CTRL_DOWN:
@@ -318,7 +318,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_V_DOWN;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::CLIPBOARD_CTRL_V_V_DOWN:
@@ -331,7 +331,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_V_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::CLIPBOARD_CTRL_V_V_UP:
@@ -345,7 +345,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::CLIPBOARD_CTRL_V_CTRL_UP:
@@ -365,7 +365,7 @@ public:
             case State::ENTER:
                 this->state = State::ENTER_DOWN;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::ENTER_DOWN:
@@ -378,7 +378,7 @@ public:
 
                 this->state = State::ENTER_UP;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::ENTER_UP:
@@ -394,7 +394,7 @@ public:
 
                 this->state = State::WAIT;
 
-                this->event.set(250000);
+                this->event.set(125000);
             break;
 
             case State::START:
@@ -432,15 +432,36 @@ public:
                 "SessionProbeClipboardBasedLauncher :=> on_server_format_data_request");
         }
 
+        StaticOutStream<1024> out_s;
+
+        const bool response_ok = true;
+        const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(
+            response_ok);
+
+        size_t alternate_shell_length = this->alternate_shell.length() + 1;
+        format_data_response_pdu.emit_ex(out_s, alternate_shell_length);
+        out_s.out_copy_bytes(this->alternate_shell.c_str(),
+            alternate_shell_length);
+
+        const size_t totalLength = out_s.get_offset();
+
+        InStream in_s(out_s.get_data(), totalLength);
+
+        this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                      in_s,
+                                      totalLength,
+                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                      | CHANNELS::CHANNEL_FLAG_LAST);
+
         this->format_data_requested = true;
 
         if (this->channel) {
             this->channel->give_additional_launch_time();
         }
 
-        if (this->state == State::CLIPBOARD) {
-            this->do_state_clipboard();
-        }
+//        if (this->state == State::CLIPBOARD) {
+//            this->do_state_clipboard();
+//        }
 
         return false;
     }
@@ -459,7 +480,7 @@ public:
 
         this->event.object_and_time = true;
 
-        this->event.set(250000);
+        this->event.set(125000);
 
         return false;
     }
@@ -485,31 +506,10 @@ private:
         if (!this->format_data_requested) {
             this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
 
-            this->event.set(250000);
+            this->event.set(125000);
 
             return;
         }
-
-        StaticOutStream<1024> out_s;
-
-        const bool response_ok = true;
-        const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(
-            response_ok);
-
-        size_t alternate_shell_length = this->alternate_shell.length() + 1;
-        format_data_response_pdu.emit_ex(out_s, alternate_shell_length);
-        out_s.out_copy_bytes(this->alternate_shell.c_str(),
-            alternate_shell_length);
-
-        const size_t totalLength = out_s.get_offset();
-
-        InStream in_s(out_s.get_data(), totalLength);
-
-        this->mod.send_to_mod_channel(channel_names::cliprdr,
-                                      in_s,
-                                      totalLength,
-                                        CHANNELS::CHANNEL_FLAG_FIRST
-                                      | CHANNELS::CHANNEL_FLAG_LAST);
 
         this->state = State::ENTER;
 
@@ -542,7 +542,7 @@ private:
 
         this->state = State::RUN;
 
-        this->event.set(250000);
+        this->event.set(125000);
     }
 };  // class SessionProbeClipboardBasedLauncher
 
