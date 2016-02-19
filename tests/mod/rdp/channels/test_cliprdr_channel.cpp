@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -505,7 +505,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();

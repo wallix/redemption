@@ -91,6 +91,9 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGUSR1);
     sigaddset(&sa.sa_mask, SIGUSR2);
 
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
     sa.sa_handler = SIG_IGN;
     sigaction(SIGSEGV, &sa, nullptr);
 
@@ -120,6 +123,7 @@ void init_signals(void)
 
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR2, &sa, nullptr);
+#pragma GCC diagnostic pop
 }
 
 //void reset_signals(void)
@@ -175,7 +179,7 @@ void redemption_new_session(CryptoContext & cctx, char const * config_filename)
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", unsigned(getpid()));
 
-    getpeername(0, &u.s, (socklen_t *)&sock_len);
+    getpeername(0, &u.s, reinterpret_cast<socklen_t *>(&sock_len));
     strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
 
     union
@@ -218,7 +222,7 @@ void redemption_new_session(CryptoContext & cctx, char const * config_filename)
     }
 
     int nodelay = 1;
-    if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
+    if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&nodelay), sizeof(nodelay))){
         Session session(sck, ini, cctx);
 
         if (ini.get<cfg::debug::session>()){
@@ -241,7 +245,11 @@ void redemption_main_loop(Inifile & ini, CryptoContext & cctx, unsigned uid, uns
     SessionServer ss(cctx, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>());
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
+#pragma GCC diagnostic pop
     int port = ini.get<cfg::globals::port>();
     Listen listener( ss
                      , s_addr

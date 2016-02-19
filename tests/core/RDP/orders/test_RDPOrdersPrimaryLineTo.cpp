@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
                   ).emit(out_stream, newcommon, state_common, state_lineto);
 
 
-        BOOST_CHECK_EQUAL((uint8_t)LINE, newcommon.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(LINE), newcommon.order);
         BOOST_CHECK_EQUAL(Rect(10, 20, 30, 40), newcommon.clip);
 
         uint8_t datas[] = {
@@ -74,9 +74,9 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)0x1D, header.control);
-        BOOST_CHECK_EQUAL((uint32_t)0x37D, header.fields);
-        BOOST_CHECK_EQUAL((uint8_t)LINE, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x1D), header.control);
+        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x37D), header.fields);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(LINE), common_cmd.order);
         BOOST_CHECK_EQUAL(Rect(10, 20, 30, 40), common_cmd.clip);
 
         RDPLineTo cmd = state_lineto;

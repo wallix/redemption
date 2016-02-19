@@ -196,7 +196,7 @@ class CryptoContext {
         this->master_key_loaded = false;
     }
 
-    CryptoContext(Random & gen, const Inifile & ini, int key_source) 
+    CryptoContext(Random & gen, const Inifile & ini, int key_source)
         : master_key_loaded(false)
         , hmac_key_loaded(false)
         , master_key{}
@@ -221,7 +221,7 @@ class CryptoContext {
                 HMAC_KEY_LENGTH);
         }
 
-    void random(void * dest, size_t size) 
+    void random(void * dest, size_t size)
     {
         this->gen.random(dest, size);
     }
@@ -246,7 +246,7 @@ class CryptoContext {
         base64tbl['_'] = 63;
 
         while (*txt) {
-            if ((v = base64tbl[(unsigned char)*txt]) >= 0) {
+            if ((v = base64tbl[static_cast<unsigned char>(*txt)]) >= 0) {
                 bits <<= 6;
                 bits += v;
                 nbits += 6;
@@ -271,12 +271,12 @@ class CryptoContext {
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmget! error=%s\n", getpid(), strerror(errno));
             return 1;
         }
-        char *shm = (char*)shmat(shmid, nullptr, 0);
-        if (shm == (char *)-1){
+        void *shm = shmat(shmid, nullptr, 0);
+        if (shm == reinterpret_cast<void*>(-1)){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmat! error=%s\n", getpid(), strerror(errno));
             return 1;
         }
-        this->unbase64(tmp_buf, 512, shm);
+        this->unbase64(tmp_buf, 512, static_cast<char*>(shm));
         if (shmdt(shm) == -1){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmdt! error=%s\n", getpid(), strerror(errno));
             return 1;
@@ -288,7 +288,7 @@ class CryptoContext {
         uint8_t tmp[SHA256_DIGEST_LENGTH];
         {
             SslSha256 sha256;
-            sha256.update((uint8_t *)(tmp_buf + SHA256_DIGEST_LENGTH + 1), MKSALT_LEN + CRYPTO_KEY_LENGTH);
+            sha256.update(reinterpret_cast<uint8_t*>(tmp_buf + SHA256_DIGEST_LENGTH + 1), MKSALT_LEN + CRYPTO_KEY_LENGTH);
             sha256.final(tmp, SHA256_DIGEST_LENGTH);
         }
         if (memcmp(tmp_buf + 1, tmp, SHA256_DIGEST_LENGTH)){
@@ -329,13 +329,13 @@ class CryptoContext {
     {
         this->get_hmac_key_cb = get_hmac_key_cb;
     }
-        
+
     void set_get_trace_key_cb(get_trace_key_prototype * get_trace_key_cb)
     {
         this->get_trace_key_cb = get_trace_key_cb;
     }
-        
-    const unsigned char * get_crypto_key() 
+
+    const unsigned char * get_crypto_key()
     {
         return get_master_key();
     }

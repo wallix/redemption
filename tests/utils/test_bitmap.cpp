@@ -252,30 +252,30 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         unsigned color = white;
         BOOST_CHECK_EQUAL(1, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+15, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FILL, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FILL), flags);
         BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+14, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+14, masks, 2);
         BOOST_CHECK_EQUAL(0x01, masks[0]);
 
 
         BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+12, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+12, masks, 4);
         BOOST_CHECK_EQUAL(0x07, masks[0]);
 
         BOOST_CHECK_EQUAL(5, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+11, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
 
         BOOST_CHECK_EQUAL(6, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+10, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         BOOST_CHECK_EQUAL(12, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+4, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+4, masks, 12);
         BOOST_CHECK_EQUAL(0xA5, masks[0]);
         BOOST_CHECK_EQUAL(0x07, masks[1]);
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         foreground = white;
         BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(0x04, foreground);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_MIX, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_MIX), flags);
     }
 
 
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         unsigned flags = 0;
         BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(4, foreground);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags); // MIX then FILL
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags); // MIX then FILL
     }
 }
 
@@ -4023,7 +4023,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     }
     catch (const Error & e){
         // this test is not supposed to be executed
-        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL(0, e.id);
     }
 
     try {
@@ -4031,14 +4031,14 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     }
     catch (const Error & e){
         // this test is supposed to be executed
-        BOOST_CHECK_EQUAL((uint32_t)ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL(ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, e.id);
     }
     try {
         Bitmap file(filename3);
     }
     catch (const Error & e){
         // this test is not supposed to be executed
-        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL(0, e.id);
     }
 }
 

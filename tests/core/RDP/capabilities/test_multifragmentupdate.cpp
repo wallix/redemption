@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
     BOOST_CHECK_EQUAL(multifragmentupdate_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE));
     BOOST_CHECK_EQUAL(multifragmentupdate_caps2.len, static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_MULTIFRAGMENTUPDATE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_MULTIFRAGMENTUPDATE, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE), stream.in_uint16_le());
     multifragmentupdate_caps2.recv(stream, CAPLEN_MULTIFRAGMENTUPDATE);
 
     BOOST_CHECK_EQUAL(multifragmentupdate_caps2.MaxRequestSize, static_cast<uint32_t>(65536));

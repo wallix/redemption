@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    FlatWabCloseMod d(ini, front, 800, 600, (time_t)100000, true);
+    FlatWabCloseMod d(ini, front, 800, 600, static_cast<time_t>(100000), true);
     d.draw_event(100001);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 

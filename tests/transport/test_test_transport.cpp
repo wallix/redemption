@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     try{
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
     };
     BOOST_CHECK(!gt.get_status());
 }
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
         gt.send("0123456789ABCDEFGHI", 19);
     } catch (const Error & e)
     {
-        BOOST_CHECK_EQUAL((uint32_t)ERR_TRANSPORT_DIFFERS, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
     };
     BOOST_CHECK(!gt.get_status());
 }
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     try {
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
     };
     BOOST_CHECK(!gt.get_status());
 }

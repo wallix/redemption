@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -440,7 +440,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -562,7 +562,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -684,7 +684,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -808,7 +808,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();

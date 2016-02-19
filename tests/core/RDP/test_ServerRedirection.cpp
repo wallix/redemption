@@ -64,10 +64,10 @@ BOOST_AUTO_TEST_CASE(TestServerRedirectionPDU)
     BOOST_CHECK_EQUAL(rinfo_init.host_is_fqdn, rinfo_target.host_is_fqdn);
     BOOST_CHECK_EQUAL(rinfo_init.smart_card_logon, rinfo_target.smart_card_logon);
 
-    BOOST_CHECK_EQUAL(0, strcmp((char*)rinfo_init.host,
-                                (char*)rinfo_target.host));
-    BOOST_CHECK_EQUAL(0, strcmp((char*)rinfo_init.username,
-                                (char*)rinfo_target.username));
-    BOOST_CHECK_EQUAL(0, strcmp((char*)rinfo_init.domain,
-                                (char*)rinfo_target.domain));
+    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.host),
+                                reinterpret_cast<char*>(rinfo_target.host)));
+    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.username),
+                                reinterpret_cast<char*>(rinfo_target.username)));
+    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.domain),
+                                reinterpret_cast<char*>(rinfo_target.domain)));
 }

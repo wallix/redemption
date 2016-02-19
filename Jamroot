@@ -130,7 +130,7 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wnarrowing
     <cxxflags>-Wvolatile-register-var
     <cxxflags>-Wdisabled-optimization
-    <cxxflags>-Woverlength-strings
+    <cxxflags>-Wno-overlength-strings
     <cxxflags>-Warray-bounds
 
 #     <toolset>clang:<cxxflags>-Weverything
@@ -1010,27 +1010,29 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
 
+if ! [ os.environ NO_MAKE_QT ]
+{
 
 #explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
 using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ;
 
-obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp 
+obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp
     :
-        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <include>/usr/include/x86_64-linux-gnu/qt5
         <cxxflags>-fPIC
-    ; 
-obj front_Qt.o : src/front/front_Qt.cpp :  
+    ;
+obj front_Qt.o : src/front/front_Qt.cpp :
     :
-        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <include>/usr/include/x86_64-linux-gnu/qt5
         <cxxflags>-fPIC
-    ; 
-obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp  
+    ;
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp
     :
-        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <include>/usr/include/x86_64-linux-gnu/qt5
         <cxxflags>-fPIC
-    ; 
+    ;
 
 
 exe test_rdp_Qt :
@@ -1038,9 +1040,9 @@ exe test_rdp_Qt :
     src/front/front_widget_Qt.hpp
     src/front/front_Qt.cpp
     tests/mod/rdp/test_rdp_Qt.cpp #
-    /qt5//QtGui 
-    /qt5//QtNetwork 
-    /qt5//QtWidgets 
+    /qt5//QtGui
+    /qt5//QtNetwork
+    /qt5//QtWidgets
     krb5
     openssl
     crypto
@@ -1062,16 +1064,16 @@ explicit testQWidget.o test_Qt ; #
 using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ;
 
 
-obj testQWidget.o : testQWidget.cpp :  
+obj testQWidget.o : testQWidget.cpp :
     :
-        <include>/usr/include/x86_64-linux-gnu/qt5 
+        <include>/usr/include/x86_64-linux-gnu/qt5
         <cxxflags>-fPIC
-    ; 
+    ;
 
 exe test_Qt :
     testQWidget.o
-    /qt5//QtGui 
-    /qt5//QtNetwork 
+    /qt5//QtGui
+    /qt5//QtNetwork
     /qt5//QtWidgets
     libboost_unit_test
     :
@@ -1079,3 +1081,4 @@ exe test_Qt :
     <cxxflags>-fPIC
     ;
 
+} # NO_MAKE_QT
