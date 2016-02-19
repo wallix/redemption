@@ -1981,9 +1981,8 @@ public:
         if (this->has_valid_to_client_sender())
             return true;
 
-        uint8_t message_buffer[1024];
-
         {
+            uint8_t message_buffer[1024];
             OutStream out_stream(message_buffer);
 
             const rdpdr::SharedHeader clent_message_header(

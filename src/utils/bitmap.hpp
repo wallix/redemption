@@ -610,7 +610,7 @@ public:
                         throw Error(ERR_BITMAP_LOAD_FAILED);
                     }
 
-                LOG(LOG_INFO, "loading file %d x %d x %d", header.image_width, header.image_height, header.bit_count);
+                LOG(LOG_INFO, "loading file %u x %u x %d", header.image_width, header.image_height, header.bit_count);
 
                 // bitmap loaded from files are always converted to 24 bits
                 // this avoid palette problems for 8 bits,
@@ -692,10 +692,10 @@ public:
 
     static openfile_t check_file_type(const char * filename) {
         char type1[8];
-        
+
         int fd_ = open(filename, O_RDONLY);
         if (!fd_) {
-            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", 
+            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n",
                 filename, strerror(errno), errno);
             TODO("see value returned, maybe we should return open error");
             return OPEN_FILE_UNKNOWN;

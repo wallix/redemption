@@ -80,6 +80,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     wcomposite.add_widget(&wrect5);
     wcomposite.add_widget(&wrect6);
 
+    {
+        WidgetRect wrect7(drawable, Rect(0, 0, 800, 600),
+                          wcomposite, notifier, id++, GREY);
+        wcomposite.add_widget(&wrect7);
+        wcomposite.remove_widget(&wrect7);
+    }
+
     // ask to widget to redraw at position 150,500 and of size 800x600
     wcomposite.rdp_input_invalidate(Rect(150 + wcomposite.dx(),
                                          150 + wcomposite.dy(),

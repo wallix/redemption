@@ -82,21 +82,12 @@ public:
     void remove(const Widget2 * w) override {
         REDASSERT(w);
         REDASSERT(this->children_count);
-        bool children_found = false;
-        for (size_t i = 0; i < this->children_count; i++) {
-            if (!children_found) {
-                if (this->child_table[i] == w) {
-                    children_found = true;
-                    this->child_table[i] = nullptr;
-                }
-            }
-            else {
-                this->child_table[i - 1] = this->child_table[i];
-            }
-        }
-        REDASSERT(children_found);
-        if (children_found) {
-            this->child_table[this->children_count] = nullptr;
+        auto last = this->child_table + this->children_count;
+        auto it = std::find(&this->child_table[0], last, w);
+        REDASSERT(it != last);
+        if (it != last) {
+            auto new_last = std::copy(it+1, last, it);
+            *new_last = nullptr;
             this->children_count--;
         }
     }

@@ -714,7 +714,7 @@ protected:
             uint32_t verbose) {
         StaticOutStream<65536> out_stream;
 
-        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+        MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
 
         uint32_t out_flags =
@@ -735,7 +735,7 @@ protected:
             uint32_t verbose) {
         StaticOutStream<65536> out_stream;
 
-        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+        MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
 
         out_stream.out_uint32_le(Length);   // Length(4)
@@ -760,7 +760,7 @@ public:
             uint32_t verbose) {
         StaticOutStream<65536> out_stream;
 
-        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+        MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
 
         out_stream.out_clear_bytes(5);  // Padding(5)
@@ -779,7 +779,7 @@ public:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
-        ManagedFileSystemObject::SendClientDriveIoResponse(
+        SendClientDriveIoResponse(
             device_io_request,
             message,
             0xC0000001, // STATUS_UNSUCCESSFUL

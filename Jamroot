@@ -132,6 +132,7 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wdisabled-optimization
     <cxxflags>-Wno-overlength-strings
     <cxxflags>-Warray-bounds
+    <cxxflags>-Wold-style-cast
 
 #     <toolset>clang:<cxxflags>-Weverything
 #     <toolset>clang:<cxxflags>-Wno-c++98-compat
@@ -223,7 +224,6 @@ constant GCOV : <variant>coverage:<library>gcov ;
 constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
 
 variant strict : :
-    <cxxflags>-Wold-style-cast
     <cxxflags>-Wsign-conversion
 ;
 
