@@ -1010,6 +1010,8 @@ unit-test test_finally : tests/utils/test_finally.cpp libboost_unit_test : $(TES
 unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_test openssl crypto snappy dl z :  $(TEST_DEPENDENCIES) ;
 
 
+if ! [ os.environ NO_MAKE_QT ]
+{
 
 #explicit front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
@@ -1079,3 +1081,4 @@ exe test_Qt :
     <cxxflags>-fPIC
     ;
 
+} # NO_MAKE_QT
