@@ -18,19 +18,19 @@ extern "C" {
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn) 
     {
-        uint8_t buffer[HMAC_KEY_LENGTH] = {};
-        printf("HMAC_FN() ->\n");
-        char * r = hmac_fn();
-        memcpy(buffer, r, HMAC_KEY_LENGTH);
-        hexdump(buffer, HMAC_KEY_LENGTH);
+//        uint8_t buffer[HMAC_KEY_LENGTH] = {};
+//        printf("HMAC_FN() ->\n");
+//        char * r = hmac_fn();
+//        memcpy(buffer, r, HMAC_KEY_LENGTH);
+//        hexdump(buffer, HMAC_KEY_LENGTH);
 
-        printf("TRACE_FN() ->\n");
-        char tmp[5];
-        memcpy(tmp, "path", 4);
-        tmp[4] = 0;
-        r = trace_fn(tmp, 4);
-        memcpy(buffer, r, CRYPTO_KEY_LENGTH);
-        hexdump(buffer, CRYPTO_KEY_LENGTH);
+//        printf("TRACE_FN() ->\n");
+//        char tmp[5];
+//        memcpy(tmp, "path", 4);
+//        tmp[4] = 0;
+//        r = trace_fn(tmp, 4);
+//        memcpy(buffer, r, CRYPTO_KEY_LENGTH);
+//        hexdump(buffer, CRYPTO_KEY_LENGTH);
     
         std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
         Inifile ini;
