@@ -41,17 +41,20 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         StaticOutStream<1000> out_stream;
         TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
 
+        const uint8_t empty[1] = {0};
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
-        RDPGlyphIndex statecmd(0, 0, 0, 0, 0, 0, Rect(), Rect(), RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
+        RDPGlyphIndex statecmd(0, 0, 0, 0, 0, 0, Rect(), Rect(), RDPBrush(), 0, 0, 0, empty);
         RDPOrderCommon newcommon(GLYPHINDEX, Rect(5, 0, 800, 600));
+        const uint8_t brush_extra[] = {1,2,3,4,5,6,7};
+        const uint8_t greeting[] = { 'H','e','l','l','o',',',' ','W','o','r','l','d' };
         RDPGlyphIndex newcmd(1, 0x20, 1, 4,
                              0x112233,
                              0x445566,
                              Rect(1,2,40,60),
                              Rect(3,4,50,70),
-                             RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t *>("\1\2\3\4\5\6\7")),
+                             RDPBrush(3, 4, 0x03, 0xDD, brush_extra),
                              5, 6,
-                             12, reinterpret_cast<const uint8_t*>("Hello, World"));
+                             12, greeting);
 
         newcmd.emit(out_stream, newcommon, state_common, statecmd);
 
@@ -94,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         RDPGlyphIndex cmd = statecmd;
         cmd.receive(in_stream, header);
 
-        if (!(RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t *>("\1\2\3\4\5\6\7"))
+        if (!(RDPBrush(3, 4, 0x03, 0xDD, brush_extra)
                 == cmd.brush)){
             BOOST_CHECK_EQUAL(true, false);
         }
@@ -106,9 +109,9 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                           0x445566,
                           Rect(1,2,40,60),
                           Rect(3,4,50,70),
-                          RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t *>("\1\2\3\4\5\6\7")),
+                          RDPBrush(3, 4, 0x03, 0xDD, brush_extra),
                           5, 6,
-                          12, reinterpret_cast<const uint8_t *>("Hello, World")),
+                          12, greeting),
             "Text 1");
     }
 }
@@ -124,22 +127,25 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
         RDPOrderCommon state_common(RDP::PATBLT, Rect(0, 0, 1024, 768));
         RDPGlyphIndex  statecmd(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
         RDPOrderCommon newcommon(GLYPHINDEX, Rect(0, 0, 1024, 768));
+        const uint8_t nullbrush_extra[] = {0,0,0,0,0,0,0};
+        const uint8_t data[] = { 0x00, 0x00, 0x01, 0x08, 0x02, 0x07, 0x03, 0x07
+                               , 0x04, 0x07, 0x05, 0x05, 0x01, 0x05, 0x04, 0x07
+                               , 0x03, 0x05, 0x07, 0x0a, 0x03, 0x07, 0x08, 0x0a
+                               , 0x03, 0x06, 0x08, 0x07, 0x08, 0x06, 0x09, 0x06
+                               , 0x0a, 0x03, 0x0b, 0x07, 0x0c, 0x0a, 0x09, 0x0b
+                               , 0x0b, 0x03, 0x07, 0x07, 0x0a, 0x07, 0x0d, 0x07
+                               , 0x08, 0x09};
+
+
         RDPGlyphIndex  newcmd( 7, 3, 0, 1
                              , 0x00ffff
                              , 0x00092d
                              , Rect(308, 155, 174, 14)
                              , Rect(0, 0, 1, 1)
-                             , RDPBrush(0, 0, 0, 0, reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0"))
+                             , RDPBrush(0, 0, 0, 0, nullbrush_extra)
                              , 0x0134, 0x00a6
                              , 50
-                             , reinterpret_cast<const uint8_t *>(
-                                 "\x00\x00\x01\x08\x02\x07\x03\x07"
-                                 "\x04\x07\x05\x05\x01\x05\x04\x07"
-                                 "\x03\x05\x07\x0a\x03\x07\x08\x0a"
-                                 "\x03\x06\x08\x07\x08\x06\x09\x06"
-                                 "\x0a\x03\x0b\x07\x0c\x0a\x09\x0b"
-                                 "\x0b\x03\x07\x07\x0a\x07\x0d\x07"
-                                 "\x08\x09")
+                             , data
                              );
 
         newcmd.emit(out_stream, newcommon, state_common, statecmd);
@@ -183,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
         RDPGlyphIndex cmd = statecmd;
         cmd.receive(in_stream, header);
 
-        BOOST_CHECK(RDPBrush(0, 0, 0x0, 0x0, reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0")) == cmd.brush);
+        BOOST_CHECK(RDPBrush(0, 0, 0x0, 0x0, nullbrush_extra) == cmd.brush);
 
         TODO(" actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
         check<RDPGlyphIndex>( common_cmd, cmd
@@ -193,18 +199,10 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
                                            , 0x00092d
                                            , Rect(308, 155, 174, 14)
                                            , Rect(0, 0, 1, 1)
-                                           , RDPBrush(0, 0, 0x0, 0x0, reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0"))
+                                           , RDPBrush(0, 0, 0x0, 0x0, nullbrush_extra)
                                            , 0x0134, 0x00a6
                                            , 50
-                                           , reinterpret_cast<const uint8_t *>(
-                                               "\x00\x00\x01\x08\x02\x07\x03\x07"
-                                               "\x04\x07\x05\x05\x01\x05\x04\x07"
-                                               "\x03\x05\x07\x0a\x03\x07\x08\x0a"
-                                               "\x03\x06\x08\x07\x08\x06\x09\x06"
-                                               "\x0a\x03\x0b\x07\x0c\x0a\x09\x0b"
-                                               "\x0b\x03\x07\x07\x0a\x07\x0d\x07"
-                                               "\x08\x09")
-                                           )
+                                           , data)
                             , "Text 1"
                             );
     }

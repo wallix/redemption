@@ -303,7 +303,7 @@ explicit install instexe install-bin install-etc install-etc-themes install-shar
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-etc-themes install-share install-lib ;
 alias exe     : rdpproxy redrec reddec redver rdptproxy rdptanalyzer rdpclient ;
-alias libs    : libredver ;
+alias libs    : libredver libreddec ;
 
 
 install install-bin
@@ -505,6 +505,21 @@ exe reddec
 lib libredver
     :
         src/main/do_verifier.cpp
+
+        openssl
+        crypto
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fPIC
+        <cxxflags>-fvisibility=hidden
+    ;
+
+lib libreddec
+    :
+        src/main/do_decrypter.cpp
 
         openssl
         crypto
