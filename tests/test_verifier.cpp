@@ -284,8 +284,6 @@ public:
     { return CRYPTO_DECRYPT_TYPE == type; }
 };
 
-
-
 struct Priv_crypto_file_decrypt
 : Priv_crypto_type_base
 {
@@ -309,64 +307,6 @@ struct Priv_crypto_file_encrypt
   , file(fd)
   {}
 };
-
-
-crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx)
-{
-    (void)cctx;
-    Priv_crypto_file_decrypt * cf_struct = new (std::nothrow) Priv_crypto_file_decrypt(systemfd);
-
-    if (!cf_struct) {
-        return nullptr;
-    }
-
-    if (-1 == cf_struct->decrypt.decrypt_open(cf_struct->file, trace_key)) {
-        delete cf_struct;
-        return nullptr;
-    }
-
-    return reinterpret_cast<crypto_file*>(cf_struct);
-}
-
-crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
-{
-    Priv_crypto_file_encrypt * cf_struct = new (std::nothrow) Priv_crypto_file_encrypt(systemfd);
-
-    if (!cf_struct) {
-        return nullptr;
-    }
-
-    if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
-        delete cf_struct;
-        return nullptr;
-    }
-
-    return reinterpret_cast<crypto_file*>(cf_struct);
-}
-
-/* Flush procedure (compression, encryption, effective file writing)
- * Return 0 on success, -1 on error
- */
-int crypto_flush(crypto_file * cf)
-{
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        return -1;
-    }
-    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-    return cf_struct->encrypt.flush(cf_struct->file);
-}
-
-/* The actual read method. Read chunks until we reach requested size.
- * Return the actual size read into buf, -1 on error
- */
-int crypto_read(crypto_file * cf, char * buf, unsigned int buf_size)
-{
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
-        return cf_struct->decrypt.decrypt_read(cf_struct->file, buf, buf_size);
-    }
-    return -1;
-}
 
 } // extern "C"
 
@@ -442,7 +382,15 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         BOOST_CHECK(false);
     }
 
-    crypto_file * cf_struct = crypto_open_write(system_fd, trace_key, &cctx, iv);
+    Priv_crypto_file_encrypt * cf_struct2 = new (std::nothrow) Priv_crypto_file_encrypt(system_fd);
+    if (cf_struct2) {
+        if (-1 == cf_struct2->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
+            delete cf_struct2;
+            cf_struct2 = nullptr;
+        }
+    }
+
+    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf_struct2);
     if (!cf_struct){
         close(system_fd);
     }
