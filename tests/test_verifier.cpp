@@ -257,54 +257,17 @@ private:
 
 extern "C" {
 
-struct crypto_file;
-
 /**********************************************
  *                Public API                  *
  **********************************************/
 
-enum Priv_crypto_type {
-    CRYPTO_DECRYPT_TYPE,
-    CRYPTO_ENCRYPT_TYPE
-};
-
-class Priv_crypto_type_base
-{
-    Priv_crypto_type type;
-
-public:
-    Priv_crypto_type_base(Priv_crypto_type t)
-    : type(t)
-    {}
-
-    bool is_encrypt() const
-    { return CRYPTO_ENCRYPT_TYPE == type; }
-
-    bool is_decrypt() const
-    { return CRYPTO_DECRYPT_TYPE == type; }
-};
-
-struct Priv_crypto_file_decrypt
-: Priv_crypto_type_base
-{
-  decrypt_filter decrypt;
-  io::posix::fdbuf file;
-
-  Priv_crypto_file_decrypt(int fd)
-  : Priv_crypto_type_base(CRYPTO_DECRYPT_TYPE)
-  , file(fd)
-  {}
-};
-
-struct Priv_crypto_file_encrypt
-: Priv_crypto_type_base
+struct crypto_file
 {
   transfil::encrypt_filter encrypt;
   io::posix::fdbuf file;
 
-  Priv_crypto_file_encrypt(int fd)
-  : Priv_crypto_type_base(CRYPTO_ENCRYPT_TYPE)
-  , file(fd)
+  crypto_file(int fd)
+  : file(fd)
   {}
 };
 
@@ -382,17 +345,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         BOOST_CHECK(false);
     }
 
-    Priv_crypto_file_encrypt * cf_struct2 = new (std::nothrow) Priv_crypto_file_encrypt(system_fd);
-    if (cf_struct2) {
-        if (-1 == cf_struct2->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
-            delete cf_struct2;
-            cf_struct2 = nullptr;
+    crypto_file * cf_struct = new (std::nothrow) crypto_file(system_fd);
+    if (cf_struct) {
+        if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
+            delete cf_struct;
+            cf_struct = nullptr;
+            close(system_fd);
         }
-    }
-
-    crypto_file * cf_struct = reinterpret_cast<crypto_file*>(cf_struct2);
-    if (!cf_struct){
-        close(system_fd);
     }
 
     BOOST_CHECK(cf_struct);
@@ -405,26 +364,12 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
 
     for (int i = 0; i < 256; i ++) {
-        if (reinterpret_cast<Priv_crypto_type_base*>(cf_struct)->is_decrypt()) {
-            res = -1;
-        }
-        else {
-            Priv_crypto_file_encrypt * cf_struct2 = reinterpret_cast<Priv_crypto_file_encrypt*>(cf_struct);
-            res = cf_struct2->encrypt.write(cf_struct2->file, const_cast<char *>(data), data_len);
-        }
+        res = cf_struct->encrypt.write(cf_struct->file, const_cast<char *>(data), data_len);
         BOOST_CHECK_EQUAL(data_len, res);
     }
 
-    res = 0;
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf_struct)->is_decrypt()) {
-        Priv_crypto_file_decrypt * cf_struct2 = reinterpret_cast<Priv_crypto_file_decrypt*>(cf_struct);
-        delete cf_struct2;
-    }
-    else {
-        Priv_crypto_file_encrypt * cf_struct2 = reinterpret_cast<Priv_crypto_file_encrypt*>(cf_struct);
-        res = cf_struct2->encrypt.close(cf_struct2->file, hash, cctx.get_hmac_key());
-        delete cf_struct2;
-    }
+    res = cf_struct->encrypt.close(cf_struct->file, hash, cctx.get_hmac_key());
+    delete cf_struct;
 
     BOOST_CHECK_EQUAL(0, res);
 
