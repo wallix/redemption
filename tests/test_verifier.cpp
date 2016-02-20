@@ -368,35 +368,6 @@ int crypto_read(crypto_file * cf, char * buf, unsigned int buf_size)
     return -1;
 }
 
-/* Actually appends data to crypto_file buffer, flush if buffer gets full
- * Return the written size, -1 on error
- */
-int crypto_write(crypto_file *cf, const char * buf, unsigned int size)
-{
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        return -1;
-    }
-    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-    return cf_struct->encrypt.write(cf_struct->file, buf, size);
-}
-
-int crypto_close(crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
-{
-    int nResult = 0;
-
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
-        delete cf_struct;
-    }
-    else {
-        Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-        nResult = cf_struct->encrypt.close(cf_struct->file, hash, hmac_key);
-        delete cf_struct;
-    }
-
-    return nResult;
-}
-
 } // extern "C"
 
 #ifdef HASH_LEN
@@ -486,12 +457,26 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
 
     for (int i = 0; i < 256; i ++) {
-        res = crypto_write(cf_struct, const_cast<char *>(data), data_len);
-
+        if (reinterpret_cast<Priv_crypto_type_base*>(cf_struct)->is_decrypt()) {
+            res = -1;
+        }
+        else {
+            Priv_crypto_file_encrypt * cf_struct2 = reinterpret_cast<Priv_crypto_file_encrypt*>(cf_struct);
+            res = cf_struct2->encrypt.write(cf_struct2->file, const_cast<char *>(data), data_len);
+        }
         BOOST_CHECK_EQUAL(data_len, res);
     }
 
-    res = crypto_close(cf_struct, hash, cctx.get_hmac_key());
+    res = 0;
+    if (reinterpret_cast<Priv_crypto_type_base*>(cf_struct)->is_decrypt()) {
+        Priv_crypto_file_decrypt * cf_struct2 = reinterpret_cast<Priv_crypto_file_decrypt*>(cf_struct);
+        delete cf_struct2;
+    }
+    else {
+        Priv_crypto_file_encrypt * cf_struct2 = reinterpret_cast<Priv_crypto_file_encrypt*>(cf_struct);
+        res = cf_struct2->encrypt.close(cf_struct2->file, hash, cctx.get_hmac_key());
+        delete cf_struct2;
+    }
 
     BOOST_CHECK_EQUAL(0, res);
 
