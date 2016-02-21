@@ -853,14 +853,6 @@ static inline bool check_file(const char * file_path, bool is_checksumed,
     return true;
 }
 
-static inline bool check_file(const char * file_path, bool is_checksumed, bool is_status_enabled,
-        MetaLine2 const & meta_line, size_t len_to_check,
-        CryptoContext * cctx) {
-//    const bool is_checksumed = true;
-    printf("check_file (with cctx)\n");
-    return check_file(file_path, is_checksumed, cctx->get_hmac_key(),
-        sizeof(cctx->get_hmac_key()), len_to_check, is_status_enabled, meta_line);
-}
 
 static inline void make_file_path(const char * directory_name, const char * file_name,  char * file_path_buf, size_t file_path_len) {
     printf("make_file_path(\n");
@@ -1172,12 +1164,14 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
 
     const bool is_status_enabled = (infile_version > 1);
     bool result = false;
+
     if (check_file( fullfilename 
                   , infile_is_checksumed
-                  , is_status_enabled
-                  , hash_line
+                  , cctx->get_hmac_key()
+                  , sizeof(cctx->get_hmac_key())
                   , (quick_check ? QUICK_CHECK_LENGTH : 0)
-                  , cctx) == true) 
+                  , is_status_enabled
+                  , hash_line) == true) 
     {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         if (ifile.open(fullfilename) < 0) {
@@ -1208,12 +1202,14 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
         result = true;
         while (read_meta_file2(reader, meta_header, meta_line_wrm) !=
                ERR_TRANSPORT_NO_MORE_DATA) {
+
             if (check_file( meta_line_wrm.filename
                           , infile_is_checksumed
-                          , is_status_enabled
-                          , (quick_check ? meta_line_wrm : meta_line_wrm)
+                          , cctx->get_hmac_key()
+                          , sizeof(cctx->get_hmac_key())
                           , (quick_check ? QUICK_CHECK_LENGTH : 0)
-                          , cctx) == false) {
+                          , is_status_enabled
+                          , (quick_check ? meta_line_wrm : meta_line_wrm)) == false) {
                 result = false;
                 break;
             }
