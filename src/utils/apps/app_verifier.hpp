@@ -774,7 +774,7 @@ static inline bool check_file_hash_sha256(
         }
     } file(fd);
 
-    uint8_t buf[4096];
+    uint8_t buf[4096] = {};
     size_t  number_of_bytes_read = 0;
     int len_read = 0;
     do {
@@ -796,6 +796,13 @@ static inline bool check_file_hash_sha256(
 
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
+
+    printf("computed hash\n");
+    hexdump(hash, hash_len);
+
+    printf("reference hash\n");
+    hexdump(hash_buf, hash_len);
+
 
     if (memcmp(hash, hash_buf, hash_len)) {
         LOG(LOG_ERR, "failed checking hash=%s", file_path);
@@ -1204,7 +1211,7 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
             if (check_file( meta_line_wrm.filename
                           , infile_is_checksumed
                           , is_status_enabled
-                          , hash_line
+                          , (quick_check ? meta_line_wrm : meta_line_wrm)
                           , (quick_check ? QUICK_CHECK_LENGTH : 0)
                           , cctx) == false) {
                 result = false;

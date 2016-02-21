@@ -8,7 +8,7 @@ GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctyp
 
 def get_hmac_key(resbuf):
     data = '\xe3\x8d\xa1\x5e\x50\x1e\x4f\x6a\x01\xef\xde\x6c\xd9\xb3\x3a\x3f\x2b\x41\x72\x13\x1e\x97\x5b\x4c\x39\x54\x23\x14\x43\xae\x22\xae'
-    libredver.vermemcpy(c_void_p, data, 32)
+    libredver.vermemcpy(resbuf, data, 32)
     return 0
 
 def get_trace_key(base, lg, resbuf):
