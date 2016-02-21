@@ -339,10 +339,11 @@ int read_hash_file_v2(ReaderLine2<Reader> & reader, HashHeader const & /*hash_he
 }
 
 
+
 template<class Reader>
 MetaHeader2 read_meta_headers(ReaderLine2<Reader> & reader)
 {
-   printf("read_meta_headers\n");
+    printf("read_meta_headers\n");
     MetaHeader2 header{1, false};
 
     char line[32];
@@ -352,7 +353,7 @@ MetaHeader2 read_meta_headers(ReaderLine2<Reader> & reader)
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
 
-    printf("read_meta_headers sz = %d\n", (int)sz);
+    printf("read_meta_headers sz = %d : %s\n", (int)sz, line);
 
     // v2
     if (line[0] == 'v') {
@@ -379,7 +380,6 @@ MetaHeader2 read_meta_headers(ReaderLine2<Reader> & reader)
 
 
 
-
 namespace transbuf {
 
     class ifile_buf
@@ -402,86 +402,100 @@ namespace transbuf {
             printf("ifile_buf::cfb_decrypt_decrypt_read\n");
 
             if (this->cfb_decrypt_state & CF_EOF) {
-                //printf("cf EOF\n");
+                printf("ifile_buf::cfb_decrypt_decrypt_read::cf EOF\n");
                 return 0;
             }
 
             unsigned int requested_size = len;
 
             while (requested_size > 0) {
+                printf("ifile_buf::cfb_decrypt_decrypt_read requested_size=%d\n",int(requested_size));
                 // Check how much we have decoded
                 if (!this->cfb_decrypt_raw_size) {
-                    // Buffer is empty. Read a chunk from file
-                    /*
-                     i f (-1 == ::do_chunk_read*(this)) {
-                         return -1;
-                }
-                */
                     uint8_t tmp_buf[4] = {};
-                    const int err = this->cfb_file_read(tmp_buf, 4);
+                    ssize_t err = this->cfb_file_read(tmp_buf, 4);
                     if (err != 4) {
+                        printf("ifile_buf::cfb_decrypt_decrypt_read read failed reading size\n");
                         return err < 0 ? err : -1;
                     }
 
                     uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+                    printf("ifile_buf::cfb_decrypt_decrypt_read ciphered_buf_size=%d\n",int(ciphered_buf_size));
 
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
                         this->cfb_decrypt_state |= CF_EOF;
                         this->cfb_decrypt_pos = 0;
                         this->cfb_decrypt_raw_size = 0;
+                        break;
                     }
-                    else {
-                        if (ciphered_buf_size > this->cfb_decrypt_MAX_CIPHERED_SIZE) {
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+
+                    if (ciphered_buf_size > this->cfb_decrypt_MAX_CIPHERED_SIZE) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                        printf("ifile_buf::cfb_decrypt_decrypt_read read failed : larger than CPHERED_SIZE=%d\n", 
+                            int(this->cfb_decrypt_MAX_CIPHERED_SIZE));
+                        return -1;
+                    }
+
+                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+
+                    printf("ifile_buf::cfb_decrypt_decrypt_read compressed_buf_size = ciphered_buf_size=%d\n",
+                        int(ciphered_buf_size+AES_BLOCK_SIZE));
+
+                    //char ciphered_buf[ciphered_buf_size];
+                    unsigned char ciphered_buf[65536];
+                    //char compressed_buf[compressed_buf_size];
+                    unsigned char compressed_buf[65536];
+
+
+                    printf("ifile_buf::cfb_decrypt_decrypt_read calling cfb_file_read\n");
+
+                    err = this->cfb_file_read(
+                                            ciphered_buf,
+                                            ciphered_buf_size);
+
+                    printf("ifile_buf::cfb_decrypt_decrypt_read done err=%d len=%d\n", int(err), int(len));
+                                           
+                    // len ? 
+                    if (err != ssize_t(ciphered_buf_size)){
+                        printf("ifile_buf::cfb_decrypt_decrypt_read cfb_file_read failed\n");
+                        return err < 0 ? err : -1;
+                    }
+
+                    if (this->cfb_decrypt_xaes_decrypt(ciphered_buf,
+                                    ciphered_buf_size,
+                                    compressed_buf,
+                                    &compressed_buf_size)) {
+                        printf("ifile_buf::cfb_decrypt_decrypt_read decrypt failed\n");
+                        return -1;
+                    }
+
+                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                    const snappy_status status = snappy_uncompress(
+                            reinterpret_cast<char *>(compressed_buf),
+                            compressed_buf_size, this->cfb_decrypt_buf, &chunk_size);
+
+                    switch (status)
+                    {
+                        case SNAPPY_OK:
+                            printf("ifile_buf::cfb_decrypt_decrypt_read snappy OK\n");
+                            break;
+                        case SNAPPY_INVALID_INPUT:
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
+                            printf("ifile_buf::cfb_decrypt_decrypt_read SNAPPY_INVALID_INPUT\n");
                             return -1;
-                        }
-                        else {
-                            uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-                            //char ciphered_buf[ciphered_buf_size];
-                            unsigned char ciphered_buf[65536];
-                            //char compressed_buf[compressed_buf_size];
-                            unsigned char compressed_buf[65536];
-
-                            ssize_t err = this->cfb_file_read(
-                                                    ciphered_buf,
-                                                    ciphered_buf_size);
-                                                    
-                            if (err != ssize_t(len)){
-                                return err < 0 ? err : -1;
-                            }
-
-                            if (this->cfb_decrypt_xaes_decrypt(ciphered_buf,
-                                            ciphered_buf_size,
-                                            compressed_buf,
-                                            &compressed_buf_size)) {
-                                return -1;
-                            }
-
-                            size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                            const snappy_status status = snappy_uncompress(
-                                    reinterpret_cast<char *>(compressed_buf),
-                                    compressed_buf_size, this->cfb_decrypt_buf, &chunk_size);
-
-                            switch (status)
-                            {
-                                case SNAPPY_OK:
-                                    break;
-                                case SNAPPY_INVALID_INPUT:
-                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
-                                    return -1;
-                                case SNAPPY_BUFFER_TOO_SMALL:
-                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                                    return -1;
-                                default:
-                                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
-                                    return -1;
-                            }
-
-                            this->cfb_decrypt_pos = 0;
-                            // When reading, raw_size represent the current chunk size
-                            this->cfb_decrypt_raw_size = chunk_size;
-                        }
+                        case SNAPPY_BUFFER_TOO_SMALL:
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                            printf("ifile_buf::cfb_decrypt_decrypt_read SNAPPY_BUFFER_TOO_SMALL\n");
+                            return -1;
+                        default:
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
+                            printf("ifile_buf::cfb_decrypt_decrypt_read snappy unknown error\n");
+                            return -1;
                     }
+
+                    this->cfb_decrypt_pos = 0;
+                    // When reading, raw_size represent the current chunk size
+                    this->cfb_decrypt_raw_size = chunk_size;
 
                     // TODO: check that
                     if (!this->cfb_decrypt_raw_size) { // end of file reached
@@ -501,6 +515,7 @@ namespace transbuf {
                     this->cfb_decrypt_raw_size = 0;
                 }
             }
+            printf("ifile_buf::cfb_decrypt_decrypt_read -> ok lg=%d\n", int(len-requested_size));
             return len - requested_size;
         }
 
@@ -545,13 +560,14 @@ namespace transbuf {
 
         ssize_t cfb_file_read(void * data, size_t len)
         {
-            printf("ifile_buf::cfb_file_read\n");
+            printf("ifile_buf::cfb_file_read %d bytes on fd=%d\n", int(len), this->cfb_file_fd);
             TODO("this is blocking read, add support for timeout reading");
             TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
             size_t remaining_len = len;
             while (remaining_len) {
                 ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
                 if (ret < 0){
+                    printf("ifile_buf::cfb_file_read ret=%d\n", int(ret));
                     if (errno == EINTR){
                         continue;
                     }
@@ -567,6 +583,7 @@ namespace transbuf {
                 }
                 remaining_len -= ret;
             }
+            printf("ifile_buf::cfb_file_read ok -> ret=%d\n", int(len - remaining_len));
             return len - remaining_len;        
         }
 
@@ -613,15 +630,11 @@ namespace transbuf {
                 const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
                 this->cfb_decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
-                printf("AAAAAAAAAAAA\n");
-
                 unsigned char tmp_buf[40];
                 const ssize_t err = this->cfb_file_read(tmp_buf, 40);
                 if (err != 40) {
                     return err < 0 ? err : -1;
                 }
-
-                printf("BBBBBBBBBBB\n");
 
                 // Check magic
                 const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
@@ -631,7 +644,7 @@ namespace transbuf {
                     return -1;
                 }
 
-                printf("CCCCCCCCCCCCCCC%d\n", int(magic));
+                printf("magic %d %d\n", int(magic), WABCRYPTOFILE_MAGIC);
 
                 const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
                 if (version > WABCRYPTOFILE_VERSION) {
@@ -640,7 +653,7 @@ namespace transbuf {
                     return -1;
                 }
 
-                printf("DDDDDDDDDDDDD %d\n", int(version));
+                printf("version %d\n", int(version));
 
                 unsigned char * const iv = tmp_buf + 8;
 
@@ -661,12 +674,18 @@ namespace transbuf {
                     return -1;
                 }
 
+                printf("ifile_buf::open ok\n");
                 return 0;
             }
             else {
                     this->cfb_file_close();
                     this->cfb_file_fd = ::open(filename, O_RDONLY);
-                    return this->cfb_file_fd;
+                    if (this->cfb_file_fd > 0){
+                        printf("ifile_buf::open (unencrypted) -> failed\n");
+                        return -1;
+                    }
+                    printf("ifile_buf::open (unencrypted) -> ok\n");
+                    return 0;
             }
         }
 
@@ -879,9 +898,10 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
     {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         int res = ifile.open(fullfilename);
+        if (res < 0){
+            printf("check_encrypted_or_checksumed open failed\n");
+        }
     
-        printf("ifile.open done %d\n", res);
-
         struct ReaderBuf1
         {
             transbuf::ifile_buf & buf;
@@ -891,13 +911,125 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
             }
         };
 
-        printf("reading line = %d\n", infile_version);
+        class ReaderLine2ReaderBuf1
+        {
+            char buf[1024];
+            char * eof;
+            char * cur;
+            ReaderBuf1 reader;
 
-        ReaderLine2<ReaderBuf1> reader({ifile});
+        public:
 
-        printf("reading headers = %d\n", infile_version);
+            explicit ReaderLine2ReaderBuf1(ReaderBuf1 reader) noexcept
+            : eof(buf)
+            , cur(buf)
+            , reader(reader)
+            {
+                printf("ReaderLine2ReaderBuf1::__init__\n");
+            }
 
-        auto meta_header = read_meta_headers(reader);
+            ssize_t read_line(char * dest, size_t len, int err)
+            {
+                printf("ReaderLine2ReaderBuf1::read_line(len=%d)\n", int(len));
+                ssize_t total_read = 0;
+                while (1) {
+                    char * pos = std::find(this->cur, this->eof, '\n');
+                    printf("read_line eof found\n");
+                    if (len < size_t(pos - this->cur)) {
+                        printf("read_line eof found %d %d\n", int(len), int(pos - this->cur));
+                        total_read += len;
+                        memcpy(dest, this->cur, len);
+                        this->cur += len;
+                        break;
+                    }
+                    printf("read_line %d %d\n", int(len), int(pos - this->cur));
+                    hexdump(dest, 10);
+                    total_read += pos - this->cur;
+                    memcpy(dest, this->cur, pos - this->cur);
+                    dest += pos - this->cur;
+                    this->cur = pos + 1;
+                    if (pos != this->eof) {
+                        break;
+                    }
+
+                    printf("ReaderLine2ReaderBuf1::read\n");
+
+                    ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
+                    
+                    if (ret < 0 && errno != EINTR) {
+                        printf("read buf failed 1 %d\n", int(ret));
+                        return -ERR_TRANSPORT_READ_FAILED;
+                    }
+                    if (ret == 0) {
+                        printf("read buf failed 2 %d\n", -err);
+                        return -err;
+                    }
+                    printf("read buf %d\n", int(ret));
+                    hexdump(this->buf, ret);
+                    this->eof = this->buf + ret;
+                    this->cur = this->buf;
+                }
+                return total_read;
+            }
+
+            int next_line()
+            {
+                printf("ReaderLine2ReaderBuf1::next_line\n");
+                char * pos;
+                while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
+                    printf("ReaderLine2ReaderBuf1::read\n");
+
+                    ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
+                    
+                    if (ret < 0 && errno != EINTR) {
+                        printf("read buf failed 1 %d\n", int(ret));
+                        return -ERR_TRANSPORT_READ_FAILED;
+                    }
+                    if (ret == 0) {
+                        printf("read buf failed 2 %d\n", -ERR_TRANSPORT_READ_FAILED);
+                        return -ERR_TRANSPORT_READ_FAILED;
+                    }
+                    printf("read buf %d\n", int(ret));
+                    hexdump(this->buf, ret);
+                    this->eof = this->buf + ret;
+                    this->cur = this->buf;
+                }
+                this->cur = pos+1;
+                return 0;
+            }
+        } reader({ifile});
+
+        printf("read_meta_headers with ReaderLine2ReaderBuf1\n");
+        MetaHeader2 meta_header{1, false};
+
+        char line[32];
+        auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
+        if (sz < 0) {
+            printf("read_meta_headers failed sz < 0 %s\n", strerror(errno));
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+
+        printf("read_meta_headers sz = %d : %s\n", (int)sz, line);
+
+        // v2
+        if (line[0] == 'v') {
+            if (reader.next_line()
+             || (sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
+            ) {
+                printf("read failed v?\n");
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            printf("read_meta_headers v2\n");
+            meta_header.version = 2;
+            meta_header.has_checksum = (line[0] == 'c');
+        }
+        // else v1
+
+        if (reader.next_line()
+         || reader.next_line()
+        ) {
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
 
         infile_version       = meta_header.version;
         infile_is_checksumed = meta_header.has_checksum;
