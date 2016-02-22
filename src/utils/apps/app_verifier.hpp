@@ -410,17 +410,10 @@ namespace transbuf {
                     unsigned char compressed_buf[65536];
 
 
-                    printf("ifile_buf::cfb_decrypt_decrypt_read calling cfb_file_read\n");
+                    err = this->cfb_file_read(ciphered_buf, ciphered_buf_size);
 
-                    err = this->cfb_file_read(
-                                            ciphered_buf,
-                                            ciphered_buf_size);
-
-                    printf("ifile_buf::cfb_decrypt_decrypt_read done err=%d len=%d\n", int(err), int(len));
-                                           
                     // len ? 
                     if (err != ssize_t(ciphered_buf_size)){
-                        printf("ifile_buf::cfb_decrypt_decrypt_read cfb_file_read failed\n");
                         return err < 0 ? err : -1;
                     }
 
@@ -428,7 +421,6 @@ namespace transbuf {
                                     ciphered_buf_size,
                                     compressed_buf,
                                     &compressed_buf_size)) {
-                        printf("ifile_buf::cfb_decrypt_decrypt_read decrypt failed\n");
                         return -1;
                     }
 
@@ -440,19 +432,15 @@ namespace transbuf {
                     switch (status)
                     {
                         case SNAPPY_OK:
-                            printf("ifile_buf::cfb_decrypt_decrypt_read snappy OK\n");
                             break;
                         case SNAPPY_INVALID_INPUT:
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
-                            printf("ifile_buf::cfb_decrypt_decrypt_read SNAPPY_INVALID_INPUT\n");
                             return -1;
                         case SNAPPY_BUFFER_TOO_SMALL:
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                            printf("ifile_buf::cfb_decrypt_decrypt_read SNAPPY_BUFFER_TOO_SMALL\n");
                             return -1;
                         default:
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
-                            printf("ifile_buf::cfb_decrypt_decrypt_read snappy unknown error\n");
                             return -1;
                     }
 
@@ -478,7 +466,6 @@ namespace transbuf {
                     this->cfb_decrypt_raw_size = 0;
                 }
             }
-            printf("ifile_buf::cfb_decrypt_decrypt_read -> ok lg=%d\n", int(len-requested_size));
             return len - requested_size;
         }
 
@@ -486,7 +473,6 @@ namespace transbuf {
 
         int cfb_decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
         {
-            printf("ifile_buf::cfb_decrypt_xaes_decrypt\n");
             int safe_size = *dst_sz;
             int remaining_size = 0;
 
@@ -509,7 +495,6 @@ namespace transbuf {
 
         int cfb_file_close()
         {
-            printf("ifile_buf::cfb_file_close\n");
             if (this->is_open()) {
                 const int ret = ::close(this->cfb_file_fd);
                 this->cfb_file_fd = -1;
@@ -523,14 +508,12 @@ namespace transbuf {
 
         ssize_t cfb_file_read(void * data, size_t len)
         {
-            printf("ifile_buf::cfb_file_read %d bytes on fd=%d\n", int(len), this->cfb_file_fd);
             TODO("this is blocking read, add support for timeout reading");
             TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
             size_t remaining_len = len;
             while (remaining_len) {
                 ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
                 if (ret < 0){
-                    printf("ifile_buf::cfb_file_read ret=%d\n", int(ret));
                     if (errno == EINTR){
                         continue;
                     }
@@ -546,7 +529,6 @@ namespace transbuf {
                 }
                 remaining_len -= ret;
             }
-            printf("ifile_buf::cfb_file_read ok -> ret=%d\n", int(len - remaining_len));
             return len - remaining_len;        
         }
 
@@ -557,18 +539,15 @@ namespace transbuf {
         , cfb_file_fd(-1)
         , encryption(encryption)
         {
-            printf("ifile_buf::__init__\n");
         }
 
         ~ifile_buf()
         {
-            printf("ifile_buf::__del__\n");
             this->cfb_file_close();
         }
 
         int open(const char * filename, mode_t mode = 0600)
         {
-            printf("ifile_buf::open(%s)\n", filename);
             if (this->encryption){
 
                 this->cfb_file_close();
@@ -607,16 +586,12 @@ namespace transbuf {
                     return -1;
                 }
 
-                printf("magic %d %d\n", int(magic), WABCRYPTOFILE_MAGIC);
-
                 const int version = tmp_buf[4] + (tmp_buf[5] << 8) + (tmp_buf[6] << 16) + (tmp_buf[7] << 24);
                 if (version > WABCRYPTOFILE_VERSION) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
                         ::getpid(), version, WABCRYPTOFILE_VERSION);
                     return -1;
                 }
-
-                printf("version %d\n", int(version));
 
                 unsigned char * const iv = tmp_buf + 8;
 
@@ -637,30 +612,24 @@ namespace transbuf {
                     return -1;
                 }
 
-                printf("ifile_buf::open ok\n");
                 return 0;
             }
             else {
                     this->cfb_file_close();
                     this->cfb_file_fd = ::open(filename, O_RDONLY);
                     if (this->cfb_file_fd < 0){
-                        printf("ifile_buf::open (unencrypted) -> failed\n");
                         return -1;
                     }
-                    printf("ifile_buf::open (unencrypted) -> ok\n");
                     return 0;
             }
         }
 
         ssize_t read(void * data, size_t len)
         {
-            printf("ifile_buf::read()\n");
             if (this->encryption){
-                printf("read: calling_cfb_decrypt_decrypt_read\n");
                 return this->cfb_decrypt_decrypt_read(data, len);
             }
             else {
-                printf("read: calling_cfb_file_read\n");
                 return this->cfb_file_read(data, len);
             }
         }
@@ -1240,10 +1209,7 @@ static inline int is_file_encrypted(const std::string & full_filename)
 
 static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
 {
-    printf("app_verifier(\n");
     openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    printf("Running app_verifier\n");
 
     std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
     std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
