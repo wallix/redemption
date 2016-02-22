@@ -13,25 +13,43 @@
 
 extern "C" {
     __attribute__((__visibility__("default"))) 
+    int decmemcpy(char * dest, char * source, int len)
+    {
+        ::memcpy(dest, source, static_cast<size_t>(len));
+        return 0;
+    }
+
+    __attribute__((__visibility__("default"))) 
     int do_main(int argc, char ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn) 
     {
-        std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
         Inifile ini;
-        { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
+        { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), CFG_PATH "/" RDPPROXY_INI); }
 
         UdevRandom rnd;
         CryptoContext cctx(rnd, ini, 1);
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 
-        return app_decrypter(
-            argc, argv
-          , "ReDemPtion DECrypter " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2015.\n"
-            "Christophe Grosjean, Raphael Zhou."
-          , cctx);
+        int res = -1;
+        try {
+            res = app_decrypter(
+                argc, argv
+              , "ReDemPtion DECrypter " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2015.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+            if (res == 0){
+                printf("decrypt ok");
+            }
+            else {
+                printf("decrypt failed\n");
+            }
+        } catch (const Error & e) {
+            printf("decrypt failed: with id=%d\n", e.id);
+        }
+        return res;
     }
 }
 

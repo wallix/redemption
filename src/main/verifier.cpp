@@ -13,17 +13,21 @@
 
 int main(int argc, char ** argv) {
 
-    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
     Inifile ini;
-    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
+    ini.set<cfg::debug::config>(false);
+    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), CFG_PATH "/" RDPPROXY_INI); }
 
     UdevRandom rnd;
     CryptoContext cctx(rnd, ini, 1);
 
-    return app_verifier(
-        argc, argv
-      , "ReDemPtion VERifier " VERSION ".\n"
-        "Copyright (C) Wallix 2010-2015.\n"
-        "Christophe Grosjean, Raphael Zhou."
-      , cctx);
+    try {
+        return app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2015.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx);
+    } catch (const Error & e) {
+        return -1;
+    }
 }
