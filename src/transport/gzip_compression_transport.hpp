@@ -32,6 +32,10 @@ static const size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 * GZipCompressionInTransport
 */
 
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 class GZipCompressionInTransport : public Transport {
     Transport & source_transport;
 
@@ -372,5 +376,7 @@ public:
         this->target_transport.timestamp(now);
     }
 };  // class GZipCompressionOutTransport
+
+#pragma GCC diagnostic pop
 
 #endif  // #ifndef REDEMPTION_TRANSPORT_GZIP_COMPRESSION_TRANSPORT_HPP

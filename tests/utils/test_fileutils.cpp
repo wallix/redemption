@@ -24,7 +24,8 @@
 #define BOOST_TEST_MODULE TestFileUtils
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+// #define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "fileutils.hpp"
@@ -39,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestBasename)
 //     Below expected behavior from the unix man pages
 //          path        basename
 //          "/usr/lib"  "lib"
-//          "/usr/"     ""         
+//          "/usr/"     ""
 //          "usr"       "usr"
 //          "/"         "/"
 //          "."         "."

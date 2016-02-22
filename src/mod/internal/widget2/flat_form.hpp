@@ -213,10 +213,9 @@ enum {
         unsigned long res = 0;
         unsigned long hours = 0;
         unsigned long minutes = 0;
-        long d = 0;
         char * end_p = nullptr;
         try {
-            d = strtoul(duration, &end_p, 10);
+            long d = strtoul(duration, &end_p, 10);
             if (*end_p == 'h') {
                 res = (d > 0);
                 hours = d;

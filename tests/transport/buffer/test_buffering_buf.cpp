@@ -60,6 +60,7 @@ BOOST_AUTO_TEST_CASE(TestOBufferingBuf)
     file.open(filename, std::ios::in);
     os << &file;
     BOOST_CHECK_EQUAL("abcdefghijklmnopqrst01234567890123456789\n", os.str());
+    unlink(filename);
 }
 
 // Note: buffering_buf is not used and the test is not specific to "buffering"

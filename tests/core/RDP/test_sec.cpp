@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 
     InStream stream(buf, length);
     SEC::SecExchangePacket_Recv sec(stream);
-    BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_EXCHANGE_PKT, sec.basicSecurityHeader);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(SEC::SEC_EXCHANGE_PKT), sec.basicSecurityHeader);
     BOOST_CHECK_EQUAL(length - 16, sec.payload.get_capacity());
     BOOST_CHECK_EQUAL(64, sec.payload.get_capacity());
     // We won't compare padding

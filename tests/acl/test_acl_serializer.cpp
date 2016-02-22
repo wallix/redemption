@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.out_string(string_from_authid(AUTHID_CONTEXT_SESSION_ID)); stream.out_string("\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
-    GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
+    GeneratorTransport trans(stream.get_data(), stream.get_offset());
     AclSerializer acl(ini, trans, 0);
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");

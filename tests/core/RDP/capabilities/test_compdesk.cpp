@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
     BOOST_CHECK_EQUAL(compdesk_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_COMPDESK));
     BOOST_CHECK_EQUAL(compdesk_caps2.len, static_cast<uint16_t>(CAPLEN_COMPDESK));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_COMPDESK, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_COMPDESK, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_COMPDESK), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_COMPDESK), stream.in_uint16_le());
     compdesk_caps2.recv(stream, CAPLEN_COMPDESK);
 
     BOOST_CHECK_EQUAL(compdesk_caps2.CompDeskSupportLevel, static_cast<uint16_t>(COMPDESK_SUPPORTED));

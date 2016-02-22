@@ -612,7 +612,7 @@ public:
                         throw Error(ERR_BITMAP_LOAD_FAILED);
                     }
 
-                LOG(LOG_INFO, "loading file %d x %d x %d", header.image_width, header.image_height, header.bit_count);
+                LOG(LOG_INFO, "loading file %u x %u x %d", header.image_width, header.image_height, header.bit_count);
 
                 // bitmap loaded from files are always converted to 24 bits
                 // this avoid palette problems for 8 bits,

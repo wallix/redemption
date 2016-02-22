@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    if (!check_sig(to_send2, message, (const char *)sig)){
+    if (!check_sig(to_send2, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    if (!check_sig(to_send3, message, (const char *)sig)){
+    if (!check_sig(to_send3, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
 
-    if (!check_sig(to_send4, message, (const char *)sig)){
+    if (!check_sig(to_send4, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send5.get_offset(), 0x5a + 2);
 
-    if (!check_sig(to_send5, message, (const char *)sig)){
+    if (!check_sig(to_send5, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -373,12 +373,12 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
     BOOST_CHECK_EQUAL(ts_cred_received.passCreds.domainName_length, sizeof(domain));
     BOOST_CHECK_EQUAL(ts_cred_received.passCreds.userName_length,   sizeof(user));
     BOOST_CHECK_EQUAL(ts_cred_received.passCreds.password_length,   sizeof(pass));
-    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred_received.passCreds.domainName),
-                      std::string((const char*)domain));
-    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred_received.passCreds.userName),
-                      std::string((const char*)user));
-    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred_received.passCreds.password),
-                      std::string((const char*)pass));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.domainName),
+                      reinterpret_cast<const char*>(domain));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.userName),
+                      reinterpret_cast<const char*>(user));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.password),
+                      reinterpret_cast<const char*>(pass));
 
 
 
@@ -389,10 +389,10 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
     ts_cred.set_credentials(domain2, sizeof(domain2),
                             user2, sizeof(user2),
                             pass2, sizeof(pass2));
-    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred.passCreds.domainName),
-                      std::string((const char*)domain2));
-    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred.passCreds.userName),
-                      std::string((const char*)user2));
-    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred.passCreds.password),
-                      std::string((const char*)pass2));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.domainName),
+                      reinterpret_cast<const char*>(domain2));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.userName),
+                      reinterpret_cast<const char*>(user2));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.password),
+                      reinterpret_cast<const char*>(pass2));
 }

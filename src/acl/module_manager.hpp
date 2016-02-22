@@ -812,8 +812,6 @@ public:
                 //    // default is "allow", do nothing special
                 //}
 
-                static const char * name = "RDP Target";
-
                 if (acl) {
                     acl->log4(false, "CREATE_CONNECTION");
                 }
@@ -941,6 +939,7 @@ public:
                 }
 
                 try {
+                    const char * const name = "RDP Target";
                     TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
                     this->mod = new ModWithSocket<mod_rdp>( *this
                                                           , name
@@ -973,7 +972,6 @@ public:
         case MODULE_VNC:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
-                static const char * name = "VNC Target";
 
                 if (acl) {
                     acl->log4(false, "CREATE_CONNECTION");
@@ -1000,6 +998,7 @@ public:
                 }
 
                 try {
+                    const char * const name = "VNC Target";
                     this->mod = new ModWithSocket<mod_vnc>(
                         *this
                       , name

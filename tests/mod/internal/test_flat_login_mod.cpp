@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 800, 600, (time_t)100000);
+    FlatLoginMod d(ini, "user", "pass", front, 800, 600, static_cast<time_t>(100000));
     d.draw_event(100001);
 
     BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod1)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 800, 600, (time_t)100000);
+    FlatLoginMod d(ini, "user", "pass", front, 800, 600, static_cast<time_t>(100000));
     d.draw_event(100001);
 
     BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);

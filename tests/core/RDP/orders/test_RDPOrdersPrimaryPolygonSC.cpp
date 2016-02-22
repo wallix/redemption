@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonSCEmpty)
     BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
     RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-    BOOST_CHECK_EQUAL((uint8_t)POLYGONSC, common_cmd.order);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONSC), common_cmd.order);
     BOOST_CHECK_EQUAL(0, common_cmd.clip.x);
     BOOST_CHECK_EQUAL(400, common_cmd.clip.y);
     BOOST_CHECK_EQUAL(800, common_cmd.clip.cx);
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonSC)
 
     polygonSC.emit(out_stream, newcommon, state_common, state_polygonSC);
 
-    BOOST_CHECK_EQUAL((uint8_t)POLYGONSC, newcommon.order);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONSC), newcommon.order);
     BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
 
     uint8_t datas[] = {
@@ -138,9 +138,9 @@ BOOST_AUTO_TEST_CASE(TestPolygonSC)
     BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
     RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-    BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
-    BOOST_CHECK_EQUAL((uint32_t)0x67, header.fields);
-    BOOST_CHECK_EQUAL((uint8_t)POLYGONSC, common_cmd.order);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x67), header.fields);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONSC), common_cmd.order);
     BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
     RDPPolygonSC cmd = state_polygonSC;

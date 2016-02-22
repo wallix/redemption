@@ -29,6 +29,9 @@
 #include "listen.hpp"
 #include "server.hpp"
 
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 
 // This test is somewhat tricky
 // The goal is to check that SocketTransport objects are working as expected
@@ -210,3 +213,5 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     }
     delete client_trans;
 }
+
+#pragma GCC diagnostic pop

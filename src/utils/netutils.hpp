@@ -39,6 +39,10 @@
 
 #include "log.hpp"
 
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 static inline bool try_again(int errnum){
     int res = false;
     TODO("Check wich signals are actually necessary depending on what we are doing "
@@ -123,11 +127,11 @@ int connect_sck(
             // try again
             fd_set fds;
             FD_ZERO(&fds);
+            FD_SET(sck, &fds);
             struct timeval timeout = {
                 retry_delai_ms / 1000,
                 1000 * (retry_delai_ms % 1000)
             };
-            FD_SET(sck, &fds);
             // exit select on timeout or connect or error
             // connect will catch the actual error if any,
             // no need to care of select result
@@ -176,7 +180,7 @@ static inline int ip_connect(const char* ip, int port,
     if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
         return -1;
     }
-    
+
     union
     {
       sockaddr s;
@@ -252,5 +256,7 @@ static inline int local_connect(const char* sck_name,
         sck_name, -1
     );
 }
+
+#pragma GCC diagnostic pop
 
 #endif

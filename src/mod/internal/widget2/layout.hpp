@@ -85,24 +85,13 @@ struct WidgetLayout : public Widget2 {
     }
 
     void remove_widget(Widget2 *w) {
-        bool found = false;
-        size_t removed = this->nb_items;
-        for (size_t i = 0; i < this->nb_items; ++i) {
-            if (!found) {
-                if (w == this->items[i]) {
-                    found = true;
-                    this->items[i] = nullptr;
-                    removed = i;
-                }
-            }
-            else {
-                this->items[i-1] = this->items[i];
-            }
-        }
-        if (found) {
-            this->items[this->nb_items] = nullptr;
+        auto last = this->items + this->nb_items;
+        auto it = std::find(&this->items[0], last, w);
+        if (it != last) {
+            auto new_last = std::copy(it+1, last, it);
+            *new_last = nullptr;
             this->nb_items--;
-            this->rearrange(removed);
+            this->rearrange(it - this->items);
         }
     }
 

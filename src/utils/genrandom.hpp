@@ -91,7 +91,7 @@ class LCGRand : public Random
 
     void random(void * dest, size_t size) override {
         for (size_t x = 0; x < size ; x++){
-            ((uint32_t*)dest)[x / sizeof(uint32_t)] = this->rand32();
+            static_cast<uint32_t*>(dest)[x / sizeof(uint32_t)] = this->rand32();
         }
     }
 
@@ -174,7 +174,7 @@ class UdevRandom : public Random
             memset(dest, 0x44, size);
         }
     }
-    
+
     virtual uint32_t rand32()
     {
         uint32_t result = 0;

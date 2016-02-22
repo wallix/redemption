@@ -183,12 +183,12 @@ public:
         return this->p.in_uint16_be();
     }
 
-    unsigned int in_uint32_le(void) {
+    uint32_t in_uint32_le(void) {
         REDASSERT(this->in_check_rem(4));
         return this->p.in_uint32_le();
     }
 
-    unsigned int in_uint32_be(void) {
+    uint32_t in_uint32_be(void) {
         REDASSERT(this->in_check_rem(4));
         return this->p.in_uint32_be();
     }
@@ -226,12 +226,12 @@ public:
         return this->p.in_uint64_be();
     }
 
-    unsigned in_bytes_le(const uint8_t nb){
+    uint32_t in_bytes_le(const uint8_t nb){
         REDASSERT(this->in_check_rem(nb));
         return this->p.in_bytes_le(nb);
     }
 
-    unsigned in_bytes_be(const uint8_t nb){
+    uint32_t in_bytes_be(const uint8_t nb){
         REDASSERT(this->in_check_rem(nb));
         return this->p.in_bytes_be(nb);
     }

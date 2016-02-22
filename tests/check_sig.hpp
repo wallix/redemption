@@ -24,7 +24,7 @@
 #include "drawable.hpp"
 
 inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
-                     char * message, const char * shasig)
+                     char * message, const void * shasig)
 {
    uint8_t sig[20];
    SslSha1 sha1;
@@ -50,17 +50,17 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
    return true;
 }
 
-inline bool check_sig(Drawable & data, char * message, const char * shasig)
+inline bool check_sig(Drawable & data, char * message, const void * shasig)
 {
    return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
 }
 
-inline bool check_sig(OutStream & stream, char * message, const char * shasig)
+inline bool check_sig(OutStream & stream, char * message, const void * shasig)
 {
    return check_sig(stream.get_data(), 1, stream.get_offset(), message, shasig);
 }
 
-inline bool check_sig(const uint8_t * data, size_t length, char * message, const char * shasig)
+inline bool check_sig(const uint8_t * data, size_t length, char * message, const void * shasig)
 {
    return check_sig(data, 1, length, message, shasig);
 }

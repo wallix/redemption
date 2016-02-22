@@ -24,6 +24,10 @@
 #include "transport/socket_transport.hpp"
 #include "wait_obj.hpp"
 
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 inline
 void add_to_fd_set(wait_obj & w, SocketTransport * t, fd_set & rfds, unsigned & max, timeval & timeout)
 {
@@ -103,5 +107,7 @@ bool is_set(wait_obj & w, int fd, fd_set & rfds)
 
     return false;
 }
+
+#pragma GCC diagnostic pop
 
 #endif

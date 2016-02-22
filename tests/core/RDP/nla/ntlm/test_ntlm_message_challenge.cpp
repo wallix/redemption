@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
     char message[1024];
-    if (!check_sig(to_send2, message, (const char *)sig)){
+    if (!check_sig(to_send2, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

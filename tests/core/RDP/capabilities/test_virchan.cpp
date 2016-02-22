@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
     BOOST_CHECK_EQUAL(virtualchannel_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_VIRTUALCHANNEL));
     BOOST_CHECK_EQUAL(virtualchannel_caps2.len, static_cast<uint16_t>(CAPLEN_VIRTUALCHANNEL));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_VIRTUALCHANNEL, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_VIRTUALCHANNEL, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_VIRTUALCHANNEL), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_VIRTUALCHANNEL), stream.in_uint16_le());
     virtualchannel_caps2.recv(stream, CAPLEN_VIRTUALCHANNEL);
 
     BOOST_CHECK_EQUAL(virtualchannel_caps2.flags, static_cast<uint32_t>(2));

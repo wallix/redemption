@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
     LOG(LOG_INFO, "TEST CLIENT SIDE");
 
     TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
-    logtrans.set_public_key((const uint8_t*)"1245789652325415", 16);
+    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
 
     LOG(LOG_INFO, "TEST SERVER SIDE");
     TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
-    logtrans.set_public_key((const uint8_t*)"1245789652325415", 16);
+    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";

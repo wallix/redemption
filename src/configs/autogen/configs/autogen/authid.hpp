@@ -44,6 +44,8 @@ enum authid_t {
     AUTHID_VIDEO_DISABLE_CLIPBOARD_LOG,
     AUTHID_VIDEO_DISABLE_FILE_SYSTEM_LOG,
     AUTHID_VIDEO_RT_DISPLAY,
+    AUTHID_CRYPTO_KEY0,
+    AUTHID_CRYPTO_KEY1,
     AUTHID_TRANSLATION_LANGUAGE,
     AUTHID_TRANSLATION_PASSWORD_EN,
     AUTHID_TRANSLATION_PASSWORD_FR,
@@ -97,8 +99,6 @@ enum authid_t {
     AUTHID_CONTEXT_PATTERN_NOTIFY,
     AUTHID_CONTEXT_OPT_MESSAGE,
     AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES,
-    AUTHID_CONTEXT_CRYPTO_KEY,
-    AUTHID_CONTEXT_HMAC_KEY,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -148,6 +148,8 @@ constexpr char const * const authstr[] = {
     "disable_clipboard_log",
     "disable_file_system_log",
     "rt_display",
+    "key0",
+    "key1",
     "language",
     "password_en",
     "password_fr",
@@ -201,7 +203,5 @@ constexpr char const * const authstr[] = {
     "pattern_notify",
     "opt_message",
     "outbound_connection_blocking_rules",
-    "crypto_key",
-    "hmac_key",
 };
 

@@ -45,12 +45,11 @@ class PatternSearcher
 {
     struct TextSearcher
     {
-        using StreamSearcher = re::Regex::PartOfText;
-        StreamSearcher searcher;
+        re::Regex::PartOfText searcher;
         re::Regex::range_matches matches;
 
         void reset(re::Regex & rgx) {
-            this->searcher = StreamSearcher(rgx.part_of_text_search(false));
+            this->searcher = rgx.part_of_text_search(false);
         }
 
         bool next(uint8_t const * uchar) {
@@ -281,7 +280,7 @@ public:
 
 
 template<class Utf8CharFn, class NoPrintableFn>
-void filtering_input_kbd(InStream in_raw_kbd_data, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
+void filtering_input_kbd(InStream & in_raw_kbd_data, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
 {
     constexpr struct {
         uint32_t uchar;
@@ -373,8 +372,9 @@ public:
         // TODO replace by this->kbd_buffer.get_data()
         uint8_t buf_char[5];
 
+        InStream in_raw_kbd_data(input_data_32);
         filtering_input_kbd(
-            InStream(input_data_32),
+            in_raw_kbd_data,
             [this, &buf_char, &can_be_sent_to_server](uint32_t uchar) {
                 size_t const char_len = UTF32toUTF8(
                     uchar, buf_char, this->kbd_buffer.tailroom()
