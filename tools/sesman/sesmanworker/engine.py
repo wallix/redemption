@@ -548,7 +548,7 @@ class Engine(object):
                     subprotocols = right.subprotocols
                     # subprotocols = right.resource.device.service.subprotocols
                 if target_context is not None:
-                    if host is None:
+                    if target_context.host and host is None:
                         continue
                     if (target_context.host and
                         not is_device_in_subnet(target_context.host, host) and
