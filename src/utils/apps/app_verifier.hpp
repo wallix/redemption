@@ -879,9 +879,10 @@ int read_meta_file2(
 }
 
 
-static inline int check_encrypted_or_checksumed(std::string const & input_filename,
+static inline int check_encrypted_or_checksumed(
+                                       std::string const & input_filename,
+                                       std::string const & mwrm_path,
                                        std::string const & hash_path,
-                                       const char * fullfilename,
                                        bool quick_check,
                                        uint32_t verbose,
                                        CryptoContext * cctx,
@@ -889,6 +890,7 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
     printf("check_encrypted_or_checksumed(\n");
     unsigned infile_version = 1;
     bool infile_is_checksumed = false;
+    std::string const full_mwrm_filename = mwrm_path + input_filename;
 
     if (infile_is_encrypted){
         OpenSSL_add_all_digests();
@@ -896,7 +898,7 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
 
     {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
-        int res = ifile.open(fullfilename);
+        int res = ifile.open(full_mwrm_filename.c_str());
         if (res < 0){
             printf("check_encrypted_or_checksumed open failed\n");
         }
@@ -1061,12 +1063,14 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
 
     {
         char file_path[PATH_MAX + 1] = {};
-
         ssize_t filename_len = input_filename.length();
-
         bool hash_ok = false;
 
-        make_file_path(hash_path.c_str(), input_filename.c_str(), file_path, sizeof(file_path));
+        snprintf(file_path, sizeof(file_path), "%s%s%s", hash_path.c_str(),
+            ((hash_path.c_str()[strlen(hash_path.c_str()) - 1] == '/') ? "" : "/"),
+            input_filename.c_str());
+            file_path[sizeof(file_path) - 1] = 0;
+
         std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
 
         try {
@@ -1170,7 +1174,7 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
     const bool is_status_enabled = (infile_version > 1);
     bool result = false;
 
-    if (check_file( fullfilename 
+    if (check_file( full_mwrm_filename.c_str() 
                   , infile_is_checksumed
                   , cctx->get_hmac_key()
                   , sizeof(cctx->get_hmac_key())
@@ -1179,9 +1183,9 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
                   , hash_line) == true) 
     {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
-        if (ifile.open(fullfilename) < 0) {
-            LOG(LOG_ERR, "failed opening=%s", fullfilename);
-            std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
+        if (ifile.open(full_mwrm_filename.c_str()) < 0) {
+            LOG(LOG_ERR, "failed opening=%s", full_mwrm_filename.c_str());
+            std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
             return 1;;
         }
 
@@ -1222,7 +1226,7 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
     }
 
     if (!result){
-        std::cerr << "File \"" << fullfilename << "\" is invalid!" << std::endl << std::endl;
+        std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
         return 1;;
     }
 
@@ -1300,15 +1304,11 @@ static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char
             input_filename  = temp_basename;
             input_filename += temp_extension;
         }
+        if (mwrm_path.back() != '/'){
+            mwrm_path.push_back('/');
+        }
     }
-
-
-    char fullfilename[2048];
-
-    make_file_path(mwrm_path.c_str(), input_filename.c_str(), fullfilename, sizeof(fullfilename));
-
-    std::cout << "Input file is \"" << fullfilename << "\".\n";
-
+    std::cout << "Input file is \"" << mwrm_path << input_filename << "\".\n";
 
     if (verbose) {
         LOG(LOG_INFO, "hash_path=\"%s\"", hash_path.c_str());
@@ -1316,64 +1316,48 @@ static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char
         LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
     }
 
-    bool infile_is_encrypted = false;
-    int fd = open(fullfilename, O_RDONLY);
-
+    std::string const full_mwrm_filename = mwrm_path + input_filename;
+    int fd = open(full_mwrm_filename.c_str(), O_RDONLY);
     if (fd == -1){
         std::cerr << "Input file missing.\n";
         return 1;
     }
-
-    class fdbuf
+    struct fdbuf
     {
         int fd;
-    public:
-        explicit fdbuf(int fd) noexcept
-        : fd(fd)
-        {}
-
-        ~fdbuf()
-        {
-            ::close(this->fd);
-        }
-
-        ssize_t read(void * data, size_t len) const
-        {
-            size_t remaining_len = len;
-            while (remaining_len) {
-                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                if (ret < 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    // Error should still be there next time we try to read
-                    if (remaining_len != len){
-                        return len - remaining_len;
-                    }
-                    return ret;
-                }
-                // We must exit loop or we will enter infinite loop
-                if (ret == 0){
-                    break;
-                }
-                remaining_len -= ret;
-            }
-            return len - remaining_len;
-        }
+        explicit fdbuf(int fd) noexcept : fd(fd){}
+        ~fdbuf() {::close(this->fd);}
     } file(fd);
 
     uint8_t tmp_buf[4] ={};
-    ssize_t res_test = file.read(&tmp_buf, sizeof(tmp_buf));
-    
-    if (res_test == sizeof(tmp_buf)){
-        const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-        if (magic == WABCRYPTOFILE_MAGIC) {
-            infile_is_encrypted = true;
-            std::cout << "Input file is encrypted.\n";
+    const size_t len = sizeof(tmp_buf);
+    size_t remaining_len = len;
+    while (remaining_len) {
+        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
+        if (ret < 0){
+            if (ret == 0){
+                std::cerr << "Input file truncated\n";
+                return 1;
+            }
+            if (errno == EINTR){
+                continue;
+            }
+            // Error should still be there next time we try to read
+            std::cerr << "Input file error\n";
+            return 1;
         }
+        // We must exit loop or we will enter infinite loop
+        remaining_len -= ret;
+    }
+
+    bool infile_is_encrypted = false;
+    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+    if (magic == WABCRYPTOFILE_MAGIC) {
+        infile_is_encrypted = true;
+        std::cout << "Input file is encrypted.\n";
     }
 
     return check_encrypted_or_checksumed(
-                input_filename, hash_path, fullfilename,
+                input_filename, mwrm_path, hash_path,
                 quick_check, verbose, &cctx, infile_is_encrypted);
 }
