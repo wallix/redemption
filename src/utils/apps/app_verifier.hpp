@@ -680,7 +680,7 @@ namespace transbuf {
             else {
                     this->cfb_file_close();
                     this->cfb_file_fd = ::open(filename, O_RDONLY);
-                    if (this->cfb_file_fd > 0){
+                    if (this->cfb_file_fd < 0){
                         printf("ifile_buf::open (unencrypted) -> failed\n");
                         return -1;
                     }
@@ -1045,6 +1045,11 @@ static inline int check_encrypted_or_checksumed(std::string const & input_filena
     // TODO: check compatibility of version and encryption
     if (infile_version < 2) {
         std::cout << "Input file is unencrypted.\n";
+        return 0;
+    }
+
+    if (infile_is_checksumed == 0) {
+        std::cout << "Input file don't include checksum\n";
         return 0;
     }
 
