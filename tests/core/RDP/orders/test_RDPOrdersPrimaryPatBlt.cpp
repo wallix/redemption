@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
                   0x102030, 0x112233,
-                  RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
+                  RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))
                   ).emit(out_stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[30] = {
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)PATBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, 0, 0, RDPBrush());
 
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
             RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, 0x102030, 0x112233,
-                RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")),
+                RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
             "PatBlt 1");
     }
 
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)PATBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, 0, 0, RDPBrush());
 
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
                   0x102030, 0x112233,
-                  RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")
+                  RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))
                   ).emit(out_stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[28] = {
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)PATBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, 0, 0, RDPBrush(0, 0, 3, 0xDD));
 
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
             RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, 0x102030, 0x112233,
-                RDPBrush(3, 4, 0x03, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7")),
+                RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
             "PatBlt 3");
     }
 }

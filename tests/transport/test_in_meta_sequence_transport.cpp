@@ -350,7 +350,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
             total += pbuffer - buffer;
         }
     } catch (const Error & e) {
-        BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_NO_MORE_DATA, (unsigned)e.id);
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
         total += pbuffer - buffer;
     };
     // total size if sum of sample sizes
@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
             total += pbuffer - buffer;
         }
     } catch (const Error & e) {
-        BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_NO_MORE_DATA, (unsigned)e.id);
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
         total += pbuffer - buffer;
     };
     // total size if sum of sample sizes
@@ -578,7 +578,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
             BOOST_CHECK(false);
         }
         catch (const Error & e){
-            BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_NO_MORE_DATA, e.id);
+            BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
         };
     }
 
@@ -643,7 +643,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
             BOOST_CHECK(false);
         }
         catch (const Error & e){
-            BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_NO_MORE_DATA, e.id);
+            BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
         };
 
     } catch(const Error & e) {
@@ -689,7 +689,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
             BOOST_CHECK(false);
         }
         catch (const Error & e){
-            BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_NO_MORE_DATA, e.id);
+            BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
         };
     }
 

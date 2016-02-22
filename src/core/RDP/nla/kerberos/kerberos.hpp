@@ -25,6 +25,9 @@
 #include "RDP/nla/sspi.hpp"
 #include "RDP/nla/kerberos/credentials.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 namespace {
     const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
     const char Kerberos_Name[] = "Kerberos";
@@ -37,7 +40,7 @@ namespace {
         Kerberos_Name,          // Name
         Kerberos_Comment        // Comment
     };
-    
+
     static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
     { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
 }
@@ -653,5 +656,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
 };
+
+#pragma GCC diagnostic pop
 
 #endif

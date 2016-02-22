@@ -54,8 +54,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
     BOOST_CHECK_EQUAL(control_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
     BOOST_CHECK_EQUAL(control_caps2.len, static_cast<uint16_t>(CAPLEN_CONTROL));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_CONTROL, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_CONTROL, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_CONTROL), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_CONTROL), stream.in_uint16_le());
 
     control_caps2.recv(stream, CAPLEN_CONTROL);
 

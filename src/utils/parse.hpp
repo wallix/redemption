@@ -62,7 +62,7 @@ public:
         return static_cast<uint16_t>(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
-    unsigned int in_uint32_le(void) {
+    uint32_t in_uint32_le(void) {
         this->p += 4;
         return  this->p[-4]
              | (this->p[-3] << 8)
@@ -71,7 +71,7 @@ public:
              ;
     }
 
-    unsigned int in_uint32_be(void) {
+    uint32_t in_uint32_be(void) {
         this->p += 4;
         return  this->p[-1]
              | (this->p[-2] << 8)

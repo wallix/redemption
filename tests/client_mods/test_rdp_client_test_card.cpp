@@ -64,6 +64,6 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
         // this test is not supposed to be executed
         // (there should be no exception in draw_event)
         // but if exception occurs, it is usefull to know which one
-        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL(0, e.id);
     };
 }

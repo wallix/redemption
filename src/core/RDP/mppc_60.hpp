@@ -865,7 +865,7 @@ private:
                     REDASSERT((offsetCacheIndex >= 0) && (offsetCacheIndex <= 3));
 
                     if (this->verbose & 512) {
-                        LOG(LOG_INFO, "offsetCacheIndex=%u", offsetCacheIndex);
+                        LOG(LOG_INFO, "offsetCacheIndex=%d", offsetCacheIndex);
                     }
 
                     if (offsetCacheIndex != 0) {
@@ -874,7 +874,7 @@ private:
 
                     LUTIndex = offsetCacheIndex + 289;
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                        LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
                     }
 
                     ::insert_n_bits_60(HuffLenLEC[LUTIndex], HuffCodeLEC[LUTIndex],
@@ -889,7 +889,7 @@ private:
                         ((CopyOffsetBaseLUT[LUTIndex] < (copy_offset + 1)) &&
                          (CopyOffsetBaseLUT[LUTIndex + 1] > (copy_offset + 1))));
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                        LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
                     }
                     int HuffmanIndex = LUTIndex + 257;
                     ::insert_n_bits_60(HuffLenLEC[HuffmanIndex], HuffCodeLEC[HuffmanIndex],
@@ -898,11 +898,11 @@ private:
                     int ExtraBitsLength = CopyOffsetBitsLUT[LUTIndex];
                     if (ExtraBitsLength) {
                         if (this->verbose & 256) {
-                            LOG(LOG_INFO, "ExtraBitsLength=%u", ExtraBitsLength);
+                            LOG(LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
                         }
                         int ExtraBits   = copy_offset & ((1 << ExtraBitsLength) - 1);
                         if (this->verbose & 256) {
-                            LOG(LOG_INFO, "ExtraBits=%u", ExtraBits);
+                            LOG(LOG_INFO, "ExtraBits=%d", ExtraBits);
                         }
                         ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
                             bits_left, opb_index, this->verbose);
@@ -914,7 +914,7 @@ private:
                 REDASSERT((LOMBaseLUT[LUTIndex] == lom) ||
                     ((LOMBaseLUT[LUTIndex] < lom) && (LOMBaseLUT[LUTIndex + 1] > lom)));
                 if (this->verbose & 256) {
-                    LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                    LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
                 }
                 ::insert_n_bits_60(HuffLenLOM[LUTIndex], HuffCodeLOM[LUTIndex],
                     this->outputBuffer, bits_left, opb_index, this->verbose);
@@ -922,11 +922,11 @@ private:
                 int ExtraBitsLength = LOMBitsLUT[LUTIndex];
                 if (ExtraBitsLength) {
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "ExtraBitsLength=%u", ExtraBitsLength);
+                        LOG(LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
                     }
                     int ExtraBits   = (lom - 2) & ((1 << ExtraBitsLength) - 1);
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "ExtraBits=%u", ExtraBits);
+                        LOG(LOG_INFO, "ExtraBits=%d", ExtraBits);
                     }
                     ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
                         bits_left, opb_index, this->verbose);

@@ -111,15 +111,15 @@ BOOST_AUTO_TEST_CASE(TestSecIdentity)
     BOOST_CHECK_EQUAL(id2.Password.size(), 0);
 
 
-    id.SetUserFromUtf8((const uint8_t *)"Zeus");
+    id.SetUserFromUtf8(reinterpret_cast<const uint8_t *>("Zeus"));
     BOOST_CHECK(!memcmp("\x5a\x00\x65\x00\x75\x00\x73\x00",
                         id.User.get_data(),
                         id.User.size()));
-    id.SetDomainFromUtf8((const uint8_t *)"Olympe");
+    id.SetDomainFromUtf8(reinterpret_cast<const uint8_t *>("Olympe"));
     BOOST_CHECK(!memcmp("\x4f\x00\x6c\x00\x79\x00\x6d\x00\x70\x00\x65\x00",
                         id.Domain.get_data(),
                         id.Domain.size()));
-    id.SetPasswordFromUtf8((const uint8_t *)"Athéna");
+    id.SetPasswordFromUtf8(reinterpret_cast<const uint8_t *>("Athéna"));
     BOOST_CHECK(!memcmp("\x41\x00\x74\x00\x68\x00\xe9\x00\x6e\x00\x61\x00",
                         id.Password.get_data(),
                         id.Password.size()));
@@ -138,16 +138,16 @@ BOOST_AUTO_TEST_CASE(TestSecureHandle)
     handle.SecureHandleSetLowerPointer(&a);
     handle.SecureHandleSetUpperPointer(&buff);
 
-    unsigned long * b = (unsigned long *)handle.SecureHandleGetLowerPointer();
-    PSecBuffer buffimport = (PSecBuffer)handle.SecureHandleGetUpperPointer();
+    unsigned long * b = reinterpret_cast<unsigned long *>(handle.SecureHandleGetLowerPointer());
+    PSecBuffer buffimport = reinterpret_cast<PSecBuffer>(handle.SecureHandleGetUpperPointer());
 
     BOOST_CHECK_EQUAL(*b, a);
     BOOST_CHECK_EQUAL(buffimport->Buffer.size(), buff.Buffer.size());
 
     SecHandle handle2(handle);
 
-    unsigned long * b2 = (unsigned long *)handle2.SecureHandleGetLowerPointer();
-    PSecBuffer buffimport2 = (PSecBuffer)handle2.SecureHandleGetUpperPointer();
+    unsigned long * b2 = reinterpret_cast<unsigned long *>(handle2.SecureHandleGetLowerPointer());
+    PSecBuffer buffimport2 = reinterpret_cast<PSecBuffer>(handle2.SecureHandleGetUpperPointer());
 
     BOOST_CHECK_EQUAL(*b2, a);
     BOOST_CHECK_EQUAL(buffimport2->Buffer.size(), buff.Buffer.size());
@@ -156,8 +156,8 @@ BOOST_AUTO_TEST_CASE(TestSecureHandle)
 
     handle3 = handle2;
 
-    unsigned long * b3 = (unsigned long *)handle3.SecureHandleGetLowerPointer();
-    PSecBuffer buffimport3 = (PSecBuffer)handle3.SecureHandleGetUpperPointer();
+    unsigned long * b3 = reinterpret_cast<unsigned long *>(handle3.SecureHandleGetLowerPointer());
+    PSecBuffer buffimport3 = reinterpret_cast<PSecBuffer>(handle3.SecureHandleGetUpperPointer());
 
     BOOST_CHECK_EQUAL(*b3, a);
     BOOST_CHECK_EQUAL(buffimport3->Buffer.size(), buff.Buffer.size());

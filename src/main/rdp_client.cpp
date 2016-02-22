@@ -379,7 +379,7 @@ class ClientFront : public FrontAPI {
             LOG(LOG_INFO, "========================================\n");
         }
     }
-    
+
 
     // reutiliser le FakeFront
     // creer un main calqué sur celui de transparent.cpp et reussir a lancer un mod_rdp
@@ -413,13 +413,6 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
 
 int main(int argc, char** argv)
 {
-    const char * copyright_notice =
-        "\n"
-        "ReDemPtion Stand alone RDP Client.\n"
-        "Copyright (C) Wallix 2010-2015.\n"
-        "\n"
-        ;
-
     RedirectionInfo redir_info;
     int verbose = 0;
     std::string target_device = "10.10.47.205";
@@ -441,16 +434,21 @@ int main(int argc, char** argv)
         {'t', "target-device", &target_device, "target device"},
         {'u', "username", &username, "username"},
         {'p', "password", &password, "password"},
-		{"verbose", &verbose, "verbose"},
+        {"verbose", &verbose, "verbose"},
     });
 
     auto options = po::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
-        std::cout << copyright_notice;
-        std::cout << "Usage: rdptproxy [options]\n\n";
-        std::cout << desc << std::endl;
-        exit(0);
+        std::cout <<
+            "\n"
+            "ReDemPtion Stand alone RDP Client.\n"
+            "Copyright (C) Wallix 2010-2015.\n"
+            "\n"
+            "Usage: rdptproxy [options]\n\n"
+            << desc << std::endl
+        ;
+        return 0;
     }
 
 
@@ -463,7 +461,7 @@ int main(int argc, char** argv)
                                , verbose);
 
     if (verbose > 128) {
-    	mod_rdp_params.log();
+        mod_rdp_params.log();
     }
 
     /* SocketTransport mod_trans */

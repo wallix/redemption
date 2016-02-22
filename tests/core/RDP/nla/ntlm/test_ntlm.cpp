@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
 
 
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
-    CREDENTIALS * creds = (CREDENTIALS*)credentials.SecureHandleGetLowerPointer();
+    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
     BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
                         creds->identity.User.get_data(),
                         creds->identity.User.size()));
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
                                             &credentials, &expiration);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
 
-    CREDENTIALS * creds = (CREDENTIALS*)credentials.SecureHandleGetLowerPointer();
+    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
     BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
                         creds->identity.User.get_data(),
                         creds->identity.User.size()));
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
 
     // Check contexts
-    NTLMContext * client = (NTLMContext*)client_context.SecureHandleGetLowerPointer();
-    NTLMContext * server = (NTLMContext*)server_context.SecureHandleGetLowerPointer();
+    NTLMContext * client = reinterpret_cast<NTLMContext*>(client_context.SecureHandleGetLowerPointer());
+    NTLMContext * server = reinterpret_cast<NTLMContext*>(server_context.SecureHandleGetLowerPointer());
 
     // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
     // LOG(LOG_INFO, "===== SESSION BASE KEY =====");

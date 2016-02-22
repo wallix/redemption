@@ -70,8 +70,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityInputEmit)
     BOOST_CHECK_EQUAL(input_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_INPUT));
     BOOST_CHECK_EQUAL(input_caps2.len, static_cast<uint16_t>(CAPLEN_INPUT));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_INPUT, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_INPUT, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_INPUT), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_INPUT), stream.in_uint16_le());
     input_caps2.recv(stream, CAPLEN_INPUT);
 
     BOOST_CHECK_EQUAL(input_caps2.inputFlags, static_cast<uint16_t>(INPUT_FLAG_FASTPATH_INPUT2));

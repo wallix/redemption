@@ -59,7 +59,6 @@ public:
             if (!this->error_raised) {
                 ::lseek(this->fd, 0, SEEK_SET);
                 int write_result = ::write(this->fd, "100 0", 5);
-(void)write_result;
                 if (write_result != -1) {
                     int truncate_result = ::ftruncate(this->fd, write_result);
 (void)truncate_result;

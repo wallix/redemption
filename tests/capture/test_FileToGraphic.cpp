@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
 
 //    png_recorder.update_config(ini);
-    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
+    player.add_consumer(&drawable1, &drawable1);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
     ini.set<cfg::video::frame_interval>(10);
@@ -110,11 +110,11 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     bool requested_to_stop = false;
 
-    BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
+    BOOST_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
     player.play(requested_to_stop);
 
     png_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
+    BOOST_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
 
     wrm_recorder.flush();
     const char * filename;
