@@ -1317,21 +1317,60 @@ static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char
     }
 
     bool infile_is_encrypted = false;
+    int fd = open(fullfilename, O_RDONLY);
 
-    if (auto file = io::posix::fdbuf(open(fullfilename, O_RDONLY)))
+    if (fd == -1){
+        std::cerr << "Input file missing.\n";
+        return 1;
+    }
+
+    class fdbuf
     {
-        uint32_t magic_test;
-        TODO("No portable code endianess")
-        ssize_t res_test = file.read(&magic_test, sizeof(magic_test));
-        if ((res_test == sizeof(magic_test)) &&
-            (magic_test == WABCRYPTOFILE_MAGIC)) {
+        int fd;
+    public:
+        explicit fdbuf(int fd) noexcept
+        : fd(fd)
+        {}
+
+        ~fdbuf()
+        {
+            ::close(this->fd);
+        }
+
+        ssize_t read(void * data, size_t len) const
+        {
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
+                    }
+                    return ret;
+                }
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
+            }
+            return len - remaining_len;
+        }
+    } file(fd);
+
+    uint8_t tmp_buf[4] ={};
+    ssize_t res_test = file.read(&tmp_buf, sizeof(tmp_buf));
+    
+    if (res_test == sizeof(tmp_buf)){
+        const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+        if (magic == WABCRYPTOFILE_MAGIC) {
             infile_is_encrypted = true;
             std::cout << "Input file is encrypted.\n";
         }
-    }
-    else {
-        std::cerr << "Input file is absent.\n";
-        return 1;
     }
 
     return check_encrypted_or_checksumed(
