@@ -56,6 +56,5 @@ extern "C" {
             printf("verify failed: with id=%d\n", e.id);
         }
         return res;
-          
     }
 }

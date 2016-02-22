@@ -303,7 +303,7 @@ explicit install instexe install-bin install-etc install-etc-themes install-shar
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-etc-themes install-share install-lib ;
 alias exe     : rdpproxy redrec reddec redver rdptproxy rdptanalyzer rdpclient ;
-alias libs    : libredver libreddec ;
+alias libs    : libredver libreddec libredrec ;
 
 
 install install-bin
@@ -389,7 +389,7 @@ lib python2 : : <name>$(PYTHON_VER) <link>shared ;
 # lib jpeg : : <name>jpeg <link>static ;
 # lib Xext : : <name>Xext <link>static ;
 
-lib libpng : : <name>png <link>static ;
+lib libpng : : <name>png <link>shared ;
 alias png : libpng z ;
 
 # lib icuuc : : <name>icuuc ;
@@ -486,6 +486,25 @@ exe redrec
         $(EXE_DEPENDENCIES)
     ;
 
+lib libredrec
+    :
+        src/main/do_recorder.cpp
+        bitmap
+        program_options
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fPIC
+        <cxxflags>-fvisibility=hidden
+    ;
+
+
 exe reddec
     :
         src/main/decrypter.cpp
@@ -500,21 +519,6 @@ exe reddec
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
-    ;
-
-lib libredver
-    :
-        src/main/do_verifier.cpp
-
-        openssl
-        crypto
-        z
-        dl
-
-        snappy
-    :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
     ;
 
 lib libreddec
@@ -547,6 +551,21 @@ exe redver
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
+    ;
+
+lib libredver
+    :
+        src/main/do_verifier.cpp
+
+        openssl
+        crypto
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fPIC
+        <cxxflags>-fvisibility=hidden
     ;
 
 exe rdptproxy
@@ -615,14 +634,14 @@ exe rdpclient
 
 exe tls_test_client
     :
-        src/ftests/tls_test_client.cpp openssl crypto png z dl snappy
+        src/ftests/tls_test_client.cpp openssl crypto png dl snappy
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
  ;
 exe tls_test_server
     :
-        src/ftests/tls_test_server.cpp openssl crypto png z dl snappy
+        src/ftests/tls_test_server.cpp openssl crypto png dl snappy
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
@@ -680,7 +699,7 @@ unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test : $(TEST_
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rect : tests/utils/test_rect.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_ellipse : tests/utils/test_ellipse.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_drawable : tests/utils/test_drawable.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_drawable : tests/utils/test_drawable.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_region : tests/utils/test_region.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bitfu : tests/utils/test_bitfu.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_parse : tests/utils/test_parse.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -714,14 +733,14 @@ unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_
 
 ## Capture tests
 ## @{
-unit-test test_image_capture : tests/capture/test_image_capture.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_image_capture : tests/capture/test_image_capture.cpp bitmap png libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_capture : tests/capture/test_capture.cpp bitmap crypto dl png z snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp bitmap png z snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp bitmap png z crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_nativecapture : tests/capture/test_nativecapture.cpp bitmap png z crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp bitmap png snappy crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp bitmap png crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_nativecapture : tests/capture/test_nativecapture.cpp bitmap png crypto snappy libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_new_kbdcapture : tests/capture/test_new_kbdcapture.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
@@ -738,13 +757,13 @@ unit-test test_error : tests/core/test_error.cpp libboost_unit_test : $(TEST_DEP
 unit-test test_font : tests/core/test_font.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_listen : tests/core/test_listen.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mainloop : tests/core/test_mainloop.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp bitmap crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp bitmap crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_redirection_info : tests/utils/test_redirection_info.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 ## Capabilities tests
@@ -805,9 +824,9 @@ unit-test test_server : tests/core/test_server.cpp libboost_unit_test : $(TEST_D
 unit-test test_session : tests/core/test_session.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_front : tests/front/test_front.cpp bitmap openssl snappy d3des krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_front : tests/front/test_front.cpp bitmap openssl snappy d3des krb5 gssglue png d3des dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_mod_osd : tests/mod/test_mod_osd.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_mod_osd : tests/mod/test_mod_osd.cpp bitmap png libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_null : tests/mod/null/test_null.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -818,15 +837,15 @@ unit-test test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel.cpp lib
 unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_bitmap : tests/utils/test_bitmap.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_bitmap : tests/utils/test_bitmap.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp bitmap png libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_colors : tests/utils/test_colors.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_d3des : tests/utils/test_d3des.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_difftimeval : tests/utils/test_difftimeval.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_genrandom : tests/utils/test_genrandom.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_log : tests/utils/test_log.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_netutils : tests/utils/test_netutils.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_png : tests/utils/test_png.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_png : tests/utils/test_png.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp openssl crypto dl z libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -865,7 +884,7 @@ unit-test test_checksum_buf : tests/transport/buffer/test_checksum_buf.cpp crypt
 
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : $(TEST_DEPENDENCIES) ;
-#unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryMemBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -887,72 +906,72 @@ unit-test test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrde
 unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_rdp : tests/mod/rdp/test_rdp.cpp bitmap krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_libpng : tests/test_libpng.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp bitmap krb5 gssglue png d3des dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp bitmap z png crypto dl openssl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp bitmap krb5 gssglue png crypto d3des z dl openssl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp bitmap krb5 gssglue png crypto d3des z openssl dl krb5 gssglue libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp bitmap krb5 gssglue png crypto d3des z dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp bitmap png z openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp bitmap png z openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk.cpp bitmap png z openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp bitmap krb5 gssglue png crypto d3des openssl dl krb5 gssglue libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp bitmap krb5 gssglue png crypto d3des dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp bitmap png openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp bitmap png openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk.cpp bitmap png openssl snappy d3des crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 ## Widget tests
 ## @{
-unit-test test_widget2_rect : tests/mod/internal/widget2/test_widget2_rect.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_image : tests/mod/internal/widget2/test_image.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_label : tests/mod/internal/widget2/test_label.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_tooltip : tests/mod/internal/widget2/test_tooltip.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_flat_button : tests/mod/internal/widget2/test_flat_button.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_edit : tests/mod/internal/widget2/test_edit.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_multiline : tests/mod/internal/widget2/test_multiline.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_password : tests/mod/internal/widget2/test_password.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_number_edit : tests/mod/internal/widget2/test_number_edit.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-# unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_widget2_rect : tests/mod/internal/widget2/test_widget2_rect.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_image : tests/mod/internal/widget2/test_image.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_label : tests/mod/internal/widget2/test_label.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_tooltip : tests/mod/internal/widget2/test_tooltip.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_button : tests/mod/internal/widget2/test_flat_button.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_edit : tests/mod/internal/widget2/test_edit.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_multiline : tests/mod/internal/widget2/test_multiline.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_password : tests/mod/internal/widget2/test_password.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_number_edit : tests/mod/internal/widget2/test_number_edit.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+# unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-#unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_flat_wab_close : tests/mod/internal/widget2/test_flat_wab_close.cpp bitmap png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_screen : tests/mod/internal/widget2/test_screen.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_wab_close : tests/mod/internal/widget2/test_flat_wab_close.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_screen : tests/mod/internal/widget2/test_screen.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-# unit-test test_columnlayout : tests/mod/internal/widget2/test_columnlayout.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-# unit-test test_linelayout : tests/mod/internal/widget2/test_linelayout.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-# unit-test test_stacklayout : tests/mod/internal/widget2/test_stacklayout.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_grid : tests/mod/internal/widget2/test_grid.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_labelgrid : tests/mod/internal/widget2/test_labelgrid.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+# unit-test test_columnlayout : tests/mod/internal/widget2/test_columnlayout.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+# unit-test test_linelayout : tests/mod/internal/widget2/test_linelayout.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+# unit-test test_stacklayout : tests/mod/internal/widget2/test_stacklayout.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_grid : tests/mod/internal/widget2/test_grid.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_labelgrid : tests/mod/internal/widget2/test_labelgrid.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-# unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-# unit-test test_tab : tests/mod/internal/widget2/test_tab.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_interactive_target.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_selector2 : tests/mod/internal/widget2/test_flat_selector2.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_group_box : tests/mod/internal/widget2/test_group_box.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+# unit-test test_scroll : tests/mod/internal/widget2/test_scroll.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+# unit-test test_tab : tests/mod/internal/widget2/test_tab.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_interactive_target.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
 
 ## Mod tests
 ## @{
-unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp bitmap png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp bitmap png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp bitmap png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp bitmap png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp png libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_copy_paste : tests/mod/internal/test_copy_paste.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_copy_paste : tests/mod/internal/test_copy_paste.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
 
@@ -995,8 +1014,8 @@ unit-test test_darray : tests/utils/test_darray.cpp libboost_unit_test : $(TEST_
 
 ## Widget for workflow
 ## @{
-unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 ## @}
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;

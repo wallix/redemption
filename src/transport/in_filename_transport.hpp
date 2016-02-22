@@ -103,9 +103,6 @@ public:
         , raw_size(0)
         , state(0)
     {
-
-        printf("InFilenameTransport\n"); 
-
         this->raw.read_min(this->fd, 40, 4);
         const uint32_t magic = this->raw.get_uint32_le(0);
         this->encryption = (magic == WABCRYPTOFILE_MAGIC)?1:0;
