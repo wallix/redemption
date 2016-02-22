@@ -718,7 +718,8 @@ namespace transbuf {
 
 
 static inline bool check_file_hash_sha256(
-    const char * file_path,
+    std::string const & input_filename,
+    std::string const & mwrm_path,
     uint8_t const * crypto_key,
     size_t          key_len,
     uint8_t const * hash_buf,
@@ -730,23 +731,18 @@ static inline bool check_file_hash_sha256(
 
     SslHMAC_Sha256 hmac(crypto_key, key_len);
 
-    int fd = ::open(file_path, O_RDONLY);
+    std::string const full_mwrm_filename = mwrm_path + input_filename;
+    int fd = ::open(full_mwrm_filename.c_str(), O_RDONLY);
     if (fd < 0) {
-        LOG(LOG_ERR, "failed opening=%s", file_path);
+        LOG(LOG_ERR, "failed opening=%s", full_mwrm_filename.c_str());
         return false;
     }
 
     struct fdbuf
     {
         int fd;
-        explicit fdbuf(int fd) noexcept : fd(fd) 
-        {
-            printf("check_file_hash_sha256::fdbus::__init__\n");
-        }
-        ~fdbuf() {
-            printf("check_file_hash_sha256::fdbus::__del__\n");
-            ::close(this->fd);
-        }
+        explicit fdbuf(int fd) noexcept : fd(fd) {}
+        ~fdbuf() {::close(this->fd);}
 
         ssize_t read_all(void * data, size_t len)
         {
@@ -790,7 +786,7 @@ static inline bool check_file_hash_sha256(
     } while (number_of_bytes_read < len_to_check || len_to_check == 0);
 
     if (len_read < 0){
-        LOG(LOG_ERR, "failed reading=%s", file_path);
+        LOG(LOG_ERR, "failed reading=%s", full_mwrm_filename.c_str());
         return false;
     }
 
@@ -803,27 +799,31 @@ static inline bool check_file_hash_sha256(
     printf("reference hash\n");
     hexdump(hash_buf, hash_len);
 
-
     if (memcmp(hash, hash_buf, hash_len)) {
-        LOG(LOG_ERR, "failed checking hash=%s", file_path);
+        LOG(LOG_ERR, "failed checking hash=%s", full_mwrm_filename.c_str());
     }
     return (memcmp(hash, hash_buf, hash_len) == 0);
 }
 
-static inline bool check_file(const char * file_path, bool is_checksumed,
+static inline bool check_file(
+        std::string const & input_filename,
+        std::string const & mwrm_path,
+        bool is_checksumed,
         uint8_t const * crypto_key, size_t key_len, size_t len_to_check,
         bool is_status_enabled, MetaLine2 const & meta_line) {
     printf("check_file\n");
 
+    std::string const full_mwrm_filename = mwrm_path + input_filename;
+
     struct stat64 sb;
     memset(&sb, 0, sizeof(sb));
     if (is_status_enabled) {
-        lstat64(file_path, &sb);
+        lstat64(full_mwrm_filename.c_str(), &sb);
     }
 
     bool is_checksum_ok = false;
     if (is_checksumed) {
-        is_checksum_ok = check_file_hash_sha256(file_path, crypto_key,
+        is_checksum_ok = check_file_hash_sha256(input_filename, mwrm_path, crypto_key,
             key_len, (len_to_check ? meta_line.hash1 : meta_line.hash2),
             (len_to_check ? sizeof(meta_line.hash1) : sizeof(meta_line.hash2)),
             len_to_check);
@@ -851,16 +851,6 @@ static inline bool check_file(const char * file_path, bool is_checksumed,
     }
 
     return true;
-}
-
-
-static inline void make_file_path(const char * directory_name, const char * file_name,  char * file_path_buf, size_t file_path_len) {
-    printf("make_file_path(\n");
-    snprintf(file_path_buf, file_path_len, "%s%s%s", directory_name,
-        ((directory_name[strlen(directory_name) - 1] == '/') ? "" : "/"),
-        file_name);
-
-    file_path_buf[file_path_len - 1] = '\0';
 }
 
 template<class Reader>
@@ -1062,20 +1052,16 @@ static inline int check_encrypted_or_checksumed(
     MetaLine2 hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
 
     {
-        char file_path[PATH_MAX + 1] = {};
         ssize_t filename_len = input_filename.length();
         bool hash_ok = false;
 
-        snprintf(file_path, sizeof(file_path), "%s%s%s", hash_path.c_str(),
-            ((hash_path.c_str()[strlen(hash_path.c_str()) - 1] == '/') ? "" : "/"),
-            input_filename.c_str());
-            file_path[sizeof(file_path) - 1] = 0;
+        std::string const full_hash_path = hash_path + input_filename;
 
-        std::cout << "hash file path: \"" << file_path << "\"." << std::endl;
+        std::cout << "hash file path: \"" << full_hash_path << "\"." << std::endl;
 
         try {
             transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
-            in_hash_fb.open(file_path);
+            in_hash_fb.open(full_hash_path.c_str());
             if (verbose) {
                 LOG(LOG_INFO, "File buffer created");
             }
@@ -1111,7 +1097,7 @@ static inline int check_encrypted_or_checksumed(
                     hash_ok = true;
                 }
                 else {
-                    std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
+                    std::cerr << "File name mismatch: \"" << full_hash_path << "\"" << std::endl << std::endl;
                 }
             }
             else {
@@ -1150,7 +1136,7 @@ static inline int check_encrypted_or_checksumed(
                         hash_ok = true;
                     }
                     else {
-                        std::cerr << "File name mismatch: \"" << file_path << "\"" << std::endl << std::endl;
+                        std::cerr << "File name mismatch: \"" << full_hash_path << "\"" << std::endl << std::endl;
                     }
                 }
             }
@@ -1159,7 +1145,7 @@ static inline int check_encrypted_or_checksumed(
             std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
         }
         catch (...) {
-            std::cerr << "Cannot read hash file: \"" << file_path << "\"" << std::endl << std::endl;
+            std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"" << std::endl << std::endl;
         }
 
         if (hash_ok == false) {
@@ -1174,7 +1160,8 @@ static inline int check_encrypted_or_checksumed(
     const bool is_status_enabled = (infile_version > 1);
     bool result = false;
 
-    if (check_file( full_mwrm_filename.c_str() 
+    if (check_file( input_filename
+                  , mwrm_path
                   , infile_is_checksumed
                   , cctx->get_hmac_key()
                   , sizeof(cctx->get_hmac_key())
@@ -1212,7 +1199,16 @@ static inline int check_encrypted_or_checksumed(
         while (read_meta_file2(reader, meta_header, meta_line_wrm) !=
                ERR_TRANSPORT_NO_MORE_DATA) {
 
-            if (check_file( meta_line_wrm.filename
+
+            size_t tmp_wrm_filename_len = 0;
+            const char * tmp_wrm_filename = 
+                    basename_len(meta_line_wrm.filename
+                                , tmp_wrm_filename_len);
+            
+            std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
+
+            if (check_file( meta_line_wrm_filename
+                          , mwrm_path
                           , infile_is_checksumed
                           , cctx->get_hmac_key()
                           , sizeof(cctx->get_hmac_key())

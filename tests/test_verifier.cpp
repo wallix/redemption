@@ -285,7 +285,8 @@ int libc_read(int fd, char *buf, unsigned int count)
 
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
-    const char * test_file_name = "./TestCheckFileHash";
+    const std::string test_mwrm_path = "./";
+    const std::string test_file_name = "TestCheckFileHash";
 
     /************************
     * Manage encryption key *
@@ -325,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char derivator[DERIVATOR_LENGTH];
     
     size_t len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name, len));
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name.c_str(), len));
     SslSha256 sha256;
     sha256.update(base, len);
     uint8_t tmp[SHA256_DIGEST_LENGTH];
@@ -339,9 +340,10 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     SHA256(tmp_derivation2, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated1);
     memcpy(trace_key, derivated1, HMAC_KEY_LENGTH);
 
-    int system_fd = open(test_file_name, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+    std::string full_test_file_name = test_mwrm_path + test_file_name;
+    int system_fd = open(full_test_file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0600);
     if (system_fd == -1){
-        printf("failed opening=%s\n", test_file_name);
+        printf("failed opening=%s\n", full_test_file_name.c_str());
         BOOST_CHECK(false);
     }
 
@@ -373,10 +375,10 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     BOOST_CHECK_EQUAL(0, res);
 
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, test_mwrm_path, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash, HASH_LEN / 2, 4096));
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, test_mwrm_path, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash + (HASH_LEN / 2), HASH_LEN / 2, 0));
 
-    unlink(test_file_name);
+    unlink(full_test_file_name.c_str());
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */
