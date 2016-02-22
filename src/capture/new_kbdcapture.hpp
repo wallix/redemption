@@ -367,6 +367,10 @@ public:
         return this->notify_flush_apis.size();
     }
 
+    bool contains_pattern() const {
+        return !this->pattern_kill.is_empty() || !this->pattern_notify.is_empty();
+    }
+
     bool input_kbd(const timeval& now, array_const_u8 const & input_data_32) override {
         bool can_be_sent_to_server = true;
         // TODO replace by this->kbd_buffer.get_data()

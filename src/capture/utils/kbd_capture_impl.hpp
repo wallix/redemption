@@ -50,21 +50,16 @@ public:
             this->kc.attach_flusher(this->sysog_notify);
         }
 
-        bool attach_kbd = false;
-
-        if (this->authentifier) {
-            if (ini.get<cfg::session_log::enable_session_log>()) {
-                this->kc.attach_flusher(this->session_log_notify);
-                api_register.capture_probe_list.push_back(this->session_log_notify);
-                attach_kbd = true;
-            }
+        if (this->authentifier && ini.get<cfg::session_log::enable_session_log>()) {
+            this->kc.attach_flusher(this->session_log_notify);
+            api_register.capture_probe_list.push_back(this->session_log_notify);
         }
 
         if (this->kc.count_flusher()) {
             api_register.capture_list.push_back(this->kc);
         }
 
-        if (attach_kbd || this->kc.count_flusher()) {
+        if (this->kc.count_flusher() || this->kc.contains_pattern()) {
             api_register.input_kbd_list.push_back(this->kc);
         }
 
