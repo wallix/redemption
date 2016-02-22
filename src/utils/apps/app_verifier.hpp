@@ -58,20 +58,14 @@ class ReaderLine2
 
     int read(int err)
     {
-        printf("ReaderLine2::read\n");
-
         ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
         
         if (ret < 0 && errno != EINTR) {
-            printf("read buf failed 1 %d\n", int(ret));
             return -ERR_TRANSPORT_READ_FAILED;
         }
         if (ret == 0) {
-            printf("read buf failed 2 %d\n", -err);
             return -err;
         }
-        printf("read buf %d\n", int(ret));
-        hexdump(this->buf, ret);
         this->eof = this->buf + ret;
         this->cur = this->buf;
         return 0;
@@ -83,25 +77,19 @@ public:
     , cur(buf)
     , reader(reader)
     {
-        printf("ReaderLine2::__init__\n");
     }
 
     ssize_t read_line(char * dest, size_t len, int err)
     {
-        printf("ReaderLine2::read_line\n");
         ssize_t total_read = 0;
         while (1) {
             char * pos = std::find(this->cur, this->eof, '\n');
-            printf("read_line eof found\n");
             if (len < size_t(pos - this->cur)) {
-                printf("read_line eof found %d %d\n", int(len), int(pos - this->cur));
                 total_read += len;
                 memcpy(dest, this->cur, len);
                 this->cur += len;
                 break;
             }
-            printf("read_line %d %d\n", int(len), int(pos - this->cur));
-            hexdump(dest, 10);
             total_read += pos - this->cur;
             memcpy(dest, this->cur, pos - this->cur);
             dest += pos - this->cur;
@@ -118,7 +106,6 @@ public:
 
     int next_line()
     {
-        printf("ReaderLine2::next_line\n");
         char * pos;
         while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
             if (int e = this->read(ERR_TRANSPORT_READ_FAILED)) {
@@ -134,7 +121,6 @@ public:
 template<class Reader>
 HashHeader read_hash_headers(ReaderLine2<Reader> & reader)
 {
-    printf("read_hash_headers\n");
     HashHeader header{1};
 
     char line[32];
@@ -159,7 +145,6 @@ HashHeader read_hash_headers(ReaderLine2<Reader> & reader)
 template<class Reader>
 int read_meta_file_v1(ReaderLine2<Reader> & reader, MetaLine2 & meta_line) 
 {
-    printf("read_meta_file_v1\n");
     char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
     ssize_t len = reader.read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
     if (len < 0) {
@@ -232,7 +217,6 @@ int read_meta_file_v1(ReaderLine2<Reader> & reader, MetaLine2 & meta_line)
 
 static inline char const * sread_filename2(char * p, char const * e, char const * pline)
 {
-    printf("sread_filename2\n");
     e -= 1;
     for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
         *p = *pline;
@@ -245,7 +229,6 @@ template<bool read_start_stop_time, class Reader>
 int read_meta_file_v2_impl2(
     ReaderLine2<Reader> & reader, bool has_checksum, MetaLine2 & meta_line
 ) {
-    printf("read_meta_file_v2_impl2\n");
     char line[
         PATH_MAX + 1 + 1 +
         (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -327,14 +310,12 @@ struct MetaHeader2 {
 
 template<class Reader>
 int read_meta_file_v2(ReaderLine2<Reader> & reader, MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
-    printf("read_meta_file_v2\n");
     return read_meta_file_v2_impl2<true>(reader, meta_header.has_checksum, meta_line);
 }
 
 
 template<class Reader>
 int read_hash_file_v2(ReaderLine2<Reader> & reader, HashHeader const & /*hash_header*/, bool has_hash, MetaLine2 & hash_line) {
-   printf("read_hash_file_v2\n");
    return read_meta_file_v2_impl2<false>(reader, has_hash, hash_line);
 }
 
@@ -343,27 +324,21 @@ int read_hash_file_v2(ReaderLine2<Reader> & reader, HashHeader const & /*hash_he
 template<class Reader>
 MetaHeader2 read_meta_headers(ReaderLine2<Reader> & reader)
 {
-    printf("read_meta_headers\n");
     MetaHeader2 header{1, false};
 
     char line[32];
     auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
     if (sz < 0) {
-        printf("read_meta_headers failed sz < 0 %s\n", strerror(errno));
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
-
-    printf("read_meta_headers sz = %d : %s\n", (int)sz, line);
 
     // v2
     if (line[0] == 'v') {
         if (reader.next_line()
          || (sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
         ) {
-            printf("read failed v?\n");
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
-        printf("read_meta_headers v2\n");
         header.version = 2;
         header.has_checksum = (line[0] == 'c');
     }
@@ -399,29 +374,22 @@ namespace transbuf {
 
         ssize_t cfb_decrypt_decrypt_read(void * data, size_t len)
         {
-            printf("ifile_buf::cfb_decrypt_decrypt_read\n");
-
             if (this->cfb_decrypt_state & CF_EOF) {
-                printf("ifile_buf::cfb_decrypt_decrypt_read::cf EOF\n");
                 return 0;
             }
 
             unsigned int requested_size = len;
 
             while (requested_size > 0) {
-                printf("ifile_buf::cfb_decrypt_decrypt_read requested_size=%d\n",int(requested_size));
                 // Check how much we have decoded
                 if (!this->cfb_decrypt_raw_size) {
                     uint8_t tmp_buf[4] = {};
                     ssize_t err = this->cfb_file_read(tmp_buf, 4);
                     if (err != 4) {
-                        printf("ifile_buf::cfb_decrypt_decrypt_read read failed reading size\n");
                         return err < 0 ? err : -1;
                     }
 
                     uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-                    printf("ifile_buf::cfb_decrypt_decrypt_read ciphered_buf_size=%d\n",int(ciphered_buf_size));
-
                     if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
                         this->cfb_decrypt_state |= CF_EOF;
                         this->cfb_decrypt_pos = 0;
@@ -431,15 +399,10 @@ namespace transbuf {
 
                     if (ciphered_buf_size > this->cfb_decrypt_MAX_CIPHERED_SIZE) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
-                        printf("ifile_buf::cfb_decrypt_decrypt_read read failed : larger than CPHERED_SIZE=%d\n", 
-                            int(this->cfb_decrypt_MAX_CIPHERED_SIZE));
                         return -1;
                     }
 
                     uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-
-                    printf("ifile_buf::cfb_decrypt_decrypt_read compressed_buf_size = ciphered_buf_size=%d\n",
-                        int(ciphered_buf_size+AES_BLOCK_SIZE));
 
                     //char ciphered_buf[ciphered_buf_size];
                     unsigned char ciphered_buf[65536];
@@ -1230,6 +1193,51 @@ static inline int check_encrypted_or_checksumed(
     return 0;
 }
 
+
+static inline int is_file_encrypted(const std::string & full_filename)
+{
+    uint8_t tmp_buf[4] ={};
+    int fd = open(full_filename.c_str(), O_RDONLY);
+    if (fd == -1){
+        std::cerr << "Input file missing.\n";
+        return -1;
+    }
+    struct fdbuf
+    {
+        int fd;
+        explicit fdbuf(int fd) noexcept : fd(fd){}
+        ~fdbuf() {::close(this->fd);}
+    } file(fd);
+
+    const size_t len = sizeof(tmp_buf);
+    size_t remaining_len = len;
+    while (remaining_len) {
+        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
+        if (ret < 0){
+            if (ret == 0){
+                std::cerr << "Input file truncated\n";
+                return -1;
+            }
+            if (errno == EINTR){
+                continue;
+            }
+            // Error should still be there next time we try to read
+            std::cerr << "Input file error\n";
+            return -1;
+        }
+        // We must exit loop or we will enter infinite loop
+        remaining_len -= ret;
+    }
+
+    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+    if (magic == WABCRYPTOFILE_MAGIC) {
+        std::cout << "Input file is encrypted.\n";
+        return 1;
+    }
+    return 0;
+}
+
+
 static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char * copyright_notice, CryptoContext & cctx)
 {
     printf("app_verifier(\n");
@@ -1312,45 +1320,17 @@ static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char
         LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
     }
 
-    std::string const full_mwrm_filename = mwrm_path + input_filename;
-    int fd = open(full_mwrm_filename.c_str(), O_RDONLY);
-    if (fd == -1){
-        std::cerr << "Input file missing.\n";
-        return 1;
-    }
-    struct fdbuf
-    {
-        int fd;
-        explicit fdbuf(int fd) noexcept : fd(fd){}
-        ~fdbuf() {::close(this->fd);}
-    } file(fd);
-
-    uint8_t tmp_buf[4] ={};
-    const size_t len = sizeof(tmp_buf);
-    size_t remaining_len = len;
-    while (remaining_len) {
-        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
-        if (ret < 0){
-            if (ret == 0){
-                std::cerr << "Input file truncated\n";
-                return 1;
-            }
-            if (errno == EINTR){
-                continue;
-            }
-            // Error should still be there next time we try to read
-            std::cerr << "Input file error\n";
-            return 1;
-        }
-        // We must exit loop or we will enter infinite loop
-        remaining_len -= ret;
-    }
-
     bool infile_is_encrypted = false;
-    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-    if (magic == WABCRYPTOFILE_MAGIC) {
+    std::string const full_mwrm_filename = mwrm_path + input_filename;
+
+    switch (is_file_encrypted(full_mwrm_filename)){
+    case -1: // error
+        return 1;
+    case 1:
         infile_is_encrypted = true;
-        std::cout << "Input file is encrypted.\n";
+        break;
+    case 0:
+        break;
     }
 
     return check_encrypted_or_checksumed(
