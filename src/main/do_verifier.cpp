@@ -16,11 +16,10 @@ extern "C" {
     __attribute__((__visibility__("default"))) 
     int vermemcpy(char * dest, char * source, int len)
     {
-        printf("calling memcopy\n");
-        hexdump(dest, 32);
-        hexdump(source, 32);
+//        hexdump(dest, 32);
+//        hexdump(source, 32);
         ::memcpy(dest, source, static_cast<size_t>(len));
-        hexdump(dest, 32);
+//        hexdump(dest, 32);
         return 0;
     }
 
@@ -50,8 +49,10 @@ extern "C" {
             if (res == 0){
                 printf("verify ok");
             }
+            else {
+                printf("verify failed\n");
+            }
         } catch (const Error & e) {
-            
             printf("verify failed: with id=%d\n", e.id);
         }
         return res;
