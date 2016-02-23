@@ -22,7 +22,8 @@
 #ifndef FRONT_QT_HPP
 #define FRONT_QT_HPP
 
-#define qt5
+//#define QT4
+#define QT5
 
 #include <stdio.h>
 #include <openssl/ssl.h>
@@ -71,11 +72,11 @@
 #include "client_info.hpp"
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
-#ifdef qt5
+#ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QImage>
 #endif
-#ifdef qt4
-#include </QtGui/QImage>
+#ifdef QT4
+#include <QtGui/QImage>
 #endif
 
 
@@ -97,10 +98,26 @@ private:
 
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            std::cout << "operator()  call " << (int)flags  << std::endl;
+            //std::cout << "operator()  server " << (int)flags  << std::endl;
             InStream chunk(chunk_data, chunk_data_length);
             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, chunk_data_length, flags);
         }
+    };
+    
+    class ClipboardClientChannelDataSender : public VirtualChannelDataSender
+    {
+    public:
+        FrontAPI            * _front;
+        CHANNELS::ChannelDef  _channel;
+
+        ClipboardClientChannelDataSender() = default;
+
+
+        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
+            //std::cout << "operator()  client " << (int)flags  << std::endl;
+            
+            this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
+        } 
     };
     
     
@@ -118,6 +135,7 @@ public:
     QImage::Format    _imageFormatRGB;  
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
+    ClipboardClientChannelDataSender _to_client_sender;
     Qt_ScanCode_KeyMap   _qtRDPKeymap;  
     int                  _fps;
     
@@ -132,7 +150,9 @@ public:
     , _callback(nullptr)
     , _qtRDPKeymap()
     , _fps(30)
-    {}
+    {
+        this->_to_client_sender._front = this;
+    }
     
     
     virtual void connexionPressed() = 0;
@@ -156,10 +176,7 @@ public:
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
-    virtual void send_Cliboard(uint32_t total_length,
-                       uint32_t flags, 
-                       const uint8_t* chunk_data,
-                       uint32_t chunk_data_length) = 0;
+    virtual void send_FormatListPDU() = 0;
 };
  
     
@@ -168,8 +185,7 @@ class Front_Qt : public Front_Qt_API
 {    
    
 public:
-    CHANNELS::ChannelDefArray   cl;
-    
+
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
@@ -187,7 +203,8 @@ public:
     bool                 _ctrl_alt_delete; // currently not used and always false
     StaticOutStream<256> _decoded_data;    // currently not initialised
     uint8_t              _keyboardMods;    
-
+    CHANNELS::ChannelDefArray   _cl;
+    uint32_t             _requestedFormatId = 0;
     
     
     enum : int {
@@ -198,6 +215,21 @@ public:
       , PORT_GOTTEN   =  8
     };
     
+    enum : long {
+        CHANNEL_OPTION_INITIALIZED   = 0x80000000,
+        CHANNEL_OPTION_ENCRYPT_RDP   = 0x40000000,
+        CHANNEL_OPTION_ENCRYPT_SC    = 0x20000000,
+        CHANNEL_OPTION_ENCRYPT_CS    = 0x10000000,
+        CHANNEL_OPTION_PRI_HIGH      = 0x08000000,
+        CHANNEL_OPTION_PRI_MED       = 0x04000000,
+        CHANNEL_OPTION_PRI_LOW       = 0x02000000,
+        CHANNEL_OPTION_COMPRESS_RDP  = 0x00800000,
+        CHANNEL_OPTION_COMPRESS      = 0x00400000,
+        CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000,
+        REMOTE_CONTROL_PERSISTENT    = 0x00100000
+    };
+            
+
     bool setClientInfo() override;
     
     void writeClientInfo() override;
@@ -219,6 +251,16 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) override;
 
     virtual int server_resize(int width, int height, int bpp) override;
+    
+    void process_server_monitor_ready_pdu();
+    
+    void send_FormatListResponsePDU();
+    
+    void send_FormatDataRequestPDU();
+    
+    void send_FormatDataResponsePDU();
+    
+    void send_FormatListPDU() override;
     
     
     
@@ -392,42 +434,8 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
     
-    void call_Draw() override {
-        if (this->_callback != nullptr) {
-            try {
-                this->_callback->draw_event(time(nullptr));
-            } catch (const Error & e) {
-                this->dropScreen();
-                const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
-                std::cout << errorMsg << std::endl;
-                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-                
-                this->disconnect(labelErrorMsg);
-            }
-        }
-    }
+    void call_Draw() override;
     
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
-    //--------------------------------
-    //   CLIPBOARD EVENTS FUNCTIONS
-    //--------------------------------
-    
-    void send_Cliboard(uint32_t total_length,
-                       uint32_t flags, 
-                       const uint8_t* chunk_data,
-                       uint32_t chunk_data_length) override {
-        
-                        //RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-            //    this->send_to_front_channel_and_set_buf_size(
-            //        this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
-            //        RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
-            //    );
-
-        this->_clipboard_channel.process_client_message(total_length, flags, chunk_data, chunk_data_length);
-    }
     
 };
 

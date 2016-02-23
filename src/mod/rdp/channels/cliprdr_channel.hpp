@@ -28,6 +28,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/stream.hpp"
 
+#include <iostream>
 #include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
@@ -1310,7 +1311,7 @@ public:
                         "ClipboardVirtualChannel::process_server_message: "
                             "Clipboard Capabilities PDU");
                 }
-
+    
                 send_message_to_client =
                     this->process_server_clipboard_capabilities_pdu(
                         total_length, flags, chunk);
@@ -1334,7 +1335,7 @@ public:
                         "ClipboardVirtualChannel::process_server_message: "
                             "File Contents Response PDU");
                 }
-
+                
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
                 }
@@ -1387,7 +1388,7 @@ public:
                         "ClipboardVirtualChannel::process_server_message: "
                             "Format List Response PDU");
                 }
-
+        
                 if (this->clipboard_initialize_notifier) {
                     if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
                         this->clipboard_initialize_notifier = nullptr;
@@ -1406,7 +1407,7 @@ public:
                         "ClipboardVirtualChannel::process_server_message: "
                             "Monitor Ready PDU");
                 }
-
+     
                 send_message_to_client =
                     this->process_server_monitor_ready_pdu(
                         total_length, flags, chunk);

@@ -33,20 +33,19 @@
 #include "listen.hpp"
 #include "parse_ip_conntrack.hpp"
 */
-
 #include "../src/front/front_widget_Qt.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
-#ifdef qt5
+#ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRgb>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRegion>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QBitmap>
 #endif
-#ifdef qt4
-#include </QtGui/QRgb>
-#include </QtGui/QRegion>
-#include </QtGui/QBitmap>
+#ifdef QT4
+#include <QtGui/QRgb>
+#include <QtGui/QRegion>
+#include <QtGui/QBitmap>
 #endif
 
 #define USER_CONF_PATH "userConfig.config"
@@ -61,7 +60,7 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
     , _connector(nullptr)  
     , _timer(0)    
     , _connected(false)
-    , _clipboard_channel(nullptr, &(this->_to_server_sender) ,*this , [](){
+    , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
         ClipboardVirtualChannel::Params params;
 
         params.authentifier = nullptr;
@@ -127,9 +126,13 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
             commandIsValid += PORT_GOTTEN;
         }
     }
-
-    this->cl.push_back({channel_names::cliprdr, 0, 0});
-    
+    CHANNELS::ChannelDef * channel = new CHANNELS::ChannelDef(channel_names::cliprdr, 
+                                                              CHANNEL_OPTION_INITIALIZED | 
+                                                              CHANNEL_OPTION_COMPRESS | 
+                                                              CHANNEL_OPTION_SHOW_PROTOCOL, 
+                                                              1601);
+    this->_to_client_sender._channel = *channel;
+    this->_cl.push_back(*channel);
     
     if (this->mod_bpp == this->_info.bpp) {
         this->mod_palette = BGRPalette::classic_332();
@@ -282,6 +285,7 @@ void Front_Qt::connect() {
         this->_screen = new Screen_Qt(this);
         this->_screen->show();
         this->_connector->listen();
+        //this->_clipboard_channel.process_server_clipboard_capabilities_pdu();
     } 
     
     this->_form->setCursor(Qt::ArrowCursor);;
@@ -884,21 +888,16 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0x00:
             this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
             break;
-            
         case 0x55: this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
             break;
-            
         case 0x99:  // nothing to change
             break;
-            
         case 0xCC:  
             this->draw_MemBlt(drect, bitmap, false, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
             break;
-            
         case 0xEE: 
             this->draw_MemBlt(drect, bitmap, false, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
             break;
-            
         case 0xFF:
             this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
@@ -984,8 +983,24 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
-    std::cout << "RDPDestBlt" << std::endl;
+    
+    const Rect drect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
+    
+    switch (cmd.rop) {
+        case 0x00: // blackness
+            this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+            break;
+        case 0x55: // inversion
+            this->draw_RDPScrBlt(drect.x, drect.y, drect, true);
+            break;
+        case 0xAA: // change nothing
+            break;
+        case 0xFF: // whiteness
+            this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+            break;
+        default: std::cout << "RDPDestBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
+            break;
+    }
 }
 
 void Front_Qt::draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
@@ -1220,7 +1235,7 @@ void Front_Qt::flush() {
     }
 }
 
-const CHANNELS::ChannelDefArray & Front_Qt::get_channel_list(void) const { return cl; }
+const CHANNELS::ChannelDefArray & Front_Qt::get_channel_list(void) const { return this->_cl; }
 
 void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
     if (this->verbose > 10) {
@@ -1229,17 +1244,223 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
         LOG(LOG_INFO, "========================================\n");
     }
 
-    const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
+    const CHANNELS::ChannelDef * mod_channel = this->_cl.get_by_name(channel.name);
     if (!mod_channel) {
         return;
     }
     
     if (!strcmp(channel.name, channel_names::cliprdr)) {
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        std::cout << channel.name << " send_to_channel" << std::endl;
-        this->_clipboard_channel.process_server_message(length, flags, data, chunk_size, out_asynchronous_task);
+
+        uint16_t client_message_type;
+        
+        InStream chunk(data, chunk_size);
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* msgType(2) */)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_client_message: "
+                        "Truncated msgType, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        
+            client_message_type = chunk.in_uint16_le();
+            
+            switch (client_message_type) {
+                case RDPECLIP::CB_CLIP_CAPS:
+                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_client_message: "
+                                "Clipboard Capabilities PDU");
+                    }
+                    std::cout << "server >> Clipboard Capabilities PDU" << std::endl;
+                    
+                break;
+                case RDPECLIP::CB_MONITOR_READY:
+                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "Monitor Ready PDU");
+                    }
+                    std::cout << "server >> Monitor Ready PDU" << std::endl;
+                    
+                    this->process_server_monitor_ready_pdu();
+                    this->send_FormatListPDU();
+                    
+                break;
+                case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
+                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "Format List Response PDU");
+                    }
+                    std::cout << "server >> Format List Response PDU" << std::endl;
+
+                break;
+                case RDPECLIP::CB_FORMAT_LIST:
+                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "Format List PDU");
+                    }
+                    std::cout << "server >> Format List PDU" << std::endl;
+                    
+                    this->_requestedFormatId =  RDPECLIP::CF_UNICODETEXT; //RDPECLIP::CF_TEXT;
+                    this->send_FormatListResponsePDU();
+                    this->send_FormatDataRequestPDU();
+                    
+                break;
+                case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
+                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "Format Data Response PDU");
+                    }
+                    std::cout << "server >> Format Data Response PDU" << std::endl;
+                    
+                    {
+                    InStream chunk(data, chunk_size);
+                    if (chunk.in_uint8() == RDPECLIP::CB_FORMAT_DATA_RESPONSE) {
+                        chunk.in_skip_bytes(6 /* msgFlags(2) */);
+                        const size_t length_of_data_to_dump = std::min((int)chunk.in_remain(), 512);
+                        uint8_t utf8_string[512];
+                        const size_t length_of_utf8_string = ::UTF16toUTF8(
+                            chunk.get_current()+1, length_of_data_to_dump,
+                            utf8_string, length_of_data_to_dump);
+                        std::string str(reinterpret_cast<const char*>(utf8_string), length_of_utf8_string);
+                        
+                        this->_connector->_local_clipboard_stream = false;
+                        this->_connector->setClipboard(str);
+                        this->_connector->_local_clipboard_stream = true;
+                    }
+                    }
+                
+                break;
+                case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "Format Data Request PDU");
+                    }
+                    std::cout << "server >> Format Data Request PDU" << std::endl;
+                    
+                    this->send_FormatDataResponsePDU();
+                    
+                break;
+                
+                default:  std::cout << "server >> something " << (int)client_message_type << std::endl;
+                break;
+            }
+        }
     }
 }  
+
+void Front_Qt::send_FormatDataResponsePDU() {
+    RDPECLIP::FormatDataResponsePDU pdu(true);
+    StaticOutStream<256> out_stream;
+    
+    pdu.emit(out_stream, this->_connector->_chunk, this->_connector->_length);
+
+    const uint32_t total_length      = out_stream.get_offset();
+    const uint32_t flags             =
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+    const uint8_t* chunk_data        = out_stream.get_data();
+    const uint32_t chunk_data_length = total_length;
+
+    this->_clipboard_channel.send_message_to_server(
+        total_length,
+        flags,
+        chunk_data,
+        chunk_data_length);
+    std::cout << "client >> Format Data Response PDU" << std::endl;
+}
+
+void Front_Qt::send_FormatListResponsePDU() {
+    RDPECLIP::FormatListResponsePDU pdu(true);
+    StaticOutStream<256> out_stream;
+    
+    pdu.emit(out_stream);
+
+    const uint32_t total_length      = out_stream.get_offset();
+    const uint32_t flags             =
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+    const uint8_t* chunk_data        = out_stream.get_data();
+    const uint32_t chunk_data_length = total_length;
+
+    this->_clipboard_channel.send_message_to_server(
+        total_length,
+        flags,
+        chunk_data,
+        chunk_data_length);
+    std::cout << "client >> Format List Response PDU" << std::endl;
+}
+
+void Front_Qt::send_FormatDataRequestPDU() {
+    RDPECLIP::FormatDataRequestPDU pdu(this->_requestedFormatId);
+    StaticOutStream<256> out_stream;
+    
+    pdu.emit(out_stream);
+
+    const uint32_t total_length      = out_stream.get_offset();
+    const uint32_t flags             =
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+    const uint8_t* chunk_data        = out_stream.get_data();
+    const uint32_t chunk_data_length = total_length;
+
+    this->_clipboard_channel.send_message_to_server(
+        total_length,
+        flags,
+        chunk_data,
+        chunk_data_length);
+    std::cout << "client >> Format Data Request PDU" << std::endl;
+}
+
+
+void Front_Qt::process_server_monitor_ready_pdu(){
+    RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
+    RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_1, 0); //RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+
+    StaticOutStream<1024> out_stream;
+
+    clipboard_caps_pdu.emit(out_stream);
+    general_cap_set.emit(out_stream);
+
+    const uint32_t total_length      = out_stream.get_offset();
+    const uint32_t flags             = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+    const uint8_t* chunk_data        = out_stream.get_data();
+    const uint32_t chunk_data_length = total_length;
+
+    this->_clipboard_channel.send_message_to_server(
+        total_length,
+        flags,
+        chunk_data,
+        chunk_data_length);
+    
+     std::cout << "client >> Clipboard Capabilities PDU" << std::endl;
+}
+
+void Front_Qt::send_FormatListPDU() {
+    RDPECLIP::FormatListPDU format_list_pdu;
+    StaticOutStream<1024> out_stream;
+    
+    const bool unicodetext = true;
+
+    format_list_pdu.emit_ex(out_stream, unicodetext);
+
+    const uint32_t total_length      = out_stream.get_offset();
+    const uint32_t flags             = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+    const uint8_t* chunk_data        = out_stream.get_data();
+    const uint32_t chunk_data_length = total_length;
+
+    this->_clipboard_channel.send_message_to_server(
+        total_length,
+        flags,
+        chunk_data,
+        chunk_data_length);
+    
+    std::cout << "client >> Format List PDU." << std::endl;
+}
 
 void Front_Qt::send_global_palette() {
     if (this->verbose > 10) {
@@ -1275,7 +1496,29 @@ void Front_Qt::set_mod_palette(const BGRPalette & palette) {
 
 
 
-/*
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+//--------------------------------
+//    SOCKET EVENTS FUNCTIONS
+//--------------------------------
+
+void Front_Qt::call_Draw() {
+    if (this->_callback != nullptr) {
+        try {
+            this->_callback->draw_event(time(nullptr));
+        } catch (const Error & e) {
+            this->dropScreen();
+            const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
+            std::cout << errorMsg << std::endl;
+            std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+            
+            this->disconnect(labelErrorMsg);
+        }
+    }
+}
+
+
+
 ///////////////////////////////
 // APPLICATION 
 int main(int argc, char** argv){
@@ -1291,5 +1534,5 @@ int main(int argc, char** argv){
     
     app.exec();
   
-}*/
+}
 

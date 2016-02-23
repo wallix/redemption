@@ -22,12 +22,12 @@
 #ifndef FORM_QT_HPP
 #define FORM_QT_HPP
 
+//#define LOGPRINT
 
 #include "transport/socket_transport.hpp"
 #include "rdp/rdp.hpp"
 #include "../src/front/front_Qt.hpp"
-
-#ifdef qt5
+#ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget>
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QLabel>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QPainter>
@@ -51,31 +51,33 @@
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QList>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QStringList>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer>
+#include </usr/include/x86_64-linux-gnu/qt5/QtCore/QMimeData>
 #endif
-#ifdef qt4
-#include </QtGui/QWidget>
-#include </QtGui/QLabel>
-#include </QtGui/QPainter>
-#include </QtGui/QColor>
-#include </QtGui/QDesktopWidget>
-#include </QtGui/QApplication>
-#include </QtGui/QMouseEvent>
-#include </QtGui/QWheelEvent>
-#include </QtCore/QSocketNotifier>
-#include </QtGui/QLineEdit>
-#include </QtGuiQFormLayout>
-#include </QtGui/QDialog>
-#include </QtGui/QPushButton>
-#include </QtGui/QClipboard>
-#include </QtGui/QTabWidget>
-#include </QtGui/QGridLayout>
-#include </QtGui/QComboBox>
-#include </QtGui/QCheckBox>
-#include </QtGui/QScrollArea>
-#include </QtGui/QTableWidget>
-#include </QtCore/QList>
-#include </QtCore/QStringList>
-#include </QtCore/QTimer>
+#ifdef QT4
+#include <QtGui/QWidget>
+#include <QtGui/QLabel>
+#include <QtGui/QPainter>
+#include <QtGui/QColor>
+#include <QtGui/QDesktopWidget>
+#include <QtGui/QApplication>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QWheelEvent>
+#include <QtCore/QSocketNotifier>
+#include <QtGui/QLineEdit>
+#include <QtGui/QFormLayout>
+#include <QtGui/QDialog>
+#include <QtGui/QPushButton>
+#include <QtGui/QClipboard>
+#include <QtGui/QTabWidget>
+#include <QtGui/QGridLayout>
+#include <QtGui/QComboBox>
+#include <QtGui/QCheckBox>
+#include <QtGui/QScrollArea>
+#include <QtGui/QTableWidget>
+#include <QtCore/QList>
+#include <QtCore/QStringList>
+#include <QtCore/QTimer>
+#include <QtCore/QMimeData>
 #endif
 
 #define KEY_SETTING_PATH "keySetting.config"
@@ -507,7 +509,7 @@ public:
         , _PWDLabel(     QString("Password :  "), this)   
         , _portLabel(    QString("Port :      "), this) 
         , _errorLabel(   QString(""            ), this)
-        , _buttonConnexion("Connexion", this)
+        , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
     {
         this->setWindowTitle("Client RDP");
@@ -638,7 +640,7 @@ public:
     , _front(front)
     , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
     , _buttonRefresh("Refresh", this)
-    , _buttonDisconnexion("Disconnexion", this)
+    , _buttonDisconnexion("Disconnection", this)
     , _penColor(Qt::black)
     , _cache(this->_front->_info.width, this->_front->_info.height)
     //, _scene(0, 0, this->_front->_info.width, this->_front->_info.height, this)
@@ -802,6 +804,9 @@ public:
     SocketTransport * _sck;
     int               _client_sck;
     QClipboard      * _clipboard;
+    bool              _local_clipboard_stream;
+    size_t            _length;
+    uint8_t           _chunk[2048];
      
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -812,9 +817,10 @@ public:
     , _sck(nullptr)
     , _client_sck(0)
     , _clipboard(nullptr)
+    , _local_clipboard_stream(true)
     {
         this->_clipboard = QApplication::clipboard();
-        this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(send_clipboard()));
+        this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
     
     ~Connector_Qt() {
@@ -911,7 +917,6 @@ public:
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
-
         try {
             this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             this->_front->_to_server_sender._callback = this->_callback;
@@ -927,6 +932,11 @@ public:
             this->_front->disconnect(labelErrorMsg);
         }
     }
+    
+    void setClipboard(const std::string & str) {
+        this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+    }
+    
 
     
 public Q_SLOTS:
@@ -934,23 +944,25 @@ public Q_SLOTS:
         this->_front->call_Draw();
     }
     
-    void send_clipboard() {
-        ;
-        if (this->_callback != nullptr) {
-            std::cout << "modifying clipboard" << std::endl;
-            std::string str(this->_clipboard->text(QClipboard::Clipboard).toStdString());
-            int length(str.length());
-            const char * dataStr(str.c_str());
-            const uint8_t * data = reinterpret_cast<const uint8_t *>(dataStr);
-            this->_front->send_Cliboard(length, 0, data, length);
+    void mem_clipboard() {
+        if (this->_callback != nullptr && this->_local_clipboard_stream) {
+            const QMimeData * mimeData = this->_clipboard->mimeData();
+            
+            if (!mimeData->hasUrls()) {
+                if (mimeData->hasText()){
+                    std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
+                    size_t size((str.length())*2);
+                    if (size > 2048) {
+                        size = 2048;
+                    }
+
+                    this->_length = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size); 
+                    this->_front->send_FormatListPDU();
+                }
+            }
         }
-        
-        /*const char * const front_channel_name
-                    , InStream &         chunk
-                    , size_t             length
-                    , uint32_t           flags
-                    */
     }
+    
 };
 
 
