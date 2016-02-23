@@ -195,7 +195,7 @@ public:
     {
         uint8_t utf8_char[5];
         size_t const char_len = UTF32toUTF8(uchar, utf8_char, 4u);
-        this->test_uchar(utf8_char, char_len, report);
+        return this->test_uchar(utf8_char, char_len, report);
     }
 
     bool is_empty() const {
