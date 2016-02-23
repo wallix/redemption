@@ -817,8 +817,13 @@ class Sesman():
                     else:   # localfile_hashed
                         data_to_send[u"trace_type"] = u'1'
 
+                    derivator = os.path.basename(self.full_path) + u".mwrm"
+                    Logger().info(u"derivator='%s'" % derivator)
+                    encryption_key = self.engine.get_trace_encryption_key(derivator, False)
+                    data_to_send[u"encryption_key"] = "".join("{:02x}".format(ord(c)) for c in encryption_key)
+
                     sign_key = self.engine.get_trace_sign_key()
-                    #data_to_send[u"crypto_key"] = "".join("{:02x}".format(ord(c)) for c in sign_key)
+                    data_to_send[u"sign_key"] = "".join("{:02x}".format(ord(c)) for c in sign_key)
 
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
                     data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
@@ -1205,7 +1210,7 @@ class Sesman():
                         session_probe_section = conn_opts.get('session_probe')
                         if session_probe_section is not None:
                             connectionpolicy_kv[u'session_probe']                         = session_probe_section.get('enable_session_probe')
-                            connectionpolicy_kv[u'session_probe_use_clipboard_based_launcher']                = session_probe_section.get('use_clipboard_based_launcher')
+                            connectionpolicy_kv[u'session_probe_use_smart_launcher']      = session_probe_section.get('use_smart_launcher')
                             connectionpolicy_kv[u'enable_session_probe_launch_mask']      = session_probe_section.get('enable_launch_mask')
                             connectionpolicy_kv[u'session_probe_on_launch_failure']       = session_probe_section.get('on_launch_failure')
                             connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')

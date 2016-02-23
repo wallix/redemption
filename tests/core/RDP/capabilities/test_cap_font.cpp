@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
 
     BOOST_CHECK_EQUAL(font_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_FONT));
     BOOST_CHECK_EQUAL(font_caps2.len, static_cast<uint16_t>(CAPLEN_FONT));
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_FONT, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_FONT, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_FONT), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_FONT), stream.in_uint16_le());
     font_caps2.recv(stream, CAPLEN_FONT);
 
     BOOST_CHECK_EQUAL(font_caps2.fontSupportFlags, static_cast<uint16_t>(32769));

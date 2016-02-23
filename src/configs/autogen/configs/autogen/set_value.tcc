@@ -60,10 +60,10 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
     }
     else if (0 == strcmp(context, "crypto")) {
         if (0) {}
-        else if (0 == strcmp(key, "key0")) {
+        else if (0 == strcmp(key, "encryption_key")) {
             ::configs::parse(static_cast<cfg::crypto::key0&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "key1")) {
+        else if (0 == strcmp(key, "sign_key")) {
             ::configs::parse(static_cast<cfg::crypto::key1&>(this->variables).value, value);
         }
 
@@ -310,7 +310,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "enable_session_probe")) {
             ::configs::parse(static_cast<cfg::mod_rdp::enable_session_probe&>(this->variables).value, value);
         }
-        else if (0 == strcmp(key, "session_probe_use_clipboard_based_launcher")) {
+        else if (0 == strcmp(key, "session_probe_use_smart_launcher")) {
             ::configs::parse(static_cast<cfg::mod_rdp::session_probe_use_clipboard_based_launcher&>(this->variables).value, value);
         }
         else if (0 == strcmp(key, "enable_session_probe_launch_mask")) {

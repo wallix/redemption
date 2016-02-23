@@ -52,8 +52,8 @@ void check_datas(size_t lg_data, uint8_t * data,
             "Expected " << lg_result << "\n"
             "Got " << lg_data << "\n"
             "Data differs at index " << i << "\n"
-            "Expected " << (int)expected_result[i] << "\n"
-            "Got " << (int)data[i] << "\n");
+            "Expected " << int(expected_result[i]) << "\n"
+            "Got " << int(data[i]) << "\n");
         return;
     }
 
@@ -72,8 +72,8 @@ void check_datas(size_t lg_data, uint8_t * data,
         }
         BOOST_CHECK_MESSAGE(expected_result[i] == data[i],
             "test "         << message << " :"
-            << " expected " << (int)expected_result[i]
-            << " got "      << (int)data[i]
+            << " expected " << int(expected_result[i])
+            << " got "      << int(data[i])
             << " at index " << i
             << "\n");
     }

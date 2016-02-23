@@ -1,18 +1,18 @@
 #!/bin/bash
 
 bt () {
-  esc="$(echo -e "\e")" 
+  esc="$(echo -e "\e")"
   sed -E '/ at /{
     s# at (.*/)?([^:]+):([0-9]+)$# at '$esc'[0;33;48m\1'$esc'[1;33;48m\2'$esc'[m:'$esc'[0;33;48;2;44;44;44m\3'$esc'[m#
   }'
 }
 
 hbt () {
-  esc="$(echo -e "\e")" 
+  esc="$(echo -e "\e")"
   source-highlight -f esc -s cpp | \
   sed -E '/ at | '$esc'\[[0-9]+mat'$esc'\[m /{
-    s#'$esc'\[31m(..)?/'$esc'\[m#/#g;
-    s#'$esc'\[31m\.'$esc'\[m#.#g;
+    s#'$esc'\[[0-9]+m(..)?/'$esc'\[m#/#g;
+    s#'$esc'\[[0-9]+m\.'$esc'\[m#.#g;
     s# (at|'$esc'\[[0-9]+mat'$esc'\[m) (.*/)?([^:]+):'$esc'\[m'$esc'\[[0-9]+m([0-9]+)'$esc'\[m$# at '$esc'[0;33;48m\2'$esc'[1;33;48m\3'$esc'[m:'$esc'[0;33;48;2;44;44;44m\4'$esc'[m#
   }'
 }
@@ -22,12 +22,12 @@ qbt () {
 }
 
 usage () {
-  echo "$0 [-hqsef] [--help] command [gdb-args...]"
-  echo ' -h,--help    show this help message and exit'
-  echo ' -q           quick backtrace'
-  echo ' -s           use source-highlight'
-  echo ' -e           catch exception'
-  echo ' -f           used as filter (... | '"$0" -f')'
+  echo "$0 [-hqsef] [--help] command [-- [gdb-args...]]"
+  echo ' -h,--help    Show this help message and exit.'
+  echo ' -q           Quick backtrace.'
+  echo ' -s           Use source-highlight.'
+  echo ' -e           Catch exceptions.'
+  echo ' -f           Used as filter (... | '"$0" -f').'
 }
 
 filter=bt
@@ -37,7 +37,6 @@ catchexcept=''
 TEMP=`getopt -o hqsfe --long help -n "$0" -- "$@"`
 [ $? -ne 0 ] && exit 1
 eval set -- "$TEMP"
-echo "$@"
 while true ; do
   case "$1" in
     -h|--help) usage ; exit 0 ;;
@@ -57,9 +56,9 @@ fi
 
 [ -z "$1" ] && usage >&2 && exit 1
 
-prog="$1"
+command="$1"
 shift
 
-gdb -q "$@" "$prog" <<< "$catchexcept
+gdb -q "$@" "$command" <<< "$catchexcept
 r
 bt" 2>&1| $filter

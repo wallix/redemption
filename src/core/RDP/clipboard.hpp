@@ -1148,8 +1148,8 @@ public:
     const char * fileName() const { return this->file_name.c_str(); }
 
     uint64_t file_size() const {
-        return ((uint64_t)this->fileSizeLow) |
-            (((uint64_t)this->fileSizeHigh) << 32);
+        return (static_cast<uint64_t>(this->fileSizeLow)) |
+            (static_cast<uint64_t>(this->fileSizeHigh) << 32);
     }
 
     static size_t size() {

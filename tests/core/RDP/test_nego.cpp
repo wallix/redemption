@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
 
         ;
     TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
-    logtrans.set_public_key((const uint8_t*)"1245789652325415", 16);
+    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";
     char pass[] = "Pénélope\x00";

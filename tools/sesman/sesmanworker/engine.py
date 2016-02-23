@@ -200,7 +200,7 @@ class Engine(object):
         return u'localfile_hashed'
 
     def get_trace_encryption_key(self, path, old_scheme=False):
-        return self.wabengine.get_trace_sign_key(path, old_scheme)
+        return self.wabengine.get_trace_encryption_key(path, old_scheme)
 
     def get_trace_sign_key(self):
         return self.wabengine.get_trace_sign_key()
@@ -548,7 +548,7 @@ class Engine(object):
                     subprotocols = right.subprotocols
                     # subprotocols = right.resource.device.service.subprotocols
                 if target_context is not None:
-                    if host is None:
+                    if target_context.host and host is None:
                         continue
                     if (target_context.host and
                         not is_device_in_subnet(target_context.host, host) and

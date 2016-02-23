@@ -64,7 +64,8 @@ enum {
 #define CRYPTO_BUFFER_SIZE ((4096 * 4))
 
 extern "C" {
-    typedef int get_crypto_key_from_cb_prototype(uint8_t * buffer);
+    typedef int get_hmac_key_prototype(char * buffer);
+    typedef int get_trace_key_prototype(char * base, int len, char * buffer);
 }
 
 
@@ -73,14 +74,15 @@ extern "C" {
 #define CRYPTO_KEY_LENGTH 32
 #define HMAC_KEY_LENGTH   CRYPTO_KEY_LENGTH
 
-class CryptoContext {
-    private:
-    bool crypto_key_loaded;
-    unsigned char crypto_key[CRYPTO_KEY_LENGTH];
 
+class CryptoContext {
+    bool master_key_loaded;
+    bool hmac_key_loaded;
+    unsigned char master_key[CRYPTO_KEY_LENGTH];
 
     public:
-    get_crypto_key_from_cb_prototype * get_crypto_key_from_cb;
+    get_hmac_key_prototype * get_hmac_key_cb;
+    get_trace_key_prototype * get_trace_key_cb;
 
     Random & gen;
     const Inifile & ini;
@@ -91,24 +93,122 @@ class CryptoContext {
 
     auto get_hmac_key() -> unsigned char (&)[HMAC_KEY_LENGTH]
     {
+        if (this->hmac_key_loaded){
+            // OK, ready
+        }
+        else if (this->get_hmac_key_cb != nullptr){
+            // if we have a callback ask key
+            this->get_hmac_key_cb(reinterpret_cast<char*>(this->hmac_key));
+            this->hmac_key_loaded = true;
+        }
+        else {
+            switch (key_source){
+            case 0:
+                if (!this->master_key_loaded){
+                    this->get_master_key();
+                }
+                if (this->master_key_loaded){
+                    // compute hmac
+                    const unsigned char HASH_DERIVATOR[] = {
+                         0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
+                    };
+                    uint8_t tmp[SHA256_DIGEST_LENGTH];
+                    {
+                        SslSha256 sha256;
+                        sha256.update(HASH_DERIVATOR, DERIVATOR_LENGTH);
+                        sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
+                        sha256.final(tmp, SHA256_DIGEST_LENGTH);
+                    }
+                    memcpy(this->hmac_key, tmp, HMAC_KEY_LENGTH);
+                    this->hmac_key_loaded = true;
+                }
+            break;
+            case 1:
+                memcpy(this->hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->hmac_key));
+                this->hmac_key_loaded = true;
+            break;
+            case 2:
+                if (!this->master_key_loaded){
+                    this->get_master_key();
+                }
+                if (this->master_key_loaded){
+                    const unsigned char HASH_DERIVATOR[] = {
+                         0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
+                    };
+                    uint8_t tmp[SHA256_DIGEST_LENGTH];
+                    {
+                        SslSha256 sha256;
+                        sha256.update(HASH_DERIVATOR, DERIVATOR_LENGTH);
+                        sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
+                        sha256.final(tmp, SHA256_DIGEST_LENGTH);
+                    }
+                    memcpy(this->hmac_key, tmp, HMAC_KEY_LENGTH);
+                    this->hmac_key_loaded = true;
+                }
+                else {
+                }
+            break;
+            default:
+                {
+                    LOG(LOG_ERR, "Failed to get cryptographic key, using default key\n");
+    //                "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+    //                "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
+                }
+            }
+            // no way to get the key raise some error
+        }
         return hmac_key;
+    }
+
+    void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
+    {
+        if (!this->master_key_loaded){
+            if (this->get_trace_key_cb != nullptr){
+                // if we have a callback ask key
+                this->get_trace_key_cb(
+                      reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
+                    , static_cast<int>(derivator_len)
+                    , reinterpret_cast<char*>(this->master_key)
+                    );
+                this->master_key_loaded = true;
+            }
+            else {
+                // no way to get the key raise some error
+            }
+        }
+        uint8_t tmp[SHA256_DIGEST_LENGTH];
+        {
+            SslSha256 sha256;
+            sha256.update(derivator, derivator_len);
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        }
+        {
+            SslSha256 sha256;
+            sha256.update(tmp, DERIVATOR_LENGTH);
+            sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        }
+        memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
     }
 
     void reset_mode(int key_source)
     {
         this->key_source = key_source;
-        this->crypto_key_loaded = false;
+        this->master_key_loaded = false;
     }
 
-    CryptoContext(Random & gen, const Inifile & ini, int key_source) 
-        : crypto_key_loaded(false)
-        , crypto_key{}
+    CryptoContext(Random & gen, const Inifile & ini, int key_source)
+        : master_key_loaded(false)
+        , hmac_key_loaded(false)
+        , master_key{}
+        , get_hmac_key_cb(nullptr)
+        , get_trace_key_cb(nullptr)
         , gen(gen)
         , ini(ini)
         , key_source(key_source)
         , hmac_key{}
         {
-            memcpy(this->crypto_key,
+            memcpy(this->master_key,
                 "\x01\x02\x03\x04\x05\x06\x07\x08"
                 "\x01\x02\x03\x04\x05\x06\x07\x08"
                 "\x01\x02\x03\x04\x05\x06\x07\x08"
@@ -122,7 +222,7 @@ class CryptoContext {
                 HMAC_KEY_LENGTH);
         }
 
-    void random(void * dest, size_t size) 
+    void random(void * dest, size_t size)
     {
         this->gen.random(dest, size);
     }
@@ -147,7 +247,7 @@ class CryptoContext {
         base64tbl['_'] = 63;
 
         while (*txt) {
-            if ((v = base64tbl[(unsigned char)*txt]) >= 0) {
+            if ((v = base64tbl[static_cast<unsigned char>(*txt)]) >= 0) {
                 bits <<= 6;
                 bits += v;
                 nbits += 6;
@@ -164,7 +264,7 @@ class CryptoContext {
         return nbytes;
     }
 
-    int get_crypto_key_from_shm()
+    int get_master_key_from_shm()
     {
         char tmp_buf[512] = {0};
         int shmid = shmget(2242, 512, 0600);
@@ -172,12 +272,12 @@ class CryptoContext {
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmget! error=%s\n", getpid(), strerror(errno));
             return 1;
         }
-        char *shm = (char*)shmat(shmid, nullptr, 0);
-        if (shm == (char *)-1){
+        void *shm = shmat(shmid, nullptr, 0);
+        if (shm == reinterpret_cast<void*>(-1)){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmat! error=%s\n", getpid(), strerror(errno));
             return 1;
         }
-        this->unbase64(tmp_buf, 512, shm);
+        this->unbase64(tmp_buf, 512, static_cast<char*>(shm));
         if (shmdt(shm) == -1){
             printf("[CRYPTO_ERROR][%d]: Could not initialize crypto, shmdt! error=%s\n", getpid(), strerror(errno));
             return 1;
@@ -186,108 +286,77 @@ class CryptoContext {
         /* Extract the effective master key component, and check its control signature.
          * Returns 0 on success, -1 on error.
          */
-        char sha256_computed[SHA256_DIGEST_LENGTH];
-
-        SHA256((unsigned char *)(tmp_buf + SHA256_DIGEST_LENGTH+1),
-            MKSALT_LEN+CRYPTO_KEY_LENGTH, (unsigned char *)sha256_computed);
-
-        if (strncmp(tmp_buf + 1, sha256_computed, SHA256_DIGEST_LENGTH)){
+        uint8_t tmp[SHA256_DIGEST_LENGTH];
+        {
+            SslSha256 sha256;
+            sha256.update(reinterpret_cast<uint8_t*>(tmp_buf + SHA256_DIGEST_LENGTH + 1), MKSALT_LEN + CRYPTO_KEY_LENGTH);
+            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+        }
+        if (memcmp(tmp_buf + 1, tmp, SHA256_DIGEST_LENGTH)){
             printf("[CRYPTO_ERROR][%d]: Crypto key integrity check failed!\n", getpid());
             return 1;
         }
-        memcpy(this->crypto_key, tmp_buf + SHA256_DIGEST_LENGTH+MKSALT_LEN+1, CRYPTO_KEY_LENGTH);
-        this->crypto_key_loaded = true;
-        // compute hmac
-        const unsigned char HASH_DERIVATOR[] = {
-             0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b
-        };                
-        unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
-        unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
-        memcpy(tmp_derivation, HASH_DERIVATOR, DERIVATOR_LENGTH);
-        memcpy(tmp_derivation + DERIVATOR_LENGTH, this->crypto_key, CRYPTO_KEY_LENGTH);
-        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
-        memcpy(this->hmac_key, derivated, HMAC_KEY_LENGTH);
+        memcpy(this->master_key, tmp_buf + SHA256_DIGEST_LENGTH + MKSALT_LEN + 1, CRYPTO_KEY_LENGTH);
+        this->master_key_loaded = true;
         return 0;
     }
 
-    int get_crypto_key_from_ini()
+    int get_master_key_from_ini()
     {
-        memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
-        memcpy(this->hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->hmac_key));
+        memcpy(this->master_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->master_key));
         return 0;
     }
 
-    int get_crypto_key_from_ini_derivated_hmac()
+    int get_master_key_from_ini_derivated_hmac()
     {
-        memcpy(this->crypto_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->crypto_key));
-        this->crypto_key_loaded = true;
-        const unsigned char tmp_derivation[] = 
-        {
-                // derivator
-                0x95, 0x8b, 0xcb, 0xd4, 0xee, 0xa9, 0x89, 0x5b,
-                // crypto_key
-                this->crypto_key[0x00], this->crypto_key[0x01], this->crypto_key[0x02], this->crypto_key[0x03],
-                this->crypto_key[0x04], this->crypto_key[0x05], this->crypto_key[0x06], this->crypto_key[0x07],
-                this->crypto_key[0x08], this->crypto_key[0x09], this->crypto_key[0x0A], this->crypto_key[0x0B],
-                this->crypto_key[0x0C], this->crypto_key[0x0D], this->crypto_key[0x0E], this->crypto_key[0x0F],
-                this->crypto_key[0x10], this->crypto_key[0x11], this->crypto_key[0x12], this->crypto_key[0x13],
-                this->crypto_key[0x14], this->crypto_key[0x15], this->crypto_key[0x16], this->crypto_key[0x17],
-                this->crypto_key[0x18], this->crypto_key[0x19], this->crypto_key[0x1A], this->crypto_key[0x1B],
-                this->crypto_key[0x1C], this->crypto_key[0x1D], this->crypto_key[0x1E], this->crypto_key[0x1F],
-        };
-        SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, this->hmac_key);
+        memcpy(this->master_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->master_key));
+        this->master_key_loaded = true;
         return 0;
     }
 
-    void set_crypto_key(const char * key)
+    void set_master_key(const char * key)
     {
-        memcpy(this->crypto_key, key, sizeof(this->crypto_key));
+        memcpy(this->master_key, key, sizeof(this->master_key));
+        this->master_key_loaded = true;
     }
 
     void set_hmac_key(const char * key)
     {
         memcpy(this->hmac_key, key, sizeof(this->hmac_key));
+        this->hmac_key_loaded = true;
     }
 
-    void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
+    void set_get_hmac_key_cb(get_hmac_key_prototype * get_hmac_key_cb)
     {
-        uint8_t tmp[SHA256_DIGEST_LENGTH];
-        {
-            SslSha256 sha256;
-            sha256.update(derivator, derivator_len);
-            sha256.final(tmp, SHA256_DIGEST_LENGTH);
-        }
-        {
-            SslSha256 sha256;
-            sha256.update(tmp, DERIVATOR_LENGTH);
-            sha256.update(this->get_crypto_key(), CRYPTO_KEY_LENGTH);
-            sha256.final(tmp, SHA256_DIGEST_LENGTH);
-        }
-        memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+        this->get_hmac_key_cb = get_hmac_key_cb;
     }
 
+    void set_get_trace_key_cb(get_trace_key_prototype * get_trace_key_cb)
+    {
+        this->get_trace_key_cb = get_trace_key_cb;
+    }
 
     const unsigned char * get_crypto_key()
     {
-        if (not this->crypto_key_loaded)
+        return get_master_key();
+    }
+
+    const unsigned char * get_master_key()
+    {
+        if (not this->master_key_loaded)
         {
             switch (key_source){
             case 0:
             {
-                this->get_crypto_key_from_shm();
+                this->get_master_key_from_shm();
             }
             break;
             case 1:
-                this->get_crypto_key_from_ini();
+                this->get_master_key_from_ini();
             break;
             case 2:
-                this->get_crypto_key_from_ini_derivated_hmac();
+                this->get_master_key_from_ini_derivated_hmac();
             break;
-            case 4:
-                if (this->get_crypto_key_from_cb){
-                    this->get_crypto_key_from_cb(this->crypto_key);
-                    break;
-                }
             default:
             {
                 LOG(LOG_ERR, "Failed to get cryptographic key, using default key\n");
@@ -295,9 +364,9 @@ class CryptoContext {
 //                "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
             }
             }
-            this->crypto_key_loaded = true;
+            this->master_key_loaded = true;
         }
-        return &(this->crypto_key[0]);
+        return &(this->master_key[0]);
     }
 };
 

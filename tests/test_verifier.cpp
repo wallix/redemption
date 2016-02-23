@@ -257,145 +257,19 @@ private:
 
 extern "C" {
 
-struct crypto_file;
-
 /**********************************************
  *                Public API                  *
  **********************************************/
 
-enum Priv_crypto_type {
-    CRYPTO_DECRYPT_TYPE,
-    CRYPTO_ENCRYPT_TYPE
-};
-
-class Priv_crypto_type_base
-{
-    Priv_crypto_type type;
-
-public:
-    Priv_crypto_type_base(Priv_crypto_type t)
-    : type(t)
-    {}
-
-    bool is_encrypt() const
-    { return CRYPTO_ENCRYPT_TYPE == type; }
-
-    bool is_decrypt() const
-    { return CRYPTO_DECRYPT_TYPE == type; }
-};
-
-
-
-struct Priv_crypto_file_decrypt
-: Priv_crypto_type_base
-{
-  decrypt_filter decrypt;
-  io::posix::fdbuf file;
-
-  Priv_crypto_file_decrypt(int fd)
-  : Priv_crypto_type_base(CRYPTO_DECRYPT_TYPE)
-  , file(fd)
-  {}
-};
-
-struct Priv_crypto_file_encrypt
-: Priv_crypto_type_base
+struct crypto_file
 {
   transfil::encrypt_filter encrypt;
   io::posix::fdbuf file;
 
-  Priv_crypto_file_encrypt(int fd)
-  : Priv_crypto_type_base(CRYPTO_ENCRYPT_TYPE)
-  , file(fd)
+  crypto_file(int fd)
+  : file(fd)
   {}
 };
-
-
-crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx)
-{
-    (void)cctx;
-    Priv_crypto_file_decrypt * cf_struct = new (std::nothrow) Priv_crypto_file_decrypt(systemfd);
-
-    if (!cf_struct) {
-        return nullptr;
-    }
-
-    if (-1 == cf_struct->decrypt.decrypt_open(cf_struct->file, trace_key)) {
-        delete cf_struct;
-        return nullptr;
-    }
-
-    return reinterpret_cast<crypto_file*>(cf_struct);
-}
-
-crypto_file * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
-{
-    Priv_crypto_file_encrypt * cf_struct = new (std::nothrow) Priv_crypto_file_encrypt(systemfd);
-
-    if (!cf_struct) {
-        return nullptr;
-    }
-
-    if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
-        delete cf_struct;
-        return nullptr;
-    }
-
-    return reinterpret_cast<crypto_file*>(cf_struct);
-}
-
-/* Flush procedure (compression, encryption, effective file writing)
- * Return 0 on success, -1 on error
- */
-int crypto_flush(crypto_file * cf)
-{
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        return -1;
-    }
-    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-    return cf_struct->encrypt.flush(cf_struct->file);
-}
-
-/* The actual read method. Read chunks until we reach requested size.
- * Return the actual size read into buf, -1 on error
- */
-int crypto_read(crypto_file * cf, char * buf, unsigned int buf_size)
-{
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
-        return cf_struct->decrypt.decrypt_read(cf_struct->file, buf, buf_size);
-    }
-    return -1;
-}
-
-/* Actually appends data to crypto_file buffer, flush if buffer gets full
- * Return the written size, -1 on error
- */
-int crypto_write(crypto_file *cf, const char * buf, unsigned int size)
-{
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        return -1;
-    }
-    Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-    return cf_struct->encrypt.write(cf_struct->file, buf, size);
-}
-
-int crypto_close(crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
-{
-    int nResult = 0;
-
-    if (reinterpret_cast<Priv_crypto_type_base*>(cf)->is_decrypt()) {
-        Priv_crypto_file_decrypt * cf_struct = reinterpret_cast<Priv_crypto_file_decrypt*>(cf);
-        delete cf_struct;
-    }
-    else {
-        Priv_crypto_file_encrypt * cf_struct = reinterpret_cast<Priv_crypto_file_encrypt*>(cf);
-        nResult = cf_struct->encrypt.close(cf_struct->file, hash, hmac_key);
-        delete cf_struct;
-    }
-
-    return nResult;
-}
 
 } // extern "C"
 
@@ -411,7 +285,8 @@ int libc_read(int fd, char *buf, unsigned int count)
 
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
-    const char * test_file_name = "./TestCheckFileHash";
+    const std::string test_mwrm_path = "./";
+    const std::string test_file_name = "TestCheckFileHash";
 
     /************************
     * Manage encryption key *
@@ -451,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char derivator[DERIVATOR_LENGTH];
     
     size_t len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name, len));
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name.c_str(), len));
     SslSha256 sha256;
     sha256.update(base, len);
     uint8_t tmp[SHA256_DIGEST_LENGTH];
@@ -465,15 +340,20 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     SHA256(tmp_derivation2, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated1);
     memcpy(trace_key, derivated1, HMAC_KEY_LENGTH);
 
-    int system_fd = open(test_file_name, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+    std::string full_test_file_name = test_mwrm_path + test_file_name;
+    int system_fd = open(full_test_file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0600);
     if (system_fd == -1){
-        printf("failed opening=%s\n", test_file_name);
+        printf("failed opening=%s\n", full_test_file_name.c_str());
         BOOST_CHECK(false);
     }
 
-    crypto_file * cf_struct = crypto_open_write(system_fd, trace_key, &cctx, iv);
-    if (!cf_struct){
-        close(system_fd);
+    crypto_file * cf_struct = new (std::nothrow) crypto_file(system_fd);
+    if (cf_struct) {
+        if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
+            delete cf_struct;
+            cf_struct = nullptr;
+            close(system_fd);
+        }
     }
 
     BOOST_CHECK(cf_struct);
@@ -486,19 +366,19 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
 
     for (int i = 0; i < 256; i ++) {
-        res = crypto_write(cf_struct, const_cast<char *>(data), data_len);
-
+        res = cf_struct->encrypt.write(cf_struct->file, const_cast<char *>(data), data_len);
         BOOST_CHECK_EQUAL(data_len, res);
     }
 
-    res = crypto_close(cf_struct, hash, cctx.get_hmac_key());
+    res = cf_struct->encrypt.close(cf_struct->file, hash, cctx.get_hmac_key());
+    delete cf_struct;
 
     BOOST_CHECK_EQUAL(0, res);
 
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, test_mwrm_path, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash, HASH_LEN / 2, 4096));
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, test_mwrm_path, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                                    hash + (HASH_LEN / 2), HASH_LEN / 2, 0));
 
-    unlink(test_file_name);
+    unlink(full_test_file_name.c_str());
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */

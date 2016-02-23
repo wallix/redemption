@@ -1264,7 +1264,7 @@ protected:
         session_probe_virtual_channel_params.authentifier                           =
             this->acl;
         session_probe_virtual_channel_params.exchanged_data_limit                   =
-            (data_size_type)-1;
+            static_cast<data_size_type>(-1);
         session_probe_virtual_channel_params.verbose                                =
             this->verbose;
 

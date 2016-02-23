@@ -10,6 +10,7 @@
 /tools/sesman/logger.pyc
 /tools/sesman/sesmanworker/password.py
 /tools/sesman/sesmanworker/*.pyc
+/tools/redcryptofile/redcryptofile.so
 [#]*[#]
 .\#*
 password.py

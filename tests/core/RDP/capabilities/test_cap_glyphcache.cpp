@@ -54,8 +54,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 
     GlyphCacheCaps glyphcache_caps2;
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_GLYPHCACHE,               stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)GlyphCacheCaps::LENGTH_CAPABILITY, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_GLYPHCACHE),               stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(GlyphCacheCaps::LENGTH_CAPABILITY), stream.in_uint16_le());
 
     glyphcache_caps2.recv(stream, GlyphCacheCaps::LENGTH_CAPABILITY);
 

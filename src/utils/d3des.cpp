@@ -194,14 +194,14 @@ static void scrunch(unsigned char *outof, unsigned long *into)
 
 static void unscrun(unsigned long *outof, unsigned char *into)
 {
-    *into++ = (unsigned char)((*outof >> 24) & 0xffL);
-    *into++ = (unsigned char)((*outof >> 16) & 0xffL);
-    *into++ = (unsigned char)((*outof >>  8) & 0xffL);
-    *into++ = (unsigned char)( *outof++	 & 0xffL);
-    *into++ = (unsigned char)((*outof >> 24) & 0xffL);
-    *into++ = (unsigned char)((*outof >> 16) & 0xffL);
-    *into++ = (unsigned char)((*outof >>  8) & 0xffL);
-    *into	= (unsigned char)( *outof	 & 0xffL);
+    *into++ = ((*outof >> 24) & 0xffuL);
+    *into++ = ((*outof >> 16) & 0xffuL);
+    *into++ = ((*outof >>  8) & 0xffuL);
+    *into++ = ( *outof++	 & 0xffuL);
+    *into++ = ((*outof >> 24) & 0xffuL);
+    *into++ = ((*outof >> 16) & 0xffuL);
+    *into++ = ((*outof >>  8) & 0xffuL);
+    *into	= ( *outof	 & 0xffuL);
     return;
 }
 

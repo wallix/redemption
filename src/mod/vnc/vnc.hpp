@@ -244,7 +244,11 @@ public:
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
         memset(&zstrm, 0, sizeof(zstrm));
+TODO("-Wold-style-cast is ignored")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
         if (inflateInit(&this->zstrm) != Z_OK)
+#pragma GCC diagnostic pop
         {
             LOG(LOG_ERR, "vnc zlib initialization failed");
 

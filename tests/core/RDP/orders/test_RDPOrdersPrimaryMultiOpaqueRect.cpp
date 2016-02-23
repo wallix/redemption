@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
         multiopaquerect.emit(out_stream, newcommon, state_common, state_multiopaquerect);
 
-        BOOST_CHECK_EQUAL((uint8_t)MULTIOPAQUERECT, newcommon.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MULTIOPAQUERECT), newcommon.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
 
         uint8_t datas[] = {
@@ -94,9 +94,9 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
-        BOOST_CHECK_EQUAL((uint32_t)0x1BF, header.fields);
-        BOOST_CHECK_EQUAL((uint8_t)MULTIOPAQUERECT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
+        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x1BF), header.fields);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MULTIOPAQUERECT), common_cmd.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPMultiOpaqueRect cmd = state_multiopaquerect;

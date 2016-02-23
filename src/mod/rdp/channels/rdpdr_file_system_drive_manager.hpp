@@ -714,7 +714,7 @@ protected:
             uint32_t verbose) {
         StaticOutStream<65536> out_stream;
 
-        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+        MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
 
         uint32_t out_flags =
@@ -735,7 +735,7 @@ protected:
             uint32_t verbose) {
         StaticOutStream<65536> out_stream;
 
-        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+        MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
 
         out_stream.out_uint32_le(Length);   // Length(4)
@@ -760,7 +760,7 @@ public:
             uint32_t verbose) {
         StaticOutStream<65536> out_stream;
 
-        ManagedFileSystemObject::MakeClientDriveIoResponse(out_stream,
+        MakeClientDriveIoResponse(out_stream,
             device_io_request, message, IoStatus, verbose);
 
         out_stream.out_clear_bytes(5);  // Padding(5)
@@ -779,7 +779,7 @@ public:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
-        ManagedFileSystemObject::SendClientDriveIoResponse(
+        SendClientDriveIoResponse(
             device_io_request,
             message,
             0xC0000001, // STATUS_UNSUCCESSFUL
@@ -1140,11 +1140,11 @@ public:
 
                     out_stream.out_uint32_le(file_name_information.size()); // Length(4)
 
-auto out_stream_p = out_stream.get_current();
+//auto out_stream_p = out_stream.get_current();
                     file_name_information.emit(out_stream);
-LOG(LOG_INFO, "FileNamesInformation: size=%u",
-    (unsigned int)(out_stream.get_current() - out_stream_p));
-hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
+//LOG(LOG_INFO, "FileNamesInformation: size=%u",
+//    static_cast<unsigned int>(out_stream.get_current() - out_stream_p));
+//hexdump(out_stream_p, out_stream.get_current() - out_stream_p);
                 }
                 break;
 
@@ -1713,7 +1713,7 @@ public:
             return false;
         }
 
-        const unsigned relative_directory_path_length = (unsigned)result;
+        const unsigned relative_directory_path_length = static_cast<unsigned>(result);
         for (unsigned i = 0; i < relative_directory_path_length; i++) {
             if ((drive_name[i] >= 0x61) && (drive_name[i] <= 0x7A)) {
                 drive_name[i] -= 0x20;

@@ -142,8 +142,11 @@ struct Listen {
     void run() {
         while (1) {
             fd_set rfds;
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
             FD_ZERO(&rfds);
             FD_SET(this->sck, &rfds);
+# pragma GCC diagnostic pop
             struct timeval timeout;
             timeout.tv_sec = this->timeout_sec;
             timeout.tv_usec = 0;

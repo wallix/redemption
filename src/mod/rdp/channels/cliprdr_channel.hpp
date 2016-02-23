@@ -783,7 +783,7 @@ public:
                         "ClipboardVirtualChannel::process_client_message: "
                             "Delivering unprocessed messages %s(%u) to server.",
                         RDPECLIP::get_msgType_name(this->client_message_type),
-                        (unsigned)this->client_message_type);
+                        static_cast<unsigned>(this->client_message_type));
                 }
             break;
         }   // switch (this->client_message_type)
@@ -1419,7 +1419,7 @@ public:
                         "ClipboardVirtualChannel::process_server_message: "
                             "Delivering unprocessed messages %s(%u) to client.",
                         RDPECLIP::get_msgType_name(this->server_message_type),
-                        (unsigned)this->server_message_type);
+                        static_cast<unsigned>(this->server_message_type));
                 }
             break;
         }   // switch (this->server_message_type)

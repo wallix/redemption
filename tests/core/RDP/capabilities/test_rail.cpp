@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityRailEmit)
     BOOST_CHECK_EQUAL(rail_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_RAIL));
     BOOST_CHECK_EQUAL(rail_caps2.len, static_cast<uint16_t>(CAPLEN_RAIL));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_RAIL, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_RAIL, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_RAIL), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_RAIL), stream.in_uint16_le());
     rail_caps2.recv(stream, CAPLEN_RAIL);
 
     BOOST_CHECK_EQUAL(rail_caps2.RailSupportLevel, static_cast<uint32_t>(1));

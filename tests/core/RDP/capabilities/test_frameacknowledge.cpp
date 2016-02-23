@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE));
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.len, static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_FRAME_ACKNOWLEDGE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_FRAME_ACKNOWLEDGE, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
     frameacknowledge_caps2.recv(stream, CAPLEN_FRAME_ACKNOWLEDGE);
 
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.maxUnacknowledgedFrameCount, static_cast<uint32_t>(65536));
