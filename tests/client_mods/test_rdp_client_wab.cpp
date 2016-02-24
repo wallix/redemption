@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // Comment the code block below to generate testing data.
     #include "fixtures/dump_wab.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

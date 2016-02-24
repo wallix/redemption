@@ -52,12 +52,10 @@ while read -ru ${COPROC[0]} l ; do
     echo -e "\nBacktrace:\n"
     echo bt >&${COPROC[1]}
     kill $COPROC_PID
-  fi
-  if [ "$l" = 'The program is not being run.' -o "$l" = 'The program no longer exists.' ] ; then
+  elif [ "$l" = 'The program is not being run.' -o "$l" = 'The program no longer exists.' ] ; then
     kill $COPROC_PID
+  else
+    $filter "$l"
+    [[ "$l" =~ ^'-- ' ]] && echo >&${COPROC[1]}
   fi
-
-  $filter "$l"
-
-  [[ "$l" =~ ^'-- ' ]] && echo >&${COPROC[1]}
 done

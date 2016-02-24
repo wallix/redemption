@@ -1033,6 +1033,9 @@ unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_
 
 
 
+if ! [ os.environ NO_MAKE_QT ]
+{
+
 explicit front_Qt.o bitmap_data_allocator.o client_rdp_Qt ; #
 #explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
@@ -1041,21 +1044,21 @@ explicit front_Qt.o bitmap_data_allocator.o client_rdp_Qt ; #
 
 using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ; #5
 
-#obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp 
+#obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp
 #    :
 	 #<include>/usr/include/qt4
-#        <include>/usr/include/x86_64-linux-gnu/qt5 
+#        <include>/usr/include/x86_64-linux-gnu/qt5
 #        <cxxflags>-fPIC
-#    ; 
+#    ;
 
-obj front_Qt.o : src/front/front_Qt.cpp 
+obj front_Qt.o : src/front/front_Qt.cpp
     :
 	#<include>/usr/include/qt4                   #4
 	<include>/usr/include/x86_64-linux-gnu/qt5  #5
 	<cxxflags>-fPIC                             #5
-    ; 
+    ;
 
-obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ; 
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 
 exe client_rdp_Qt :
@@ -1084,5 +1087,4 @@ exe client_rdp_Qt :
     <cxxflags>-fPIC                             #5
     ;
 
-
-
+} # NO_MAKE_QT
