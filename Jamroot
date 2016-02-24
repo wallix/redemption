@@ -940,7 +940,7 @@ unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp bit
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_flat_wab_close : tests/mod/internal/widget2/test_flat_wab_close.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
