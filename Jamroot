@@ -884,7 +884,7 @@ unit-test test_checksum_buf : tests/transport/buffer/test_checksum_buf.cpp crypt
 
 
 
-unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
