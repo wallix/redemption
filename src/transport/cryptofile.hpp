@@ -173,6 +173,9 @@ class CryptoContext {
                 this->master_key_loaded = true;
             }
             else {
+                if (this->key_source == 1){
+                    this->get_master_key_from_ini();
+                }
                 // no way to get the key raise some error
             }
         }
@@ -304,6 +307,7 @@ class CryptoContext {
     int get_master_key_from_ini()
     {
         memcpy(this->master_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->master_key));
+        this->master_key_loaded = true;
         return 0;
     }
 
