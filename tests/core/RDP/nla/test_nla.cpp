@@ -38,7 +38,6 @@
 
 BOOST_AUTO_TEST_CASE(TestNlaclient)
 {
-
     const char client[65000] =
         // negotiate
 /* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
@@ -98,7 +97,8 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
 
     LOG(LOG_INFO, "TEST CLIENT SIDE");
 
-    TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
+    TestTransport logtrans("test", server, sizeof(server)-1, client, sizeof(client)-1);
+    logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
@@ -174,7 +174,8 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
         ;
 
     LOG(LOG_INFO, "TEST SERVER SIDE");
-    TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
+    TestTransport logtrans("test", client, sizeof(client)-1, server, sizeof(server)-1);
+    logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";

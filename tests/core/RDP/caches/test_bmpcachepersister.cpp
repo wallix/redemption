@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
     //LogTransport t;
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    CheckTransport t(outdata, sizeof(outdata), verbose);
+    CheckTransport t(outdata, sizeof(outdata)-1, verbose);
 
     BmpCachePersister::save_all_to_disk(bmp_cache, t, verbose);
 }

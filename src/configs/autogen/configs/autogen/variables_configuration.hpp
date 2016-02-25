@@ -283,7 +283,7 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
         struct selector_device_filter {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 59; }
             using type = std::string;
@@ -292,7 +292,7 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
         struct selector_group_filter {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 60; }
             using type = std::string;
@@ -301,7 +301,7 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
         struct selector_proto_filter {
             static constexpr ::configs::VariableProperties properties() {
-                return ::configs::VariableProperties::read;
+                return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 61; }
             using type = std::string;
@@ -1398,7 +1398,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 22; }
             using type = bool;
-            type value{1};
+            type value{0};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
         struct enable_session_probe_launch_mask {

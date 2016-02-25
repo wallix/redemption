@@ -884,8 +884,8 @@ unit-test test_checksum_buf : tests/transport/buffer/test_checksum_buf.cpp crypt
 
 
 
-unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -910,7 +910,7 @@ unit-test test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_Alternat
 
 
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test : $(TEST_DEPENDENCIES) ;
-unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp : tests/mod/rdp/test_rdp.cpp bitmap krb5 gssglue png d3des z dl crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp bitmap z png crypto dl openssl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp bitmap krb5 gssglue png crypto d3des z dl openssl libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -940,7 +940,7 @@ unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp bit
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
-unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
+#unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z crypto dl libboost_unit_test : $(TEST_DEPENDENCIES) ;
 
 unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
 unit-test test_flat_wab_close : tests/mod/internal/widget2/test_flat_wab_close.cpp bitmap png crypto libboost_unit_test : $(TEST_DEPENDENCIES) ;
@@ -1033,6 +1033,9 @@ unit-test test_verifier : tests/test_verifier.cpp program_options libboost_unit_
 
 
 
+if ! [ os.environ NO_MAKE_QT ]
+{
+
 explicit front_Qt.o bitmap_data_allocator.o client_rdp_Qt ; #
 #explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
@@ -1084,5 +1087,4 @@ exe client_rdp_Qt :
     #<cxxflags>-fPIC                             #5
     ;
 
-
-
+} # NO_MAKE_QT

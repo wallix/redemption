@@ -111,24 +111,25 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
         BOOST_CHECK_EQUAL(p-buffer, 12);
         BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
         BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));
-    };
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestCheckTransport)
 {
     CheckTransport gt("input", 5);
+    gt.disable_remaining_error();
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     try{
         gt.send("in", 2);
     } catch (const Error & e){
         BOOST_CHECK(false);
-    };
+    }
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     try{
         gt.send("pot", 3);
     } catch (const Error & e){
         BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
-    };
+    }
     BOOST_CHECK(!gt.get_status());
 }
 
@@ -141,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
     } catch (const Error & e)
     {
         BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
-    };
+    }
     BOOST_CHECK(!gt.get_status());
 }
 
@@ -155,6 +156,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     // and status is set to false (and will stay so) to allow tests to fail.
     // inside Transport, the difference is shown in trace logs.
     TestTransport gt("Test1", "OUTPUT", 6, "input", 5);
+    gt.disable_remaining_error();
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     char buf[128] = {};
     char * p = buf;
@@ -170,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
         gt.send("pot", 3);
     } catch (const Error & e){
         BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
-    };
+    }
     BOOST_CHECK(!gt.get_status());
 }
 

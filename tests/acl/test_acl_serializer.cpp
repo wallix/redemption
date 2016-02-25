@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     }
 
     // try exception
-    CheckTransport transexcpt("something very wrong",21);
+    CheckTransport transexcpt("", 0);
     AclSerializer aclexcpt(ini, transexcpt, 0);
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
