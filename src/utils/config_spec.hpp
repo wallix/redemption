@@ -553,9 +553,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<bool>(), "selector", set(false), r);
         W.member(type_<unsigned>(), "selector_current_page", set(1), rw);
-        W.member(type_<std::string>(), "selector_device_filter", r);
-        W.member(type_<std::string>(), "selector_group_filter", r);
-        W.member(type_<std::string>(), "selector_proto_filter", r);
+        W.member(type_<std::string>(), "selector_device_filter", rw);
+        W.member(type_<std::string>(), "selector_group_filter", rw);
+        W.member(type_<std::string>(), "selector_proto_filter", rw);
         W.member(type_<unsigned>(), "selector_lines_per_page", set(0), rw);
         W.member(type_<unsigned>(), "selector_number_of_pages", set(1), r);
         W.sep();

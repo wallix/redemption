@@ -9,6 +9,7 @@ try:
     from wabengine.common.exception import LicenseLimitReached
     from wabengine.common.exception import MustChangePassword
     from wabengine.common.exception import AccountLocked
+    from wabengine.common.exception import SessionAlreadyStopped
     from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
         PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, \
         RDP_PATTERN_FOUND, FILESYSTEM_FULL
@@ -815,6 +816,8 @@ class Engine(object):
                 #               (self.session_result, self.session_diag, title))
                 self.wabengine.stop_session(self.session_id, result=self.session_result,
                                             diag=self.session_diag, title=title)
+        except SessionAlreadyStopped:
+            pass
         except Exception, e:
             import traceback
             Logger().info("Engine stop_session failed: (((%s)))" % (traceback.format_exc(e)))
