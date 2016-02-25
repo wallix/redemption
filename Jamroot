@@ -1037,9 +1037,9 @@ explicit front_Qt.o bitmap_data_allocator.o client_rdp_Qt ; #
 #explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
 
 
-#using qt : /usr ; #4
+using qt : /usr ; #4
 
-using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ; #5
+#using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ; #5
 
 #obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp 
 #    :
@@ -1050,9 +1050,9 @@ using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linu
 
 obj front_Qt.o : src/front/front_Qt.cpp 
     :
-	#<include>/usr/include/qt4                   #4
-	<include>/usr/include/x86_64-linux-gnu/qt5  #5
-	<cxxflags>-fPIC                             #5
+	<include>/usr/include/qt4                   #4
+	#<include>/usr/include/x86_64-linux-gnu/qt5  #5
+	#<cxxflags>-fPIC                             #5
     ; 
 
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ; 
@@ -1065,10 +1065,10 @@ exe client_rdp_Qt :
     src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
     front_Qt.o
     bitmap_data_allocator.o
-    #/qt//QtGui       #4
-    /qt5//QtGui      #5
-    /qt5//QtNetwork  #5
-    /qt5//QtWidgets  #5
+    /qt//QtGui       #4
+    #/qt5//QtGui      #5
+    #/qt5//QtNetwork  #5
+    #/qt5//QtWidgets  #5
     krb5
     openssl
     crypto
@@ -1079,9 +1079,9 @@ exe client_rdp_Qt :
     dl
     #libboost_unit_test #
     :
-    #<include>/usr/include/qt4                   #4
-    <include>/usr/include/x86_64-linux-gnu/qt5  #5
-    <cxxflags>-fPIC                             #5
+    <include>/usr/include/qt4                   #4
+    #<include>/usr/include/x86_64-linux-gnu/qt5  #5
+    #<cxxflags>-fPIC                             #5
     ;
 
 

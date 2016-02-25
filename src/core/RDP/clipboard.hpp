@@ -198,6 +198,20 @@ inline static const char * get_msgType_name(uint16_t msgType) {
 // |                  | ASCII 8.                                               |
 // +------------------+--------------------------------------------------------+
 
+
+// Short Format Name
+enum {
+    SF_TEXT_HTML = 1
+};
+
+inline static const char * get_format_short_name(uint16_t formatID) {
+    switch (formatID) {
+        case SF_TEXT_HTML:         return "text/html";
+    }
+
+    return "<unknown>";
+}
+
 enum {
       CB_RESPONSE_OK   = 0x0001
     , CB_RESPONSE_FAIL = 0x0002
@@ -669,6 +683,25 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_uint32_le(CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
     }
+    
+    void emit(OutStream & stream, uint32_t * formatListData, std::string * formatListDataShortName, int formatListData_size) {
+        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        if (formatListData_size > 32) {
+            formatListData_size = 32;
+        }
+        for (int i = 0; i < formatListData_size; i++) {
+            stream.out_uint32_le(formatListData[i]);
+            std::string & currentStr = formatListDataShortName[i];
+            int j;
+            for (j = 0; j < currentStr.size(); j++) {
+                stream.out_uint8(currentStr[j]);
+            }
+            stream.out_clear_bytes(32 - currentStr.size()); // formatName(32)
+        }
+    }
 
     void emit_ex(OutStream & stream, bool unicodetext) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
@@ -694,7 +727,7 @@ struct FormatListPDU : public CliprdrHeader {
         // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
         // |                            formatId                           |
         // +---------------------------------------------------------------+
-        // |                           formatName                          |
+        // |                      formatName (32 bytes)                    |
         // +---------------------------------------------------------------+
         // |                              ...                              |
         // +---------------------------------------------------------------+

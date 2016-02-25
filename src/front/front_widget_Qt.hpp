@@ -82,6 +82,12 @@
 
 #define KEY_SETTING_PATH "keySetting.config"
 
+#define PASTE_ON_SERVER_MAX_CHAR   795
+#define PASTE_ON_SERVER_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
+#define PASTE_ON_CLIENT_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
+#define CLIENT_DATA_RESPONSE_SIZE  (PASTE_ON_SERVER_MAX_SIZE * 2)
+
+
 
 class DialogOptions_Qt : public QDialog
 {
@@ -806,7 +812,7 @@ public:
     QClipboard      * _clipboard;
     bool              _local_clipboard_stream;
     size_t            _length;
-    uint8_t           _chunk[2048];
+    uint8_t           _chunk[PASTE_ON_SERVER_MAX_SIZE];
      
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -950,14 +956,20 @@ public Q_SLOTS:
             
             if (!mimeData->hasUrls()) {
                 if (mimeData->hasText()){
+                    
                     std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
-                    size_t size((str.length())*2);
-                    if (size > 2048) {
-                        size = 2048;
+                    size_t size(str.length()*2);
+                    if (size > PASTE_ON_SERVER_MAX_SIZE) {
+                        size = PASTE_ON_SERVER_MAX_SIZE;
                     }
-
-                    this->_length = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size); 
-                    this->_front->send_FormatListPDU();
+                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
+                    if (this->_length > PASTE_ON_SERVER_MAX_SIZE) {
+                        this->_length = PASTE_ON_SERVER_MAX_SIZE;
+                    }
+                    
+                    uint32_t formatIDs[]                  = {RDPECLIP::CF_UNICODETEXT};
+                    std::string formatListDataShortName[] = {std::string("")};
+                    this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
                 }
             }
         }

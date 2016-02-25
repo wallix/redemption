@@ -22,8 +22,8 @@
 #ifndef FRONT_QT_HPP
 #define FRONT_QT_HPP
 
-//#define QT4
-#define QT5
+#define QT4
+//#define QT5
 
 #include <stdio.h>
 #include <openssl/ssl.h>
@@ -176,7 +176,7 @@ public:
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
-    virtual void send_FormatListPDU() = 0;
+    virtual void send_FormatListPDU(uint32_t * formatIDs, std::string * formatListDataShortName, int formatIDs_size) = 0;
 };
  
     
@@ -205,7 +205,8 @@ public:
     uint8_t              _keyboardMods;    
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
-    
+    std::string          _requestedFormatShortName;   
+     
     
     enum : int {
         COMMAND_VALID = 15
@@ -260,7 +261,11 @@ public:
     
     void send_FormatDataResponsePDU();
     
-    void send_FormatListPDU() override;
+    void send_FormatListPDU(uint32_t * formatIDs, std::string * formatListDataShortName, int formatIDs_size) override;
+    
+    void send_to_local_clipboard(InStream & chunk, bool isTextHtml);
+    
+    std::string HTMLtoASCII(std::string & html);
     
     
     
