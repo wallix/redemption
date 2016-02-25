@@ -1398,7 +1398,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 22; }
             using type = bool;
-            type value{1};
+            type value{0};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
         struct enable_session_probe_launch_mask {
