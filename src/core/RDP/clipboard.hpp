@@ -683,8 +683,8 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_uint32_le(CF_TEXT);
         stream.out_clear_bytes(32); // formatName(32)
     }
-    
-    void emit(OutStream & stream, uint32_t * formatListData, std::string * formatListDataShortName, int formatListData_size) {
+
+    void emit(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
 
@@ -692,13 +692,11 @@ struct FormatListPDU : public CliprdrHeader {
         if (formatListData_size > 32) {
             formatListData_size = 32;
         }
-        for (int i = 0; i < formatListData_size; i++) {
+        for (std::size_t i = 0; i < formatListData_size; i++) {
             stream.out_uint32_le(formatListData[i]);
-            std::string & currentStr = formatListDataShortName[i];
-            int j;
-            for (j = 0; j < currentStr.size(); j++) {
-                stream.out_uint8(currentStr[j]);
-            }
+            std::string const & currentStr = formatListDataShortName[i];
+            REDASSERT(currentStr.size() <= 32);
+            stream.out_copy_bytes(currentStr.c_str(), currentStr.size());
             stream.out_clear_bytes(32 - currentStr.size()); // formatName(32)
         }
     }
