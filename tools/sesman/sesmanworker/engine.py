@@ -474,9 +474,9 @@ class Engine(object):
             def fc(string):
                 return string if case_sensitive else string.lower()
 
-            if (fc(target_info.group).find(fc(group_filter)) == -1 or
-                fc(temp_service_login).find(fc(device_filter)) == -1 or
-                fc(temp_resource_service_protocol_cn).find(fc(protocol_filter)) == -1):
+            if (not fc(group_filter) in fc(target_info.group) or
+                not fc(device_filter) in fc(temp_service_login) or
+                not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
                 item_filtered = True
                 continue
 
