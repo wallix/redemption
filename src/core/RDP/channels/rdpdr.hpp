@@ -440,14 +440,9 @@ public:
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
     , device_data{device_data_p, device_data_size} {
-        ::memcpy(this->PreferredDosName_, preferred_dos_name,
-                 std::min<size_t>( 8 // PreferredDosName(8)
-                                 , ::strlen(preferred_dos_name))
-                 );
-        for (size_t i = ::strlen(::char_ptr_cast(this->PreferredDosName_));
-             i < sizeof(this->PreferredDosName_); ++i) {
-            this->PreferredDosName_[i] = '\0';
-        }
+        memcpy(
+            this->PreferredDosName_, preferred_dos_name,
+            strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
     }
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);

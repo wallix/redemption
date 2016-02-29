@@ -93,6 +93,7 @@ struct Keymap2
          , F12         = 0x58
     };
 
+private:
     TODO("we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events."
          " These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar"
          " to the way X11 manage inputs (hence easier to unify with keymapSym)")
@@ -100,6 +101,7 @@ struct Keymap2
     // keyboard info
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
 
+public:
     int key_flags; // scroll_lock = 1, num_lock = 2, caps_lock = 4,
                    // shift = 8, ctrl = 16, Alt = 32,
                    // Windows = 64, AltGr = 128
@@ -134,6 +136,7 @@ struct Keymap2
         , KEVENT_INSERT = 0x13
     };
 
+private:
     uint32_t ibuf; // first free position in char buffer
     uint32_t nbuf; // number of char in char buffer
     uint32_t buffer[SIZE_KEYBUF]; // actual char buffer
@@ -159,9 +162,10 @@ struct Keymap2
 
     uint32_t verbose;
 
+public:
     bool is_application_switching_shortcut_pressed = false;
 
-
+public:
     // Constructor
     //==============================================================================
     explicit Keymap2(uint32_t verbose = 0)

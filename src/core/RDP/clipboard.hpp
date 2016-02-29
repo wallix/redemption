@@ -1183,7 +1183,7 @@ public:
             (static_cast<uint64_t>(this->fileSizeHigh) << 32);
     }
 
-    static size_t size() {
+    static constexpr size_t size() {
         return 592; // flags(4) + reserved1(32) + fileAttributes(4) +
                     //     reserved2(16) + lastWriteTime(8) +
                     //     fileSizeHigh(4) + fileSizeLow(4) +
