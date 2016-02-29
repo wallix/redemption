@@ -868,6 +868,7 @@ class Engine(object):
             if video_path:
                 # Notify WabEngine with Trace file descriptor
                 trace = self.wabengine.get_trace_writer(self.session_id, trace_type=u"rdptrc")
+                trace.initialize()
                 trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8')) ) )
                 trace.end()
         except Exception, e:
