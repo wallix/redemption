@@ -28,6 +28,7 @@
 #include "error.hpp"
 #include "noncopyable.hpp"
 #include "stream.hpp"
+#include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 
 namespace RDP {
 
@@ -925,17 +926,8 @@ public:
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
-            const size_t maximum_length_of_TitleInfo_in_bytes = this->title_info.length() * 2;
-
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                        maximum_length_of_TitleInfo_in_bytes));
-            const size_t size_of_unicode_data = ::UTF8toUTF16(
-                reinterpret_cast<const uint8_t *>(this->title_info.c_str()), unicode_data,
-                maximum_length_of_TitleInfo_in_bytes);
-
-            stream.out_uint16_le(size_of_unicode_data);
-
-            stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+            put_non_null_terminated_utf16_from_utf8(
+                stream, this->title_info.data(), this->title_info.size() * 2);
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
@@ -1057,37 +1049,8 @@ public:
             }
 
             const uint16_t CbString = stream.in_uint16_le();
-
-            if (!stream.in_check_rem(CbString)) {
-                LOG(LOG_ERR,
-                    "Truncated NewOrExistingWindow (4): expected=%u remains=%zu",
-                    CbString, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(CbString));
-
-            {
-                const unsigned expected = CbString;  // String(variable)
-
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (5): expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-            }
-
-            stream.in_copy_bytes(unicode_data, CbString);
-
-            const size_t size_of_utf8_string =
-                        CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            const size_t length_of_utf8_string = ::UTF16toUTF8(
-                unicode_data, CbString / 2, utf8_string, size_of_utf8_string);
-            this->title_info.assign(::char_ptr_cast(utf8_string),
-                length_of_utf8_string);
+            get_non_null_terminated_utf16_from_utf8(
+                this->title_info, stream, CbString, "NewOrExistingWindow (4)");
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
