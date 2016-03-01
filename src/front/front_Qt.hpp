@@ -40,7 +40,7 @@
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp" 
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -103,7 +103,7 @@ private:
             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, chunk_data_length, flags);
         }
     };
-    
+
     class ClipboardClientChannelDataSender : public VirtualChannelDataSender
     {
     public:
@@ -115,31 +115,31 @@ private:
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
             //std::cout << "operator()  client " << (int)flags  << std::endl;
-            
+
             this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
-        } 
+        }
     };
-    
-    
+
+
 public:
     uint32_t          verbose;
     ClientInfo        _info;
-    std::string       _userName;     
-    std::string       _pwd;          
-    std::string       _targetIP;     
-    int               _port;         
+    std::string       _userName;
+    std::string       _pwd;
+    std::string       _targetIP;
+    int               _port;
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
     mod_api         * _callback;
-    QImage::Format    _imageFormatRGB;  
+    QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
     ClipboardClientChannelDataSender _to_client_sender;
-    Qt_ScanCode_KeyMap   _qtRDPKeymap;  
+    Qt_ScanCode_KeyMap   _qtRDPKeymap;
     int                  _fps;
-    
-    
+
+
     Front_Qt_API( bool param1
                 , bool param2
                 , int verb)
@@ -153,8 +153,8 @@ public:
     {
         this->_to_client_sender._front = this;
     }
-    
-    
+
+
     virtual void connexionPressed() = 0;
     virtual void connexionReleased() = 0;
     virtual void closeFromScreen() = 0;
@@ -176,14 +176,14 @@ public:
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
-    virtual void send_FormatListPDU(uint32_t * formatIDs, std::string * formatListDataShortName, int formatIDs_size) = 0;
+    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
 };
- 
-    
-    
+
+
+
 class Front_Qt : public Front_Qt_API
-{    
-   
+{
+
 public:
 
     // Graphic members
@@ -191,7 +191,7 @@ public:
     BGRPalette            mod_palette;
     Form_Qt            * _form;
     Screen_Qt          * _screen;
-    
+
     // Connexion socket members
     Connector_Qt       * _connector;
     int                  _timer;
@@ -202,14 +202,20 @@ public:
     Keymap2              _keymap;
     bool                 _ctrl_alt_delete; // currently not used and always false
     StaticOutStream<256> _decoded_data;    // currently not initialised
-    uint8_t              _keyboardMods;    
+    uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
+<<<<<<< HEAD
     std::string          _requestedFormatShortName;   
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
      
     
+=======
+    std::string          _requestedFormatShortName;
+
+
+>>>>>>> 0880bab5eff7dc441153b69398aa3e0d416ff8bb
     enum : int {
         COMMAND_VALID = 15
       , NAME_GOTTEN   =  1
@@ -217,7 +223,7 @@ public:
       , IP_GOTTEN     =  4
       , PORT_GOTTEN   =  8
     };
-    
+
     enum : long {
         CHANNEL_OPTION_INITIALIZED   = 0x80000000,
         CHANNEL_OPTION_ENCRYPT_RDP   = 0x40000000,
@@ -231,17 +237,17 @@ public:
         CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000,
         REMOTE_CONTROL_PERSISTENT    = 0x00100000
     };
-            
+
 
     bool setClientInfo() override;
-    
+
     void writeClientInfo() override;
-  
+
     virtual void flush() override;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override;
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override; 
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override;
 
     virtual void send_global_palette() override;
 
@@ -254,12 +260,13 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) override;
 
     virtual int server_resize(int width, int height, int bpp) override;
-    
+
     void process_server_monitor_ready_pdu();
-    
+
     void send_FormatListResponsePDU();
-    
+
     void send_FormatDataRequestPDU();
+<<<<<<< HEAD
     
     void send_buffer_to_clipboard(bool isTextHtml);
     
@@ -278,43 +285,57 @@ public:
     
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+=======
+
+    void send_FormatDataResponsePDU();
+
+    void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) override;
+
+    void send_to_local_clipboard(InStream & chunk, bool isTextHtml);
+
+    std::string HTMLtoASCII(std::string & html);
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+>>>>>>> 0880bab5eff7dc441153b69398aa3e0d416ff8bb
 
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
     //---------------------------------------
 
     void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert);
-    
+
     QColor u32_to_qcolor(uint32_t color);
-    
-    QImage::Format bpp_to_QFormat(int bpp, bool alpha) override; 
-    
+
+    QImage::Format bpp_to_QFormat(int bpp, bool alpha) override;
+
     void draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert);
-    
+
     void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy);
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //-----------------------------
-    //      DRAWING FUNCTIONS 
+    //      DRAWING FUNCTIONS
     //-----------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override;
-    
+
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
-    
+
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
-    
+
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
-    
+
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override;
-    
+
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override;
@@ -346,21 +367,21 @@ public:
     virtual void draw(const RDP::RAIL::CachedIcon & order) override;
 
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
-    
+
     virtual void draw(const RDPColCache   & cmd);
-    
+
     virtual void draw(const RDPBrushCache & cmd);
 
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //------------------------
     //      CONSTRUCTOR
     //------------------------
-    
+
     Front_Qt(char* argv[], int argc, uint32_t verbose);
-    
+
     // -------- Start of system wide SSL_Ctx option ------------------------------
 
     // ERR_load_crypto_strings() registers the error strings for all libcrypto
@@ -388,71 +409,71 @@ public:
     // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
 
     //SSL_library_init();
-    
+
     ~Front_Qt();
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //------------------------
     //      CONTROLLERS
     //------------------------
-    
+
     void mousePressEvent(QMouseEvent *e) override;
-    
+
     void mouseReleaseEvent(QMouseEvent *e) override;
-    
+
     void keyPressEvent(QKeyEvent *e) override;
-    
+
     void keyReleaseEvent(QKeyEvent *e) override;
-    
+
     void wheelEvent(QWheelEvent *e) override;
-    
+
     bool eventFilter(QObject *obj, QEvent *e) override;
-    
+
     void connexionPressed() override;
-    
+
     void connexionReleased() override;
 
     void RefreshPressed() override;
-    
+
     void RefreshReleased() override;
-    
+
     void CtrlAltDelPressed() override;
-    
+
     void CtrlAltDelReleased() override;
-    
+
     void disconnexionPressed()  override;
-    
+
     void disconnexionReleased() override;
- 
+
     void refresh(int x, int y, int w, int h);
-    
+
     void send_rdp_scanCode(int keyCode, int flag);
-    
+
     void connect();
-    
+
     void disconnect(std::string) override;
-    
+
     void closeFromScreen() override;
-    
+
     void dropScreen() override;
-        
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //--------------------------------
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
-    
+
     void call_Draw() override;
-    
-    
+
+
 };
 
 
-  
+
 
 #endif
