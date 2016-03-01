@@ -82,10 +82,10 @@
 
 #define KEY_SETTING_PATH "keySetting.config"
 
-#define PASTE_ON_SERVER_MAX_CHAR   795
+#define PASTE_ON_SERVER_MAX_CHAR   796
 #define PASTE_ON_SERVER_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
 #define PASTE_ON_CLIENT_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
-#define CLIENT_DATA_RESPONSE_SIZE  (PASTE_ON_SERVER_MAX_SIZE * 2)
+#define CLIENT_DATA_RESPONSE_SIZE  (PASTE_ON_SERVER_MAX_SIZE + 8)
 
 
 
@@ -812,7 +812,7 @@ public:
     QClipboard      * _clipboard;
     bool              _local_clipboard_stream;
     size_t            _length;
-    uint8_t           _chunk[PASTE_ON_SERVER_MAX_SIZE];
+    uint8_t         * _chunk;
      
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -824,6 +824,8 @@ public:
     , _client_sck(0)
     , _clipboard(nullptr)
     , _local_clipboard_stream(true)
+    , _length(0)
+    , _chunk(nullptr)
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
@@ -957,15 +959,20 @@ public Q_SLOTS:
             if (!mimeData->hasUrls()) {
                 if (mimeData->hasText()){
                     
+                    int cmptCR(0);
+                    
                     std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
-                    size_t size(str.length()*2);
-                    if (size > PASTE_ON_SERVER_MAX_SIZE) {
-                        size = PASTE_ON_SERVER_MAX_SIZE;
+                    std::string tmp(str);
+                    int pos(tmp.find("\n"));
+                    while (pos != -1) {
+                        cmptCR++;
+                        tmp = tmp.substr(pos+2, tmp.length());  
+                        pos = tmp.find("\n"); // for linux install
                     }
+                    size_t size((str.length() + cmptCR*2) * 2);
+
+                    this->_chunk = new uint8_t[size];
                     this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
-                    if (this->_length > PASTE_ON_SERVER_MAX_SIZE) {
-                        this->_length = PASTE_ON_SERVER_MAX_SIZE;
-                    }
                     
                     uint32_t formatIDs[]                  = {RDPECLIP::CF_UNICODETEXT};
                     std::string formatListDataShortName[] = {std::string("")};

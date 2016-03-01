@@ -206,6 +206,8 @@ public:
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
     std::string          _requestedFormatShortName;   
+    uint8_t            * _bufferRDPClipboardChannel;
+    size_t               _bufferRDPClipboardChannelSize;
      
     
     enum : int {
@@ -259,13 +261,19 @@ public:
     
     void send_FormatDataRequestPDU();
     
+    void send_buffer_to_clipboard(bool isTextHtml);
+    
+    void process_server_clipboard_data(int flags, InStream & chunk);
+    
+    const uint32_t send_FormatDataResponsePDU(int shift, size_t data_length, uint32_t total_data_length, uint32_t flag);
+    
     void send_FormatDataResponsePDU();
     
     void send_FormatListPDU(uint32_t * formatIDs, std::string * formatListDataShortName, int formatIDs_size) override;
     
-    void send_to_local_clipboard(InStream & chunk, bool isTextHtml);
+    void send_to_clipboard_buffer(InStream & chunk);
     
-    std::string HTMLtoASCII(std::string & html);
+    std::string HTMLtoASCII(const std::string & html);
     
     
     
