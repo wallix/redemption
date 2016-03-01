@@ -131,13 +131,13 @@ struct bytes_array : array_view<uint8_t>
 
 private:
     template<class T>
-    static auto to_array(T & v) noexcept -> decltype(array_view<uint8_t>(v)) {
-        return v;
+    static auto to_array(T & v) noexcept -> decltype(array_view<char>(v)) {
+        return array_view<char>(v);
     }
 
     template<class T>
-    static auto to_array(T & v) noexcept -> decltype(array_view<char>(v)) {
-        return v;
+    static auto to_array(T & v) noexcept -> decltype(array_view<uint8_t>(v)) {
+        return array_view<uint8_t>(v);
     }
 };
 
@@ -193,13 +193,13 @@ struct const_bytes_array : array_view<const uint8_t>
 
 private:
     template<class T>
-    static auto to_array(T & v) noexcept -> decltype(array_view<const uint8_t>(v)) {
-        return v;
+    static auto to_array(T & v) noexcept -> decltype(array_view<const char>(v)) {
+        return array_view<const char>(v);
     }
 
     template<class T>
-    static auto to_array(T & v) noexcept -> decltype(array_view<const char>(v)) {
-        return v;
+    static auto to_array(T & v) noexcept -> decltype(array_view<const uint8_t>(v)) {
+        return array_view<const uint8_t>(v);
     }
 };
 
