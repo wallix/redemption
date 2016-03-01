@@ -75,7 +75,6 @@ public:
     InStream & operator=(InStream &&) = default;
     InStream & operator=(InStream const &) = delete;
 
-private:
     InStream(InStream const &) = default;
 
 public:
