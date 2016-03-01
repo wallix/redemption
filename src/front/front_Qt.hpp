@@ -205,17 +205,12 @@ public:
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
-<<<<<<< HEAD
     std::string          _requestedFormatShortName;   
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
-     
+
     
-=======
-    std::string          _requestedFormatShortName;
-
-
->>>>>>> 0880bab5eff7dc441153b69398aa3e0d416ff8bb
+    
     enum : int {
         COMMAND_VALID = 15
       , NAME_GOTTEN   =  1
@@ -266,7 +261,6 @@ public:
     void send_FormatListResponsePDU();
 
     void send_FormatDataRequestPDU();
-<<<<<<< HEAD
     
     void send_buffer_to_clipboard(bool isTextHtml);
     
@@ -276,7 +270,7 @@ public:
     
     void send_FormatDataResponsePDU();
     
-    void send_FormatListPDU(uint32_t * formatIDs, std::string * formatListDataShortName, int formatIDs_size) override;
+    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
     
     void send_to_clipboard_buffer(InStream & chunk);
     
@@ -285,20 +279,6 @@ public:
     
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-=======
-
-    void send_FormatDataResponsePDU();
-
-    void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) override;
-
-    void send_to_local_clipboard(InStream & chunk, bool isTextHtml);
-
-    std::string HTMLtoASCII(std::string & html);
-
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
->>>>>>> 0880bab5eff7dc441153b69398aa3e0d416ff8bb
 
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
