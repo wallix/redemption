@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     CryptoContext cctx(rnd, ini, 1);
     cctx.get_crypto_key();
-    cctx.set_hmac_key("12345678901234567890123456789012");
+    cctx.set_hmac_key(byte_ptr_cast("12345678901234567890123456789012"));
 
     {
         timeval now;

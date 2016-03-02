@@ -35,14 +35,14 @@
 
 
 using FlatWaitModVariables = vcfg::variables<
-    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>,
-    vcfg::var<cfg::context::comment,        vcfg::write>,
-    vcfg::var<cfg::context::duration,       vcfg::write>,
-    vcfg::var<cfg::context::ticket,         vcfg::write>,
-    vcfg::var<cfg::context::waitinforeturn, vcfg::write>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>,
+    vcfg::var<cfg::context::comment,                    vcfg::set>,
+    vcfg::var<cfg::context::duration,                   vcfg::set>,
+    vcfg::var<cfg::context::ticket,                     vcfg::set>,
+    vcfg::var<cfg::context::waitinforeturn,             vcfg::set>,
+    vcfg::var<cfg::translation::language,               vcfg::get>,
+    vcfg::var<cfg::font,                                vcfg::get>,
+    vcfg::var<cfg::theme,                               vcfg::get>
 >;
 
 class FlatWaitMod : public InternalMod, public NotifyApi

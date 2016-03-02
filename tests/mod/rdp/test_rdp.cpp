@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //                  );
 
     #include "fixtures/dump_w2008.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

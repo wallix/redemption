@@ -363,6 +363,14 @@ BOOST_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
     }
 }
 
+bool ends_with(char const * s1, char const * s2) {
+    return ends_with(s1, strlen(s1), s2, strlen(s2));
+}
+
+bool ends_case_with(char const * s1, char const * s2) {
+    return ends_case_with(s1, strlen(s1), s2, strlen(s2));
+}
+
 BOOST_AUTO_TEST_CASE(TestEndsWith)
 {
     BOOST_CHECK(!ends_with("", "ini"));

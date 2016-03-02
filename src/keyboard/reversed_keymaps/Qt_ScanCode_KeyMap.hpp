@@ -103,8 +103,12 @@
 
 #include "reversed_keymaps/keylayouts_r.hpp"
 
+#ifdef QT5
+#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QKeyEvent>
+#endif
+#ifdef QT4
 #include <QtGui/QKeyEvent>
-
+#endif
 
 
                                  

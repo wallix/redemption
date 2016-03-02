@@ -315,7 +315,7 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "session_probe_use_smart_launcher", desc{
             "Minimum supported server : Windows Server 2008.\n"
             "Clipboard redirection should be remain enabled on Terminal Server."
-        }, real_name{"session_probe_use_clipboard_based_launcher"}, set(true), r);
+        }, real_name{"session_probe_use_clipboard_based_launcher"}, set(false), r);
         W.member(A, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
         W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
             "Behavior on failure to launch Session Probe.\n"
@@ -472,13 +472,19 @@ void config_spec_definition(Writer && W)
 
     W.section("crypto", [&]
     {
-        W.member(H, type_<StaticKeyString<32>>(), "encryption_key", real_name{"key0"}, set(
+        W.member(H, type_<StaticKeyString<32>>(), "encryption_key",
+            real_name{"key0"},
+            str_authid{"encryption_key"},
+            set(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
         ), r);
-        W.member(H, type_<StaticKeyString<32>>(), "sign_key", real_name{"key1"}, set(
+        W.member(H, type_<StaticKeyString<32>>(), "sign_key",
+            real_name{"key1"},
+            str_authid{"sign_key"},
+            set(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -547,9 +553,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<bool>(), "selector", set(false), r);
         W.member(type_<unsigned>(), "selector_current_page", set(1), rw);
-        W.member(type_<std::string>(), "selector_device_filter", r);
-        W.member(type_<std::string>(), "selector_group_filter", r);
-        W.member(type_<std::string>(), "selector_proto_filter", r);
+        W.member(type_<std::string>(), "selector_device_filter", rw);
+        W.member(type_<std::string>(), "selector_group_filter", rw);
+        W.member(type_<std::string>(), "selector_proto_filter", rw);
         W.member(type_<unsigned>(), "selector_lines_per_page", set(0), rw);
         W.member(type_<unsigned>(), "selector_number_of_pages", set(1), r);
         W.sep();

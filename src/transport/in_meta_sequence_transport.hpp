@@ -395,7 +395,7 @@ struct InMetaSequenceTransport : public Transport
         }
     } * cfb;
 
-    struct buf_meta_t {
+    class buf_meta_t {
         CryptoContext * cctx;
         int file_fd;
         int encryption;
@@ -406,6 +406,7 @@ struct InMetaSequenceTransport : public Transport
         uint32_t       decrypt_state;                   // enum crypto_file_state
         unsigned int   decrypt_MAX_CIPHERED_SIZE;       // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
+    public:
         buf_meta_t(CryptoContext * cctx, int encryption)
             : cctx(cctx)
             , file_fd(-1)
@@ -440,7 +441,7 @@ struct InMetaSequenceTransport : public Transport
 
         void open(const char * meta_filename)
         {
-            if (encryption){
+            if (this->encryption){
                 unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
                 size_t base_len = 0;
                 const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(meta_filename, base_len));

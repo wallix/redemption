@@ -26,7 +26,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "transport/test_transport.hpp"
 #include "RDP/gcc.hpp"
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     TestTransport t("test_gcc",
         "", 0,
         gcc_conference_create_request_expected,
-        sizeof(gcc_conference_create_request_expected),
+        sizeof(gcc_conference_create_request_expected) - sizeof(gcc_user_data),
         256);
 
     StaticOutStream<65536> stream;
@@ -154,7 +154,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     uint8_t buf[16];
     OutStream out_stream(buf);
     GCC::UserData::SCNet sc_net;
-    sc_net.length = 16;
     sc_net.MCSChannelId = 1003;
     sc_net.channelCount = 3;
     sc_net.channelDefArray[0].id = 1004;
@@ -171,7 +170,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
         InStream in_stream(buf);
         sc_net2.recv(in_stream, bogus_sc_net_size);
         BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-        BOOST_CHECK_EQUAL(16, sc_net2.length);
         BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
         BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
         BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
@@ -624,7 +622,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
     OutStream out_stream(buf);
     sc_sec1.emit(out_stream);
 
-    CheckTransport ct(indata, sizeof(indata));
+    CheckTransport ct(indata, sizeof(indata) - 1);
 
     ct.send(out_stream.get_data(), out_stream.get_offset());
 }

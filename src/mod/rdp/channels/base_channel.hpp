@@ -92,6 +92,7 @@ protected:
         }
     }
 
+public:
     inline void send_message_to_server(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
@@ -102,6 +103,7 @@ protected:
         }
     }
 
+protected:
     inline void update_exchanged_data(uint32_t data_length)
     {
         this->exchanged_data += data_length;

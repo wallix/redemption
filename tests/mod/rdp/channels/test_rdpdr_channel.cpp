@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel.hpp"
-    TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
+    TestTransport t("rdpdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
         verbose);
 
     TestToClientSender to_client_sender(t);
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_no_drive.hpp"
-    TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
+    TestTransport t("rdpdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
         verbose);
 
     TestToClientSender to_client_sender(t);
@@ -381,7 +381,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_no_print.hpp"
-    TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
+    TestTransport t("rdpdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
         verbose);
 
     TestToClientSender to_client_sender(t);
@@ -503,7 +503,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_no_drive_no_print.hpp"
-    TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
+    TestTransport t("rdpdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
         verbose);
 
     TestToClientSender to_client_sender(t);
@@ -625,7 +625,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_device_remove.hpp"
-    TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
+    TestTransport t("rdpdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
         verbose);
 
     TestToClientSender to_client_sender(t);
@@ -747,7 +747,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_fragmented_header.hpp"
-    TestTransport t("rdpdr", indata, sizeof(indata), outdata, sizeof(outdata),
+    TestTransport t("rdpdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
         verbose);
 
     TestToClientSender to_client_sender(t);

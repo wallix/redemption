@@ -3318,7 +3318,6 @@ private:
 // targetUser (2 bytes): A 16-bit, unsigned integer. The MCS channel ID of the
 //   target user.
 
-    TODO(" duplicated code in mod/rdp")
     void send_synchronize()
     {
         if (this->verbose & 1) {

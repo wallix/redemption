@@ -32,18 +32,18 @@
 
 
 using FlatWabCloseModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,       vcfg::wait | vcfg::read>,
-    vcfg::var<cfg::globals::target_device,   vcfg::wait | vcfg::read | vcfg::ask>,
-    vcfg::var<cfg::globals::target_user,     vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::context::selector,        vcfg::ask>,
-    vcfg::var<cfg::context::target_protocol, vcfg::ask>,
-    vcfg::var<cfg::globals::close_timeout>,
-    vcfg::var<cfg::globals::target_application>,
-    vcfg::var<cfg::context::auth_error_message>,
-    vcfg::var<cfg::context::module>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::globals::auth_user,          vcfg::get | vcfg::is_asked>,
+    vcfg::var<cfg::globals::target_device,      vcfg::get | vcfg::ask | vcfg::is_asked>,
+    vcfg::var<cfg::globals::target_user,        vcfg::get | vcfg::ask>,
+    vcfg::var<cfg::context::selector,           vcfg::ask>,
+    vcfg::var<cfg::context::target_protocol,    vcfg::ask>,
+    vcfg::var<cfg::globals::close_timeout,      vcfg::get>,
+    vcfg::var<cfg::globals::target_application, vcfg::get>,
+    vcfg::var<cfg::context::auth_error_message, vcfg::get>,
+    vcfg::var<cfg::context::module,             vcfg::get>,
+    vcfg::var<cfg::translation::language,       vcfg::get>,
+    vcfg::var<cfg::font,                        vcfg::get>,
+    vcfg::var<cfg::theme,                       vcfg::get>
 >;
 
 class FlatWabCloseMod : public InternalMod, public NotifyApi

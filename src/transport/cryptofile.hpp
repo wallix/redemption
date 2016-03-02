@@ -173,6 +173,9 @@ class CryptoContext {
                 this->master_key_loaded = true;
             }
             else {
+                if (this->key_source == 1){
+                    this->get_master_key_from_ini();
+                }
                 // no way to get the key raise some error
             }
         }
@@ -304,6 +307,7 @@ class CryptoContext {
     int get_master_key_from_ini()
     {
         memcpy(this->master_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->master_key));
+        this->master_key_loaded = true;
         return 0;
     }
 
@@ -314,13 +318,13 @@ class CryptoContext {
         return 0;
     }
 
-    void set_master_key(const char * key)
+    void set_master_key(const uint8_t * key)
     {
         memcpy(this->master_key, key, sizeof(this->master_key));
         this->master_key_loaded = true;
     }
 
-    void set_hmac_key(const char * key)
+    void set_hmac_key(const uint8_t * key)
     {
         memcpy(this->hmac_key, key, sizeof(this->hmac_key));
         this->hmac_key_loaded = true;

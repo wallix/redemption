@@ -34,7 +34,7 @@
 BOOST_AUTO_TEST_CASE(TestNego)
 {
     LOG(LOG_INFO, "============= Test Nego Client Side ===========");
-    const char client[65000] =
+    const char client[] =
 // RDP Negotiation Request
 /* 0000 */ "\x03\x00\x00\x2a\x25\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...*%......Cooki
 /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x74\x65\x73\x74" //e: mstshash=test
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
 
         ;
 
-    const char server[65000] =
+    const char server[] =
 // RDP Negotiation Response
 /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x02" //................
 /* 0010 */ "\x00\x00\x00"                                                     //...
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
 
         ;
-    TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
+    TestTransport logtrans("test", server, sizeof(server)-1, client, sizeof(client)-1);
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";

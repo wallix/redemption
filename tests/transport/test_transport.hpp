@@ -31,6 +31,8 @@
 
 #include <new>
 #include <memory>
+#include <stdexcept>
+#include <sstream>
 
 class InputTransportDynarray : public Transport
 {
@@ -91,7 +93,6 @@ struct GeneratorTransport : public InputTransportDynarray
             LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
         }
     }
-
 };
 
 
@@ -101,6 +102,11 @@ class CheckTransport
     std::unique_ptr<uint8_t[]> data;
     std::size_t len;
     std::size_t current;
+    bool remaining_is_error = true;
+
+    struct remaining_error : std::runtime_error {
+        using std::runtime_error::runtime_error;
+    };
 
 public:
     CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
@@ -114,6 +120,25 @@ public:
         memcpy(this->data.get(), data, len);
     }
 
+    void disable_remaining_error() {
+        this->remaining_is_error = false;
+    }
+
+    ~CheckTransport() override {
+        this->disconnect();
+    }
+
+    bool disconnect() override {
+        if (this->remaining_is_error && this->len != this->current) {
+            this->status = false;
+            std::ostringstream out;
+            out << "Check transport remaining=" << (this->len-this->current) << " len=" << this->len;
+            this->remaining_is_error = true;
+            throw remaining_error{out.str()};
+        }
+        return true;
+    }
+
 private:
     void do_send(const char * const data, size_t len)
     {
@@ -124,11 +149,11 @@ private:
             while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
                 ++differs;
             }
-            LOG(LOG_INFO, "=============== Common Part =======");
+            LOG(LOG_ERR, "=============== Common Part =======");
             hexdump_c(data, differs);
-            LOG(LOG_INFO, "=============== Expected ==========");
+            LOG(LOG_ERR, "=============== Expected ==========");
             hexdump_c(this->data.get() + this->current + differs, available_len - differs);
-            LOG(LOG_INFO, "=============== Got ===============");
+            LOG(LOG_ERR, "=============== Got ===============");
             hexdump_c(data + differs, available_len - differs);
             this->data.reset();
             this->status = false;
@@ -138,10 +163,10 @@ private:
         this->current += available_len;
 
         if (available_len != len){
-            LOG(LOG_INFO, "Check transport out of reference data available=%zu len=%zu", available_len, len);
-            LOG(LOG_INFO, "=============== Common Part =======");
+            LOG(LOG_ERR, "Check transport out of reference data available=%zu len=%zu", available_len, len);
+            LOG(LOG_ERR, "=============== Common Part =======");
             hexdump_c(data, available_len);
-            LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
+            LOG(LOG_ERR, "=============== Got Unexpected Data ==========");
             hexdump_c(data + available_len, len - available_len);
             this->data.reset();
             this->status = false;
@@ -168,6 +193,10 @@ public:
     , gen(outdata, outlen, verbose)
     , public_key_length(0)
     {}
+
+    void disable_remaining_error() {
+        this->check.disable_remaining_error();
+    }
 
     void set_public_key(const uint8_t * data, size_t data_size) {
         this->public_key.reset(new uint8_t[data_size]);

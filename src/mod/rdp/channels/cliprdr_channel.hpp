@@ -28,6 +28,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/stream.hpp"
 
+#include <iostream>
 #include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
@@ -55,8 +56,7 @@ private:
 
     auth_api*  param_acl = nullptr;
 
-    std::unique_ptr<uint8_t[]> file_descriptor_data;
-    OutStream                  file_descriptor_stream;
+    StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
     FrontAPI& front;
 
@@ -92,10 +92,6 @@ public:
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , param_acl(params.acl)
-    , file_descriptor_data(
-          std::make_unique<uint8_t[]>(RDPECLIP::FileDescriptor::size()))
-    , file_descriptor_stream(
-          file_descriptor_data.get(), RDPECLIP::FileDescriptor::size())
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr) {}
 

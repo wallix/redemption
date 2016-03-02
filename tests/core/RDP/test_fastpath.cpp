@@ -27,8 +27,8 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-// #define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
 #include "stream.hpp"
 #include "transport/test_transport.hpp"
@@ -214,7 +214,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     size_t payload_length = 46;
 
     GeneratorTransport in_t(payload, payload_length);
-    CheckTransport     out_t(payload, payload_length);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];

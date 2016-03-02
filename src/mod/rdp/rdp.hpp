@@ -89,7 +89,6 @@
 #include "mod/rdp/rdp_params.hpp"
 #include "utils/algostring.hpp"
 #include "utils/cast.hpp"
-#include "utils/finally.hpp"
 #include "utils/splitter.hpp"
 #include "utils/timeout.hpp"
 
