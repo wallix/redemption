@@ -945,7 +945,11 @@ public:
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
     
-
+    void setClipboard() {
+        QImage image;
+        this->_clipboard->setImage(image, QClipboard::Clipboard);
+    }
+    
     
 public Q_SLOTS:
     void call_Draw() {
@@ -956,8 +960,17 @@ public Q_SLOTS:
         if (this->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
             
+            
             if (!mimeData->hasUrls()) {
-                if (mimeData->hasText()){
+                if (mimeData->hasImage()){
+                    
+                    QImage image(this->_clipboard->image());
+                    
+                    uint32_t formatIDs[]                  = {RDPECLIP::CF_METAFILEPICT};
+                    std::string formatListDataShortName[] = {std::string("")};
+                    this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+                    
+                } else if (mimeData->hasText()){
                     
                     int cmptCR(0);
                     

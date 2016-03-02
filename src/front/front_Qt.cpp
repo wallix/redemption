@@ -51,7 +51,7 @@
 #define USER_CONF_PATH "userConfig.config"
 
 
-Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
+Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     : Front_Qt_API(false, false, verbose)
     , mod_bpp(24)
     , mod_palette(BGRPalette::classic_332())
@@ -169,6 +169,8 @@ Front_Qt::Front_Qt(char* argv[] = {}, int argc = 0, uint32_t verbose = 0)
 
         this->disconnect("");
     }
+    
+    
 }
 
 
@@ -1264,17 +1266,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
         InStream chunk(data, chunk_size);
 
-        InStream chunk_series(chunk);
+        InStream chunk_series = chunk.clone();
 
         uint16_t server_message_type = chunk.in_uint16_le();
 
-            /*if (!chunk.in_check_rem(2  msgType(2) )) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Truncated msgType, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }*/
+        if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
+            LOG(LOG_ERR,
+                "ClipboardVirtualChannel::process_client_message: "
+                    "Truncated msgType, need=2 remains=%zu",
+                chunk.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
 
         switch (server_message_type) {
             case RDPECLIP::CB_CLIP_CAPS:
@@ -1297,17 +1299,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 this->process_server_monitor_ready_pdu();
                 
                 {
-                    uint32_t formatIDs[]                  = {RDPECLIP::CF_UNICODETEXT
+                    uint32_t formatIDs[]                  = { RDPECLIP::CF_UNICODETEXT
                                                             , RDPECLIP::CF_TEXT
                                                             , RDPECLIP::CF_BITMAP
                                                             , 49364
-                    };
+                                                                                       };
                                             
                     std::string formatListDataShortName[] = {""
                                                             , ""
                                                             , ""
                                                             , RDPECLIP::get_format_short_name(RDPECLIP::SF_TEXT_HTML)
-                    };
+                                                                                                                     };
                     
                     this->send_FormatListPDU(formatIDs, formatListDataShortName, 3);
                 }
@@ -1425,22 +1427,21 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
     }
     
     switch (this->_requestedFormatId) {
-        case RDPECLIP::CF_UNICODETEXT: this->send_to_clipboard_buffer(chunk);
+        case RDPECLIP::CF_UNICODETEXT:  this->send_to_clipboard_textBuffer(chunk);
         break;
         
-        case RDPECLIP::CF_TEXT:        this->send_to_clipboard_buffer(chunk);
+        case RDPECLIP::CF_TEXT:         this->send_to_clipboard_textBuffer(chunk);
         break;
         
-        case RDPECLIP::CF_BITMAP: std::cout << " CF_BITMAP";
+        case RDPECLIP::CF_BITMAP:       //this->send_to_clipboard_imageBuffer(chunk);
         break;
         
-        case RDPECLIP::CF_METAFILEPICT: std::cout << " CF_METAFILEPICT";
+        case RDPECLIP::CF_METAFILEPICT: this->send_to_clipboard_imageBuffer(chunk);
         break;
         
         default: 
             if (strcmp(this->_requestedFormatShortName.c_str(), RDPECLIP::get_format_short_name(RDPECLIP::SF_TEXT_HTML)) == 0) {
-                isTextHtml = true;
-                this->send_to_clipboard_buffer(chunk);
+                                        this->send_to_clipboard_textBuffer(chunk);
             } else {
                 std::cout << " Format Data not recognized (" << (int) this->_requestedFormatId << ")" << std::endl;
             }
@@ -1449,7 +1450,28 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
     }
     
     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-        this->send_buffer_to_clipboard(isTextHtml);
+        
+        switch (this->_requestedFormatId) {
+            case RDPECLIP::CF_UNICODETEXT:  this->send_textBuffer_to_clipboard(false);
+            break;
+            
+            case RDPECLIP::CF_TEXT:         this->send_textBuffer_to_clipboard(false);
+            break;
+            
+            case RDPECLIP::CF_BITMAP:       //this->send_ImageBuffer_to_clipboard();
+            break;
+            
+            case RDPECLIP::CF_METAFILEPICT: this->send_imageBuffer_to_clipboard();
+            break;
+            
+            default: 
+                if (strcmp(this->_requestedFormatShortName.c_str(), RDPECLIP::get_format_short_name(RDPECLIP::SF_TEXT_HTML)) == 0) {
+                                            this->send_textBuffer_to_clipboard(true);
+                }
+                
+            break;
+        }
+        
         std::cout << " Last";
     } else if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
         std::cout << " Middle";
@@ -1458,7 +1480,11 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
     std::cout << std::endl;
 }
 
-void Front_Qt::send_to_clipboard_buffer(InStream & chunk) {
+void send_to_clipboard_imageBuffer(InStream & chunk) {
+    
+}
+
+void Front_Qt::send_to_clipboard_textBuffer(InStream & chunk) {
     const size_t length_of_data_to_dump(chunk.in_remain());
     const size_t sum_buffer_and_data(this->_bufferRDPClipboardChannelSize + length_of_data_to_dump);
 
@@ -1481,7 +1507,11 @@ void Front_Qt::send_to_clipboard_buffer(InStream & chunk) {
     this->_bufferRDPClipboardChannelSize = sum_buffer_and_data;
 }
 
-void Front_Qt::send_buffer_to_clipboard(bool isTextHtml) {
+void Front_Qt::send_imageBuffer_to_clipboard() {
+ 
+}
+
+void Front_Qt::send_textBuffer_to_clipboard(bool isTextHtml) {
     uint8_t * utf8_string = new uint8_t[this->_bufferRDPClipboardChannelSize/2];
     
     size_t length_of_utf8_string = ::UTF16toUTF8(
@@ -1721,11 +1751,11 @@ void Front_Qt::call_Draw() {
 int main(int argc, char** argv){
 
     //" -name QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389";
-
+    std::cout << "built" << std::endl;
     QApplication app(argc, argv);
 
     int verbose = 511;
-
+    
     Front_Qt front(argv, argc, verbose);
 
 

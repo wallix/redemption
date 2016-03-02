@@ -262,7 +262,7 @@ public:
 
     void send_FormatDataRequestPDU();
     
-    void send_buffer_to_clipboard(bool isTextHtml);
+    void send_buffer_to_clipboard();
     
     void process_server_clipboard_data(int flags, InStream & chunk);
     
@@ -272,9 +272,15 @@ public:
     
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
     
-    void send_to_clipboard_buffer(InStream & chunk);
-    
     std::string HTMLtoASCII(const std::string & html);
+    
+    void send_to_clipboard_textBuffer(InStream & chunk);
+    
+    void send_to_clipboard_imageBuffer(InStream & chunk);
+
+    void send_textBuffer_to_clipboard(bool isTextHtml);
+    
+    void send_imageBuffer_to_clipboard();
     
     
     
