@@ -2253,14 +2253,15 @@ public:
         }
 
         uint8_t const * const VolumeLabel_unicode_data = stream.get_current();
-        uint8_t VolumeLabel_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+        uint8_t VolumeLabel_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes + 1];
 
         const size_t length_of_VolumeLabel_utf8_string = ::UTF16toUTF8(
             VolumeLabel_unicode_data, VolumeLabelLength / 2,
-            VolumeLabel_utf8_string, sizeof(VolumeLabel_utf8_string));
+            VolumeLabel_utf8_string, sizeof(VolumeLabel_utf8_string) - 1);
 
         stream.in_skip_bytes(VolumeLabelLength);
 
+        VolumeLabel_utf8_string[length_of_VolumeLabel_utf8_string] = '\0';
         for (uint8_t * c =
                  VolumeLabel_utf8_string + length_of_VolumeLabel_utf8_string - 1;
              (c >= VolumeLabel_utf8_string) && ((*c) == ' '); c--) {

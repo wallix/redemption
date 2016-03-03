@@ -1575,8 +1575,10 @@ public:
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<3>(*target_iter)) {
                                         if (!::ends_case_with(
-                                                std::get<2>(*target_iter).c_str(),
-                                                "/desktop.ini")) {
+                                                std::get<2>(*target_iter).data(),
+                                                std::get<2>(*target_iter).size(),
+                                                "/desktop.ini",
+                                                sizeof("/desktop.ini")-1)) {
                                             if (this->param_acl) {
                                                 std::string info("file_name=\"");
                                                 info += std::get<2>(*target_iter).c_str();

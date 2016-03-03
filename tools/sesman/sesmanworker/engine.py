@@ -9,6 +9,7 @@ try:
     from wabengine.common.exception import LicenseLimitReached
     from wabengine.common.exception import MustChangePassword
     from wabengine.common.exception import AccountLocked
+    from wabengine.common.exception import SessionAlreadyStopped
     from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
         PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, \
         RDP_PATTERN_FOUND, FILESYSTEM_FULL
@@ -473,9 +474,9 @@ class Engine(object):
             def fc(string):
                 return string if case_sensitive else string.lower()
 
-            if (fc(target_info.group).find(fc(group_filter)) == -1 or
-                fc(temp_service_login).find(fc(device_filter)) == -1 or
-                fc(temp_resource_service_protocol_cn).find(fc(protocol_filter)) == -1):
+            if (not fc(group_filter) in fc(target_info.group) or
+                not fc(device_filter) in fc(temp_service_login) or
+                not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
                 item_filtered = True
                 continue
 
@@ -815,6 +816,8 @@ class Engine(object):
                 #               (self.session_result, self.session_diag, title))
                 self.wabengine.stop_session(self.session_id, result=self.session_result,
                                             diag=self.session_diag, title=title)
+        except SessionAlreadyStopped:
+            pass
         except Exception, e:
             import traceback
             Logger().info("Engine stop_session failed: (((%s)))" % (traceback.format_exc(e)))
@@ -865,6 +868,7 @@ class Engine(object):
             if video_path:
                 # Notify WabEngine with Trace file descriptor
                 trace = self.wabengine.get_trace_writer(self.session_id, trace_type=u"rdptrc")
+                trace.initialize()
                 trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8')) ) )
                 trace.end()
         except Exception, e:
@@ -990,7 +994,7 @@ class Engine(object):
             domain = ""
         if right.account.domain_cn == AM_IL_DOMAIN:
             return login
-        trule = right.resource.service.connectionpolicy.data.get("global", {}).get("transformation_rule")
+        trule = right.resource.service.connectionpolicy.data.get("general", {}).get("transformation_rule")
         if (trule and '${LOGIN}' in trule):
             return trule.replace('${LOGIN}', login).replace('${DOMAIN}', domain or '')
         if not domain:

@@ -22,6 +22,9 @@
 #ifndef FRONT_QT_HPP
 #define FRONT_QT_HPP
 
+#define QT4
+//#define QT5
+
 #include <stdio.h>
 #include <openssl/ssl.h>
 #include <iostream>
@@ -37,7 +40,7 @@
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp" 
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -69,9 +72,12 @@
 #include "client_info.hpp"
 #include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
 
+#ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QImage>
- 
-
+#endif
+#ifdef QT4
+#include <QtGui/QImage>
+#endif
 
 
 class Form_Qt;
@@ -92,31 +98,48 @@ private:
 
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            std::cout << "operator()  call" << std::endl;
+            //std::cout << "operator()  server " << (int)flags  << std::endl;
             InStream chunk(chunk_data, chunk_data_length);
             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, chunk_data_length, flags);
         }
     };
-    
-    
+
+    class ClipboardClientChannelDataSender : public VirtualChannelDataSender
+    {
+    public:
+        FrontAPI            * _front;
+        CHANNELS::ChannelDef  _channel;
+
+        ClipboardClientChannelDataSender() = default;
+
+
+        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
+            //std::cout << "operator()  client " << (int)flags  << std::endl;
+
+            this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
+        }
+    };
+
+
 public:
     uint32_t          verbose;
     ClientInfo        _info;
-    std::string       _userName;     
-    std::string       _pwd;          
-    std::string       _targetIP;     
-    int               _port;         
+    std::string       _userName;
+    std::string       _pwd;
+    std::string       _targetIP;
+    int               _port;
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
     mod_api         * _callback;
-    QImage::Format    _imageFormatRGB;  
+    QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
-    Qt_ScanCode_KeyMap   _qtRDPKeymap;  
+    ClipboardClientChannelDataSender _to_client_sender;
+    Qt_ScanCode_KeyMap   _qtRDPKeymap;
     int                  _fps;
-    
-    
+
+
     Front_Qt_API( bool param1
                 , bool param2
                 , int verb)
@@ -127,9 +150,11 @@ public:
     , _callback(nullptr)
     , _qtRDPKeymap()
     , _fps(30)
-    {}
-    
-    
+    {
+        this->_to_client_sender._front = this;
+    }
+
+
     virtual void connexionPressed() = 0;
     virtual void connexionReleased() = 0;
     virtual void closeFromScreen() = 0;
@@ -151,26 +176,22 @@ public:
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
-    virtual void send_Cliboard(uint32_t total_length,
-                       uint32_t flags, 
-                       const uint8_t* chunk_data,
-                       uint32_t chunk_data_length) = 0;
+    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
 };
- 
-    
-    
+
+
+
 class Front_Qt : public Front_Qt_API
-{    
-   
+{
+
 public:
-    CHANNELS::ChannelDefArray   cl;
-    
+
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
     Form_Qt            * _form;
     Screen_Qt          * _screen;
-    
+
     // Connexion socket members
     Connector_Qt       * _connector;
     int                  _timer;
@@ -181,7 +202,12 @@ public:
     Keymap2              _keymap;
     bool                 _ctrl_alt_delete; // currently not used and always false
     StaticOutStream<256> _decoded_data;    // currently not initialised
-    uint8_t              _keyboardMods;    
+    uint8_t              _keyboardMods;
+    CHANNELS::ChannelDefArray   _cl;
+    uint32_t             _requestedFormatId = 0;
+    std::string          _requestedFormatShortName;   
+    uint8_t            * _bufferRDPClipboardChannel;
+    size_t               _bufferRDPClipboardChannelSize;
 
     
     
@@ -192,75 +218,63 @@ public:
       , IP_GOTTEN     =  4
       , PORT_GOTTEN   =  8
     };
-    
+
+    enum : long {
+        CHANNEL_OPTION_INITIALIZED   = 0x80000000,
+        CHANNEL_OPTION_ENCRYPT_RDP   = 0x40000000,
+        CHANNEL_OPTION_ENCRYPT_SC    = 0x20000000,
+        CHANNEL_OPTION_ENCRYPT_CS    = 0x10000000,
+        CHANNEL_OPTION_PRI_HIGH      = 0x08000000,
+        CHANNEL_OPTION_PRI_MED       = 0x04000000,
+        CHANNEL_OPTION_PRI_LOW       = 0x02000000,
+        CHANNEL_OPTION_COMPRESS_RDP  = 0x00800000,
+        CHANNEL_OPTION_COMPRESS      = 0x00400000,
+        CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000,
+        REMOTE_CONTROL_PERSISTENT    = 0x00100000
+    };
+
+
     bool setClientInfo() override;
-    
+
     void writeClientInfo() override;
-  
-    virtual void flush() override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "flush()");
-            LOG(LOG_INFO, "========================================\n"); 
-        }
-    }
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
+    virtual void flush() override;
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_to_channel");
-            LOG(LOG_INFO, "========================================\n");
-        }
+    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override;
 
-        const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
-        if (!mod_channel) {
-            return;
-        }
-        
-        if (!strcmp(channel.name, channel_names::cliprdr)) {
-            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-            std::cout << channel.name << " send_to_channel" << std::endl;
-            this->_clipboard_channel.process_server_message(length, flags, data, chunk_size, out_asynchronous_task);
-        }
-    }  
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override;
 
-    virtual void send_global_palette() override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_global_palette()");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
+    virtual void send_global_palette() override;
 
-    virtual void begin_update() override {
-        //if (this->verbose > 10) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "begin_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
-    }
+    virtual void begin_update() override;
 
-    virtual void end_update() override {
-        //if (this->verbose > 10) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "end_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
-    }
+    virtual void end_update() override;
 
-    virtual void set_mod_palette(const BGRPalette & palette) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "set_mod_palette");
-            LOG(LOG_INFO, "========================================\n");
-        }
-    }
+    virtual void set_mod_palette(const BGRPalette & palette) override;
 
     virtual void server_set_pointer(const Pointer & cursor) override;
 
     virtual int server_resize(int width, int height, int bpp) override;
+
+    void process_server_monitor_ready_pdu();
+
+    void send_FormatListResponsePDU();
+
+    void send_FormatDataRequestPDU();
+    
+    void send_buffer_to_clipboard(bool isTextHtml);
+    
+    void process_server_clipboard_data(int flags, InStream & chunk);
+    
+    const uint32_t send_FormatDataResponsePDU(int shift, size_t data_length, uint32_t total_data_length, uint32_t flag);
+    
+    void send_FormatDataResponsePDU();
+    
+    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
+    
+    void send_to_clipboard_buffer(InStream & chunk);
+    
+    std::string HTMLtoASCII(const std::string & html);
     
     
     
@@ -271,245 +285,83 @@ public:
     //---------------------------------------
 
     void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert);
-    
+
     QColor u32_to_qcolor(uint32_t color);
-    
-    QImage::Format bpp_to_QFormat(int bpp, bool alpha) override; 
-    
+
+    QImage::Format bpp_to_QFormat(int bpp, bool alpha) override;
+
     void draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert);
-    
+
     void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy);
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //-----------------------------
-    //      DRAWING FUNCTIONS 
+    //      DRAWING FUNCTIONS
     //-----------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override;
-    
+
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
-    
+
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
-    
+
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
-    
+
     void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override;
-    
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
 
-        std::cout << "RDPDestBlt" << std::endl;
-    }
+    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override;
 
-        std::cout << "RDPMultiDstBlt" << std::endl;
-    }
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override;
 
-        std::cout << "RDPMultiOpaqueRect" << std::endl;
-    }
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override;
 
-        std::cout << "RDPMultiPatBlt" << std::endl;
-    }
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) override;
 
-        std::cout << "RDPMultiScrBlt" << std::endl;
-    }
+    void draw(const RDPPolyline & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "RDPGlyphIndex" << std::endl;
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) override;
 
-       /* RDPGlyphIndex new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);*/
-        //this->gd.draw(new_cmd24, clip, gly_cache);
-    }
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) override;
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "RDPPolygonSC" << std::endl;
+    virtual void draw(const RDP::FrameMarker & order) override;
 
-        /*RDPPolygonSC new_cmd24 = cmd;
-        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);*/
-        //this->gd.draw(new_cmd24, clip);
-    }
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "RDPPolygonCB" << std::endl;
+    virtual void draw(const RDP::RAIL::WindowIcon & order) override;
 
-        /*RDPPolygonCB new_cmd24 = cmd;
-        new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
-        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);*/
-        //this->gd.draw(new_cmd24, clip);
-    }
+    virtual void draw(const RDP::RAIL::CachedIcon & order) override;
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "RDPPolyline" << std::endl;
+    virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
 
-        /*RDPPolyline new_cmd24 = cmd;
-        new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);*/
-        //this->gd.draw(new_cmd24, clip);
-    }
+    virtual void draw(const RDPColCache   & cmd);
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "RDPEllipseSC" << std::endl;
+    virtual void draw(const RDPBrushCache & cmd);
 
-        /*RDPEllipseSC new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);*/
-        //this->gd.draw(new_cmd24, clip);
-    }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "RDPEllipseCB" << std::endl;
-/*
-        RDPEllipseCB new_cmd24 = cmd;
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);*/
-        //this->gd.draw(new_cmd24, clip);
-    }
 
-    virtual void draw(const RDP::FrameMarker & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "FrameMarker" << std::endl;
-        //this->gd.draw(order);
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        std::cout << "NewOrExistingWindow" << std::endl;
-        //this->gd.draw(order);
-    }
-
-    virtual void draw(const RDP::RAIL::WindowIcon & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "WindowIcon" << std::endl;
-        //this->gd.draw(order);
-    }
-
-    virtual void draw(const RDP::RAIL::CachedIcon & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-         std::cout << "CachedIcon" << std::endl;
-
-        //this->gd.draw(order);
-    }
-
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        
-        std::cout << "DeletedWindow" << std::endl;
-
-        //this->gd.draw(order);
-    }
-    
-    virtual void draw(const RDPColCache   & cmd) {}
-    
-    virtual void draw(const RDPBrushCache & cmd) {}
-
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
     //------------------------
     //      CONSTRUCTOR
     //------------------------
-    
+
     Front_Qt(char* argv[], int argc, uint32_t verbose);
-    
+
     // -------- Start of system wide SSL_Ctx option ------------------------------
 
     // ERR_load_crypto_strings() registers the error strings for all libcrypto
@@ -537,180 +389,71 @@ public:
     // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
 
     //SSL_library_init();
-    
+
     ~Front_Qt();
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //------------------------
     //      CONTROLLERS
     //------------------------
-    
-    void mousePressEvent(QMouseEvent *e) override {
-        if (this->_callback != nullptr) {
-            int flag(0); 
-            switch (e->button()) {
-                case 1: flag = MOUSE_FLAG_BUTTON1; break;
-                case 2: flag = MOUSE_FLAG_BUTTON2; break; 
-                case 4: flag = MOUSE_FLAG_BUTTON4; break;
-                default: break; 
-            }
-            //std::cout << "mousePressed" << std::endl;
-            this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &(this->_keymap));
-        } 
-    }
-    
-    void mouseReleaseEvent(QMouseEvent *e) override {
-        if (this->_callback != nullptr) {
-            int flag(0); 
-            switch (e->button()) {
-                case 1: flag = MOUSE_FLAG_BUTTON1; break; 
-                case 2: flag = MOUSE_FLAG_BUTTON2; break; 
-                case 4: flag = MOUSE_FLAG_BUTTON4; break; 
-                default: break;
-            }
-            //std::cout << "mouseRelease" << std::endl;
-            this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap)); 
-        }
-    }
-    
-    void keyPressEvent(QKeyEvent *e) override { 
-        this->_qtRDPKeymap.keyEvent(0       ,      e);
-        if (this->_qtRDPKeymap.scanCode != 0) {
-            this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
-        }
-    }
-    
-    void keyReleaseEvent(QKeyEvent *e) override {
-        this->_qtRDPKeymap.keyEvent(0x8000, e);
-        if (this->_qtRDPKeymap.scanCode != 0) {
-            this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
-        }
-    }
-    
-    void wheelEvent(QWheelEvent *e) override {
-        //std::cout << "wheel " << " delta=" << e->delta() << std::endl;
-        int flag(MOUSE_FLAG_HWHEEL);
-        if (e->delta() < 0) {
-            flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
-        }
-        if (this->_callback != nullptr) {
-            //this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
-        }
-    }
-    
-    bool eventFilter(QObject *obj, QEvent *e) override {
-        if (e->type() == QEvent::MouseMove)
-        {
-            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
-            //std::cout << "MouseMove " <<  mouseEvent->x() << " " <<  mouseEvent->y()<< std::endl;
-            if (this->_callback != nullptr) {
-                this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));  
-            }
-        }
-        return false;
-    }
-    
-    void connexionPressed() override {}
-    
+
+    void mousePressEvent(QMouseEvent *e) override;
+
+    void mouseReleaseEvent(QMouseEvent *e) override;
+
+    void keyPressEvent(QKeyEvent *e) override;
+
+    void keyReleaseEvent(QKeyEvent *e) override;
+
+    void wheelEvent(QWheelEvent *e) override;
+
+    bool eventFilter(QObject *obj, QEvent *e) override;
+
+    void connexionPressed() override;
+
     void connexionReleased() override;
 
-    void RefreshPressed() override {
-        this->refresh(0, 0, this->_info.width, this->_info.height);
-    }
-    
-    void RefreshReleased() override {}
-    
-    void CtrlAltDelPressed() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED;
+    void RefreshPressed() override;
 
-        this->send_rdp_scanCode(0x38, flag);  // ALT
-        this->send_rdp_scanCode(0x1D, flag);  // CTRL
-        this->send_rdp_scanCode(0x53, flag);  // DELETE       
-    }
-    
-    void CtrlAltDelReleased() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
-        
-        this->send_rdp_scanCode(0x38, flag);  // ALT
-        this->send_rdp_scanCode(0x1D, flag);  // CTRL
-        this->send_rdp_scanCode(0x53, flag);  // DELETE  
-    }
-    
-    void disconnexionPressed()  override {}
-    
+    void RefreshReleased() override;
+
+    void CtrlAltDelPressed() override;
+
+    void CtrlAltDelReleased() override;
+
+    void disconnexionPressed()  override;
+
     void disconnexionReleased() override;
- 
-    void refresh(int x, int y, int w, int h) {
-        Rect rect(x, y, w, h);
-        this->_callback->rdp_input_invalidate(rect);
-    }
-    
-    void send_rdp_scanCode(int keyCode, int flag) {
-        this->_keymap.event(flag, keyCode, this->_decoded_data, this->_ctrl_alt_delete); 
-        if (this->_callback != nullptr) {
-            this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap)); 
-        }
-    }
-    
+
+    void refresh(int x, int y, int w, int h);
+
+    void send_rdp_scanCode(int keyCode, int flag);
+
     void connect();
-    
+
     void disconnect(std::string) override;
-    
+
     void closeFromScreen() override;
-    
+
     void dropScreen() override;
-        
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //--------------------------------
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
-    
-    void call_Draw() override {
-        if (this->_callback != nullptr) {
-            try {
-                this->_callback->draw_event(time(nullptr));
-            } catch (const Error & e) {
-                this->dropScreen();
-                const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
-                std::cout << errorMsg << std::endl;
-                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-                
-                this->disconnect(labelErrorMsg);
-            }
-        }
-    }
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    
-    //--------------------------------
-    //   CLIPBOARD EVENTS FUNCTIONS
-    //--------------------------------
-    
-    void send_Cliboard(uint32_t total_length,
-                       uint32_t flags, 
-                       const uint8_t* chunk_data,
-                       uint32_t chunk_data_length) override {
-        
-                        //RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
-            //    this->send_to_front_channel_and_set_buf_size(
-            //        this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
-            //        RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
-            //    );
 
-        this->_clipboard_channel.process_client_message(total_length, flags, chunk_data, chunk_data_length);
-    }
-    
+    void call_Draw() override;
+
+
 };
 
 
-  
+
 
 #endif

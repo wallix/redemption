@@ -86,6 +86,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
 
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
+    trans.disable_remaining_error();
     Inifile ini;
     ini.set<cfg::video::wrm_compression_algorithm>(0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,

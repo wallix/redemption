@@ -271,85 +271,31 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\xA1"
-           "login\nASK\n"
-           "ip_client\n!\n"
-           "ip_target\n!\n"
-           "target_device\nASK\n"
-           "target_login\nASK\n"
-           "bpp\n!24\n"
-           "height\n!600\n"
-           "width\n!800\n"
-           "selector\n!False\n"
-           "selector_current_page\n!1\n"
-           "selector_device_filter\n!\n"
-           "selector_group_filter\n!\n"
-           "selector_proto_filter\n!\n"
-           "selector_lines_per_page\n!0\n"
-           "target_password\nASK\n"
-           "target_host\nASK\n"
-           "proto_dest\nASK\n"
-           "password\nASK\n"
-           "reporting\n!\n"
-           "auth_channel_result\n!\n"
-           "auth_channel_target\n!\n"
-           "accept_message\n!\n"
-           "display_message\n!\n"
-           "real_target_device\n!\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
-
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
+        "\x00\x00\x01\xA1"
+        "login\nASK\n"
+        "ip_client\n!\n"
+        "ip_target\n!\n"
+        "target_device\nASK\n"
+        "target_login\nASK\n"
+        "bpp\n!24\n"
+        "height\n!600\n"
+        "width\n!800\n"
+        "selector\n!False\n"
+        "selector_current_page\n!1\n"
+        "selector_device_filter\n!\n"
+        "selector_group_filter\n!\n"
+        "selector_proto_filter\n!\n"
+        "selector_lines_per_page\n!0\n"
+        "target_password\nASK\n"
+        "target_host\nASK\n"
+        "proto_dest\nASK\n"
+        "password\nASK\n"
+        "reporting\n!\n"
+        "auth_channel_result\n!\n"
+        "auth_channel_target\n!\n"
+        "accept_message\n!\n"
+        "display_message\n!\n"
+        "real_target_device\n!\n"
     ;
 
 //    printf("len=%x\n",

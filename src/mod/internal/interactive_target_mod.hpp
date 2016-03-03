@@ -32,15 +32,15 @@
 #include "widget2/language_button.hpp"
 
 using InteractiveTargetModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::target_user,     vcfg::wait | vcfg::write | vcfg::read>,
-    vcfg::var<cfg::context::target_password, vcfg::wait | vcfg::write>,
-    vcfg::var<cfg::context::target_host,     vcfg::wait | vcfg::write>,
-    vcfg::var<cfg::globals::target_device,   vcfg::read>,
-    vcfg::var<cfg::context::display_message, vcfg::write>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>,
-    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>
+    vcfg::var<cfg::globals::target_user,                vcfg::is_asked | vcfg::set | vcfg::get>,
+    vcfg::var<cfg::context::target_password,            vcfg::is_asked | vcfg::set>,
+    vcfg::var<cfg::context::target_host,                vcfg::is_asked | vcfg::set>,
+    vcfg::var<cfg::globals::target_device,              vcfg::get>,
+    vcfg::var<cfg::context::display_message,            vcfg::set>,
+    vcfg::var<cfg::translation::language,               vcfg::get>,
+    vcfg::var<cfg::font,                                vcfg::get>,
+    vcfg::var<cfg::theme,                               vcfg::get>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>
 >;
 
 class InteractiveTargetMod : public InternalMod, public NotifyApi

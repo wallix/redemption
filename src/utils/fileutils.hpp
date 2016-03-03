@@ -396,6 +396,7 @@ static inline int recursive_delete_directory(const char * directory_path) {
 
     if (dir) {
         struct dirent * ent;
+        size_t const directory_path_len = strlen(directory_path);
 
         while (!return_value && (ent = readdir(dir)))
         {
@@ -404,11 +405,8 @@ static inline int recursive_delete_directory(const char * directory_path) {
                 continue;
             }
 
-            char * entry_path;
-            size_t entry_path_length;
-
-            entry_path_length = strlen(directory_path) + strlen(ent->d_name) + 2;
-            entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
+            size_t entry_path_length = directory_path_len + strlen(ent->d_name) + 2;
+            char * entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
 
             if (entry_path) {
                 struct stat statbuf;

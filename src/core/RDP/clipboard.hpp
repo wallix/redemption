@@ -198,6 +198,20 @@ inline static const char * get_msgType_name(uint16_t msgType) {
 // |                  | ASCII 8.                                               |
 // +------------------+--------------------------------------------------------+
 
+
+// Short Format Name
+enum {
+    SF_TEXT_HTML = 1
+};
+
+inline static const char * get_format_short_name(uint16_t formatID) {
+    switch (formatID) {
+        case SF_TEXT_HTML:         return "text/html";
+    }
+
+    return "<unknown>";
+}
+
 enum {
       CB_RESPONSE_OK   = 0x0001
     , CB_RESPONSE_FAIL = 0x0002
@@ -670,6 +684,23 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_clear_bytes(32); // formatName(32)
     }
 
+    void emit(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
+        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        if (formatListData_size > 32) {
+            formatListData_size = 32;
+        }
+        for (std::size_t i = 0; i < formatListData_size; i++) {
+            stream.out_uint32_le(formatListData[i]);
+            std::string const & currentStr = formatListDataShortName[i];
+            REDASSERT(currentStr.size() <= 32);
+            stream.out_copy_bytes(currentStr.c_str(), currentStr.size());
+            stream.out_clear_bytes(32 - currentStr.size()); // formatName(32)
+        }
+    }
+
     void emit_ex(OutStream & stream, bool unicodetext) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
@@ -694,7 +725,7 @@ struct FormatListPDU : public CliprdrHeader {
         // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
         // |                            formatId                           |
         // +---------------------------------------------------------------+
-        // |                           formatName                          |
+        // |                      formatName (32 bytes)                    |
         // +---------------------------------------------------------------+
         // |                              ...                              |
         // +---------------------------------------------------------------+
@@ -1152,7 +1183,7 @@ public:
             (static_cast<uint64_t>(this->fileSizeHigh) << 32);
     }
 
-    static size_t size() {
+    static constexpr size_t size() {
         return 592; // flags(4) + reserved1(32) + fileAttributes(4) +
                     //     reserved2(16) + lastWriteTime(8) +
                     //     fileSizeHigh(4) + fileSizeLow(4) +

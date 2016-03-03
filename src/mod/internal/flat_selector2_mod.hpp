@@ -31,23 +31,23 @@
 
 
 using FlatSelector2ModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,          vcfg::ask | vcfg::write | vcfg::read>,
-    vcfg::var<cfg::context::selector,           vcfg::ask | vcfg::write>,
-    vcfg::var<cfg::context::target_protocol,    vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_device,      vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_user,        vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::context::password,           vcfg::ask>,
-    vcfg::var<cfg::context::selector_current_page,      vcfg::wait | vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::wait | vcfg::read>,
-    vcfg::var<cfg::context::selector_device_filter,     vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_group_filter,      vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_proto_filter,      vcfg::read | vcfg::write>,
-    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>,
-    vcfg::var<cfg::globals::host>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::globals::auth_user,                  vcfg::ask | vcfg::set | vcfg::get>,
+    vcfg::var<cfg::context::selector,                   vcfg::ask | vcfg::set>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::ask | vcfg::get>,
+    vcfg::var<cfg::globals::target_device,              vcfg::ask | vcfg::get>,
+    vcfg::var<cfg::globals::target_user,                vcfg::ask | vcfg::get>,
+    vcfg::var<cfg::context::password,                   vcfg::ask>,
+    vcfg::var<cfg::context::selector_current_page,      vcfg::is_asked | vcfg::get | vcfg::set>,
+    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::is_asked | vcfg::get>,
+    vcfg::var<cfg::context::selector_device_filter,     vcfg::get | vcfg::set>,
+    vcfg::var<cfg::context::selector_group_filter,      vcfg::get | vcfg::set>,
+    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::get | vcfg::set>,
+    vcfg::var<cfg::context::selector_proto_filter,      vcfg::get | vcfg::set>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>,
+    vcfg::var<cfg::globals::host,                       vcfg::get>,
+    vcfg::var<cfg::translation::language,               vcfg::get>,
+    vcfg::var<cfg::font,                                vcfg::get>,
+    vcfg::var<cfg::theme,                               vcfg::get>
 >;
 
 class FlatSelector2Mod : public InternalMod, public NotifyApi
@@ -118,9 +118,9 @@ public:
     void ask_page()
     {
         this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
-        this->vars.set<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
-        this->vars.set<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
-        this->vars.set<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
+        this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
+        this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
+        this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::selector>();

@@ -30,6 +30,7 @@
 #include "utf.hpp"
 #include "parse.hpp"
 #include "make_unique.hpp"
+#include "bytes_t.hpp"
 
 #include <memory>
 #include <initializer_list>
@@ -64,20 +65,7 @@ public:
     {
     }
 
-    template<std::size_t N>
-    explicit InStream(char const (&array)[N])
-    : InStream(reinterpret_cast<uint8_t const *>(array), N)
-    {
-    }
-
-    template<std::size_t N>
-    explicit InStream(uint8_t const (&array)[N])
-    : InStream(array, N)
-    {
-    }
-
-    template<class T>
-    explicit InStream(T const & array)
+    explicit InStream(const_bytes_array array)
     : InStream(array.data(), array.size())
     {
     }
@@ -389,21 +377,8 @@ public:
     {
     }
 
-    template<std::size_t N>
-    explicit OutStream(char (&array)[N])
-    : OutStream(reinterpret_cast<uint8_t*>(array), N)
-    {
-    }
-
-    template<std::size_t N>
-    explicit OutStream(uint8_t (&array)[N])
-    : OutStream(array, N)
-    {
-    }
-
-    template<class T>
-    explicit OutStream(T & array)
-    : OutStream(&array[0], array.size())
+    explicit OutStream(bytes_array array)
+    : OutStream(array.data(), array.size())
     {
     }
 
@@ -787,6 +762,10 @@ public:
         this->p += n;
     }
 
+    void out_copy_bytes(const char * v, size_t n) {
+        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
+    }
+
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
         this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), strlen(v));
@@ -794,10 +773,6 @@ public:
 
     void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
         memcpy(this->get_data()+offset, v, n);
-    }
-
-    void out_copy_bytes(const char * v, size_t n) {
-        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
     }
 
     void set_out_copy_bytes(const char * v, size_t n, size_t offset) {

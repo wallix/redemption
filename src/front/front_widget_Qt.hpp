@@ -22,11 +22,12 @@
 #ifndef FORM_QT_HPP
 #define FORM_QT_HPP
 
+//#define LOGPRINT
 
 #include "transport/socket_transport.hpp"
 #include "rdp/rdp.hpp"
 #include "../src/front/front_Qt.hpp"
-
+#ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget>
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QLabel>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QPainter>
@@ -49,11 +50,43 @@
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QTableWidget>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QList>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QStringList>
-#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGraphicsScene>
-#include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGraphicsView>
 #include </usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer>
+#include </usr/include/x86_64-linux-gnu/qt5/QtCore/QMimeData>
+#endif
+#ifdef QT4
+#include <QtGui/QWidget>
+#include <QtGui/QLabel>
+#include <QtGui/QPainter>
+#include <QtGui/QColor>
+#include <QtGui/QDesktopWidget>
+#include <QtGui/QApplication>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QWheelEvent>
+#include <QtCore/QSocketNotifier>
+#include <QtGui/QLineEdit>
+#include <QtGui/QFormLayout>
+#include <QtGui/QDialog>
+#include <QtGui/QPushButton>
+#include <QtGui/QClipboard>
+#include <QtGui/QTabWidget>
+#include <QtGui/QGridLayout>
+#include <QtGui/QComboBox>
+#include <QtGui/QCheckBox>
+#include <QtGui/QScrollArea>
+#include <QtGui/QTableWidget>
+#include <QtCore/QList>
+#include <QtCore/QStringList>
+#include <QtCore/QTimer>
+#include <QtCore/QMimeData>
+#endif
 
 #define KEY_SETTING_PATH "keySetting.config"
+
+#define PASTE_ON_SERVER_MAX_CHAR   796
+#define PASTE_ON_SERVER_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
+#define PASTE_ON_CLIENT_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
+#define CLIENT_DATA_RESPONSE_SIZE  (PASTE_ON_SERVER_MAX_SIZE + 8)
+
 
 
 class DialogOptions_Qt : public QDialog
@@ -454,15 +487,15 @@ public:
     const int            _width;
     const int            _height;
     QFormLayout          _formLayout;
-    QLineEdit            _userNameField;
     QLineEdit            _IPField; 
+    QLineEdit            _userNameField;
     QLineEdit            _PWDField;
     QLineEdit            _portField;
-    QLabel               _errorLabel;
-    QLabel               _userNameLabel;           
-    QLabel               _IPLabel;  
+    QLabel               _IPLabel; 
+    QLabel               _userNameLabel;            
     QLabel               _PWDLabel;  
     QLabel               _portLabel;
+    QLabel               _errorLabel;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
       
@@ -473,16 +506,16 @@ public:
         , _width(400)
         , _height(300)
         , _formLayout(this)
-        , _userNameField("", this)
         , _IPField("", this)
+        , _userNameField("", this)
         , _PWDField("", this)
         , _portField("", this)
-        , _errorLabel(   QString(""            ), this)
+        , _IPLabel(      QString("IP serveur :"), this) 
         , _userNameLabel(QString("User name : "), this)         
-        , _IPLabel(      QString("IP serveur :"), this)   
         , _PWDLabel(     QString("Password :  "), this)   
         , _portLabel(    QString("Port :      "), this) 
-        , _buttonConnexion("Connexion", this)
+        , _errorLabel(   QString(""            ), this)
+        , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
     {
         this->setWindowTitle("Client RDP");
@@ -580,7 +613,7 @@ private Q_SLOTS:
     void optionsPressed() {}
     
     void optionsReleased() {
-        DialogOptions_Qt * dia = new DialogOptions_Qt(this->_front, this);
+        new DialogOptions_Qt(this->_front, this);
     }
 };
 
@@ -613,7 +646,7 @@ public:
     , _front(front)
     , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
     , _buttonRefresh("Refresh", this)
-    , _buttonDisconnexion("Disconnexion", this)
+    , _buttonDisconnexion("Disconnection", this)
     , _penColor(Qt::black)
     , _cache(this->_front->_info.width, this->_front->_info.height)
     //, _scene(0, 0, this->_front->_info.width, this->_front->_info.height, this)
@@ -625,13 +658,14 @@ public:
     , _buttonHeight(20)
     , _timer(this)
     {
-        this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
-        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str())); 
+        
+        this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
+        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
     
         QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
@@ -647,7 +681,7 @@ public:
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
-        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
+        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);    
         
         QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), this->_buttonHeight));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
@@ -656,9 +690,7 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
-        
-        this->setFocusPolicy(Qt::StrongFocus); 
-        
+
         QDesktopWidget* desktop = QApplication::desktop();
         int centerW = (desktop->width()/2)  - (this->_width/2);
         int centerH = (desktop->height()/2) - ((this->_height+20)/2);
@@ -666,6 +698,8 @@ public:
         
         this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
         this->_timer.start(1000/this->_front->_fps);
+        
+        this->setFocusPolicy(Qt::StrongFocus);
     }
     
     ~Screen_Qt() {
@@ -776,7 +810,9 @@ public:
     SocketTransport * _sck;
     int               _client_sck;
     QClipboard      * _clipboard;
-    bool              _toUpDateLocalClipboard;
+    bool              _local_clipboard_stream;
+    size_t            _length;
+    uint8_t         * _chunk;
      
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -787,10 +823,12 @@ public:
     , _sck(nullptr)
     , _client_sck(0)
     , _clipboard(nullptr)
-    , _toUpDateLocalClipboard(true) 
+    , _local_clipboard_stream(true)
+    , _length(0)
+    , _chunk(nullptr)
     {
         this->_clipboard = QApplication::clipboard();
-        this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(send_clipboard()));
+        this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
     
     ~Connector_Qt() {
@@ -821,7 +859,7 @@ public:
         const std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
         
         //std::cout << name << " " << this->_front->_pwd << " " << this->_front->_targetIP.c_str() << " " << this->_front->_port << std::endl;
-
+        
         this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay, this->_front->verbose);
 
         if (this->_client_sck > 0) {
@@ -857,8 +895,8 @@ public:
         const char * targetIP(this->_front->_targetIP.c_str());         
         const char * localIP(this->_front->_localIP.c_str());
         
-        
         Inifile ini;
+
         ModRDPParams mod_rdp_params( name
                                     , pwd
                                     , targetIP
@@ -883,7 +921,8 @@ public:
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
         std::string allow_channels = "*";
-        mod_rdp_params.allow_channels                    = &allow_channels;        
+        mod_rdp_params.allow_channels                    = &allow_channels;    
+
         LCGRandom gen(0); // To always get the same client random, in tests
 
         try {
@@ -901,6 +940,11 @@ public:
             this->_front->disconnect(labelErrorMsg);
         }
     }
+    
+    void setClipboard(const std::string & str) {
+        this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+    }
+    
 
     
 public Q_SLOTS:
@@ -908,21 +952,37 @@ public Q_SLOTS:
         this->_front->call_Draw();
     }
     
-    void send_clipboard() {
-        std::cout << "modifying clipboard" << std::endl;
-        if (this->_callback != nullptr && this->_toUpDateLocalClipboard) {
-            //this->_front->send_Cliboard(front_channel_name, chunk, length, flags);
+    void mem_clipboard() {
+        if (this->_callback != nullptr && this->_local_clipboard_stream) {
+            const QMimeData * mimeData = this->_clipboard->mimeData();
+            
+            if (!mimeData->hasUrls()) {
+                if (mimeData->hasText()){
+                    
+                    int cmptCR(0);
+                    
+                    std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
+                    std::string tmp(str);
+                    int pos(tmp.find("\n"));
+                    while (pos != -1) {
+                        cmptCR++;
+                        tmp = tmp.substr(pos+2, tmp.length());  
+                        pos = tmp.find("\n"); // for linux install
+                    }
+                    size_t size((str.length() + cmptCR*2) * 2);
+
+                    this->_chunk = new uint8_t[size];
+                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
+                    
+                    uint32_t formatIDs[]                  = {RDPECLIP::CF_UNICODETEXT};
+                    std::string formatListDataShortName[] = {std::string("")};
+                    this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+                }
+            }
         }
-        
-        /*const char * const front_channel_name
-                    , InStream &         chunk
-                    , size_t             length
-                    , uint32_t           flags
-                    */
     }
     
-
-    
 };
+
 
 #endif
