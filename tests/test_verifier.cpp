@@ -178,3 +178,87 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     unlink(full_test_file_name.c_str());
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */
+
+// python tools/verifier.py -i toto@10.10.43.13\,Administrateur@QA@cible\,20160218-183009\,wab-5-0-0.yourdomain\,7335.mwrm --hash-path tests/fixtures/verifier/hash/ --mwrm-path tests/fixtures/verifier/recorded/ --verbose 10
+
+extern "C" {
+    int hmac_fn(char * buffer)
+    {
+        uint8_t hmac_key[32] = {
+            0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
+            0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
+            0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
+            0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
+        memcpy(buffer, hmac_key, 32);
+        return 0;
+    }
+    
+    int trace_fn(char * base, int len, char * buffer)
+    {
+        // in real uses actual trace_key is derived from base and some master key
+        uint8_t trace_key[32] = {
+            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
+            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
+            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
+            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2
+         };
+        memcpy(buffer, trace_key, 32);
+        return 0;
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini, 1);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char * argv[9] = {};
+        int argc = sizeof(argv)/sizeof(char*);
+        char oneargv[] =
+            "verifier.py\0"
+            "-i\0"
+                "toto@10.10.43.13,Administrateur@QA@cible,"
+                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
+            "--hash-path\0"
+                "tests/fixtures/verifier/hash/\0"
+            "--mwrm-path\0"
+                "tests/fixtures/verifier/recorded/\0"
+            "--verbose\0"
+                "10\0";
+        {
+            int i = 0;
+            char * p = oneargv;
+            for (i = 0 ; i < argc ; i++){
+                argv[i] = p;
+                // provided command line parameters malformed
+                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
+                p++;
+                // provided command line parameters malformed
+                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
+            }
+            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
+        }
+
+        int res = -1;
+        try {
+            res = app_verifier(ini,
+                argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+            if (res == 0){
+                printf("verify ok");
+            }
+            else {
+                printf("verify failed\n");
+            }
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(0, res);
+}
