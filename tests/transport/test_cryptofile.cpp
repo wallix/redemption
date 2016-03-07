@@ -775,7 +775,14 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
         "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
     ));
 
-    CryptoContext cctx(rnd, ini, 2);
+    ini.set<cfg::crypto::key1>(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+
+    CryptoContext cctx(rnd, ini);
 
     const char * file = "tests/fixtures/encrypted_video/"
         "x@10.10.43.13,qaadministrateur@win78,20131211-085926,wab2-4-0-0.yourdomain,5423.rdptrc";
@@ -794,7 +801,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
     unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
     unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
     memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_master_key(), CRYPTO_KEY_LENGTH);
     SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
     memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 
@@ -854,9 +861,15 @@ BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
         "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
         "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
     ));
+    ini.set<cfg::crypto::key1>(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
     LCGRandom rnd(0);
-    CryptoContext cctx(rnd, ini, 2);
-    cctx.get_crypto_key();
+    CryptoContext cctx(rnd, ini);
+    cctx.get_master_key();
 //    hexdump_c(cctx.get_hmac_key(), HMAC_KEY_LENGTH);
     BOOST_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), 32));
 }
@@ -877,10 +890,16 @@ BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey2)
         "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
         "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
         "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"));
+    ini.set<cfg::crypto::key1>(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    CryptoContext cctx(rnd, ini, 2);
-    cctx.get_crypto_key();
+    
+    CryptoContext cctx(rnd, ini);
+    cctx.get_master_key();
     BOOST_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), HMAC_KEY_LENGTH));
 }
 
@@ -897,8 +916,15 @@ BOOST_AUTO_TEST_CASE(TestCryptAndReadBack)
         "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
         "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"));
 
-    CryptoContext cctx(rnd, ini, 2);
-    cctx.get_crypto_key();
+    ini.set<cfg::crypto::key1>(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+
+    CryptoContext cctx(rnd, ini);
+    cctx.get_master_key();
 
     OpenSSL_add_all_digests();
 
@@ -920,7 +946,7 @@ BOOST_AUTO_TEST_CASE(TestCryptAndReadBack)
     unsigned char tmp_derivation[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
     unsigned char derivated[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
     memcpy(tmp_derivation, derivator, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+    memcpy(tmp_derivation + DERIVATOR_LENGTH, cctx.get_master_key(), CRYPTO_KEY_LENGTH);
     SHA256(tmp_derivation, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated);
     memcpy(trace_key, derivated, HMAC_KEY_LENGTH);
 

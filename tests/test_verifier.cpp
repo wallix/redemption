@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 1);
+    CryptoContext cctx(rnd, ini);
 
     uint8_t hmac_key[32] = {};
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char tmp_derivation1[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
     unsigned char derivated2[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
     memcpy(tmp_derivation1, HASH_DERIVATOR, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation1 + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+    memcpy(tmp_derivation1 + DERIVATOR_LENGTH, cctx.get_master_key(), CRYPTO_KEY_LENGTH);
     SHA256(tmp_derivation1, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated2);
     memcpy(hmac_key, derivated2, HMAC_KEY_LENGTH);
 
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     unsigned char tmp_derivation2[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
     unsigned char derivated1[SHA256_DIGEST_LENGTH  + CRYPTO_KEY_LENGTH] = {}; // really should be MAX, but + will do
     memcpy(tmp_derivation2, derivator, DERIVATOR_LENGTH);
-    memcpy(tmp_derivation2 + DERIVATOR_LENGTH, cctx.get_crypto_key(), CRYPTO_KEY_LENGTH);
+    memcpy(tmp_derivation2 + DERIVATOR_LENGTH, cctx.get_master_key(), CRYPTO_KEY_LENGTH);
     SHA256(tmp_derivation2, CRYPTO_KEY_LENGTH + DERIVATOR_LENGTH, derivated1);
     memcpy(trace_key, derivated1, HMAC_KEY_LENGTH);
 
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
         Inifile ini;
         ini.set<cfg::debug::config>(false);
         UdevRandom rnd;
-        CryptoContext cctx(rnd, ini, 1);
+        CryptoContext cctx(rnd, ini);
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 

@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestFilename)
 
         LCGRandom rnd(0);
 
-        CryptoContext cctx(rnd, ini, 1);
+        CryptoContext cctx(rnd, ini);
 
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
 
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 1);
+    CryptoContext cctx(rnd, ini);
 
     {
         CryptoOutFilenameTransport out(&cctx, filename);

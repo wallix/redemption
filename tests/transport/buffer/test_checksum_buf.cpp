@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
     ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
 
     LCGRandom rnd(0);
-    CryptoContext cctx(rnd, ini, 1);
-    cctx.get_crypto_key();
+    CryptoContext cctx(rnd, ini);
+    cctx.get_master_key();
 //    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
     transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.get_hmac_key());
     buf.open();

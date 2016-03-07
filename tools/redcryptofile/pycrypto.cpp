@@ -548,7 +548,7 @@ CryptoContext * get_cctx()
 {
     static CryptoContext * cctx = nullptr;
     if (cctx == nullptr){
-        cctx = new CryptoContext(*get_rnd(), *get_ini(), 1);
+        cctx = new CryptoContext(*get_rnd(), *get_ini());
     }
     return cctx;
 }
