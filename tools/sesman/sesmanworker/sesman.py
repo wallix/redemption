@@ -1541,7 +1541,8 @@ class Sesman():
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
             self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
-            self.engine.set_session_status(diag=u'Restriction pattern detected')
+            if (reason == u'FINDPATTERN_KILL'):
+                self.engine.set_session_status(diag=u'Restriction pattern detected')
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
