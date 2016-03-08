@@ -1906,7 +1906,6 @@ namespace GCC
 
         struct SCNet {
             uint16_t userDataType;
-            uint16_t length;
             uint16_t MCSChannelId;
             uint16_t channelCount;
             struct {
@@ -1915,7 +1914,6 @@ namespace GCC
 
             SCNet()
             : userDataType(SC_NET)
-            , length(12)
             , MCSChannelId(GCC::MCS_GLOBAL_CHANNEL)
             , channelCount(0)
             {
@@ -1923,9 +1921,9 @@ namespace GCC
 
             void emit(OutStream & stream)
             {
-                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
+                uint16_t const length = 8 + 4 * ((this->channelCount+1) >> 1);
                 stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);
+                stream.out_uint16_le(length);
                 stream.out_uint16_le(this->MCSChannelId);
                 stream.out_uint16_le(this->channelCount);
                 for (size_t i = 0; i < this->channelCount ; i++){
@@ -1944,21 +1942,21 @@ namespace GCC
                 }
 
                 this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
+                uint16_t const length = stream.in_uint16_le();
 
-                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
-                    LOG(LOG_ERR, "SCNet::recv bad header length=%" PRIu16 " size=%zu", this->length, stream.get_capacity());
+                if (length < 8 || !stream.in_check_rem(length - 4)){
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%" PRIu16 " size=%zu", length, stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
 
                 this->MCSChannelId = stream.in_uint16_le();
                 this->channelCount = stream.in_uint16_le();
 
-                if (!this->channelCount && (this->length == 10) && bogus_sc_net_size) {
+                if (!this->channelCount && (length == 10) && bogus_sc_net_size) {
                     LOG(LOG_WARNING, "SCNet::recv accepts VirtualBox bogus TS_UD_SC_NET data block.");
                 }
-                else if (this->length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
-                    LOG(LOG_ERR, "SCNet::recv bad header length=%d", this->length);
+                else if (length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%d", length);
                     throw Error(ERR_GCC);
                 }
 
@@ -1977,8 +1975,8 @@ namespace GCC
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
-                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
-                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, this->length);
+                uint16_t const length = 8 + 4 * ((this->channelCount+1) >> 1);
+                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, length);
                 LOG(LOG_INFO, "sc_net::MCSChannelId   = %u", this->MCSChannelId);
                 LOG(LOG_INFO, "sc_net::channelCount   = %u", this->channelCount);
 

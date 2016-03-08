@@ -40,6 +40,8 @@
 
 #include "get_printable_password.hpp"
 
+#include "utils/range.hpp"
+
 #include "configs/parse.hpp"
 #include "configs/c_str_buf.hpp"
 
@@ -247,42 +249,54 @@ public:
         }
 
         void set(char const * value) {
-            this->field->parse(this->ini.variables, value);
+            this->field->parse(this->ini->variables, value);
             this->field->asked_ = false;
-            this->ini.new_from_acl = true;
+            this->ini->new_from_acl = true;
         }
 
         int copy(char * buff, std::size_t n) const {
-            return this->field->copy_val(this->ini.variables, buff, n);
+            return this->field->copy_val(this->ini->variables, buff, n);
         }
 
         char const * c_str() const {
-            return this->field->c_str(this->ini.variables, this->ini.buffers);
+            return this->field->c_str(this->ini->variables, this->ini->buffers);
         }
 
         explicit operator bool () const {
             return this->field;
         }
 
+        authid_t authid() const {
+            return this->id;
+        }
+
         FieldReference(FieldReference &&) = default;
 
+        FieldReference() = default;
+
     private:
-        FieldBase * field;
-        Inifile & ini;
+        FieldBase * field = nullptr;
+        Inifile * ini = nullptr;
+        authid_t id = authid_t::AUTHID_UNKNOWN;
 
         FieldReference(FieldReference const &) = delete;
         FieldReference & operator=(FieldReference const &) = delete;
 
-        FieldReference(FieldBase * field_ptr, Inifile & ini)
-        : field(field_ptr)
-        , ini(ini)
+        FieldReference(Inifile & ini, authid_t id)
+        : field(&ini.fields[static_cast<unsigned>(id)])
+        , ini(&ini)
+        , id(id)
         {}
 
         friend class Inifile;
+        friend class iterator;
     };
 
     FieldReference get_acl_field(authid_t authid) {
-        return {authid >= authid_t::MAX_AUTHID ? nullptr : &this->fields[static_cast<unsigned>(authid)], *this};
+        if (authid >= authid_t::MAX_AUTHID) {
+            return {};
+        }
+        return {*this, authid};
     }
 
     void notify_from_acl() {
@@ -301,12 +315,50 @@ public:
         this->to_send_index.clear();
     }
 
-    template<class Fn>
-    void for_each_changed_field(Fn fn)
+    struct FieldsChanged
     {
-        for (unsigned i : this->to_send_index) {
-            fn(FieldReference{&this->fields[i], *this}, static_cast<authid_t>(i));
-        }
+        struct iterator
+        {
+            iterator & operator++() {
+                ++this->it;
+                return *this;
+            }
+
+            bool operator != (iterator const & other) {
+                return this->it != other.it;
+            }
+
+            FieldReference operator*() const {
+                return {*this->ini, static_cast<authid_t>(*this->it)};
+            }
+
+        private:
+            std::set<unsigned>::const_iterator it;
+            Inifile * ini;
+
+            friend class FieldsChanged;
+
+            iterator(std::set<unsigned>::const_iterator it, Inifile & ini)
+            : it(it)
+            , ini(&ini)
+            {}
+        };
+
+        iterator begin() const { return {this->ini->to_send_index.cbegin(), *this->ini}; }
+        iterator end() const { return {this->ini->to_send_index.cend(), *this->ini}; }
+
+    private:
+        Inifile * ini;
+
+        friend class Inifile;
+
+        FieldsChanged(Inifile & ini)
+        :ini(&ini)
+        {}
+    };
+
+    FieldsChanged get_fields_changed() const {
+        return {*const_cast<Inifile*>(this)};
     }
 
     void check_record_config();

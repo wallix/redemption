@@ -29,10 +29,10 @@
 namespace vcfg {
 
 enum accessmode {
-    read  = 1 << 0,
-    write = 1 << 1,
-    ask   = 1 << 2,
-    wait  = 1 << 3,
+    get      = 1 << 0,
+    set      = 1 << 1,
+    ask      = 1 << 2,
+    is_asked = 1 << 3,
 };
 
 constexpr inline accessmode operator | (accessmode x, accessmode y) {
@@ -43,7 +43,7 @@ constexpr inline accessmode operator & (accessmode x, accessmode y) {
     return static_cast<accessmode>(underlying_cast(x) & underlying_cast(y));
 }
 
-template<class T, accessmode Mode = accessmode::read>
+template<class T, accessmode Mode>
 struct var
 {};
 
@@ -72,21 +72,21 @@ public:
     template<class T>
     typename T::type const & get() const noexcept {
 //         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
-        static_assert(has_access<T>(accessmode::read), "T isn't readable");
+        static_assert(has_access<T>(accessmode::get), "T isn't gettable");
         return this->ini.template get<T>();
     }
 
     template<class T, class U>
     void set(U && new_value) {
 //         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
-        static_assert(has_access<T>(accessmode::write), "T isn't writable");
+        static_assert(has_access<T>(accessmode::set), "T isn't settable");
         return this->ini.template set<T>(std::forward<U>(new_value));
     }
 
     template<class T, class U>
     void set_acl(U && new_value) {
 //         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
-        static_assert(has_access<T>(accessmode::write), "T isn't writable");
+        static_assert(has_access<T>(accessmode::set), "T isn't settable");
         return this->ini.template set_acl<T>(std::forward<U>(new_value));
     }
 
@@ -100,7 +100,7 @@ public:
     template<class T>
     bool is_asked() const {
 //         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
-        static_assert(has_access<T>(accessmode::wait), "T isn't waitable");
+        static_assert(has_access<T>(accessmode::is_asked), "T isn't is_askable");
         return this->ini.template is_asked<T>();
     }
 };

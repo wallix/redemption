@@ -359,8 +359,8 @@ public:
             try {
                 Buffers buffers(this->auth_trans, this->verbose);
 
-                this->ini.for_each_changed_field([&](Inifile::FieldReference bfield, authid_t authid){
-                    char const * key = string_from_authid(authid);
+                for (auto && bfield : this->ini.get_fields_changed()) {
+                    char const * key = string_from_authid(bfield.authid());
                     buffers.push(key);
                     buffers.push('\n');
                     if (bfield.is_asked()) {
@@ -383,7 +383,7 @@ public:
                             LOG(LOG_INFO, "sending %s=%s", key, display_val);
                         }
                     }
-                });
+                }
 
                 buffers.send_buffer();
             }

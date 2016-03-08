@@ -35,13 +35,27 @@ struct array_view
     , sz(sz)
     {}
 
+    constexpr array_view(type * p, type * pright)
+    : p(p)
+    , sz(pright - p)
+    {}
+
     template<std::size_t N>
     constexpr array_view(type (&a)[N])
     : p(a)
     , sz(N)
     {}
 
-    constexpr explicit operator bool () const noexcept { return this->p; }
+    template<class U, class = decltype(
+        *static_cast<type**>(nullptr) = static_cast<U*>(nullptr)->data(),
+        *static_cast<std::size_t*>(nullptr) = static_cast<U*>(nullptr)->size()
+    )>
+    constexpr array_view(U & x)
+    : p(x.data())
+    , sz(x.size())
+    {}
+
+    constexpr bool empty() const noexcept { return this->sz; }
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
@@ -70,25 +84,27 @@ struct array_view<T const>
     , sz(sz)
     {}
 
+    constexpr array_view(type * p, type * pright)
+    : p(p)
+    , sz(pright - p)
+    {}
+
     template<std::size_t N>
     constexpr array_view(type (&a)[N])
     : p(a)
     , sz(N)
     {}
 
-    constexpr array_view(array_view const &) = default;
-    constexpr array_view(array_view<T> const & other)
-    : array_view(other.data(), other.size())
+    template<class U, class = decltype(
+        *static_cast<type**>(nullptr) = static_cast<U*>(nullptr)->data(),
+        *static_cast<std::size_t*>(nullptr) = static_cast<U*>(nullptr)->size()
+    )>
+    constexpr array_view(U & x)
+    : p(x.data())
+    , sz(x.size())
     {}
 
-    array_view & operator=(array_view const &) = default;
-    array_view & operator=(array_view<T> const & other) {
-        this->p = other.data();
-        this->sz = other.size();
-        return *this;
-    }
-
-    constexpr explicit operator bool () const noexcept { return this->p; }
+    constexpr bool empty() const noexcept { return this->sz; }
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
@@ -107,6 +123,18 @@ template<class T>
 constexpr array_view<T> make_array_view(T * x, std::size_t n)
 { return {x, n}; }
 
+template<class T>
+constexpr array_view<T> make_array_view(T * left, T * right)
+{ return {left, right}; }
+
+template<class T>
+constexpr array_view<const T> make_array_view(T const * left, T * right)
+{ return {left, right}; }
+
+template<class T>
+constexpr array_view<const T> make_array_view(T * left, T const * right)
+{ return {left, right}; }
+
 template<class T, std::size_t N>
 constexpr array_view<T> make_array_view(T (&arr)[N])
 { return {arr, N}; }
@@ -118,6 +146,10 @@ constexpr auto make_array_view(Cont & cont) -> array_view<decltype(cont.data())>
 template<class T>
 constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n)
 { return {x, n}; }
+
+template<class T>
+constexpr array_view<const T> make_const_array_view(T const * left, T const * right)
+{ return {left, right}; }
 
 template<class T, std::size_t N>
 constexpr array_view<T const> make_const_array_view(T const (&arr)[N])

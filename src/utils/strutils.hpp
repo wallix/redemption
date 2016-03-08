@@ -151,20 +151,12 @@ inline static size_t linux_to_windows_newline_convert(char const * s,
     return (d_length + s_length);
 }
 
-inline static bool ends_with(const char * str, const char * suffix) {
-    size_t str_length = ::strlen(str);
-    size_t suffix_length = :: strlen(suffix);
-
-    return ((str_length >= suffix_length) &&
-        (strcmp(str + str_length - suffix_length, suffix) == 0));
+inline static bool ends_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len) {
+    return ((str_len >= suffix_len) && (strcmp(str + str_len - suffix_len, suffix) == 0));
 }
 
-inline static bool ends_case_with(const char * str, const char * suffix) {
-    size_t str_length = ::strlen(str);
-    size_t suffix_length = :: strlen(suffix);
-
-    return ((str_length >= suffix_length) &&
-        (strcasecmp(str + str_length - suffix_length, suffix) == 0));
+inline static bool ends_case_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len) {
+    return ((str_len >= suffix_len) && (strcasecmp(str + str_len - suffix_len, suffix) == 0));
 }
 
 // A multi-sz contains a sequence of null-terminated strings,

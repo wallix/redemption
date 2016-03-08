@@ -35,18 +35,18 @@
 #include "utils/timeout.hpp"
 
 using FlatLoginModVariables = vcfg::variables<
-    vcfg::var<cfg::context::password,   vcfg::write>,
-    vcfg::var<cfg::globals::auth_user,  vcfg::write>,
-    vcfg::var<cfg::context::selector,           vcfg::ask | vcfg::write>,
-    vcfg::var<cfg::context::target_protocol,    vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_device,      vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_user,        vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>,
-    vcfg::var<cfg::context::opt_message, vcfg::read>,
-    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::read>,
-    vcfg::var<cfg::globals::authentication_timeout>
+    vcfg::var<cfg::context::password,                   vcfg::set>,
+    vcfg::var<cfg::globals::auth_user,                  vcfg::set>,
+    vcfg::var<cfg::context::selector,                   vcfg::ask>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::ask>,
+    vcfg::var<cfg::globals::target_device,              vcfg::ask>,
+    vcfg::var<cfg::globals::target_user,                vcfg::ask>,
+    vcfg::var<cfg::translation::language,               vcfg::get>,
+    vcfg::var<cfg::font,                                vcfg::get>,
+    vcfg::var<cfg::theme,                               vcfg::get>,
+    vcfg::var<cfg::context::opt_message,                vcfg::get>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>,
+    vcfg::var<cfg::globals::authentication_timeout,     vcfg::get>
 >;
 
 

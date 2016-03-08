@@ -1051,7 +1051,7 @@ using qt : /usr ; #4
 #        <cxxflags>-fPIC
 #    ;
 
-obj front_Qt.o : src/front/front_Qt.cpp
+obj front_Qt.o : src/system/Qt/front_Qt.cpp
     :
 	<include>/usr/include/qt4                   #4
 	#<include>/usr/include/x86_64-linux-gnu/qt5  #5
@@ -1063,9 +1063,9 @@ obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
 exe client_rdp_Qt :
     #test_rdp_Qt.o #
-    src/front/front_Qt.hpp
-    src/front/front_widget_Qt.hpp
-    src/keyboard/reversed_keymaps/Qt_ScanCode_KeyMap.hpp
+    src/system/Qt/front_Qt.hpp
+    src/system/Qt/front_widget_Qt.hpp
+    src/system/Qt/keymaps/Qt_ScanCode_KeyMap.hpp
     front_Qt.o
     bitmap_data_allocator.o
     /qt//QtGui       #4

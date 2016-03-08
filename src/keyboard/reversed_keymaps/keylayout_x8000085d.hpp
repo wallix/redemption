@@ -1,7 +1,7 @@
 #ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X8000085d_HPP_
 #define _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X8000085d_HPP_
 
-#include "keylayout_r.hpp"
+#include "../src/system/Qt/keylayout_r.hpp"
 
 namespace x8000085d{ 
 

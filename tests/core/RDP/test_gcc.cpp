@@ -154,7 +154,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     uint8_t buf[16];
     OutStream out_stream(buf);
     GCC::UserData::SCNet sc_net;
-    sc_net.length = 16;
     sc_net.MCSChannelId = 1003;
     sc_net.channelCount = 3;
     sc_net.channelDefArray[0].id = 1004;
@@ -171,7 +170,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
         InStream in_stream(buf);
         sc_net2.recv(in_stream, bogus_sc_net_size);
         BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-        BOOST_CHECK_EQUAL(16, sc_net2.length);
         BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
         BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
         BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
