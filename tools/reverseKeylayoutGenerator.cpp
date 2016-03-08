@@ -133,7 +133,7 @@ int main () {
         std::stringstream ss;
         ss << std::hex << LCIDreverse;
         std::string name = ss.str();
-        std::ofstream fichier(("src/system/Qt/keymaps/keylayout_x"+name+".hpp").c_str(), std::ios::out | std::ios::trunc);
+        std::ofstream fichier(("src/keyboard/reversed_keymaps/keylayout_x"+name+".hpp").c_str(), std::ios::out | std::ios::trunc);
         
         
         if(fichier) {
@@ -141,7 +141,7 @@ int main () {
             fichier << "#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X"<<std::hex<<LCIDreverse<<"_HPP_" << std::endl;
             fichier << "#define _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X"<<std::hex<<LCIDreverse<<"_HPP_" << std::endl<< std::endl;
             
-            fichier << "#include \"../src/system/Qt/keymaps/keylayout_r.hpp\"" << std::endl<< std::endl;
+            fichier << "#include \"keylayout_r.hpp\"" << std::endl<< std::endl;
             
             fichier << "namespace x"<< std::hex<<LCIDreverse << "{ " << std::endl<< std::endl;
             

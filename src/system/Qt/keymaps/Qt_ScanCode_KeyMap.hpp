@@ -101,7 +101,7 @@
 
 #include <iostream>
 
-#include "../src/system/Qt/keymaps/keylayouts_r.hpp"
+#include "../src/keyboard/reversed_keymaps/keylayouts_r.hpp"
 
 #ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QKeyEvent>
