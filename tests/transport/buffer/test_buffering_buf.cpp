@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestOBufferingBuf)
 
 //        LCGRandom rnd(0);
 
-//        CryptoContext cctx(rnd, ini, 1);
+//        CryptoContext cctx(rnd, ini);
 
 //        ibuffering_file file(&cctx);
 //        BOOST_CHECK(file.open(filename, 0644) > 0);

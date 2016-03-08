@@ -302,7 +302,7 @@ explicit install instexe install-bin install-etc install-etc-themes install-shar
 
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-etc-themes install-share install-lib ;
-alias exe     : rdpproxy redrec reddec redver rdptproxy rdptanalyzer rdpclient ;
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
 alias libs    : libredver libreddec libredrec ;
 
 
@@ -467,25 +467,6 @@ exe rdpproxy
         $(EXE_DEPENDENCIES)
     ;
 
-exe redrec
-    :
-        src/main/recorder.cpp
-        bitmap
-        program_options
-
-        openssl
-        crypto
-        png
-        z
-        dl
-
-        snappy
-#        lzma
-    :
-#         <link>static
-        $(EXE_DEPENDENCIES)
-    ;
-
 lib libredrec
     :
         src/main/do_recorder.cpp
@@ -504,23 +485,6 @@ lib libredrec
         <cxxflags>-fvisibility=hidden
     ;
 
-
-exe reddec
-    :
-        src/main/decrypter.cpp
-        program_options
-
-        openssl
-        crypto
-        z
-        dl
-
-        snappy
-    :
-#         <link>static
-        $(EXE_DEPENDENCIES)
-    ;
-
 lib libreddec
     :
         src/main/do_decrypter.cpp
@@ -534,23 +498,6 @@ lib libreddec
     :
         <cxxflags>-fPIC
         <cxxflags>-fvisibility=hidden
-    ;
-
-
-exe redver
-    :
-        src/main/verifier.cpp
-        program_options
-
-        openssl
-        crypto
-        z
-        dl
-
-        snappy
-    :
-#         <link>static
-        $(EXE_DEPENDENCIES)
     ;
 
 lib libredver

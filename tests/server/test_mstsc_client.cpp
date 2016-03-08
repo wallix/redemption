@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     LCGRandom gen(0);
 
-    CryptoContext cctx(gen, ini, 1);
+    CryptoContext cctx(gen, ini);
 
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_mstsc_client.hpp"

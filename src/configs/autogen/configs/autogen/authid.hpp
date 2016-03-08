@@ -125,7 +125,7 @@ constexpr char const * const authstr[] = {
     "shell_working_directory",
     "use_client_provided_alternate_shell",
     "session_probe",
-    "session_probe_use_clipboard_based_launcher",
+    "session_probe_use_smart_launcher",
     "enable_session_probe_launch_mask",
     "session_probe_on_launch_failure",
     "session_probe_launch_timeout",

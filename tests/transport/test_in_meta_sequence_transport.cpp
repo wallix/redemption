@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
 
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 1);
+    CryptoContext cctx(rnd, ini);
 
     ifile_buf ifile(&cctx, 0);
 
@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2sum)
 
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 1);
+    CryptoContext cctx(rnd, ini);
 
     ifile_buf ifile(&cctx, 0);
     ifile.open("./tests/fixtures/sample_v2_checksum.mwrm");
@@ -743,7 +743,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 1);
+    CryptoContext cctx(rnd, ini);
 
     BOOST_CHECK(true);
 
@@ -822,7 +822,7 @@ BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
 
     LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini, 1);
+    CryptoContext cctx(rnd, ini);
 
     try {
         InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1, 0);

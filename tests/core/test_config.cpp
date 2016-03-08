@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -624,7 +624,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -1088,7 +1088,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::rdp_compression>());
@@ -1276,7 +1276,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -1474,7 +1474,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -1647,7 +1647,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -1819,7 +1819,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -1979,7 +1979,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());
@@ -2139,7 +2139,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     BOOST_CHECK_EQUAL(4,                                ini.get<cfg::client::rdp_compression>());

@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         LCGRandom gen1(0);
 
-        CryptoContext cctx(gen1, ini, 1);
+        CryptoContext cctx(gen1, ini);
 
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client.hpp"
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         LCGRandom gen1(0);
 
-        CryptoContext cctx(gen1, ini, 1);
+        CryptoContext cctx(gen1, ini);
 
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client.hpp"
