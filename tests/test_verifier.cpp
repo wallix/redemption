@@ -225,9 +225,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
                 "toto@10.10.43.13,Administrateur@QA@cible,"
                 "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
             "--hash-path\0"
-                "tests/fixtures/verifier/hash/\0"
+                "tests/fixtures/verifier/hash\0"
             "--mwrm-path\0"
-                "tests/fixtures/verifier/recorded/\0"
+                "tests/fixtures/verifier/recorded\0"
             "--verbose\0"
                 "10\0";
         {
