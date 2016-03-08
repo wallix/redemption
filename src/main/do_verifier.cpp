@@ -6,7 +6,6 @@
    redver video verifier program
 */
 
-#include "../modules/program_options/src/program_options.cpp"
 #include <string.h>
 #include "utils/apps/app_verifier.hpp"
 #include "config.hpp"

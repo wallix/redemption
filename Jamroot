@@ -488,6 +488,7 @@ lib libredrec
 lib libreddec
     :
         src/main/do_decrypter.cpp
+        program_options
 
         openssl
         crypto
@@ -503,6 +504,7 @@ lib libreddec
 lib libredver
     :
         src/main/do_verifier.cpp
+        program_options
 
         openssl
         crypto
