@@ -212,7 +212,6 @@ public:
             {0x00000009, cstr_array_view("/<tab>")},
             {0x0000000D, cstr_array_view("/<enter>")},
             {0x0000001B, cstr_array_view("/<escape>")},
-            {0x0000002F, cstr_array_view("//")},
             {0x0000007F, cstr_array_view("/<delete>")},
             {0x00002190, cstr_array_view("/<left>")},
             {0x00002191, cstr_array_view("/<up>")},
@@ -243,6 +242,14 @@ public:
                 }
             }
             else {
+                if (uchar == 0x0000002F /* '/' */) {
+                    if (this->unlogged_data.has_room(1)) {
+                        this->unlogged_data.out_string("/");
+                    }
+                    else {
+                        break;
+                    }
+                }
                 uint8_t buf_char[5]{};
                 size_t const char_len = UTF32toUTF8(
                     in_raw_kbd_data.get_current() - 4,
