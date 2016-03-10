@@ -812,10 +812,6 @@ public:
                 //    // default is "allow", do nothing special
                 //}
 
-                if (acl) {
-                    acl->log4(false, "CREATE_CONNECTION");
-                }
-
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
@@ -934,10 +930,6 @@ public:
 
                 mod_rdp_params.lang                                = language(this->ini);
 
-                if (acl) {
-                    acl->log4(false, "CREATE_SESSION");
-                }
-
                 try {
                     const char * const name = "RDP Target";
                     TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
@@ -973,10 +965,6 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
 
-                if (acl) {
-                    acl->log4(false, "CREATE_CONNECTION");
-                }
-
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
@@ -992,10 +980,6 @@ public:
                 }
 
                 this->ini.set<cfg::context::auth_error_message>("failed authentification on remote VNC host");
-
-                if (acl) {
-                    acl->log4(false, "CREATE_SESSION");
-                }
 
                 try {
                     const char * const name = "VNC Target";

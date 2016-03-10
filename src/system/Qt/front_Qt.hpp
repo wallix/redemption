@@ -70,7 +70,7 @@
 #include "RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "client_info.hpp"
-#include "reversed_keymaps/Qt_ScanCode_KeyMap.hpp"
+#include "keymaps/Qt_ScanCode_KeyMap.hpp"
 
 #ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QImage>
@@ -177,6 +177,7 @@ public:
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
+    virtual void empty_buffer() = 0;
 };
 
 
@@ -208,7 +209,10 @@ public:
     std::string          _requestedFormatShortName;   
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
-
+    size_t               _bufferRDPClipboardChannelSizeTotal;
+    int                  _bufferRDPCLipboardMetaFilePic_width;
+    int                  _bufferRDPCLipboardMetaFilePic_height;
+    int                  _bufferRDPClipboardMetaFilePicBPP;
     
     
     enum : int {
@@ -219,19 +223,6 @@ public:
       , PORT_GOTTEN   =  8
     };
 
-    enum : long {
-        CHANNEL_OPTION_INITIALIZED   = 0x80000000,
-        CHANNEL_OPTION_ENCRYPT_RDP   = 0x40000000,
-        CHANNEL_OPTION_ENCRYPT_SC    = 0x20000000,
-        CHANNEL_OPTION_ENCRYPT_CS    = 0x10000000,
-        CHANNEL_OPTION_PRI_HIGH      = 0x08000000,
-        CHANNEL_OPTION_PRI_MED       = 0x04000000,
-        CHANNEL_OPTION_PRI_LOW       = 0x02000000,
-        CHANNEL_OPTION_COMPRESS_RDP  = 0x00800000,
-        CHANNEL_OPTION_COMPRESS      = 0x00400000,
-        CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000,
-        REMOTE_CONTROL_PERSISTENT    = 0x00100000
-    };
 
 
     bool setClientInfo() override;
@@ -262,7 +253,7 @@ public:
 
     void send_FormatDataRequestPDU();
     
-    void send_buffer_to_clipboard(bool isTextHtml);
+    void send_buffer_to_clipboard();
     
     void process_server_clipboard_data(int flags, InStream & chunk);
     
@@ -272,9 +263,15 @@ public:
     
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
     
-    void send_to_clipboard_buffer(InStream & chunk);
+    std::string HTMLtoText(const std::string & html);
     
-    std::string HTMLtoASCII(const std::string & html);
+    void send_to_clipboard_Buffer(InStream & chunk);
+
+    void send_textBuffer_to_clipboard(bool isTextHtml);
+    
+    void send_imageBuffer_to_clipboard();
+    
+    void empty_buffer() override;
     
     
     

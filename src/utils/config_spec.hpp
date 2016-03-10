@@ -237,7 +237,7 @@ void config_spec_definition(Writer && W)
         W.member(A | X, type_<uint32_>(), "performance_flags_force_present", desc{"Disable theme (0x8)."}, set(0x8));
         W.member(A | X, type_<uint32_>(), "performance_flags_force_not_present", desc{"Disable font smoothing (0x80)."}, set(0x80));
         W.sep();
-        W.member(V, type_<bool>(), "tls_fallback_legacy", desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(true));
+        W.member(V, type_<bool>(), "tls_fallback_legacy", desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(false));
         W.member(V, type_<bool>(), "tls_support", set(true));
         W.member(A, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
         W.member(A, type_<bool>(), "bogus_user_id", desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."}, set(true));
@@ -309,34 +309,34 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<std::string>(), "alternate_shell", r);
         W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
-        W.member(V, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
+        W.member(H, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
         W.sep();
-        W.member(V, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
-        W.member(V, type_<bool>(), "session_probe_use_smart_launcher", desc{
+        W.member(H, type_<bool>(), "enable_session_probe", str_authid{"session_probe"}, set(false), r);
+        W.member(H, type_<bool>(), "session_probe_use_smart_launcher", desc{
             "Minimum supported server : Windows Server 2008.\n"
             "Clipboard redirection should be remain enabled on Terminal Server."
-        }, real_name{"session_probe_use_clipboard_based_launcher"}, set(false), r);
-        W.member(A, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
-        W.member(V, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
+        }, real_name{"session_probe_use_clipboard_based_launcher"}, str_authid{"session_probe_use_smart_launcher"}, set(false), r);
+        W.member(H, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
+        W.member(H, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", desc{
             "Behavior on failure to launch Session Probe.\n"
             "  0: ignore failure and continue.\n"
             "  1: disconnect user.\n"
             "  2: reconnect without Session Probe."
         }, set(SessionProbeOnLaunchFailure::retry_without_session_probe), r);
-        W.member(A, type_<unsigned>(), "session_probe_launch_timeout", desc{
+        W.member(H, type_<unsigned>(), "session_probe_launch_timeout", desc{
             "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
             "In milliseconds, 0 to disable timeout."
         }, set(20000), r);
-        W.member(A, type_<unsigned>(), "session_probe_launch_fallback_timeout", desc{
+        W.member(H, type_<unsigned>(), "session_probe_launch_fallback_timeout", desc{
             "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
             "In milliseconds, 0 to disable timeout."
         }, set(7000), r);
-        W.member(V, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", desc{
+        W.member(H, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", desc{
             "Minimum supported server : Windows Server 2008."
         }, set(true), r);
-        W.member(A, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
-        W.member(V, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
-        W.member(V, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
+        W.member(H, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
+        W.member(H, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
+        W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
         W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set("cmd /k"));
 

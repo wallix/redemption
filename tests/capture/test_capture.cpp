@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::hash_path>("/tmp");
         ini.set<cfg::globals::movie_path>("capture");
 
-        CryptoContext cctx(rnd, ini, 1);
+        CryptoContext cctx(rnd, ini);
 
         TODO("remove this after unifying capture interface");
         bool full_video = false;
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.set<cfg::video::hash_path>("/tmp");
         ini.set<cfg::globals::movie_path>("capture");
 
-        CryptoContext cctx(rnd, ini, 1);
+        CryptoContext cctx(rnd, ini);
 
         TODO("remove this after unifying capture interface");
         bool full_video = false;

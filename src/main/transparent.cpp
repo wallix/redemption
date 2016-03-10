@@ -183,7 +183,7 @@ int main(int argc, char * argv[]) {
 
     LCGRandom gen(0);
 
-    CryptoContext cctx(gen, ini, 1);
+    CryptoContext cctx(gen, ini);
 
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());

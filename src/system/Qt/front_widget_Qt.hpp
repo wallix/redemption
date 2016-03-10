@@ -26,7 +26,7 @@
 
 #include "transport/socket_transport.hpp"
 #include "rdp/rdp.hpp"
-#include "../src/front/front_Qt.hpp"
+#include "../src/system/Qt/front_Qt.hpp"
 #ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget>
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QLabel>
@@ -82,10 +82,10 @@
 
 #define KEY_SETTING_PATH "keySetting.config"
 
-#define PASTE_ON_SERVER_MAX_CHAR   796
-#define PASTE_ON_SERVER_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
-#define PASTE_ON_CLIENT_MAX_SIZE   (PASTE_ON_SERVER_MAX_CHAR * 2)
-#define CLIENT_DATA_RESPONSE_SIZE  (PASTE_ON_SERVER_MAX_SIZE + 8)
+
+#define PASTE_DATA_FIRST_PART_SIZE   1592
+#define PDU_MAX_SIZE                 1600
+
 
 
 
@@ -518,7 +518,7 @@ public:
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
     {
-        this->setWindowTitle("Client RDP");
+        this->setWindowTitle("Remote Desktop Player");
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
         
@@ -661,7 +661,7 @@ public:
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
-        std::string title = "Desktop from [" + this->_front->_targetIP +  "].";
+        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str())); 
         
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
@@ -907,18 +907,10 @@ public:
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
         mod_rdp_params.enable_nla                      = false;
-        //mod_rdp_params.enable_krb                      = false;
-        //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false; 
         mod_rdp_params.enable_mem3blt                  = true;
         mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = true;
-        //mod_rdp_params.rdp_compression                 = 0;
-        //mod_rdp_params.error_message                   = nullptr;
-        //mod_rdp_params.disconnect_on_logon_user_change = false;
-        //mod_rdp_params.open_session_timeout            = 0;
-        //mod_rdp_params.certificate_change_action       = 0;
-        //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                    = &allow_channels;    
@@ -945,7 +937,10 @@ public:
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
     
-
+    void setClipboard(const QImage & image) {
+        this->_clipboard->setImage(image, QClipboard::Clipboard);
+    }
+    
     
 public Q_SLOTS:
     void call_Draw() {
@@ -956,22 +951,35 @@ public Q_SLOTS:
         if (this->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
             
+            
             if (!mimeData->hasUrls()) {
-                if (mimeData->hasText()){
+                if (mimeData->hasImage()){
+                    
+                    QImage image(this->_clipboard->image());
+
+                    this->_chunk  = reinterpret_cast<uint8_t *>(image.bits());
+                    this->_length = image.byteCount();
+                    
+                    uint32_t formatIDs[]                  = {RDPECLIP::CF_METAFILEPICT};
+                    std::string formatListDataShortName[] = {std::string("")};
+                    this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+                    
+                } else if (mimeData->hasText()){
                     
                     int cmptCR(0);
-                    
                     std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
                     std::string tmp(str);
                     int pos(tmp.find("\n"));
+                    
                     while (pos != -1) {
                         cmptCR++;
                         tmp = tmp.substr(pos+2, tmp.length());  
                         pos = tmp.find("\n"); // for linux install
                     }
-                    size_t size((str.length() + cmptCR*2) * 2);
+                    size_t size((str.length() + cmptCR*2) * 4);
 
-                    this->_chunk = new uint8_t[size];
+                    this->_front->empty_buffer();
+                    this->_chunk  = new uint8_t[size];
                     this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
                     
                     uint32_t formatIDs[]                  = {RDPECLIP::CF_UNICODETEXT};

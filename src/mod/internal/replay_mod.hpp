@@ -81,7 +81,7 @@ public:
         LCGRandom rnd(0);
         Inifile ini;
         TODO("This use of cctx for replay will lead to memory leak because the object is never deallocated, fix that");
-        CryptoContext * cctx = new CryptoContext(rnd, ini, 1); // cctx will not be really used
+        CryptoContext * cctx = new CryptoContext(rnd, ini); // cctx will not be really used
         this->in_trans = new InMetaSequenceTransport(cctx, prefix, extension, 0, 0);
 
         timeval const begin_capture{0, 0};

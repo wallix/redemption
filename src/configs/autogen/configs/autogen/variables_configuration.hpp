@@ -76,7 +76,7 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = bool;
-            type value{1};
+            type value{0};
         };
         struct tls_support {
             static constexpr ::configs::VariableProperties properties() {

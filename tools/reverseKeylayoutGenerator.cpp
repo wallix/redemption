@@ -53,7 +53,7 @@ static int over(0);
     
 int main () {
     
-    
+    /*
     std::vector<const Keylayout *> vecKeylayouts;
     
     vecKeylayouts.push_back(keylayouts[0]);
@@ -101,8 +101,11 @@ int main () {
         if ((i+1)%3 == 0) {
             std::cout << std::endl << "                                       ";
         }
+    }
+    */
         
-        /*const Keylayout *  keylayout_WORK(keylayouts[i]); 
+    for(int i = 0; i < 84; i++) {
+        const Keylayout *  keylayout_WORK(keylayouts[i]); 
              
         
         std::string loc_name(keylayout_WORK->locale_name);
@@ -134,8 +137,6 @@ int main () {
         
         
         if(fichier) {
-            
-            
 
             fichier << "#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X"<<std::hex<<LCIDreverse<<"_HPP_" << std::endl;
             fichier << "#define _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X"<<std::hex<<LCIDreverse<<"_HPP_" << std::endl<< std::endl;
@@ -199,12 +200,12 @@ int main () {
 
             std::cerr << "Error file" << std::endl;
 
-        }*/
+        }
     }
     
     std::cout << " };" << std::endl; 
     
-    std::cout << std::endl << std::dec << "missed data = " << over << std::endl;
+    std::cout << std::endl << std::dec << "missing data = " << over << std::endl;
     
     return 0;
 }

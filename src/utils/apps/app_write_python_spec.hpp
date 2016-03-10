@@ -127,7 +127,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<class T>
     void write_type(type_<bool>, T x) {
-        this->out() << "boolean(default=" << bool(x) << ")\n";
+        this->out() << "boolean(default=" << (bool(x) ? "True" : "False") << ")\n";
     }
 
     template<class T>

@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd, ini, 1);
+    CryptoContext cctx(rnd, ini);
 
     return app_proxy(
         argc, argv

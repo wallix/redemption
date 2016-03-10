@@ -6,7 +6,6 @@
    redver video verifier program
 */
 
-#include "../modules/program_options/src/program_options.cpp"
 #include <string.h>
 #include "utils/apps/app_verifier.hpp"
 #include "config.hpp"
@@ -34,7 +33,7 @@ extern "C" {
         ini.set<cfg::debug::config>(false);
         { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), CFG_PATH "/" RDPPROXY_INI); }
         UdevRandom rnd;
-        CryptoContext cctx(rnd, ini, 1);
+        CryptoContext cctx(rnd, ini);
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
         
