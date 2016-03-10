@@ -292,7 +292,6 @@ void filtering_input_kbd(InStream & in_raw_kbd_data, Utf8CharFn utf32_char_fn, N
         {0x00000009, cstr_array_view("/<tab>")},
         {0x0000000D, cstr_array_view("/<enter>")},
         {0x0000001B, cstr_array_view("/<escape>")},
-        {0x0000002F, cstr_array_view("//")},
         {0x0000007F, cstr_array_view("/<delete>")},
         {0x00002190, cstr_array_view("/<left>")},
         {0x00002191, cstr_array_view("/<up>")},
@@ -318,6 +317,9 @@ void filtering_input_kbd(InStream & in_raw_kbd_data, Utf8CharFn utf32_char_fn, N
             }
         }
         else {
+            if (uchar == 0x0000002F /* '/' */ && !no_printable_fn(cstr_array_view("//"))) {
+                break;
+            }
             if (!utf32_char_fn(uchar)) {
                 break;
             }
