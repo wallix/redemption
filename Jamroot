@@ -228,10 +228,17 @@ variant strict : :
 ;
 
 variant asan : debug :
-    <cxxflags>-fsanitize=address
-    <cxxflags>-fsanitize=leak
-    <cxxflags>-fno-omit-frame-pointer
+#    <cxxflags>-fsanitize=address
+#    <cxxflags>-fsanitize=leak
+#    <cxxflags>-fno-omit-frame-pointer
 #    <linkflags>-lasan
+#    <define>CXX_ENABLE_ASAN
+;
+constant LIB_SAN_DEPENDENCY :
+    <variant>asan:<library>libasan 
+    <cxxflags>-fsanitize=address
+#    <cxxflags>-fsanitize=leak
+    <cxxflags>-fno-omit-frame-pointer
     <define>CXX_ENABLE_ASAN
 ;
 
@@ -346,15 +353,15 @@ explicit pycryptofile redcryptofile.so ;
 
 lib pycryptofile :
         tools/redcryptofile/pycrypto.cpp
-        snappy
-        python2
-        crypto
     :
         <define>REDPYTHON_BINDING
         <include>$(PYTHON_INCLUDE)
         <cxxflags>-fPIC
         <cflags>-fPIC
         <link>shared
+        <library>snappy
+        <library>python2
+        <library>crypto
     ;
 
 make redcryptofile.so
@@ -394,14 +401,13 @@ alias png : libpng z ;
 
 # lib icuuc : : <name>icuuc ;
 
-lib libasan : : <name>asan ;
+lib libasan : libboost_unit_test openssl krb5 gssglue crypto snappy png dl python2 : <name>asan ;
 
 obj mainloop : src/core/mainloop.cpp ;
 obj d3des : src/utils/d3des.cpp ;
 obj bitmap : src/utils/bitmap_data_allocator.cpp ;
 obj program_options : modules/program_options/src/program_options.cpp ;
 
-constant LIB_SAN_DEPENDENCY : <variant>asan:<library>libasan ;
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
 if ! [ os.environ NO_MAKE_CONFIG ]
