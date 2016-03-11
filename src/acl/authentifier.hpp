@@ -359,6 +359,16 @@ public:
                     this->keepalive.start(now);
                 }
             }
+            else
+            {
+                if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
+                    this->ini.set<cfg::context::manager_disconnect_reason>(
+                        this->ini.get<cfg::context::disconnect_reason>().c_str());
+                    this->ini.get_ref<cfg::context::disconnect_reason>().clear();
+
+                    this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+                }
+            }
         }
         if (this->wait_for_capture && mm.is_up_and_running()) {
             this->ini.check_record_config();
@@ -398,7 +408,16 @@ public:
         } catch (...) {
             // acl connection lost
             this->ini.set_acl<cfg::context::authenticated>(false);
-            this->ini.set_acl<cfg::context::rejected>(TR("manager_close_cnx", language(this->ini)));
+
+            if (this->ini.get<cfg::context::manager_disconnect_reason>().empty()) {
+                this->ini.set_acl<cfg::context::rejected>(
+                    TR("manager_close_cnx", language(this->ini)));
+            }
+            else {
+                this->ini.set_acl<cfg::context::rejected>(
+                    this->ini.get<cfg::context::manager_disconnect_reason>().c_str());
+                this->ini.get_ref<cfg::context::manager_disconnect_reason>().clear();
+            }
         }
     }
 
