@@ -262,14 +262,14 @@ public:
                 if (char_len > 0) {
                     if (this->authentifier) {
                         can_be_sent_to_server &= !this->check_filter(
-                            "FINDPATTERN_KILL",
+                            true,   // pattern_kill = true -> FINDPATTERN_KILL
                             this->regexes_filter_kill,
                             this->regexes_searcher.get(),
                             this->utf8_kbd_data_kill,
                             buf_char, char_len
                         );
                         this->check_filter(
-                            "FINDPATTERN_NOTIFY",
+                            false,  // pattern_kill = false -> FINDPATTERN_NOTIFY
                             this->regexes_filter_notify,
                             this->regexes_searcher.get() + this->regexes_filter_kill.size(),
                             this->utf8_kbd_data_notify,
@@ -288,7 +288,7 @@ public:
 
 private:
     bool check_filter(
-        char const * reason,
+        bool pattern_kill,
         utils::MatchFinder::NamedRegexArray const & regexes_filter,
         TextSearcher * test_searcher_it,
         Utf8KbdData & utf8_kbd_data,
@@ -315,7 +315,7 @@ private:
                           : char_kbd_data;
                         utils::MatchFinder::report(
                             this->authentifier,
-                            reason,
+                            pattern_kill,
                             utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                             named_regex.name.c_str(), str
                         );

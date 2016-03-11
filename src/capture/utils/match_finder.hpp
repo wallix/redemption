@@ -184,14 +184,22 @@ public:
         }
     }
 
-    static void report(auth_api * authentifier, const char * reason,
+    static void report(auth_api * authentifier, bool pattern_kill,
         ConfigureRegexes conf_regex, const char * pattern, const char * data) {
         char message[4096];
 
         snprintf(message, sizeof(message), "$%s:%s|%s",
             ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
 
-        authentifier->report(reason, message);
+        if (pattern_kill) {
+            std::string pattern = "pattern='";
+            pattern += message;
+            pattern += "'";
+            authentifier->log4(false, "KILL_PATTERN_DETECTED", pattern.c_str());
+        }
+        authentifier->report(
+            (pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),
+            message);
     }
 };
 
