@@ -25,21 +25,22 @@
 #include "apis_register.hpp"
 #include "new_kbdcapture.hpp"
 #include "gdi/capture_api.hpp"
-#include "gdi/input_kbd_api.hpp"
+#include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
 class KbdCaptureImpl
 {
     auth_api * authentifier;
-    KbdSyslogNotify sysog_notify;
-    KbdSessionLogNotify session_log_notify;
-    NewKbdCapture kc;
+    SyslogKbd syslog_kbd;
+    SessionLogKbd session_log_kbd;
+    PatternKbd pattern_kbd;
 
 public:
     KbdCaptureImpl(const timeval & now, auth_api * authentifier, const Inifile & ini)
     : authentifier(authentifier)
-    , session_log_notify(*authentifier)
-    , kc(now, authentifier,
+    , syslog_kbd(now)
+    , session_log_kbd(*authentifier)
+    , pattern_kbd(authentifier,
         ini.get<cfg::context::pattern_kill>().c_str(),
         ini.get<cfg::context::pattern_notify>().c_str(),
         ini.get<cfg::debug::capture>())
@@ -47,26 +48,18 @@ public:
 
     void attach_apis(ApisRegister & api_register, const Inifile & ini) {
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
-            this->kc.attach_flusher(this->sysog_notify);
+            api_register.kbd_input_list.push_back(this->syslog_kbd);
+            api_register.capture_list.push_back(this->syslog_kbd);
         }
 
         if (this->authentifier && ini.get<cfg::session_log::enable_session_log>()) {
-            this->kc.attach_flusher(this->session_log_notify);
-            api_register.capture_probe_list.push_back(this->session_log_notify);
+            api_register.kbd_input_list.push_back(this->session_log_kbd);
+            api_register.capture_probe_list.push_back(this->session_log_kbd);
         }
 
-        if (this->kc.count_flusher()) {
-            api_register.capture_list.push_back(this->kc);
+        if (this->pattern_kbd.contains_pattern()) {
+            api_register.kbd_input_list.push_back(this->pattern_kbd);
         }
-
-        if (this->kc.count_flusher() || this->kc.contains_pattern()) {
-            api_register.input_kbd_list.push_back(this->kc);
-        }
-
-    }
-
-    void enable_keyboard_input_mask(bool enable) {
-        this->kc.enable_keyboard_input_mask(enable);
     }
 };
 

@@ -51,7 +51,7 @@
 #include "png.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/graphic_api.hpp"
-#include "gdi/input_kbd_api.hpp"
+#include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
 struct FileToGraphic
@@ -117,7 +117,7 @@ public:
     struct Consumer {
         gdi::GraphicApi * graphic_ptr;
         gdi::CaptureApi * capture_ptr;
-        gdi::InputKbdApi * input_kbd_ptr;
+        gdi::KbdInputApi * kbd_input_ptr;
         gdi::CaptureProbeApi * capture_probe_ptr;
     } consumers[10];
 
@@ -286,13 +286,13 @@ public:
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
         gdi::CaptureApi * capture_ptr,
-        gdi::InputKbdApi * input_kbd_ptr,
+        gdi::KbdInputApi * kbd_input_ptr,
         gdi::CaptureProbeApi * capture_probe_ptr
     ) {
         assert(std::end(this->consumers) != &this->consumers[this->nbconsumers]);
         this->consumers[this->nbconsumers  ].graphic_ptr = graphic_ptr;
         this->consumers[this->nbconsumers  ].capture_ptr = capture_ptr;
-        this->consumers[this->nbconsumers  ].input_kbd_ptr = input_kbd_ptr;
+        this->consumers[this->nbconsumers  ].kbd_input_ptr = kbd_input_ptr;
         this->consumers[this->nbconsumers++].capture_probe_ptr = capture_probe_ptr;
     }
 
@@ -698,8 +698,8 @@ public:
                         this->stream.in_skip_bytes(this->stream.in_remain());
 
                         for (size_t i = 0; i < this->nbconsumers; i++){
-                            if (this->consumers[i].input_kbd_ptr) {
-                                this->consumers[i].input_kbd_ptr->input_kbd(
+                            if (this->consumers[i].kbd_input_ptr) {
+                                this->consumers[i].kbd_input_ptr->kbd_input(
                                     this->record_now,
                                     {this->input, this->input_len}
                                 );

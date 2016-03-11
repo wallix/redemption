@@ -30,7 +30,7 @@
 #include "apis_register.hpp"
 
 
-class WrmCaptureImpl final : private gdi::InputKbdApi, public gdi::CaptureProxy<WrmCaptureImpl>
+class WrmCaptureImpl final : private gdi::KbdInputApi, public gdi::CaptureProxy<WrmCaptureImpl>
 {
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
@@ -113,6 +113,11 @@ class WrmCaptureImpl final : private gdi::InputKbdApi, public gdi::CaptureProxy<
                 GraphicToFile::draw(bitmap_data, bmp);
             }
         }
+
+        WrmCaptureImpl * impl = nullptr;
+        void enable_kbd_input_mask(bool enable) override {
+            this->impl->enable_kbd_input_mask(enable);
+        }
     } graphic_to_file;
 
     struct WrmCapture final : NativeCapture {
@@ -120,6 +125,7 @@ class WrmCaptureImpl final : private gdi::InputKbdApi, public gdi::CaptureProxy<
     } nc;
 
     std::size_t idx_kbd = -1u;
+    std::vector<std::reference_wrapper<gdi::KbdInputApi>> * kbd_list = nullptr;
 
 public:
     WrmCaptureImpl(
@@ -152,21 +158,23 @@ public:
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
-            auto & list = apis_register.input_kbd_list;
+            auto & list = apis_register.kbd_input_list;
+
+            this->kbd_list = &list;
             this->idx_kbd = list.size();
+
+            this->graphic_to_file.impl = this;
+
             list.push_back(this->graphic_to_file);
         }
     }
 
-    void enable_keyboard_input_mask(ApisRegister & apis_register, bool enable) {
-        if (this->idx_kbd == -1u) {
-            return ;
-        }
-        auto & kbd = apis_register.input_kbd_list[this->idx_kbd];
+    void enable_kbd_input_mask(bool enable) override {
+        auto & kbd = (*this->kbd_list)[this->idx_kbd];
         assert(&kbd.get() == this || &kbd.get() == &this->graphic_to_file);
         kbd = enable
-            ? static_cast<gdi::InputKbdApi&>(*this)
-            : static_cast<gdi::InputKbdApi&>(this->graphic_to_file);
+            ? static_cast<gdi::KbdInputApi&>(*this)
+            : static_cast<gdi::KbdInputApi&>(this->graphic_to_file);
     }
 
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
@@ -190,7 +198,7 @@ private:
     }
 
 private:
-    bool input_kbd(const timeval& now, const array_const_u8& input_data_32) override {
+    bool kbd_input(const timeval& now, const array_const_u8& input_data_32) override {
         static const char shadow_buf[] =
             "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
             "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
@@ -220,7 +228,7 @@ private:
             "*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0*\0\0\0"
         ;
         static_assert((sizeof(shadow_buf)-1) % 4 == 0, "");
-        return this->graphic_to_file.input_kbd(now, {
+        return this->graphic_to_file.kbd_input(now, {
             reinterpret_cast<unsigned char const *>(shadow_buf),
             std::min(input_data_32.size(), sizeof(shadow_buf)-1)
         });

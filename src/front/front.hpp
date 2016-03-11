@@ -4335,7 +4335,7 @@ private:
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
             && decoded_data.get_offset()) {
-            send_to_mod = this->capture->input_kbd(
+            send_to_mod = this->capture->kbd_input(
                 tvtime(),
                 {decoded_data.get_data(), decoded_data.get_offset()}
             );
@@ -4374,7 +4374,7 @@ private:
              (!this->session_probe_started_) : false);
 
         if (this->capture) {
-            this->capture->enable_keyboard_input_mask(
+            this->capture->enable_kbd_input_mask(
                     this->focus_on_password_textbox ||
                     this->consent_ui_is_visible || mask_unidentified_data
                 );

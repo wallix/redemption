@@ -32,7 +32,7 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
-#include "gdi/input_kbd_api.hpp"
+#include "gdi/kbd_input_api.hpp"
 #include "gdi/input_pointer_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
@@ -47,7 +47,7 @@
 class Capture final
 : public gdi::GraphicBase<Capture>
 , public gdi::CaptureApi
-, public gdi::InputKbdApi
+, public gdi::KbdInputApi
 , public gdi::InputPointer
 , public gdi::CaptureProbeApi
 {
@@ -128,17 +128,23 @@ class Capture final
     };
 
 
-    struct NewInputKbd : gdi::InputKbdApi
+    struct NewInputKbd : gdi::KbdInputApi
     {
-        bool input_kbd(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
+        bool kbd_input(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
             bool ret = true;
-            for (gdi::InputKbdApi & kbd : this->kbds) {
-                ret &= kbd.input_kbd(now, input_data_32);
+            for (gdi::KbdInputApi & kbd : this->kbds) {
+                ret &= kbd.kbd_input(now, input_data_32);
             }
             return ret;
         }
 
-        std::vector<std::reference_wrapper<gdi::InputKbdApi>> kbds;
+        void enable_kbd_input_mask(bool enable) override {
+            for (gdi::KbdInputApi & kbd : this->kbds) {
+                kbd.enable_kbd_input_mask(enable);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     };
 
 
@@ -195,7 +201,7 @@ private:
     std::unique_ptr<Kbd> pkc;
 
     NewCapture capture_api;
-    NewInputKbd input_kbd_api;
+    NewInputKbd kbd_input_api;
     NewInputPointer input_pointer_api;
     NewCaptureProbe capture_probe_api;
     Graphic::GraphicApi * graphic_api = nullptr;
@@ -205,7 +211,7 @@ private:
             this->graphic_api ? &this->graphic_api->gds : nullptr,
             this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
             this->capture_api.caps,
-            this->input_kbd_api.kbds,
+            this->kbd_input_api.kbds,
             this->input_pointer_api.mouses,
             this->capture_probe_api.cds
         };
@@ -343,23 +349,16 @@ public:
         return this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    bool input_kbd(const timeval & now, array_const_u8 const & input_data_32) override {
-        return this->input_kbd_api.input_kbd(now, input_data_32);
+    bool kbd_input(const timeval & now, array_const_u8 const & input_data_32) override {
+        return this->kbd_input_api.kbd_input(now, input_data_32);
     }
 
     void update_pointer_position(uint16_t x, uint16_t y) override {
         this->input_pointer_api.update_pointer_position(x, y);
     }
 
-    void enable_keyboard_input_mask(bool enable) {
-        if (this->pnc) {
-            ApisRegister apis_register = this->get_apis_register();
-            this->pnc->enable_keyboard_input_mask(apis_register, enable);
-        }
-
-        if (this->pkc) {
-            this->pkc->enable_keyboard_input_mask(enable);
-        }
+    void enable_kbd_input_mask(bool enable) override {
+        this->kbd_input_api.enable_kbd_input_mask(enable);
     }
 
 private:

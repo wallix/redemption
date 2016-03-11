@@ -31,7 +31,7 @@
 #include "send_wrm_chunk.hpp"
 
 #include "gdi/dump_png24.hpp"
-#include "gdi/input_kbd_api.hpp"
+#include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
 
@@ -78,7 +78,7 @@ private:
 
 class GraphicToFile
 : public RDPSerializer
-, public gdi::InputKbdApi
+, public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
@@ -183,13 +183,16 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    bool input_kbd(const timeval& now, const array_const_u8& input_data_32) override {
+    bool kbd_input(const timeval & now, const array_const_u8 & input_data_32) override {
         size_t const count  = input_data_32.size() / sizeof(uint32_t);
 
         size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
         keyboard_buffer_32.out_copy_bytes(input_data_32.data(), c * sizeof(uint32_t));
 
         return true;
+    }
+
+    void enable_kbd_input_mask(bool) override {
     }
 
     void send_meta_chunk()

@@ -50,79 +50,48 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         void set_auth_error_message(const char*) override {}
     } auth;
 
-    struct Translog : KbdNotifyFlushApi {
-        MemoryTransport trans;
-        bool enable_mask = false;
-
-        void notify_flush(const array_const_char& data, bool enable_mask) override {
-            BOOST_CHECK_EQUAL(this->enable_mask, enable_mask);
-            trans.send(data.data(), data.size());
-        }
-
-        void rewind() { this->trans.out_stream.rewind(); }
-        size_t get_offset() { return this->trans.out_stream.get_offset(); }
-        char * get_data() { return reinterpret_cast<char*>(this->trans.out_stream.get_data()); }
-    } trans;
-
     timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, nullptr, nullptr);
-    KbdSessionLogNotify session_log(auth);
-
-    kbd_capture.attach_flusher(session_log);
-    kbd_capture.attach_flusher(trans);
+    SessionLogKbd kbd_capture(auth);
 
     const unsigned char input[] = {'a', 0, 0, 0};
 
     {
-        kbd_capture.input_kbd(time, input);
+        kbd_capture.kbd_input(time, input);
         kbd_capture.flush();
 
-        session_log.send_session_data();
         BOOST_CHECK_EQUAL(auth.s.size(), 8);
         BOOST_CHECK_EQUAL("data=\"a\"", auth.s);
-        BOOST_CHECK_EQUAL(trans.get_offset(), 1);
-        BOOST_CHECK_EQUAL('a', *trans.get_data());
     }
 
-    kbd_capture.enable_keyboard_input_mask(true);
-    trans.enable_mask = true;
-    trans.rewind();
+    kbd_capture.enable_kbd_input_mask(true);
     auth.s.clear();
 
     {
-        kbd_capture.input_kbd(time, input);
+        kbd_capture.kbd_input(time, input);
         kbd_capture.flush();
 
-        session_log.send_session_data();
         // prob is not enabled
         BOOST_CHECK_EQUAL(auth.s.size(), 0);
-        BOOST_CHECK_EQUAL(trans.get_offset(), 1);
-        BOOST_CHECK_EQUAL('*', *trans.get_data());
     }
 
-    kbd_capture.enable_keyboard_input_mask(false);
-    trans.enable_mask = false;
-    trans.rewind();
+    kbd_capture.enable_kbd_input_mask(false);
     auth.s.clear();
 
     {
-        kbd_capture.input_kbd(time, input);
-        kbd_capture.enable_keyboard_input_mask(true);
+        kbd_capture.kbd_input(time, input);
 
-        session_log.send_session_data();
-        BOOST_CHECK_EQUAL(auth.s.size(), 8);
-        BOOST_CHECK_EQUAL(trans.get_offset(), 1);
-        trans.enable_mask = true;
+        BOOST_CHECK_EQUAL(auth.s.size(), 0);
 
-        kbd_capture.input_kbd(time, input);
-        kbd_capture.flush();
+        kbd_capture.enable_kbd_input_mask(true);
 
-        session_log.send_session_data();
         BOOST_CHECK_EQUAL(auth.s.size(), 8);
         BOOST_CHECK_EQUAL("data=\"a\"", auth.s);
-        BOOST_CHECK_EQUAL(trans.get_offset(), 2);
-        BOOST_CHECK_EQUAL('a', trans.get_data()[0]);
-        BOOST_CHECK_EQUAL('*', trans.get_data()[1]);
+        auth.s.clear();
+
+        kbd_capture.kbd_input(time, input);
+        kbd_capture.flush();
+
+        BOOST_CHECK_EQUAL(auth.s.size(), 0);
     }
 }
 
@@ -144,20 +113,19 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         void log4(bool, const char*, const char*) const override {}
     } auth;
 
-    timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, "$kbd:abcd", nullptr);
+    PatternKbd kbd_capture(&auth, "$kbd:abcd", nullptr);
 
     unsigned char input[] = {0, 0, 0, 0};
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
-    unsigned count_ok = 0;
+    unsigned pattern_count = 0;
     for (auto c : str) {
         input[0] = c;
-        if (!kbd_capture.input_kbd(time, input)) {
-            ++count_ok;
+        if (!kbd_capture.kbd_input({0, 0}, input)) {
+            ++pattern_count;
         }
     }
-    kbd_capture.flush();
-    BOOST_CHECK_EQUAL(4, count_ok);
+
+    BOOST_CHECK_EQUAL(4, pattern_count);
     BOOST_CHECK_EQUAL(
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
@@ -171,10 +139,10 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
     struct : auth_api {
-        bool kill = 0;
+        bool is_killed = 0;
 
         void report(const char* , const char* ) override {
-            this->kill = 1;
+            this->is_killed = 1;
         }
 
         void set_auth_channel_target(const char*) override {}
@@ -182,19 +150,17 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         void log4(bool, const char*, const char*) const override {}
     } auth;
 
-    timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, "$kbd:ab/cd", nullptr);
+    PatternKbd kbd_capture(&auth, "$kbd:ab/cd", nullptr);
 
     unsigned char input[] = {0, 0, 0, 0};
     char const str[] = "abcdab/cdaa";
-    unsigned count_ok = 0;
+    unsigned pattern_count = 0;
     for (auto c : str) {
         input[0] = c;
-        if (!kbd_capture.input_kbd(time, input)) {
-            ++count_ok;
+        if (!kbd_capture.kbd_input({0, 0}, input)) {
+            ++pattern_count;
         }
     }
-    kbd_capture.flush();
-    BOOST_CHECK_EQUAL(1, count_ok);
-    BOOST_CHECK_EQUAL(auth.kill, true);
+    BOOST_CHECK_EQUAL(1, pattern_count);
+    BOOST_CHECK_EQUAL(auth.is_killed, true);
 }

@@ -18,19 +18,20 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_INPUT_KBD_API_HPP
-#define REDEMPTION_GDI_INPUT_KBD_API_HPP
+#ifndef REDEMPTION_GDI_KBD_INPUT_API_HPP
+#define REDEMPTION_GDI_KBD_INPUT_API_HPP
 
 #include "utils/noncopyable.hpp"
 #include "utils/array_view.hpp"
 
 namespace gdi {
 
-struct InputKbdApi : private noncopyable
+struct KbdInputApi : private noncopyable
 {
-    virtual ~InputKbdApi() = default;
+    virtual ~KbdInputApi() = default;
 
-    virtual bool input_kbd(const timeval & now, array_const_u8 const & input_data_32) = 0;
+    virtual bool kbd_input(timeval const & now, array_const_u8 const & input_data_32) = 0;
+    virtual void enable_kbd_input_mask(bool enable) = 0;
 };
 
 }

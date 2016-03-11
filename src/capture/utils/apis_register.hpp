@@ -28,7 +28,7 @@ namespace gdi {
   class GraphicApi;
   class CaptureApi;
   class CaptureProbeApi;
-  class InputKbdApi;
+  class KbdInputApi;
   class InputPointer;
 }
 
@@ -37,7 +37,7 @@ struct ApisRegister
     std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
-    std::vector<std::reference_wrapper<gdi::InputKbdApi>> & input_kbd_list;
+    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
     std::vector<std::reference_wrapper<gdi::InputPointer>> & input_pointer_list;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
 };
