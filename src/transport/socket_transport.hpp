@@ -751,7 +751,7 @@ public:
             switch (SSL_get_error(ssl, connection_status))
             {
                 case SSL_ERROR_ZERO_RETURN:
-                    LOG(LOG_INFO, "Server closed TLS connection\n");
+                    LOG(LOG_WARNING, "Server closed TLS connection\n");
                     return;
 
                 case SSL_ERROR_WANT_READ:
@@ -761,23 +761,23 @@ public:
                     goto again;
 
                 case SSL_ERROR_SYSCALL:
-                    LOG(LOG_INFO, "I/O error\n");
+                    LOG(LOG_WARNING, "I/O error\n");
                     while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, nullptr));
+                        LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
                     return;
 
                 case SSL_ERROR_SSL:
-                    LOG(LOG_INFO, "Failure in SSL library (protocol error?)\n");
+                    LOG(LOG_WARNING, "Failure in SSL library (protocol error?)\n");
                     while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, nullptr));
+                        LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
                     return;
 
                 default:
-                    LOG(LOG_INFO, "Unknown error\n");
+                    LOG(LOG_WARNING, "Unknown error\n");
                     while ((error = ERR_get_error()) != 0){
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, nullptr));
+                        LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
                     }
-                    LOG(LOG_INFO, "tls::tls_print_error %s [%u]", strerror(errno), errno);
+                    LOG(LOG_WARNING, "tls::tls_print_error %s [%u]", strerror(errno), errno);
                     return;
             }
         }
@@ -812,7 +812,7 @@ public:
 
         X509 * px509 = SSL_get_peer_certificate(ssl);
         if (!px509) {
-            LOG(LOG_INFO, "SSL_get_peer_certificate() failed");
+            LOG(LOG_WARNING, "SSL_get_peer_certificate() failed");
             server_notifier.server_cert_error(strerror(errno));
             return;
         }
@@ -822,8 +822,8 @@ public:
         int  checking_exception  = NO_ERROR;
 
         // ensures the certificate directory exists
-        if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, 0) != 0) {
-            LOG(LOG_ERR, "Failed to create certificate directory: %s ", certif_path);
+        if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, -1) != 0) {
+            LOG(LOG_WARNING, "Failed to create certificate directory: %s ", certif_path);
             if (this->error_message) {
                 *this->error_message = "Failed to create certificate directory: \"";
                 *this->error_message += certif_path;
@@ -848,7 +848,7 @@ public:
             if (!fp) {
                 if (errno != ENOENT) {
                     // failed to open stored certificate file
-                    LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
+                    LOG(LOG_WARNING, "Failed to open stored certificate: \"%s\"\n", filename);
                     if (this->error_message) {
                         *this->error_message = "Failed to open stored certificate: \"";
                         *this->error_message += filename;
@@ -861,7 +861,7 @@ public:
                     checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE;
                 }
                 else {
-                    LOG(LOG_ERR, "There's no stored certificate: \"%s\"\n", filename);
+                    LOG(LOG_WARNING, "There's no stored certificate: \"%s\"\n", filename);
                     if (this->error_message) {
                         *this->error_message = "There's no stored certificate: \"";
                         *this->error_message += filename;
@@ -881,7 +881,7 @@ public:
                 X509 *px509Existing = PEM_read_X509(fp, nullptr, nullptr, nullptr);
                 if (!px509Existing) {
                     // failed to read stored certificate file
-                    LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
+                    LOG(LOG_WARNING, "Failed to read stored certificate: \"%s\"\n", filename);
                     if (this->error_message) {
                         *this->error_message = "Failed to read stored certificate: \"";
                         *this->error_message += filename;
@@ -957,7 +957,7 @@ public:
                                      this->ip_address, this->port);
                             *this->error_message = buff;
                         }
-                        LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
+                        LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                             this->ip_address, this->port,
                             issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
                         if (this->error_message) {
@@ -1018,7 +1018,7 @@ public:
                 server_notifier.server_cert_create();
             }
             else {
-                LOG(LOG_ERR, "Failed to dump X509 peer certificate\n");
+                LOG(LOG_WARNING, "Failed to dump X509 peer certificate\n");
             }
         }
 
@@ -1073,7 +1073,7 @@ public:
         EVP_PKEY* pkey = X509_get_pubkey(px509);
         if (!pkey)
         {
-            LOG(LOG_INFO, "SocketTransport::crypto_cert_get_public_key: X509_get_pubkey() failed");
+            LOG(LOG_WARNING, "SocketTransport::crypto_cert_get_public_key: X509_get_pubkey() failed");
             return;
         }
 
