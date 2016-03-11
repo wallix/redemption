@@ -295,12 +295,12 @@ public:
                     buf_char[char_len] = '\0';
                     if (!this->pattern_kill.is_empty()) {
                         can_be_sent_to_server &= !this->test_pattern(
-                            buf_char, char_len, this->pattern_kill, "FINDPATTERN_KILL"
+                            buf_char, char_len, this->pattern_kill, true
                         );
                     }
                     if (!this->pattern_notify.is_empty()) {
                         this->test_pattern(
-                            buf_char, char_len, this->pattern_notify, "FINDPATTERN_NOTIFY"
+                            buf_char, char_len, this->pattern_notify, false
                         );
                     }
                     return true;
@@ -324,7 +324,7 @@ public:
 private:
     bool test_pattern(
         uint8_t const * uchar, size_t char_len,
-        PatternSearcher & searcher, char const * reason
+        PatternSearcher & searcher, bool is_pattern_kill
     ) {
         return searcher.test_uchar(
             uchar, char_len,
@@ -332,7 +332,7 @@ private:
                 assert(this->authentifier);
                 utils::MatchFinder::report(
                     *this->authentifier,
-                    reason,
+                    is_pattern_kill,
                     utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                     pattern.c_str(),
                     str

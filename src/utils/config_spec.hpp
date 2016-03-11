@@ -613,6 +613,10 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "opt_message", r);
         W.sep();
         W.member(type_<std::string>(), "outbound_connection_blocking_rules", r);
+        W.sep();
+        W.member(type_<std::string>(), "manager_disconnect_reason");
+        W.member(type_<std::string>(), "disconnect_reason", r);
+        W.member(type_<bool>(), "disconnect_reason_ack", set(false), w);
     });
 
     W.section("", [&]
