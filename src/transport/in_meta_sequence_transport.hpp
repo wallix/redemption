@@ -77,7 +77,7 @@ struct MetaLine
     unsigned char hash2[MD_HASH_LENGTH];
 };
 
-struct InMetaSequenceTransport : public Transport
+class InMetaSequenceTransport : public Transport
 {
     struct cfb_t
     {
@@ -393,7 +393,7 @@ struct InMetaSequenceTransport : public Transport
             }
             return 0;
         }
-    } * cfb;
+    } cfb;
 
     class buf_meta_t {
         CryptoContext * cctx;
@@ -651,7 +651,7 @@ struct InMetaSequenceTransport : public Transport
             return 0;
         }
 
-    } * buf_meta;
+    } buf_meta;
 
     struct rl_t {
         char buf[1024];
@@ -670,7 +670,7 @@ public:
     uint32_t verbose;
 
     int buf_close()
-    { return this->cfb->file_close(); }
+    { return this->cfb.file_close(); }
 
 public:
     ssize_t buf_reader_read_line(char * dest, size_t len, int err)
@@ -692,7 +692,7 @@ public:
                 break;
             }
 
-            ssize_t ret = this->buf_meta->read(this->rl.buf, sizeof(this->rl.buf));
+            ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
             TODO("test on EINTR suspicious here, check that");
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
@@ -710,7 +710,7 @@ public:
     {
         char * pos;
         while ((pos = std::find(this->rl.cur, this->rl.eof, '\n')) == this->rl.eof) {
-            ssize_t ret = this->buf_meta->read(this->rl.buf, sizeof(this->rl.buf));
+            ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
             TODO("test on EINTR suspicious here, check that");
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
@@ -728,13 +728,13 @@ public:
 public:
     ssize_t buf_read(void * data, size_t len)
     {
-        if (!this->cfb->is_open()) {
+        if (!this->cfb.is_open()) {
             if (const int e1 = this->buf_next_line()) {
                 this->status = false;
                 throw Error(ERR_TRANSPORT_READ_FAILED, e1);
             }
             else {
-                const int e2 = this->cfb->open(this->meta_line.filename);
+                const int e2 = this->cfb.open(this->meta_line.filename);
                 if (e2 < 0) {
                     this->status = false;
                     throw Error(ERR_TRANSPORT_READ_FAILED, e2);
@@ -742,7 +742,7 @@ public:
             }
         }
 
-        ssize_t res = this->cfb->read(data, len);
+        ssize_t res = this->cfb.read(data, len);
         if (res < 0) {
             this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
@@ -763,14 +763,14 @@ public:
                     return res;
                 }
                 else {
-                    const int e = this->cfb->open(this->meta_line.filename);
+                    const int e = this->cfb.open(this->meta_line.filename);
                     if (e < 0) {
                         this->status = false;
                         throw Error(ERR_TRANSPORT_READ_FAILED, res);
                     }
                 }
                 len -= res2;
-                res2 = this->cfb->read(data, len);
+                res2 = this->cfb.read(data, len);
                 if (res2 < 0) {
                     this->status = false;
                     throw Error(ERR_TRANSPORT_READ_FAILED, res);
@@ -965,7 +965,7 @@ private:
         if (const int e = this->buf_reader_next_line()) {
             return e < 0 ? e : -1;
         }
-        const int e = this->cfb->open(this->meta_line.filename);
+        const int e = this->cfb.open(this->meta_line.filename);
         return (e < 0) ? e : 0;
     }
 
@@ -1002,8 +1002,8 @@ public:
         const char * extension,
         int encryption,
         uint32_t verbose)
-    : cfb(new cfb_t(cctx, encryption))
-    , buf_meta(new buf_meta_t(cctx, encryption))
+    : cfb(cctx, encryption)
+    , buf_meta(cctx, encryption)
     , meta_header_version(1)
     , meta_header_has_checksum(false)
     , encryption(encryption)
@@ -1011,7 +1011,7 @@ public:
     {
         detail::temporary_concat tmp(filename, extension);
         const char * meta_filename = tmp.c_str();
-        this->buf_meta->open(meta_filename);
+        this->buf_meta.open(meta_filename);
 
         char line[32];
         auto sz = this->buf_reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
@@ -1063,8 +1063,8 @@ public:
 //    }
 
     ~InMetaSequenceTransport(){
-        this->cfb->file_close();
-        this->buf_meta->file_close();
+        this->cfb.file_close();
+        this->buf_meta.file_close();
     }
 
 
@@ -1090,7 +1090,7 @@ public:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
 
-        if (this->cfb->is_open()) {
+        if (this->cfb.is_open()) {
             this->buf_close();
         }
 

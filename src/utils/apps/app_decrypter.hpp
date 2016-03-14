@@ -93,8 +93,7 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, CryptoC
             while (1) {
                 buf = mem;
                 in_t.recv(&buf, sizeof(mem));
-
-                out_t.send(mem, sizeof(mem));
+                out_t.send(mem, buf-mem);
             }
         }
         catch (Error const & e) {
@@ -110,7 +109,6 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, CryptoC
     else {
         std::cerr << strerror(errno) << std::endl << std::endl;
     }
-
     return 0;
 }
 

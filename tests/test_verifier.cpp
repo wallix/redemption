@@ -36,6 +36,7 @@
 
 #include "ssl_calls.hpp"
 #include "utils/apps/app_verifier.hpp"
+#include "utils/apps/app_decrypter.hpp"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -224,6 +225,62 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
                 "toto@10.10.43.13,Administrateur@QA@cible,"
                 "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
             "--hash-path\0"
+                "tests/fixtures/verifier/hash\0"
+            "--mwrm-path\0"
+                "tests/fixtures/verifier/recorded\0"
+            "--verbose\0"
+                "10\0";
+        {
+            int i = 0;
+            char * p = oneargv;
+            for (i = 0 ; i < argc ; i++){
+                argv[i] = p;
+                // provided command line parameters malformed
+                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
+                p++;
+                // provided command line parameters malformed
+                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
+            }
+            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
+        }
+
+        int res = -1;
+        try {
+            res = app_verifier(ini,
+                argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+            if (res == 0){
+                printf("verify ok");
+            }
+            else {
+                printf("verify failed\n");
+            }
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(0, res);
+}
+
+BOOST_AUTO_TEST_CASE(TestVerifierClearData)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char * argv[9] = {};
+        int argc = sizeof(argv)/sizeof(char*);
+        char oneargv[] =
+            "verifier.py\0"
+            "-i\0"
+                "toto@10.10.43.13,Administrateur@QA@cible"
+                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
+            "--hash-path\0"
                 "tests/fixtures/verifier/hash/\0"
             "--mwrm-path\0"
                 "tests/fixtures/verifier/recorded/\0"
@@ -257,6 +314,106 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
             else {
                 printf("verify failed\n");
             }
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(0, res);
+}
+
+// tests/fixtures/verifier/recorded/toto@10.10.43.13\,Administrateur@QA@cible\,20160218-181658\,wab-5-0-0.yourdomain\,7681.mwrm
+
+// python tools/decrypter.py -i tests/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -o decrypted.out
+
+BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char * argv[7] = {};
+        int argc = sizeof(argv)/sizeof(char*);
+        char oneargv[] =
+            "decrypter.py\0"
+            "-i\0"
+                "tests/fixtures/verifier/recorded/"
+                "toto@10.10.43.13,Administrateur@QA@cible,"
+                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
+            "-o\0"
+                "decrypted.out\0"
+            "--verbose\0"
+                "10\0";
+        {
+            int i = 0;
+            char * p = oneargv;
+            for (i = 0 ; i < argc ; i++){
+                argv[i] = p;
+                // provided command line parameters malformed
+                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
+                p++;
+                // provided command line parameters malformed
+                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
+            }
+            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
+        }
+
+        int res = -1;
+        try {
+            res = app_decrypter(argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(0, res);
+}
+
+BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char * argv[7] = {};
+        int argc = sizeof(argv)/sizeof(char*);
+        char oneargv[] =
+            "decrypter.py\0"
+            "-i\0"
+                "tests/fixtures/verifier/recorded/"
+                 "toto@10.10.43.13,Administrateur@QA@cible"
+                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
+           "-o\0"
+                "decrypted.2.out\0"
+            "--verbose\0"
+                "10\0";
+        {
+            int i = 0;
+            char * p = oneargv;
+            for (i = 0 ; i < argc ; i++){
+                argv[i] = p;
+                // provided command line parameters malformed
+                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
+                p++;
+                // provided command line parameters malformed
+                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
+            }
+            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
+        }
+
+        int res = -1;
+        try {
+            res = app_decrypter(argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
         } catch (const Error & e) {
             printf("verify failed: with id=%d\n", e.id);
         }

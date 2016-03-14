@@ -798,13 +798,16 @@ class Engine(object):
         :param target physical_target: selected target
         :return: None
         """
-        hosttarget = u"%s@%s:%s" % (
+        hosttarget = u"%s@%s@%s:%s" % (
             physical_target.account.name,
+            physical_target.account.domain_cn,
             physical_target.resource.device.cn,
             physical_target.resource.service.cn)
         try:
             if self.session_id:
-                self.wabengine.update_session(self.session_id, hosttarget, **kwargs)
+                self.wabengine.update_session(self.session_id,
+                                              hosttarget=hosttarget,
+                                              **kwargs)
         except Exception, e:
             import traceback
             Logger().info("Engine update_session failed: (((%s)))" % (traceback.format_exc(e)))

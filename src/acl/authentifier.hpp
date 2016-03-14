@@ -181,6 +181,8 @@ class SessionManager : public auth_api {
 
     bool wait_for_capture;
 
+    mutable std::string session_type;
+
 public:
     SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
@@ -357,6 +359,16 @@ public:
                     this->keepalive.start(now);
                 }
             }
+            else
+            {
+                if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
+                    this->ini.set<cfg::context::manager_disconnect_reason>(
+                        this->ini.get<cfg::context::disconnect_reason>().c_str());
+                    this->ini.get_ref<cfg::context::disconnect_reason>().clear();
+
+                    this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+                }
+            }
         }
         if (this->wait_for_capture && mm.is_up_and_running()) {
             this->ini.check_record_config();
@@ -386,11 +398,26 @@ public:
         LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         try {
             this->acl_serial.incoming();
+
+            if (!this->ini.get<cfg::context::module>().compare("RDP") ||
+                !this->ini.get<cfg::context::module>().compare("VNC")) {
+                this->session_type = this->ini.get<cfg::context::module>().c_str();
+            }
+
             this->remote_answer = true;
         } catch (...) {
             // acl connection lost
             this->ini.set_acl<cfg::context::authenticated>(false);
-            this->ini.set_acl<cfg::context::rejected>(TR("manager_close_cnx", language(this->ini)));
+
+            if (this->ini.get<cfg::context::manager_disconnect_reason>().empty()) {
+                this->ini.set_acl<cfg::context::rejected>(
+                    TR("manager_close_cnx", language(this->ini)));
+            }
+            else {
+                this->ini.set_acl<cfg::context::rejected>(
+                    this->ini.get<cfg::context::manager_disconnect_reason>().c_str());
+                this->ini.get_ref<cfg::context::manager_disconnect_reason>().clear();
+            }
         }
     }
 
@@ -433,16 +460,10 @@ public:
             this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
 
-        const char * session_type = "Neutral";
-
-        if (!this->ini.get<cfg::context::module>().compare("RDP") ||
-            !this->ini.get<cfg::context::module>().compare("VNC"))
-            session_type = this->ini.get<cfg::context::module>().c_str();
-
         LOG_SESSION( duplicate_with_pid
                    , session_log
 
-                   , session_type
+                   , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
                    , type
                    , this->ini.get<cfg::context::session_id>().c_str()
                    , this->ini.get<cfg::globals::auth_user>().c_str()

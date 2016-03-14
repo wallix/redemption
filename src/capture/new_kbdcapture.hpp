@@ -212,7 +212,6 @@ public:
             {0x00000009, cstr_array_view("/<tab>")},
             {0x0000000D, cstr_array_view("/<enter>")},
             {0x0000001B, cstr_array_view("/<escape>")},
-            {0x0000002F, cstr_array_view("//")},
             {0x0000007F, cstr_array_view("/<delete>")},
             {0x00002190, cstr_array_view("/<left>")},
             {0x00002191, cstr_array_view("/<up>")},
@@ -243,6 +242,14 @@ public:
                 }
             }
             else {
+                if (uchar == 0x0000002F /* '/' */) {
+                    if (this->unlogged_data.has_room(1)) {
+                        this->unlogged_data.out_string("/");
+                    }
+                    else {
+                        break;
+                    }
+                }
                 uint8_t buf_char[5]{};
                 size_t const char_len = UTF32toUTF8(
                     in_raw_kbd_data.get_current() - 4,
@@ -255,14 +262,14 @@ public:
                 if (char_len > 0) {
                     if (this->authentifier) {
                         can_be_sent_to_server &= !this->check_filter(
-                            "FINDPATTERN_KILL",
+                            true,   // pattern_kill = true -> FINDPATTERN_KILL
                             this->regexes_filter_kill,
                             this->regexes_searcher.get(),
                             this->utf8_kbd_data_kill,
                             buf_char, char_len
                         );
                         this->check_filter(
-                            "FINDPATTERN_NOTIFY",
+                            false,  // pattern_kill = false -> FINDPATTERN_NOTIFY
                             this->regexes_filter_notify,
                             this->regexes_searcher.get() + this->regexes_filter_kill.size(),
                             this->utf8_kbd_data_notify,
@@ -281,7 +288,7 @@ public:
 
 private:
     bool check_filter(
-        char const * reason,
+        bool pattern_kill,
         utils::MatchFinder::NamedRegexArray const & regexes_filter,
         TextSearcher * test_searcher_it,
         Utf8KbdData & utf8_kbd_data,
@@ -308,7 +315,7 @@ private:
                           : char_kbd_data;
                         utils::MatchFinder::report(
                             this->authentifier,
-                            reason,
+                            pattern_kill,
                             utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                             named_regex.name.c_str(), str
                         );

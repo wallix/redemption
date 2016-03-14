@@ -669,6 +669,32 @@ namespace cfg {
             using type = std::string;
             type value{};
         };
+
+        struct manager_disconnect_reason {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = std::string;
+            type value{};
+        };
+        // AUTHID_CONTEXT_DISCONNECT_REASON
+        struct disconnect_reason {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::read;
+            }
+            static constexpr unsigned index() { return 100; }
+            using type = std::string;
+            type value{};
+        };
+        // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
+        struct disconnect_reason_ack {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::write;
+            }
+            static constexpr unsigned index() { return 101; }
+            using type = bool;
+            type value{0};
+        };
     };
 
     struct crypto {
@@ -1974,6 +2000,9 @@ struct context
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::manager_disconnect_reason
+, cfg::context::disconnect_reason
+, cfg::context::disconnect_reason_ack
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -2265,5 +2294,7 @@ using VariablesAclPack = Pack<
 , cfg::context::pattern_notify
 , cfg::context::opt_message
 , cfg::context::outbound_connection_blocking_rules
+, cfg::context::disconnect_reason
+, cfg::context::disconnect_reason_ack
 >;
 }

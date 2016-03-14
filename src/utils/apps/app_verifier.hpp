@@ -1227,7 +1227,6 @@ static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char
         char temp_extension[256] = {};
 
         canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
-        //cout << "temp_path: \"" << temp_path << "\", \"" << temp_basename << "\", \"" << temp_extension << "\"" << std::endl;
 
         if (strlen(temp_path) > 0) {
             mwrm_path       = temp_path;
@@ -1237,6 +1236,10 @@ static inline int app_verifier(Inifile & ini, int argc, char ** argv, const char
         if (mwrm_path.back() != '/'){
             mwrm_path.push_back('/');
         }
+        if (hash_path.back() != '/'){
+            hash_path.push_back('/');
+        }
+
     }
     std::cout << "Input file is \"" << mwrm_path << input_filename << "\".\n";
 

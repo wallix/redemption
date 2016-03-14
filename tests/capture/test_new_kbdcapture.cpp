@@ -143,3 +143,35 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
       , auth.s
     );
 }
+
+
+BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
+{
+    struct : auth_api {
+        bool kill = 0;
+
+        void report(const char* , const char* ) override {
+            this->kill = 1;
+        }
+
+        void set_auth_channel_target(const char*) override {}
+        void set_auth_error_message(const char*) override {}
+        void log4(bool, const char*, const char*) const override {}
+    } auth;
+
+    timeval const time = {0, 0};
+    NewKbdCapture kbd_capture(time, &auth, "$kbd:ab/cd", nullptr, false, false);
+
+    unsigned char input[] = {0, 0, 0, 0};
+    char const str[] = "abcdab/cdaa";
+    unsigned count_ok = 0;
+    for (auto c : str) {
+        input[0] = c;
+        if (!kbd_capture.input(time, input, 4)) {
+            ++count_ok;
+        }
+    }
+    kbd_capture.flush();
+    BOOST_CHECK_EQUAL(1, count_ok);
+    BOOST_CHECK_EQUAL(auth.kill, true);
+}
