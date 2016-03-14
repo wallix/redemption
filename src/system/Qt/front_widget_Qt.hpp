@@ -82,8 +82,12 @@
 
 #define KEY_SETTING_PATH "keySetting.config"
 
+#define METAFILE_CLIP_PIC_HEADERS_SIZE       130
+#define META_DIBSTRETCHBLT_HEADER_SIZE 66
+#define METAFILE_HEADER_SIZE           118
 
-#define PASTE_DATA_FIRST_PART_SIZE   1592
+#define PASTE_TEXT_FIRST_PART_SIZE   1592 // = 1600 - 8
+#define PASTE_PIC_FIRST_PART_SIZE    1462 // = 1600 - METAFILEPICT_HEADER_SIZE - 8
 #define PDU_MAX_SIZE                 1600
 
 
@@ -813,6 +817,8 @@ public:
     bool              _local_clipboard_stream;
     size_t            _length;
     uint8_t         * _chunk;
+    QImage          * _bufferImage;
+    uint16_t          _bufferTypeID;
      
     
     Connector_Qt(Front_Qt_API * front, QWidget * parent) 
@@ -826,6 +832,8 @@ public:
     , _local_clipboard_stream(true)
     , _length(0)
     , _chunk(nullptr)
+    , _bufferImage(nullptr)
+    , _bufferTypeID(0)
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
@@ -836,6 +844,8 @@ public:
     }
     
     void drop_connexion() { 
+        this->emptyBuffer();
+        
         if (this->_callback != nullptr) {
             this->_callback->send_disconnect_ultimatum();
             delete (this->_callback);
@@ -911,9 +921,9 @@ public:
         mod_rdp_params.enable_mem3blt                  = true;
         mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = true;
-        mod_rdp_params.server_redirection_support        = true;
+        mod_rdp_params.server_redirection_support      = true;
         std::string allow_channels = "*";
-        mod_rdp_params.allow_channels                    = &allow_channels;    
+        mod_rdp_params.allow_channels                  = &allow_channels;    
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -941,6 +951,21 @@ public:
         this->_clipboard->setImage(image, QClipboard::Clipboard);
     }
     
+    void emptyBuffer() {
+        this->_bufferTypeID = 0;
+        this->_length = 0;
+        if (this->_chunk != nullptr) {
+            delete (this->_chunk);
+            this->_chunk = nullptr;
+        }
+    }
+    
+    void send_FormatListPDU() {
+        uint32_t formatIDs[]                  = {this->_bufferTypeID};
+        std::string formatListDataShortName[] = {std::string("")};
+        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+    }
+    
     
 public Q_SLOTS:
     void call_Draw() {
@@ -950,22 +975,22 @@ public Q_SLOTS:
     void mem_clipboard() {
         if (this->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
-            
-            
+
             if (!mimeData->hasUrls()) {
                 if (mimeData->hasImage()){
                     
-                    QImage image(this->_clipboard->image());
+                    this->emptyBuffer();
 
-                    this->_chunk  = reinterpret_cast<uint8_t *>(image.bits());
-                    this->_length = image.byteCount();
-                    
-                    uint32_t formatIDs[]                  = {RDPECLIP::CF_METAFILEPICT};
-                    std::string formatListDataShortName[] = {std::string("")};
-                    this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+                    this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT; 
+                    this->_bufferImage = new QImage(this->_clipboard->image()); //.convertToFormat(QImage::Format_RGB888)
+                    this->_length = this->_bufferImage->byteCount();
+
+                    this->send_FormatListPDU();
                     
                 } else if (mimeData->hasText()){
                     
+                    this->emptyBuffer();
+                    this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
                     int cmptCR(0);
                     std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
                     std::string tmp(str);
@@ -978,13 +1003,10 @@ public Q_SLOTS:
                     }
                     size_t size((str.length() + cmptCR*2) * 4);
 
-                    this->_front->empty_buffer();
                     this->_chunk  = new uint8_t[size];
                     this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
                     
-                    uint32_t formatIDs[]                  = {RDPECLIP::CF_UNICODETEXT};
-                    std::string formatListDataShortName[] = {std::string("")};
-                    this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+                    this->send_FormatListPDU();
                 }
             }
         }
