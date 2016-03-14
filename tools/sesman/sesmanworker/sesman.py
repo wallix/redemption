@@ -1338,6 +1338,7 @@ class Sesman():
 
 
                         self.engine.update_session(physical_target,
+                                                   is_application=bool(application),
                                                    target_host=self._physical_target_host)
 
                         if not _status:

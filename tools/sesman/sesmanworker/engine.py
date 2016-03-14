@@ -798,8 +798,9 @@ class Engine(object):
         :param target physical_target: selected target
         :return: None
         """
-        hosttarget = u"%s@%s:%s" % (
+        hosttarget = u"%s@%s@%s:%s" % (
             physical_target.account.name,
+            physical_target.account.domain_cn,
             physical_target.resource.device.cn,
             physical_target.resource.service.cn)
         try:
