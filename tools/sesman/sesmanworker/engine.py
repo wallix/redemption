@@ -805,7 +805,9 @@ class Engine(object):
             physical_target.resource.service.cn)
         try:
             if self.session_id:
-                self.wabengine.update_session(self.session_id, hosttarget, **kwargs)
+                self.wabengine.update_session(self.session_id,
+                                              hosttarget=hosttarget,
+                                              **kwargs)
         except Exception, e:
             import traceback
             Logger().info("Engine update_session failed: (((%s)))" % (traceback.format_exc(e)))
