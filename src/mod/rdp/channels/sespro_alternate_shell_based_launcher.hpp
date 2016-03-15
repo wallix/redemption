@@ -40,6 +40,8 @@ public:
 
     bool on_clipboard_initialize() override { return false; }
 
+    bool on_clipboard_monitor_ready() override { return false; }
+
     bool on_drive_access() override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
@@ -79,6 +81,10 @@ public:
     bool on_server_format_data_request() override { return false; }
 
     bool on_server_format_list_response() override { return false; }
+
+    void set_clipboard_virtual_channel(
+            BaseVirtualChannel* channel) override {
+    }
 
     void set_session_probe_virtual_channel(
         BaseVirtualChannel* channel) override {

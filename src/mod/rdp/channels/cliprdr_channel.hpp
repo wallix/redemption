@@ -60,9 +60,10 @@ private:
 
     FrontAPI& front;
 
-    SessionProbeLauncher* clipboard_initialize_notifier = nullptr;
-    SessionProbeLauncher* format_list_response_notifier = nullptr;
-    SessionProbeLauncher* format_data_request_notifier  = nullptr;
+    SessionProbeLauncher* clipboard_monitor_ready_notifier = nullptr;
+    SessionProbeLauncher* clipboard_initialize_notifier    = nullptr;
+    SessionProbeLauncher* format_list_response_notifier    = nullptr;
+    SessionProbeLauncher* format_data_request_notifier     = nullptr;
 
     const bool proxy_managed;   // Has not client.
 
@@ -255,8 +256,6 @@ private:
     bool process_client_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-LOG(LOG_INFO, "process_client_format_data_response_pdu: total_length=%u, flags=0x%X", total_length, flags);
-hexdump(chunk.get_current(), chunk.in_remain());
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
             !this->param_dont_log_data_into_syslog) {
             const auto saved_chunk_p = chunk.get_current();
@@ -491,12 +490,11 @@ hexdump(chunk.get_current(), chunk.in_remain());
         InStream& chunk)
     {
         if (!this->param_clipboard_down_authorized &&
-            !this->param_clipboard_up_authorized) {
-            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                        "Clipboard is fully disabled.");
-            }
+            !this->param_clipboard_up_authorized &&
+            !this->format_list_response_notifier) {
+            LOG(LOG_WARNING,
+                "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                    "Clipboard is fully disabled.");
 
             this->send_pdu_to_client<RDPECLIP::FormatListResponsePDU>(
                 true);
@@ -1088,11 +1086,9 @@ public:
     {
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized) {
-            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                        "Clipboard is fully disabled.");
-            }
+            LOG(LOG_WARNING,
+                "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                    "Clipboard is fully disabled.");
 
             this->send_pdu_to_server<RDPECLIP::FormatListResponsePDU>(
                 true);
@@ -1237,6 +1233,8 @@ public:
                     chunk_data_length);
             }
 
+            this->client_use_long_format_name = true;
+
             // Format List PDU.
             {
                 RDPECLIP::FormatListPDU format_list_pdu;
@@ -1260,6 +1258,13 @@ public:
             }
 
             return false;
+        }
+        else {
+            if (this->clipboard_monitor_ready_notifier) {
+                if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
+                    this->clipboard_monitor_ready_notifier = nullptr;
+                }
+            }
         }
 
         return true;
@@ -1428,9 +1433,10 @@ public:
     }   // process_server_message
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
-        this->clipboard_initialize_notifier = launcher;
-        this->format_list_response_notifier = launcher;
-        this->format_data_request_notifier  = launcher;
+        this->clipboard_monitor_ready_notifier = launcher;
+        this->clipboard_initialize_notifier    = launcher;
+        this->format_list_response_notifier    = launcher;
+        this->format_data_request_notifier     = launcher;
     }
 };  // class ClipboardVirtualChannel
 
