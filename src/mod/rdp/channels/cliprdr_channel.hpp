@@ -255,8 +255,6 @@ private:
     bool process_client_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-LOG(LOG_INFO, "process_client_format_data_response_pdu: total_length=%u, flags=0x%X", total_length, flags);
-hexdump(chunk.get_current(), chunk.in_remain());
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
             !this->param_dont_log_data_into_syslog) {
             const auto saved_chunk_p = chunk.get_current();
@@ -491,12 +489,11 @@ hexdump(chunk.get_current(), chunk.in_remain());
         InStream& chunk)
     {
         if (!this->param_clipboard_down_authorized &&
-            !this->param_clipboard_up_authorized) {
-            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                        "Clipboard is fully disabled.");
-            }
+            !this->param_clipboard_up_authorized &&
+            !this->format_list_response_notifier) {
+            LOG(LOG_WARNING,
+                "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                    "Clipboard is fully disabled.");
 
             this->send_pdu_to_client<RDPECLIP::FormatListResponsePDU>(
                 true);
@@ -1088,11 +1085,9 @@ public:
     {
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized) {
-            if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                        "Clipboard is fully disabled.");
-            }
+            LOG(LOG_WARNING,
+                "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                    "Clipboard is fully disabled.");
 
             this->send_pdu_to_server<RDPECLIP::FormatListResponsePDU>(
                 true);

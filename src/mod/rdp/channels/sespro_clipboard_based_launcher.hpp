@@ -451,7 +451,8 @@ public:
                                       in_s,
                                       totalLength,
                                         CHANNELS::CHANNEL_FLAG_FIRST
-                                      | CHANNELS::CHANNEL_FLAG_LAST);
+                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
         this->format_data_requested = true;
 
@@ -538,7 +539,8 @@ private:
                                       in_s,
                                       totalLength,
                                         CHANNELS::CHANNEL_FLAG_FIRST
-                                      | CHANNELS::CHANNEL_FLAG_LAST);
+                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
         this->state = State::RUN;
 
