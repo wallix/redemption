@@ -1233,6 +1233,8 @@ public:
                     chunk_data_length);
             }
 
+            this->client_use_long_format_name = true;
+
             // Format List PDU.
             {
                 RDPECLIP::FormatListPDU format_list_pdu;
