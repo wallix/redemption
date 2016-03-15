@@ -109,7 +109,7 @@ inline static const char * get_Format_name(uint32_t FormatId) {
 // +---------------------------------------------------------------+
 
 // msgType (2 bytes): An unsigned, 16-bit integer that specifies the type of
-//  the clipboard PDU that follows the dataLen field.
+// the clipboard PDU that follows the dataLen field.
 
 // +---------------------------------+-----------------------------------------+
 // | Value                           | Meaning                                 |

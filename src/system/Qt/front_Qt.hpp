@@ -246,12 +246,6 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) override;
 
     virtual int server_resize(int width, int height, int bpp) override;
-
-    void process_server_monitor_ready_pdu();
-
-    void send_FormatListResponsePDU();
-
-    void send_FormatDataRequestPDU();
     
     void send_buffer_to_clipboard();
     
@@ -292,7 +286,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //-----------------------------
-    //      DRAWING FUNCTIONS
+    //       DRAW FUNCTIONS
     //-----------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override;

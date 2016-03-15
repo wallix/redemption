@@ -358,7 +358,7 @@ void Front_Qt::mouseReleaseEvent(QMouseEvent *e) {
 }
 
 void Front_Qt::keyPressEvent(QKeyEvent *e) {
-    this->_qtRDPKeymap.keyEvent(0       ,      e);
+    this->_qtRDPKeymap.keyEvent(0     , e);
     if (this->_qtRDPKeymap.scanCode != 0) {
         this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
     }
@@ -378,7 +378,7 @@ void Front_Qt::wheelEvent(QWheelEvent *e) {
         flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
     }
     if (this->_callback != nullptr) {
-        //this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
+        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
     }
 }
 
@@ -1346,11 +1346,27 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         "ClipboardVirtualChannel::process_server_message: "
                             "Monitor Ready PDU");
                 }
-                std::cout << "server >> Monitor Ready PDU" << std::endl;
+                    std::cout << "server >> Monitor Ready PDU" << std::endl;
+                    
+                    {
+                    RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
+                    RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_1, RDPECLIP::CB_STREAM_FILECLIP_ENABLED);
+                    StaticOutStream<1024> out_stream;
+                    clipboard_caps_pdu.emit(out_stream);
+                    general_cap_set.emit(out_stream);
+                    
+                    const uint32_t total_length = out_stream.get_offset();
+                    InStream chunk(out_stream.get_data(), total_length);
+                    
+                    static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
+                                                                                chunk, 
+                                                                                total_length, 
+                                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                               );
 
-                this->process_server_monitor_ready_pdu();
+                    std::cout << "client >> Clipboard Capabilities PDU" << std::endl;
 
-                {
+                
                     uint32_t formatIDs[]                  = { RDPECLIP::CF_UNICODETEXT
                                                             , RDPECLIP::CF_TEXT
                                                             , RDPECLIP::CF_BITMAP
@@ -1386,12 +1402,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         "ClipboardVirtualChannel::process_server_message: "
                             "Format List PDU");
                 }
-                std::cout << "server >> Format List PDU";
 
                 {
                     chunk.in_skip_bytes(6);
                     this->_requestedFormatId = chunk.in_uint32_le();
-                    std::cout << " (Format PDU type = " << (int) this->_requestedFormatId ;
 
                     uint8_t utf8_string[32];
                     int k(0);
@@ -1403,12 +1417,39 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         }
                     }
                     this->_requestedFormatShortName = std::string(reinterpret_cast<const char*>(utf8_string), k);
-                    std::cout << " name = " << this->_requestedFormatShortName << ")" << std::endl;
+                    std::cout << "server >> Format List PDU (Format ID = " << this->_requestedFormatId << ", name = " << this->_requestedFormatShortName << ")" << std::endl;
+                    
 
-                    this->send_FormatListResponsePDU();
-                    if (this->_requestedFormatId != 0) {
-                        this->send_FormatDataRequestPDU();
-                    }
+                    RDPECLIP::FormatListResponsePDU formatListResponsePDU(true);
+                    StaticOutStream<256> out_stream;
+                    formatListResponsePDU.emit(out_stream);
+                    const uint32_t total_length_FormatListResponsePDU = out_stream.get_offset();
+                    
+                    InStream chunk(out_stream.get_data(), total_length_FormatListResponsePDU);
+                    
+                    static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
+                                                                                chunk, 
+                                                                                total_length_FormatListResponsePDU, 
+                                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                               );
+
+                    std::cout << "client >> Format List Response PDU" << std::endl;
+
+                        
+                    RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(this->_requestedFormatId);
+                    StaticOutStream<256> out_streamRequest;
+                    formatDataRequestPDU.emit(out_streamRequest);
+                    const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
+                    
+                    InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
+                
+                    static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
+                                                                                chunkRequest, 
+                                                                                total_length_FormatDataRequestPDU, 
+                                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                                );
+                    
+                    std::cout << "client >> Format Data Request PDU" << std::endl;
                 }
 
             break;
@@ -1419,13 +1460,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         "ClipboardVirtualChannel::process_server_message: "
                             "Format Data Response PDU");
                 }
-                std::cout << length << std::endl;
+
                 this->process_server_clipboard_data(flags, chunk);
 
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-            {
+
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
@@ -1434,184 +1475,546 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                 std::cout << "server >> Format Data Request PDU" << std::endl;
                 
-                int firstPartSize;
-                uint32_t total_length(this->_connector->_length + 8);
-                StaticOutStream<PDU_MAX_SIZE> out_streamfirst;
+                // 2.2.5.1 Format Data Request PDU (CLIPRDR_FORMAT_DATA_REQUEST)
                 
-                // Clipboard PDU Header
-                out_streamfirst.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
-                out_streamfirst.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
+                // The Format Data Request PDU is sent by the recipient of the Format List PDU. It is used to request the 
+                // data for one of the formats that was listed in the Format List PDU. 
                 
+                // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+                // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+                // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                // |                           clipHeader                          |
+                // +---------------------------------------------------------------+
+                // |                              ...                              |
+                // +---------------------------------------------------------------+
+                // |                       requestedFormatId                       |
+                // +---------------------------------------------------------------+
                 
-                switch(this->_connector->_bufferTypeID) {
+                // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_FORMAT_DATA_REQUEST
+                // (0x0004), while the msgFlags field MUST be set to 0x0000.
+
+                //requestedFormatId (4 bytes): An unsigned, 32-bit integer that specifies the Clipboard Format ID of the clipboard data. The Clipboard 
+                // Format ID MUST be one listed previously in the Format List PDU.
+                
+                chunk.in_skip_bytes(6);
+                
+                if (this->_connector->_bufferTypeID == chunk.in_uint32_le()) {
                     
-                    case RDPECLIP::CF_METAFILEPICT:
-                    {   
-                        this->_connector->_chunk = reinterpret_cast<uint8_t *>(this->_connector->_bufferImage->bits());
-                        firstPartSize = PASTE_PIC_FIRST_PART_SIZE;
-                        total_length += METAFILE_CLIP_PIC_HEADERS_SIZE;
-                        const int largeRecordWordsSize((this->_connector->_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-                        out_streamfirst.out_uint32_le(this->_connector->_length + METAFILE_CLIP_PIC_HEADERS_SIZE);
+                    int firstPartSize;
+                    uint32_t total_length(this->_connector->_length + 8);
+                    StaticOutStream<PDU_MAX_SIZE> out_streamfirst;
+                    
+                    
+                    // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (cliboard.hpp) 
+                    // 8 bytes
+                    out_streamfirst.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+                    out_streamfirst.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
+                    
+                    
+                    switch(this->_connector->_bufferTypeID) {
                         
-                        // Packed Metafile Payload Header (12 bytes) 2.2.5.2.1 Packed Metafile Payload (CLIPRDR_MFPICT)
-                        out_streamfirst.out_uint32_le(RDPECLIP::MM_ANISOTROPIC);
-                        out_streamfirst.out_uint32_le(this->_connector->_bufferImage->width()*40); 
-                        out_streamfirst.out_uint32_le(this->_connector->_bufferImage->height()*40);
-                        
-                        // META_HEADER (18 bytes) 3.2.1 META_HEADER
-                        out_streamfirst.out_uint16_le(RDPECLIP::MEMORYMETAFILE);
-                        out_streamfirst.out_uint16_le(9);
-                        out_streamfirst.out_uint16_le(RDPECLIP::METAVERSION300);
-                        out_streamfirst.out_uint32_le((this->_connector->_length + METAFILE_HEADER_SIZE)/2);
-                        out_streamfirst.out_uint16_le(0);
-                        out_streamfirst.out_uint32_le(largeRecordWordsSize);
-                        out_streamfirst.out_uint16_le(0); 
-                        
-                        
-                        // Records
-                        
-                        //      META_SETMAPMODE (8 bytes)
-                        out_streamfirst.out_uint32_le(4);
-                        out_streamfirst.out_uint16_le(RDPECLIP::META_SETMAPMODE);
-                        out_streamfirst.out_uint16_le(RDPECLIP::MM_ANISOTROPIC);
-                        
-                        
-                        //      META_SETWINDOWEXT (10 bytes)
-                        out_streamfirst.out_uint32_le(5);
-                        out_streamfirst.out_uint16_le(RDPECLIP::META_SETWINDOWEXT);  
-                        out_streamfirst.out_uint16_le( - this->_connector->_bufferImage->height());
-                        out_streamfirst.out_uint16_le(this->_connector->_bufferImage->width());
-                        
-                        
-                        //      META_SETWINDOWORG (10 bytes)
-                        out_streamfirst.out_uint32_le(5);
-                        out_streamfirst.out_uint16_le(RDPECLIP::META_SETWINDOWORG);
-                        out_streamfirst.out_uint16_le(0);
-                        out_streamfirst.out_uint16_le(0);
-                        
-                        
-                        //      META_DIBSTRETCHBLT record header (26 bytes) 2.3.1.3 META_DIBSTRETCHBLT Record, 2.3.1.3.1 With Bitmap
-                        out_streamfirst.out_uint32_le(largeRecordWordsSize);
-                        out_streamfirst.out_uint16_le(RDPECLIP::META_DIBSTRETCHBLT);
-                        out_streamfirst.out_uint32_le(0x00CC0020); // SRCCOPY
-                        out_streamfirst.out_uint16_le(this->_connector->_bufferImage->height());
-                        out_streamfirst.out_uint16_le(this->_connector->_bufferImage->width());
-                        out_streamfirst.out_uint16_le(0);
-                        out_streamfirst.out_uint16_le(0);
-                        out_streamfirst.out_uint16_le( - this->_connector->_bufferImage->height()); 
-                        out_streamfirst.out_uint16_le(this->_connector->_bufferImage->width());
-                        out_streamfirst.out_uint16_le(0);
-                        out_streamfirst.out_uint16_le(0);
+                        case RDPECLIP::CF_METAFILEPICT:
+                        {   
+                            this->_connector->_chunk = reinterpret_cast<uint8_t *>(this->_connector->_bufferImage->bits());
+                            firstPartSize = PASTE_PIC_FIRST_PART_SIZE;
+                            total_length += METAFILE_CLIP_PIC_HEADERS_SIZE;
+                            const int largeRecordWordsSize((this->_connector->_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+                            out_streamfirst.out_uint32_le(this->_connector->_length + METAFILE_CLIP_PIC_HEADERS_SIZE);
                             
-                        //          DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
-                        //                  BitmapInfoHeader (40 bytes) 2.2.2.3 BitmapInfoHeader Object
-                        out_streamfirst.out_uint32_le(40);
-                        out_streamfirst.out_uint32_le(this->_connector->_bufferImage->width());
-                        out_streamfirst.out_uint32_le(-this->_connector->_bufferImage->height());
-                        out_streamfirst.out_uint16_le(1); 
-                        out_streamfirst.out_uint16_le(this->_connector->_bufferImage->depth());
-                        out_streamfirst.out_uint32_le(0);  // BI_RGB
-                        out_streamfirst.out_uint32_le(this->_connector->_length);
-                        out_streamfirst.out_uint32_le(0);
-                        out_streamfirst.out_uint32_le(0);
-                        out_streamfirst.out_uint32_le(0);
-                        out_streamfirst.out_uint32_le(0);
+                            
+                            // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
+                            // 12 bytes
+                            out_streamfirst.out_uint32_le(RDPECLIP::MM_ANISOTROPIC);
+                            out_streamfirst.out_uint32_le(this->_connector->_bufferImage->width()*40); 
+                            out_streamfirst.out_uint32_le(this->_connector->_bufferImage->height()*40);
+                            
+                            
+                            // 3.2.1 META_HEADER Example 
+                            
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+                            // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // |             Type              |          HeaderSize           |
+                            // +-------------------------------+-------------------------------+
+                            // |           Version             |             Size              |
+                            // +-------------------------------+-------------------------------+
+                            // |             ...               |        NumberOfObjects        |
+                            // +-------------------------------+-------------------------------+
+                            // |                     metaFileData (variable)                   |
+                            // +-------------------------------+-------------------------------+
+                            // |       NumberOfMembers         |                               |
+                            // +-------------------------------+-------------------------------+
+                            
+                            // Type: 0x0001 specifies the type of metafile from the MetafileType Enumeration 
+                            // (section 2.1.1.18) to be a metafile stored in memory.
+
+                            // HeaderSize: 0x0009 specifies the number of WORDs in this record, which is equivalent 
+                            // to 18 (0x0012) bytes.
+
+                            // Version: 0x0300 specifies the metafile version from the MetafileVersion Enumeration 
+                            // (section 2.1.1.19) to be a WMF metafile that supports DIBs.
+
+                            // Size: 0x00000036 specifies the number of WORDs in the entire metafile, which is 
+                            // equivalent to 108 (0x0000006C) bytes.
+
+                            // NumberOfObjects: 0x0002 specifies the number of graphics objects that are defined in the metafile.
+
+                            // MaxRecord: 0x0000000C specifies the size in WORDs of the largest record in the 
+                            // metafile, which is equivalent to 24 (0x00000018) bytes.
+
+                            // NumberOfMembers: 0x0000 is not used.
+
+                            // Note Based on the value of the NumberOfObjects field, a WMF Object Table (section 3.1.4.1) 
+                            // can be created that is large enough for 2 objects.
+                            
+                            // 18 bytes
+                            out_streamfirst.out_uint16_le(RDPECLIP::MEMORYMETAFILE);
+                            out_streamfirst.out_uint16_le(9);
+                            out_streamfirst.out_uint16_le(RDPECLIP::METAVERSION300);
+                            out_streamfirst.out_uint32_le((this->_connector->_length + METAFILE_HEADER_SIZE)/2);
+                            out_streamfirst.out_uint16_le(0);
+                            out_streamfirst.out_uint32_le(largeRecordWordsSize);
+                            out_streamfirst.out_uint16_le(0); 
+                            
+                            
+                            // 2.3 WMF Records
+                            
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+                            // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // |                           RecordSize                          |
+                            // +-------------------------------+-------------------------------+
+                            // |        RecordFunction         |           rdParam             |
+                            // +-------------------------------+-------------------------------+
+                            // |                              ...                              |
+                            // +---------------------------------------------------------------+
+                            
+                            // RecordSize (4 bytes): A 32-bit unsigned integer that defines the number of 16-bit WORDs 
+                            // in the record.
+
+                            // RecordFunction (2 bytes): A 16-bit unsigned integer that defines the type of this record. 
+                            // The low-order byte MUST match the low-order byte of one of the values in the RecordType Enumeration.
+
+                            // rdParam (variable): An optional place holder that is provided for record-specific fields.
+                            
+                            //      META_SETMAPMODE (8 bytes)
+                            out_streamfirst.out_uint32_le(4);
+                            out_streamfirst.out_uint16_le(RDPECLIP::META_SETMAPMODE);
+                            out_streamfirst.out_uint16_le(RDPECLIP::MM_ANISOTROPIC);
+                            
+                            
+                            //      META_SETWINDOWEXT (10 bytes)
+                            out_streamfirst.out_uint32_le(5);
+                            out_streamfirst.out_uint16_le(RDPECLIP::META_SETWINDOWEXT);  
+                            out_streamfirst.out_uint16_le( - this->_connector->_bufferImage->height());
+                            out_streamfirst.out_uint16_le(this->_connector->_bufferImage->width());
+                            
+                            
+                            //      META_SETWINDOWORG (10 bytes)
+                            out_streamfirst.out_uint32_le(5);
+                            out_streamfirst.out_uint16_le(RDPECLIP::META_SETWINDOWORG);
+                            out_streamfirst.out_uint16_le(0);
+                            out_streamfirst.out_uint16_le(0);
+                            
+                            
+                            // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap 
+
+                            // This section specifies the structure of the META_DIBSTRETCHBLT record when it contains an 
+                            // embedded device-independent bitmap (DIB).
+
+                            // Fields not specified in this section are specified in the preceding META_DIBSTRETCHBLT section.
+                            
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+                            // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // |                           RecordSize                          |
+                            // +-------------------------------+-------------------------------+
+                            // |        RecordFunction         |           rdParam             |
+                            // +-------------------------------+-------------------------------+
+                            // |             ...               |          SrcHeight            |
+                            // +-------------------------------+-------------------------------+
+                            // |           SrcWidth            |             YSrc              |
+                            // +-------------------------------+-------------------------------+
+                            // |             XSrc              |         DestHeight            |
+                            // +-------------------------------+-------------------------------+
+                            // |          DestWidth            |             YDest             |
+                            // +-------------------------------+-------------------------------+
+                            // |            XDest              |      Target (variable)        |
+                            // +-------------------------------+-------------------------------+
+                            // |                              ...                              |
+                            // +---------------------------------------------------------------+
+                            
+                            // RecordFunction (2 bytes): A 16-bit unsigned integer that defines this WMF record type. 
+                            // The low-order byte MUST match the low-order byte of the RecordType enumeration (section 2.1.1.1) 
+                            // value META_DIBSTRETCHBLT. The high-order byte MUST contain a value equal to the number of 16-bit 
+                            // WORDs in the record minus the number of WORDs in the RecordSize and Target fields. That is:
+
+                            //      RecordSize - (2 + (sizeof(Target)/2))
+
+                            // Target (variable): A variable-sized DeviceIndependentBitmap Object (section 2.2.2.9) that defines
+                            // image content. This object MUST be specified, even if the raster operation does not require a source.
+
+                            // 26 bytes
+                            out_streamfirst.out_uint32_le(largeRecordWordsSize);
+                            out_streamfirst.out_uint16_le(RDPECLIP::META_DIBSTRETCHBLT);
+                            out_streamfirst.out_uint32_le(0x00CC0020); // SRCCOPY
+                            out_streamfirst.out_uint16_le(this->_connector->_bufferImage->height());
+                            out_streamfirst.out_uint16_le(this->_connector->_bufferImage->width());
+                            out_streamfirst.out_uint16_le(0);
+                            out_streamfirst.out_uint16_le(0);
+                            out_streamfirst.out_uint16_le(- this->_connector->_bufferImage->height()); 
+                            out_streamfirst.out_uint16_le(this->_connector->_bufferImage->width());
+                            out_streamfirst.out_uint16_le(0);
+                            out_streamfirst.out_uint16_le(0);
+                                
+                            
+                            // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
+                            
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+                            // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // |                     DIBHeaderInfo (variable)                  |
+                            // +---------------------------------------------------------------+
+                            // |                              ...                              |
+                            // +---------------------------------------------------------------+
+                            // |                        Colors (variable)                      |
+                            // +---------------------------------------------------------------+
+                            // |                              ...                              |
+                            // +---------------------------------------------------------------+
+                            // |                    BitmapBuffer (variable)                    |
+                            // +---------------------------------------------------------------+
+                            // |                              ...                              |
+                            // +---------------------------------------------------------------+
+                            
+                            // DIBHeaderInfo (variable): Either a BitmapCoreHeader Object (section 2.2.2.2) or a BitmapInfoHeader 
+                            // Object (section 2.2.2.3) that specifies information about the image.
+
+                            // The first 32 bits of this field is the HeaderSize value. If it is 0x0000000C, then this is a 
+                            // BitmapCoreHeader; otherwise, this is a BitmapInfoHeader.
+
+                            // Colors (variable): An optional array of either RGBQuad Objects (section 2.2.2.20) or 16-bit unsigned 
+                            // integers that define a color table.
+
+                            // The size and contents of this field SHOULD be determined from the metafile record or object that 
+                            // contains this DeviceIndependentBitmap and from information in the DIBHeaderInfo field. See ColorUsage 
+                            // Enumeration (section 2.1.1.6) and BitCount Enumeration (section 2.1.1.3) for additional details.
+
+                            
+                            // BitmapBuffer (variable): A buffer containing the image, which is not required to be contiguous with the 
+                            // DIB header, unless this is a packed bitmap.
+                            
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+                            // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // |                    UndefinedSpace (variable)                  |
+                            // +---------------------------------------------------------------+
+                            // |                              ...                              |
+                            // +---------------------------------------------------------------+
+                            // |                        aData (variable)                       |
+                            // +---------------------------------------------------------------+
+                            // |                              ...                              |
+                            // +---------------------------------------------------------------+ 
+
+                            // UndefinedSpace (variable): An optional field that MUST be ignored. If this DIB is a packed bitmap, 
+                            // this field MUST NOT be present.
+
+                            // aData (variable): An array of bytes that define the image.
+
+                            //      The size and format of this data is determined by information in the DIBHeaderInfo field. 
+                            // If it is a BitmapCoreHeader, the size in bytes MUST be calculated as follows:
+
+                            //              (((Width * Planes * BitCount + 31) & ~31) / 8) * abs(Height)
+
+                            //      This formula SHOULD also be used to calculate the size of aData when DIBHeaderInfo is a BitmapInfoHeader 
+                            // Object, using values from that object, but only if its Compression value is BI_RGB, BI_BITFIELDS, or BI_CMYK.
+
+                            //      Otherwise, the size of aData MUST be the BitmapInfoHeader Object value ImageSize.
+
+                            
+                            // 2.2.2.3 BitmapInfoHeader Object
+                            
+                            // The BitmapInfoHeader Object contains information about the dimensions and color format of a device-independent
+                            // bitmap (DIB).
+                            
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+                            // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+                            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                            // |                           HeaderSize                          |
+                            // +---------------------------------------------------------------+
+                            // |                             Width                             |
+                            // +---------------------------------------------------------------+
+                            // |                            Height                             |
+                            // +-------------------------------+-------------------------------+
+                            // |          Planes               |           BitCount            |
+                            // +-------------------------------+-------------------------------+
+                            // |                         Compression                           |
+                            // +---------------------------------------------------------------+
+                            // |                          ImageSize                            |
+                            // +---------------------------------------------------------------+
+                            // |                         XPelsPerMeter                         |
+                            // +---------------------------------------------------------------+
+                            // |                         YPelsPerMeter                         |
+                            // +---------------------------------------------------------------+
+                            // |                          ColorUsed                            |
+                            // +---------------------------------------------------------------+
+                            // |                        ColorImportant                         |
+                            // +---------------------------------------------------------------+
+                            
+                            // HeaderSize (4 bytes): A 32-bit unsigned integer that defines the size of this object, in bytes.
+
+                            // Width (4 bytes): A 32-bit signed integer that defines the width of the DIB, in pixels. This value 
+                            // MUST be positive.
+
+                            //          This field SHOULD specify the width of the decompressed image file, if the
+                            //          Compression value specifies JPEG or PNG format.<44>
+
+                            // Height (4 bytes): A 32-bit signed integer that defines the height of the DIB, in pixels. This value MUST NOT 
+                            // be zero.
+                            
+                            // Planes (2 bytes): A 16-bit unsigned integer that defines the number of planes for the target device. 
+                            // This value MUST be 0x0001.
+
+                            // BitCount (2 bytes): A 16-bit unsigned integer that defines the number of bits that define each pixel 
+                            // and the maximum number of colors in the DIB. This value MUST be in the BitCount Enumeration (section 2.1.1.3).
+
+                            // Compression (4 bytes): A 32-bit unsigned integer that defines the compression mode of the DIB. This value 
+                            // MUST be in the Compression Enumeration (section 2.1.1.7).
+
+                            //          This value MUST NOT specify a compressed format if the DIB is a top-down bitmap, as indicated by 
+                            //          the Height value.
+
+                            // ImageSize (4 bytes): A 32-bit unsigned integer that defines the size, in bytes, of the image.
+
+                            //          If the Compression value is BI_RGB, this value SHOULD be zero and MUST be ignored.<45>
+
+                            //          If the Compression value is BI_JPEG or BI_PNG, this value MUST specify the size of the JPEG or PNG 
+                            //          image buffer, respectively.
+
+                            // XPelsPerMeter (4 bytes): A 32-bit signed integer that defines the horizontal resolution, in pixels-per-meter, 
+                            // of the target device for the DIB.
+
+                            // YPelsPerMeter (4 bytes): A 32-bit signed integer that defines the vertical resolution, in pixels-per-meter, 
+                            // of the target device for the DIB.
+
+                            // ColorUsed (4 bytes): A 32-bit unsigned integer that specifies the number of indexes in the color table 
+                            // used by the DIB, as follows:
+
+                            //           If this value is zero, the DIB uses the maximum number of colors that correspond to the BitCount value.
+
+                            //           If this value is nonzero and the BitCount value is less than 16, this value specifies the number 
+                            //           of colors used by the DIB.
+
+                            //           If this value is nonzero and the BitCount value is 16 or greater, this value specifies the size 
+                            //           of the color table used to optimize performance of the system palette.
+
+                            //           Note If this value is nonzero and greater than the maximum possible size of the color table 
+                            //          based on the BitCount value, the maximum color table size SHOULD be assumed.
+
+                            // ColorImportant (4 bytes): A 32-bit unsigned integer that defines the number of color indexes that are 
+                            // required for displaying the DIB. If this value is zero, all color indexes are required.
+
+                            //           A DIB is specified by a DeviceIndependentBitmap Object (section 2.2.2.9).
+
+                            //           When the array of pixels in the DIB immediately follows the BitmapInfoHeader, the DIB is a packed 
+                            //           bitmap. In a packed bitmap, the ColorUsed value MUST be either 0x00000000 or the actual size 
+                            //           of the color table.
+
+                            // 40 bytes
+                            out_streamfirst.out_uint32_le(40);
+                            out_streamfirst.out_uint32_le(this->_connector->_bufferImage->width());
+                            out_streamfirst.out_uint32_le(-this->_connector->_bufferImage->height());
+                            out_streamfirst.out_uint16_le(1); 
+                            out_streamfirst.out_uint16_le(this->_connector->_bufferImage->depth());
+                            out_streamfirst.out_uint32_le(0);  // BI_RGB
+                            out_streamfirst.out_uint32_le(this->_connector->_length);
+                            out_streamfirst.out_uint32_le(0);
+                            out_streamfirst.out_uint32_le(0);
+                            out_streamfirst.out_uint32_le(0);
+                            out_streamfirst.out_uint32_le(0);
+                        }
+                        break;
+                        
+                        case RDPECLIP::CF_UNICODETEXT: 
+                            
+                            firstPartSize = PASTE_TEXT_FIRST_PART_SIZE;
+                            out_streamfirst.out_uint32_le(this->_connector->_length);
+                            
+                        break;
+                        
+                        default:
+                        break;
                     }
-                    break;
+    
+    
+                    // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Data
                     
-                    case RDPECLIP::CF_UNICODETEXT: 
-                        
-                        firstPartSize = PASTE_TEXT_FIRST_PART_SIZE;
-                        out_streamfirst.out_uint32_le(this->_connector->_length);
-                        
-                    break;
+                    // Virtual channel data can span multiple Virtual Channel PDUs (section 3.1.5.2.1). 
+                    // If this is the case, the embedded length field of the channelPduHeader field 
+                    // (the Channel PDU Header structure is specified in section 2.2.6.1.1) specifies 
+                    // the total length of the uncompressed virtual channel data spanned across all of 
+                    // the associated Virtual Channel PDUs. This length is referred to as totalLength. 
+                    // For example, assume that the virtual channel chunking size specified in the Virtual 
+                    // Channel Capability Set (section 2.2.7.1.10) is 1,000 bytes and that 2,062 bytes need 
+                    // to be transmitted on a given virtual channel. In this example, 
+                    // the following sequence of Virtual Channel PDUs will be sent (only relevant fields are listed):
+
+                    //    Virtual Channel PDU 1:
+                    //    CHANNEL_PDU_HEADER::length = 2062 bytes
+                    //    CHANNEL_PDU_HEADER::flags = CHANNEL_FLAG_FIRST
+                    //    Actual virtual channel data is 1000 bytes (the chunking size).
                     
-                    default:
-                    break;
-                }
-                    
-                
-                
-                if (total_length > PDU_MAX_SIZE) {
-
-                    const int cmpt_PDU_part(total_length / PDU_MAX_SIZE);
-                    const int remains_PDU  (total_length % PDU_MAX_SIZE);
-                    int data_sent(0);
-
-                    out_streamfirst.out_copy_bytes(this->_connector->_chunk, firstPartSize);
-                    data_sent += firstPartSize;
-
-                    InStream chunkFirst(out_streamfirst.get_data(), out_streamfirst.get_offset());
-                    static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
-                                                                                chunkFirst, 
-                                                                                total_length, 
-                                                                                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                               );
-                    std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
-
-                    for (int i = 0; i < cmpt_PDU_part - 1; i++) {
-                        StaticOutStream<PDU_MAX_SIZE> out_stream;
-
-                        out_stream.out_copy_bytes(this->_connector->_chunk + data_sent, PDU_MAX_SIZE);
-                        data_sent += PDU_MAX_SIZE;
+                    //    Virtual Channel PDU 2: 
+                    //    CHANNEL_PDU_HEADER::length = 2062 bytes
+                    //   CHANNEL_PDU_HEADER::flags = 0
+                    //    Actual virtual channel data is 1000 bytes (the chunking size).
                         
-                        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+                    //    Virtual Channel PDU 3: 
+                    //    CHANNEL_PDU_HEADER::length = 2062 bytes
+                    //    CHANNEL_PDU_HEADER::flags = CHANNEL_FLAG_LAST
+                    //    Actual virtual channel data is 62 bytes.
+
+                    // The size of the virtual channel data in the last PDU (the data in the virtualChannelData field)
+                    // is determined by subtracting the offset of the virtualChannelData field in the encapsulating 
+                    // Virtual Channel PDU from the total size specified in the tpktHeader field. This length is 
+                    // referred to as chunkLength.
+
+                    // Upon receiving each Virtual Channel PDU, the server MUST dispatch the virtual channel data to
+                    // the appropriate virtual channel endpoint. The sequencing of the chunk (whether it is first,
+                    // intermediate, or last), totalLength, chunkLength, and the virtualChannelData fields MUST
+                    // be dispatched to the virtual channel endpoint so that the data can be correctly reassembled. 
+                    // If the CHANNEL_FLAG_SHOW_PROTOCOL (0x00000010) flag is specified in the Channel PDU Header,
+                    // then the channelPduHeader field MUST also be dispatched to the virtual channel endpoint.
+
+                    // A reassembly buffer MUST be created by the virtual channel endpoint using the size specified 
+                    // by totalLength when the first chunk is received. After the reassembly buffer has been created 
+                    // the first chunk MUST be copied into the front of the buffer. Subsequent chunks MUST then be
+                    // copied into the reassembly buffer in the order in which they are received. Upon receiving the
+                    // last chunk of virtual channel data, the reassembled data is processed by the virtual channel endpoint.
+    
+                    if (total_length > PDU_MAX_SIZE) {
+
+                        const int cmpt_PDU_part(total_length / PDU_MAX_SIZE);
+                        const int remains_PDU  (total_length % PDU_MAX_SIZE);
+                        int data_sent(0);
+
+                        out_streamfirst.out_copy_bytes(this->_connector->_chunk, firstPartSize);
+                        data_sent += firstPartSize;
+
+                        InStream chunkFirst(out_streamfirst.get_data(), out_streamfirst.get_offset());
+                        static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
+                                                                                    chunkFirst, 
+                                                                                    total_length, 
+                                                                                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                                   );
+                        std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
+
+                        for (int i = 0; i < cmpt_PDU_part - 1; i++) {
+                            StaticOutStream<PDU_MAX_SIZE> out_stream;
+
+                            out_stream.out_copy_bytes(this->_connector->_chunk + data_sent, PDU_MAX_SIZE);
+                            data_sent += PDU_MAX_SIZE;
+                            
+                            InStream chunk(out_stream.get_data(), out_stream.get_offset());
+                            static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
+                                                                                        chunk, 
+                                                                                        total_length, 
+                                                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                                       );
+                            std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
+                        }
+                        
+                        StaticOutStream<PDU_MAX_SIZE> out_streamLast;
+                            
+                        out_streamLast.out_copy_bytes(this->_connector->_chunk + data_sent, remains_PDU);
+                        if (this->_connector->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
+                            out_streamLast.out_uint32_le(3);
+                            out_streamLast.out_uint16_le(0);
+                        }
+                        data_sent += remains_PDU;
+                        
+                        InStream chunk(out_streamLast.get_data(), out_streamLast.get_offset());
                         static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
                                                                                     chunk, 
                                                                                     total_length, 
-                                                                                    CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                                    CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                                    );
                         std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
-                    }
-                    
-                    StaticOutStream<PDU_MAX_SIZE> out_streamLast;
+
+                    } else {
                         
-                    out_streamLast.out_copy_bytes(this->_connector->_chunk + data_sent, remains_PDU);
-                    if (this->_connector->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
-                        out_streamLast.out_uint32_le(3);
-                        out_streamLast.out_uint16_le(0);
+                        out_streamfirst.out_copy_bytes(this->_connector->_chunk, this->_connector->_length);
+
+                        InStream chunk(out_streamfirst.get_data(), out_streamfirst.get_offset());
+                        static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
+                                                                                    chunk, 
+                                                                                    total_length, 
+                                                                                    CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                                   );
+                        std::cout << "client >> Format Data Response PDU  " << this->_connector->_length << " / " << this->_connector->_length << std::endl;
                     }
-                    data_sent += remains_PDU;
-                    
-                    InStream chunk(out_streamLast.get_data(), out_streamLast.get_offset());
-                    static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
-                                                                                chunk, 
-                                                                                total_length, 
-                                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                               );
-                    std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
-
-                } else {
-                    
-                    out_streamfirst.out_copy_bytes(this->_connector->_chunk, this->_connector->_length);
-
-                    InStream chunk(out_streamfirst.get_data(), out_streamfirst.get_offset());
-                    static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
-                                                                                chunk, 
-                                                                                total_length, 
-                                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                               );
-                    std::cout << "client >> Format Data Response PDU  " << this->_connector->_length << " / " << this->_connector->_length << std::endl;
                 }
-            }
-
             break;
 
             default:
                 this->process_server_clipboard_data(flags, chunk_series);
-                
             break;
         }
     }
 }
 
 void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
-    std::cout << "server >> Format Data Response PDU";
-    std::cout << std::dec;
-    bool isTextHtml(false);
+    
+    // 3.1.5.2.2 Processing of Virtual Channel PDU
+
+    
+    // The Virtual Channel PDU is received by both the client and the server. Its structure 
+    // and fields are specified in section 2.2.6.1.
+
+    // If Enhanced RDP Security (section 5.4) is in effect, the External Security Protocol (section 5.4.5)
+    // being used to secure the connection MUST be used to decrypt and verify the integrity of the entire 
+    // PDU prior to any processing taking place.
+
+    // The embedded length fields within the tpktHeader ([T123] section 8) and mcsPdu ([T125] section 7, parts 
+    // 7 and 10) fields MUST be examined for consistency with the received data. If there is any discrepancy, 
+    // the connection SHOULD be dropped.
+
+    // The mcsPdu field encapsulates either an MCS Send Data Request PDU (if the PDU is being sent from client 
+    // to server) or an MCS Send Data Indication PDU (if the PDU is being sent from server to client). In both 
+    // of these cases, the embedded channelId field MUST contain the server-assigned virtual channel ID. This 
+    // ID MUST be used to route the data in the virtualChannelData field to the appropriate virtual channel 
+    // endpoint after decryption of the PDU and any necessary decompression of the payload has been conducted.
+
+    // The conditions mandating the presence of the securityHeader field, as well as the type of Security 
+    // Header structure present in this field, are explained in section 2.2.6.1. If the securityHeader field is 
+    // present, the embedded flags field MUST be examined for the presence of the SEC_ENCRYPT (0x0008) flag 
+    // (section 2.2.8.1.1.2.1), and, if it is present, the data following the securityHeader field MUST be 
+    // verified and decrypted using the methods and techniques specified in section 5.3.6. If the MAC signature 
+    // is incorrect, or the data cannot be decrypted correctly, the connection SHOULD be dropped.
+
+    // If the data in the virtualChannelData field is compressed, then the data MUST be decompressed using 
+    // the techniques detailed in section 3.1.8.3 (the Virtual Channel PDU compression flags are specified 
+    // in section 2.2.6.1.1).
+
+    // If the embedded flags field of the channelPduHeader field (the Channel PDU Header structure is specified
+    // in section 2.2.6.1.1) does not contain the CHANNEL_FLAG_FIRST (0x00000001) flag or CHANNEL_FLAG_LAST 
+    // (0x00000002) flag, and the data is not part of a chunked sequence (that is, a start chunk has not been 
+    // received), then the data in the virtualChannelData field can be dispatched to the appropriate virtual 
+    // channel endpoint (no reassembly is required by the endpoint). If the CHANNEL_FLAG_SHOW_PROTOCOL 
+    // (0x00000010) flag is specified in the Channel PDU Header, then the channelPduHeader field MUST also
+    // be dispatched to the virtual channel endpoint.
+
+    // If the virtual channel data is part of a sequence of chunks, then the instructions in section 3.1.5.2.2.1
+    //MUST be followed to reassemble the stream.
 
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        std::cout << " First";
+        std::cout << "server >> Format Data Response PDU" << std::endl;
         chunk.in_skip_bytes(2);
         this->_bufferRDPClipboardChannelSizeTotal = chunk.in_uint32_le();
     }
@@ -1637,117 +2040,57 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
         break;
         
         case RDPECLIP::CF_METAFILEPICT: if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                                            
-                                            /*    
-                                            for (int i = 0; i < 0x100; i++) {
-                                                if (i % 16 == 0) {
-                                                    std::cout << std::endl;
-                                                }
-                                            
-                                                std::string c;
-                                                int byte = chunk.in_uint8();
-                                                if (byte < 16) {
-                                                    c = std::string("0");
-                                                }
-                                                
-                                                std::cout << " " << c << std::hex << byte << std::dec;
-                                                
-                                            }*/
             
+                                            // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
+                                            chunk.in_skip_bytes(12);         
                                             
-                                            std::cout << std::endl << std::endl << this->_bufferRDPClipboardChannelSizeTotal << std::endl;
-            
-                                            // Packed Metafile Payload Header
-                                            //chunk.in_skip_bytes(12);         
-                                            std::cout << std::endl << std::endl << chunk.in_uint32_le() << std::endl;
-                                            std::cout << chunk.in_uint32_le() << std::endl;
-                                            std::cout << chunk.in_uint32_le() << std::endl;
-                                            
-                                            // META_HEADER Record
-                                            //chunk.in_skip_bytes(18);
-                                            std::cout << chunk.in_uint16_le() << std::endl;
-                                            std::cout << chunk.in_uint16_le() << std::endl;
-                                            std::cout << chunk.in_uint16_le() << std::endl;
-                                            std::cout << chunk.in_uint32_le() << std::endl;
-                                            std::cout << chunk.in_uint16_le() << std::endl;
-                                            std::cout << chunk.in_uint32_le() << std::endl;
-                                            std::cout << chunk.in_uint16_le() << std::endl;
+                                            // 3.2.1 META_HEADER Example 
+                                            chunk.in_skip_bytes(18);
                                             
                                             bool notEOF(true);
                                             while(notEOF) {
+                                                
+                                                // 2.3 WMF Records
                                                 int recordSize(chunk.in_uint32_le());
                                                 int type(chunk.in_uint16_le());
                                                 
                                                 switch (type) {
-                                                    // Records
+
                                                     case RDPECLIP::META_SETWINDOWEXT:   
-                                                        std::cout << std::endl << "META_SETWINDOWEXT " << recordSize - 3 << std::endl;
-                                                        //chunk.in_skip_bytes(recordSize*2 - 6); 
-                                                        for (int i = 0; i < recordSize - 3; i++) {
-                                                            std::cout << chunk.in_uint16_le() << std::endl;
-                                                        }
+                                                        chunk.in_skip_bytes(recordSize*2 - 6); 
                                                     break;
                                                     
                                                     case RDPECLIP::META_SETWINDOWORG:   
-                                                        std::cout << std::endl << "META_SETWINDOWORG " << recordSize - 3 << std::endl;
-                                                        //chunk.in_skip_bytes(recordSize*2 - 6); 
-                                                        for (int i = 0; i < recordSize - 3; i++) {
-                                                            std::cout << chunk.in_uint16_le() << std::endl;
-                                                        }
+                                                        chunk.in_skip_bytes(recordSize*2 - 6); 
                                                     break;
                                                     
                                                     case RDPECLIP::META_SETMAPMODE:     
-                                                        std::cout << std::endl << "META_SETMAPMODE " << recordSize - 3 << std::endl;
-                                                        //chunk.in_skip_bytes(recordSize*2 - 6); 
-                                                        for (int i = 0; i < recordSize - 3; i++) {
-                                                            std::cout << chunk.in_uint16_le() << std::endl;
-                                                        }
+                                                        chunk.in_skip_bytes(recordSize*2 - 6); 
                                                     break;
                                                     
                                                     case RDPECLIP::META_DIBSTRETCHBLT: 
                                                     {
                                                         notEOF = false; 
-                                                        // META_DIBSTRETCHBLT Record Header
-                                                        //chunk.in_skip_bytes(4); 
-                                                        std::cout << std::endl << recordSize << std::endl;
-                                                        std::cout << type << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
+                                                        
+                                                        // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
+                                                        chunk.in_skip_bytes(4); 
                                                        
                                                         this->_bufferRDPCLipboardMetaFilePic_height = chunk.in_uint16_le();
                                                         this->_bufferRDPCLipboardMetaFilePic_width  = chunk.in_uint16_le();
-                                                        std::cout << this->_bufferRDPCLipboardMetaFilePic_height << std::endl;
-                                                        std::cout << this->_bufferRDPCLipboardMetaFilePic_width << std::endl;
-                                                        //chunk.in_skip_bytes(12);
-                                                        std::cout << chunk.in_uint16_le() << std::endl;
-                                                        std::cout << chunk.in_uint16_le() << std::endl;
-                                                        std::cout << chunk.in_uint16_le() << std::endl;
-                                                        std::cout << chunk.in_uint16_le() << std::endl;
-                                                        std::cout << chunk.in_uint16_le() << std::endl;
-                                                        std::cout << chunk.in_uint16_le() << std::endl;
+                                                        chunk.in_skip_bytes(12);
+
+                                                        // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
                                                         
-                                                        // DeviceIndependentBitmap Object
-                                                        
-                                                            // BitmapInfoHeader
-                                                        //chunk.in_skip_bytes(14);
-                                                        std::cout << std::endl << chunk.in_uint32_le() << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
-                                                        std::cout << chunk.in_uint16_le() << std::endl;
+                                                        // 2.2.2.3 BitmapInfoHeader Object
+                                                        chunk.in_skip_bytes(14);
                                                         
                                                         this->_bufferRDPClipboardMetaFilePicBPP     = chunk.in_uint16_le();
-                                                        //chunk.in_skip_bytes(4);
-                                                        std::cout << this->_bufferRDPClipboardMetaFilePicBPP << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
+                                                        chunk.in_skip_bytes(4);
 
                                                         this->_bufferRDPClipboardChannelSizeTotal   = chunk.in_uint32_le();
                                                         this->_bufferRDPClipboardChannel = new uint8_t[this->_bufferRDPClipboardChannelSizeTotal];
-                                                        //chunk.in_skip_bytes(8);
-                                                        std::cout << this->_bufferRDPClipboardChannelSizeTotal << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
-                                                        std::cout << chunk.in_uint32_le() << std::endl;
-                                                        /*
+                                                        chunk.in_skip_bytes(8);
+
                                                         int skip(0);
                                                         if (chunk.in_uint32_le() == 0) { // if colorUsed == 0
                                                             skip = 0;
@@ -1758,7 +2101,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
                                                         chunk.in_skip_bytes(skip);
                                                         
                                                             // BitmapBuffer (variable)
-                                                        chunk.in_skip_bytes(0);*/ 
+                                                        chunk.in_skip_bytes(0);
                                                     }
                                                     break;
                                                     
@@ -1793,17 +2136,12 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
         break;
     }
-
-    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-        std::cout << " Last";
-    } else if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-        std::cout << " Middle";
-    }
-
-    std::cout << std::endl;
 }
 
 void Front_Qt::send_to_clipboard_Buffer(InStream & chunk) {
+    
+    // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Data
+
     const size_t length_of_data_to_dump(chunk.in_remain());
     
     const size_t sum_buffer_and_data(this->_bufferRDPClipboardChannelSize + length_of_data_to_dump);
@@ -1864,7 +2202,6 @@ void Front_Qt::empty_buffer() {
     }
 }
 
-
 std::string Front_Qt::HTMLtoText(const std::string & html) {
     std::string openDelimiter(">");
     std::string endDelimiter("<");
@@ -1891,84 +2228,20 @@ std::string Front_Qt::HTMLtoText(const std::string & html) {
     return str;
 }
 
-void Front_Qt::send_FormatListResponsePDU() {
-    RDPECLIP::FormatListResponsePDU pdu(true);
-    StaticOutStream<256> out_stream;
-
-    pdu.emit(out_stream);
-
-    const uint32_t total_length      = out_stream.get_offset();
-    const uint32_t flags             = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    const uint8_t* chunk_data        = out_stream.get_data();
-    const uint32_t chunk_data_length = total_length;
-
-    this->_clipboard_channel.send_message_to_server(
-        total_length,
-        flags,
-        chunk_data,
-        chunk_data_length);
-    std::cout << "client >> Format List Response PDU" << std::endl;
-}
-
-void Front_Qt::send_FormatDataRequestPDU() {
-    RDPECLIP::FormatDataRequestPDU pdu(this->_requestedFormatId);
-    StaticOutStream<256> out_stream;
-
-    pdu.emit(out_stream);
-
-    const uint32_t total_length      = out_stream.get_offset();
-    const uint32_t flags             = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    const uint8_t* chunk_data        = out_stream.get_data();
-    const uint32_t chunk_data_length = total_length;
-
-    this->_clipboard_channel.send_message_to_server(
-        total_length,
-        flags,
-        chunk_data,
-        chunk_data_length);
-    std::cout << "client >> Format Data Request PDU" << std::endl;
-}
-
-void Front_Qt::process_server_monitor_ready_pdu(){
-    RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
-    RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_1, RDPECLIP::CB_STREAM_FILECLIP_ENABLED); // , 0 //RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-
-    StaticOutStream<1024> out_stream;
-
-    clipboard_caps_pdu.emit(out_stream);
-    general_cap_set.emit(out_stream);
-
-    const uint32_t total_length      = out_stream.get_offset();
-    const uint32_t flags             = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    const uint8_t* chunk_data        = out_stream.get_data();
-    const uint32_t chunk_data_length = total_length;
-
-    this->_clipboard_channel.send_message_to_server(
-        total_length,
-        flags,
-        chunk_data,
-        chunk_data_length);
-
-     std::cout << "client >> Clipboard Capabilities PDU" << std::endl;
-}
-
 void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) {
     RDPECLIP::FormatListPDU format_list_pdu;
     StaticOutStream<1024> out_stream;
 
     format_list_pdu.emit(out_stream, formatIDs, formatListDataShortName, formatIDs_size);
-
     const uint32_t total_length      = out_stream.get_offset();
-    const uint32_t flags             = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    const uint8_t* chunk_data        = out_stream.get_data();
-    const uint32_t chunk_data_length = total_length;
 
-    this->_clipboard_channel.send_message_to_server(
-        total_length,
-        flags,
-        chunk_data,
-        chunk_data_length);
-
+    InStream chunk(out_stream.get_data(), out_stream.get_offset());
+    static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr, 
+                                                                chunk, 
+                                                                total_length, 
+                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                               );
+                                                                
     std::cout << "client >> Format List PDU" << std::endl;
 }
 
@@ -2034,6 +2307,8 @@ void Front_Qt::call_Draw() {
 int main(int argc, char** argv){
 
     //" -name QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389";
+
+    //bjam client_rdp_Qt |& grep error || ./bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.73 -p 3389
 
     QApplication app(argc, argv);
 
