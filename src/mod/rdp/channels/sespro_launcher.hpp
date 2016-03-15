@@ -32,6 +32,8 @@ public:
 
     virtual bool on_clipboard_initialize() = 0;
 
+    virtual bool on_clipboard_monitor_ready() = 0;
+
     virtual bool on_drive_access() = 0;
 
     virtual bool on_event() = 0;
@@ -41,6 +43,9 @@ public:
     virtual bool on_server_format_data_request() = 0;
 
     virtual bool on_server_format_list_response() = 0;
+
+    virtual void set_clipboard_virtual_channel(
+        BaseVirtualChannel* channel) = 0;
 
     virtual void set_session_probe_virtual_channel(
         BaseVirtualChannel* channel) = 0;

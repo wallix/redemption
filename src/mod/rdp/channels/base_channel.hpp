@@ -62,6 +62,10 @@ protected:
 public:
     virtual ~BaseVirtualChannel() = default;
 
+    void disable_to_client_sender() {
+        this->to_client_sender = nullptr;
+    }
+
     virtual const char * get_reporting_reason_exchanged_data_limit_reached()
         const = 0;
 

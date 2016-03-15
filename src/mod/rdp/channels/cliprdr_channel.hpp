@@ -60,9 +60,10 @@ private:
 
     FrontAPI& front;
 
-    SessionProbeLauncher* clipboard_initialize_notifier = nullptr;
-    SessionProbeLauncher* format_list_response_notifier = nullptr;
-    SessionProbeLauncher* format_data_request_notifier  = nullptr;
+    SessionProbeLauncher* clipboard_monitor_ready_notifier = nullptr;
+    SessionProbeLauncher* clipboard_initialize_notifier    = nullptr;
+    SessionProbeLauncher* format_list_response_notifier    = nullptr;
+    SessionProbeLauncher* format_data_request_notifier     = nullptr;
 
     const bool proxy_managed;   // Has not client.
 
@@ -1256,6 +1257,13 @@ public:
 
             return false;
         }
+        else {
+            if (this->clipboard_monitor_ready_notifier) {
+                if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
+                    this->clipboard_monitor_ready_notifier = nullptr;
+                }
+            }
+        }
 
         return true;
     }
@@ -1423,9 +1431,10 @@ public:
     }   // process_server_message
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
-        this->clipboard_initialize_notifier = launcher;
-        this->format_list_response_notifier = launcher;
-        this->format_data_request_notifier  = launcher;
+        this->clipboard_monitor_ready_notifier = launcher;
+        this->clipboard_initialize_notifier    = launcher;
+        this->format_list_response_notifier    = launcher;
+        this->format_data_request_notifier     = launcher;
     }
 };  // class ClipboardVirtualChannel
 

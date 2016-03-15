@@ -23,6 +23,7 @@
 
 #include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/rdp_log.hpp"
@@ -63,12 +64,14 @@ private:
 
     bool drive_ready = false;
     bool clipboard_initialized = false;
+    bool clipboard_monitor_ready = false;
 
     bool format_data_requested = false;
 
     wait_obj event;
 
     SessionProbeVirtualChannel* channel = nullptr;
+    ClipboardVirtualChannel*    cliprdr_channel = nullptr;
 
     uint32_t verbose;
 
@@ -104,6 +107,12 @@ public:
         }
 
         this->do_state_start();
+
+        return false;
+    }
+
+    bool on_clipboard_monitor_ready() override {
+        this->clipboard_monitor_ready = true;
 
         return false;
     }
@@ -486,6 +495,11 @@ public:
         return false;
     }
 
+    void set_clipboard_virtual_channel(
+            BaseVirtualChannel* channel) override {
+        this->cliprdr_channel = static_cast<ClipboardVirtualChannel*>(channel);
+    }
+
     void set_session_probe_virtual_channel(
             BaseVirtualChannel* channel) override {
         this->channel = static_cast<SessionProbeVirtualChannel*>(channel);
@@ -521,6 +535,62 @@ private:
         REDASSERT(State::START == this->state);
 
         if (!this->drive_ready || !this->clipboard_initialized) {
+            if (this->drive_ready && this->clipboard_monitor_ready) {
+                if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+                    LOG(LOG_INFO,
+                        "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
+                }
+
+                if (this->cliprdr_channel) {
+                    this->cliprdr_channel->disable_to_client_sender();
+                }
+
+                // Client Clipboard Capabilities PDU.
+                {
+                    RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
+                        RDPECLIP::GeneralCapabilitySet::size());
+                    RDPECLIP::GeneralCapabilitySet general_cap_set(
+                        RDPECLIP::CB_CAPS_VERSION_1,
+                        RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                    StaticOutStream<1024> out_s;
+
+                    clipboard_caps_pdu.emit(out_s);
+                    general_cap_set.emit(out_s);
+
+                    const size_t totalLength = out_s.get_offset();
+
+                    InStream in_s(out_s.get_data(), totalLength);
+
+                    this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                                  in_s,
+                                                  totalLength,
+                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                  | CHANNELS::CHANNEL_FLAG_LAST
+                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                }
+
+                // Format List PDU.
+                {
+                    RDPECLIP::FormatListPDU format_list_pdu;
+                    StaticOutStream<256>    out_s;
+
+                    const bool unicodetext = false;
+
+                    format_list_pdu.emit_ex(out_s, unicodetext);
+
+                    const size_t totalLength = out_s.get_offset();
+
+                    InStream in_s(out_s.get_data(), totalLength);
+
+                    this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                                  in_s,
+                                                  totalLength,
+                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                  | CHANNELS::CHANNEL_FLAG_LAST
+                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                }
+            }
+
             return;
         }
 
