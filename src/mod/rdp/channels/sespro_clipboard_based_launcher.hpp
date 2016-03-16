@@ -576,7 +576,7 @@ private:
 
                     const bool unicodetext = false;
 
-                    format_list_pdu.emit_ex(out_s, unicodetext);
+                    format_list_pdu.emit_long(out_s, unicodetext);
 
                     const size_t totalLength = out_s.get_offset();
 
@@ -599,7 +599,7 @@ private:
 
         const bool unicodetext = false;
 
-        format_list_pdu.emit_ex(out_s, unicodetext);
+        format_list_pdu.emit_long(out_s, unicodetext);
 
         const size_t totalLength = out_s.get_offset();
 

@@ -710,6 +710,15 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_clear_bytes(32); // formatName(32)
     }
 
+    void emit_long(OutStream & stream, bool unicodetext) {
+        this->dataLen_ = 6; /* formatId(4) + formatName(2) */
+        CliprdrHeader::emit(stream);
+
+        // 1 CLIPRDR_LONG_FORMAT_NAMES structures.
+        stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
+        stream.out_clear_bytes(2); // formatName(2) - a single Unicode null character.
+    }
+
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
@@ -1253,9 +1262,9 @@ enum {
 // The meanings of the high-order bytes of these record type fields are specified in the respective sections that define them.
 
 // A record type is not defined for the WMF Header record, because only one can be present as the first record in the metafile.
- 
- 
- 
+
+
+
 
 struct PacketFileList {
     uint32_t cItems;
