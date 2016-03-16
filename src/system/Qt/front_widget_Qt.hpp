@@ -82,7 +82,7 @@
 
 #define KEY_SETTING_PATH "keySetting.config"
 
-#define METAFILE_CLIP_PIC_HEADERS_SIZE       130
+#define METAFILE_CLIP_PIC_HEADERS_SIZE 130
 #define META_DIBSTRETCHBLT_HEADER_SIZE 66
 #define METAFILE_HEADER_SIZE           118
 
@@ -982,7 +982,7 @@ public Q_SLOTS:
                     this->emptyBuffer();
 
                     this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT; 
-                    this->_bufferImage = new QImage(this->_clipboard->image()); //.convertToFormat(QImage::Format_RGB888)
+                    this->_bufferImage = new QImage(this->_clipboard->image()); 
                     this->_length = this->_bufferImage->byteCount();
 
                     this->send_FormatListPDU();
