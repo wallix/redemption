@@ -571,12 +571,18 @@ private:
 
                 // Format List PDU.
                 {
+                    const bool use_long_format_names =
+                        (this->cliprdr_channel ?
+                         this->cliprdr_channel->use_long_format_names() :
+                         false);
+
                     RDPECLIP::FormatListPDU format_list_pdu;
                     StaticOutStream<256>    out_s;
 
                     const bool unicodetext = false;
 
-                    format_list_pdu.emit_long(out_s, unicodetext);
+                    format_list_pdu.emit_2(out_s, unicodetext,
+                        use_long_format_names);
 
                     const size_t totalLength = out_s.get_offset();
 
@@ -594,12 +600,17 @@ private:
             return;
         }
 
+        const bool use_long_format_names =
+            (this->cliprdr_channel ?
+             this->cliprdr_channel->use_long_format_names() :
+             false);
+
         RDPECLIP::FormatListPDU format_list_pdu;
         StaticOutStream<256>    out_s;
 
         const bool unicodetext = false;
 
-        format_list_pdu.emit_long(out_s, unicodetext);
+        format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
 
         const size_t totalLength = out_s.get_offset();
 

@@ -719,6 +719,15 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_clear_bytes(2); // formatName(2) - a single Unicode null character.
     }
 
+    void emit_2(OutStream & stream, bool unicodetext, bool use_long_format_names) {
+        if (use_long_format_names) {
+            this->emit_long(stream, unicodetext);
+        }
+        else {
+            this->emit_ex(stream, unicodetext);
+        }
+    }
+
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
