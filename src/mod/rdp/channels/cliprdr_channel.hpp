@@ -1242,7 +1242,7 @@ public:
 
                 const bool unicodetext = false;
 
-                format_list_pdu.emit_ex(out_stream, unicodetext);
+                format_list_pdu.emit_long(out_stream, unicodetext);
 
                 const uint32_t total_length      = out_stream.get_offset();
                 const uint32_t flags             =
