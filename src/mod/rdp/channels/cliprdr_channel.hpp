@@ -823,9 +823,6 @@ public:
                 this->server_use_long_format_names =
                     (general_caps.generalFlags() &
                      RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-
-                // New initialization sequence.
-                this->client_use_long_format_names = false;
             }
         }
 
