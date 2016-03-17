@@ -914,7 +914,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
                 destData[i] = srcData[i] & destData[i];
             }
             
-            QImage image(srcData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), false));
+            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
             image.invertPixels();
             QRect tect(drect.x, drect.y, drect.cx, drect.cy);
             this->_screen->paintCache().drawImage(tect, image);
@@ -930,7 +930,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0x66:  // TODO
         {
             //std::cout << "RDPMemBlt TODO (" << std::hex << (int)cmd.rop << ")" << std::endl;
-           // std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
+            // std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
             QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
             
             uchar *       destData = dest.bits();
@@ -941,7 +941,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
                 destData[i] = srcData[i] ^ destData[i];
             }
             
-            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), false));
+            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
             
             QRect tect(drect.x, drect.y, drect.cx, drect.cy);
             this->_screen->paintCache().drawImage(tect, image);
@@ -1346,7 +1346,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         "ClipboardVirtualChannel::process_server_message: "
                             "Monitor Ready PDU");
                 }
-                    std::cout << "server >> Monitor Ready PDU" << std::endl;
+                std::cout << "server >> Monitor Ready PDU" << std::endl;
                     
                     {
                     RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
@@ -1872,7 +1872,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     
                     //    Virtual Channel PDU 2: 
                     //    CHANNEL_PDU_HEADER::length = 2062 bytes
-                    //   CHANNEL_PDU_HEADER::flags = 0
+                    //    CHANNEL_PDU_HEADER::flags = 0
                     //    Actual virtual channel data is 1000 bytes (the chunking size).
                         
                     //    Virtual Channel PDU 3: 
@@ -1973,7 +1973,6 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
     
     // 3.1.5.2.2 Processing of Virtual Channel PDU
 
-    
     // The Virtual Channel PDU is received by both the client and the server. Its structure 
     // and fields are specified in section 2.2.6.1.
 
