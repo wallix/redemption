@@ -1580,9 +1580,9 @@ public:
                                                 "/desktop.ini",
                                                 sizeof("/desktop.ini")-1)) {
                                             if (this->param_acl) {
-                                                std::string info("file_name=\"");
+                                                std::string info("file_name='");
                                                 info += std::get<2>(*target_iter).c_str();
-                                                info += "\"";
+                                                info += "'";
 
                                                 this->param_acl->log4(
                                                     !this->param_dont_log_data_into_syslog,
@@ -1653,9 +1653,9 @@ public:
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<4>(*target_iter)) {
                                         if (this->param_acl) {
-                                            std::string info("file_name=\"");
+                                            std::string info("file_name='");
                                             info += std::get<2>(*target_iter).c_str();
-                                            info += "\"";
+                                            info += "'";
 
                                             this->param_acl->log4(
                                                 !this->param_dont_log_data_into_syslog,
