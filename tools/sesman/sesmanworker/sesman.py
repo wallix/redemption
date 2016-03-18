@@ -1401,9 +1401,6 @@ class Sesman():
                                             _remains.partition(':')
                                         self.shared[u'reporting'] = u''
 
-                                        _restriction, _, _text = \
-                                            _reporting_message.partition('|')
-
                                         Logger().info(u"Reporting: reason=\"%s\" "
                                                       "target=\"%s\" message=\"%s\"" %
                                                       (_reporting_reason,
@@ -1429,7 +1426,7 @@ class Sesman():
                                             release_reason = u'Kill pattern detected'
                                             self.engine.set_session_status(
                                                 result=False, diag=release_reason)
-                                            self.send_data({u'disconnect_reason': (TR(u"pattern_kill %s") % _restriction)})
+                                            self.send_data({u'disconnect_reason': TR(u"pattern_kill")})
                                         elif _reporting_reason == u'SERVER_REDIRECTION':
                                             (redir_login, _, redir_host) = \
                                                 _reporting_message.rpartition('@')

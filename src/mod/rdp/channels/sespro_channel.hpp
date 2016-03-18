@@ -650,17 +650,10 @@ public:
             if (parameters.compare("EndingInProgress")) {
                 this->param_acl->log4(
                     (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                    "Self.Status", "status=EndingInProgress");
+                    "Self.Status", "status='EndingInProgress'");
 
                 this->session_probe_ending_in_progress = true;
             }
-        }
-        else if (!session_probe_message.compare("Self.Status=EndingInProgress")) {
-            this->param_acl->log4(
-                (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                "Self.Status", "status=EndingInProgress");
-
-            this->session_probe_ending_in_progress = true;
         }
         else {
             const char * message   = session_probe_message.c_str();
@@ -675,7 +668,7 @@ public:
                 std::string parameters(separator + 1);
 
                 if (!order.compare("PasswordTextBox.SetFocus")) {
-                    std::string info("status=\"" + parameters + "\"");
+                    std::string info("status='" + parameters + "'");
                     this->param_acl->log4(
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
@@ -684,7 +677,7 @@ public:
                         !parameters.compare("yes"));
                 }
                 else if (!order.compare("ConsentUI.IsVisible")) {
-                    std::string info("status=\"" + parameters + "\"");
+                    std::string info("status='" + parameters + "'");
                     this->param_acl->log4
                         ((this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
@@ -703,8 +696,8 @@ public:
                         std::string display_name(subitem_separator + 1);
 
                         std::string info(
-                            "code=\"" + code +
-                            "\" name=\"" + display_name + "\"");
+                            "code='" + code +
+                            "' name='" + display_name + "'");
                         this->param_acl->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
@@ -718,7 +711,7 @@ public:
                 }
                 else if (!order.compare("NewProcess") ||
                          !order.compare("CompletedProcess")) {
-                    std::string info("command_line=\"" + parameters + "\"");
+                    std::string info("command_line='" + parameters + "'");
                     this->param_acl->log4(
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
@@ -734,8 +727,8 @@ public:
                         std::string application_name(subitem_separator + 1);
 
                         std::string info(
-                            "rule=\"" + rule +
-                            "\" application_name=\"" + application_name + "\"");
+                            "rule='" + rule +
+                            "' application_name='" + application_name + "'");
                         this->param_acl->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
@@ -779,9 +772,9 @@ public:
                             std::string command_line(subitem_separator + 1);
 
                             std::string info(
-                                "text=\"" + text +
-                                "\" class=\"" + window_class +
-                                "\" command_line=\"" + command_line + "\"");
+                                "text='" + text +
+                                "' class='" + window_class +
+                                "' command_line='" + command_line + "'");
                             this->param_acl->log4(
                                 (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                                 order.c_str(), info.c_str());
@@ -805,8 +798,8 @@ public:
                         std::string button(subitem_separator + 1);
 
                         std::string info(
-                            "window=\"" + window +
-                            "\" button=\"" + button + "\"");
+                            "window='" + window +
+                            "' button='" + button + "'");
                         this->param_acl->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
@@ -826,8 +819,8 @@ public:
                         std::string edit(subitem_separator + 1);
 
                         std::string info(
-                            "window=\"" + window +
-                            "\" edit=\"" + edit + "\"");
+                            "window='" + window +
+                            "' edit='" + edit + "'");
                         this->param_acl->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());

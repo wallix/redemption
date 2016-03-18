@@ -117,7 +117,7 @@ class SesmanConfig(object):
             , u'authentication_failed' : u"Echec d'authentification."
             , u'account_locked' : u"Compte verrouillé."
             , u'start_session_failed' : u'Echec de démarage de session.'
-            , u'pattern_kill %s' : u' Restriction %s detecté, le gestionnaire de session a coupé la connexion.'
+            , u'pattern_kill' : u' Motif interdit detecté, le gestionnaire de session a coupé la connexion.'
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -202,7 +202,7 @@ class SesmanConfig(object):
             , u'authentication_failed' : u'Authentication failed.'
             , u'account_locked' : u"Account locked."
             , u'start_session_failed' : u'Failed to start session.'
-            , u'pattern_kill %s' : u' Restriction %s detected, connection closed by manager.'
+            , u'pattern_kill' : u' Forbidden pattern detected, connection closed by manager.'
             }
         }
 

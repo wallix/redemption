@@ -39,8 +39,8 @@ private:
     uint16_t client_message_type = 0;
     uint16_t server_message_type = 0;
 
-    bool client_use_long_format_name = false;
-    bool server_use_long_format_name = false;
+    bool client_use_long_format_names = false;
+    bool server_use_long_format_names = false;
 
     uint32_t client_file_list_format_id = 0;
     uint32_t server_file_list_format_id = 0;
@@ -101,6 +101,12 @@ protected:
         override
     {
         return "CLIPBOARD_LIMIT";
+    }
+
+public:
+    bool use_long_format_names() const {
+        return (this->client_use_long_format_names &&
+            this->server_use_long_format_names);
     }
 
 private:
@@ -184,7 +190,7 @@ private:
                     general_caps.log(LOG_INFO);
                 }
 
-                this->client_use_long_format_name =
+                this->client_use_long_format_names =
                     (general_caps.generalFlags() &
                      RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
             }
@@ -401,11 +407,11 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name=\"");
+                    std::string info("file_name='");
                     info += fd.fileName();
-                    info += "\" size=\"";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
-                    info += "\"";
+                    info += "'";
 
                     this->param_acl->log4(
                         !this->param_dont_log_data_into_syslog,
@@ -444,11 +450,11 @@ private:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name=\"");
+                    std::string info("file_name='");
                     info += fd.fileName();
-                    info += "\" size=\"";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
-                    info += "\"";
+                    info += "'";
 
                     this->param_acl->log4(
                         !this->param_dont_log_data_into_syslog,
@@ -529,8 +535,8 @@ private:
         const uint16_t msgFlags = chunk.in_uint16_le();
         const uint32_t dataLen  = chunk.in_uint32_le();
 
-        if (!this->client_use_long_format_name ||
-            !this->server_use_long_format_name) {
+        if (!this->client_use_long_format_names ||
+            !this->server_use_long_format_names) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_client_format_list_pdu: "
@@ -814,7 +820,7 @@ public:
                     general_caps.log(LOG_INFO);
                 }
 
-                this->server_use_long_format_name =
+                this->server_use_long_format_names =
                     (general_caps.generalFlags() &
                      RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
             }
@@ -1005,11 +1011,11 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name=\"");
+                    std::string info("file_name='");
                     info += fd.fileName();
-                    info += "\" size=\"";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
-                    info += "\"";
+                    info += "'";
 
                     this->param_acl->log4(
                         !this->param_dont_log_data_into_syslog,
@@ -1039,11 +1045,11 @@ public:
                 }
 
                 if (this->param_acl) {
-                    std::string info("file_name=\"");
+                    std::string info("file_name='");
                     info += fd.fileName();
-                    info += "\" size=\"";
+                    info += "' size='";
                     info += std::to_string(fd.file_size());
-                    info += "\"";
+                    info += "'";
 
                     this->param_acl->log4(
                         !this->param_dont_log_data_into_syslog,
@@ -1099,8 +1105,8 @@ public:
         const uint16_t msgFlags = chunk.in_uint16_le();
         const uint32_t dataLen  = chunk.in_uint32_le();
 
-        if (!this->client_use_long_format_name ||
-            !this->server_use_long_format_name) {
+        if (!this->client_use_long_format_names ||
+            !this->server_use_long_format_names) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_server_format_list_pdu: "
@@ -1233,7 +1239,7 @@ public:
                     chunk_data_length);
             }
 
-            this->client_use_long_format_name = true;
+            this->client_use_long_format_names = true;
 
             // Format List PDU.
             {
@@ -1242,7 +1248,8 @@ public:
 
                 const bool unicodetext = false;
 
-                format_list_pdu.emit_long(out_stream, unicodetext);
+                format_list_pdu.emit_2(out_stream, unicodetext,
+                    this->use_long_format_names());
 
                 const uint32_t total_length      = out_stream.get_offset();
                 const uint32_t flags             =

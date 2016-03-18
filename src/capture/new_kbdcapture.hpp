@@ -362,8 +362,8 @@ public:
 private:
     template<int N, class LogMgr>
     void log_input_data(LogMgr log_mgr, bool enable_mask, uint8_t const * data, size_t data_len) {
-        const char prefix[] = "data=\"";
-        const char suffix[] = "\"";
+        const char prefix[] = "data='";
+        const char suffix[] = "'";
 
         char extra[N + sizeof(prefix) + sizeof(suffix) + 1];
         ::snprintf(extra, sizeof(extra), "%s%.*s%s",
