@@ -186,7 +186,7 @@ public:
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 
-    virtual void flush() {}
+    virtual void flush() override {}
 
     virtual void display_osd_message(std::string & message) {}
 };
