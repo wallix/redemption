@@ -495,6 +495,54 @@ public:
         return false;
     }
 
+    // Returns false to prevent message to be sent to server.
+    bool process_client_cliprdr_message(InStream & chunk,
+        uint32_t length, uint32_t flags) override {
+
+        if (this->state == State::STOP) {
+            return true;
+        }
+
+        bool ret = true;
+
+        const size_t saved_chunk_offset = chunk.get_offset();
+
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) &&
+            (chunk.in_remain() >= 8 /* msgType(2) + msgFlags(2) + dataLen(4) */)) {
+            const uint16_t msgType = chunk.in_uint16_le();
+            chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+            if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                const bool use_long_format_names =
+                    (this->cliprdr_channel ?
+                     this->cliprdr_channel->use_long_format_names() :
+                     false);
+
+                RDPECLIP::FormatListPDU format_list_pdu;
+                StaticOutStream<256>    out_s;
+
+                const bool unicodetext = false;
+
+                format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+
+                const size_t totalLength = out_s.get_offset();
+
+                this->cliprdr_channel->process_client_message(
+                        totalLength,
+                          CHANNELS::CHANNEL_FLAG_FIRST
+                        | CHANNELS::CHANNEL_FLAG_LAST
+                        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                        out_s.get_data(),
+                        totalLength);
+
+                ret = false;
+            }
+        }
+
+        chunk.rewind(saved_chunk_offset);
+
+        return ret;
+    }
+
     void set_clipboard_virtual_channel(
             BaseVirtualChannel* channel) override {
         this->cliprdr_channel = static_cast<ClipboardVirtualChannel*>(channel);

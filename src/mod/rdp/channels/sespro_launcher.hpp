@@ -44,6 +44,10 @@ public:
 
     virtual bool on_server_format_list_response() = 0;
 
+    // Returns false to prevent message to be sent to server.
+    virtual bool process_client_cliprdr_message(InStream & chunk,
+        uint32_t length, uint32_t flags) = 0;
+
     virtual void set_clipboard_virtual_channel(
         BaseVirtualChannel* channel) = 0;
 

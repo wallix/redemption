@@ -82,6 +82,10 @@ public:
 
     bool on_server_format_list_response() override { return false; }
 
+    // Returns false to prevent message to be sent to server.
+    bool process_client_cliprdr_message(InStream & chunk,
+        uint32_t length, uint32_t flags) override { return true; }
+
     void set_clipboard_virtual_channel(
             BaseVirtualChannel* channel) override {
     }
