@@ -1546,6 +1546,12 @@ private:
                                      InStream & chunk, size_t length, uint32_t flags) {
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
+        if (this->session_probe_launcher) {
+            if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
+                return;
+            }
+        }
+
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
 
