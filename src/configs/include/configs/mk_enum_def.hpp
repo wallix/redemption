@@ -91,7 +91,7 @@ arguments_size(Ts const &...){ return {}; }
 
 #define MK_ENUM_FIELD(Enum, ...)                               \
     MK_ENUM_IO(Enum)                                           \
-    ENUM_OPTION(Enum, __VA_ARGS__);                            \
+    ENUM_OPTION(Enum, __VA_ARGS__)                            \
     inline void parse(Enum & e, char const * cstr)  {          \
         unsigned i = 0;                                        \
         auto l = {__VA_ARGS__};                                \

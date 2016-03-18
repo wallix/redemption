@@ -388,6 +388,8 @@ lib snappy : : <name>snappy <link>shared ;
 lib dl : : <name>dl <link>shared ;
 lib python2 : : <name>$(PYTHON_VER) <link>shared ;
 
+lib SDL : : <name>SDL <link>shared ;
+
 
 # lib lcms : : <name>lcms <link>shared ;
 
@@ -1079,3 +1081,34 @@ exe client_rdp_Qt :
     ;
 
 } # NO_MAKE_QT
+
+
+
+explicit test_rdp_client_test_card_JS.o bitmap_data_allocator.o client_rdp_JS ; 
+
+
+obj test_rdp_client_test_card_JS.o : tests/client_mods/test_rdp_client_test_card_JS.cpp 
+    :<include>/usr/include/SDL
+    ;
+
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
+
+
+exe client_rdp_JS :
+    src/system/JS/front_JS.hpp
+    test_rdp_client_test_card_JS.o
+    bitmap_data_allocator.o
+    SDL
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    :
+    <include>/usr/include/SDL
+
+    #<cxxflags>-fPIC                             #5
+    ;
