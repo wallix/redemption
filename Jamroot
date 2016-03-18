@@ -145,33 +145,33 @@ constant CXXFLAGS-COMMON :
 
 
 constant CXXFLAGS-GCC-4.7 :
-    <cxxflags>-Wunused-but-set-parameter
-    <cxxflags>-Wunused-but-set-variable
+#emscripten    <cxxflags>-Wunused-but-set-parameter
+#emscripten     <cxxflags>-Wunused-but-set-variable
 #     <cxxflags>-Wsuggest-attribute=pure
 #     <cxxflags>-Wsuggest-attribute=const
-    <cxxflags>-Wsuggest-attribute=noreturn
-    <cxxflags>-Wzero-as-null-pointer-constant
-    <cxxflags>-Wlogical-op
+#emscripten     <cxxflags>-Wsuggest-attribute=noreturn
+#emscripten     <cxxflags>-Wzero-as-null-pointer-constant
+#emscripten     <cxxflags>-Wlogical-op
 #     <cxxflags>-Wno-aggressive-loop-optimizations
-    <cxxflags>-Wnormalized=nfc #disable ?
-    <cxxflags>-Wvector-operation-performance
+#emscripten     <cxxflags>-Wnormalized=nfc #disable ?
+#emscripten     <cxxflags>-Wvector-operation-performance
     <cxxflags>-Wdouble-promotion
-   <cxxflags>-Wmaybe-uninitialized
-    <cxxflags>-Wtrampolines
+#emscripten    <cxxflags>-Wmaybe-uninitialized
+#emscripten     <cxxflags>-Wtrampolines
 ;
 
 
 constant CXXFLAGS-GCC-4.8 :
     $(CXXFLAGS-GCC-4.7)
-    <cxxflags>-Wuseless-cast
+#emscripten     <cxxflags>-Wuseless-cast
 ;
 
 
 constant CXXFLAGS-GCC-4.9 :
     $(CXXFLAGS-GCC-4.8)
-    <cxxflags>-Wconditionally-supported
+#emscripten     <cxxflags>-Wconditionally-supported
     <cxxflags>-Wfloat-conversion
-    <cxxflags>-Wopenmp-simd
+#emscripten     <cxxflags>-Wopenmp-simd
     <cxxflags>-Wparentheses
 
     <variant>release:<cxxflags>-flto
@@ -260,7 +260,7 @@ project redemption
     <include>src/headers
     <include>src/main
     <include>modules/includes
-    <include>/usr/include
+#emscripten     <include>/usr/include
     <include>tests
 
     <conditional>@defines
@@ -1086,6 +1086,11 @@ exe client_rdp_Qt :
 
 explicit test_rdp_client_test_card_JS.o bitmap_data_allocator.o client_rdp_JS ; 
 
+using emscripten ;
+
+objjs rdpclient.bc : src/main/rdp_client.cpp : <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
+
+js rdpclient.js : rdpclient.bc : <cxxflags>-g3 ;
 
 obj test_rdp_client_test_card_JS.o : tests/client_mods/test_rdp_client_test_card_JS.cpp 
     :<include>/usr/include/SDL
