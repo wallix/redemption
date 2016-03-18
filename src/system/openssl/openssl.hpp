@@ -411,8 +411,7 @@ again:
     }
 
     // TODO("Before to have default value certificate doesn't exists")
-    bool certificate_exists  = true;
-    bool certificate_matches = true;
+    bool bad_certificate_path = false;
     int  checking_exception  = NO_ERROR;
 
     // ensures the certificate directory exists
@@ -423,8 +422,7 @@ again:
             *this->error_message += certif_path;
             *this->error_message += "\"\n";
         }
-        certificate_exists  = false;
-        certificate_matches = false;
+        bad_certificate_path = true;
 
         server_notifier.server_cert_error(strerror(errno));
         checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE;
@@ -437,7 +435,10 @@ again:
         certif_path, this->ip_address, this->port);
     filename[sizeof(filename) - 1] = '\0';
 
-    if (certificate_exists && certificate_matches) {
+    bool certificate_exists  = false;
+    bool certificate_matches = false;
+
+    if (!bad_certificate_path) {
         FILE *fp = ::fopen(filename, "r");
         if (!fp) {
             if (errno != ENOENT) {
@@ -448,9 +449,6 @@ again:
                     *this->error_message += filename;
                     *this->error_message += "\"\n";
                 }
-                certificate_exists  = false;
-                certificate_matches = false;
-
                 server_notifier.server_cert_error(strerror(errno));
                 checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE;
             }
