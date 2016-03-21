@@ -453,7 +453,7 @@ public:
             this->log_input_data<Buffer::original_capacity()>(
                       [this] (char const * data) {
                           this->authentifier->log4(false,
-                              "KBD input", data);
+                              "KBD_INPUT", data);
                       }
                     , false
                     , this->session_data.get_data()

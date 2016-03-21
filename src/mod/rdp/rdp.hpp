@@ -571,8 +571,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_access_allowed_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "certificate_check_success",
-                        "data='Connexion to server allowed'"
+                        "CERTIFICATE_CHECK_SUCCESS",
+                        "description='Connexion to server allowed'"
                     );
             }
         }
@@ -582,8 +582,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_cert_create_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_new",
-                        "data='New X.509 certificate created'"
+                        "SERVER_CERTIFICATE_NEW",
+                        "description='New X.509 certificate created'"
                     );
             }
         }
@@ -593,8 +593,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_cert_success_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_match_success",
-                        "data='X.509 server certificate match'"
+                        "SERVER_CERTIFICATE_MATCH_SUCCESS",
+                        "description='X.509 server certificate match'"
                     );
             }
         }
@@ -604,8 +604,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_cert_failure_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_match_failure",
-                        "data='X.509 server certificate match failure'"
+                        "SERVER_CERTIFICATE_MATCH_FAILURE",
+                        "description='X.509 server certificate match failure'"
                     );
             }
         }
@@ -616,11 +616,11 @@ class mod_rdp : public RDPChannelManagerMod {
                 this->acl) {
                 char extra[512];
                 snprintf(extra, sizeof(extra),
-                        "data='X.509 server certificate internal error: \"%s\"'",
+                        "description='X.509 server certificate internal error: \"%s\"'",
                         (str_error ? str_error : "")
                     );
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_error",
+                        "SERVER_CERTIFICATE_ERROR",
                         extra
                     );
             }
