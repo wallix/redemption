@@ -371,8 +371,6 @@ public:
         const char request_outbound_connection_monitoring_rule[] =
             "Request=Get outbound connection monitoring rule\x01";
 
-        const char self_status_eq[] = "Self.Status=";
-
         const char request_hello[] = "Request=Hello";
 
         if (!session_probe_message.compare(request_hello)) {
@@ -641,19 +639,12 @@ public:
             }
             this->session_probe_keep_alive_received = true;
         }
-        else if (!session_probe_message.compare(0, std::string::npos,
-                                                self_status_eq,
-                                                sizeof(self_status_eq) - 1)) {
-            std::string parameters(session_probe_message,
-                sizeof(self_status_eq) - 1, std::string::npos);
+        else if (!session_probe_message.compare("SESSION_ENDING_IN_PROGRESS")) {
+            this->param_acl->log4(
+                (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                "SESSION_ENDING_IN_PROGRESS");
 
-            if (parameters.compare("EndingInProgress")) {
-                this->param_acl->log4(
-                    (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                    "Self.Status", "status='EndingInProgress'");
-
-                this->session_probe_ending_in_progress = true;
-            }
+            this->session_probe_ending_in_progress = true;
         }
         else {
             const char * message   = session_probe_message.c_str();
@@ -667,7 +658,7 @@ public:
                 std::string order(message, separator - message);
                 std::string parameters(separator + 1);
 
-                if (!order.compare("PasswordTextBox.SetFocus")) {
+                if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     std::string info("status='" + parameters + "'");
                     this->param_acl->log4(
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
@@ -676,7 +667,7 @@ public:
                     this->front.set_focus_on_password_textbox(
                         !parameters.compare("yes"));
                 }
-                else if (!order.compare("ConsentUI.IsVisible")) {
+                else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
                     std::string info("status='" + parameters + "'");
                     this->param_acl->log4
                         ((this->verbose & MODRDP_LOGLEVEL_SESPROBE),
@@ -685,38 +676,38 @@ public:
                     this->front.set_consent_ui_visible(
                         !parameters.compare("yes"));
                 }
-                else if (!order.compare("InputLanguage")) {
+                else if (!order.compare("INPUT_LANGUAGE")) {
                     const char * subitems          = parameters.c_str();
                     const char * subitem_separator =
                         ::strchr(subitems, '\x01');
 
                     if (subitem_separator) {
-                        std::string code(subitems,
-                                         subitem_separator - subitems);
+                        std::string identifier(subitems,
+                                               subitem_separator - subitems);
                         std::string display_name(subitem_separator + 1);
 
                         std::string info(
-                            "code='" + code +
-                            "' name='" + display_name + "'");
+                            "identifier='" + identifier +
+                            "' display_name='" + display_name + "'");
                         this->param_acl->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
 
-                        this->front.set_keylayout(::strtol(code.c_str(),
+                        this->front.set_keylayout(::strtol(identifier.c_str(),
                             nullptr, 16));
                     }
                     else {
                         message_format_invalid = true;
                     }
                 }
-                else if (!order.compare("NewProcess") ||
-                         !order.compare("CompletedProcess")) {
+                else if (!order.compare("NEW_PROCESS") ||
+                         !order.compare("COMPLETED_PROCESS")) {
                     std::string info("command_line='" + parameters + "'");
                     this->param_acl->log4(
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
                 }
-                else if (!order.compare("OutboundConnectionBlocked")) {
+                else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED")) {
                     const char * subitems          = parameters.c_str();
                     const char * subitem_separator =
                         ::strchr(subitems, '\x01');
@@ -753,7 +744,7 @@ public:
                         message_format_invalid = true;
                     }
                 }
-                else if (!order.compare("ForegroundWindowChanged")) {
+                else if (!order.compare("FOREGROUND_WINDOW_CHANGED")) {
                     const char * subitems          = parameters.c_str();
                     const char * subitem_separator =
                         ::strchr(subitems, '\x01');
@@ -772,7 +763,7 @@ public:
                             std::string command_line(subitem_separator + 1);
 
                             std::string info(
-                                "text='" + text +
+                                "window='" + text +
                                 "' class='" + window_class +
                                 "' command_line='" + command_line + "'");
                             this->param_acl->log4(
@@ -787,7 +778,7 @@ public:
                         message_format_invalid = true;
                     }
                 }
-                else if (!order.compare("Button.Clicked")) {
+                else if (!order.compare("BUTTON_CLICKED")) {
                     const char * subitems          = parameters.c_str();
                     const char * subitem_separator =
                         ::strchr(subitems, '\x01');
@@ -798,7 +789,7 @@ public:
                         std::string button(subitem_separator + 1);
 
                         std::string info(
-                            "window='" + window +
+                            "windows='" + window +
                             "' button='" + button + "'");
                         this->param_acl->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
@@ -808,7 +799,7 @@ public:
                         message_format_invalid = true;
                     }
                 }
-                else if (!order.compare("Edit.Changed")) {
+                else if (!order.compare("EDIT_CHANGED")) {
                     const char * subitems          = parameters.c_str();
                     const char * subitem_separator =
                         ::strchr(subitems, '\x01');
@@ -819,7 +810,7 @@ public:
                         std::string edit(subitem_separator + 1);
 
                         std::string info(
-                            "window='" + window +
+                            "windows='" + window +
                             "' edit='" + edit + "'");
                         this->param_acl->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
