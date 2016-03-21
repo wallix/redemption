@@ -244,6 +244,7 @@ constant LIB_SAN_DEPENDENCY :
 
 project redemption
     : requirements
+    
     <include>src
     <include>src/utils
     <include>src/core
@@ -260,14 +261,28 @@ project redemption
     <include>src/headers
     <include>src/main
     <include>modules/includes
-#emscripten     <include>/usr/include
+#emscripten    <include>/usr/include
+    
+    <include>src/system/JS
+    
+    #emscripten
+    #<include>/usr/include/openssl
+    #<include>/usr/include/x86_64-linux-gnu
+    #<include>/usr/include/x86_64-linux-gnu/sys
+    #<include>/usr/include/x86_64-linux-gnu/gnu
+    #emscripten
+    
     <include>tests
-
     <conditional>@defines
 
     <variant>debug:<define>REDASSERT_AS_ASSERT
     <variant>debug:<cxxflags>-g
-
+    
+    #<cxxflags>-o  #emscripten
+    #<cxxflags>client_rdp_JS.html #emscripten
+    <cxxflags>-Wall #emscripten
+    <cxxflags>-O2 #emscripten
+    
     <cxxflags>-std=c++11
 
 
@@ -1084,36 +1099,27 @@ exe client_rdp_Qt :
 
 
 
-explicit test_rdp_client_test_card_JS.o bitmap_data_allocator.o client_rdp_JS ; 
 
-using emscripten ;
+using emscripten ; 
 
-objjs rdpclient.bc : src/main/rdp_client.cpp : <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
+explicit test_rdp_client_test_card_JS.bc bitmap_data_allocator.bc client_rdp_JS.js ; 
 
-js rdpclient.js : rdpclient.bc : <cxxflags>-g3 ;
-
-obj test_rdp_client_test_card_JS.o : tests/client_mods/test_rdp_client_test_card_JS.cpp 
-    :<include>/usr/include/SDL
+install client_rdp_JS
+    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+    : <location>./sandbox
     ;
+    
+objjs test_rdp_client_test_card_JS.bc : tests/client_mods/test_rdp_client_test_card_JS.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
 
-obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
+objjs bitmap_data_allocator.bc : src/utils/bitmap_data_allocator.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
 
+js client_rdp_JS.js : 
+        test_rdp_client_test_card_JS.bc 
+        bitmap_data_allocator.bc
+     : 
+     <cxxflags>-g3 
+     ;
+actions nothing { }
 
-exe client_rdp_JS :
-    src/system/JS/front_JS.hpp
-    test_rdp_client_test_card_JS.o
-    bitmap_data_allocator.o
-    SDL
-    krb5
-    openssl
-    crypto
-    gssglue
-    png
-    d3des
-    z
-    dl
-    :
-    <include>/usr/include/SDL
+#make client_rdp_JS.html : client_rdp_JS.js : nothing ;
 
-    #<cxxflags>-fPIC                             #5
-    ;
