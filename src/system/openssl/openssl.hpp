@@ -48,15 +48,19 @@ void enable_client_tls(
             bool ensure_certificate_present,
 //            configs::ServerCertCheck server_cert_check,
             ServerNotifier & server_notifier,
-            const char * certif_path
+            const char * certif_path,
+            std::string * error_message,
+            const char * ip_address,
+            int port,
         )
 {
-        
-    if (this->tls) {
-        TODO("this should be an error, no need to commute two times to TLS");
-        return;
-    }
-    LOG(LOG_INFO, "Client TLS start");
+
+    // this is to check in caller        
+//    if (this->tls) {
+//        TODO("this should be an error, no need to commute two times to TLS");
+//        return;
+//    }
+//    LOG(LOG_INFO, "Client TLS start");
 
 
     // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
@@ -90,6 +94,7 @@ void enable_client_tls(
         LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
         ERR_print_errors_fp(stderr);
     }
+    // TODO: This should be wrapped in some abstract layer
     this->allocated_ctx = ctx;
 
     /*
@@ -268,9 +273,11 @@ void enable_client_tls(
     // to find out the reason.
     TODO("add error management");
     SSL * ssl = SSL_new(ctx);
+    // TODO: this should be wrapped in some abstraction layer
     this->allocated_ssl = ssl;
 
     TODO("I should probably not be doing that here ? Is it really necessary");
+    // TODO: Socket should be passed by caller
     int flags = fcntl(this->sck, F_GETFL);
     fcntl(this->sck, F_SETFL, flags & ~(O_NONBLOCK));
 
@@ -417,10 +424,10 @@ again:
     // ensures the certificate directory exists
     if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, -1) != 0) {
         LOG(LOG_WARNING, "Failed to create certificate directory: %s ", certif_path);
-        if (this->error_message) {
-            *this->error_message = "Failed to create certificate directory: \"";
-            *this->error_message += certif_path;
-            *this->error_message += "\"\n";
+        if (error_message) {
+            *error_message = "Failed to create certificate directory: \"";
+            *error_message += certif_path;
+            *error_message += "\"\n";
         }
         bad_certificate_path = true;
 
@@ -432,7 +439,7 @@ again:
 
     // generates the name of certificate file associated with RDP target
     snprintf(filename, sizeof(filename) - 1, "%s/rdp,%s,%d,X509.pem",
-        certif_path, this->ip_address, this->port);
+        certif_path, ip_address, port);
     filename[sizeof(filename) - 1] = '\0';
 
     bool certificate_exists  = false;
@@ -441,141 +448,150 @@ again:
     if (!bad_certificate_path) {
         FILE *fp = ::fopen(filename, "r");
         if (!fp) {
-            if (errno != ENOENT) {
+            switch (errno) {
+            case default: {
                 // failed to open stored certificate file
                 LOG(LOG_WARNING, "Failed to open stored certificate: \"%s\"\n", filename);
-                if (this->error_message) {
-                    *this->error_message = "Failed to open stored certificate: \"";
-                    *this->error_message += filename;
-                    *this->error_message += "\"\n";
+                if (error_message) {
+                    *error_message = "Failed to open stored certificate: \"";
+                    *error_message += filename;
+                    *error_message += "\"\n";
                 }
                 server_notifier.server_cert_error(strerror(errno));
                 checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE;
             }
-            else {
+            break;
+            case ENOENT:
+            {
                 LOG(LOG_WARNING, "There's no stored certificate: \"%s\"\n", filename);
-                if (this->error_message) {
-                    *this->error_message = "There's no stored certificate: \"";
-                    *this->error_message += filename;
-                    *this->error_message += "\"\n";
+                if (error_message) {
+                    *error_message = "There's no stored certificate: \"";
+                    *error_message += filename;
+                    *error_message += "\"\n";
                 }
-                certificate_exists  = false;
-                certificate_matches = false;
 
                 if (ensure_certificate_present) {
                     server_notifier.server_cert_failure();
                     checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_MISSED;
                 }
             }
+            break;
+            }
         }
         else {
+            certificate_exists  = true;
             X509 *px509Existing = PEM_read_X509(fp, nullptr, nullptr, nullptr);
+            ::fclose(fp);
             if (!px509Existing) {
                 // failed to read stored certificate file
                 LOG(LOG_WARNING, "Failed to read stored certificate: \"%s\"\n", filename);
-                if (this->error_message) {
-                    *this->error_message = "Failed to read stored certificate: \"";
-                    *this->error_message += filename;
-                    *this->error_message += "\"\n";
+                if (error_message) {
+                    *error_message = "Failed to read stored certificate: \"";
+                    *error_message += filename;
+                    *error_message += "\"\n";
                 }
-                certificate_exists  = true;
                 certificate_matches = false;
 
                 server_notifier.server_cert_error(strerror(errno));
                 checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED;
             }
-            ::fclose(fp);
-
-            if (certificate_exists && certificate_matches) {
+            else  {
                 char tmpfilename[1024];
                 // temp file for certificate binary check
-                snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/rdp,%s,%d,X509,XXXXXX", this->ip_address, this->port);
+                snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/rdp,%s,%d,X509,XXXXXX", ip_address, port);
                 tmpfilename[sizeof(tmpfilename) - 1] = 0;
                 int tmpfd = ::mkostemp(tmpfilename, O_RDWR|O_CREAT);
                 FILE * tmpfp = ::fdopen(tmpfd, "w+");
                 PEM_write_X509(tmpfp, px509);
-
                 ::fclose(tmpfp);
 
-                fp = ::fopen(filename, "r");
-                tmpfp = ::fopen(tmpfilename, "r");
+                // This can be made into a function checking two files are identical
+                FILE* fp2 = ::fopen(filename, "r");
+                FILE* tmpfp2 = ::fopen(tmpfilename, "r");
 
                 char buffer1[2048];
                 char buffer2[2048];
                 int binary_check_failed = false;
 
                 for (;;){
-                    size_t nb1 = fread(buffer1, sizeof(buffer1[0]), sizeof(buffer1)/sizeof(buffer1[0]), fp);
-                    size_t nb2 = fread(buffer2, sizeof(buffer2[0]), sizeof(buffer2)/sizeof(buffer1[1]), tmpfp);
+                    size_t nb1 = fread(buffer1, sizeof(buffer1[0]), sizeof(buffer1)/sizeof(buffer1[0]), fp2);
+                    size_t nb2 = fread(buffer2, sizeof(buffer2[0]), sizeof(buffer2)/sizeof(buffer1[1]), tmpfp2);
                     LOG(LOG_INFO, "nb1=%zu nb2=%zu\n", nb1, nb2);
                     if ((nb1 != nb2) || (0 != memcmp(buffer1, buffer2, nb1 * sizeof(buffer1[0])))) {
                         binary_check_failed = true;
                         break;
                     }
-                    if (feof(tmpfp) && feof(fp)){
+                    if (feof(tmpfp2) && feof(fp2)){
                         break;
                     }
-                    if (ferror(tmpfp)||ferror(fp)||feof(tmpfp)||feof(fp)){
+                    if (ferror(tmpfp2)||ferror(fp2)||feof(tmpfp2)||feof(fp2)){
                         binary_check_failed = true;
                         break;
                     }
                 }
-                ::fclose(tmpfp);
+                ::fclose(tmpfp2);
                 ::unlink(tmpfilename);
-                ::fclose(fp);
+                ::fclose(fp2);
 
-                char const * const issuer               = crypto_print_name(X509_get_issuer_name(px509));
                 char const * const issuer_existing      = crypto_print_name(X509_get_issuer_name(px509Existing));
-                char const * const subject              = crypto_print_name(X509_get_subject_name(px509));
                 char const * const subject_existing     = crypto_print_name(X509_get_subject_name(px509Existing));
-                char const * const fingerprint          = crypto_cert_fingerprint(px509);
                 char const * const fingerprint_existing = crypto_cert_fingerprint(px509Existing);;
 
                 LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing);
                 LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
                 LOG(LOG_INFO, "TLS::X509 existing::fingerprint=%s", fingerprint_existing);
 
+                char const * const issuer               = crypto_print_name(X509_get_issuer_name(px509));
+                char const * const subject              = crypto_print_name(X509_get_subject_name(px509));
+                char const * const fingerprint          = crypto_cert_fingerprint(px509);
+
+                certificate_matches = !binary_check_failed;
                 if (binary_check_failed
-                || (0 != strcmp(issuer_existing, issuer))
-                // Only one of subject_existing and subject is null
-                || ((!subject_existing || !subject) && (subject_existing != subject))
-                // All of subject_existing and subject are not null
-                || (subject && (0 != strcmp(subject_existing, subject)))
-                || (0 != strcmp(fingerprint_existing, fingerprint))) {
-                    if (this->error_message) {
-                        char buff[256];
-                        snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
-                                 this->ip_address, this->port);
-                        *this->error_message = buff;
-                    }
-                    LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
-                        this->ip_address, this->port,
-                        issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
-                    if (this->error_message) {
-                        *this->error_message = "The certificate has changed: \"";
-                        *this->error_message += filename;
-                        *this->error_message += "\"\n";
-                    }
-                    certificate_exists  = true;
-                    certificate_matches = false;
+                    // Read certificate fields to ensure change is not irrelevant
+                    // Relevant changes are either:
+                    // - issuer changed
+                    // - subject changed (or appears, or disappears)
+                    // - fingerprint changed
+                    // other changes are ignored (expiration date for instance,
+                    //  and revocation list is not checked)
+                    && ((0 != strcmp(issuer_existing, issuer))
+                    // Only one of subject_existing and subject is null
+                    || ((!subject_existing || !subject) && (subject_existing != subject))
+                    // All of subject_existing and subject are not null
+                    || (subject && (0 != strcmp(subject_existing, subject)))
+                    || (0 != strcmp(fingerprint_existing, fingerprint)))) {
+                        if (error_message) {
+                            char buff[256];
+                            snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
+                                     ip_address, port);
+                            *error_message = buff;
+                        }
+                        LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
+                            ip_address, port,
+                            issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
+                        if (error_message) {
+                            *error_message = "The certificate has changed: \"";
+                            *error_message += filename;
+                            *error_message += "\"\n";
+                        }
+                        certificate_exists  = true;
+                        certificate_matches = false;
 
-                    if (ensure_server_certificate_match) {
-                        server_notifier.server_cert_failure();
-                        checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED;
+                        if (ensure_server_certificate_match) {
+                            server_notifier.server_cert_failure();
+                            checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED;
+                        }
                     }
+                    else {
+                        server_notifier.server_cert_success();
+                    }
+
+                    if (issuer               != nullptr) { free(const_cast<char *>(issuer              )); }
+                    if (subject              != nullptr) { free(const_cast<char *>(subject             )); }
+                    if (fingerprint          != nullptr) { free(const_cast<char *>(fingerprint         )); }
+
+                    X509_free(px509Existing);
                 }
-                else {
-                    server_notifier.server_cert_success();
-                }
-
-                if (issuer               != nullptr) { free(const_cast<char *>(issuer              )); }
-                if (issuer_existing      != nullptr) { free(const_cast<char *>(issuer_existing     )); }
-                if (subject              != nullptr) { free(const_cast<char *>(subject             )); }
-                if (subject_existing     != nullptr) { free(const_cast<char *>(subject_existing    )); }
-                if (fingerprint          != nullptr) { free(const_cast<char *>(fingerprint         )); }
-                if (fingerprint_existing != nullptr) { free(const_cast<char *>(fingerprint_existing)); }
-
-                X509_free(px509Existing);
             }
         }
     }
@@ -734,6 +750,7 @@ again:
 
        X509_free(px509);
 
+       // TODO: Probably to be set by caller if everything successfull
        this->io = ssl;
        this->tls = true;
 
