@@ -177,7 +177,7 @@ public:
         }
     }
 
-    virtual void mouse(uint16_t mouse_x, uint16_t mouse_y)
+    void mouse(uint16_t mouse_x, uint16_t mouse_y)
     {
         this->mouse_x = mouse_x;
         this->mouse_y = mouse_y;
