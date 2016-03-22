@@ -29,7 +29,7 @@ TODO("-Wold-style-cast is ignored")
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 inline
-void add_to_fd_set(wait_obj & w, SocketTransport * t, fd_set & rfds, unsigned & max, timeval & timeout)
+void add_to_fd_set(wait_obj const & w, SocketTransport * t, fd_set & rfds, unsigned & max, timeval & timeout)
 {
     if (t && (t->sck > INVALID_SOCKET)) {
         FD_SET(t->sck, &rfds);
@@ -69,7 +69,7 @@ bool is_set(wait_obj & w, SocketTransport * t, fd_set & rfds)
 }
 
 inline
-void add_to_fd_set(wait_obj & w, int fd, fd_set & rfds, unsigned & max, timeval & timeout)
+void add_to_fd_set(wait_obj const & w, int fd, fd_set & rfds, unsigned & max, timeval & timeout)
 {
     if (fd > -1) {
         FD_SET(fd, &rfds);

@@ -887,7 +887,7 @@ public:
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
-        this->capture->capture_event.set();
+        this->capture->get_capture_event().set();
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(*this->capture->get_graphic_api());

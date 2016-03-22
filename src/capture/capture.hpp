@@ -43,6 +43,8 @@
 #include "utils/graphic_capture_impl.hpp"
 #include "utils/wrm_capture_impl.hpp"
 #include "utils/kbd_capture_impl.hpp"
+#include "utils/image_capture_impl.hpp"
+#include "utils/capture_apis_impl.hpp"
 
 class Capture final
 : public gdi::GraphicBase<Capture>
@@ -51,132 +53,13 @@ class Capture final
 , public gdi::InputPointer
 , public gdi::CaptureProbeApi
 {
-    // for snapshot
-    using MouseInfo = MouseTrace;
-
     using Graphic = GraphicCaptureImpl;
 
-
-    class Static
-    {
-        OutFilenameSequenceTransport trans;
-        StaticCapture sc;
-
-    public:
-        Static(
-            const timeval & now, bool clear_png, auth_api * authentifier, Graphic & graphic,
-            const char * record_tmp_path, const char * basename, int groupid,
-            const Inifile & ini)
-        : trans(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-            record_tmp_path, basename, ".png", groupid, authentifier)
-        , sc(now, this->trans, this->trans.seqgen(), graphic.impl().width(), graphic.impl().height(),
-             clear_png, ini, graphic.impl())
-        {}
-
-        void attach_apis(ApisRegister & apis_register, const Inifile &) {
-            apis_register.capture_list.push_back(this->sc);
-            apis_register.graphic_snapshot_list->push_back(this->sc);
-        }
-
-        void zoom(unsigned percent) {
-            this->sc.zoom(percent);
-        }
-    };
-
+    using Static = ImageCaptureImpl;
 
     using Native = WrmCaptureImpl;
 
     using Kbd = KbdCaptureImpl;
-
-
-    struct NewCapture : gdi::CaptureDispatcher<NewCapture>
-    {
-        NewCapture(Capture & cap) : cap(cap) {}
-
-        std::chrono::microseconds snapshot(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) override {
-            this->cap.capture_event.reset();
-
-            if (this->cap.gd) {
-                this->cap.gd->rdp_drawable().set_mouse_cursor_pos(cursor_x, cursor_y);
-            }
-
-            this->cap.mouse_info = {now, cursor_x, cursor_y};
-
-            std::chrono::microseconds time = std::chrono::microseconds::max();
-            if (!this->caps.empty()) {
-                time = NewCapture::base_type::snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-                this->cap.capture_event.update(time.count());
-            }
-            return time;
-        }
-
-        friend gdi::CaptureCoreAccess;
-
-        using captures_list = std::vector<std::reference_wrapper<gdi::CaptureApi>>;
-        captures_list caps;
-
-        captures_list & get_capture_list_impl() {
-            return this->caps;
-        }
-
-        Capture & cap;
-    };
-
-
-    struct NewInputKbd : gdi::KbdInputApi
-    {
-        bool kbd_input(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
-            bool ret = true;
-            for (gdi::KbdInputApi & kbd : this->kbds) {
-                ret &= kbd.kbd_input(now, input_data_32);
-            }
-            return ret;
-        }
-
-        void enable_kbd_input_mask(bool enable) override {
-            for (gdi::KbdInputApi & kbd : this->kbds) {
-                kbd.enable_kbd_input_mask(enable);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
-    };
-
-
-    struct NewInputPointer : gdi::InputPointer
-    {
-        void update_pointer_position(uint16_t x, uint16_t y) override {
-            for (gdi::InputPointer & mouse : this->mouses) {
-                mouse.update_pointer_position(x, y);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::InputPointer>> mouses;
-    };
-
-
-    struct NewCaptureProbe : gdi::CaptureProbeApi
-    {
-        void possible_active_window_change() override {
-            for (gdi::CaptureProbeApi & cap_prob : this->cds) {
-                cap_prob.possible_active_window_change();
-            }
-        }
-
-        void session_update(const timeval& now, array_const_char const & message) override {
-            for (gdi::CaptureProbeApi & cap_prob : this->cds) {
-                cap_prob.session_update(now, message);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> cds;
-    };
-
 
 public:
     const bool capture_wrm;
@@ -184,26 +67,19 @@ public:
 // for extension
 // end extension
 
-    wait_obj capture_event;
-
-private:
-    CryptoContext & cctx;
-
 private:
 // for extension
 // end extension
-
-    MouseInfo mouse_info;
 
     std::unique_ptr<Graphic> gd;
     std::unique_ptr<Native> pnc;
     std::unique_ptr<Static> psc;
     std::unique_ptr<Kbd> pkc;
 
-    NewCapture capture_api;
-    NewInputKbd kbd_input_api;
-    NewInputPointer input_pointer_api;
-    NewCaptureProbe capture_probe_api;
+    CaptureApisImpl::Capture capture_api;
+    CaptureApisImpl::InputKbd kbd_input_api;
+    CaptureApisImpl::InputPointer input_pointer_api;
+    CaptureApisImpl::CaptureProbe capture_probe_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
     ApisRegister get_apis_register() {
@@ -213,23 +89,20 @@ private:
             this->capture_api.caps,
             this->kbd_input_api.kbds,
             this->input_pointer_api.mouses,
-            this->capture_probe_api.cds
+            this->capture_probe_api.probes
         };
     };
 
 public:
     Capture(
         const timeval & now,
-        int width, int height, int order_bpp, int capture_bpp,
+        uint16_t width, uint16_t height, int order_bpp, int capture_bpp,
         bool clear_png, bool no_timestamp, auth_api * authentifier,
         const Inifile & ini, Random & rnd, CryptoContext & cctx,
         bool full_video, bool extract_meta_data)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
-    , capture_event{}
-    , cctx(cctx)
-    , mouse_info{now, width / 2, height / 2}
-    , capture_api(*this)
+    , capture_api(now, width / 2, height / 2)
     {
         TODO("Remove that after change of capture interface")
         (void)full_video;
@@ -258,8 +131,9 @@ public:
 
 
         if (capture_drawable) {
-            this->gd.reset(new Graphic(width, height, order_bpp, this->mouse_info));
+            this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
             this->graphic_api = &this->gd->get_graphic_api();
+            this->capture_api.set_drawable(&this->gd->impl());
 
             if (this->capture_png) {
                 if (recursive_create_directory(record_tmp_path, S_IRWXU|S_IRWXG, groupid) != 0) {
@@ -267,7 +141,7 @@ public:
                 }
 
                 this->psc.reset(new Static(
-                    now, clear_png, authentifier, *this->gd,
+                    now, clear_png, authentifier, this->gd->impl(),
                     record_tmp_path, basename, groupid, ini
                 ));
             }
@@ -283,7 +157,7 @@ public:
 
                 this->pnc.reset(new Native(
                     now, capture_bpp, ini.get<cfg::globals::trace_type>(),
-                    this->cctx, record_path, hash_path, basename,
+                    cctx, record_path, hash_path, basename,
                     groupid, authentifier, this->gd->rdp_drawable(), ini
                 ));
             }
@@ -320,6 +194,10 @@ public:
         this->gd.reset();
     }
 
+    wait_obj & get_capture_event() {
+        return this->capture_api.get_capture_event();
+    }
+
     void request_full_cleaning()
     {
         if (this->pnc) {
@@ -329,12 +207,10 @@ public:
 
     void pause_capture(timeval const & now) {
         this->capture_api.pause_capture(now);
-        this->capture_event.reset();
     }
 
     void resume_capture(timeval const & now) {
         this->capture_api.resume_capture(now);
-        this->capture_event.set();
     }
 
     void update_config(const Inifile & ini) {
