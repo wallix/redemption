@@ -208,10 +208,10 @@ public:
                     add_to_fd_set(*session_probe_launcher_event, -1, rfds, max, timeout);
                 }
 
-                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.allocated_ssl));
-                if (has_pending_data)
+                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
+                if (has_pending_data){
                     memset(&timeout, 0, sizeof(timeout));
-
+                }
 
                 int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
@@ -234,7 +234,7 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (is_set(this->front->get_event(), &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.allocated_ssl))) {
+                if (is_set(this->front->get_event(), &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.mod, now);
                     } catch (Error & e) {
