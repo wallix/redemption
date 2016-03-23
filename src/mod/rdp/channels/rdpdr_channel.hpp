@@ -983,6 +983,9 @@ public:
                 general_capability_set.log(LOG_INFO);
             }
         }
+        else {
+            chunk.rewind(tmp_chunk.get_offset());
+        }
     }   // process_client_general_capability_set
 
     bool process_client_core_capability_response(
