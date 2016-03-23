@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
 
-#include "ssl_calls.hpp"
+#include "system/ssl_calls.hpp"
 #include "genrandom.hpp"
 #include "difftimeval.hpp"
 #include "utf.hpp"

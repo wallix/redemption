@@ -245,6 +245,7 @@ constant LIB_SAN_DEPENDENCY :
 project redemption
     : requirements
     <include>src
+    <include>src/system/linux
     <include>src/utils
     <include>src/core
     <include>src/configs/autogen
@@ -839,7 +840,7 @@ unit-test test_log : tests/utils/test_log.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_netutils : tests/utils/test_netutils.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_png : tests/utils/test_png.cpp : $(TEST_DEPENDENCIES) <library>png ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_calls : tests/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_strings : tests/test_strings.cpp : $(TEST_DEPENDENCIES) ;
 
 

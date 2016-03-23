@@ -23,14 +23,11 @@
 #ifndef REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
 
-#include "system/openssl/openssl.hpp"
+#include "system/openssl.hpp"
 #include "defines.hpp"
 #include "transport/transport.hpp"
 #include "netutils.hpp"
 #include "fileutils.hpp"
-
-//#include "openssl_crypto.hpp"
-//#include "openssl_tls.hpp"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -44,9 +41,6 @@
 #define INVALID_SOCKET -1
 #endif  // #ifndef INVALID_SOCKET
 
-TODO("-Wold-style-cast is ignored")
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
 
 // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
 // Each line (for multiline formats) is indented by indent spaces.
@@ -75,6 +69,7 @@ public:
     , verbose(verbose)
     , port(port)
     , error_message(error_message)
+    , tls(nullptr)
     {
         strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
         this->ip_address[127] = 0;
@@ -84,12 +79,12 @@ public:
         if (!this->sck_closed){
             this->disconnect();
         }
-        if (this->tls->allocated_ssl) {
+        if (this->tls && this->tls->allocated_ssl) {
             //SSL_shutdown(this->tls->allocated_ssl);
             SSL_free(this->tls->allocated_ssl);
         }
 
-        if (this->tls->allocated_ctx) {
+        if (this->tls && this->tls->allocated_ctx) {
             SSL_CTX_free(this->tls->allocated_ctx);
         }
 
@@ -101,11 +96,11 @@ public:
     }
 
     const uint8_t * get_public_key() const override {
-        return this->tls->public_key.get();
+        return this->tls ? this->tls->public_key.get() : nullptr;
     }
 
     size_t get_public_key_length() const override {
-        return this->tls->public_key_length;
+        return this->tls ? this->tls->public_key_length : 0;
     }
 
     void enable_server_tls(const char * certificate_password) override {
@@ -163,7 +158,7 @@ public:
             LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
         }
         // Disconnect tls if needed
-        if (this->tls != nullptr) {
+        if (this->tls) {
             if (this->tls->allocated_ssl) {
                 SSL_free(this->tls->allocated_ssl);
                 this->tls->allocated_ssl = nullptr;
@@ -220,7 +215,7 @@ public:
         }
         char * start = *pbuffer;
 
-        ssize_t res = (this->tls != nullptr) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
+        ssize_t res = (this->tls) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -249,7 +244,7 @@ public:
             LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
         }
 
-        ssize_t res = (this->tls != nullptr) ? this->tls->privsend_tls(buffer, len) : this->privsend(buffer, len);
+        ssize_t res = (this->tls) ? this->tls->privsend_tls(buffer, len) : this->privsend(buffer, len);
         if (res < 0) {
             LOG(LOG_WARNING,
                 "SocketTransport::Send failed on %s (%d) errno=%u [%s]",
