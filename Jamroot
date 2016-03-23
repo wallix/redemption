@@ -671,7 +671,7 @@ unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transp
 #ChunkToFile.hpp
 unit-test test_ChunkToFile : tests/capture/test_ChunkToFile.cpp : $(TEST_DEPENDENCIES) ;
 #FileToChunk.hpp
-unit-test test_FileToChunk : tests/capture/test_FileToChunk.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_FileToChunk : tests/capture/test_FileToChunk.cpp : $(TEST_DEPENDENCIES) <library>png ;
 #FileToGraphic.hpp
 unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>snappy <library>crypto ;
 #GraphicToFile.hpp
