@@ -77,7 +77,7 @@ private:
     std::unique_ptr<Kbd> pkc;
 
     CaptureApisImpl::Capture capture_api;
-    CaptureApisImpl::InputKbd kbd_input_api;
+    CaptureApisImpl::KbdInput kbd_input_api;
     CaptureApisImpl::InputPointer input_pointer_api;
     CaptureApisImpl::CaptureProbe capture_probe_api;
     Graphic::GraphicApi * graphic_api = nullptr;
@@ -108,6 +108,22 @@ public:
         (void)full_video;
         TODO("Remove that after change of capture interface")
         (void)extract_meta_data;
+
+        bool const enable_kbd
+          = !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
+          || ini.get<cfg::session_log::enable_session_log>()
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+        ;
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d",
+                this->capture_wrm ? 1 : 0,
+                this->capture_png ? 1 : 0,
+                enable_kbd ? 1 : 0
+            );
+        }
+
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_png;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>();
@@ -120,15 +136,16 @@ public:
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "redemption"); // default value actual one should come from movie_path
         strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(),
-                                        path, sizeof(path),
-                                        basename, sizeof(basename),
-                                        extension, sizeof(extension));
-        if (!res) {
+
+        if (!canonical_path(
+            ini.get<cfg::globals::movie_path>().c_str()
+          , path, sizeof(path)
+          , basename, sizeof(basename)
+          , extension, sizeof(extension))
+        ) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
-
 
         if (capture_drawable) {
             this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
@@ -136,7 +153,7 @@ public:
             this->capture_api.set_drawable(&this->gd->impl());
 
             if (this->capture_png) {
-                if (recursive_create_directory(record_tmp_path, S_IRWXU|S_IRWXG, groupid) != 0) {
+                if (recursive_create_directory(record_tmp_path, S_IRWXU | S_IRWXG, groupid) != 0) {
                     LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_tmp_path);
                 }
 
@@ -163,10 +180,7 @@ public:
             }
         }
 
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
-            ini.get<cfg::session_log::enable_session_log>() ||
-            ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
-            ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())) {
+        if (enable_kbd) {
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
 
