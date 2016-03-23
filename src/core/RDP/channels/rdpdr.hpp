@@ -1528,9 +1528,12 @@ public:
         stream.out_uint8(this->Information);
     }
 
-    void receive(InStream & stream) {
+    void receive(InStream & stream, uint32_t IoStatus) {
         {
-            const unsigned expected = 5;   // FileId(4) + Information(1)
+            const unsigned expected =
+                    4 +                 // FileId(4)
+                    (IoStatus ? 1 : 0)  // Information(1)
+                ;
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -1541,7 +1544,7 @@ public:
         }
 
         this->FileId_     = stream.in_uint32_le();
-        this->Information = stream.in_uint8();
+        this->Information = (IoStatus ? stream.in_uint8() : 0x00);
     }
 
     uint32_t FileId() const { return this->FileId_; }
