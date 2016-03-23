@@ -214,7 +214,7 @@ public:
 
 
 template<class Utf8CharFn, class NoPrintableFn>
-void filtering_kbd_input(InStream & in_raw_kbd_data, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
+void filtering_kbd_input(gdi::KbdInputApi::Keys const & k, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
 {
     constexpr struct {
         uint32_t uchar;
@@ -239,21 +239,27 @@ void filtering_kbd_input(InStream & in_raw_kbd_data, Utf8CharFn utf32_char_fn, N
     // TODO used static_assert
     assert(std::is_sorted(begin(noprintable_table), end(noprintable_table)));
 
-    uint32_t uchar;
-
-    for (size_t i = 0, count = in_raw_kbd_data.get_capacity() / sizeof(uint32_t); i < count; ++i) {
-        uchar = in_raw_kbd_data.in_uint32_le();
-
+    auto send_uchar = [&](uint32_t uchar) -> bool {
         auto p = std::lower_bound(begin(noprintable_table), end(noprintable_table), uchar);
         if (p != end(noprintable_table) && *p == uchar) {
             if (!no_printable_fn(p->str)) {
-                break;
+                return false;
             }
         }
         else {
             if (!utf32_char_fn(uchar)) {
-                break;
+                return false;
             }
+        }
+        return true;
+    };
+
+    if (k.count == 1) {
+        send_uchar(k.fisrt());
+    }
+    else if (k.count == 2) {
+        if (send_uchar(k.fisrt())) {
+            send_uchar(k.second());
         }
     }
 }
@@ -281,13 +287,12 @@ public:
         return !this->pattern_kill.is_empty() || !this->pattern_notify.is_empty();
     }
 
-    bool kbd_input(const timeval& /*now*/, array_const_u8 const & input_data_32) override {
+    bool kbd_input(const timeval& /*now*/, Keys const & k) override {
         bool can_be_sent_to_server = true;
         uint8_t buf_char[5];
 
-        InStream in_raw_kbd_data(input_data_32);
         filtering_kbd_input(
-            in_raw_kbd_data,
+            k,
             [this, &buf_char, &can_be_sent_to_server](uint32_t uchar) {
                 size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char));
 
@@ -363,31 +368,19 @@ public:
     }
 
 protected:
-    void write_shadow_data(array_const_u8 const & input_data_32) {
-        static const char shadow_buf[] =
-            "****************************************************************"
-            "****************************************************************"
-            "****************************************************************"
-            "****************************************************************"
-        ;
-        auto len = input_data_32.size();
-        while (len) {
-            size_t n = std::min(len, sizeof(shadow_buf)-1u);
-            if (n > this->kbd_stream.tailroom()) {
-                this->inherit_flush();
-                n = std::min(n, this->kbd_stream.tailroom());
-            }
-            this->kbd_stream.out_copy_bytes(shadow_buf, n);
-            len -= n;
+    void write_shadow_keys(Keys const & k) {
+        static const char shadow_buf[] = "**";
+        if (!this->kbd_stream.has_room(k.count)) {
+            this->inherit_flush();
         }
+        this->kbd_stream.out_copy_bytes(shadow_buf, k.count);
     }
 
-    void write_data(array_const_u8 const & input_data_32) {
+    void write_keys(Keys const & k) {
         uint8_t buf_char[5];
 
-        InStream in_raw_kbd_data(input_data_32);
         filtering_kbd_input(
-            in_raw_kbd_data,
+            k,
             [this, &buf_char](uint32_t uchar) {
                 if (uchar == '/') {
                     return this->copy_bytes({"//", 2});
@@ -433,12 +426,12 @@ public:
         this->flush();
     }
 
-    bool kbd_input(const timeval& /*now*/, array_const_u8 const & input_data_32) override {
+    bool kbd_input(const timeval& /*now*/, gdi::KbdInputApi::Keys const & keys) override {
         if (this->keyboard_input_mask_enabled) {
-            this->write_shadow_data(input_data_32);
+            this->write_shadow_keys(keys);
         }
         else {
-            this->write_data(input_data_32);
+            this->write_keys(keys);
         }
         return true;
     }
@@ -501,14 +494,14 @@ public:
         this->flush();
     }
 
-    bool kbd_input(const timeval& /*now*/, array_const_u8 const & input_data_32) override {
+    bool kbd_input(const timeval& /*now*/, gdi::KbdInputApi::Keys const & keys) override {
         if (this->keyboard_input_mask_enabled) {
             if (this->is_probe_enabled_session) {
-                this->write_shadow_data(input_data_32);
+                this->write_shadow_keys(keys);
             }
         }
         else {
-            this->write_data(input_data_32);
+            this->write_keys(keys);
         }
         return true;
     }

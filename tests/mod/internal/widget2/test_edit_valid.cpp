@@ -221,7 +221,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
@@ -242,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     }
 
 
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.rect);
@@ -309,7 +308,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
@@ -330,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     }
 
 
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.rect);
@@ -434,7 +432,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
@@ -455,7 +452,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     }
 
 
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.rect);

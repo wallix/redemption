@@ -105,10 +105,10 @@ struct CaptureApisImpl
 
     struct InputKbd : gdi::KbdInputApi
     {
-        bool kbd_input(const timeval & now, array_view<uint8_t const> const & input_data_32) override {
+        bool kbd_input(const timeval & now, Keys const & k) override {
             bool ret = true;
             for (gdi::KbdInputApi & kbd : this->kbds) {
-                ret &= kbd.kbd_input(now, input_data_32);
+                ret &= kbd.kbd_input(now, k);
             }
             return ret;
         }

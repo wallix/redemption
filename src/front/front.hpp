@@ -4314,7 +4314,6 @@ public:
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
-        StaticOutStream<256> decoded_data;
         bool    tsk_switch_shortcuts;
 
         struct KeyboardFlags {
@@ -4326,7 +4325,8 @@ private:
             }
         };
 
-        this->keymap.event(KeyboardFlags::get(ke), ke.keyCode, decoded_data, tsk_switch_shortcuts);
+        Keymap2::DecodedKeys decoded_keys = this->keymap.event(
+            KeyboardFlags::get(ke), ke.keyCode, tsk_switch_shortcuts);
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
@@ -4334,11 +4334,9 @@ private:
 
         if (  this->capture
             && (this->capture_state == CAPTURE_STATE_STARTED)
-            && decoded_data.get_offset()) {
-            send_to_mod = this->capture->kbd_input(
-                tvtime(),
-                {decoded_data.get_data(), decoded_data.get_offset()}
-            );
+            && decoded_keys.count) {
+            send_to_mod = this->capture->kbd_input(tvtime(),
+                {{{decoded_keys.uchars[0], decoded_keys.uchars[1]}}, decoded_keys.count});
         }
 
         if (this->up_and_running) {

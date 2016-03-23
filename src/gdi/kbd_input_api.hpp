@@ -21,8 +21,11 @@
 #ifndef REDEMPTION_GDI_KBD_INPUT_API_HPP
 #define REDEMPTION_GDI_KBD_INPUT_API_HPP
 
+#include <sys/time.h> // timeval
+
+#include <array>
+
 #include "utils/noncopyable.hpp"
-#include "utils/array_view.hpp"
 
 namespace gdi {
 
@@ -30,7 +33,21 @@ struct KbdInputApi : private noncopyable
 {
     virtual ~KbdInputApi() = default;
 
-    virtual bool kbd_input(timeval const & now, array_const_u8 const & input_data_32) = 0;
+    struct Keys
+    {
+        std::array<uint32_t, 2> uchar;
+        unsigned count;
+
+        uint32_t fisrt() const noexcept { return this->uchar.front(); }
+        uint32_t second() const noexcept { return this->uchar.back(); }
+        uint32_t & fisrt() noexcept { return this->uchar.front(); }
+        uint32_t & second() noexcept { return this->uchar.back(); }
+
+        uint32_t operator[](unsigned i) const noexcept { return this->uchar[i]; }
+        uint32_t & operator[](unsigned i) noexcept { return this->uchar[i]; }
+    };
+
+    virtual bool kbd_input(timeval const & now, Keys const & k) = 0;
     virtual void enable_kbd_input_mask(bool enable) = 0;
 };
 

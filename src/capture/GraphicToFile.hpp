@@ -183,11 +183,13 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    bool kbd_input(const timeval & now, const array_const_u8 & input_data_32) override {
-        size_t const count  = input_data_32.size() / sizeof(uint32_t);
-
-        size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
-        keyboard_buffer_32.out_copy_bytes(input_data_32.data(), c * sizeof(uint32_t));
+    bool kbd_input(const timeval & now, Keys const & k) override {
+        if (k.count >= 1 && keyboard_buffer_32.has_room(sizeof(uint32_t))) {
+            keyboard_buffer_32.out_uint32_le(k.fisrt());
+        }
+        if (k.count == 2 && keyboard_buffer_32.has_room(sizeof(uint32_t))) {
+            keyboard_buffer_32.out_uint32_le(k.second());
+        }
 
         return true;
     }

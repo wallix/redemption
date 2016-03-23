@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     timeval const time = {0, 0};
     SessionLogKbd kbd_capture(auth);
 
-    const unsigned char input[] = {'a', 0, 0, 0};
+    gdi::KbdInputApi::Keys input{{{'a', 0}}, 1};
 
     {
         kbd_capture.kbd_input(time, input);
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
     PatternKbd kbd_capture(&auth, "$kbd:abcd", nullptr);
 
-    unsigned char input[] = {0, 0, 0, 0};
+    gdi::KbdInputApi::Keys input{{}, 1};
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
     for (auto c : str) {
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
     PatternKbd kbd_capture(&auth, "$kbd:ab/cd", nullptr);
 
-    unsigned char input[] = {0, 0, 0, 0};
+    gdi::KbdInputApi::Keys input{{}, 1};
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;
     for (auto c : str) {

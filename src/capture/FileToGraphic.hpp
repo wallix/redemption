@@ -125,8 +125,6 @@ public:
     bool timestamp_ok;
     uint16_t mouse_x;
     uint16_t mouse_y;
-    uint16_t input_len;
-    uint8_t  input[8192];
     bool real_time;
 
     const BGRPalette & palette = BGRPalette::classic_332(); // We don't really care movies are always 24 bits for now
@@ -233,7 +231,6 @@ public:
         , timestamp_ok(false)
         , mouse_x(0)
         , mouse_y(0)
-        , input_len(0)
         , real_time(real_time)
         , begin_capture(begin_capture)
         , end_capture(end_capture)
@@ -688,35 +685,32 @@ public:
                            , this->mouse_y);
                     }
 
-                    TODO("this->input contains UTF32 unicode points, it should not be a byte buffer."
-                         "This leads to back and forth conversion between 32 bits and 8 bits")
-                    this->input_len = std::min( static_cast<uint16_t>(stream.in_remain())
-                                              , static_cast<uint16_t>(sizeof(this->input) - 1));
-                    if (this->input_len){
-                        this->stream.in_copy_bytes(this->input, this->input_len);
-                        this->input[this->input_len] = 0;
-                        this->stream.in_skip_bytes(this->stream.in_remain());
 
-                        for (size_t i = 0; i < this->nbconsumers; i++){
-                            if (this->consumers[i].kbd_input_ptr) {
-                                this->consumers[i].kbd_input_ptr->kbd_input(
-                                    this->record_now,
-                                    {this->input, this->input_len}
-                                );
+                    auto const input_data = this->stream.get_current();
+                    auto const input_len = this->stream.in_remain();
+                    this->stream.in_skip_bytes(input_len);
+                    gdi::KbdInputApi::Keys keys;
+                    keys.count = 1;
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
+                        if (this->consumers[i].kbd_input_ptr) {
+                            InStream input(input_data, input_len);
+                            while (input.in_remain()) {
+                                keys.fisrt() = input.in_uint32_le();
+                                this->consumers[i].kbd_input_ptr->kbd_input(this->record_now, keys);
                             }
                         }
+                    }
 
-                        if (this->verbose > 16) {
-                            while (this->input_len >= 4) {
-                                uint8_t         key8[6];
-                                const size_t    len = UTF32toUTF8(this->input, 4, key8, sizeof(key8));
-                                key8[len] = 0;
+                    if (this->verbose > 16) {
+                        for (auto data = input_data, end = data + input_len/4; data != end; data += 4) {
+                            uint8_t         key8[6];
+                            const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
+                            key8[len] = 0;
 
-                                LOG( LOG_INFO, "TIMESTAMP %lu.%lu keyboard '%s'"
-                                   , static_cast<unsigned long>(this->record_now.tv_sec)
-                                   , static_cast<unsigned long>(this->record_now.tv_usec)
-                                   , key8);
-                            }
+                            LOG( LOG_INFO, "TIMESTAMP %lu.%lu keyboard '%s'"
+                                , static_cast<unsigned long>(this->record_now.tv_sec)
+                                , static_cast<unsigned long>(this->record_now.tv_usec)
+                                , key8);
                         }
                     }
                 }

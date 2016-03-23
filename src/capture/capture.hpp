@@ -225,8 +225,8 @@ public:
         return this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    bool kbd_input(const timeval & now, array_const_u8 const & input_data_32) override {
-        return this->kbd_input_api.kbd_input(now, input_data_32);
+    bool kbd_input(const timeval & now, Keys const & k) override {
+        return this->kbd_input_api.kbd_input(now, k);
     }
 
     void update_pointer_position(uint16_t x, uint16_t y) override {
