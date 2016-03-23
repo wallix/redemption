@@ -32,17 +32,17 @@
 namespace po = program_options;
 
 extern "C" {
-    __attribute__((__visibility__("default"))) 
-    int decmemcpy(char * dest, char * source, int len)
+    __attribute__((__visibility__("default")))
+    int recmemcpy(char * dest, char * source, int len)
     {
         ::memcpy(dest, source, static_cast<size_t>(len));
         return 0;
     }
 
-    __attribute__((__visibility__("default"))) 
+    __attribute__((__visibility__("default")))
     int do_main(int argc, char** argv,
             get_hmac_key_prototype * hmac_fn,
-            get_trace_key_prototype * trace_fn) 
+            get_trace_key_prototype * trace_fn)
     {
         std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
         Inifile ini;

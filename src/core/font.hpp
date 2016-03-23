@@ -33,6 +33,7 @@
 #include <cstring>
 #include <cerrno>
 
+#include <algorithm>
 #include "make_unique.hpp"
 #include "log.hpp"
 #include "stream.hpp"

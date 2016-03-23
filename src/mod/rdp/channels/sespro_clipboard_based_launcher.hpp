@@ -23,6 +23,7 @@
 
 #include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/rdp_log.hpp"
@@ -56,19 +57,23 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
         STOP
     } state = State::START;
 
-private:
     mod_api& mod;
 
     const std::string& alternate_shell;
 
     bool drive_ready = false;
     bool clipboard_initialized = false;
+    bool clipboard_monitor_ready = false;
 
     bool format_data_requested = false;
 
     wait_obj event;
 
-    SessionProbeVirtualChannel* channel = nullptr;
+    SessionProbeVirtualChannel* sesprob_channel = nullptr;
+    ClipboardVirtualChannel*    cliprdr_channel = nullptr;
+
+    const uint64_t long_delay  = 500000;
+    const uint64_t short_delay = 50000;
 
     uint32_t verbose;
 
@@ -99,11 +104,17 @@ public:
 
         this->clipboard_initialized = true;
 
-        if (this->channel) {
-            this->channel->give_additional_launch_time();
+        if (this->sesprob_channel) {
+            this->sesprob_channel->give_additional_launch_time();
         }
 
         this->do_state_start();
+
+        return false;
+    }
+
+    bool on_clipboard_monitor_ready() override {
+        this->clipboard_monitor_ready = true;
 
         return false;
     }
@@ -118,8 +129,8 @@ public:
             return false;
         }
 
-        if (this->channel) {
-            this->channel->give_additional_launch_time();
+        if (this->sesprob_channel) {
+            this->sesprob_channel->give_additional_launch_time();
         }
 
         this->drive_ready = true;
@@ -150,7 +161,7 @@ public:
 
                 this->state = State::RUN_WIN_D_D_DOWN;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::RUN_WIN_D_D_DOWN:
@@ -163,7 +174,7 @@ public:
 
                 this->state = State::RUN_WIN_D_D_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::RUN_WIN_D_D_UP:
@@ -177,7 +188,7 @@ public:
 
                 this->state = State::RUN_WIN_D_WIN_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::RUN_WIN_D_WIN_UP:
@@ -192,7 +203,7 @@ public:
 
                 this->state = State::RUN_WIN_R_WIN_DOWN;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::RUN_WIN_R_WIN_DOWN:
@@ -205,7 +216,7 @@ public:
 
                 this->state = State::RUN_WIN_R_R_DOWN;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::RUN_WIN_R_R_DOWN:
@@ -218,7 +229,7 @@ public:
 
                 this->state = State::RUN_WIN_R_R_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::RUN_WIN_R_R_UP:
@@ -232,7 +243,7 @@ public:
 
                 this->state = State::RUN_WIN_R_WIN_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::RUN_WIN_R_WIN_UP:
@@ -247,7 +258,7 @@ public:
 
                 this->state = State::CLIPBOARD;
 
-                this->event.set(1000000);
+                this->event.set(this->long_delay);
             break;
 
             case State::CLIPBOARD:
@@ -264,7 +275,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_A_DOWN;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_A_A_DOWN:
@@ -277,7 +288,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_A_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_A_A_UP:
@@ -291,7 +302,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_CTRL_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_A_CTRL_UP:
@@ -305,7 +316,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_DOWN;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_V_CTRL_DOWN:
@@ -318,7 +329,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_V_DOWN;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_V_V_DOWN:
@@ -331,7 +342,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_V_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_V_V_UP:
@@ -345,7 +356,7 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_V_CTRL_UP:
@@ -359,13 +370,13 @@ public:
 
                 this->state = State::CLIPBOARD;
 
-                this->event.set(1000000);
+                this->event.set(this->long_delay);
             break;
 
             case State::ENTER:
                 this->state = State::ENTER_DOWN;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::ENTER_DOWN:
@@ -378,7 +389,7 @@ public:
 
                 this->state = State::ENTER_UP;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::ENTER_UP:
@@ -394,7 +405,7 @@ public:
 
                 this->state = State::WAIT;
 
-                this->event.set(125000);
+                this->event.set(this->short_delay);
             break;
 
             case State::START:
@@ -419,8 +430,8 @@ public:
             return false;
         }
 
-        if (this->channel) {
-            this->channel->give_additional_launch_time();
+        if (this->sesprob_channel) {
+            this->sesprob_channel->give_additional_launch_time();
         }
 
         return true;
@@ -451,12 +462,13 @@ public:
                                       in_s,
                                       totalLength,
                                         CHANNELS::CHANNEL_FLAG_FIRST
-                                      | CHANNELS::CHANNEL_FLAG_LAST);
+                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
         this->format_data_requested = true;
 
-        if (this->channel) {
-            this->channel->give_additional_launch_time();
+        if (this->sesprob_channel) {
+            this->sesprob_channel->give_additional_launch_time();
         }
 
 //        if (this->state == State::CLIPBOARD) {
@@ -480,14 +492,67 @@ public:
 
         this->event.object_and_time = true;
 
-        this->event.set(125000);
+        this->event.set(this->short_delay);
 
         return false;
     }
 
+    // Returns false to prevent message to be sent to server.
+    bool process_client_cliprdr_message(InStream & chunk,
+        uint32_t length, uint32_t flags) override {
+
+        if (this->state == State::STOP) {
+            return true;
+        }
+
+        bool ret = true;
+
+        const size_t saved_chunk_offset = chunk.get_offset();
+
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) &&
+            (chunk.in_remain() >= 8 /* msgType(2) + msgFlags(2) + dataLen(4) */)) {
+            const uint16_t msgType = chunk.in_uint16_le();
+            chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+            if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                const bool use_long_format_names =
+                    (this->cliprdr_channel ?
+                     this->cliprdr_channel->use_long_format_names() :
+                     false);
+
+                RDPECLIP::FormatListPDU format_list_pdu;
+                StaticOutStream<256>    out_s;
+
+                const bool unicodetext = false;
+
+                format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+
+                const size_t totalLength = out_s.get_offset();
+
+                this->cliprdr_channel->process_client_message(
+                        totalLength,
+                          CHANNELS::CHANNEL_FLAG_FIRST
+                        | CHANNELS::CHANNEL_FLAG_LAST
+                        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                        out_s.get_data(),
+                        totalLength);
+
+                ret = false;
+            }
+        }
+
+        chunk.rewind(saved_chunk_offset);
+
+        return ret;
+    }
+
+    void set_clipboard_virtual_channel(
+            BaseVirtualChannel* channel) override {
+        this->cliprdr_channel = static_cast<ClipboardVirtualChannel*>(channel);
+    }
+
     void set_session_probe_virtual_channel(
             BaseVirtualChannel* channel) override {
-        this->channel = static_cast<SessionProbeVirtualChannel*>(channel);
+        this->sesprob_channel = static_cast<SessionProbeVirtualChannel*>(channel);
     }
 
     virtual void stop() override {
@@ -506,29 +571,96 @@ private:
         if (!this->format_data_requested) {
             this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
 
-            this->event.set(125000);
+            this->event.set(this->short_delay);
 
             return;
         }
 
         this->state = State::ENTER;
 
-        this->event.set(1000000);
+        this->event.set(this->long_delay);
     }
 
     void do_state_start() {
         REDASSERT(State::START == this->state);
 
         if (!this->drive_ready || !this->clipboard_initialized) {
+            if (this->drive_ready && this->clipboard_monitor_ready) {
+                if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+                    LOG(LOG_INFO,
+                        "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
+                }
+
+                if (this->cliprdr_channel) {
+                    this->cliprdr_channel->disable_to_client_sender();
+                }
+
+                // Client Clipboard Capabilities PDU.
+                {
+                    RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
+                        RDPECLIP::GeneralCapabilitySet::size());
+                    RDPECLIP::GeneralCapabilitySet general_cap_set(
+                        RDPECLIP::CB_CAPS_VERSION_1,
+                        RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                    StaticOutStream<1024> out_s;
+
+                    clipboard_caps_pdu.emit(out_s);
+                    general_cap_set.emit(out_s);
+
+                    const size_t totalLength = out_s.get_offset();
+
+                    InStream in_s(out_s.get_data(), totalLength);
+
+                    this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                                  in_s,
+                                                  totalLength,
+                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                  | CHANNELS::CHANNEL_FLAG_LAST
+                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                }
+
+                // Format List PDU.
+                {
+                    const bool use_long_format_names =
+                        (this->cliprdr_channel ?
+                         this->cliprdr_channel->use_long_format_names() :
+                         false);
+
+                    RDPECLIP::FormatListPDU format_list_pdu;
+                    StaticOutStream<256>    out_s;
+
+                    const bool unicodetext = false;
+
+                    format_list_pdu.emit_2(out_s, unicodetext,
+                        use_long_format_names);
+
+                    const size_t totalLength = out_s.get_offset();
+
+                    InStream in_s(out_s.get_data(), totalLength);
+
+                    this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                                  in_s,
+                                                  totalLength,
+                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                  | CHANNELS::CHANNEL_FLAG_LAST
+                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                }
+            }
+
             return;
         }
+
+        const bool use_long_format_names =
+            (this->cliprdr_channel ?
+             this->cliprdr_channel->use_long_format_names() :
+             false);
 
         RDPECLIP::FormatListPDU format_list_pdu;
         StaticOutStream<256>    out_s;
 
         const bool unicodetext = false;
 
-        format_list_pdu.emit_ex(out_s, unicodetext);
+        format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
 
         const size_t totalLength = out_s.get_offset();
 
@@ -538,11 +670,12 @@ private:
                                       in_s,
                                       totalLength,
                                         CHANNELS::CHANNEL_FLAG_FIRST
-                                      | CHANNELS::CHANNEL_FLAG_LAST);
+                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
         this->state = State::RUN;
 
-        this->event.set(125000);
+        this->event.set(this->short_delay);
     }
 };  // class SessionProbeClipboardBasedLauncher
 

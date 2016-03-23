@@ -253,6 +253,18 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
             return nullptr;
         }
 
+        bool is_known_device(uint32_t DeviceId) {
+            for (device_info_inventory_type::const_iterator iter =
+                     this->device_info_inventory.cbegin();
+                 iter != this->device_info_inventory.cend(); ++iter) {
+                if (std::get<0>(*iter) == DeviceId) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
     private:
         void remove_known_device(uint32_t DeviceId) {
             for (device_info_inventory_type::const_iterator iter =
@@ -266,6 +278,8 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                             std::get<1>(*iter).c_str(),
                             DeviceId);
                     }
+
+                    this->device_info_inventory.erase(iter);
 
                     break;
                 }
@@ -983,6 +997,9 @@ public:
                 general_capability_set.log(LOG_INFO);
             }
         }
+        else {
+            chunk.rewind(tmp_chunk.get_offset());
+        }
     }   // process_client_general_capability_set
 
     bool process_client_core_capability_response(
@@ -1432,7 +1449,8 @@ public:
 
                 rdpdr::DeviceCreateResponse device_create_response;
 
-                device_create_response.receive(chunk);
+                device_create_response.receive(chunk,
+                    device_io_response.IoStatus());
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     device_create_response.log(LOG_INFO);
                 }
@@ -1474,7 +1492,7 @@ public:
                                 "Device not found. DeviceId=%u",
                             device_io_response.DeviceId());
 
-                        REDASSERT(false);
+                        //REDASSERT(false);
                     }
                 }
             }
@@ -1580,13 +1598,13 @@ public:
                                                 "/desktop.ini",
                                                 sizeof("/desktop.ini")-1)) {
                                             if (this->param_acl) {
-                                                std::string info("file_name=\"");
+                                                std::string info("file_name='");
                                                 info += std::get<2>(*target_iter).c_str();
-                                                info += "\"";
+                                                info += "'";
 
                                                 this->param_acl->log4(
                                                     !this->param_dont_log_data_into_syslog,
-                                                    "DR_READ",
+                                                    "DRIVE_REDIRECTION_READ",
                                                     info.c_str());
                                             }
 
@@ -1652,13 +1670,13 @@ public:
                                     (FileId == std::get<1>(*target_iter))) {
                                     if (!std::get<4>(*target_iter)) {
                                         if (this->param_acl) {
-                                            std::string info("file_name=\"");
+                                            std::string info("file_name='");
                                             info += std::get<2>(*target_iter).c_str();
-                                            info += "\"";
+                                            info += "'";
 
                                             this->param_acl->log4(
                                                 !this->param_dont_log_data_into_syslog,
-                                                "DR_WRITE",
+                                                "DRIVE_REDIRECTION_WRITE",
                                                 info.c_str());
                                         }
 
@@ -2090,20 +2108,26 @@ public:
         }
 
               bool     access_ok     = true;
-        const uint32_t DesiredAccess = device_create_request.DesiredAccess();
 
-        if (!this->param_file_system_read_authorized &&
-            smb2::read_access_is_required(DesiredAccess,
-                                          /* strict_check = */false) &&
-            !(device_create_request.CreateOptions() &
-              smb2::FILE_DIRECTORY_FILE) &&
-            ::strcmp(device_create_request.Path(), "/")) {
-            access_ok = false;
-        }
-        if (!this->param_file_system_write_authorized &&
-            smb2::write_access_is_required(DesiredAccess,
-                                           /* strict_check = */false)) {
-            access_ok = false;
+        if (this->device_redirection_manager.is_known_device(
+                this->server_device_io_request.DeviceId())) {
+            // Is a File system device.
+            const uint32_t DesiredAccess =
+                device_create_request.DesiredAccess();
+
+            if (!this->param_file_system_read_authorized &&
+                smb2::read_access_is_required(DesiredAccess,
+                                              /* strict_check = */false) &&
+                !(device_create_request.CreateOptions() &
+                  smb2::FILE_DIRECTORY_FILE) &&
+                ::strcmp(device_create_request.Path(), "/")) {
+                access_ok = false;
+            }
+            if (!this->param_file_system_write_authorized &&
+                smb2::write_access_is_required(DesiredAccess,
+                                               /* strict_check = */false)) {
+                access_ok = false;
+            }
         }
 
         if (!access_ok)

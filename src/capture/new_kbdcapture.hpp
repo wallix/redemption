@@ -455,7 +455,7 @@ public:
 
     void flush() {
         if (this->kbd_stream.get_offset()) {
-            LOG(LOG_INFO, "type=\"KBD input\" data=\"%*s\"",
+            LOG(LOG_INFO, "type=\"KBD input\" data='%*s'",
                 int(this->kbd_stream.get_offset()),
                 reinterpret_cast<char const *>(this->kbd_stream.get_data()));
             this->kbd_stream.rewind();
@@ -471,8 +471,8 @@ public:
 
 
 namespace {
-    constexpr array_const_char session_log_prefix() { return cstr_array_view("data=\""); }
-    constexpr array_const_char session_log_suffix() { return cstr_array_view("\""); }
+    constexpr array_const_char session_log_prefix() { return cstr_array_view("data='"); }
+    constexpr array_const_char session_log_suffix() { return cstr_array_view("'"); }
 }
 
 class SessionLogKbd : public TextKbd<SessionLogKbd>, public gdi::CaptureProbeApi
@@ -509,7 +509,7 @@ public:
     void flush() {
         if (this->kbd_stream.get_offset()) {
             memcpy(this->kbd_stream.get_current(), session_log_suffix().data(), session_log_suffix().size() + 1);
-            this->authentifier.log4(false, "KBD input", reinterpret_cast<char const *>(this->buffer));
+            this->authentifier.log4(false, "KBD_INPUT", reinterpret_cast<char const *>(this->buffer));
             this->kbd_stream.rewind();
         }
     }

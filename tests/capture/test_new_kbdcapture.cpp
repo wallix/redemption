@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         kbd_capture.flush();
 
         BOOST_CHECK_EQUAL(auth.s.size(), 8);
-        BOOST_CHECK_EQUAL("data=\"a\"", auth.s);
+        BOOST_CHECK_EQUAL("data='a'", auth.s);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         kbd_capture.enable_kbd_input_mask(true);
 
         BOOST_CHECK_EQUAL(auth.s.size(), 8);
-        BOOST_CHECK_EQUAL("data=\"a\"", auth.s);
+        BOOST_CHECK_EQUAL("data='a'", auth.s);
         auth.s.clear();
 
         kbd_capture.kbd_input(time, input);

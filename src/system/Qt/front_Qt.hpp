@@ -100,7 +100,7 @@ private:
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
             //std::cout << "operator()  server " << (int)flags  << std::endl;
             InStream chunk(chunk_data, chunk_data_length);
-            this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, chunk_data_length, flags);
+            this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
         }
     };
 
@@ -246,20 +246,10 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) override;
 
     virtual int server_resize(int width, int height, int bpp) override;
-
-    void process_server_monitor_ready_pdu();
-
-    void send_FormatListResponsePDU();
-
-    void send_FormatDataRequestPDU();
     
     void send_buffer_to_clipboard();
     
     void process_server_clipboard_data(int flags, InStream & chunk);
-    
-    const uint32_t send_FormatDataResponsePDU(int shift, size_t data_length, uint32_t total_data_length, uint32_t flag);
-    
-    void send_FormatDataResponsePDU();
     
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
     
@@ -296,7 +286,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //-----------------------------
-    //      DRAWING FUNCTIONS
+    //       DRAW FUNCTIONS
     //-----------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override;

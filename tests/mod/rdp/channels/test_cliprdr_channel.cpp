@@ -522,3 +522,69 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
     BOOST_CHECK(end_of_file_reached || t.get_status());
 }
+
+class NullSender : public VirtualChannelDataSender {
+public:
+    virtual void operator() (uint32_t total_length, uint32_t flags,
+        const uint8_t* chunk_data, uint32_t chunk_data_length) override {}
+};
+
+BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
+{
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info,
+                    511 // verbose
+                   );
+
+    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+
+    clipboard_virtual_channel_params.authentifier              = nullptr;
+    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
+    clipboard_virtual_channel_params.verbose                   = verbose;
+
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
+
+    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+
+
+    NullSender to_client_sender;
+    NullSender to_server_sender;
+
+    ClipboardVirtualChannel clipboard_virtual_channel(
+        &to_client_sender, &to_server_sender, front,
+        clipboard_virtual_channel_params);
+
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
+
+
+    RDPECLIP::FormatListPDU format_list_pdu;
+    StaticOutStream<256>    out_s;
+
+    const bool unicodetext           = false;
+    const bool use_long_format_names = true;    // Malformation
+
+    format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+
+    const size_t totalLength = out_s.get_offset();
+
+    clipboard_virtual_channel.process_client_message(
+            totalLength,
+              CHANNELS::CHANNEL_FLAG_FIRST
+            | CHANNELS::CHANNEL_FLAG_LAST
+            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            out_s.get_data(),
+            totalLength);
+}

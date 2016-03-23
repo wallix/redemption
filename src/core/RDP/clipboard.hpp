@@ -109,7 +109,7 @@ inline static const char * get_Format_name(uint32_t FormatId) {
 // +---------------------------------------------------------------+
 
 // msgType (2 bytes): An unsigned, 16-bit integer that specifies the type of
-//  the clipboard PDU that follows the dataLen field.
+// the clipboard PDU that follows the dataLen field.
 
 // +---------------------------------+-----------------------------------------+
 // | Value                           | Meaning                                 |
@@ -710,6 +710,24 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_clear_bytes(32); // formatName(32)
     }
 
+    void emit_long(OutStream & stream, bool unicodetext) {
+        this->dataLen_ = 6; /* formatId(4) + formatName(2) */
+        CliprdrHeader::emit(stream);
+
+        // 1 CLIPRDR_LONG_FORMAT_NAMES structures.
+        stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
+        stream.out_clear_bytes(2); // formatName(2) - a single Unicode null character.
+    }
+
+    void emit_2(OutStream & stream, bool unicodetext, bool use_long_format_names) {
+        if (use_long_format_names) {
+            this->emit_long(stream, unicodetext);
+        }
+        else {
+            this->emit_ex(stream, unicodetext);
+        }
+    }
+
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
@@ -946,10 +964,79 @@ struct FileContentsResponse : CliprdrHeader {
     }
 };
 
+// 2.1.1.18 MetafileType Enumeration
 
-//2.1.1.1 RecordType Enumeration
+// The MetafileType Enumeration specifies where the metafile is stored.
 
-//The RecordType Enumeration defines the types of records that can be used in WMF metafiles.
+enum {
+    MEMORYMETAFILE = 0x0001,
+    DISKMETAFILE   = 0x0002
+};
+
+// MEMORYMETAFILE:  Metafile is stored in memory.
+
+// DISKMETAFILE:  Metafile is stored on disk.
+
+
+
+// 2.1.1.19 MetafileVersion Enumeration
+
+// The MetafileVersion Enumeration defines values that specify support for device-independent bitmaps (DIBs) in metafiles.
+
+enum {
+    METAVERSION100 = 0x0100,
+    METAVERSION300 = 0x0300
+};
+
+// METAVERSION100:  DIBs are not supported.
+
+// METAVERSION300:  DIBs are supported.
+
+
+
+// 2.2.5.2.1 Packed Metafile Payload (CLIPRDR_MFPICT)
+
+// The CLIPRDR_MFPICT structure is used to transfer a Windows metafile. The Windows metafile format is specified in [MS-WMF] section 2.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                          mappingMode                          |
+// +---------------------------------------------------------------+
+// |                             xExt                              |
+// +---------------------------------------------------------------+
+// |                             yExt                              |
+// +---------------------------------------------------------------+
+// |                     metaFileData (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// mappingMode (4 bytes): An unsigned, 32-bit integer specifying the mapping mode in which the picture is drawn.
+
+enum {
+    MM_TEXT        = 0x00000001, // Each logical unit is mapped to one device pixel. Positive x is to the right; positive y is down.
+    MM_LOMETRIC    = 0x00000002, // Each logical unit is mapped to 0.1 millimeter. Positive x is to the right; positive y is up.
+    MM_HIMETRIC    = 0x00000003, // Each logical unit is mapped to 0.01 millimeter. Positive x is to the right; positive y is up.
+    MM_LOENGLISH   = 0x00000004, // Each logical unit is mapped to 0.01 inch. Positive x is to the right; positive y is up.
+    MM_HIENGLISH   = 0x00000005, // Each logical unit is mapped to 0.001 inch. Positive x is to the right; positive y is up.
+    MM_TWIPS       = 0x00000006, // Each logical unit is mapped to 1/20 of a printer's point (1/1440 of an inch), also called a twip. Positive x is to the right; positive y is up.
+    MM_ISOTROPIC   = 0x00000007, // ogical units are mapped to arbitrary units with equally scaled axes; one unit along the x-axis is equal to one unit along the y-axis.
+    MM_ANISOTROPIC = 0x00000008  // Logical units are mapped to arbitrary units with arbitrarily scaled axes.
+};
+
+//    For MM_ISOTROPIC and MM_ANISOTROPIC modes, which can be scaled, the xExt and yExt fields contain an optional suggested size in MM_HIMETRIC units. For MM_ANISOTROPIC pictures, xExt and yExt SHOULD be zero when no suggested size is given. For MM_ISOTROPIC pictures, an aspect ratio MUST be supplied even when no suggested size is given. If a suggested size is given, the aspect ratio is implied by the size. To give an aspect ratio without implying a suggested size, the xExt and yExt fields are set to negative values whose ratio is the appropriate aspect ratio. The magnitude of the negative xExt and yExt values is ignored; only the ratio is used.
+
+//xExt (4 bytes): An unsigned, 32-bit integer that specifies the width of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+
+//yExt (4 bytes): An unsigned, 32-bit integer that specifies the height of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+
+//metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2
+
+// 2.1.1.1 RecordType Enumeration
+
+// The RecordType Enumeration defines the types of records that can be used in WMF metafiles.
 
 
 enum {
@@ -1184,9 +1271,9 @@ enum {
 // The meanings of the high-order bytes of these record type fields are specified in the respective sections that define them.
 
 // A record type is not defined for the WMF Header record, because only one can be present as the first record in the metafile.
- 
- 
- 
+
+
+
 
 struct PacketFileList {
     uint32_t cItems;

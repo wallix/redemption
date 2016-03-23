@@ -574,8 +574,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
                     this->server_access_allowed_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "certificate_check_success",
-                        "data=\"Connexion to server allowed\""
+                        "CERTIFICATE_CHECK_SUCCESS",
+                        "description='Connexion to server allowed'"
                     );
             }
         }
@@ -585,8 +585,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
                     this->server_cert_create_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_new",
-                        "data=\"New X.509 certificate created\""
+                        "SERVER_CERTIFICATE_NEW",
+                        "description='New X.509 certificate created'"
                     );
             }
         }
@@ -596,8 +596,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
                     this->server_cert_success_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_match_success",
-                        "data=\"X.509 server certificate match\""
+                        "SERVER_CERTIFICATE_MATCH_SUCCESS",
+                        "description='X.509 server certificate match'"
                     );
             }
         }
@@ -607,8 +607,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
                     this->server_cert_failure_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_match_failure",
-                        "data=\"X.509 server certificate match failure\""
+                        "SERVER_CERTIFICATE_MATCH_FAILURE",
+                        "description='X.509 server certificate match failure'"
                     );
             }
         }
@@ -619,11 +619,11 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
                 this->acl) {
                 char extra[512];
                 snprintf(extra, sizeof(extra),
-                        "data=\"X.509 server certificate internal error: '%s'\"",
+                        "description='X.509 server certificate internal error: \"%s\"'",
                         (str_error ? str_error : "")
                     );
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_error",
+                        "SERVER_CERTIFICATE_ERROR",
                         extra
                     );
             }
@@ -1078,6 +1078,9 @@ public:
             }
 
             if (this->session_probe_launcher) {
+                this->session_probe_launcher->set_clipboard_virtual_channel(
+                    &cvc);
+
                 this->session_probe_launcher->set_session_probe_virtual_channel(
                     this->session_probe_virtual_channel_p);
             }
@@ -1545,6 +1548,12 @@ private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
                                      InStream & chunk, size_t length, uint32_t flags) {
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+
+        if (this->session_probe_launcher) {
+            if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
+                return;
+            }
+        }
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
