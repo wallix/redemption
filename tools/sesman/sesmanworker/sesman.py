@@ -99,7 +99,6 @@ class Sesman():
         self.proxy_conx  = conn
         self.addr        = addr
         self.full_path   = None
-        self._license_ok = None
 
         self.engine = engine.Engine()
 
@@ -539,12 +538,6 @@ class Sesman():
 
             Logger().info(u'lang=%s' % self.language)
 
-            # TODO: Should be done by authentication methods
-            # When user is authentified check if licence tokens are available
-            Logger().info(u"Checking licence")
-            if not self.engine.get_license_status():
-                return False, TR(u'licence_blocker')
-
         except Exception, e:
             if DEBUG:
                 import traceback
@@ -832,7 +825,7 @@ class Sesman():
                     if record_warning:
                         message =  u"Warning! Your remote session may be recorded and kept in electronic format."
                         try:
-                            with open('/opt/wab/share/proxys/messages/motd.%s' % self.language) as f:
+                            with open('/var/wab/etc/proxys/messages/motd.%s' % self.language) as f:
                                 message = f.read().decode('utf-8')
                         except Exception, e:
                             pass
@@ -1116,7 +1109,7 @@ class Sesman():
 
                 _status, _error = self.engine.checkout_target(selected_target)
                 if not _status:
-                    self.send_data({u'rejected': _error})
+                    self.send_data({u'rejected': _error or TR(u"start_session_failed")})
 
             if _status:
                 kv['password'] = 'pass'
@@ -1192,7 +1185,10 @@ class Sesman():
 
                     _status, _error = self.engine.checkout_target(physical_target)
                     if not _status:
-                        try_next = True
+                        if _error is None:
+                            self.send_data({u'rejected': TR(u"start_session_failed")})
+                            Logger().info("License Error")
+                            break
                         Logger().info("Account locked on jump server, %s." % _error)
                         continue
 

@@ -1586,7 +1586,7 @@ public:
 
                                                 this->param_acl->log4(
                                                     !this->param_dont_log_data_into_syslog,
-                                                    "DR_READ",
+                                                    "DRIVE_REDIRECTION_READ",
                                                     info.c_str());
                                             }
 
@@ -1659,7 +1659,7 @@ public:
 
                                             this->param_acl->log4(
                                                 !this->param_dont_log_data_into_syslog,
-                                                "DR_WRITE",
+                                                "DRIVE_REDIRECTION_WRITE",
                                                 info.c_str());
                                         }
 

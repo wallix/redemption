@@ -6,15 +6,13 @@ from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
-    from wabengine.common.exception import LicenseLimitReached
+    from wabengine.common.exception import LicenseException
     from wabengine.common.exception import MustChangePassword
     from wabengine.common.exception import AccountLocked
     from wabengine.common.exception import SessionAlreadyStopped
     from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
         PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, \
         RDP_PATTERN_FOUND, FILESYSTEM_FULL
-    from wallixgenericnotifier import LICENCE_EXPIRED, LICENCE_PRIMARY_CX_ERROR, \
-        LICENCE_SECONDARY_CX_ERROR
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
     from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
@@ -247,7 +245,7 @@ class Engine(object):
             self.challenge = e.challenge
         except AuthenticationFailed, e:
             self.challenge = None
-        except LicenseLimitReached, e:
+        except LicenseException, e:
             self.challenge = None
         except Exception, e:
             import traceback
@@ -270,7 +268,7 @@ class Engine(object):
             self.challenge = e.challenge
         except AuthenticationFailed, e:
             self.challenge = None
-        except LicenseLimitReached, e:
+        except LicenseException, e:
             self.challenge = None
         except Exception, e:
             self.challenge = None
@@ -290,7 +288,7 @@ class Engine(object):
                 return True
         except AuthenticationFailed, e:
             self.challenge = None
-        except LicenseLimitReached, e:
+        except LicenseException, e:
             self.challenge = None
         except Exception, e:
             import traceback
@@ -350,32 +348,6 @@ class Engine(object):
                     # Logger().info(">>>%s" %traceback.format_exc(e))
                     Logger().info("target_device is not a hostname")
         return target_device, target_context
-
-    def get_license_status(self):
-        u""" Three checks : expiration, primary limits, secondary limit
-        If at least one fails, user can't connect at all to any device,
-        but all three checks are performed wether one as
-        yet failed or not to send all relevant notifications to ADMIN.
-        """
-        license_ok = True
-        try:
-            lic_status = self.wabengine.get_license_status()
-
-            if lic_status.is_expired():
-                Logger().info("LICENCE_EXPIRED")
-                Notify(self.wabengine, LICENCE_EXPIRED, u"")
-                license_ok = False
-            if lic_status.is_secondary_limit_reached():
-                Logger().info("SECONDARY LICENCE LIMIT")
-                Notify(self.wabengine, LICENCE_SECONDARY_CX_ERROR, {u'nbSecondaryConnection': lic_status.secondary[0]})
-                license_ok = False
-        except Exception, e:
-            """If calling get_license_status raise some error, user will be rejected as per invalid license"""
-            import traceback
-            Logger().info("Engine get_license_status failed: (((%s)))" % (traceback.format_exc(e)))
-            license_ok = False
-
-        return license_ok
 
     def NotifyConnectionToCriticalEquipment(self, protocol, user, source,
                                             ip_source, login, device, ip,
@@ -698,6 +670,9 @@ class Engine(object):
             except AccountLocked as m:
                 Logger().info("Engine checkout_target failed: account locked")
                 return False, "%s" % m
+            except LicenseException:
+                Logger().info("Engine checkout_target failed: License Exception")
+                return False, None
             Logger().debug("** END checkout_target")
         else:
             Logger().info("checkout_target: target already checked out")
@@ -785,6 +760,9 @@ class Engine(object):
             self.session_id = self.wabengine.start_session(
                 auth, self.get_pidhandler(pid), effective_login=effective_login,
                 **kwargs)
+        except LicenseException:
+            Logger().info("Engine start_session failed: License Exception")
+            self.session_id = None
         except Exception, e:
             import traceback
             self.session_id = None
