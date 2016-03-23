@@ -23,11 +23,14 @@
 #ifndef REDEMPTION_SYSTEM_OPENSSL_OPENSSL_HPP
 #define REDEMPTION_SYSTEM_OPENSSL_OPENSSL_HPP
 
+#include "fcntl.h"
 #include "openssl_crypto.hpp"
 #include "openssl_tls.hpp"
 
 #include "core/server_notifier_api.hpp"
 #include "core/defines.hpp"
+#include "utils/fileutils.hpp"
+#include <memory>
 
 extern "C" {
     int openssl_print_fp(const char *str, size_t len, void *fp)
