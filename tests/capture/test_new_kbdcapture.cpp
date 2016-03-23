@@ -115,7 +115,8 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
     PatternKbd kbd_capture(&auth, "$kbd:abcd", nullptr);
 
-    gdi::KbdInputApi::Keys input{{}, 1};
+    gdi::KbdInputApi::Keys input;
+    input.count = 1;
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
     for (auto c : str) {
@@ -152,7 +153,8 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
     PatternKbd kbd_capture(&auth, "$kbd:ab/cd", nullptr);
 
-    gdi::KbdInputApi::Keys input{{}, 1};
+    gdi::KbdInputApi::Keys input;
+    input.count = 1;
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;
     for (auto c : str) {

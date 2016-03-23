@@ -216,30 +216,30 @@ public:
 template<class Utf8CharFn, class NoPrintableFn>
 void filtering_kbd_input(gdi::KbdInputApi::Keys const & k, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
 {
-    constexpr struct {
-        uint32_t uchar;
-        array_const_char str;
-        // for std::sort and std::lower_bound
-        operator uint32_t () const { return this->uchar; }
-    } noprintable_table[] = {
-        {0x00000008, cstr_array_view("/<backspace>")},
-        {0x00000009, cstr_array_view("/<tab>")},
-        {0x0000000D, cstr_array_view("/<enter>")},
-        {0x0000001B, cstr_array_view("/<escape>")},
-        {0x0000007F, cstr_array_view("/<delete>")},
-        {0x00002190, cstr_array_view("/<left>")},
-        {0x00002191, cstr_array_view("/<up>")},
-        {0x00002192, cstr_array_view("/<right>")},
-        {0x00002193, cstr_array_view("/<down>")},
-        {0x00002196, cstr_array_view("/<home>")},
-        {0x00002198, cstr_array_view("/<end>")},
-    };
-    using std::begin;
-    using std::end;
-    // TODO used static_assert
-    assert(std::is_sorted(begin(noprintable_table), end(noprintable_table)));
-
     auto send_uchar = [&](uint32_t uchar) -> bool {
+        constexpr struct {
+            uint32_t uchar;
+            array_const_char str;
+            // for std::sort and std::lower_bound
+            operator uint32_t () const { return this->uchar; }
+        } noprintable_table[] = {
+            {0x00000008, cstr_array_view("/<backspace>")},
+            {0x00000009, cstr_array_view("/<tab>")},
+            {0x0000000D, cstr_array_view("/<enter>")},
+            {0x0000001B, cstr_array_view("/<escape>")},
+            {0x0000007F, cstr_array_view("/<delete>")},
+            {0x00002190, cstr_array_view("/<left>")},
+            {0x00002191, cstr_array_view("/<up>")},
+            {0x00002192, cstr_array_view("/<right>")},
+            {0x00002193, cstr_array_view("/<down>")},
+            {0x00002196, cstr_array_view("/<home>")},
+            {0x00002198, cstr_array_view("/<end>")},
+        };
+        using std::begin;
+        using std::end;
+        // TODO used static_assert
+        assert(std::is_sorted(begin(noprintable_table), end(noprintable_table)));
+
         auto p = std::lower_bound(begin(noprintable_table), end(noprintable_table), uchar);
         if (p != end(noprintable_table) && *p == uchar) {
             if (!no_printable_fn(p->str)) {
