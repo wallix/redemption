@@ -28,7 +28,7 @@
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "bitmap.hpp"
+#include "utils/bitmap.hpp"
 
 class TestCardMod : public InternalMod
 {

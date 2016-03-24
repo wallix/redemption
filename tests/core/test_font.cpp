@@ -30,7 +30,7 @@
 
 #define LOGNULL
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "font.hpp"
 
 #ifndef FIXTURES_PATH

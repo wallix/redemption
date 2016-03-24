@@ -30,7 +30,7 @@
 #include "theme.hpp"
 #include "group_box.hpp"
 #include "flat_form.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "flat_button.hpp"
 
 class FlatWait : public WidgetParent

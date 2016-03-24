@@ -27,7 +27,7 @@
 #include "RDP/nla/nla.hpp"
 #include "RDP/x224.hpp"
 
-#include "strutils.hpp"
+#include "utils/strutils.hpp"
 
 struct RdpNego
 {

@@ -30,7 +30,7 @@
 
 #include "config.hpp"
 #include "mainloop.hpp"
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "listen.hpp"
 #include "session_server.hpp"
 #include "parse_ip_conntrack.hpp"

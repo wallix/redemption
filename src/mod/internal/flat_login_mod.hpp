@@ -27,7 +27,7 @@
 #include "widget2/flat_login.hpp"
 #include "internal_mod.hpp"
 #include "widget2/notify_api.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "copy_paste.hpp"
 #include "config_access.hpp"
 #include "widget2/language_button.hpp"

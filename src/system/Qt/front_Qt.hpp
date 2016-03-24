@@ -64,7 +64,7 @@
 #include "front_api.hpp"
 #include "channel_list.hpp"
 #include "mod_api.hpp"
-#include "bitmap.hpp"
+#include "utils/bitmap.hpp"
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"

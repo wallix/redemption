@@ -20,7 +20,7 @@
 #ifndef REDEMPTION_UTILS_DARRAY_HPP
 #define REDEMPTION_UTILS_DARRAY_HPP
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <algorithm>
 #include <memory>

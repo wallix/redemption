@@ -29,8 +29,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "bitmap.hpp"
-#include "drawable.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/drawable.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {

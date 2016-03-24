@@ -27,7 +27,7 @@
 #include <cassert>
 
 #include "transport/transport.hpp"
-#include "bitfu.hpp"
+#include "utils/bitfu.hpp"
 
 namespace detail {
 

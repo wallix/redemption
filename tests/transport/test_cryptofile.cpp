@@ -40,7 +40,7 @@
 #include <new>
 
 #include <snappy-c.h>
-#include "fdbuf.hpp"
+#include "utils/fdbuf.hpp"
 
 #include "transport/cryptofile.hpp"
 

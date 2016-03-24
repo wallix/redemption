@@ -41,7 +41,7 @@
 #include "rdp/rdp.hpp"
 #include "../front/fake_front.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "netutils.hpp"
+//#include "utils/netutils.hpp"
 //#include "socket_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)

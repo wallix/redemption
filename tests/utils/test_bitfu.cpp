@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "bitfu.hpp"
+#include "utils/bitfu.hpp"
 
 //#include "rdtsc.hpp"
 //long long ustime() {

@@ -26,11 +26,11 @@
 #include "transport/transport.hpp"
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
-#include "stream.hpp"
-#include "cast.hpp"
+#include "utils/stream.hpp"
+#include "utils/cast.hpp"
 
-#include "array_view.hpp"
-#include "make_unique.hpp"
+#include "utils/array_view.hpp"
+#include "utils/make_unique.hpp"
 
 #include <algorithm>
 #include <memory>

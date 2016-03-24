@@ -23,11 +23,11 @@
 
 #include <cinttypes>
 
-#include "cast.hpp"
+#include "utils/cast.hpp"
 #include "error.hpp"
-#include "noncopyable.hpp"
-#include "stream.hpp"
-#include "utf.hpp"
+#include "utils/noncopyable.hpp"
+#include "utils/stream.hpp"
+#include "utils/utf.hpp"
 
 namespace rdpdr {
 

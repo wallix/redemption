@@ -45,12 +45,12 @@
 #include <type_traits> // aligned_storage
 
 #include "error.h"
-#include "log.hpp"
-#include "bitfu.hpp"
-#include "colors.hpp"
-#include "stream.hpp"
+#include "utils/log.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/colors.hpp"
+#include "utils/stream.hpp"
 #include "system/ssl_calls.hpp"
-#include "rect.hpp"
+#include "utils/rect.hpp"
 #include "bitmap_data_allocator.hpp"
 
 using std::size_t;

@@ -28,12 +28,12 @@
 #include <unistd.h>
 #include <memory>
 #include "openssl_crypto.hpp"
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "transport/detail/meta_opener.hpp"
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
 #include "transport/cryptofile.hpp"
-#include "urandom_read.hpp"
+#include "utils/urandom_read.hpp"
 
 char chex_to_int(char c, int & err) {
     return

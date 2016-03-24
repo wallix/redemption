@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_UTILS_THEME_HPP
 #define REDEMPTION_UTILS_THEME_HPP
 
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "cfgloader.hpp"
 #include "parser.hpp"
 

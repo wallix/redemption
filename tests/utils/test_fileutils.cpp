@@ -26,9 +26,9 @@
 
 // #define LOGPRINT
 #define LOGNULL
-#include "log.hpp"
+#include "utils/log.hpp"
 
-#include "fileutils.hpp"
+#include "utils/fileutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBasename)
 {

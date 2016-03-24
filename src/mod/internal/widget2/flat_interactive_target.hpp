@@ -30,7 +30,7 @@
 #include "widget2_rect.hpp"
 #include "composite.hpp"
 #include "flat_button.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "theme.hpp"
 
 

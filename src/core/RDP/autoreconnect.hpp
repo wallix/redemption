@@ -23,8 +23,8 @@
 
 #include <cinttypes>
 
-#include "stream.hpp"
-#include "log.hpp"
+#include "utils/stream.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
 
 namespace RDP {

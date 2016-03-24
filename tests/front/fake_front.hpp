@@ -20,7 +20,7 @@
    Fake Front class for Unit Testing
 */
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "front_api.hpp"
 #include "channel_list.hpp"
 #include "client_info.hpp"

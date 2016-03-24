@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CORE_SMB2_MESSAGESYNTAX_HPP_
 #define _REDEMPTION_CORE_SMB2_MESSAGESYNTAX_HPP_
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 namespace smb2 {
 

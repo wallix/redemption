@@ -37,17 +37,17 @@
 #include <array>
 
 #include "server.hpp"
-#include "colors.hpp"
-#include "stream.hpp"
+#include "utils/colors.hpp"
+#include "utils/stream.hpp"
 #include "front.hpp"
 #include "system/ssl_calls.hpp"
-#include "rect.hpp"
-#include "netutils.hpp"
+#include "utils/rect.hpp"
+#include "utils/netutils.hpp"
 
 #include "config.hpp"
 #include "wait_obj.hpp"
 #include "transport/transport.hpp"
-#include "bitmap.hpp"
+#include "utils/bitmap.hpp"
 
 #include "authentifier.hpp"
 

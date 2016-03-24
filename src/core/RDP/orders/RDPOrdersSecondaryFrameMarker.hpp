@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "RDPOrdersCommon.hpp"
 
 namespace RDP {

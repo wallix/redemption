@@ -25,7 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_FRAMEWORKACKNOWLEDGE_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.1.3 TS_FRAME_ACKNOWLEDGE_CAPABILITYSET
 //===========================================

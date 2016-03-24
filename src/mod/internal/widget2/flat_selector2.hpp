@@ -29,13 +29,13 @@
 #include "edit.hpp"
 #include "number_edit.hpp"
 #include "image.hpp"
-#include "region.hpp"
-#include "difftimeval.hpp"
+#include "utils/region.hpp"
+#include "utils/difftimeval.hpp"
 #include "labelgrid.hpp"
 
 
 #include "flat_button.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "theme.hpp"
 
 class WidgetSelectorFlat2 : public WidgetParent

@@ -31,10 +31,10 @@
 #define LOGNULL
 
 #include "font.hpp"
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "internal/widget2/flat_interactive_target.hpp"
 #include "internal/widget2/screen.hpp"
-#include "png.hpp"
+#include "utils/png.hpp"
 #include "system/ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"

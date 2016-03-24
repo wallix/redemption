@@ -22,9 +22,9 @@
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
 
 #include "system/ssl_calls.hpp"
-#include "genrandom.hpp"
-#include "difftimeval.hpp"
-#include "utf.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/utf.hpp"
 
 #include "RDP/nla/ntlm/ntlm_message.hpp"
 #include "RDP/nla/ntlm/ntlm_message_negotiate.hpp"

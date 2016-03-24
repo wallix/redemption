@@ -25,7 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_SURFACECOMMANDS_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.7.2.9 Surface Commands Capability Set (TS_SURFCMDS_CAPABILITYSET)
 //======================================================================

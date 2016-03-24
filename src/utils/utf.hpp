@@ -29,7 +29,7 @@
 #include <stdlib.h>
 // #include <wctype.h>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4

@@ -28,12 +28,12 @@
 
 #include <cinttypes>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "defines.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "stream.hpp"
-#include "fileutils.hpp"
+#include "utils/stream.hpp"
+#include "utils/fileutils.hpp"
 
 #include "RDP/protocol.hpp"
 

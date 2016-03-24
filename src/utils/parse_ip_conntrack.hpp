@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_UTILS_PARSE_IP_CONNTRACK_HPP
 #define REDEMPTION_UTILS_PARSE_IP_CONNTRACK_HPP
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "regex.hpp"
 
 #include <unistd.h>

@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 #include <type_traits>
 
 struct Copyable {

@@ -26,8 +26,8 @@
 #include "system/openssl.hpp"
 #include "defines.hpp"
 #include "transport/transport.hpp"
-#include "netutils.hpp"
-#include "fileutils.hpp"
+#include "utils/netutils.hpp"
+#include "utils/fileutils.hpp"
 
 #include <unistd.h>
 #include <fcntl.h>

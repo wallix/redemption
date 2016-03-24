@@ -23,7 +23,7 @@
 #ifndef _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
 #define _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include <string.h>
 
 

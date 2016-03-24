@@ -22,7 +22,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCROLLBAR_HPP_)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_SCROLLBAR_HPP_
 #include "widget.hpp"
-#include "region.hpp"
+#include "utils/region.hpp"
 
 class WidgetFrame : public Widget2 {
 public:

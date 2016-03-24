@@ -26,7 +26,7 @@
 #define _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
 
 #include "transport/transport.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "wrm_label.hpp"
 
 #include <memory>

@@ -26,7 +26,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "redirection_info.hpp"
+#include "utils/redirection_info.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRedirectionInfo)
 {

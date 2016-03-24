@@ -22,7 +22,7 @@
 #define _REDEMPTION_CAPTURE_CHUNKTOFILE_HPP_
 
 #include "RDPChunkedDevice.hpp"
-#include "compression_transport_wrapper.hpp"
+#include "utils/compression_transport_wrapper.hpp"
 #include "config.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"

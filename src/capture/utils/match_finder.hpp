@@ -24,7 +24,7 @@
 
 #include "auth_api.hpp"
 #include "regex.hpp"
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <memory>
 #include <cstring>

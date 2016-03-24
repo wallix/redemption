@@ -28,7 +28,7 @@
 
 #define LOGPRINT
 
-#include "parse.hpp"
+#include "utils/parse.hpp"
 
 BOOST_AUTO_TEST_CASE(TestParse)
 {

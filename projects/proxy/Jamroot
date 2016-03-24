@@ -250,7 +250,7 @@ project redemption
     : requirements
     <include>$(SRCDIR)
     <include>$(SRCDIR)/system/linux
-    <include>$(SRCDIR)/utils
+    #<include>$(SRCDIR)/utils
     <include>$(SRCDIR)/core
     <include>$(SRCDIR)/configs/autogen
     <include>$(SRCDIR)/configs/variant

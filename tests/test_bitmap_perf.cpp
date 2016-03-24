@@ -28,8 +28,8 @@
 
 #define LOGNULL
 
-#include "bitmap.hpp"
-#include "difftimeval.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/difftimeval.hpp"
 #include "rdtsc.hpp"
 
 #include <cinttypes>

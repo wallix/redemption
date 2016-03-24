@@ -29,7 +29,7 @@
 
 #include "channel_list.hpp"
 #include "client_info.hpp"
-#include "make_unique.hpp"
+#include "utils/make_unique.hpp"
 #include "RDP/clipboard.hpp"
 #include "transport/test_transport.hpp"
 #include "virtual_channel_data_sender.hpp"

@@ -27,7 +27,7 @@
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/dynarray_buf.hpp"
 #include "transport/buffer/check_buf.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 #include <new>
 #include <memory>

@@ -29,8 +29,8 @@
 
 #include "channel_list.hpp"
 #include "client_info.hpp"
-#include "make_unique.hpp"
-#include "stream.hpp"
+#include "utils/make_unique.hpp"
+#include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
 #include "virtual_channel_data_sender.hpp"
 #include "rdp/channels/rdpdr_channel.hpp"

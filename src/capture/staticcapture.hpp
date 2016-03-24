@@ -23,7 +23,7 @@
 #define _REDEMPTION_CAPTURE_STATICCAPTURE_HPP_
 
 #include "image_capture.hpp"
-#include "difftimeval.hpp"
+#include "utils/difftimeval.hpp"
 #include "config.hpp"
 #include "transport/sequence_generator.hpp"
 #include "CaptureDevice.hpp"

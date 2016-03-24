@@ -122,8 +122,8 @@
 
 #include "transport/transport.hpp"
 
-#include "finally.hpp"
-#include "stream.hpp"
+#include "utils/finally.hpp"
+#include "utils/stream.hpp"
 
 struct RDPSerializer : public RDPGraphicDevice
 {

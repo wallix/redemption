@@ -28,7 +28,7 @@
 #include <array>
 #include <cstring>
 
-#include "get_printable_password.hpp"
+#include "utils/get_printable_password.hpp"
 #include "RDP/logon.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/caches/glyphcache.hpp"

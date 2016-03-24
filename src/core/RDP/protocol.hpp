@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
 #define _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
 
-#include "stream.hpp"
-#include "colors.hpp"
+#include "utils/stream.hpp"
+#include "utils/colors.hpp"
 #include "capabilities/common.hpp"
 #include <cassert>
 

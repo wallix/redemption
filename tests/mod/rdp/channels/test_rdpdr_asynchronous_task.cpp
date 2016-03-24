@@ -27,10 +27,10 @@
 //#define LOGNULL
 #define LOGPRINT
 
-#include "fdbuf.hpp"
+#include "utils/fdbuf.hpp"
 #include "transport/in_file_transport.hpp"
-#include "log.hpp"
-#include "make_unique.hpp"
+#include "utils/log.hpp"
+#include "utils/make_unique.hpp"
 #include "rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "utils/socket_transport_utility.hpp"
 #include "transport/test_transport.hpp"

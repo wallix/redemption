@@ -23,11 +23,11 @@
 
 #include <vector>
 
-#include "cast.hpp"
-#include "log.hpp"
+#include "utils/cast.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
-#include "noncopyable.hpp"
-#include "stream.hpp"
+#include "utils/noncopyable.hpp"
+#include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 
 namespace RDP {

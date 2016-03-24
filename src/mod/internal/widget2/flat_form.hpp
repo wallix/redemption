@@ -31,7 +31,7 @@
 #include "password.hpp"
 #include "theme.hpp"
 #include "group_box.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "regex.hpp"
 
 class FlatForm : public WidgetParent

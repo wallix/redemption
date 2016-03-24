@@ -32,8 +32,8 @@
 
 #include <stdio.h>
 
-#include "cast.hpp"
-#include "utf.hpp"
+#include "utils/cast.hpp"
+#include "utils/utf.hpp"
 
 // BOOST_AUTO_TEST_CASE(TestUTF32isValid)
 // {

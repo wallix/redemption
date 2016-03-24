@@ -27,7 +27,7 @@
 #include <cinttypes>
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "error.hpp"
 
 // 2.2.7.1.4.2 Revision 2 (TS_BITMAPCACHE_CAPABILITYSET_REV2)

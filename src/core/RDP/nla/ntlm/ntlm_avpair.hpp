@@ -20,8 +20,8 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMAVPAIR_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMAVPAIR_HPP_
 
-#include "log.hpp"
-#include "stream.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.2.1   AV_PAIR
 // ==================================

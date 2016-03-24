@@ -31,7 +31,7 @@
 //#define LOGPRINT
 
 #include "check_sig.hpp"
-#include "png.hpp"
+#include "utils/png.hpp"
 #include "RDP/RDPDrawable.hpp"
 
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)

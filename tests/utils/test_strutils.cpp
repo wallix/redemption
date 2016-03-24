@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "strutils.hpp"
+#include "utils/strutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
 {

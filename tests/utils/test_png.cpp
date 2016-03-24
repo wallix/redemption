@@ -30,7 +30,7 @@
 
 #define LOGNULL
 
-#include "png.hpp"
+#include "utils/png.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
 {

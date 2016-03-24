@@ -26,11 +26,11 @@
 
 #include <stdint.h>
 
-#include "cast.hpp"
-#include "log.hpp"
+#include "utils/cast.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
-#include "stream.hpp"
-#include "get_printable_password.hpp"
+#include "utils/stream.hpp"
+#include "utils/get_printable_password.hpp"
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================

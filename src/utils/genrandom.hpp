@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 class Random
 {

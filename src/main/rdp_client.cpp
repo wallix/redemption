@@ -24,7 +24,7 @@
 #include <string>
 
 #define LOGPRINT
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include "front_api.hpp"
 //#include "RDP/x224.hpp"
@@ -35,10 +35,10 @@
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "wait_obj.hpp"
 #include "mod_api.hpp"
-#include "redirection_info.hpp"
+#include "utils/redirection_info.hpp"
 #include "channel_list.hpp"
 #include "rdp/rdp_params.hpp"
-#include "genrandom.hpp"
+#include "utils/genrandom.hpp"
 #include "rdp/rdp.hpp"
 #include "program_options/program_options.hpp"
 
