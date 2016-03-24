@@ -85,6 +85,92 @@ BOOST_AUTO_TEST_CASE(TestDeviceCreateRequest2)
     BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
+BOOST_AUTO_TEST_CASE(TestDeviceCreateResponse1)
+{
+    const char in_data[] =
+            "\x00\x00\x00\x00\x00"                                             // .....
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::DeviceCreateResponse device_create_response;
+
+    uint32_t IoStatus = 0x00000000;
+
+    device_create_response.receive(in_stream, IoStatus);
+
+    //device_create_request.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    device_create_response.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(),
+                      in_stream.get_offset() +
+                      1 /* Information(1) is ignored */);
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestDeviceCreateResponse2)
+{
+    const char in_data[] =
+            "\x00\x00\x00\x00"                                                 // ....
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::DeviceCreateResponse device_create_response;
+
+    uint32_t IoStatus = 0x00000000;
+
+    device_create_response.receive(in_stream, IoStatus);
+
+    //device_create_request.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    device_create_response.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(),
+                      in_stream.get_offset() +
+                      1 /* Information(1) is ignored */);
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestDeviceCreateResponse3)
+{
+    const char in_data[] =
+            "\x00\x00\x00\x00\x01"                                             // .....
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    rdpdr::DeviceCreateResponse device_create_response;
+
+    uint32_t IoStatus = 0xC0000022;
+
+    device_create_response.receive(in_stream, IoStatus);
+
+    //device_create_request.log(LOG_INFO);
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    device_create_response.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+
 BOOST_AUTO_TEST_CASE(ClientNameRequest1)
 {
     const char in_data[] =
