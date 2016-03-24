@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "src/core/RDP/channels/rdpdr.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDeviceCreateRequest1)
 {

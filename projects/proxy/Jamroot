@@ -17,7 +17,6 @@ path-constant TOP : . ;
 constant SRCDIR : ../../src ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
-constant TOOLSDIR : ../../tools ;
 
 
 # Returns environment value if it exists or default otherwise.
@@ -42,7 +41,7 @@ constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) {
 constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
 
 
-constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : $(TESTDIR)/fixtures ] ;
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
@@ -303,9 +302,6 @@ project redemption
 
     <define>PUBLIC
 
-    <define>QT_NO_KEYWORDS
-    <define>QT_NO_DEBUG
-
    : default-build release
 
 ;
@@ -357,7 +353,7 @@ actions gen_redcryptofile {
 explicit pycryptofile redcryptofile.so ;
 
 lib pycryptofile :
-        $(TOOLSDIR)/tools/redcryptofile/pycrypto.cpp
+        tools/redcryptofile/pycrypto.cpp
     :
         <define>REDPYTHON_BINDING
         <include>$(PYTHON_INCLUDE)

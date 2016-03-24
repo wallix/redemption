@@ -784,7 +784,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
 
     CryptoContext cctx(rnd, ini);
 
-    const char * file = "tests/fixtures/encrypted_video/"
+    const char * file = FIXTURES_PATH "/encrypted_video/"
         "x@10.10.43.13,qaadministrateur@win78,20131211-085926,wab2-4-0-0.yourdomain,5423.rdptrc";
 
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher

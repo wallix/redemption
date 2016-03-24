@@ -3993,17 +3993,17 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     Bitmap::openfile_t res;
 
     // const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
-    const char * filename = "tests/fixtures/xrdp24b.bmp";
+    const char * filename = FIXTURES_PATH "/xrdp24b.bmp";
     res = bmp.check_file_type(filename);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_BMP);
 
     // const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
-    const char * filename2 = "tests/fixtures/xrdp24b.jpg";
+    const char * filename2 = FIXTURES_PATH "/xrdp24b.jpg";
     res = bmp.check_file_type(filename2);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
     // const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
-    const char * filename3 = "tests/fixtures/xrdp24b.png";
+    const char * filename3 = FIXTURES_PATH "/xrdp24b.png";
     res = bmp.check_file_type(filename3);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_PNG);
 
@@ -4011,7 +4011,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
     // res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
-    res = bmp.check_file_type("tests/fixtures/cursor1.cur");
+    res = bmp.check_file_type(FIXTURES_PATH "/cursor1.cur");
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
 
@@ -4245,7 +4245,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
     BGRPalette palette332;
     init_palette332(palette332);
 
-    const char * filename = "tests/fixtures/color_image_160x120.png";
+    const char * filename = FIXTURES_PATH "/color_image_160x120.png";
 
     Bitmap bmp(filename);
 
@@ -4261,7 +4261,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
     BGRPalette palette332;
     init_palette332(palette332);
 
-    const char * filename = "tests/fixtures/color_image_40x30.png";
+    const char * filename = FIXTURES_PATH "/color_image_40x30.png";
 
     Bitmap bmp(filename);
 
@@ -4277,7 +4277,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
     BGRPalette palette332;
     init_palette332(palette332);
 
-    const char * filename = "tests/fixtures/red_box.png";
+    const char * filename = FIXTURES_PATH "/red_box.png";
 
     Bitmap bmp(filename);
 
@@ -4293,7 +4293,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
     BGRPalette palette332;
     init_palette332(palette332);
 
-    const char * filename = "tests/fixtures/wablogoblue_220x76.png";
+    const char * filename = FIXTURES_PATH "/wablogoblue_220x76.png";
 
     Bitmap bmp(filename);
 
@@ -4309,7 +4309,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
     const BGRPalette & palette332 = BGRPalette::classic_332();
 
-    const char * filename = "tests/fixtures/red_box_20x20.png";
+    const char * filename = FIXTURES_PATH "/red_box_20x20.png";
 
     Bitmap bmp(filename);
 

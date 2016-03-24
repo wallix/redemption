@@ -24,12 +24,11 @@
 #define BOOST_TEST_MODULE TestFlatLoginMod
 #include <boost/test/auto_unit_test.hpp>
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
 #undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
+#define SHARE_PATH FIXTURES_PATH
 
-#define LOGNULL
+//#define LOGNULL
+#define LOGPRINT
 
 #include "internal/flat_login_mod.hpp"
 #include "../../front/fake_front.hpp"

@@ -225,9 +225,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
                 "toto@10.10.43.13,Administrateur@QA@cible,"
                 "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
             "--hash-path\0"
-                "tests/fixtures/verifier/hash\0"
+                FIXTURES_PATH "/verifier/hash\0"
             "--mwrm-path\0"
-                "tests/fixtures/verifier/recorded\0"
+                FIXTURES_PATH "/verifier/recorded\0"
             "--verbose\0"
                 "10\0";
         {
@@ -281,9 +281,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
                 "toto@10.10.43.13,Administrateur@QA@cible"
                 ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
             "--hash-path\0"
-                "tests/fixtures/verifier/hash/\0"
+                FIXTURES_PATH "/verifier/hash/\0"
             "--mwrm-path\0"
-                "tests/fixtures/verifier/recorded/\0"
+                FIXTURES_PATH "/verifier/recorded/\0"
             "--verbose\0"
                 "10\0";
         {
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
         char oneargv[] =
             "decrypter.py\0"
             "-i\0"
-                "tests/fixtures/verifier/recorded/"
+                FIXTURES_PATH "/verifier/recorded/"
                 "toto@10.10.43.13,Administrateur@QA@cible,"
                 "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
             "-o\0"
@@ -386,7 +386,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
         char oneargv[] =
             "decrypter.py\0"
             "-i\0"
-                "tests/fixtures/verifier/recorded/"
+                FIXTURES_PATH "/verifier/recorded/"
                  "toto@10.10.43.13,Administrateur@QA@cible"
                 ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
            "-o\0"
