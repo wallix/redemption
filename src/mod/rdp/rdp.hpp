@@ -352,6 +352,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
+    const ClientTimeZone client_time_zone;
     Random & gen;
     const uint32_t verbose;
     const uint32_t cache_verbose;
@@ -657,6 +658,7 @@ public:
         , console_session(info.console_session)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
+        , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
@@ -6250,6 +6252,12 @@ public:
                              , this->performanceFlags
                              , this->clientAddr
                              );
+
+LOG(LOG_INFO, "mod_rdp - ClientTimeZone avant");
+hexdump_c((const char *)&infoPacket.extendedInfoPacket.clientTimeZone, sizeof(infoPacket.extendedInfoPacket.clientTimeZone));
+        infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
+LOG(LOG_INFO, "mod_rdp - ClientTimeZone après");
+hexdump_c((const char *)&infoPacket.extendedInfoPacket.clientTimeZone, sizeof(infoPacket.extendedInfoPacket.clientTimeZone));
 
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,

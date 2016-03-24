@@ -1263,7 +1263,8 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-                        GCC::UserData::CSMonitor cs_monitor;
+                        GCC::UserData::CSMonitor & cs_monitor =
+                            this->client_info.client_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
