@@ -1058,7 +1058,7 @@ using qt : /usr ; #4
 #        <cxxflags>-fPIC
 #    ;
 
-obj front_Qt.o : src/system/Qt/front_Qt.cppclient_rdp_JS.js
+obj front_Qt.o : src/system/Qt/front_Qt.cpp
     :
 	<include>/usr/include/qt4                   #4
 	#<include>/usr/include/x86_64-linux-gnu/qt5  #5
