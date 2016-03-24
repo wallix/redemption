@@ -53,10 +53,8 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     timeval const time = {0, 0};
     SessionLogKbd kbd_capture(auth);
 
-    gdi::KbdInputApi::Keys input{{{'a', 0}}, 1};
-
     {
-        kbd_capture.kbd_input(time, input);
+        kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
         BOOST_CHECK_EQUAL(auth.s.size(), 8);
@@ -67,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     auth.s.clear();
 
     {
-        kbd_capture.kbd_input(time, input);
+        kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
         // prob is not enabled
@@ -78,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     auth.s.clear();
 
     {
-        kbd_capture.kbd_input(time, input);
+        kbd_capture.kbd_input(time, 'a');
 
         BOOST_CHECK_EQUAL(auth.s.size(), 0);
 
@@ -88,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         BOOST_CHECK_EQUAL("data='a'", auth.s);
         auth.s.clear();
 
-        kbd_capture.kbd_input(time, input);
+        kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
         BOOST_CHECK_EQUAL(auth.s.size(), 0);
@@ -115,13 +113,10 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
     PatternKbd kbd_capture(&auth, "$kbd:abcd", nullptr);
 
-    gdi::KbdInputApi::Keys input;
-    input.count = 1;
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
     for (auto c : str) {
-        input[0] = c;
-        if (!kbd_capture.kbd_input({0, 0}, input)) {
+        if (!kbd_capture.kbd_input({0, 0}, c)) {
             ++pattern_count;
         }
     }
@@ -153,13 +148,10 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
     PatternKbd kbd_capture(&auth, "$kbd:ab/cd", nullptr);
 
-    gdi::KbdInputApi::Keys input;
-    input.count = 1;
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;
     for (auto c : str) {
-        input[0] = c;
-        if (!kbd_capture.kbd_input({0, 0}, input)) {
+        if (!kbd_capture.kbd_input({0, 0}, c)) {
             ++pattern_count;
         }
     }

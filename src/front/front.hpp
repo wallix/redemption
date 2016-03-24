@@ -4330,14 +4330,14 @@ private:
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
-        bool send_to_mod = true;
-
-        if (  this->capture
-            && (this->capture_state == CAPTURE_STATE_STARTED)
-            && decoded_keys.count) {
-            send_to_mod = this->capture->kbd_input(tvtime(),
-                {{{decoded_keys.uchars[0], decoded_keys.uchars[1]}}, decoded_keys.count});
-        }
+        bool const send_to_mod = this->capture && this->capture_state == CAPTURE_STATE_STARTED
+        ? (  0 == decoded_keys.count
+         || (1 == decoded_keys.count
+            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[0]))
+         || (2 == decoded_keys.count
+            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[0])
+            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[1]))
+        ) : true;
 
         if (this->up_and_running) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {

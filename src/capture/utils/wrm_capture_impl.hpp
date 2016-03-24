@@ -198,8 +198,9 @@ private:
     }
 
 private:
-    bool kbd_input(const timeval& now, Keys const & k) override {
-        return this->graphic_to_file.kbd_input(now, {{{'*', '*'}}, k.count});
+    // shadow text
+    bool kbd_input(const timeval& now, uint32_t) override {
+        return this->graphic_to_file.kbd_input(now, '*');
     }
 };
 

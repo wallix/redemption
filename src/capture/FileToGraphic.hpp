@@ -689,14 +689,13 @@ public:
                     auto const input_data = this->stream.get_current();
                     auto const input_len = this->stream.in_remain();
                     this->stream.in_skip_bytes(input_len);
-                    gdi::KbdInputApi::Keys keys;
-                    keys.count = 1;
                     for (size_t i = 0; i < this->nbconsumers; i++) {
                         if (this->consumers[i].kbd_input_ptr) {
                             InStream input(input_data, input_len);
                             while (input.in_remain()) {
-                                keys.fisrt() = input.in_uint32_le();
-                                this->consumers[i].kbd_input_ptr->kbd_input(this->record_now, keys);
+                                this->consumers[i].kbd_input_ptr->kbd_input(
+                                    this->record_now, input.in_uint32_le()
+                                );
                             }
                         }
                     }

@@ -183,14 +183,10 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    bool kbd_input(const timeval & now, Keys const & k) override {
-        if (k.count >= 1 && keyboard_buffer_32.has_room(sizeof(uint32_t))) {
-            keyboard_buffer_32.out_uint32_le(k.fisrt());
+    bool kbd_input(const timeval & now, uint32_t uchar) override {
+        if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
+            keyboard_buffer_32.out_uint32_le(uchar);
         }
-        if (k.count == 2 && keyboard_buffer_32.has_room(sizeof(uint32_t))) {
-            keyboard_buffer_32.out_uint32_le(k.second());
-        }
-
         return true;
     }
 

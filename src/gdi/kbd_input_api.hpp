@@ -23,9 +23,8 @@
 
 #include <sys/time.h> // timeval
 
-#include <array>
-
 #include "utils/noncopyable.hpp"
+
 
 namespace gdi {
 
@@ -33,21 +32,7 @@ struct KbdInputApi : private noncopyable
 {
     virtual ~KbdInputApi() = default;
 
-    struct Keys
-    {
-        std::array<uint32_t, 2> uchar;
-        unsigned count;
-
-        uint32_t fisrt() const noexcept { return this->uchar.front(); }
-        uint32_t second() const noexcept { return this->uchar.back(); }
-        uint32_t & fisrt() noexcept { return this->uchar.front(); }
-        uint32_t & second() noexcept { return this->uchar.back(); }
-
-        uint32_t operator[](unsigned i) const noexcept { return this->uchar[i]; }
-        uint32_t & operator[](unsigned i) noexcept { return this->uchar[i]; }
-    };
-
-    virtual bool kbd_input(timeval const & now, Keys const & k) = 0;
+    virtual bool kbd_input(timeval const & now, uint32_t uchar) = 0;
     virtual void enable_kbd_input_mask(bool enable) = 0;
 };
 
