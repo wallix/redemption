@@ -31,12 +31,12 @@ rule objjs ( name : extra-sources * : requirements * )
 
 actions objjs
 {
-    em++ -c $(CXXFLAGS) $(2) -o $(1) -s EXPORTED_FUNCTIONS="['_run_main']" #--shell-file templates/penta_template.html
+    em++ -c $(CXXFLAGS) -I$(INCLUDES) $(2) -o $(1) 
 }
 
 
-type.register JS : js ;
-generators.register-composing emscripten.exejs : CPP OBJJS : JS ;
+type.register EXEJS : js ;
+generators.register-composing emscripten.exejs : CPP OBJJS : EXEJS ;
 flags emscripten.exejs INCLUDES <include> ;
 flags emscripten.exejs CXXFLAGS <cxxflags> ;
 
@@ -47,7 +47,7 @@ rule exejs ( name : extra-sources * : requirements * )
 
 actions exejs
 {
-    em++ $(CXXFLAGS) $(2) -o `perl -e '$f = @ARGV[0]; $f =~ s/js$/html/; print $f;' $(1)` -s EXPORTED_FUNCTIONS="['_run_main']" #--shell-file templates/penta_template.html
+    em++ $(CXXFLAGS) -I$(INCLUDES) $(2) -o `perl -e '$f = @ARGV[0]; $f =~ s/js$/html/; print $f;' $(1)` 
 }
 
 

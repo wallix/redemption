@@ -277,12 +277,10 @@ project redemption
 
     <variant>debug:<define>REDASSERT_AS_ASSERT
     <variant>debug:<cxxflags>-g
-    
-    #<cxxflags>-o  #emscripten
-    #<cxxflags>client_rdp_JS.html #emscripten
+
     <cxxflags>-Wall #emscripten
     <cxxflags>-O2 #emscripten
-    
+    #<cxxflags>-obin/gcc-4.9.2/release/client_rdp_JS.html #emscripten
     <cxxflags>-std=c++11
 
 
@@ -1060,7 +1058,7 @@ using qt : /usr ; #4
 #        <cxxflags>-fPIC
 #    ;
 
-obj front_Qt.o : src/system/Qt/front_Qt.cpp
+obj front_Qt.o : src/system/Qt/front_Qt.cppclient_rdp_JS.js
     :
 	<include>/usr/include/qt4                   #4
 	#<include>/usr/include/x86_64-linux-gnu/qt5  #5
@@ -1099,10 +1097,12 @@ exe client_rdp_Qt :
 
 
 
+if ! [ os.environ NO_MAKE_JS ]
+{
 
 using emscripten ; 
 
-explicit test_rdp_client_test_card_JS.bc bitmap_data_allocator.bc client_rdp_JS.js ; 
+explicit client_rdp_JS.js ; 
 
 install client_rdp_JS
     : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
@@ -1113,7 +1113,7 @@ objjs test_rdp_client_test_card_JS.bc : tests/client_mods/test_rdp_client_test_c
 
 objjs bitmap_data_allocator.bc : src/utils/bitmap_data_allocator.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
 
-js client_rdp_JS.js : 
+exejs client_rdp_JS.js : 
         test_rdp_client_test_card_JS.bc 
         bitmap_data_allocator.bc
      : 
@@ -1121,5 +1121,6 @@ js client_rdp_JS.js :
      ;
 actions nothing { }
 
-#make client_rdp_JS.html : client_rdp_JS.js : nothing ;
+make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
 
+} # NO_MAKE_JS

@@ -580,7 +580,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
     const Rect rect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
 
     if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) { // external
-        enum { BackColor, ForeColor };
         QColor backColor = this->u32_to_qcolor(new_cmd24.back_color);
         QColor foreColor = this->u32_to_qcolor(new_cmd24.fore_color);
 

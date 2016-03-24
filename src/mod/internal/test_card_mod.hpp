@@ -85,9 +85,10 @@ public:
 
         Rect winrect = this->get_screen_rect().shrink(30);
         this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
-
+        
+        
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.png");
-        //Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
+
         this->front.draw(RDPMemBlt(0,
             Rect(winrect.x + (winrect.cx - bitmap.cx())/2,
                  winrect.y + (winrect.cy - bitmap.cy())/2,
