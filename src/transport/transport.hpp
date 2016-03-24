@@ -27,10 +27,10 @@
 #include <stdint.h>
 #include <cstddef>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
 #include "auth_api.hpp"
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 #include "configs/types.hpp"
 

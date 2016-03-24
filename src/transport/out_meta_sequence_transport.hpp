@@ -34,15 +34,16 @@
 #include "transport/detail/meta_writer.hpp"
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
-#include "fdbuf.hpp"
-#include "log.hpp"
-#include "urandom_read.hpp"
+#include "utils/fdbuf.hpp"
+#include "utils/log.hpp"
+#include "utils/urandom_read.hpp"
 #include "utils/genrandom.hpp"
-#include "fileutils.hpp"
+#include "utils/fileutils.hpp"
 #include "transport/detail/meta_hash.hpp"
 #include "transport/buffer/checksum_buf.hpp"
 #include "transport/buffer/null_buf.hpp"
-#include "urandom_read.hpp"
+#include "transport/buffer/file_buf.hpp"
+#include "transport/filter/crypto_filter.hpp"
 
 
 namespace transfil {
@@ -639,9 +640,6 @@ namespace detail
     };
 }
 
-#include "transport/buffer/file_buf.hpp"
-#include "transport/filter/crypto_filter.hpp"
-#include "urandom_read.hpp"
 
 namespace transbuf {
     class ocrypto_filename_buf

@@ -35,10 +35,10 @@
 #include "transport/sequence_generator.hpp"
 #include "no_param.hpp"
 #include "error.hpp"
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "auth_api.hpp"
-#include "fileutils.hpp"
-#include "iter.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/iter.hpp"
 
 #include "transport/cryptofile.hpp" // MD_HASH_LENGTH
 

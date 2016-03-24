@@ -18,7 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#include "apps/app_write_cpp_config.hpp"
+#include "utils/apps/app_write_cpp_config.hpp"
 
 int main(int ac, char ** av)
 {

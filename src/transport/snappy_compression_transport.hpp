@@ -26,7 +26,7 @@
 #include <snappy-c.h>
 
 #include "transport/transport.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 static const size_t SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 

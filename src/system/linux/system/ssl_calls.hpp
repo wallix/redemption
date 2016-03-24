@@ -35,7 +35,7 @@
 #include "error.hpp"
 #include "openssl_crypto.hpp"
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 enum {
     SEC_RANDOM_SIZE   = 32,

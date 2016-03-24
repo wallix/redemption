@@ -34,10 +34,10 @@
 #include <cerrno>
 
 #include <algorithm>
-#include "make_unique.hpp"
-#include "log.hpp"
-#include "stream.hpp"
-#include "bitfu.hpp"
+#include "utils/make_unique.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
+#include "utils/bitfu.hpp"
 
 //##############################################################################
 struct FontChar

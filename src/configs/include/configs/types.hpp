@@ -21,10 +21,10 @@
 #ifndef REDEMPTION_SRC_UTILS_CONFIG_TYPES_TYPES_HPP
 #define REDEMPTION_SRC_UTILS_CONFIG_TYPES_TYPES_HPP
 
-#include "parser.hpp"
-#include "fileutils.hpp"
-#include "underlying_cast.hpp"
-#include "array_view.hpp"
+#include "utils/parser.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/underlying_cast.hpp"
+#include "utils/array_view.hpp"
 
 #include "configs/variant/capture_flags.hpp"
 #include "configs/variant/keyboard_log_flags.hpp"

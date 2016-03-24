@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
 #define REDEMPTION_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include "openssl_crypto.hpp"
 
