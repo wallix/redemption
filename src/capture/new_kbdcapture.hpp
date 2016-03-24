@@ -431,7 +431,7 @@ public:
 
     void flush() {
         if (this->kbd_stream.get_offset()) {
-            LOG(LOG_INFO, "type=\"KBD input\" data='%*s'",
+            LOG(LOG_INFO, R"x(type="KBD input" data="%*s")x",
                 int(this->kbd_stream.get_offset()),
                 reinterpret_cast<char const *>(this->kbd_stream.get_data()));
             this->kbd_stream.rewind();
