@@ -83,7 +83,7 @@ class Sesman():
     #===============================================================================
         try:
             confwab = engine.read_config_file(modulename='sesman',
-                                                   confdir='/opt/wab/share/sesman/config')
+                                              confdir='/var/wab/etc/sesman/config')
             seswabconfig = confwab.get(u'sesman', {})
             SESMANCONF.conf[u'sesman'].update(seswabconfig)
             # Logger().info(" WABCONFIG SESMANCONF = '%s'" % seswabconfig)
