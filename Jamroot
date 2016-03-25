@@ -246,7 +246,6 @@ project redemption
     : requirements
     <include>src
     <include>src/system/linux
-    <include>src/utils
     <include>src/core
     <include>src/configs/autogen
     <include>src/configs/variant

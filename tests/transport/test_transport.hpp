@@ -141,7 +141,7 @@ public:
 private:
     void do_send(const char * const data, size_t len)
     {
-        const size_t available_len = (this->current + len > this->len) ? (this->len - this->current) : len;
+        const size_t available_len = std::min<size_t>(this->len - this->current, len );
         if (0 != memcmp(data, this->data.get() + this->current, available_len)){
             // data differs, find where
             uint32_t differs = 0;
