@@ -30,8 +30,8 @@
 
 #include <cstddef>
 
-#include "noncopyable.hpp"
-#include "log.hpp"
+#include "utils/noncopyable.hpp"
+#include "utils/log.hpp"
 
 class BGRPalette;
 class RDPDestBlt;

@@ -33,7 +33,7 @@
 //#define LOGPRINT
 
 #undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
+#define SHARE_PATH FIXTURES_PATH
 
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx(gen, ini);
 
     // Comment the code block below to generate testing data.
-    #include "fixtures/trace_rdesktop_client.hpp"
+    #include "../fixtures/trace_rdesktop_client.hpp"
 
     // Comment the code block below to generate testing data.
     uint32_t     verbose = 511;

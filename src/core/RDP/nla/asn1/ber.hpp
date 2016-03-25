@@ -20,7 +20,7 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_ASN1_BER_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_ASN1_BER_HPP_
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 namespace BER {
     enum CLASS {

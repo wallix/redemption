@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "rect.hpp"
+#include "utils/rect.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestRect)

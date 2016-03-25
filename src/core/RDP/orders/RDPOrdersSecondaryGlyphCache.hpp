@@ -25,8 +25,8 @@
 
 #include <memory>
 
-#include "bitfu.hpp"
-#include "stream.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/stream.hpp"
 #include "RDPOrdersCommon.hpp"
 
 using std::size_t;

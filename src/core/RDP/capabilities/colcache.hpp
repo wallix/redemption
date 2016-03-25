@@ -24,7 +24,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_COLCACHE_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.1.1  Color Table Cache Capability Set (TS_COLORTABLE_CAPABILITYSET)
 

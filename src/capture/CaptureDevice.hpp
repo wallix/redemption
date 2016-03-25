@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CAPTURE_CAPTUREDEVICE_HPP_
 #define _REDEMPTION_CAPTURE_CAPTUREDEVICE_HPP_
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 #include <cstdint>
 

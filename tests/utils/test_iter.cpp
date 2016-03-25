@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "iter.hpp"
+#include "utils/iter.hpp"
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestIter)

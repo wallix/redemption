@@ -28,13 +28,13 @@
 
 #include <cinttypes>
 
-#include "exchange.hpp"
-#include "stream.hpp"
+#include "utils/exchange.hpp"
+#include "utils/stream.hpp"
 #include "config.hpp"
 #include "authid.hpp"
 #include "transport/transport.hpp"
-#include "translation.hpp"
-#include "get_printable_password.hpp"
+#include "utils/translation.hpp"
+#include "utils/get_printable_password.hpp"
 
 class AclSerializer{
     enum {

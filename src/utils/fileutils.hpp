@@ -33,7 +33,7 @@
 
 #include <string>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
 
 // two flavors of basename_len to make it const agnostic

@@ -22,7 +22,7 @@
 #define _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_
 
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 #include "RDP/pointer.hpp"
 

@@ -35,12 +35,12 @@
 #include <stdint.h>
 #include <algorithm>
 #include <unistd.h>
-#include <genrandom.hpp>
+#include "utils/genrandom.hpp"
 
 #include <new>
 
 #include <snappy-c.h>
-#include "fdbuf.hpp"
+#include "utils/fdbuf.hpp"
 
 #include "transport/cryptofile.hpp"
 
@@ -784,7 +784,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
 
     CryptoContext cctx(rnd, ini);
 
-    const char * file = "tests/fixtures/encrypted_video/"
+    const char * file = FIXTURES_PATH "/encrypted_video/"
         "x@10.10.43.13,qaadministrateur@win78,20131211-085926,wab2-4-0-0.yourdomain,5423.rdptrc";
 
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher

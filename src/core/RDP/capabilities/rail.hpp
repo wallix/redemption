@@ -24,7 +24,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // [MS-RDPERP] - 2.2.1.1.1 Remote Programs Capability Set
 // ======================================================

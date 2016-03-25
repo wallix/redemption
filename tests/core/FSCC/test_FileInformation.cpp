@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "src/core/FSCC/FileInformation.hpp"
+#include "core/FSCC/FileInformation.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation)
 {

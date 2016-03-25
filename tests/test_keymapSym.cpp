@@ -31,7 +31,7 @@
 //#define LOGPRINT
 #define LOGNULL
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include "keymapSym.hpp"
 

@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_CORE_RDP_COMPRESS_AND_DRAW_BITMAP_UPDATE_HPP
 #define REDEMPTION_CORE_RDP_COMPRESS_AND_DRAW_BITMAP_UPDATE_HPP
 
-#include "bitmap.hpp"
+#include "utils/bitmap.hpp"
 #include "bitmapupdate.hpp"
 #include "RDPGraphicDevice.hpp"
 

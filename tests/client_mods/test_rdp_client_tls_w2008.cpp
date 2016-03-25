@@ -33,7 +33,7 @@
 //#define LOGPRINT
 
 #include "config.hpp"
-//#include "socket_transport.hpp"
+//#include "transport/socket_transport.hpp"
 #include "transport/test_transport.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
@@ -54,22 +54,23 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
 
+    //SSL_library_init();
 
     FakeFront front(info, verbose);
 
     const char * name       = "RDP W2008 TLS Target";
-//     int          client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, verbose);
 
-//     std::string  error_message;
-//     SocketTransport     t( name
-//                          , client_sck
-//                          , "10.10.47.36"
-//                          , 3389
-//                          , verbose
-//                          , &error_message
-//                          );
+    //std::string  error_message;
+    //SocketTransport     t( name
+    //                     , client_sck
+    //                     , "10.10.47.16"
+    //                     , 3389
+    //                     , verbose
+    //                     , &error_message
+    //                     );
 
-    #include "fixtures/dump_TLSw2008.hpp"
+    #include "../fixtures/dump_TLSw2008.hpp"
     TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {
@@ -82,8 +83,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     ModRDPParams mod_rdp_params( "administrateur"
                                , "S3cur3!1nux"
-                               , "10.10.47.36"
-                               , "192.168.1.100"
+                               , "10.10.47.16"
+                               , "10.10.43.33"
                                , 7
                                , 511
                                );

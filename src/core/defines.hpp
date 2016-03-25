@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_CORE_DEFINES_HPP
 #define REDEMPTION_CORE_DEFINES_HPP
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
 #if !defined(SHARE_PATH)

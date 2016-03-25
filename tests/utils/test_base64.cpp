@@ -29,7 +29,7 @@
 #define LOGNULL
 
 #include "base64.hpp"
-#include "genrandom.hpp"
+#include "utils/genrandom.hpp"
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestEncoding)

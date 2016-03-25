@@ -30,7 +30,7 @@
 
 #include <cinttypes>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "RDPSerializer.hpp"
 #include "gcc.hpp"
 #include "sec.hpp"

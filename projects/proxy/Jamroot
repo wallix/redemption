@@ -1,0 +1,1087 @@
+
+import os ;
+
+# below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
+
+import feature : feature ;
+import modules : poke ;
+
+# this feature is defined so we can add a dependency on <distri>lenny for some targets
+# disabled because in our current code it finds the right library
+#feature distri : none lenny : propagated ;
+
+# No need to make it a new variant after all
+#variant lenny : release ;
+
+path-constant TOP : . ;
+constant SRCDIR : ../../src ;
+constant TESTDIR : ../../tests ;
+constant MODULEDIR : ../../modules ;
+
+
+# Returns environment value if it exists or default otherwise.
+# Allow us to customize install path with shell variables like $PREFIX...
+# (this is bad practice and should be replaced by a site configuration file
+# but I until now I miserably failed creating a clean separate configuration file)
+rule setvar ( env : default * )
+{
+    if [ os.environ $(env) ]
+    {
+        return [ os.environ $(env) ] ;
+    }
+    else
+    {
+        return $(default) ;
+    }
+}
+
+constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
+# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
+constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
+constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
+
+
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : $(TESTDIR)/fixtures ] ;
+constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
+constant PREFIX : [ setvar PREFIX : /usr/local ] ;
+constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
+constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
+constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
+constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
+constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
+constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
+constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
+constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
+constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
+constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
+
+constant PNG_DEBUG : <variant>debug:<library>png ;
+
+rule defines ( properties * )
+{
+    local defs ;
+    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+    defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
+    defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>WRM_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>HASH_PATH='\"$(HASH_PATH)\"' ;
+    defs += <define>LICENSE_PATH='\"$(CERT_PREFIX)/rdplicense\"' ;
+    defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)/rdp\"' ;
+    defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
+    defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
+    defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
+    if [ os.environ VERBOSE ]
+    {
+        defs += <define>VERBOSE ;
+    }
+    return $(defs) ;
+}
+variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
+
+
+constant CXXFLAGS-COMMON :
+#     <cxxflags>-Weffc++
+#     <cxxflags>-Wswitch-enum
+#     <cxxflags>-Wswitch-default
+    <cxxflags>-pedantic
+    <cxxflags>-pedantic-errors
+#    <cxxflags>-Wconversion
+    <cxxflags>-Wvla
+    <cxxflags>-Wstrict-aliasing=2
+#    <cxxflags>-Wlong-long
+
+    <cxxflags>-Wuninitialized
+    <cxxflags>-Wnon-virtual-dtor
+    <cxxflags>-Wall
+    <cxxflags>-Wextra
+    <cxxflags>-Wno-unused-parameter
+    <cxxflags>-Wno-long-long
+    <cxxflags>-Wtype-limits
+    <cxxflags>-Wundef
+    <cxxflags>-Wcast-align
+    <cxxflags>-Wchar-subscripts
+#     <cxxflags>-Wformat
+    <cxxflags>-Wformat=2
+    <cxxflags>-Wformat-security
+#     <cxxflags>-Wmissing-format-attribute
+    <cxxflags>-Wsequence-point
+    <cxxflags>-Wreturn-type
+    <cxxflags>-Wfloat-equal
+#     <cxxflags>-Wshadow
+    <cxxflags>-Wpointer-arith
+    <cxxflags>-Wsign-compare
+#     <cxxflags>-Wmissing-declarations
+    <cxxflags>-Wpacked
+    <cxxflags>-Wredundant-decls
+#     <cxxflags>-Winline
+    <cxxflags>-Winit-self
+    <cxxflags>-Wcast-qual
+    <cxxflags>-Woverloaded-virtual
+    <cxxflags>-Wunused-variable
+#     <cxxflags>-Wunused-parameter
+    <cxxflags>-Wmissing-include-dirs
+    <cxxflags>-Wunused
+    <cxxflags>-Wendif-labels
+    <cxxflags>-Wwrite-strings
+#     <cxxflags>-Wpadded
+    <cxxflags>-Wstrict-overflow=1
+#     <cxxflags>-Wstrict-overflow=5
+    <cxxflags>-Wc++11-compat
+    <cxxflags>-Wnarrowing
+    <cxxflags>-Wvolatile-register-var
+    <cxxflags>-Wdisabled-optimization
+    <cxxflags>-Wno-overlength-strings
+    <cxxflags>-Warray-bounds
+    <cxxflags>-Wold-style-cast
+
+#     <toolset>clang:<cxxflags>-Weverything
+#     <toolset>clang:<cxxflags>-Wno-c++98-compat
+    <toolset>clang:<cxxflags>-Wno-mismatched-tags
+#    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
+    <toolset>clang:<cxxflags>-Wno-char-subscripts
+    <toolset>clang:<cxxflags>-Wno-unused-variable
+#     <toolset>clang:<cxxflags>-Wno-unused-private-field
+;
+
+
+constant CXXFLAGS-GCC-4.7 :
+    <cxxflags>-Wunused-but-set-parameter
+    <cxxflags>-Wunused-but-set-variable
+#     <cxxflags>-Wsuggest-attribute=pure
+#     <cxxflags>-Wsuggest-attribute=const
+    <cxxflags>-Wsuggest-attribute=noreturn
+    <cxxflags>-Wzero-as-null-pointer-constant
+    <cxxflags>-Wlogical-op
+#     <cxxflags>-Wno-aggressive-loop-optimizations
+    <cxxflags>-Wnormalized=nfc #disable ?
+    <cxxflags>-Wvector-operation-performance
+    <cxxflags>-Wdouble-promotion
+   <cxxflags>-Wmaybe-uninitialized
+    <cxxflags>-Wtrampolines
+;
+
+
+constant CXXFLAGS-GCC-4.8 :
+    $(CXXFLAGS-GCC-4.7)
+    <cxxflags>-Wuseless-cast
+;
+
+
+constant CXXFLAGS-GCC-4.9 :
+    $(CXXFLAGS-GCC-4.8)
+    <cxxflags>-Wconditionally-supported
+    <cxxflags>-Wfloat-conversion
+    <cxxflags>-Wopenmp-simd
+    <cxxflags>-Wparentheses
+
+    <variant>release:<cxxflags>-flto
+;
+
+
+constant CXXFLAGS-GCC-5 :
+    $(CXXFLAGS-GCC-4.9)
+    <cxxflags>-Wlogical-not-parentheses
+    <cxxflags>-Wswitch-bool
+    <cxxflags>-Wsizeof-array-argument
+    <cxxflags>-Wbool-compare
+#    <cxxflags>-Wsuggest-final-types
+#    <cxxflags>-Wsuggest-final-methods
+#     <cxxflags>-Wsuggest-attribute=pure
+#    <cxxflags>-Wsuggest-attribute=const
+    <variant>release:<cxxflags>-flto-odr-type-merging
+    # <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by ##default)
+;
+
+
+constant CXXFLAGS-GCC-5.1 :
+    $(CXXFLAGS-GCC-5)
+    <cxxflags>-Wsuggest-override
+    <cxxflags>-fsized-deallocation
+    <cxxflags>-Wsized-deallocation
+    <cxxflags>-Warray-bounds=2
+;
+
+
+constant CXXFLAGS-GCC-6 :
+    $(CXXFLAGS-GCC-5)
+;
+
+
+# switch [ modules.peek : ODSHOME ]
+# {
+#     case *gcc-4.8* : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-4.8) ;
+#     case *gcc-4.9* : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-4.9) ;
+#     case *gcc-5*   : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-5) ;
+#     case *gcc-6*   : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-6) ;
+# }
+
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+lib gcov : : <name>gcov : ;
+
+constant GCOV : <variant>coverage:<library>gcov ;
+constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
+
+variant strict : :
+    <cxxflags>-Wsign-conversion
+;
+
+variant asan : debug :
+#    <cxxflags>-fsanitize=address
+#    <cxxflags>-fsanitize=leak
+#    <cxxflags>-fno-omit-frame-pointer
+#    <linkflags>-lasan
+#    <define>CXX_ENABLE_ASAN
+;
+constant LIB_SAN_DEPENDENCY :
+    <variant>asan:<library>libasan
+    <variant>asan:<cxxflags>-fsanitize=address
+#    <variant>asan:<cxxflags>-fsanitize=leak
+    <variant>asan:<cxxflags>-fno-omit-frame-pointer
+    <variant>asan:<define>CXX_ENABLE_ASAN
+;
+
+project redemption
+    : requirements
+    <include>$(SRCDIR)
+    <include>$(SRCDIR)/system/linux
+    #<include>$(SRCDIR)/utils
+    <include>$(SRCDIR)/core
+    <include>$(SRCDIR)/configs/autogen
+    <include>$(SRCDIR)/configs/variant
+    <include>$(SRCDIR)/configs/include
+    <include>$(SRCDIR)/mod
+    <include>$(SRCDIR)/front
+    <include>$(SRCDIR)/acl
+    <include>$(SRCDIR)/capture
+    <include>$(SRCDIR)/keyboard
+    <include>$(SRCDIR)/keyboard/reversed_keymaps
+    <include>$(SRCDIR)/regex
+    <include>$(SRCDIR)/headers
+    <include>$(SRCDIR)/main
+    <include>$(MODULEDIR)/includes
+    <include>/usr/include
+
+    <conditional>@defines
+
+    <variant>debug:<define>REDASSERT_AS_ASSERT
+    <variant>debug:<cxxflags>-g
+
+    <cxxflags>-std=c++11
+
+
+    $(CXXFLAGS-COMMON)
+    <toolset>gcc-4.7:$(CXXFLAGS-GCC-4.7)
+    <toolset>gcc-4.8:$(CXXFLAGS-GCC-4.8)
+    <toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.2:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.3:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-5.0:$(CXXFLAGS-GCC-5)
+    <toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5)
+    <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
+    <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
+
+#    <cxxflags>-fpie
+    <cxxflags>-fPIC
+
+
+    <define>_FILE_OFFSET_BITS=64
+    <define>_LARGEFILE64_SOURCE
+
+    <define>__STDC_FORMAT_MACROS
+
+    <define>PUBLIC
+
+   : default-build release
+
+;
+
+explicit install instexe install-bin install-etc install-etc-themes install-share install-lib check_coverage exe ;
+
+alias instexe : install-bin ;
+alias install : install-bin install-etc install-etc-themes install-share install-lib ;
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
+alias libs    : libredver libreddec libredrec ;
+
+
+install install-bin
+    : exe
+    : <install-type>EXE <install-dependencies>on
+    : <location>$(INSTALLDIR)/usr/local/bin
+    ;
+
+install install-share
+    : [ glob sys/share/rdpproxy/[^.k]* ]
+    :
+    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
+    ;
+
+install install-etc
+    : [ glob sys/etc/rdpproxy/*ini sys/etc/rdpproxy/*pem sys/etc/rdpproxy/*crt sys/etc/rdpproxy/*key sys/etc/rdpproxy/*p12 ]
+    :
+    : <location>$(INSTALLDIR)/etc/rdpproxy
+    ;
+
+install install-etc-themes
+    : [ glob sys/etc/rdpproxy/themes/HOWTO ]
+    :
+    : <location>$(INSTALLDIR)/etc/rdpproxy/themes
+    ;
+
+install install-lib
+    : libs
+    :
+    : <location>$(INSTALLDIR)/usr/lib
+    ;
+
+actions gen_redcryptofile {
+    echo "$(>)" "$(<)" ;
+    cp "$(>)" "$(<)"
+    cp "$(<)" tools/redcryptofile/redcryptofile.so
+}
+
+explicit pycryptofile redcryptofile.so ;
+
+lib pycryptofile :
+        tools/redcryptofile/pycrypto.cpp
+    :
+        <define>REDPYTHON_BINDING
+        <include>$(PYTHON_INCLUDE)
+        <cxxflags>-fPIC
+        <cflags>-fPIC
+        <link>shared
+        <library>snappy
+        <library>python2
+        <library>crypto
+    ;
+
+make redcryptofile.so
+    :
+        pycryptofile
+    :
+        @gen_redcryptofile
+    ;
+
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+lib openssl : : <name>ssl <link>shared ;
+# lib X11 : : <name>X11 <link>shared ;
+# lib Xfixes : : <name>Xfixes <link>static ;
+# lib pthread : : <name>pthread <link>shared ;
+# lib pam : : <name>pam <link>static ;
+
+lib krb5 : : <name>krb5 <link>shared ;
+lib gssglue : : <name>gssglue <link>shared ;
+
+lib crypto : : <name>crypto <link>shared ;
+lib z : : <name>z <link>shared ;
+lib snappy : : <name>snappy <link>shared ;
+# lib lzma : : <name>lzma <link>shared ;
+lib dl : : <name>dl <link>shared ;
+lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+
+
+# lib lcms : : <name>lcms <link>shared ;
+
+# lib tiff : : <name>tiff <link>static ;
+# lib freetype : : <name>freetype <link>static ;
+# lib jpeg : : <name>jpeg <link>static ;
+# lib Xext : : <name>Xext <link>static ;
+
+lib libpng : : <name>png <link>shared ;
+alias png : libpng z ;
+
+# lib icuuc : : <name>icuuc ;
+
+lib libasan : libboost_unit_test openssl krb5 gssglue crypto snappy png dl python2 : <name>asan ;
+
+obj mainloop : $(SRCDIR)/core/mainloop.cpp ;
+obj d3des : $(SRCDIR)/utils/d3des.cpp ;
+obj bitmap : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
+obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
+
+constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
+
+if ! [ os.environ NO_MAKE_CONFIG ]
+{
+    actions generate_configs {
+        $(>) \
+            $(SRCDIR)/configs/autogen/configs/autogen/authid.hpp \
+            $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp \
+            $(SRCDIR)/configs/autogen/configs/autogen/set_value.tcc
+    }
+
+    make $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp
+    :
+        make_cpp_config
+#         [ glob $(SRCDIR)/configs/variant/configs/variant/*.hpp ]
+#         [ glob $(SRCDIR)/configs/include/configs/*.hpp ]
+#         $(SRCDIR)/utils/apps/app_write_cpp_config.hpp
+#         $(SRCDIR)/utils/config_spec.hpp
+#         $(SRCDIR)/main/write_cpp_config.cpp
+    : @generate_configs
+    : <location>.
+    ;
+
+    alias generate_configs : $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp ;
+
+    constant CONFIG_DEPENDENCY : $(LIB_SAN_DEPENDENCY) <implicit-dependency>generate_configs ;
+
+    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) <cxxflags>-fpie ;
+    constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(CONFIG_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
+}
+else
+{
+    constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
+    constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
+}
+
+
+#
+# Redemption
+#
+
+exe rdpproxy
+    :
+        $(SRCDIR)/main/main.cpp
+        $(SRCDIR)/main/write_python_spec.cpp
+        bitmap
+        program_options
+
+        mainloop
+
+        d3des
+
+        openssl
+        crypto
+        z
+        dl
+        png
+
+        snappy
+#        lzma
+
+        krb5
+        gssglue
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
+lib libredrec
+    :
+        $(SRCDIR)/main/do_recorder.cpp
+        bitmap
+        program_options
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fPIC
+        <cxxflags>-fvisibility=hidden
+    ;
+
+lib libreddec
+    :
+        $(SRCDIR)/main/do_decrypter.cpp
+        program_options
+
+        openssl
+        crypto
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fPIC
+        <cxxflags>-fvisibility=hidden
+    ;
+
+lib libredver
+    :
+        $(SRCDIR)/main/do_verifier.cpp
+        program_options
+
+        openssl
+        crypto
+        z
+        dl
+
+        snappy
+    :
+        <cxxflags>-fPIC
+        <cxxflags>-fvisibility=hidden
+    ;
+
+exe rdptproxy
+    :
+        $(SRCDIR)/main/transparent.cpp
+        bitmap
+        program_options
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        snappy
+#        lzma
+
+        krb5
+        gssglue
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
+exe rdptanalyzer
+    :
+        $(SRCDIR)/main/tanalyzer.cpp
+        program_options
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        snappy
+
+        krb5
+        gssglue
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
+exe rdpclient
+    : $(SRCDIR)/main/rdp_client.cpp
+        program_options
+        bitmap
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        snappy
+        krb5
+        gssglue
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
+
+#
+# Functional tests (run by hand)
+#
+
+exe tls_test_client
+    :
+        $(SRCDIR)/ftests/tls_test_client.cpp openssl crypto png dl snappy
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+ ;
+exe tls_test_server
+    :
+        $(SRCDIR)/ftests/tls_test_server.cpp openssl crypto png dl snappy
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+;
+
+exe make_cpp_config
+    : $(SRCDIR)/main/write_cpp_config.cpp
+    : <variant>asan:<library>libasan $(GCOV)
+;
+
+explicit make_cpp_config ;
+
+
+#exe freetype_draw : ftests/freetype_draw.cpp freetype
+#    : <link>static <variant>coverage:<library>gcov
+#;
+
+#add flag -I/usr/include/freetype2
+
+#
+# Unit Tests
+#
+
+import testing ;
+
+import type ;
+type.register PYTHON : py ;
+
+actions run-python-test {
+    rm -f $(<)
+    python $(>[1]) && touch $(<)
+}
+
+make test_trace.py.unittest
+    :
+        tools/redcryptofile/test_trace.py
+        redcryptofile.so
+    :
+        run-python-test
+    :
+    ;
+
+## Acl tests
+## @{
+unit-test test_acl_serializer : $(TESTDIR)/acl/test_acl_serializer.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_authentifier : $(TESTDIR)/acl/test_authentifier.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
+unit-test test_module_manager : $(TESTDIR)/acl/test_module_manager.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
+## @}
+
+
+## Capture tests
+## @{
+#CaptureDevice.hpp
+unit-test test_CaptureDevice : $(TESTDIR)/capture/test_CaptureDevice.cpp : $(TEST_DEPENDENCIES) ;
+#capture.hpp
+unit-test test_capture : $(TESTDIR)/capture/test_capture.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto <library>dl <library>png <library>z <library>snappy ;
+#chunked_image_transport.hpp
+unit-test test_chunked_image_transport : $(TESTDIR)/capture/test_chunked_image_transport.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
+#ChunkToFile.hpp
+unit-test test_ChunkToFile : $(TESTDIR)/capture/test_ChunkToFile.cpp : $(TEST_DEPENDENCIES) ;
+#FileToChunk.hpp
+unit-test test_FileToChunk : $(TESTDIR)/capture/test_FileToChunk.cpp : $(TEST_DEPENDENCIES) ;
+#FileToGraphic.hpp
+unit-test test_FileToGraphic : $(TESTDIR)/capture/test_FileToGraphic.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>snappy <library>crypto ;
+#GraphicToFile.hpp
+unit-test test_GraphicToFile : $(TESTDIR)/capture/test_GraphicToFile.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto <library>snappy ;
+#image_capture.hpp
+unit-test test_image_capture : $(TESTDIR)/capture/test_image_capture.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
+#nativecapture.hpp
+unit-test test_nativecapture : $(TESTDIR)/capture/test_nativecapture.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto <library>snappy ;
+#new_kbdcapture.hpp
+unit-test test_new_kbdcapture : $(TESTDIR)/capture/test_new_kbdcapture.cpp : $(TEST_DEPENDENCIES) ;
+#RDPChunkedDevice.hpp
+unit-test test_RDPChunkedDevice : $(TESTDIR)/capture/test_RDPChunkedDevice.cpp : $(TEST_DEPENDENCIES) ;
+#send_wrm_chunk.hpp
+unit-test test_send_wrm_chunk : $(TESTDIR)/capture/test_send_wrm_chunk.cpp : $(TEST_DEPENDENCIES) ;
+#staticcapture.hpp
+unit-test test_staticcapture : $(TESTDIR)/capture/test_staticcapture.cpp : $(TEST_DEPENDENCIES) <library>png ;
+#transparentchunk.hpp
+unit-test test_transparentchunk : $(TESTDIR)/capture/test_transparentchunk.cpp : $(TEST_DEPENDENCIES) ;
+#transparentplayer.hpp
+unit-test test_transparentplayer : $(TESTDIR)/capture/test_transparentplayer.cpp : $(TEST_DEPENDENCIES) ;
+#transparentrecorder.hpp
+unit-test test_transparentrecorder : $(TESTDIR)/capture/test_transparentrecorder.cpp : $(TEST_DEPENDENCIES) ;
+#utils/match_finder.hpp
+unit-test test_utils_match_finder : $(TESTDIR)/capture/utils/test_match_finder.cpp : $(TEST_DEPENDENCIES) ;
+#wrm_label.hpp
+unit-test test_wrm_label : $(TESTDIR)/capture/test_wrm_label.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_capture_wrm_save_state : $(TESTDIR)/capture/test_capture_wrm_save_state.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
+## @}
+
+
+## Test facility functions or classes
+## @{
+unit-test test_iter : $(TESTDIR)/utils/test_iter.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_noncopyable : $(TESTDIR)/utils/test_noncopyable.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_splitter : $(TESTDIR)/utils/test_splitter.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_algostring : $(TESTDIR)/utils/test_algostring.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_make_unique : $(TESTDIR)/utils/test_make_unique.cpp : $(TEST_DEPENDENCIES) ;
+## @}
+
+unit-test test_stream : $(TESTDIR)/utils/test_stream.cpp : $(TEST_DEPENDENCIES) ;
+# unit-test test_inputarray : $(TESTDIR)/utils/test_inputarray.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_utf : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rect : $(TESTDIR)/utils/test_rect.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_ellipse : $(TESTDIR)/utils/test_ellipse.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_drawable : $(TESTDIR)/utils/test_drawable.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_region : $(TESTDIR)/utils/test_region.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_bitfu : $(TESTDIR)/utils/test_bitfu.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_parse : $(TESTDIR)/utils/test_parse.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_parser : $(TESTDIR)/utils/test_parser.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_fileutils : $(TESTDIR)/utils/test_fileutils.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_parse_ip_conntrack : $(TESTDIR)/utils/test_parse_ip_conntrack.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_x224 : $(TESTDIR)/core/RDP/test_x224.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_out_per_bstream : $(TESTDIR)/core/RDP/test_out_per_bstream.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mcs : $(TESTDIR)/core/RDP/test_mcs.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_mppc : $(TESTDIR)/core/RDP/test_mppc.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mppc_40 : $(TESTDIR)/core/RDP/test_mppc_40.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mppc_50 : $(TESTDIR)/core/RDP/test_mppc_50.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mppc_60 : $(TESTDIR)/core/RDP/test_mppc_60.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mppc_61 : $(TESTDIR)/core/RDP/test_mppc_61.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_gcc : $(TESTDIR)/core/RDP/test_gcc.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_sec : $(TESTDIR)/core/RDP/test_sec.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_lic : $(TESTDIR)/core/RDP/test_lic.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_share : $(TESTDIR)/core/RDP/test_share.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_fastpath : $(TESTDIR)/core/RDP/test_fastpath.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_slowpath : $(TESTDIR)/core/RDP/test_slowpath.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_clipboard : $(TESTDIR)/core/RDP/test_clipboard.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_FileInformation : $(TESTDIR)/core/FSCC/test_FileInformation.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rdpdr : $(TESTDIR)/core/RDP/channels/test_rdpdr.cpp : $(TEST_DEPENDENCIES) ;
+
+
+
+unit-test test_cliprdr : $(TESTDIR)/channels/cliprdr/test_cliprdr.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_sound : $(TESTDIR)/channels/sound/test_sound.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_callback : $(TESTDIR)/core/test_callback.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_channel_list : $(TESTDIR)/core/test_channel_list.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_check_files : $(TESTDIR)/core/test_check_files.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cipher : $(TESTDIR)/core/test_cipher.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_client_info : $(TESTDIR)/core/test_client_info.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_theme : $(TESTDIR)/utils/test_theme.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_confdescriptor : $(TESTDIR)/utils/test_confdescriptor.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_error : $(TESTDIR)/core/test_error.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_font : $(TESTDIR)/core/test_font.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_listen : $(TESTDIR)/core/test_listen.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mainloop : $(TESTDIR)/core/test_mainloop.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_bitmapupdate : $(TESTDIR)/core/RDP/test_bitmapupdate.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_bmpcache : $(TESTDIR)/core/RDP/caches/test_bmpcache.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
+unit-test test_bmpcachepersister : $(TESTDIR)/core/RDP/caches/test_bmpcachepersister.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
+unit-test test_brushcache : $(TESTDIR)/core/RDP/caches/test_brushcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_glyphcache : $(TESTDIR)/core/RDP/caches/test_glyphcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_pointercache : $(TESTDIR)/core/RDP/caches/test_pointercache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_bmpcache_put_get : $(TESTDIR)/core/RDP/caches/test_bmpcache_put_get.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_redirection_info : $(TESTDIR)/utils/test_redirection_info.cpp : $(TEST_DEPENDENCIES) ;
+
+## Capabilities tests
+## @{
+unit-test test_config : $(TESTDIR)/core/test_config.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_config_assign : $(TESTDIR)/core/test_config_assign.cpp : $(TEST_DEPENDENCIES) ;
+## }
+
+## Capabilities tests
+## @{
+unit-test test_bitmapcodecs : $(TESTDIR)/core/RDP/capabilities/test_bitmapcodecs.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_activate : $(TESTDIR)/core/RDP/capabilities/test_activate.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_bitmap : $(TESTDIR)/core/RDP/capabilities/test_cap_bitmap.cpp : $(TEST_DEPENDENCIES) ;
+
+obj test_cap_bmpcache.o : $(TESTDIR)/core/RDP/capabilities/test_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_bmpcache : test_cap_bmpcache.o : $(TEST_DEPENDENCIES) ;
+
+#unit-test test_cap_bmpcache : $(TESTDIR)/core/RDP/capabilities/test_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_bitmapcachehostsupport : $(TESTDIR)/core/RDP/capabilities/test_bitmapcachehostsupport.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_brushcache : $(TESTDIR)/core/RDP/capabilities/test_cap_brushcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_compdesk : $(TESTDIR)/core/RDP/capabilities/test_compdesk.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_control : $(TESTDIR)/core/RDP/capabilities/test_control.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_drawgdiplus : $(TESTDIR)/core/RDP/capabilities/test_drawgdiplus.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_drawninegridcache : $(TESTDIR)/core/RDP/capabilities/test_drawninegridcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_font : $(TESTDIR)/core/RDP/capabilities/test_cap_font.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_frameacknowledge : $(TESTDIR)/core/RDP/capabilities/test_frameacknowledge.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_general : $(TESTDIR)/core/RDP/capabilities/test_general.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_glyphcache : $(TESTDIR)/core/RDP/capabilities/test_cap_glyphcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_input : $(TESTDIR)/core/RDP/capabilities/test_input.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_largepointer : $(TESTDIR)/core/RDP/capabilities/test_largepointer.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_multifragmentupdate : $(TESTDIR)/core/RDP/capabilities/test_multifragmentupdate.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_offscreencache : $(TESTDIR)/core/RDP/capabilities/test_offscreencache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_order : $(TESTDIR)/core/RDP/capabilities/test_order.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_pointer : $(TESTDIR)/core/RDP/capabilities/test_pointer.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rail : $(TESTDIR)/core/RDP/capabilities/test_rail.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_share : $(TESTDIR)/core/RDP/capabilities/test_cap_share.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_sound : $(TESTDIR)/core/RDP/capabilities/test_cap_sound.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_surfacecommands : $(TESTDIR)/core/RDP/capabilities/test_surfacecommands.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_window : $(TESTDIR)/core/RDP/capabilities/test_window.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_bmpcache2 : $(TESTDIR)/core/RDP/capabilities/test_bmpcache2.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_colcache : $(TESTDIR)/core/RDP/capabilities/test_colcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_common : $(TESTDIR)/core/RDP/capabilities/test_common.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_virchan : $(TESTDIR)/core/RDP/capabilities/test_virchan.cpp : $(TEST_DEPENDENCIES) ;
+## @}
+
+unit-test test_ServerRedirection : $(TESTDIR)/core/RDP/test_ServerRedirection.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_GraphicUpdatePDU : $(TESTDIR)/core/RDP/test_GraphicUpdatePDU.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RefreshRectPDU : $(TESTDIR)/core/RDP/test_RefreshRectPDU.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_logon : $(TESTDIR)/core/RDP/test_logon.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_nego : $(TESTDIR)/core/RDP/test_nego.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
+unit-test test_RDPOrdersCommon : $(TESTDIR)/core/RDP/orders/test_RDPOrdersCommon.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersNames : $(TESTDIR)/core/RDP/orders/test_RDPOrdersNames.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryMem3Blt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersSecondaryGlyphCache : $(TESTDIR)/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPDrawable : $(TESTDIR)/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
+unit-test test_RDPGraphicDevice : $(TESTDIR)/core/RDP/test_RDPGraphicDevice.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPSerializer : $(TESTDIR)/core/RDP/test_RDPSerializer.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_remote_programs : $(TESTDIR)/core/RDP/test_remote_programs.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_server : $(TESTDIR)/core/test_server.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_session : $(TESTDIR)/core/test_session.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_session_server : $(TESTDIR)/core/test_session_server.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_wait_obj : $(TESTDIR)/core/test_wait_obj.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_front : $(TESTDIR)/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
+unit-test test_mod_api : $(TESTDIR)/mod/test_mod_api.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mod_osd : $(TESTDIR)/mod/test_mod_osd.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
+unit-test test_draw_api : $(TESTDIR)/mod/test_draw_api.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_null : $(TESTDIR)/mod/null/test_null.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rdp_cursor : $(TESTDIR)/mod/rdp/test_rdp_cursor.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rdp_orders : $(TESTDIR)/mod/rdp/test_rdp_orders.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rdpdr_asynchronous_task : $(TESTDIR)/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cliprdr_channel : $(TESTDIR)/mod/rdp/channels/test_cliprdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_rdpdr_channel : $(TESTDIR)/mod/rdp/channels/test_rdpdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_vnc : $(TESTDIR)/mod/vnc/test_vnc.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_xup : $(TESTDIR)/mod/xup/test_xup.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_bitmap : $(TESTDIR)/utils/test_bitmap.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_bitmap_perf : $(TESTDIR)/test_bitmap_perf.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
+unit-test test_colors : $(TESTDIR)/utils/test_colors.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_d3des : $(TESTDIR)/utils/test_d3des.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_difftimeval : $(TESTDIR)/utils/test_difftimeval.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_genrandom : $(TESTDIR)/utils/test_genrandom.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_log : $(TESTDIR)/utils/test_log.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_netutils : $(TESTDIR)/utils/test_netutils.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_png : $(TESTDIR)/utils/test_png.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_rdtsc : $(TESTDIR)/utils/test_rdtsc.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_ssl_calls : $(TESTDIR)/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_strings : $(TESTDIR)/test_strings.cpp : $(TEST_DEPENDENCIES) ;
+
+
+## Transport tests
+## @{
+unit-test test_meta_writer : $(TESTDIR)/transport/detail/test_meta_writer.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_meta_opener : $(TESTDIR)/transport/detail/test_meta_opener.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_in_meta_sequence_transport : $(TESTDIR)/transport/test_in_meta_sequence_transport.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>snappy <library>dl <library>z ;
+unit-test test_filename_sequence_transport : $(TESTDIR)/transport/test_filename_sequence_transport.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_out_meta_sequence_transport : $(TESTDIR)/transport/test_out_meta_sequence_transport.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>snappy <library>dl <library>z ;
+unit-test test_test_transport : $(TESTDIR)/transport/test_test_transport.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_count_transport : $(TESTDIR)/transport/test_count_transport.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_socket_transport : $(TESTDIR)/transport/test_socket_transport.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl ;
+unit-test test_file_transport : $(TESTDIR)/transport/test_file_transport.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_request_full_cleaning : $(TESTDIR)/transport/test_request_full_cleaning.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_filename_transport : $(TESTDIR)/transport/test_filename_transport.cpp : $(TEST_DEPENDENCIES) <library>z <library>dl <library>snappy <library>crypto ;
+unit-test test_bulk_compression_transport : $(TESTDIR)/transport/test_bulk_compression_transport.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_gzip_compression_transport : $(TESTDIR)/transport/test_gzip_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>z ;
+unit-test test_snappy_compression_transport : $(TESTDIR)/transport/test_snappy_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>snappy ;
+
+unit-test test_cryptofile : $(TESTDIR)/transport/test_cryptofile.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+
+unit-test test_compression_transport_wrapper : $(TESTDIR)/utils/test_compression_transport_wrapper.cpp : $(TEST_DEPENDENCIES) <library>z <library>snappy ;
+## @}
+
+
+## Buffer Transport tests
+## @{
+unit-test test_buffering_buf : $(TESTDIR)/transport/buffer/test_buffering_buf.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_checksum_buf : $(TESTDIR)/transport/buffer/test_checksum_buf.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>dl <library>z ;
+## @}
+
+
+
+#unit-test test_crypt_openssl : $(TESTDIR)/test_crypt_openssl.cpp : $(TEST_DEPENDENCIES) <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
+#unit-test test_capture_wrm : $(TESTDIR)/capture/test_capture_wrm.cpp : $(TEST_DEPENDENCIES) <library>png <library>z <library>crypto <library>libboost_unit_test ;
+
+unit-test test_RDPOrdersPrimaryOpaqueRect : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryScrBlt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryMemBlt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryDestBlt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryMultiDstBlt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryMultiPatBlt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryMultiScrBlt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryMultiOpaqueRect : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryLineTo : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryPolygonSC : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryPolygonCB : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryPolyline : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryEllipseSC : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryEllipseCB : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryPatBlt : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryGlyphIndex : $(TESTDIR)/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersSecondaryBmpCache : $(TESTDIR)/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
+unit-test test_RDPOrdersSecondaryColorCache : $(TESTDIR)/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersSecondaryBrushCache : $(TESTDIR)/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_AlternateSecondaryWindowing : $(TESTDIR)/core/RDP/orders/test_AlternateSecondaryWindowing.cpp : $(TEST_DEPENDENCIES) ;
+
+
+unit-test test_libpng : $(TESTDIR)/test_libpng.cpp : $(TEST_DEPENDENCIES) <library>png <library>z ;
+#unit-test test_convert_bitmap : $(TESTDIR)/test_convert_bitmap.cpp : $(TEST_DEPENDENCIES) <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
+unit-test test_rdp : $(TESTDIR)/mod/rdp/test_rdp.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
+unit-test test_rdp_client_test_card : $(TESTDIR)/client_mods/test_rdp_client_test_card.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>z <library>png <library>crypto <library>dl <library>openssl ;
+unit-test test_rdp_client_tls_w2008 : $(TESTDIR)/client_mods/test_rdp_client_tls_w2008.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>z <library>dl <library>openssl ;
+unit-test test_rdp_client_wab : $(TESTDIR)/client_mods/test_rdp_client_wab.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>openssl <library>dl <library>krb5 <library>gssglue ;
+unit-test test_vnc_client_simple : $(TESTDIR)/client_mods/test_vnc_client_simple.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>dl ;
+unit-test test_rdesktop_client : $(TESTDIR)/server/test_rdesktop_client.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
+unit-test test_mstsc_client : $(TESTDIR)/server/test_mstsc_client.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
+unit-test test_mstsc_client_rdp50bulk : $(TESTDIR)/server/test_mstsc_client_rdp50bulk.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
+
+unit-test test_keymap2 : $(TESTDIR)/test_keymap2.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_keymapSym : $(TESTDIR)/test_keymapSym.cpp : $(TEST_DEPENDENCIES) ;
+
+## Widget tests
+## @{
+unit-test test_widget2_rect : $(TESTDIR)/mod/internal/widget2/test_widget2_rect.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_image : $(TESTDIR)/mod/internal/widget2/test_image.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_label : $(TESTDIR)/mod/internal/widget2/test_label.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_tooltip : $(TESTDIR)/mod/internal/widget2/test_tooltip.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_flat_button : $(TESTDIR)/mod/internal/widget2/test_flat_button.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_edit : $(TESTDIR)/mod/internal/widget2/test_edit.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_multiline : $(TESTDIR)/mod/internal/widget2/test_multiline.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_password : $(TESTDIR)/mod/internal/widget2/test_password.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_number_edit : $(TESTDIR)/mod/internal/widget2/test_number_edit.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_edit_valid : $(TESTDIR)/mod/internal/widget2/test_edit_valid.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+# unit-test test_radio_list : $(TESTDIR)/mod/internal/widget2/test_radio_list.cpp : $(TEST_DEPENDENCIES) <library>png <library>libboost_unit_test ;
+unit-test test_flat_dialog : $(TESTDIR)/mod/internal/widget2/test_flat_dialog.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_widget : $(TESTDIR)/mod/internal/widget2/test_widget.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_composite : $(TESTDIR)/mod/internal/widget2/test_composite.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+
+#unit-test test_window_dialog : $(TESTDIR)/mod/internal/widget2/test_window_dialog.cpp : $(TEST_DEPENDENCIES) <library>png <library>z <library>crypto <library>dl ;
+
+unit-test test_flat_login : $(TESTDIR)/mod/internal/widget2/test_flat_login.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_flat_wab_close : $(TESTDIR)/mod/internal/widget2/test_flat_wab_close.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_screen : $(TESTDIR)/mod/internal/widget2/test_screen.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+
+# unit-test test_columnlayout : $(TESTDIR)/mod/internal/widget2/test_columnlayout.cpp : $(TEST_DEPENDENCIES) <library>png ;
+# unit-test test_linelayout : $(TESTDIR)/mod/internal/widget2/test_linelayout.cpp : $(TEST_DEPENDENCIES) <library>png ;
+# unit-test test_stacklayout : $(TESTDIR)/mod/internal/widget2/test_stacklayout.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_grid : $(TESTDIR)/mod/internal/widget2/test_grid.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_labelgrid : $(TESTDIR)/mod/internal/widget2/test_labelgrid.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+
+unit-test test_flat_selector2 : $(TESTDIR)/mod/internal/widget2/test_flat_selector2.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_group_box : $(TESTDIR)/mod/internal/widget2/test_group_box.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+# unit-test test_scroll : $(TESTDIR)/mod/internal/widget2/test_scroll.cpp : $(TEST_DEPENDENCIES) <library>png ;
+# unit-test test_tab : $(TESTDIR)/mod/internal/widget2/test_tab.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_flat_interactive_target : $(TESTDIR)/mod/internal/widget2/test_flat_interactive_target.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+## @}
+
+
+## Mod tests
+## @{
+unit-test test_flat_dialog_mod : $(TESTDIR)/mod/internal/test_flat_dialog_mod.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
+unit-test test_flat_login_mod : $(TESTDIR)/mod/internal/test_flat_login_mod.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
+unit-test test_flat_wab_close_mod : $(TESTDIR)/mod/internal/test_flat_wab_close_mod.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
+unit-test test_widget_test_mod : $(TESTDIR)/mod/internal/test_widget_test_mod.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_interactive_target_mod : $(TESTDIR)/mod/internal/test_interactive_target_mod.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+
+unit-test test_bouncer2_mod : $(TESTDIR)/mod/internal/test_bouncer2_mod.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_test_card_mod : $(TESTDIR)/mod/internal/test_test_card_mod.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_replay_mod : $(TESTDIR)/mod/internal/test_replay_mod.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_internal_mod : $(TESTDIR)/mod/internal/test_internal_mod.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_copy_paste : $(TESTDIR)/mod/internal/test_copy_paste.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+## @}
+
+
+## Regex tests
+## @{
+unit-test test_regex_state : $(TESTDIR)/regex/test_regex_state.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_regex_parser : $(TESTDIR)/regex/test_regex_parser.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_regex_ndfa : $(TESTDIR)/regex/test_regex_ndfa.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_regex : $(TESTDIR)/regex/test_regex.cpp : $(TEST_DEPENDENCIES) ;
+# unit-test benchmark_regex_parser : $(TESTDIR)/benchmark/parser.cpp ;
+# unit-test benchmark_regex_search : $(TESTDIR)/benchmark/search.cpp ;
+## @}
+
+# unit-test test_base64 : $(TESTDIR)/utils/test_base64.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_translation : $(TESTDIR)/utils/test_translation.cpp : $(TEST_DEPENDENCIES) ;
+
+
+## NLA TESTS
+## @{
+unit-test test_ber : $(TESTDIR)/core/RDP/nla/asn1/test_ber.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_credssp : $(TESTDIR)/core/RDP/nla/test_credssp.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_sspi : $(TESTDIR)/core/RDP/nla/test_sspi.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_nla : $(TESTDIR)/core/RDP/nla/test_nla.cpp : $(TEST_DEPENDENCIES) <library>dl <library>krb5 <library>gssglue <library>z <library>crypto ;
+
+alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
+
+unit-test test_ntlm_message_negotiate : $(TESTDIR)/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_ntlm_avpair : $(TESTDIR)/core/RDP/nla/ntlm/test_ntlm_avpair.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_ntlm_message_challenge : $(TESTDIR)/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_ntlm_message_authenticate : $(TESTDIR)/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_ntlm_context : $(TESTDIR)/core/RDP/nla/ntlm/test_ntlm_context.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_ntlm : $(TESTDIR)/core/RDP/nla/ntlm/test_ntlm.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_credentials : $(TESTDIR)/core/RDP/nla/kerberos/test_credentials.cpp : $(TEST_DEPENDENCIES) <library>krb5 ;
+unit-test test_kerberos : $(TESTDIR)/core/RDP/nla/kerberos/test_kerberos.cpp : $(TEST_DEPENDENCIES) <library>krb5 <library>gssglue ;
+## @}
+
+
+unit-test test_darray : $(TESTDIR)/utils/test_darray.cpp : $(TEST_DEPENDENCIES) ;
+
+## Widget for workflow
+## @{
+unit-test test_flat_wait : $(TESTDIR)/mod/internal/widget2/test_flat_wait.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+unit-test test_flat_form : $(TESTDIR)/mod/internal/widget2/test_flat_form.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
+## @}
+
+unit-test test_authorization_channels : $(TESTDIR)/utils/test_authorization_channels.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_pattutils : $(TESTDIR)/utils/test_pattutils.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_strutils : $(TESTDIR)/utils/test_strutils.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_diffiehellman : $(TESTDIR)/utils/test_diffiehellman.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_finally : $(TESTDIR)/utils/test_finally.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_verifier : $(TESTDIR)/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+
+
+
+if ! [ os.environ NO_MAKE_QT ]
+{
+
+explicit front_Qt.o bitmap_data_allocator.o client_rdp_Qt ; #
+#explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
+
+
+using qt : /usr ; #4
+
+#using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ; #5
+
+#obj test_rdp_Qt.o : $(TESTDIR)/mod/rdp/test_rdp_Qt.cpp
+#    :
+	 #<include>/usr/include/qt4
+#        <include>/usr/include/x86_64-linux-gnu/qt5
+#        <cxxflags>-fPIC
+#    ;
+
+obj front_Qt.o : $(SRCDIR)/system/Qt/front_Qt.cpp
+    :
+	<include>/usr/include/qt4                   #4
+	#<include>/usr/include/x86_64-linux-gnu/qt5  #5
+	#<cxxflags>-fPIC                             #5
+    ;
+
+obj bitmap_data_allocator.o : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
+
+
+exe client_rdp_Qt :
+    #test_rdp_Qt.o #
+    $(SRCDIR)/system/Qt/front_Qt.hpp
+    $(SRCDIR)/system/Qt/front_widget_Qt.hpp
+    $(SRCDIR)/system/Qt/keymaps/Qt_ScanCode_KeyMap.hpp
+    front_Qt.o
+    bitmap_data_allocator.o
+    /qt//QtGui       #4
+    #/qt5//QtGui      #5
+    #/qt5//QtNetwork  #5
+    #/qt5//QtWidgets  #5
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    :
+    <include>/usr/include/qt4                   #4
+    #<include>/usr/include/x86_64-linux-gnu/qt5  #5
+    #<cxxflags>-fPIC                             #5
+    ;
+
+} # NO_MAKE_QT

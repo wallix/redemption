@@ -27,34 +27,16 @@
 #include <stdint.h>
 #include <cstddef>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
 #include "auth_api.hpp"
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 #include "configs/types.hpp"
 
+#include "core/server_notifier_api.hpp"
+
 using std::size_t;
-
-class ServerNotifier {
-public:
-    virtual void server_access_allowed() = 0;
-    virtual void server_cert_create() = 0;
-    virtual void server_cert_success() = 0;
-    virtual void server_cert_failure() = 0;
-    virtual void server_cert_error(const char * str_error) = 0;
-
-    virtual ~ServerNotifier() = default;
-};
-
-class NullServerNotifier : public ServerNotifier {
-public:
-    void server_access_allowed() override {}
-    void server_cert_create() override {}
-    void server_cert_success() override {}
-    void server_cert_failure() override {}
-    void server_cert_error(const char * str_error) override {}
-};
 
 class Transport : noncopyable
 {

@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
 #define _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 
 inline static void msgdump_c(bool send, bool from_or_to_client,

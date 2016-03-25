@@ -22,7 +22,7 @@
 #define REDEMPTION_TRANSPORT_BUFFER_CHECKSUM_BUF_HPP
 
 #include "transport/cryptofile.hpp"
-#include "ssl_calls.hpp"
+#include "system/ssl_calls.hpp"
 
 #include <memory>
 

@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_UTILS_BYTES_T_HPP
 #define REDEMPTION_UTILS_BYTES_T_HPP
 
-#include "array_view.hpp"
+#include "utils/array_view.hpp"
 
 
 struct bytes_t

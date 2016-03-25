@@ -30,7 +30,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include "font.hpp"
 #include "internal/widget2/flat_selector2.hpp"

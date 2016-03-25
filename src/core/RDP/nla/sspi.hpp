@@ -22,8 +22,8 @@
 #define _REDEMPTION_CORE_RDP_NLA_SSPI_HPP_
 
 #include <stdio.h>
-#include "utf.hpp"
-#include "array.hpp"
+#include "utils/utf.hpp"
+#include "utils/array.hpp"
 
 #define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION                        0

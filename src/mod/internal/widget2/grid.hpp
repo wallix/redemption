@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "widget.hpp"
 #include "keymap2.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"

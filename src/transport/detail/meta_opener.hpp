@@ -33,11 +33,10 @@
 #include <memory>
 
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
 #include "no_param.hpp"
-#include "fileutils.hpp"
-#include "log.hpp"
+#include "utils/fileutils.hpp"
 #include "openssl_crypto.hpp"
 #include "transport/cryptofile.hpp"
 

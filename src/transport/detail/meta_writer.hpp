@@ -35,10 +35,10 @@
 #include "transport/sequence_generator.hpp"
 #include "no_param.hpp"
 #include "error.hpp"
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "auth_api.hpp"
-#include "fileutils.hpp"
-#include "iter.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/iter.hpp"
 
 #include "transport/cryptofile.hpp" // MD_HASH_LENGTH
 
@@ -486,8 +486,15 @@ namespace detail
         , stop_sec_(params.sec)
         , verbose(params.verbose)
         {
-            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP) < 0) {
+            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+            }
+            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->mf_.filename
+                   , "u+r, g+r"
+                   , strerror(errno), errno);
             }
         }
 

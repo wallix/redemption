@@ -25,13 +25,13 @@
 #ifndef _REDEMPTION_FRONT_FRONT_HPP_
 #define _REDEMPTION_FRONT_FRONT_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "openssl_tls.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "transport/transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
@@ -40,17 +40,17 @@
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "RDP/fastpath.hpp"
 #include "RDP/slowpath.hpp"
 
-#include "ssl_calls.hpp"
-#include "bitfu.hpp"
-#include "rect.hpp"
-#include "region.hpp"
+#include "system/ssl_calls.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/rect.hpp"
+#include "utils/region.hpp"
 #include "capture.hpp"
 #include "font.hpp"
-#include "bitmap.hpp"
+#include "utils/bitmap.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
 #include "RDP/caches/glyphcache.hpp"
@@ -61,12 +61,12 @@
 #include "config.hpp"
 #include "error.hpp"
 #include "callback.hpp"
-#include "colors.hpp"
-#include "bitfu.hpp"
-#include "confdescriptor.hpp"
+#include "utils/colors.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/confdescriptor.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "pattutils.hpp"
+#include "utils/pattutils.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
@@ -93,7 +93,7 @@
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"
-#include "genrandom.hpp"
+#include "utils/genrandom.hpp"
 
 #include "auth_api.hpp"
 
@@ -1263,7 +1263,8 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-                        GCC::UserData::CSMonitor cs_monitor;
+                        GCC::UserData::CSMonitor & cs_monitor =
+                            this->client_info.client_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");

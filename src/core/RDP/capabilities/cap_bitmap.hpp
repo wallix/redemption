@@ -25,7 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BITMAP_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "error.hpp"
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)

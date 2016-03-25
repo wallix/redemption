@@ -57,9 +57,9 @@
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
 
-#include "drawable.hpp"
-#include "png.hpp"
-#include "text_metrics.hpp"
+#include "utils/drawable.hpp"
+#include "utils/png.hpp"
+#include "utils/text_metrics.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders

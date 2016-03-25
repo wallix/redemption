@@ -25,7 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "difftimeval.hpp"
+#include "utils/difftimeval.hpp"
 
 BOOST_AUTO_TEST_CASE(TestUstime)
 {

@@ -25,8 +25,8 @@
 
 #include <assert.h>
 
-#include "stream.hpp"
-#include "rect.hpp"
+#include "utils/stream.hpp"
+#include "utils/rect.hpp"
 
 // MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
 // ====================================================================

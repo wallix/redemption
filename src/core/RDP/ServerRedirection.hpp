@@ -24,10 +24,10 @@
 
 #include <cinttypes>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
-#include "stream.hpp"
-#include "redirection_info.hpp"
+#include "utils/stream.hpp"
+#include "utils/redirection_info.hpp"
 
 
 // [MS-RDPBCGR] - 2.2.13.1 Server Redirection Packet

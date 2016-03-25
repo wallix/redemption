@@ -22,9 +22,9 @@
 #define _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
 
 #include "transport/in_file_transport.hpp"
-#include "asynchronous_task_manager.hpp"
+#include "utils/asynchronous_task_manager.hpp"
 #include "channel_list.hpp"
-#include "virtual_channel_data_sender.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
 #include "RDP/channels/rdpdr.hpp"
 #include "wait_obj.hpp"
 

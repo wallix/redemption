@@ -32,7 +32,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "genrandom.hpp"
+#include "utils/genrandom.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGenRandom)
 {

@@ -37,17 +37,17 @@
 #include <array>
 
 #include "server.hpp"
-#include "colors.hpp"
-#include "stream.hpp"
+#include "utils/colors.hpp"
+#include "utils/stream.hpp"
 #include "front.hpp"
-#include "ssl_calls.hpp"
-#include "rect.hpp"
-#include "netutils.hpp"
+#include "system/ssl_calls.hpp"
+#include "utils/rect.hpp"
+#include "utils/netutils.hpp"
 
 #include "config.hpp"
 #include "wait_obj.hpp"
 #include "transport/transport.hpp"
-#include "bitmap.hpp"
+#include "utils/bitmap.hpp"
 
 #include "authentifier.hpp"
 
@@ -208,10 +208,10 @@ public:
                     add_to_fd_set(*session_probe_launcher_event, -1, rfds, max, timeout);
                 }
 
-                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.allocated_ssl));
-                if (has_pending_data)
+                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
+                if (has_pending_data){
                     memset(&timeout, 0, sizeof(timeout));
-
+                }
 
                 int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
@@ -234,7 +234,7 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (is_set(this->front->get_event(), &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.allocated_ssl))) {
+                if (is_set(this->front->get_event(), &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.mod, now);
                     } catch (Error & e) {

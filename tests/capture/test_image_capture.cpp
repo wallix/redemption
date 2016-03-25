@@ -28,8 +28,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "transport/out_file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     d.zoom(50);
 
     {
-        const char * filename = "./tests/fixtures/win2008capture10.png";
+        const char * filename = FIXTURES_PATH "/win2008capture10.png";
         FILE * fd = fopen(filename, "r");
         TODO("Add ability to write image to file or read image from file in RDPDrawable")
         read_png24(fd, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize());

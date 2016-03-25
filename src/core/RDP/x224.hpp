@@ -27,11 +27,11 @@
 
 #include <stdint.h>
 #include "transport/transport.hpp"
-#include "stream.hpp"
-#include "log.hpp"
+#include "utils/stream.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
 #include "fastpath.hpp"
-#include "parse.hpp"
+#include "utils/parse.hpp"
 
 //##############################################################################
 namespace X224

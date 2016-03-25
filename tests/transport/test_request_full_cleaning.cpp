@@ -28,7 +28,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "fileutils.hpp"
+#include "utils/fileutils.hpp"
 
 #include "transport/out_meta_sequence_transport.hpp"
 

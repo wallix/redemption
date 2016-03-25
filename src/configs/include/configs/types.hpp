@@ -21,10 +21,10 @@
 #ifndef REDEMPTION_SRC_UTILS_CONFIG_TYPES_TYPES_HPP
 #define REDEMPTION_SRC_UTILS_CONFIG_TYPES_TYPES_HPP
 
-#include "parser.hpp"
-#include "fileutils.hpp"
-#include "underlying_cast.hpp"
-#include "array_view.hpp"
+#include "utils/parser.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/underlying_cast.hpp"
+#include "utils/array_view.hpp"
 
 #include "configs/variant/capture_flags.hpp"
 #include "configs/variant/keyboard_log_flags.hpp"
@@ -446,10 +446,10 @@ MK_PARSER_ENUM_FLAGS(::configs::ServerNotification)
 
 
 enum class ServerCertCheck : unsigned {
-    fails_if_no_match_or_missing,
-    fails_if_no_match_and_succeed_if_no_know,
-    succeed_if_exists_and_fails_if_missing,
-    always_succeed,
+    fails_if_no_match_or_missing,             // ensure match, ensure present
+    fails_if_no_match_and_succeed_if_no_know, // ensure match, dont care missing
+    succeed_if_exists_and_fails_if_missing,   // dont care match, ensure present
+    always_succeed,                           // dont care match, dont care missing
     NB
 };
 MK_ENUM_FIELD(::configs::ServerCertCheck, "0", "1", "2", "3")

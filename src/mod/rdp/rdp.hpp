@@ -28,8 +28,8 @@
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
-#include "stream.hpp"
-#include "ssl_calls.hpp"
+#include "utils/stream.hpp"
+#include "system/ssl_calls.hpp"
 #include "mod_api.hpp"
 #include "auth_api.hpp"
 #include "front_api.hpp"
@@ -42,7 +42,7 @@
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "RDP/autoreconnect.hpp"
 #include "RDP/ServerRedirection.hpp"
 #include "RDP/bitmapupdate.hpp"
@@ -74,9 +74,9 @@
 #include "transparentrecorder.hpp"
 
 #include "client_info.hpp"
-#include "genrandom.hpp"
-#include "authorization_channels.hpp"
-#include "parser.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/authorization_channels.hpp"
+#include "utils/parser.hpp"
 #include "channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
@@ -352,6 +352,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
+    const ClientTimeZone client_time_zone;
     Random & gen;
     const uint32_t verbose;
     const uint32_t cache_verbose;
@@ -657,6 +658,7 @@ public:
         , console_session(info.console_session)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
+        , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
@@ -6250,6 +6252,8 @@ public:
                              , this->performanceFlags
                              , this->clientAddr
                              );
+
+        infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
 
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,

@@ -51,13 +51,13 @@
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/share.hpp"
 #include "RDP/bitmapupdate.hpp"
-#include "difftimeval.hpp"
-#include "compression_transport_wrapper.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/compression_transport_wrapper.hpp"
 #include "chunked_image_transport.hpp"
 #include "CaptureDevice.hpp"
 #include "wrm_label.hpp"
-#include "cast.hpp"
-#include "png.hpp"
+#include "utils/cast.hpp"
+#include "utils/png.hpp"
 
 struct FileToGraphic
 {

@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_UTILS_PATTUTILS_HPP_
 #define _REDEMPTION_UTILS_PATTUTILS_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 template<typename F>
 bool contains_pattern(F f, unsigned int expected_result,

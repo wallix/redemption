@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
 #define _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 struct RDPChunkedDevice {
     virtual ~RDPChunkedDevice () {}

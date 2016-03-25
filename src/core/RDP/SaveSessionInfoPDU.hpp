@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
 #define _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 namespace RDP {
 

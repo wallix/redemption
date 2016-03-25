@@ -24,7 +24,7 @@
 #include "FileToGraphic.hpp"
 #include "transport/transport.hpp"
 #include "RDPChunkedDevice.hpp"
-#include "compression_transport_wrapper.hpp"
+#include "utils/compression_transport_wrapper.hpp"
 
 class FileToChunk
 {

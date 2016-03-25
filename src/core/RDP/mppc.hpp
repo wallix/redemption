@@ -30,7 +30,7 @@
 #include <stdint.h>
 #include <cinttypes>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
 class OutStream;
 

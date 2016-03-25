@@ -25,7 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <stdlib.h>
 #include <unistd.h>

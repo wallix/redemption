@@ -31,14 +31,14 @@
 #include <string>
 #include <set>
 
-#include "log.hpp"
-#include "font.hpp"
-#include "defines.hpp"
-#include "exchange.hpp"
+#include "utils/log.hpp"
+#include "core/font.hpp"
+#include "core/defines.hpp"
+#include "utils/exchange.hpp"
 
 #include "authid.hpp"
 
-#include "get_printable_password.hpp"
+#include "utils/get_printable_password.hpp"
 
 #include "utils/range.hpp"
 
