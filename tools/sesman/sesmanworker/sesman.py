@@ -13,7 +13,6 @@ from __future__ import with_statement
 
 import random
 import os
-import urllib
 import signal
 import traceback
 import json
