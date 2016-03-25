@@ -43,7 +43,7 @@
 #include <stdint.h>
 #include <algorithm>
 #include <unistd.h>
-#include <genrandom.hpp>
+#include "utils/genrandom.hpp"
 
 #include <new>
 
