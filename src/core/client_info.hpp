@@ -28,10 +28,11 @@
 #include <array>
 #include <cstring>
 
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/logon.hpp"
+#include "core/RDP/capabilities/glyphcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
 #include "utils/get_printable_password.hpp"
-#include "RDP/logon.hpp"
-#include "RDP/capabilities/glyphcache.hpp"
-#include "RDP/caches/glyphcache.hpp"
 
 struct ClientInfo {
     int bpp = 0;
@@ -85,6 +86,10 @@ struct ClientInfo {
 
     char alternate_shell[512] = { 0 };
     char working_dir[512] = { 0 };
+
+    GCC::UserData::CSMonitor client_monitor;
+
+    ClientTimeZone client_time_zone;
 
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
@@ -163,6 +168,12 @@ struct ClientInfo {
 
         snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.AlternateShell);
         snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
+
+LOG(LOG_INFO, "ClientInfo - ClientTimeZone avant");
+hexdump_c((const char *)&this->client_time_zone, sizeof(this->client_time_zone));
+        this->client_time_zone = infoPacket.extendedInfoPacket.clientTimeZone;
+LOG(LOG_INFO, "ClientInfo - ClientTimeZone après");
+hexdump_c((const char *)&this->client_time_zone, sizeof(this->client_time_zone));
     }
 };
 

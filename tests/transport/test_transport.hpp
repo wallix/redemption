@@ -133,7 +133,6 @@ public:
             this->status = false;
             std::ostringstream out;
             out << "Check transport remaining=" << (this->len-this->current) << " len=" << this->len;
-            this->remaining_is_error = true;
             throw remaining_error{out.str()};
         }
         return true;
@@ -157,6 +156,7 @@ private:
             hexdump_c(data + differs, available_len - differs);
             this->data.reset();
             this->status = false;
+            this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
 
@@ -170,6 +170,7 @@ private:
             hexdump_c(data + available_len, len - available_len);
             this->data.reset();
             this->status = false;
+            this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
 

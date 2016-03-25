@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     };
 
     unsigned char derivator[DERIVATOR_LENGTH];
-    
+
     size_t len = 0;
     const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name.c_str(), len));
     SslSha256 sha256;
@@ -193,7 +193,7 @@ extern "C" {
         memcpy(buffer, hmac_key, 32);
         return 0;
     }
-    
+
     int trace_fn(char * base, int len, char * buffer)
     {
         // in real uses actual trace_key is derived from base and some master key
@@ -369,6 +369,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
         } catch (const Error & e) {
             printf("verify failed: with id=%d\n", e.id);
         }
+        BOOST_CHECK_EQUAL(0, unlink("decrypted.out"));
         BOOST_CHECK_EQUAL(0, res);
 }
 
