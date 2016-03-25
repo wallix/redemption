@@ -6253,11 +6253,7 @@ public:
                              , this->clientAddr
                              );
 
-LOG(LOG_INFO, "mod_rdp - ClientTimeZone avant");
-hexdump_c((const char *)&infoPacket.extendedInfoPacket.clientTimeZone, sizeof(infoPacket.extendedInfoPacket.clientTimeZone));
         infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
-LOG(LOG_INFO, "mod_rdp - ClientTimeZone après");
-hexdump_c((const char *)&infoPacket.extendedInfoPacket.clientTimeZone, sizeof(infoPacket.extendedInfoPacket.clientTimeZone));
 
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,

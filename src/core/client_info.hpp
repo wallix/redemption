@@ -169,11 +169,7 @@ struct ClientInfo {
         snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.AlternateShell);
         snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
 
-LOG(LOG_INFO, "ClientInfo - ClientTimeZone avant");
-hexdump_c((const char *)&this->client_time_zone, sizeof(this->client_time_zone));
         this->client_time_zone = infoPacket.extendedInfoPacket.clientTimeZone;
-LOG(LOG_INFO, "ClientInfo - ClientTimeZone après");
-hexdump_c((const char *)&this->client_time_zone, sizeof(this->client_time_zone));
     }
 };
 
