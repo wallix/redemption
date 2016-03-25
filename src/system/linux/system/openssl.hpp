@@ -37,10 +37,10 @@ TODO("-Wold-style-cast is ignored")
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 extern "C" {
-    int openssl_print_fp(const char *str, size_t len, void *fp)
+    int openssl_print_fp(const char *str, size_t len, void * error_message)
     {
-        if (fp) {
-            std::string* error = reinterpret_cast<std::string*>(fp);
+        if (error_message) {
+            std::string* error = reinterpret_cast<std::string*>(error_message);
             error->append(str, len);
         }
         return 0;
@@ -162,6 +162,8 @@ struct TLSContext
         if (ctx == nullptr) {
             LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
             ERR_print_errors_cb(openssl_print_fp, static_cast<void*>(error_message));
+
+            return;
         }
         // TODO: This should be wrapped in some abstract layer
         this->allocated_ctx = ctx;
