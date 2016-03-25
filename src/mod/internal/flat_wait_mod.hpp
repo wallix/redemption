@@ -29,7 +29,7 @@
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
-#include "timeout.hpp"
+#include "utils/timeout.hpp"
 
 #include "config_access.hpp"
 

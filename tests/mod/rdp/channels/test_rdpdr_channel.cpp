@@ -32,7 +32,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
-#include "virtual_channel_data_sender.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
 #include "rdp/channels/rdpdr_channel.hpp"
 #include "rdp/channels/rdpdr_file_system_drive_manager.hpp"
 

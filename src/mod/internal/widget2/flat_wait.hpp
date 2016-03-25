@@ -27,7 +27,7 @@
 #include "multiline.hpp"
 #include "image.hpp"
 #include "widget2_rect.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 #include "group_box.hpp"
 #include "flat_form.hpp"
 #include "utils/translation.hpp"

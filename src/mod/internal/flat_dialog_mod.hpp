@@ -30,7 +30,7 @@
 #include "widget2/screen.hpp"
 #include "config_access.hpp"
 #include "internal_mod.hpp"
-#include "timeout.hpp"
+#include "utils/timeout.hpp"
 
 
 

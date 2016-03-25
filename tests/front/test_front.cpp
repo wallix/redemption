@@ -48,7 +48,7 @@
 
 #include "front.hpp"
 #include "null/null.hpp"
-#include "config_spec.hpp"
+#include "utils/config_spec.hpp"
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"

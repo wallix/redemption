@@ -23,7 +23,7 @@
 
 #include "utils/colors.hpp"
 #include "cfgloader.hpp"
-#include "parser.hpp"
+#include "utils/parser.hpp"
 
 
 struct Theme : public ConfigurationHolder {

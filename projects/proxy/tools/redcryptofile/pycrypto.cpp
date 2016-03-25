@@ -19,7 +19,7 @@
 typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include <algorithm>
 #include <unistd.h>
-#include <genrandom.hpp>
+#include "utils/genrandom.hpp"
 #include <new>
 
 

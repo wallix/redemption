@@ -23,7 +23,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_LANGUAGE_BUTTON_HPP
 
 
-#include "splitter.hpp"
+#include "utils/splitter.hpp"
 #include "flat_button.hpp"
 
 #include "utils/algostring.hpp"

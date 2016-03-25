@@ -31,7 +31,7 @@
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "utils/translation.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 
 
 class FlatInteractiveTarget : public WidgetParent

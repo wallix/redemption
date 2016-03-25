@@ -1,5 +1,5 @@
 #include "write_python_spec.hpp"
-#include "apps/app_write_python_spec.hpp"
+#include "utils/apps/app_write_python_spec.hpp"
 
 int write_python_spec(char const * application_name, char const * output) {
     char const * av[] = {application_name, output, nullptr};

@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "splitter.hpp"
+#include "utils/splitter.hpp"
 #include "algostring.hpp"
 #include <string>
 

@@ -75,8 +75,8 @@
 
 #include "client_info.hpp"
 #include "utils/genrandom.hpp"
-#include "authorization_channels.hpp"
-#include "parser.hpp"
+#include "utils/authorization_channels.hpp"
+#include "utils/parser.hpp"
 #include "channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"

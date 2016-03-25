@@ -27,7 +27,7 @@
 #include "widget2/flat_wab_close.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
-#include "timeout.hpp"
+#include "utils/timeout.hpp"
 #include "config_access.hpp"
 
 

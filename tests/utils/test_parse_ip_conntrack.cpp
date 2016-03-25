@@ -25,7 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "parse_ip_conntrack.hpp"
+#include "utils/parse_ip_conntrack.hpp"
 
 #include <stdlib.h>
 #include <sys/types.h>

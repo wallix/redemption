@@ -24,7 +24,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "diffiehellman.hpp"
+#include "utils/diffiehellman.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDiffieHellman)
 {

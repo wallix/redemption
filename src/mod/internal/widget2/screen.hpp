@@ -25,7 +25,7 @@
 #include "font.hpp"
 #include "composite.hpp"
 #include "tooltip.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 
 #include <typeinfo>
 

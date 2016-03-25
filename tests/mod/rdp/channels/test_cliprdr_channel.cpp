@@ -32,7 +32,7 @@
 #include "utils/make_unique.hpp"
 #include "RDP/clipboard.hpp"
 #include "transport/test_transport.hpp"
-#include "virtual_channel_data_sender.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
 #include "rdp/channels/cliprdr_channel.hpp"
 
 #include "../../../front/fake_front.hpp"
