@@ -27,7 +27,7 @@
 //#define LOGPRINT
 
 #include "utils/splitter.hpp"
-#include "algostring.hpp"
+#include "utils/algostring.hpp"
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestSplitter)
