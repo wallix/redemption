@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //                  , &error_message
     //                  );
 
-    #include "fixtures/dump_w2008.hpp"
+    #include "../../fixtures/dump_w2008.hpp"
     TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2){
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     //                  );
 
 
-    #include "fixtures/dump_w2003_mem3blt.hpp"
+    #include "../../fixtures/dump_w2003_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     if (verbose > 2){
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     //                  , &error_message
     //                  );
 
-    #include "fixtures/dump_w2000_mem3blt.hpp"
+    #include "../../fixtures/dump_w2000_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     if (verbose > 2){
