@@ -37,7 +37,7 @@ TODO("-Wold-style-cast is ignored")
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 extern "C" {
-    int openssl_print_fp(const char *str, size_t len, void * error_message)
+    inline int openssl_print_fp(const char *str, size_t len, void * error_message)
     {
         if (error_message) {
             std::string* error = reinterpret_cast<std::string*>(error_message);
@@ -46,7 +46,7 @@ extern "C" {
         return 0;
     }
 
-    int password_cb0(char *buf, int num, int rwflag, void *userdata)
+    inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
     {
         const char * pass = static_cast<const char*>(userdata);
         size_t pass_len = strlen(pass);
