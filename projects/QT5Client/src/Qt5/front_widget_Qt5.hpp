@@ -27,7 +27,7 @@
 #include "transport/socket_transport.hpp"
 #include "rdp/rdp.hpp"
 
-#include "front_Qt5.hpp"
+#include "Qt5/front_Qt5.hpp"
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QLabel>

@@ -14,32 +14,20 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2013
+   Copyright (C) Wallix 2010-2016
    Author(s): Clément Moroldo
 */
 
-
-//#include <algorithm>
 #include <string>
 #include <unistd.h>
-/*
-#include <signal.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <QtGui/QRgb>
+#include <QtGui/QRegion>
+#include <QtGui/QBitmap>
 
-#include "listen.hpp"
-#include "utils/parse_ip_conntrack.hpp"
-*/
-#include "front_widget_Qt5.hpp"
+#include "Qt5/front_widget_Qt5.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
-#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRgb>
-#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRegion>
-#include </usr/include/x86_64-linux-gnu/qt5/QtGui/QBitmap>
 
 #define USER_CONF_PATH "userConfig.config"
 
