@@ -83,9 +83,9 @@ arguments_size(Ts const &...){ return {}; }
     template<class T> struct enum_option<Enum, T> {      \
         static constexpr const std::decay<decltype(X)>::type value[decltype(arguments_size(X, __VA_ARGS__))::value] = {X, __VA_ARGS__};                        \
         using type = std::true_type;                     \
-    };                                                   \
-//    template<class T> constexpr const                    \
-//    std::decay<decltype(X)>::type[decltype(arguments_size(X, __VA_ARGS__))::value] \
+    };                                                   
+//    template<class T> constexpr const                    
+//    std::decay<decltype(X)>::type[decltype(arguments_size(X, __VA_ARGS__))::value]
 //    enum_option<Enum, T>::value
 #endif
 

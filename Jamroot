@@ -145,33 +145,33 @@ constant CXXFLAGS-COMMON :
 
 
 constant CXXFLAGS-GCC-4.7 :
-#emscripten    <cxxflags>-Wunused-but-set-parameter
-#emscripten     <cxxflags>-Wunused-but-set-variable
+#emscripten    <cxxflags>-Wunused-but-set-parameter #emscripten
+#emscripten    <cxxflags>-Wunused-but-set-variable #emscripten 
 #     <cxxflags>-Wsuggest-attribute=pure
 #     <cxxflags>-Wsuggest-attribute=const
-#emscripten     <cxxflags>-Wsuggest-attribute=noreturn
-#emscripten     <cxxflags>-Wzero-as-null-pointer-constant
-#emscripten     <cxxflags>-Wlogical-op
+#emscripten     <cxxflags>-Wsuggest-attribute=noreturn #emscripten
+#emscripten     <cxxflags>-Wzero-as-null-pointer-constant #emscripten
+     <cxxflags>-Wlogical-op #emscripten
 #     <cxxflags>-Wno-aggressive-loop-optimizations
-#emscripten     <cxxflags>-Wnormalized=nfc #disable ?
-#emscripten     <cxxflags>-Wvector-operation-performance
+#emscripten     <cxxflags>-Wnormalized=nfc #disable ? #emscripten
+#emscripten     <cxxflags>-Wvector-operation-performance #emscripten
     <cxxflags>-Wdouble-promotion
-#emscripten    <cxxflags>-Wmaybe-uninitialized
-#emscripten     <cxxflags>-Wtrampolines
+#emscripten   <cxxflags>-Wmaybe-uninitialized #emscripten 
+#emscripten    <cxxflags>-Wtrampolines #emscripten 
 ;
 
 
 constant CXXFLAGS-GCC-4.8 :
     $(CXXFLAGS-GCC-4.7)
-#emscripten     <cxxflags>-Wuseless-cast
+#emscripten   <cxxflags>-Wuseless-cast #emscripten  
 ;
 
 
 constant CXXFLAGS-GCC-4.9 :
     $(CXXFLAGS-GCC-4.8)
-#emscripten     <cxxflags>-Wconditionally-supported
+#emscripten     <cxxflags>-Wconditionally-supported #emscripten
     <cxxflags>-Wfloat-conversion
-#emscripten     <cxxflags>-Wopenmp-simd
+#emscripten    <cxxflags>-Wopenmp-simd #emscripten 
     <cxxflags>-Wparentheses
 
     <variant>release:<cxxflags>-flto
@@ -260,17 +260,11 @@ project redemption
     <include>src/regex
     <include>src/headers
     <include>src/main
-    <include>modules/includes
-#emscripten    <include>/usr/include
+    <include>modules/includes 
+    #emscripten<include>/usr/include #emscripten
     
     <include>src/system/JS
     
-    #emscripten
-    #<include>/usr/include/openssl
-    #<include>/usr/include/x86_64-linux-gnu
-    #<include>/usr/include/x86_64-linux-gnu/sys
-    #<include>/usr/include/x86_64-linux-gnu/gnu
-    #emscripten
     
     <include>tests
     <conditional>@defines
@@ -280,7 +274,7 @@ project redemption
 
     <cxxflags>-Wall #emscripten
     <cxxflags>-O2 #emscripten
-    #<cxxflags>-obin/gcc-4.9.2/release/client_rdp_JS.html #emscripten
+    <cxxflags>-obin/gcc-4.9.2/release/client_rdp_JS.html #emscripten
     <cxxflags>-std=c++11
 
 
@@ -1067,7 +1061,6 @@ obj front_Qt.o : src/system/Qt/front_Qt.cpp
 
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
-
 exe client_rdp_Qt :
     #test_rdp_Qt.o #
     src/system/Qt/front_Qt.hpp
@@ -1124,3 +1117,26 @@ actions nothing { }
 make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
 
 } # NO_MAKE_JS
+
+
+
+explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
+
+
+obj test_show_data.o : tests/mod/rdp/test_show_data.cpp 
+    : <cxxflags>-fPIC ;
+
+
+exe test_data_draw :
+    bitmap_data_allocator.o
+    test_show_data.o
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    : <cxxflags>-fPIC 
+    ;
