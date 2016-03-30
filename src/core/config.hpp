@@ -24,8 +24,9 @@
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cassert>
+#include <cstdint>
 
 #include <stdexcept>
 #include <string>
