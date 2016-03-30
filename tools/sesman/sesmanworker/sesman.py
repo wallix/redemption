@@ -1051,7 +1051,9 @@ class Sesman():
             if _status:
                 tries = 5
                 Logger().info(u"Wab user '%s' authentication succeeded" % mundane(self.shared.get(u'login')))
-
+                if not self.engine.check_license():
+                    _status, _error = False, "License 'sm' not available"
+                    break
                 # Warn password will expire soon for user
                 _status, _error = self.check_password_expiration_date()
 

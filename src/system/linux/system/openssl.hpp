@@ -830,7 +830,7 @@ struct TLSContext
             throw Error(checking_exception);
         }
 
-       LOG(LOG_INFO, "SocketTransport::enable_tls() done");
+        LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
     }
 
     void enable_server_tls(int sck, const char * certificate_password)

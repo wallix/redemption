@@ -169,6 +169,12 @@ class Engine(object):
         except Exception, e:
             return ""
 
+    def check_license(self):
+        res = self.wabengine.is_session_management_license()
+        if not res:
+            Logger().info("License Error: Session management License is not available.")
+        return res
+
     def get_force_change_password(self):
         try:
             return self.wabuser.forceChangePwd
@@ -670,9 +676,9 @@ class Engine(object):
             except AccountLocked as m:
                 Logger().info("Engine checkout_target failed: account locked")
                 return False, "%s" % m
-            except LicenseException:
+            except LicenseException as m:
                 Logger().info("Engine checkout_target failed: License Exception")
-                return False, None
+                return False, "%s" % m
             Logger().debug("** END checkout_target")
         else:
             Logger().info("checkout_target: target already checked out")

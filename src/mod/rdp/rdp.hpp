@@ -423,7 +423,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool                     server_cert_store;
     const configs::ServerCertCheck server_cert_check;
 
-    const char * certif_path;
+    std::unique_ptr<char[]> certif_path;
 
     bool enable_polygonsc;
     bool enable_polygoncb;
@@ -1114,7 +1114,6 @@ public:
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
-        delete [] this->certif_path;
     }
 
 protected:
@@ -1964,7 +1963,7 @@ public:
                                 this->server_cert_store,
                                 this->server_cert_check,
                                 this->server_notifier,
-                                this->certif_path
+                                this->certif_path.get()
                             );
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
@@ -3506,6 +3505,14 @@ public:
                     this->end_session_message.clear();
                 }
 
+                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
+                    (e.id == ERR_NLA_AUTHENTICATION_FAILED)) {
+                    throw;
+                }
+
                 StaticOutStream<256> stream;
                 X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                 try {
@@ -3520,15 +3527,6 @@ public:
 
                 if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
-                }
-
-                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
-                    (e.id == ERR_NLA_AUTHENTICATION_FAILED))
-                {
-                    throw;
                 }
             }
         }
