@@ -632,7 +632,11 @@ type.register PYTHON : py ;
 actions nop { }
 
 rule gcno {
-   # LOCATE on $(1) = $(2:P) ;
+   echo "rule gcno" ;
+   echo $(1) "xxx==============\n" 
+        $(2) "yyy==============\n" 
+        $(3) "zzz==============\n" 
+        ;
 }
 
 actions gcno {
@@ -642,6 +646,16 @@ actions gcno {
     mkdir -p $(1:P)/$(1:B).coverage
     mv *gcov $(1:P)/$(1:B).coverage
 }
+
+rule keepcoverage {
+   echo "rule keep coverage" ;
+   echo $(1) "xxx==============\n" 
+        $(2) "yyy==============\n" 
+        $(3) "zzz==============\n"
+        $(4)
+        ; 
+}
+
 
 actions keepcoverage {
     echo "action keep coverage"
