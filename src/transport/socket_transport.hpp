@@ -79,13 +79,18 @@ public:
         if (!this->sck_closed){
             this->disconnect();
         }
-        if (this->tls && this->tls->allocated_ssl) {
-            //SSL_shutdown(this->tls->allocated_ssl);
-            SSL_free(this->tls->allocated_ssl);
-        }
 
-        if (this->tls && this->tls->allocated_ctx) {
-            SSL_CTX_free(this->tls->allocated_ctx);
+        if (this->tls) {
+            if (this->tls->allocated_ssl) {
+                //SSL_shutdown(this->tls->allocated_ssl);
+                SSL_free(this->tls->allocated_ssl);
+            }
+
+            if (this->tls->allocated_ctx) {
+                SSL_CTX_free(this->tls->allocated_ctx);
+            }
+
+            delete this->tls;
         }
 
         if (verbose) {
@@ -109,7 +114,7 @@ public:
             return;
         }
         this->tls = new TLSContext();
-       
+
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
         this->tls->enable_server_tls(this->sck, certificate_password);
@@ -131,25 +136,45 @@ public:
         this->tls = new TLSContext();
 
         LOG(LOG_INFO, "Client TLS start");
-        bool ensure_server_certificate_match = 
+        bool ensure_server_certificate_match =
             (server_cert_check == configs::ServerCertCheck::fails_if_no_match_or_missing)
            ||(server_cert_check == configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know);
 
-        bool ensure_server_certificate_exists = 
+        bool ensure_server_certificate_exists =
             (server_cert_check == configs::ServerCertCheck::fails_if_no_match_or_missing)
            ||(server_cert_check == configs::ServerCertCheck::succeed_if_exists_and_fails_if_missing);
 
-        this->tls->enable_client_tls(this->sck,
-           server_cert_store,
-           ensure_server_certificate_match,
-           ensure_server_certificate_exists,
-           server_notifier,
-           certif_path,
-           this->error_message,
-           &this->ip_address[0],
-           this->port);
+        try {
+            this->tls->enable_client_tls(this->sck,
+               server_cert_store,
+               ensure_server_certificate_match,
+               ensure_server_certificate_exists,
+               server_notifier,
+               certif_path,
+               this->error_message,
+               &this->ip_address[0],
+               this->port);
+        }
+        catch (...) {
+            // Disconnect tls if needed
+            if (this->tls) {
+                if (this->tls->allocated_ssl) {
+                    SSL_free(this->tls->allocated_ssl);
+                    this->tls->allocated_ssl = nullptr;
+                }
+                if (this->tls->allocated_ctx) {
+                    SSL_CTX_free(this->tls->allocated_ctx);
+                    this->tls->allocated_ctx = nullptr;
+                }
+                delete this->tls;
+                this->tls = nullptr;
+            }
 
-       LOG(LOG_INFO, "SocketTransport::enable_tls() done");
+            LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
+            throw;
+        }
+
+        LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
     }
 
     bool disconnect()override {
@@ -167,6 +192,7 @@ public:
                 SSL_CTX_free(this->tls->allocated_ctx);
                 this->tls->allocated_ctx = nullptr;
             }
+            delete this->tls;
             this->tls = nullptr;
         }
         shutdown(this->sck, 2);
