@@ -21,20 +21,20 @@
 #ifndef REDEMPTION_SRC_UTILS_CONFIG_TYPES_TYPES_HPP
 #define REDEMPTION_SRC_UTILS_CONFIG_TYPES_TYPES_HPP
 
-#include "utils/parser.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/underlying_cast.hpp"
-#include "utils/array_view.hpp"
-
 #include "configs/variant/capture_flags.hpp"
 #include "configs/variant/keyboard_log_flags.hpp"
 #include "configs/c_str_buf.hpp"
+
+#include "utils/fileutils.hpp" // pathncpy
+#include "utils/parser.hpp" // pathncpy
 
 #include <iosfwd>
 #include <type_traits>
 
 #include <cstddef>
 #include <cassert>
+#include <cstring>
+#include <cstdio>
 
 namespace configs {
 
@@ -145,28 +145,42 @@ struct StaticKeyString
     : str{}
     {}
 
+    StaticKeyString(StaticKeyString const &) = default;
+
     explicit StaticKeyString(const char (&key)[33]) {
         // 32 = 33 - null terminal
         memcpy(this->str, key, 32);
         this->str[N] = 0;
     }
 
-    StaticKeyString(StaticKeyString const &) = default;
-
-    StaticKeyString & operator=(char (&key)[32]) {
+    StaticKeyString & operator=(unsigned char const (&key)[32]) {
         memcpy(this->str, key, 32);
         return *this;
     }
 
-    StaticKeyString & operator=(array_view<unsigned char const> const & key) {
-        assert(key.size() <= N);
-        memcpy(this->str, key.data(), key.size());
-        memset(this->str + key.size(), 0, N - key.size());
+    StaticKeyString & operator=(char const (&key)[32]) {
+        memcpy(this->str, key, 32);
         return *this;
     }
 
-    StaticKeyString & operator=(array_view<char const> const & key) {
-        return *this = {reinterpret_cast<unsigned char const *>(key.data()), key.size()};
+    StaticKeyString & operator=(char const (&key)[33]) {
+        // 32 = 33 - null terminal
+        memcpy(this->str, key, 32);
+        return *this;
+    }
+
+    struct ByteRange{ char const * data; std::size_t size; };
+    struct UByteRange{ unsigned char const * data; std::size_t size; };
+
+    StaticKeyString & operator=(UByteRange key) {
+        assert(key.size <= N);
+        memcpy(this->str, key.data, key.size);
+        memset(this->str + key.size, 0, N - key.size);
+        return *this;
+    }
+
+    StaticKeyString & operator=(ByteRange key) {
+        return *this = {reinterpret_cast<unsigned char const *>(key.data), key.size};
     }
 
     using array_key_type = unsigned char const (&)[32];
