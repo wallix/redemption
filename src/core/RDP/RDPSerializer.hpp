@@ -88,7 +88,7 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "config.hpp"
+#include "configs/config.hpp"
 
 #include "RDPGraphicDevice.hpp"
 #include "bitmapupdate.hpp"

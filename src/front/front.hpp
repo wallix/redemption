@@ -58,7 +58,7 @@
 #include "RDP/caches/brushcache.hpp"
 #include "channel_names.hpp"
 #include "client_info.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "error.hpp"
 #include "callback.hpp"
 #include "utils/colors.hpp"

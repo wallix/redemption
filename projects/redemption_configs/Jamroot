@@ -17,7 +17,7 @@ rule setvar ( env : default * )
 }
 
 
-constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ../../tests/fixtures ] ;
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
@@ -216,10 +216,9 @@ constant LIB_SAN_DEPENDENCY :
 project configs
     : requirements
     <include>src
-    <include>autogen
+    <include>include
     <include>../../src/
     <include>../../src/core
-    <include>../../src/configs/variant/
 
     <conditional>@defines
 
@@ -252,38 +251,70 @@ project configs
 
 lib libasan : : <name>asan ;
 
+constant AUTOGENDIR : include/configs/autogen ;
+constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
+constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
+
 actions generate_configs {
     $(>) \
-        autogen/configs/autogen/authid.hpp \
-        autogen/configs/autogen/variables_configuration.hpp \
-        autogen/configs/autogen/set_value.tcc
+        $(AUTOGENDIR)/authid.hpp \
+        $(FILEGEN_CONF) \
+        $(AUTOGENDIR)/set_value.tcc
 }
 
-make autogen/configs/autogen/variables_configuration.hpp
-:
-    make_cpp_config
-#         [ glob src/configs/variant/configs/variant/*.hpp ]
-#         [ glob src/configs/include/configs/*.hpp ]
-#         src/utils/apps/app_write_cpp_config.hpp
-#         src/utils/config_spec.hpp
-#         src/main/write_cpp_config.cpp
-: @generate_configs
-: <location>.
-;
+actions generate_spec {
+    $(>) $(FILEGEN_SPEC)
+}
 
-alias generate_configs : autogen/configs/autogen/variables_configuration.hpp ;
+make $(FILEGEN_CONF) : make_cpp_config : @generate_configs : <location>. ;
+make $(FILEGEN_SPEC) : make_python_spec : @generate_spec : <location>. ;
 
-exe make_cpp_config
-    : src/configs/write_cpp_config.cpp
-    : $(LIB_SAN_DEPENDENCY)
-;
+alias generate_configs : $(FILEGEN_CONF) ;
+alias generate_spec : $(FILEGEN_SPEC) ;
+
+exe make_cpp_config : src/configs/write_cpp_config.cpp : $(LIB_SAN_DEPENDENCY) ;
+exe make_python_spec : src/configs/write_python_spec.cpp : $(LIB_SAN_DEPENDENCY) ;
 
 actions cp_config {
-    cp -R $PWD/`dirname $(>)` ../../src/configs/autogen/configs/ && :>$(<)
+    #cp -R $PWD/`dirname $(>)` ../../src/configs &&
+    dirinstall=../../src/configs
+    mkdir -p $dirinstall && \
+    cp -R "$PWD"/include/configs/* $dirinstall && \
+    cp  \
+        "$PWD"/src/configs/types.hpp \
+        "$PWD"/src/configs/parse.hpp \
+        "$PWD"/src/configs/mk_enum_def.hpp \
+        "$PWD"/src/configs/mk_enum_undef.hpp \
+        "$PWD"/src/configs/c_str_buf.hpp \
+        "$PWD"/src/configs/config.hpp \
+        "$PWD"/src/configs/config_access.hpp \
+        $dirinstall && \
+    find $dirinstall -type f | while read f ; do
+        sed -i '1,+0i//\n// ATTENTION -- This file is auto-generated\n//\n' "$f"
+    done
 }
 
-make install : generate_configs : @cp_config : ;
-
+import notfile ;
+notfile install : @cp_config : generate_configs generate_spec ;
 explicit install ;
 
-# explicit make_cpp_config ;
+
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+
+import testing ;
+
+constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
+
+constant TEST_DEPENDENCIES :
+    $(LIB_SAN_DEPENDENCY)
+    $(LIB_TEST_DEPENDENCY)
+    <implicit-dependency>generate_configs
+    <implicit-dependency>generate_spec
+    <include>include/autogen
+;
+
+## Tests
+## @{
+unit-test test_config : tests/test_config.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_config_assign : tests/test_config_assign.cpp : $(TEST_DEPENDENCIES) ;
+## }

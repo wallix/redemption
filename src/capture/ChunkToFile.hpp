@@ -23,7 +23,7 @@
 
 #include "RDPChunkedDevice.hpp"
 #include "utils/compression_transport_wrapper.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
 

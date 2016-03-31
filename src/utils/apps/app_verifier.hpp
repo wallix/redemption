@@ -15,7 +15,7 @@
 #include "transport/in_filename_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "system/ssl_calls.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "utils/fdbuf.hpp"
 
 #include "program_options/program_options.hpp"

@@ -245,9 +245,6 @@ project redemption
     <include>src
     <include>$(SRCDIR)/system/linux
     <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/configs/autogen
-    <include>$(SRCDIR)/configs/variant
-    <include>$(SRCDIR)/configs/include
     <include>$(SRCDIR)/mod
     <include>$(SRCDIR)/front
     <include>$(SRCDIR)/acl
@@ -258,7 +255,6 @@ project redemption
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
-    <include>../redemption_configs/src
 
     <conditional>@defines
 

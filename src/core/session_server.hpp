@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CORE_SESSION_SERVER_HPP_
 #define _REDEMPTION_CORE_SESSION_SERVER_HPP_
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "server.hpp"
 #include "session.hpp"
 #include "utils/parse_ip_conntrack.hpp"

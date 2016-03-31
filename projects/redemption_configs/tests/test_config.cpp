@@ -32,7 +32,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include <sstream>
 
 BOOST_AUTO_TEST_CASE(TestConfigFromFile)

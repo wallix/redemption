@@ -8,7 +8,7 @@
 
 #include "utils/apps/app_decrypter.hpp"
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "version.hpp"
 
 extern "C" {

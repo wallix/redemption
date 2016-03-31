@@ -298,6 +298,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit> {
 template<class ConfigCppWriter>
 void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
     out_authid <<
+      "#ifndef REDEMPTION_CONFIGS_AUTHID_T_DEF\n"
+      "#define REDEMPTION_CONFIGS_AUTHID_T_DEF\n"
       "enum authid_t {\n"
     ;
     for (auto & body : writer.authids) {
@@ -312,15 +314,12 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
     for (auto & body : writer.authids) {
         out_authid << "    \"" << body.second << "\",\n";
     }
-    out_authid << "};\n\n";
+    out_authid << "};\n#endif\n";
 }
 
 template<class ConfigCppWriter>
 void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter & writer) {
     out_varconf <<
-        "#include \"font.hpp\"\n"
-        "#include \"configs/types.hpp\"\n"
-        "#include \"configs/variant/includes.hpp\"\n\n"
         "namespace cfg {\n"
     ;
     for (auto & body : writer.sections_member) {

@@ -42,7 +42,7 @@
 #include "null/null.hpp"
 #include "internal/test_card_mod.hpp"
 #include "transport/test_transport.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "front.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "listen.hpp"

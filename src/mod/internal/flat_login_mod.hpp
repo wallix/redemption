@@ -29,7 +29,7 @@
 #include "widget2/notify_api.hpp"
 #include "utils/translation.hpp"
 #include "copy_paste.hpp"
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
 #include "widget2/language_button.hpp"
 
 #include "utils/timeout.hpp"

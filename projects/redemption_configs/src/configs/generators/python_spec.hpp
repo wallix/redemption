@@ -102,7 +102,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     T const & get_value(T const & x)
     { return x; }
 
-    const char * get_value(macro const & m) { return m.value; }
+    const char * get_value(macro const & m) { return m.name; }
     const char * get_value(null_fill) { return ""; }
     uint32_t get_value(uint32_) { return 0; }
     uint64_t get_value(uint64_) { return 0; }
@@ -247,17 +247,30 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
 template<class SpecWriter>
 void write_spec(std::ostream & os, SpecWriter & writer) {
-    os << "## Config file for RDP proxy.\n\n\n";
+    os <<
+      "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
+      "\"";
     for (auto & section_name : writer.sections_ordered) {
         auto body = writer.sections_member.find(section_name)->second;
         if (std::none_of(begin(body), end(body), [](int c){return std::isblank(c);} )) {
             continue;
         }
         if (!section_name.empty()) {
-            os << "[" << section_name << "]\n\n";
+            os << "[" << section_name << "]\\n\\n\"\n\n\"";
         }
-        os << body;
+        for (char c : body) {
+            if (c == '\\' || c == '"') {
+                os << '\\' << c;
+            }
+            else if (c == '\n') {
+                os << "\\n\"\n\"";
+            }
+            else {
+                os << c;
+            }
+        }
     }
+    os << "\"";
 }
 
 }
