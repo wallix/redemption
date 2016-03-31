@@ -258,7 +258,7 @@ project redemption
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
-    <include>/usr/include
+    <include>../redemption_configs/src
 
     <conditional>@defines
 
@@ -346,15 +346,15 @@ obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
 
 constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) ;
 
-using qt5 
+using qt5
     : /usr/lib/x86_64-linux-gnu/qt5
     : 5.3
-    : 
-    : 
-    : 
-    : 
-    : /usr/include/x86_64-linux-gnu/qt5 
-    : /usr/lib/x86_64-linux-gnu 
+    :
+    :
+    :
+    :
+    : /usr/include/x86_64-linux-gnu/qt5
+    : /usr/lib/x86_64-linux-gnu
     ;
 
 obj front_Qt5.o : src/Qt5/front_Qt5.cpp
