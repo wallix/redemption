@@ -262,6 +262,8 @@ project redemption
     <include>src/headers
     <include>src/main
     <include>modules/includes 
+    <include>src/utils
+    <include>src/system/linux/system
     #emscripten<include>/usr/include #emscripten
     
     <include>src/system/JS

@@ -744,8 +744,8 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
     }
 
     Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
-                            (bitmap_data.dest_right - bitmap_data.dest_left + 1),
-                            (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
+                (bitmap_data.dest_right - bitmap_data.dest_left + 1),
+                (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
     const Rect clipRect(0, 0, this->_info.width, this->_info.height);
     const Rect rect = rectBmp.intersect(clipRect);
 
@@ -910,7 +910,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             
             int len(drect.cx * drect.cy);
             for (int i = 0; i < len; i++) {
-                destData[i] = srcData[i] & destData[i];
+                destData[i] = ~(srcData[i]) & destData[i];
             }
             
             QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
@@ -920,6 +920,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             
             //this->_screen->repaint();
             //this->_screen->_timer.stop();
+
         }
         break;
             
