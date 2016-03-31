@@ -224,7 +224,7 @@ constant CXXFLAGS-GCC-6 :
 
 lib gcov : : <name>gcov : ;
 
-constant GCOV : <variant>coverage:<library>gcov ;
+constant GCOV : <variant>coverage:<library>gcov;
 constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
 
 variant strict : :
@@ -624,6 +624,7 @@ explicit make_cpp_config ;
 # Unit Tests
 #
 
+#import testing-coverage ;
 import testing ;
 
 import type ;
@@ -631,51 +632,68 @@ type.register PYTHON : py ;
 
 actions nop { }
 
-rule gcno {
-   echo "rule gcno" ;
-   echo $(1) "xxx==============\n" 
-        $(2) "yyy==============\n" 
-        $(3) "zzz==============\n" 
-        ;
+#rule gcno {
+#   echo "rule gcno" ;
+#   echo $(1) "xxx==============\n" 
+#        $(2) "yyy==============\n" 
+#        $(3) "zzz==============\n" 
+#        ;
+#}
+
+#actions gcno {
+#    #echo     gcov -a -c -b -f -o $(1) $(2)
+#    echo    "action gcno" $(1) $(2)
+#    gcov -a -c -b -f -o $(1) $(2)
+#    mkdir -p $(1:P)/$(1:B).coverage
+#    mv *gcov $(1:P)/$(1:B).coverage
+#}
+
+#rule keepcoverage {
+#   echo "rule keep coverage" ;
+#   echo $(1) "xxx==============\n" 
+#        $(2) "yyy==============\n" 
+#        $(3) "zzz==============\n"
+#        $(4)
+#        ; 
+#}
+
+
+#actions keepcoverage {
+#    echo "action keep coverage"
+#    echo $(<[1])
+#    echo $(>[1])
+#    echo $(>[2])
+#    mkdir -p coverage/$(>[2])
+#    cp $(2:P)/$(2:B).coverage coverage/$(1:G)
+#}
+
+rule utest ( target : source : properties * )
+{
+    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
+    echo $(properties)
+    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
+    
+    if <variant>coverage:<library>gcov in $(properties) {
+        echo "unit test coverage" ;
+        unit-test $(target) : $(source) : $(properties) ;
+    }
+    else {
+        echo "unit test not coverage" ;
+        unit-test $(target) : $(source) : $(properties) ;
+    }
 }
 
-actions gcno {
-    #echo     gcov -a -c -b -f -o $(1) $(2)
-    echo    "action gcno" $(1) $(2)
-    gcov -a -c -b -f -o $(1) $(2)
-    mkdir -p $(1:P)/$(1:B).coverage
-    mv *gcov $(1:P)/$(1:B).coverage
-}
 
-rule keepcoverage {
-   echo "rule keep coverage" ;
-   echo $(1) "xxx==============\n" 
-        $(2) "yyy==============\n" 
-        $(3) "zzz==============\n"
-        $(4)
-        ; 
-}
+utest test_utf.passed : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
 
+#make test_utf.gcno : test_utf.ut : gcno ;
+#make utils/utf.hpp.gcov : test_utf.gcno $(SRCDIR)/utils/utf.hpp : keepcoverage ;
 
-actions keepcoverage {
-    echo "action keep coverage"
-    echo $(<[1])
-    echo $(>[1])
-    echo $(>[2])
-    mkdir -p coverage/$(>[2])
-    cp $(2:P)/$(2:B).coverage coverage/$(1:G)
-}
-
-
-unit-test test_utf.ut : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
-make test_utf.gcno : test_utf.ut : gcno ;
-make utils/utf.hpp.gcov : test_utf.gcno $(SRCDIR)/utils/utf.hpp : keepcoverage ;
-
-install coverage_utils
-    : utf.gcov
-    : 
-    : <location>$(TOP)/utils/coverage
-    ;
+#install coverage_utils
+#    : utf.gcov
+#    : 
+#    : <location>$(TOP)/utils/coverage
+#    ;
 
 install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
