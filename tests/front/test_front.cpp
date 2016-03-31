@@ -48,7 +48,6 @@
 
 #include "front.hpp"
 #include "null/null.hpp"
-#include "utils/config_spec.hpp"
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -80,18 +79,18 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
         ini.set<cfg::video::wrm_compression_algorithm>(0);
 
-        ini.set<cfg::crypto::key0>(cstr_array_view(
+        ini.set<cfg::crypto::key0>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        ));
-        ini.set<cfg::crypto::key1>(cstr_array_view(
+        );
+        ini.set<cfg::crypto::key1>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        ));
+        );
 
 
         // Uncomment the code block below to generate testing data.
@@ -311,18 +310,18 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
         ini.set<cfg::video::wrm_compression_algorithm>(0);
 
-        ini.set<cfg::crypto::key0>(cstr_array_view(
+        ini.set<cfg::crypto::key0>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        ));
-        ini.set<cfg::crypto::key1>(cstr_array_view(
+        );
+        ini.set<cfg::crypto::key1>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        ));
+        );
 
 
         // Uncomment the code block below to generate testing data.

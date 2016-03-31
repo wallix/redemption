@@ -105,6 +105,7 @@
 #include "RDP/mppc_61.hpp"
 
 #include "utils/timeout.hpp"
+#include "utils/underlying_cast.hpp"
 
 #include <memory>
 

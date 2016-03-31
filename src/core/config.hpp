@@ -24,8 +24,9 @@
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cassert>
+#include <cstdint>
 
 #include <stdexcept>
 #include <string>
@@ -35,6 +36,7 @@
 #include "core/font.hpp"
 #include "core/defines.hpp"
 #include "utils/exchange.hpp"
+#include "utils/underlying_cast.hpp"
 
 #include "authid.hpp"
 
@@ -42,7 +44,6 @@
 
 #include "utils/range.hpp"
 
-#include "configs/parse.hpp"
 #include "configs/c_str_buf.hpp"
 
 namespace configs {

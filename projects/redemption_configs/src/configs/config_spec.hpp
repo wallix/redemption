@@ -23,7 +23,7 @@
 
 #include "configs/types.hpp"
 
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp" // keylayouts
 
 #include <type_traits>
 #include <sstream>

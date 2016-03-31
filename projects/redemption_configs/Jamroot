@@ -1,23 +1,4 @@
-
 import os ;
-
-# below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
-
-import feature : feature ;
-import modules : poke ;
-
-# this feature is defined so we can add a dependency on <distri>lenny for some targets
-# disabled because in our current code it finds the right library
-#feature distri : none lenny : propagated ;
-
-# No need to make it a new variant after all
-#variant lenny : release ;
-
-path-constant TOP : . ;
-constant SRCDIR : ../../src ;
-constant TESTDIR : ../../tests ;
-constant MODULEDIR : ../../modules ;
-
 
 # Returns environment value if it exists or default otherwise.
 # Allow us to customize install path with shell variables like $PREFIX...
@@ -35,13 +16,8 @@ rule setvar ( env : default * )
     }
 }
 
-constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
-# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
-constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
-constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
 
-
-constant FIXTURES_PATH : [ setvar FIXTURES_PATH : $(TESTDIR)/fixtures ] ;
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
@@ -55,7 +31,6 @@ constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
 
-constant PNG_DEBUG : <variant>debug:<library>png ;
 
 rule defines ( properties * )
 {
@@ -80,7 +55,6 @@ rule defines ( properties * )
     }
     return $(defs) ;
 }
-variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
 
 
 constant CXXFLAGS-COMMON :
@@ -178,8 +152,9 @@ constant CXXFLAGS-GCC-4.9 :
     <cxxflags>-Wopenmp-simd
     <cxxflags>-Wparentheses
 
-    <variant>release:<cxxflags>-flto
+    #<variant>release:<cxxflags>-flto
 ;
+
 
 constant CXXFLAGS-GCC-5 :
     $(CXXFLAGS-GCC-4.9)
@@ -191,7 +166,7 @@ constant CXXFLAGS-GCC-5 :
 #    <cxxflags>-Wsuggest-final-methods
 #     <cxxflags>-Wsuggest-attribute=pure
 #    <cxxflags>-Wsuggest-attribute=const
-    <variant>release:<cxxflags>-flto-odr-type-merging
+    #<variant>release:<cxxflags>-flto-odr-type-merging
     # <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by ##default)
 ;
 
@@ -238,25 +213,13 @@ constant LIB_SAN_DEPENDENCY :
     <variant>asan:<define>CXX_ENABLE_ASAN
 ;
 
-project redemption
+project configs
     : requirements
-    <include>$(SRCDIR)
-    <include>$(SRCDIR)/system/linux
-    <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/configs/autogen
-    <include>$(SRCDIR)/configs/variant
-    <include>$(SRCDIR)/configs/include
-    <include>$(SRCDIR)/mod
-    <include>$(SRCDIR)/front
-    <include>$(SRCDIR)/acl
-    <include>$(SRCDIR)/capture
-    <include>$(SRCDIR)/keyboard
-    <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/regex
-    <include>$(SRCDIR)/headers
-    <include>$(SRCDIR)/main
-    <include>$(MODULEDIR)/includes
-    <include>../redemption_configs/src
+    <include>src
+    <include>autogen
+    <include>../../src/
+    <include>../../src/core
+    <include>../../src/configs/variant/
 
     <conditional>@defines
 
@@ -264,6 +227,7 @@ project redemption
     <variant>debug:<cxxflags>-g
 
     <cxxflags>-std=c++11
+
 
     $(CXXFLAGS-COMMON)
     <toolset>gcc-4.7:$(CXXFLAGS-GCC-4.7)
@@ -281,108 +245,45 @@ project redemption
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 
-#    <cxxflags>-fpie
-    <cxxflags>-fPIC
-
-
-    <define>_FILE_OFFSET_BITS=64
-    <define>_LARGEFILE64_SOURCE
-
-    <define>__STDC_FORMAT_MACROS
-
     <define>PUBLIC
-    #<define>QT_NO_KEYWORDS
 
    : default-build release
-
 ;
 
-explicit install instexe install-bin install-share install-etc ;
+lib libasan : : <name>asan ;
 
-alias instexe : install-bin ;
-alias install : install-bin install-etc install-etc-themes install-share install-lib ;
+actions generate_configs {
+    $(>) \
+        autogen/configs/autogen/authid.hpp \
+        autogen/configs/autogen/variables_configuration.hpp \
+        autogen/configs/autogen/set_value.tcc
+}
 
-install install-bin
-    : client_rdp_Qt5
-    : <install-type>EXE <install-dependencies>on
-    : <location>$(INSTALLDIR)/usr/local/bin
-    ;
+make autogen/configs/autogen/variables_configuration.hpp
+:
+    make_cpp_config
+#         [ glob src/configs/variant/configs/variant/*.hpp ]
+#         [ glob src/configs/include/configs/*.hpp ]
+#         src/utils/apps/app_write_cpp_config.hpp
+#         src/utils/config_spec.hpp
+#         src/main/write_cpp_config.cpp
+: @generate_configs
+: <location>.
+;
 
-install install-share
-    : [ glob sys/share/rdpproxy/[^.k]* ]
-    :
-    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
-    ;
+alias generate_configs : autogen/configs/autogen/variables_configuration.hpp ;
 
-install install-etc
-    : [ glob sys/etc/rdpproxy/*ini sys/etc/rdpproxy/*pem sys/etc/rdpproxy/*crt sys/etc/rdpproxy/*key sys/etc/rdpproxy/*p12 ]
-    :
-    : <location>$(INSTALLDIR)/etc/rdpproxy
-    ;
+exe make_cpp_config
+    : src/configs/write_cpp_config.cpp
+    : $(LIB_SAN_DEPENDENCY)
+;
 
-lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
-lib openssl : : <name>ssl <link>shared ;
-lib krb5 : : <name>krb5 <link>shared ;
-lib gssglue : : <name>gssglue <link>shared ;
+actions cp_config {
+    cp -R $PWD/`dirname $(>)` ../../src/configs/autogen/configs/ && :>$(<)
+}
 
-lib crypto : : <name>crypto <link>shared ;
-lib z : : <name>z <link>shared ;
-lib snappy : : <name>snappy <link>shared ;
-lib dl : : <name>dl <link>shared ;
-lib python2 : : <name>$(PYTHON_VER) <link>shared ;
-lib libpng : : <name>png <link>shared ;
+make install : generate_configs : @cp_config : ;
 
-alias png : libpng z ;
+explicit install ;
 
-lib libasan : libboost_unit_test openssl krb5 gssglue crypto snappy png dl python2 : <name>asan ;
-
-obj mainloop : $(SRCDIR)/core/mainloop.cpp ;
-obj d3des : $(SRCDIR)/utils/d3des.cpp ;
-obj bitmap : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
-obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
-
-constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) ;
-
-using qt : /usr ; #4
-
-#using qt5
-#    : /usr/lib/x86_64-linux-gnu/qt5
-#    : 5.3
-#    :
-#    :
-#    :
-#    :
-#    : /usr/include/x86_64-linux-gnu/qt5
-#    : /usr/lib/x86_64-linux-gnu
-#    ;
-
-obj front_Qt4.o : src/Qt4/front_Qt4.cpp
-    :
-    <define>QT_NO_KEYWORDS
-    <include>/usr/include/qt4                   #4
-#    <cxxflags>-fPIC
-    ;
-
-obj bitmap_data_allocator.o : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
-
-exe client_rdp_Qt4 :
-    src/Qt4/front_Qt4.hpp
-    src/Qt4/front_widget_Qt4.hpp
-    src/Qt4/keymaps/Qt4_ScanCode_KeyMap.hpp
-    front_Qt4.o
-    bitmap_data_allocator.o
-    /qt//QtGui       #4
-    krb5
-    openssl
-    crypto
-    gssglue
-    png
-    d3des
-    z
-    dl
-    :
-    <define>QT_NO_KEYWORDS
-    <include>/usr/include/qt4                   #4
-#    <cxxflags>-fPIC
-    ;
-
+# explicit make_cpp_config ;

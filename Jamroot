@@ -250,6 +250,7 @@ project redemption
     <include>src/configs/autogen
     <include>src/configs/variant
     <include>src/configs/include
+    <include>projects/redemption_configs/src
     <include>src/mod
     <include>src/front
     <include>src/acl
@@ -606,7 +607,7 @@ exe tls_test_server
 ;
 
 exe make_cpp_config
-    : src/main/write_cpp_config.cpp
+    : projects/redemption_configs/src/configs/write_cpp_config.cpp
     : <variant>asan:<library>libasan $(GCOV)
 ;
 
