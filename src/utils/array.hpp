@@ -25,15 +25,15 @@
 #ifndef _REDEMPTION_UTILS_ARRAY_HPP_
 #define _REDEMPTION_UTILS_ARRAY_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <stdio.h>
 #include <string.h> // for memcpy, memset
 #include <algorithm>
 
 #include "error.hpp"
-#include "bitfu.hpp"
-//#include "utf.hpp"
+#include "utils/bitfu.hpp"
+//#include "utils/utf.hpp"
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 

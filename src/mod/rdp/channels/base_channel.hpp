@@ -21,8 +21,8 @@
 #ifndef REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP
 #define REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP
 
-#include "asynchronous_task_manager.hpp"
-#include "virtual_channel_data_sender.hpp"
+#include "utils/asynchronous_task_manager.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
 #include "rdp/rdp_log.hpp"
 
 typedef int_fast32_t data_size_type;

@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_PUBLIC_UTILS_URANDOM_READ_HPP
 #define REDEMPTION_PUBLIC_UTILS_URANDOM_READ_HPP
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <fcntl.h>
 #include <unistd.h>

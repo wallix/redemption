@@ -24,7 +24,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_COMMON_HPP_
 
 #include <stdint.h>
-#include "log.hpp"
+#include "utils/log.hpp"
 
 class InStream;
 class OutStream;

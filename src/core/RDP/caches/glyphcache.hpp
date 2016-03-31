@@ -22,7 +22,7 @@
 #define _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
 
 #include "font.hpp"
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 #include "RDP/capabilities/glyphcache.hpp"
 
 #include <array>

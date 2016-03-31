@@ -26,7 +26,7 @@
 #define _REDEMPTION_UTILS_REGION_HPP_
 
 #include <vector>
-#include "rect.hpp"
+#include "utils/rect.hpp"
 
 /* region */
 struct Region {

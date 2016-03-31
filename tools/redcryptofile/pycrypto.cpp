@@ -19,9 +19,9 @@
 typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include <algorithm>
 #include <unistd.h>
-#include <genrandom.hpp>
 #include <new>
 
+#include "utils/genrandom.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -534,11 +534,11 @@ Inifile * get_ini(){
     static Inifile * ini = nullptr;
     if (ini == nullptr){
         ini = new Inifile;
-        ini->set<cfg::crypto::key0>(cstr_array_view(
+        ini->set<cfg::crypto::key0>(
             "\x01\x02\x03\x04\x05\x06\x07\x08"
             "\x01\x02\x03\x04\x05\x06\x07\x08"
             "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"));
+            "\x01\x02\x03\x04\x05\x06\x07\x08");
     }
     return ini;
 }

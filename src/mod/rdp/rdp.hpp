@@ -28,8 +28,8 @@
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
-#include "stream.hpp"
-#include "ssl_calls.hpp"
+#include "utils/stream.hpp"
+#include "system/ssl_calls.hpp"
 #include "mod_api.hpp"
 #include "auth_api.hpp"
 #include "front_api.hpp"
@@ -42,7 +42,7 @@
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "RDP/autoreconnect.hpp"
 #include "RDP/ServerRedirection.hpp"
 #include "RDP/bitmapupdate.hpp"
@@ -74,9 +74,9 @@
 #include "transparentrecorder.hpp"
 
 #include "client_info.hpp"
-#include "genrandom.hpp"
-#include "authorization_channels.hpp"
-#include "parser.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/authorization_channels.hpp"
+#include "utils/parser.hpp"
 #include "channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
@@ -352,6 +352,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
+    const ClientTimeZone client_time_zone;
     Random & gen;
     const uint32_t verbose;
     const uint32_t cache_verbose;
@@ -422,7 +423,7 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool                     server_cert_store;
     const configs::ServerCertCheck server_cert_check;
 
-    const char * certif_path;
+    std::unique_ptr<char[]> certif_path;
 
     bool enable_polygonsc;
     bool enable_polygoncb;
@@ -571,8 +572,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_access_allowed_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "certificate_check_success",
-                        "data='Connexion to server allowed'"
+                        "CERTIFICATE_CHECK_SUCCESS",
+                        "description='Connexion to server allowed'"
                     );
             }
         }
@@ -582,8 +583,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_cert_create_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_new",
-                        "data='New X.509 certificate created'"
+                        "SERVER_CERTIFICATE_NEW",
+                        "description='New X.509 certificate created'"
                     );
             }
         }
@@ -593,8 +594,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_cert_success_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_match_success",
-                        "data='X.509 server certificate match'"
+                        "SERVER_CERTIFICATE_MATCH_SUCCESS",
+                        "description='X.509 server certificate match'"
                     );
             }
         }
@@ -604,8 +605,8 @@ class mod_rdp : public RDPChannelManagerMod {
                     this->server_cert_failure_message) &&
                 this->acl) {
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_match_failure",
-                        "data='X.509 server certificate match failure'"
+                        "SERVER_CERTIFICATE_MATCH_FAILURE",
+                        "description='X.509 server certificate match failure'"
                     );
             }
         }
@@ -616,11 +617,11 @@ class mod_rdp : public RDPChannelManagerMod {
                 this->acl) {
                 char extra[512];
                 snprintf(extra, sizeof(extra),
-                        "data='X.509 server certificate internal error: \"%s\"'",
+                        "description='X.509 server certificate internal error: \"%s\"'",
                         (str_error ? str_error : "")
                     );
                 this->acl->log4((this->verbose & 1),
-                        "server_certificate_error",
+                        "SERVER_CERTIFICATE_ERROR",
                         extra
                     );
             }
@@ -657,6 +658,7 @@ public:
         , console_session(info.console_session)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
+        , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
@@ -1112,7 +1114,6 @@ public:
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
-        delete [] this->certif_path;
     }
 
 protected:
@@ -1962,7 +1963,7 @@ public:
                                 this->server_cert_store,
                                 this->server_cert_check,
                                 this->server_notifier,
-                                this->certif_path
+                                this->certif_path.get()
                             );
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
@@ -3504,6 +3505,14 @@ public:
                     this->end_session_message.clear();
                 }
 
+                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
+                    (e.id == ERR_NLA_AUTHENTICATION_FAILED)) {
+                    throw;
+                }
+
                 StaticOutStream<256> stream;
                 X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                 try {
@@ -3518,15 +3527,6 @@ public:
 
                 if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
                     this->front.disable_input_event_and_graphics_update(false);
-                }
-
-                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
-                    (e.id == ERR_NLA_AUTHENTICATION_FAILED))
-                {
-                    throw;
                 }
             }
         }
@@ -6250,6 +6250,8 @@ public:
                              , this->performanceFlags
                              , this->clientAddr
                              );
+
+        infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
 
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,

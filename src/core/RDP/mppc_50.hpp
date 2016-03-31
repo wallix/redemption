@@ -26,7 +26,7 @@
 #define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
 #include <stdint.h>
 #include "mppc.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 struct rdp_mppc_50_dec : public rdp_mppc_dec {
     uint8_t    history_buf[RDP_50_HIST_BUF_LEN];

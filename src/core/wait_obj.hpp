@@ -25,8 +25,8 @@
 #ifndef _REDEMPTION_CORE_WAIT_OBJ_HPP_
 #define _REDEMPTION_CORE_WAIT_OBJ_HPP_
 
-#include "difftimeval.hpp"
-#include "noncopyable.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/noncopyable.hpp"
 
 enum BackEvent_t {
     BACK_EVENT_NONE = 0,

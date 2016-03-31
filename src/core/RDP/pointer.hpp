@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_POINTER_HPP_
 #define _REDEMPTION_CORE_RDP_POINTER_HPP_
 
-#include "log.hpp"
-#include "bitfu.hpp"
+#include "utils/log.hpp"
+#include "utils/bitfu.hpp"
 #include <cstring>
 #include <algorithm> // std:min
 

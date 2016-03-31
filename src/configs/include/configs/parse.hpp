@@ -25,10 +25,10 @@
 #include <limits>
 #include <string>
 
-#include "theme.hpp"
-#include "parser.hpp"
-#include "defines.hpp"
-#include "fileutils.hpp"
+#include "utils/theme.hpp"
+#include "utils/parser.hpp"
+#include "core/defines.hpp"
+#include "utils/fileutils.hpp"
 #include "configs/types.hpp"
 #include "configs/c_str_buf.hpp"
 

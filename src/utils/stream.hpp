@@ -25,11 +25,11 @@
 #ifndef _REDEMPTION_UTILS_STREAM_HPP_
 #define _REDEMPTION_UTILS_STREAM_HPP_
 
-#include "log.hpp" // REDASSERT
-#include "bitfu.hpp"
-#include "utf.hpp"
-#include "parse.hpp"
-#include "make_unique.hpp"
+#include "utils/log.hpp" // REDASSERT
+#include "utils/bitfu.hpp"
+#include "utils/utf.hpp"
+#include "utils/parse.hpp"
+#include "utils/make_unique.hpp"
 #include "bytes_t.hpp"
 
 #include <memory>

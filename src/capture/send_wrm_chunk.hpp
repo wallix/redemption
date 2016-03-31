@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_SRC_CAPTURE_SEND_WRM_CHUNK_HPP
 #define REDEMPTION_SRC_CAPTURE_SEND_WRM_CHUNK_HPP
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "transport/transport.hpp"
 #include "wrm_label.hpp"
 

@@ -1,0 +1,388 @@
+
+import os ;
+
+# below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
+
+import feature : feature ;
+import modules : poke ;
+
+# this feature is defined so we can add a dependency on <distri>lenny for some targets
+# disabled because in our current code it finds the right library
+#feature distri : none lenny : propagated ;
+
+# No need to make it a new variant after all
+#variant lenny : release ;
+
+path-constant TOP : . ;
+constant SRCDIR : ../../src ;
+constant TESTDIR : ../../tests ;
+constant MODULEDIR : ../../modules ;
+
+
+# Returns environment value if it exists or default otherwise.
+# Allow us to customize install path with shell variables like $PREFIX...
+# (this is bad practice and should be replaced by a site configuration file
+# but I until now I miserably failed creating a clean separate configuration file)
+rule setvar ( env : default * )
+{
+    if [ os.environ $(env) ]
+    {
+        return [ os.environ $(env) ] ;
+    }
+    else
+    {
+        return $(default) ;
+    }
+}
+
+constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
+# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
+constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
+constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
+
+
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : $(TESTDIR)/fixtures ] ;
+constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
+constant PREFIX : [ setvar PREFIX : /usr/local ] ;
+constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
+constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
+constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
+constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
+constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
+constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
+constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
+constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
+constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
+constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
+
+constant PNG_DEBUG : <variant>debug:<library>png ;
+
+rule defines ( properties * )
+{
+    local defs ;
+    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+    defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
+    defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>WRM_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>HASH_PATH='\"$(HASH_PATH)\"' ;
+    defs += <define>LICENSE_PATH='\"$(CERT_PREFIX)/rdplicense\"' ;
+    defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)/rdp\"' ;
+    defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
+    defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
+    defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
+    if [ os.environ VERBOSE ]
+    {
+        defs += <define>VERBOSE ;
+    }
+    return $(defs) ;
+}
+variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
+
+
+constant CXXFLAGS-COMMON :
+#     <cxxflags>-Weffc++
+#     <cxxflags>-Wswitch-enum
+#     <cxxflags>-Wswitch-default
+    <cxxflags>-pedantic
+    <cxxflags>-pedantic-errors
+#    <cxxflags>-Wconversion
+    <cxxflags>-Wvla
+    <cxxflags>-Wstrict-aliasing=2
+#    <cxxflags>-Wlong-long
+
+    <cxxflags>-Wuninitialized
+    <cxxflags>-Wnon-virtual-dtor
+    <cxxflags>-Wall
+    <cxxflags>-Wextra
+    <cxxflags>-Wno-unused-parameter
+    <cxxflags>-Wno-long-long
+    <cxxflags>-Wtype-limits
+    <cxxflags>-Wundef
+    <cxxflags>-Wcast-align
+    <cxxflags>-Wchar-subscripts
+#     <cxxflags>-Wformat
+    <cxxflags>-Wformat=2
+    <cxxflags>-Wformat-security
+#     <cxxflags>-Wmissing-format-attribute
+    <cxxflags>-Wsequence-point
+    <cxxflags>-Wreturn-type
+    <cxxflags>-Wfloat-equal
+#     <cxxflags>-Wshadow
+    <cxxflags>-Wpointer-arith
+    <cxxflags>-Wsign-compare
+#     <cxxflags>-Wmissing-declarations
+    <cxxflags>-Wpacked
+    <cxxflags>-Wredundant-decls
+#     <cxxflags>-Winline
+    <cxxflags>-Winit-self
+    <cxxflags>-Wcast-qual
+    <cxxflags>-Woverloaded-virtual
+    <cxxflags>-Wunused-variable
+#     <cxxflags>-Wunused-parameter
+    <cxxflags>-Wmissing-include-dirs
+    <cxxflags>-Wunused
+    <cxxflags>-Wendif-labels
+    <cxxflags>-Wwrite-strings
+#     <cxxflags>-Wpadded
+    <cxxflags>-Wstrict-overflow=1
+#     <cxxflags>-Wstrict-overflow=5
+    <cxxflags>-Wc++11-compat
+    <cxxflags>-Wnarrowing
+    <cxxflags>-Wvolatile-register-var
+    <cxxflags>-Wdisabled-optimization
+    <cxxflags>-Wno-overlength-strings
+    <cxxflags>-Warray-bounds
+    <cxxflags>-Wold-style-cast
+
+#     <toolset>clang:<cxxflags>-Weverything
+#     <toolset>clang:<cxxflags>-Wno-c++98-compat
+    <toolset>clang:<cxxflags>-Wno-mismatched-tags
+#    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
+    <toolset>clang:<cxxflags>-Wno-char-subscripts
+    <toolset>clang:<cxxflags>-Wno-unused-variable
+#     <toolset>clang:<cxxflags>-Wno-unused-private-field
+;
+
+
+constant CXXFLAGS-GCC-4.7 :
+    <cxxflags>-Wunused-but-set-parameter
+    <cxxflags>-Wunused-but-set-variable
+#     <cxxflags>-Wsuggest-attribute=pure
+#     <cxxflags>-Wsuggest-attribute=const
+    <cxxflags>-Wsuggest-attribute=noreturn
+    <cxxflags>-Wzero-as-null-pointer-constant
+    <cxxflags>-Wlogical-op
+#     <cxxflags>-Wno-aggressive-loop-optimizations
+    <cxxflags>-Wnormalized=nfc #disable ?
+    <cxxflags>-Wvector-operation-performance
+    <cxxflags>-Wdouble-promotion
+   <cxxflags>-Wmaybe-uninitialized
+    <cxxflags>-Wtrampolines
+;
+
+
+constant CXXFLAGS-GCC-4.8 :
+    $(CXXFLAGS-GCC-4.7)
+    <cxxflags>-Wuseless-cast
+;
+
+
+constant CXXFLAGS-GCC-4.9 :
+    $(CXXFLAGS-GCC-4.8)
+    <cxxflags>-Wconditionally-supported
+    <cxxflags>-Wfloat-conversion
+    <cxxflags>-Wopenmp-simd
+    <cxxflags>-Wparentheses
+
+    <variant>release:<cxxflags>-flto
+;
+
+constant CXXFLAGS-GCC-5 :
+    $(CXXFLAGS-GCC-4.9)
+    <cxxflags>-Wlogical-not-parentheses
+    <cxxflags>-Wswitch-bool
+    <cxxflags>-Wsizeof-array-argument
+    <cxxflags>-Wbool-compare
+#    <cxxflags>-Wsuggest-final-types
+#    <cxxflags>-Wsuggest-final-methods
+#     <cxxflags>-Wsuggest-attribute=pure
+#    <cxxflags>-Wsuggest-attribute=const
+    <variant>release:<cxxflags>-flto-odr-type-merging
+    # <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by ##default)
+;
+
+
+constant CXXFLAGS-GCC-5.1 :
+    $(CXXFLAGS-GCC-5)
+    <cxxflags>-Wsuggest-override
+    <cxxflags>-fsized-deallocation
+    <cxxflags>-Wsized-deallocation
+    <cxxflags>-Warray-bounds=2
+;
+
+
+constant CXXFLAGS-GCC-6 :
+    $(CXXFLAGS-GCC-5)
+;
+
+
+# switch [ modules.peek : ODSHOME ]
+# {
+#     case *gcc-4.8* : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-4.8) ;
+#     case *gcc-4.9* : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-4.9) ;
+#     case *gcc-5*   : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-5) ;
+#     case *gcc-6*   : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-6) ;
+# }
+
+
+variant strict : :
+    <cxxflags>-Wsign-conversion
+;
+
+variant asan : debug :
+#    <cxxflags>-fsanitize=address
+#    <cxxflags>-fsanitize=leak
+#    <cxxflags>-fno-omit-frame-pointer
+#    <linkflags>-lasan
+#    <define>CXX_ENABLE_ASAN
+;
+constant LIB_SAN_DEPENDENCY :
+    <variant>asan:<library>libasan
+    <variant>asan:<cxxflags>-fsanitize=address
+#    <variant>asan:<cxxflags>-fsanitize=leak
+    <variant>asan:<cxxflags>-fno-omit-frame-pointer
+    <variant>asan:<define>CXX_ENABLE_ASAN
+;
+
+project redemption
+    : requirements
+    <include>$(SRCDIR)
+    <include>$(SRCDIR)/system/linux
+    <include>$(SRCDIR)/core
+    <include>$(SRCDIR)/configs/autogen
+    <include>$(SRCDIR)/configs/variant
+    <include>$(SRCDIR)/configs/include
+    <include>$(SRCDIR)/mod
+    <include>$(SRCDIR)/front
+    <include>$(SRCDIR)/acl
+    <include>$(SRCDIR)/capture
+    <include>$(SRCDIR)/keyboard
+    <include>$(SRCDIR)/keyboard/reversed_keymaps
+    <include>$(SRCDIR)/regex
+    <include>$(SRCDIR)/headers
+    <include>$(SRCDIR)/main
+    <include>$(MODULEDIR)/includes
+    <include>../redemption_configs/src
+
+    <conditional>@defines
+
+    <variant>debug:<define>REDASSERT_AS_ASSERT
+    <variant>debug:<cxxflags>-g
+
+    <cxxflags>-std=c++11
+
+    $(CXXFLAGS-COMMON)
+    <toolset>gcc-4.7:$(CXXFLAGS-GCC-4.7)
+    <toolset>gcc-4.8:$(CXXFLAGS-GCC-4.8)
+    <toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.2:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.3:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-5.0:$(CXXFLAGS-GCC-5)
+    <toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5)
+    <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
+    <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
+
+#    <cxxflags>-fpie
+    <cxxflags>-fPIC
+
+
+    <define>_FILE_OFFSET_BITS=64
+    <define>_LARGEFILE64_SOURCE
+
+    <define>__STDC_FORMAT_MACROS
+
+    <define>PUBLIC
+    #<define>QT_NO_KEYWORDS
+
+   : default-build release
+
+;
+
+explicit install instexe install-bin install-share install-etc ;
+
+alias instexe : install-bin ;
+alias install : install-bin install-etc install-etc-themes install-share install-lib ;
+
+install install-bin
+    : client_rdp_Qt5
+    : <install-type>EXE <install-dependencies>on
+    : <location>$(INSTALLDIR)/usr/local/bin
+    ;
+
+install install-share
+    : [ glob sys/share/rdpproxy/[^.k]* ]
+    :
+    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
+    ;
+
+install install-etc
+    : [ glob sys/etc/rdpproxy/*ini sys/etc/rdpproxy/*pem sys/etc/rdpproxy/*crt sys/etc/rdpproxy/*key sys/etc/rdpproxy/*p12 ]
+    :
+    : <location>$(INSTALLDIR)/etc/rdpproxy
+    ;
+
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+lib openssl : : <name>ssl <link>shared ;
+lib krb5 : : <name>krb5 <link>shared ;
+lib gssglue : : <name>gssglue <link>shared ;
+
+lib crypto : : <name>crypto <link>shared ;
+lib z : : <name>z <link>shared ;
+lib snappy : : <name>snappy <link>shared ;
+lib dl : : <name>dl <link>shared ;
+lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+lib libpng : : <name>png <link>shared ;
+
+alias png : libpng z ;
+
+lib libasan : libboost_unit_test openssl krb5 gssglue crypto snappy png dl python2 : <name>asan ;
+
+obj mainloop : $(SRCDIR)/core/mainloop.cpp ;
+obj d3des : $(SRCDIR)/utils/d3des.cpp ;
+obj bitmap : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
+obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
+
+constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) ;
+
+using qt : /usr ; #4
+
+#using qt5
+#    : /usr/lib/x86_64-linux-gnu/qt5
+#    : 5.3
+#    :
+#    :
+#    :
+#    :
+#    : /usr/include/x86_64-linux-gnu/qt5
+#    : /usr/lib/x86_64-linux-gnu
+#    ;
+
+obj front_Qt4.o : src/Qt4/front_Qt4.cpp
+    :
+    <define>QT_NO_KEYWORDS
+    <include>/usr/include/qt4                   #4
+#    <cxxflags>-fPIC
+    ;
+
+obj bitmap_data_allocator.o : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
+
+exe client_rdp_Qt4 :
+    src/Qt4/front_Qt4.hpp
+    src/Qt4/front_widget_Qt4.hpp
+    src/Qt4/keymaps/Qt4_ScanCode_KeyMap.hpp
+    front_Qt4.o
+    bitmap_data_allocator.o
+    /qt//QtGui       #4
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    :
+    <define>QT_NO_KEYWORDS
+    <include>/usr/include/qt4                   #4
+#    <cxxflags>-fPIC
+    ;
+

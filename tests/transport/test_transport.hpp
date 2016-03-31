@@ -27,7 +27,7 @@
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/dynarray_buf.hpp"
 #include "transport/buffer/check_buf.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 #include <new>
 #include <memory>
@@ -133,7 +133,6 @@ public:
             this->status = false;
             std::ostringstream out;
             out << "Check transport remaining=" << (this->len-this->current) << " len=" << this->len;
-            this->remaining_is_error = true;
             throw remaining_error{out.str()};
         }
         return true;
@@ -142,7 +141,7 @@ public:
 private:
     void do_send(const char * const data, size_t len)
     {
-        const size_t available_len = (this->current + len > this->len) ? (this->len - this->current) : len;
+        const size_t available_len = std::min<size_t>(this->len - this->current, len );
         if (0 != memcmp(data, this->data.get() + this->current, available_len)){
             // data differs, find where
             uint32_t differs = 0;
@@ -157,6 +156,7 @@ private:
             hexdump_c(data + differs, available_len - differs);
             this->data.reset();
             this->status = false;
+            this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
 
@@ -170,6 +170,7 @@ private:
             hexdump_c(data + available_len, len - available_len);
             this->data.reset();
             this->status = false;
+            this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
 

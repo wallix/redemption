@@ -24,25 +24,26 @@
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cassert>
+#include <cstdint>
 
 #include <stdexcept>
 #include <string>
 #include <set>
 
-#include "log.hpp"
-#include "font.hpp"
-#include "defines.hpp"
-#include "exchange.hpp"
+#include "utils/log.hpp"
+#include "core/font.hpp"
+#include "core/defines.hpp"
+#include "utils/exchange.hpp"
+#include "utils/underlying_cast.hpp"
 
 #include "authid.hpp"
 
-#include "get_printable_password.hpp"
+#include "utils/get_printable_password.hpp"
 
 #include "utils/range.hpp"
 
-#include "configs/parse.hpp"
 #include "configs/c_str_buf.hpp"
 
 namespace configs {

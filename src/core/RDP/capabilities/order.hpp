@@ -25,7 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_ORDER_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "error.hpp"
 
 // 2.2.7.1.3 Order Capability Set (TS_ORDER_CAPABILITYSET)

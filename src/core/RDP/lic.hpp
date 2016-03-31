@@ -30,8 +30,8 @@
 
 #include <cinttypes>
 
-#include "ssl_calls.hpp"
-#include "stream.hpp"
+#include "system/ssl_calls.hpp"
+#include "utils/stream.hpp"
 
 // Sent by server:
 // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).

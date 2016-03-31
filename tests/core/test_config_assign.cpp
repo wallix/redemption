@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::comment>(s);
     ini.set<cfg::crypto::key0>(key);
     ini.set<cfg::crypto::key0>("12\x00#:\x55", 6u);
-    ini.set<cfg::crypto::key0>(cstr_array_view("12\x00#:\x55"));
+    //ini.set<cfg::crypto::key0>("12\x00#:\x55");
     ini.set_acl<cfg::context::display_message>(cs);
     ini.set_acl<cfg::context::display_message>(s);
     ini.set_acl<cfg::context::duration>(cs);
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::waitinforeturn>(s);
 
     ini.set<cfg::crypto::key0>("12\x00#:\x55", 6u);
-    ini.set<cfg::crypto::key0>(cstr_array_view("12\x00#:\x55"));
+    //ini.set<cfg::crypto::key0>("12\x00#:\x55");
     ini.set<cfg::crypto::key0>(key);
     // is_same<key0:type, key1:type>
     [](cfg::crypto::key0::type *){}(static_cast<cfg::crypto::key1::type *>(nullptr));

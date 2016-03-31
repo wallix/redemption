@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_UTILS_TEXT_METRICS_HPP
 #define REDEMPTION_UTILS_TEXT_METRICS_HPP
 
-#include "utf.hpp"
+#include "utils/utf.hpp"
 #include "font.hpp"
 
 template<class NotFoundCallback>

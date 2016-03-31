@@ -30,7 +30,7 @@
 #include "widget2_rect.hpp"
 #include "edit.hpp"
 #include "password.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 #include "flat_button.hpp"
 
 enum ChallengeOpt {

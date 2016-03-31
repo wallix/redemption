@@ -23,8 +23,8 @@
 #ifndef _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP_
 #define _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP_
 
-#include "log.hpp"
-#include "parser.hpp"
+#include "utils/log.hpp"
+#include "utils/parser.hpp"
 #include "cfgloader.hpp"
 
 #include "RDP/capabilities/general.hpp"

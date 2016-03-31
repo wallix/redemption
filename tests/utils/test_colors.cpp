@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "colors.hpp"
+#include "utils/colors.hpp"
 
 BOOST_AUTO_TEST_CASE(TestColors)
 {

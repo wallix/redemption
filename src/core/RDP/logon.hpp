@@ -26,11 +26,11 @@
 
 #include <stdint.h>
 
-#include "cast.hpp"
-#include "log.hpp"
+#include "utils/cast.hpp"
+#include "utils/log.hpp"
 #include "error.hpp"
-#include "stream.hpp"
-#include "get_printable_password.hpp"
+#include "utils/stream.hpp"
+#include "utils/get_printable_password.hpp"
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================
@@ -590,16 +590,47 @@ struct SystemTime {
         ;
     } // END CONSTRUCTOR
 
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(wYear);
+        stream.out_uint16_le(wMonth);
+        stream.out_uint16_le(wDayOfWeek);
+        stream.out_uint16_le(wDay);
+        stream.out_uint16_le(wHour);
+        stream.out_uint16_le(wMinute);
+        stream.out_uint16_le(wSecond);
+        stream.out_uint16_le(wMilliseconds);
+    }
+
+    void recv(InStream & stream){
+        const unsigned expected =
+              16 /* wYear(2) + wMonth(2) + wDayOfWeek(2) + wDay(2) + wHour(2) + wMinute(2) + wSecond(2) + wMilliseconds(2) */
+            ;
+
+        if (!stream.in_check_rem(expected))
+        {
+            LOG(LOG_ERR, "Truncated System Time structure: expected=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_SYSTEM_TIME_TRUNCATED);
+        }
+
+        this->wYear         = stream.in_uint16_le();
+        this->wMonth        = stream.in_uint16_le();
+        this->wDayOfWeek    = stream.in_uint16_le();
+        this->wDay          = stream.in_uint16_le();
+        this->wHour         = stream.in_uint16_le();
+        this->wMinute       = stream.in_uint16_le();
+        this->wSecond       = stream.in_uint16_le();
+        this->wMilliseconds = stream.in_uint16_le();
+    }
 }; // END STRUCT : SystemTime
 
 
 struct ClientTimeZone {
-
     uint32_t Bias;
-    uint8_t StandardName[65];
+    uint8_t StandardName[64];
     SystemTime StandardDate;
     uint32_t StandardBias;
-    uint8_t DaylightName[65];
+    uint8_t DaylightName[64];
     SystemTime DaylightDate;
     uint32_t DaylightBias;
 
@@ -612,26 +643,71 @@ struct ClientTimeZone {
                           //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
                           //    of the DaylightDate field are all set to zero
     {
-        memset(StandardName, 0, 65);
-        memset(DaylightName, 0, 65);
+        ::memset(this->StandardName, 0, sizeof(this->StandardName));
+        ::memset(this->DaylightName, 0, sizeof(this->DaylightName));
 
         // bias
-        this->Bias = 120;
+        this->Bias = 0;
         // standard Name
-        memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time")+1);
+//        memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time")+1);
+        ::UTF8toUTF16(::byte_ptr_cast("GMT"), this->StandardName, sizeof(this->StandardName));
         // standard date
-        ;
+        this->StandardDate.wYear            = 0;
+        this->StandardDate.wMonth           = 10;
+        this->StandardDate.wDayOfWeek       = 0;
+        this->StandardDate.wDay             = 5;
+        this->StandardDate.wHour            = 2;
+        this->StandardDate.wMinute          = 0;
+        this->StandardDate.wSecond          = 0;
+        this->StandardDate.wMilliseconds    = 0;
         // standard bias
-        this->StandardBias = 60;
+        this->StandardBias = 0;
         // daylight name
-        memcpy(this->DaylightName, "GMT Daylight Time", strlen("GMT Daylight Time")+1);
+//        memcpy(this->DaylightName, "GMT Daylight Time", strlen("GMT Daylight Time")+1);
+        ::UTF8toUTF16(::byte_ptr_cast("GMT (heure d'été)"), this->DaylightName, sizeof(this->DaylightName));
         // daylight date
-        ;
+        this->DaylightDate.wYear            = 0;
+        this->DaylightDate.wMonth           = 3;
+        this->DaylightDate.wDayOfWeek       = 0;
+        this->DaylightDate.wDay             = 5;
+        this->DaylightDate.wHour            = 1;
+        this->DaylightDate.wMinute          = 0;
+        this->DaylightDate.wSecond          = 0;
+        this->DaylightDate.wMilliseconds    = 0;
         // daylight bias
-        this->DaylightBias = 120;
+        this->DaylightBias = 4294967236;
 
     } // END CONSTRUCTOR
 
+    void emit(OutStream & stream) {
+    }
+
+    void recv(InStream & stream) {
+        const unsigned expected =
+              172 /* Bias(4) + StandardName(64) + StandardDate(16) + StandardBias(4) + DaylightName(64) + DaylightDate(16) + DaylightBias(4) */
+            ;
+
+        if (!stream.in_check_rem(expected))
+        {
+            LOG(LOG_ERR, "Truncated Time Zone Information structure: expected=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_SYSTEM_TIME_TRUNCATED);
+        }
+
+        this->Bias = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->StandardName, sizeof(this->StandardName));
+
+        this->StandardDate.recv(stream);
+
+        this->StandardBias = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->DaylightName, sizeof(this->DaylightName));
+
+        this->DaylightDate.recv(stream);
+
+        this->DaylightBias = stream.in_uint32_le();
+    }
 }; // END STRUCT : ClientTimeZone
 
 
@@ -971,7 +1047,8 @@ struct InfoPacket {
                 LOG(LOG_ERR, "Missing InfoPacket.clientTimeZone");
                 return;
             }
-            stream.in_skip_bytes(172);
+            this->extendedInfoPacket.clientTimeZone.recv(stream);
+//            stream.in_skip_bytes(172);
 
             // Client Session Id
             if (stream.get_current() + 4 > stream.get_data_end()){
@@ -1071,7 +1148,14 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved2 %u", this->extendedInfoPacket.reserved2);
         // Extended - Client Time Zone
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias %u", this->extendedInfoPacket.clientTimeZone.Bias);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", this->extendedInfoPacket.clientTimeZone.StandardName);
+
+        uint8_t utf8_StandardName[sizeof(this->extendedInfoPacket.clientTimeZone.StandardName) / 2 * 4];
+        ::UTF16toUTF8(this->extendedInfoPacket.clientTimeZone.StandardName,
+            sizeof(this->extendedInfoPacket.clientTimeZone.StandardName) / 2,
+            utf8_StandardName, sizeof(utf8_StandardName));
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", this->extendedInfoPacket.clientTimeZone.StandardName);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", utf8_StandardName);
+
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wYear %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
@@ -1081,7 +1165,14 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wSecond);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMilliseconds);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardBias %u", this->extendedInfoPacket.clientTimeZone.StandardBias);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", this->extendedInfoPacket.clientTimeZone.DaylightName);
+
+        uint8_t utf8_DaylightName[sizeof(this->extendedInfoPacket.clientTimeZone.DaylightName) / 2 * 4];
+        ::UTF16toUTF8(this->extendedInfoPacket.clientTimeZone.DaylightName,
+            sizeof(this->extendedInfoPacket.clientTimeZone.DaylightName) / 2,
+            utf8_DaylightName, sizeof(utf8_DaylightName));
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", this->extendedInfoPacket.clientTimeZone.DaylightName);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", utf8_DaylightName);
+
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wYear %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
@@ -1090,6 +1181,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightBias %u", this->extendedInfoPacket.clientTimeZone.DaylightBias);
     } // END FUNCT : log()
 }; // END STRUCT : InfoPacket
 

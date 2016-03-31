@@ -35,7 +35,7 @@
 #include <errno.h>
 
 #include "utils/genrandom.hpp"
-#include "utils/ssl_calls.hpp"
+#include "system/ssl_calls.hpp"
 #include "utils/cast.hpp"
 
 #include "openssl_crypto.hpp"

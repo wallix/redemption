@@ -28,9 +28,9 @@
 
 #define LOGNULL
 
-#include "bitfu.hpp"
+#include "utils/bitfu.hpp"
 
-//#include "rdtsc.hpp"
+//#include "utils/rdtsc.hpp"
 //long long ustime() {
 //    struct timeval now;
 //    gettimeofday(&now, nullptr);

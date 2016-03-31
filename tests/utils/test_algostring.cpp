@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "algostring.hpp"
+#include "utils/algostring.hpp"
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestTrim)

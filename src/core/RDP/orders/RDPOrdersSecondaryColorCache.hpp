@@ -72,7 +72,7 @@
 // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in this
 // field are arbitrary and MUST be ignored.
 
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "RDPOrdersCommon.hpp"
 
 class RDPColCache {

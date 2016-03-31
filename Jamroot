@@ -246,11 +246,12 @@ project redemption
     : requirements
     
     <include>src
-    <include>src/utils
+    <include>src/system/linux
     <include>src/core
     <include>src/configs/autogen
     <include>src/configs/variant
     <include>src/configs/include
+    <include>projects/redemption_configs/src
     <include>src/mod
     <include>src/front
     <include>src/acl
@@ -615,7 +616,7 @@ exe tls_test_server
 ;
 
 exe make_cpp_config
-    : src/main/write_cpp_config.cpp
+    : projects/redemption_configs/src/configs/write_cpp_config.cpp
     : <variant>asan:<library>libasan $(GCOV)
 ;
 
@@ -848,7 +849,7 @@ unit-test test_log : tests/utils/test_log.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_netutils : tests/utils/test_netutils.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_png : tests/utils/test_png.cpp : $(TEST_DEPENDENCIES) <library>png ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_calls : tests/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_strings : tests/test_strings.cpp : $(TEST_DEPENDENCIES) ;
 
 

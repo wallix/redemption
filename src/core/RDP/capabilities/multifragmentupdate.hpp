@@ -25,7 +25,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.7.2.6 Multifragment Update Capability Set (TS_MULTIFRAGMENTUPDATE_CAPABILITYSET)
 // ====================================================================================

@@ -23,10 +23,8 @@
 #define BOOST_TEST_MODULE TestFlatWabCloseMod
 #include <boost/test/auto_unit_test.hpp>
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
 #undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
+#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 

@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr),
-        "./tests/fixtures/sample", ".mwrm", 0, 0);
+        FIXTURES_PATH "/sample", ".mwrm", 0, 0);
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -360,13 +360,13 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 BOOST_AUTO_TEST_CASE(TestMetav2)
 {
     Inifile ini;
-    ini.set<cfg::crypto::key0>(cstr_array_view(
+    ini.set<cfg::crypto::key0>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+    );
+    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
     LCGRandom rnd(0);
@@ -375,7 +375,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
 
     ifile_buf ifile(&cctx, 0);
 
-    ifile.open("./tests/fixtures/sample_v2.mwrm");
+    ifile.open(FIXTURES_PATH "/sample_v2.mwrm");
 
     struct ReaderBuf
     {
@@ -434,13 +434,13 @@ BOOST_AUTO_TEST_CASE(TestMetav2)
 BOOST_AUTO_TEST_CASE(TestMetav2sum)
 {
     Inifile ini;
-    ini.set<cfg::crypto::key0>(cstr_array_view(
+    ini.set<cfg::crypto::key0>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+    );
+    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
     LCGRandom rnd(0);
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2sum)
     CryptoContext cctx(rnd, ini);
 
     ifile_buf ifile(&cctx, 0);
-    ifile.open("./tests/fixtures/sample_v2_checksum.mwrm");
+    ifile.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
 
     struct ReaderBuf
     {
@@ -523,7 +523,7 @@ BOOST_AUTO_TEST_CASE(TestMetav2sum)
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
     // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample_v2", ".mwrm", 0, 0);
+    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample_v2", ".mwrm", 0, 0);
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
@@ -552,23 +552,23 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm", 0, 0);
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0, 0);
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
@@ -583,24 +583,24 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm", 0, 0);
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0, 0);
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
     BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
     BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
@@ -617,23 +617,23 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 
     // This is what we are actually testing, chaining of several files content
     try {
-        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/sample", ".mwrm", 0, 0);
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0, 0);
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
@@ -663,23 +663,23 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     // This is what we are actually testing, chaining of several files content
 
     {
-        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/moved_sample", ".mwrm", 0, 0);
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/moved_sample", ".mwrm", 0, 0);
         BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
         BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
         BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
@@ -694,24 +694,24 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), "./tests/fixtures/moved_sample", ".mwrm", 0, 0);
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/moved_sample", ".mwrm", 0, 0);
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
     BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
     BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
@@ -732,13 +732,13 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
     BOOST_CHECK(true);
 
     Inifile ini;
-    ini.set<cfg::crypto::key0>(cstr_array_view(
+    ini.set<cfg::crypto::key0>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+    );
+    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
     LCGRandom rnd(0);
@@ -812,13 +812,13 @@ BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
 {
 
     Inifile ini;
-    ini.set<cfg::crypto::key0>(cstr_array_view(
+    ini.set<cfg::crypto::key0>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+    );
+    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
     LCGRandom rnd(0);
 

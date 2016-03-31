@@ -23,9 +23,9 @@
 #ifndef _REDEMPTION_CORE_RDP_OUT_PER_BSTREAM_HPP_
 #define _REDEMPTION_CORE_RDP_OUT_PER_BSTREAM_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 class OutPerStream : public OutStream
 {

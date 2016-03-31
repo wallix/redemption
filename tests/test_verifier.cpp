@@ -34,7 +34,7 @@
 
 #include <iostream>
 
-#include "ssl_calls.hpp"
+#include "system/ssl_calls.hpp"
 #include "utils/apps/app_verifier.hpp"
 #include "utils/apps/app_decrypter.hpp"
 
@@ -43,11 +43,11 @@
 #include <stdint.h>
 #include <algorithm>
 #include <unistd.h>
-#include <genrandom.hpp>
+#include "utils/genrandom.hpp"
 
 #include <new>
 
-#include "fdbuf.hpp"
+#include "utils/fdbuf.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/cryptofile.hpp"
@@ -89,13 +89,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     * Manage encryption key *
     ************************/
     Inifile ini;
-    ini.set<cfg::crypto::key0>(cstr_array_view(
+    ini.set<cfg::crypto::key0>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+    );
+    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
     LCGRandom rnd(0);
 
     CryptoContext cctx(rnd, ini);
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     };
 
     unsigned char derivator[DERIVATOR_LENGTH];
-    
+
     size_t len = 0;
     const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name.c_str(), len));
     SslSha256 sha256;
@@ -193,7 +193,7 @@ extern "C" {
         memcpy(buffer, hmac_key, 32);
         return 0;
     }
-    
+
     int trace_fn(char * base, int len, char * buffer)
     {
         // in real uses actual trace_key is derived from base and some master key
@@ -225,9 +225,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
                 "toto@10.10.43.13,Administrateur@QA@cible,"
                 "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
             "--hash-path\0"
-                "tests/fixtures/verifier/hash\0"
+                FIXTURES_PATH "/verifier/hash\0"
             "--mwrm-path\0"
-                "tests/fixtures/verifier/recorded\0"
+                FIXTURES_PATH "/verifier/recorded\0"
             "--verbose\0"
                 "10\0";
         {
@@ -281,9 +281,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
                 "toto@10.10.43.13,Administrateur@QA@cible"
                 ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
             "--hash-path\0"
-                "tests/fixtures/verifier/hash/\0"
+                FIXTURES_PATH "/verifier/hash/\0"
             "--mwrm-path\0"
-                "tests/fixtures/verifier/recorded/\0"
+                FIXTURES_PATH "/verifier/recorded/\0"
             "--verbose\0"
                 "10\0";
         {
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
         char oneargv[] =
             "decrypter.py\0"
             "-i\0"
-                "tests/fixtures/verifier/recorded/"
+                FIXTURES_PATH "/verifier/recorded/"
                 "toto@10.10.43.13,Administrateur@QA@cible,"
                 "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
             "-o\0"
@@ -369,6 +369,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
         } catch (const Error & e) {
             printf("verify failed: with id=%d\n", e.id);
         }
+        BOOST_CHECK_EQUAL(0, unlink("decrypted.out"));
         BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -386,7 +387,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
         char oneargv[] =
             "decrypter.py\0"
             "-i\0"
-                "tests/fixtures/verifier/recorded/"
+                FIXTURES_PATH "/verifier/recorded/"
                  "toto@10.10.43.13,Administrateur@QA@cible"
                 ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
            "-o\0"

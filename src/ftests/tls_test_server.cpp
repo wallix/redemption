@@ -40,6 +40,8 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 
     printf("received plain text HELLO, going TLS\n");
 
+    sockettransport.tls = new TLSContext();
+
     BIO * sbio = BIO_new_socket(sock, BIO_NOCLOSE);
     SSL * ssl = SSL_new(ctx);
     SSL_set_bio(ssl, sbio, sbio);
@@ -52,10 +54,10 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
         exit(0);
     }
 
-    sockettransport.allocated_ctx = ctx;
-    sockettransport.allocated_ssl = ssl;
-    sockettransport.tls = true;
-    sockettransport.io = ssl;
+
+    sockettransport.tls->allocated_ctx = ctx;
+    sockettransport.tls->allocated_ssl = ssl;
+    sockettransport.tls->io = ssl;
 
     sockettransport.send("Server: Redemption Server\r\n\r\n", 29);
     sockettransport.send("Server test page\r\n", 18);

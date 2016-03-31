@@ -24,7 +24,7 @@
 #include <cstring>
 #include <krb5.h>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 class Krb5Creds {
 public:

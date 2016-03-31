@@ -23,7 +23,7 @@
 #define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 
 #include "CaptureDevice.hpp"
-#include "difftimeval.hpp"
+#include "utils/difftimeval.hpp"
 #include "GraphicToFile.hpp"
 
 class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice

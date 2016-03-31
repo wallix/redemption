@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_LABELGRID_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_LABELGRID_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "widget.hpp"
 #include "label.hpp"
 #include "grid.hpp"

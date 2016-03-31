@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestUniquePtr
 #include <boost/test/auto_unit_test.hpp>
 
-#include "make_unique.hpp"
+#include "utils/make_unique.hpp"
 #include <type_traits>
 
 struct A {

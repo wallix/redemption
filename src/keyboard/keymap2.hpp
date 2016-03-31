@@ -26,8 +26,8 @@
 
 #include <cinttypes>
 
-#include "log.hpp"
-#include "stream.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
 #include "keylayouts.hpp"
 
 static const Keylayout * keylayouts[] = { &keylayout_x00000405, &keylayout_x00000406, &keylayout_x00000407

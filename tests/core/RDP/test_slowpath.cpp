@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
 #include "RDP/slowpath.hpp"
 

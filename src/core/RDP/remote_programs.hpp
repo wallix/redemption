@@ -21,9 +21,9 @@
 #ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
 #define _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
 
-#include "cast.hpp"
+#include "utils/cast.hpp"
 #include "error.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)

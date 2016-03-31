@@ -26,11 +26,11 @@
 #include "transport/transport.hpp"
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
-#include "stream.hpp"
-#include "cast.hpp"
+#include "utils/stream.hpp"
+#include "utils/cast.hpp"
 
-#include "array_view.hpp"
-#include "make_unique.hpp"
+#include "utils/array_view.hpp"
+#include "utils/make_unique.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -453,7 +453,7 @@ public:
             this->log_input_data<Buffer::original_capacity()>(
                       [this] (char const * data) {
                           this->authentifier->log4(false,
-                              "KBD input", data);
+                              "KBD_INPUT", data);
                       }
                     , false
                     , this->session_data.get_data()

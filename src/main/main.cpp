@@ -24,7 +24,7 @@
 
 #include "version.hpp"
 
-#include "apps/app_proxy.hpp"
+#include "utils/apps/app_proxy.hpp"
 
 #include "program_options/program_options.hpp"
 

@@ -29,9 +29,9 @@
 #include "image.hpp"
 #include "composite.hpp"
 #include "flat_button.hpp"
-#include "translation.hpp"
-#include "ellipse.hpp"
-#include "theme.hpp"
+#include "utils/translation.hpp"
+#include "utils/ellipse.hpp"
+#include "utils/theme.hpp"
 #include "defines.hpp"
 
 #include <array>
