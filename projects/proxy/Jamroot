@@ -1,4 +1,4 @@
-
+#import gcc ;
 import os ;
 
 # below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
@@ -635,33 +635,54 @@ actions nop { }
 #    cp $(2:P)/$(2:B).coverage coverage/$(1:G)
 #}
 
-rule utest ( target : source : properties * )
-{
-    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
-    echo $(properties)
-    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
+#rule utest ( target : source : properties * )
+#{
+#    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
+#    echo $(properties)
+#    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
 
-    import feature ;
+#    import feature ;
 
     # local result = [ feature.values <variant> ] ;
     # local result = [ feature.defaults <variant> ] ;
     #local result = [ feature.attributes <variant> ] ;
-    local result =  [ modules.peek : variant ]  ;
+#    local result =  [ modules.peek : variant ]  ;
 
-    echo $(result) ;
+#    echo $(result) ;
     
-    if <variant>coverage:<library>gcov in $(properties) {
-        echo "unit test coverage" ;
-        unit-test $(target) : $(source) : $(properties) ;
-    }
-    else {
-        echo "unit test not coverage" ;
-        unit-test $(target) : $(source) : $(properties) ;
-    }
+#    if <variant>coverage:<library>gcov in $(properties) {
+#        echo "unit test coverage" ;
+#        unit-test $(target) : $(source) : $(properties) ;
+#    }
+#    else {
+#        echo "unit test not coverage" ;
+#        unit-test $(target) : $(source) : $(properties) ;
+#    }
+#}
+import toolset ;
+
+feature.feature <cover-path> : : free ;
+toolset.flags cover COVERPATH : <cover-path> ;
+
+actions cover
+{
+    echo "Computing coverage" $(COVERPATH:E=) "\n"
+    touch utils/$(<)
 }
 
+rule test-run ( target : sources + : requirements * )
+{
+    echo "run $(sources) : : : $(requirements) : $(target) : coverage ;" ;
+    run $(sources) : : : $(requirements) : $(target) : coverage ;
+    make $(target).coverage : $(target) : nop : <variant>coverage:<action>@cover <cover-path>utils ;
+}
 
-utest test_utf.passed : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
+test-run test_utf : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
+#make test_utf.coverage : test_utf : nop : <variant>coverage:<action>@cover <cover-path>utils ;
+
+#make test_utf.coverage : test_utf : @cover ;
+
+#unit-test test_utf.passed : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
 
 #make test_utf.gcno : test_utf.ut : gcno ;
 #make utils/utf.hpp.gcov : test_utf.gcno $(SRCDIR)/utils/utf.hpp : keepcoverage ;
