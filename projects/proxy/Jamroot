@@ -224,7 +224,7 @@ constant CXXFLAGS-GCC-6 :
 
 lib gcov : : <name>gcov : ;
 
-constant GCOV : <variant>coverage:<library>gcov;
+constant GCOV : <variant>coverage:<library>gcov ;
 constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
 
 variant strict : :
@@ -254,7 +254,6 @@ project redemption
     <include>$(SRCDIR)/core
     <include>$(SRCDIR)/configs/autogen
     <include>$(SRCDIR)/configs/variant
-    <include>$(SRCDIR)/configs/include
     <include>$(SRCDIR)/mod
     <include>$(SRCDIR)/front
     <include>$(SRCDIR)/acl
@@ -411,39 +410,8 @@ obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
 
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
-if ! [ os.environ NO_MAKE_CONFIG ]
-{
-    actions generate_configs {
-        $(>) \
-            $(SRCDIR)/configs/autogen/configs/autogen/authid.hpp \
-            $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp \
-            $(SRCDIR)/configs/autogen/configs/autogen/set_value.tcc
-    }
-
-    make $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp
-    :
-        make_cpp_config
-#         [ glob $(SRCDIR)/configs/variant/configs/variant/*.hpp ]
-#         [ glob $(SRCDIR)/configs/include/configs/*.hpp ]
-#         $(SRCDIR)/utils/apps/app_write_cpp_config.hpp
-#         $(SRCDIR)/utils/config_spec.hpp
-#         $(SRCDIR)/main/write_cpp_config.cpp
-    : @generate_configs
-    : <location>.
-    ;
-
-    alias generate_configs : $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp ;
-
-    constant CONFIG_DEPENDENCY : $(LIB_SAN_DEPENDENCY) <implicit-dependency>generate_configs ;
-
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) <cxxflags>-fpie ;
-    constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(CONFIG_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
-}
-else
-{
-    constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
-    constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
-}
+constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
+constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
 
 
 #
@@ -672,6 +640,15 @@ rule utest ( target : source : properties * )
     echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
     echo $(properties)
     echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
+
+    import feature ;
+
+    # local result = [ feature.values <variant> ] ;
+    # local result = [ feature.defaults <variant> ] ;
+    #local result = [ feature.attributes <variant> ] ;
+    local result =  [ modules.peek : variant ]  ;
+
+    echo $(result) ;
     
     if <variant>coverage:<library>gcov in $(properties) {
         echo "unit test coverage" ;
