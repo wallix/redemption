@@ -276,7 +276,7 @@ exe make_cpp_config : src/configs/write_cpp_config.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_python_spec : src/configs/write_python_spec.cpp : $(LIB_SAN_DEPENDENCY) ;
 
 actions cp_config {
-    dirinstall=../../src/configs
+    dirinstall=../../include/configs
     mkdir -p $dirinstall && \
     cp -R \
         include/configs/* \

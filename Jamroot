@@ -256,8 +256,8 @@ project redemption
     <include>src/regex
     <include>src/headers
     <include>src/main
+    <include>include
     <include>modules/includes
-    <include>/usr/include
     <include>tests
 
     <conditional>@defines
