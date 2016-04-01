@@ -128,6 +128,61 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         this->member_impl(typename std::is_convertible<Pack, ref<Attribute>>::type(), pack);
     }
 
+    struct quoted_range {
+        char const * s;
+        char const * e;
+
+        quoted_range(char const * s, char const * e)
+        : s(s)
+        , e(e)
+        {}
+
+        friend std::ostream & operator << (std::ostream & os, quoted_range const & q) {
+            for (auto s = q.s, p = q.e; s != p; ++s) {
+                if (*s == '\\' || *s == '"') {
+                    os << '\\';
+                }
+                os << *s;
+            }
+            return os;
+        }
+    };
+
+    struct quoted_range2_t {
+        char const * s;
+        char const * e;
+
+        template<class S>
+        quoted_range2_t(S const & s)
+        : s(s.data())
+        , e(s.data() + s.size())
+        {}
+
+        quoted_range2_t(char const * s)
+        : s(s)
+        , e(s + strlen(s))
+        {}
+
+        friend std::ostream & operator << (std::ostream & os, quoted_range2_t const & q) {
+            for (auto s = q.s, p = q.e; s != p; ++s) {
+                if (*s == '\\' || *s == '"') {
+                    os << '\\';
+                }
+                os << *s;
+            }
+            return os;
+        }
+    };
+
+    template<class S>
+    quoted_range2_t quoted_range2(S const & s) {
+        return {s};
+    }
+
+    macroio quoted_range2(macroio const & m) {
+        return m;
+    }
+
     void write(desc x) {
         char const * s = x.value;
         while (*s) {
@@ -136,15 +191,9 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
                 ++p;
             }
             this->tab();
-            this->out() << "\"# ";
+            this->out() << "\"# " << quoted_range(s, p) << "\\n\"\n";
 
-            for (; s != p; ++s) {
-                if (*s == '\\' || *s == '"') {
-                    this->out() << '\\';
-                }
-                this->out() << *s;
-            }
-            this->out() << "\\n\"\n";
+            s = p;
 
             if (*s == '\n') {
                 ++s;
@@ -161,7 +210,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<class T>
     void write_type(type_<std::string>, T const & s) {
-        this->out() << "string(default='" << s << "')";
+        this->out() << "string(default='" << quoted_range2(s) << "')";
     }
 
     template<class T>
@@ -255,7 +304,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<std::size_t N, class Copier, class T>
     void write_type(type_<StaticStringBase<N, Copier>>, T const & x) {
-        this->out() << "string(max=" << N-1 <<  ", default='" << this->inherit().get_value(x) << "')";
+        this->out() << "string(max=" << N-1 <<  ", default='" << quoted_range2(this->inherit().get_value(x)) << "')";
     }
 
     template<class T>
