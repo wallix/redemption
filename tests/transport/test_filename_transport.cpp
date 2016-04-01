@@ -46,13 +46,13 @@ BOOST_AUTO_TEST_CASE(TestFilename)
 
     {
         Inifile ini;
-        ini.set<cfg::crypto::key0>(cstr_array_view(
+        ini.set<cfg::crypto::key0>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
             "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
             "\x10\x11\x12\x13\x14\x15\x16\x17"
             "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        ));
-        ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+        );
+        ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
         LCGRandom rnd(0);
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestFilename)
 
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-    
+
         int fd = ::open(filename, O_RDONLY);
         if (fd < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
@@ -98,13 +98,13 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     ::unlink(filename);
 
     Inifile ini;
-    ini.set<cfg::crypto::key0>(cstr_array_view(
+    ini.set<cfg::crypto::key0>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    ini.set<cfg::crypto::key1>(cstr_array_view("12345678901234567890123456789012"));
+    );
+    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
     LCGRandom rnd(0);
 
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     {
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-    
+
         int fd = ::open(filename, O_RDONLY);
         if (fd < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);

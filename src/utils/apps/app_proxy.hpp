@@ -37,7 +37,7 @@
 
 #include "openssl_crypto.hpp"
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "check_files.hpp"
 #include "mainloop.hpp"
 #include "utils/log.hpp"

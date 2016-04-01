@@ -23,7 +23,7 @@
 #define REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 
 #include "front_api.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "widget2/language_button.hpp"
 #include "widget2/flat_wait.hpp"
 #include "widget2/screen.hpp"
@@ -31,7 +31,7 @@
 #include "copy_paste.hpp"
 #include "utils/timeout.hpp"
 
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
 
 
 using FlatWaitModVariables = vcfg::variables<

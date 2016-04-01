@@ -88,8 +88,11 @@ struct Listen {
           struct sockaddr_in6 s6;
         } u;
         memset(&u, 0, sizeof(u));
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
         u.s4.sin_family = AF_INET;
         u.s4.sin_port = htons(this->port);
+# pragma GCC diagnostic pop
 //        u.s4.sin_addr.s_addr = INADDR_ANY;
         u.s4.sin_addr.s_addr = this->s_addr;
 

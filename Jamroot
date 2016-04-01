@@ -247,9 +247,6 @@ project redemption
     <include>src
     <include>src/system/linux
     <include>src/core
-    <include>src/configs/autogen
-    <include>src/configs/variant
-    <include>src/configs/include
     <include>src/mod
     <include>src/front
     <include>src/acl
@@ -410,39 +407,8 @@ obj program_options : modules/program_options/src/program_options.cpp ;
 
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
-if ! [ os.environ NO_MAKE_CONFIG ]
-{
-    actions generate_configs {
-        $(>) \
-            src/configs/autogen/configs/autogen/authid.hpp \
-            src/configs/autogen/configs/autogen/variables_configuration.hpp \
-            src/configs/autogen/configs/autogen/set_value.tcc
-    }
-
-    make src/configs/autogen/configs/autogen/variables_configuration.hpp
-    :
-        make_cpp_config
-#         [ glob src/configs/variant/configs/variant/*.hpp ]
-#         [ glob src/configs/include/configs/*.hpp ]
-#         src/utils/apps/app_write_cpp_config.hpp
-#         src/utils/config_spec.hpp
-#         src/main/write_cpp_config.cpp
-    : @generate_configs
-    : <location>.
-    ;
-
-    alias generate_configs : src/configs/autogen/configs/autogen/variables_configuration.hpp ;
-
-    constant CONFIG_DEPENDENCY : $(LIB_SAN_DEPENDENCY) <implicit-dependency>generate_configs ;
-
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) <cxxflags>-fpie ;
-    constant TEST_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
-}
-else
-{
-    constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
-    constant TEST_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
-}
+constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
+constant TEST_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
 
 
 #
@@ -452,7 +418,6 @@ else
 exe rdpproxy
     :
         src/main/main.cpp
-        src/main/write_python_spec.cpp
         bitmap
         program_options
 
@@ -605,14 +570,6 @@ exe tls_test_server
         $(EXE_DEPENDENCIES)
 ;
 
-exe make_cpp_config
-    : src/main/write_cpp_config.cpp
-    : <variant>asan:<library>libasan $(GCOV)
-;
-
-explicit make_cpp_config ;
-
-
 #exe freetype_draw : ftests/freetype_draw.cpp freetype
 #    : <link>static <variant>coverage:<library>gcov
 #;
@@ -757,12 +714,6 @@ unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp : $(TEST_D
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
 unit-test test_redirection_info : tests/utils/test_redirection_info.cpp : $(TEST_DEPENDENCIES) ;
-
-## Capabilities tests
-## @{
-unit-test test_config : tests/core/test_config.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_config_assign : tests/core/test_config_assign.cpp : $(TEST_DEPENDENCIES) ;
-## }
 
 ## Capabilities tests
 ## @{

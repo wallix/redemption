@@ -22,11 +22,11 @@
 #define REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR2_MOD_HPP
 
 #include "front_api.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "widget2/flat_selector2.hpp"
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
 #include "widget2/language_button.hpp"
 
 

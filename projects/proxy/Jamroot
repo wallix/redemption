@@ -254,7 +254,6 @@ project redemption
     <include>$(SRCDIR)/core
     <include>$(SRCDIR)/configs/autogen
     <include>$(SRCDIR)/configs/variant
-    <include>$(SRCDIR)/configs/include
     <include>$(SRCDIR)/mod
     <include>$(SRCDIR)/front
     <include>$(SRCDIR)/acl
@@ -411,39 +410,8 @@ obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
 
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
-if ! [ os.environ NO_MAKE_CONFIG ]
-{
-    actions generate_configs {
-        $(>) \
-            $(SRCDIR)/configs/autogen/configs/autogen/authid.hpp \
-            $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp \
-            $(SRCDIR)/configs/autogen/configs/autogen/set_value.tcc
-    }
-
-    make $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp
-    :
-        make_cpp_config
-#         [ glob $(SRCDIR)/configs/variant/configs/variant/*.hpp ]
-#         [ glob $(SRCDIR)/configs/include/configs/*.hpp ]
-#         $(SRCDIR)/utils/apps/app_write_cpp_config.hpp
-#         $(SRCDIR)/utils/config_spec.hpp
-#         $(SRCDIR)/main/write_cpp_config.cpp
-    : @generate_configs
-    : <location>.
-    ;
-
-    alias generate_configs : $(SRCDIR)/configs/autogen/configs/autogen/variables_configuration.hpp ;
-
-    constant CONFIG_DEPENDENCY : $(LIB_SAN_DEPENDENCY) <implicit-dependency>generate_configs ;
-
-    constant EXE_DEPENDENCIES : $(CONFIG_DEPENDENCY) $(GCOV) <cxxflags>-fpie ;
-    constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(CONFIG_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
-}
-else
-{
-    constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
-    constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
-}
+constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
+constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
 
 
 #
@@ -624,11 +592,98 @@ explicit make_cpp_config ;
 # Unit Tests
 #
 
+#import testing-coverage ;
 import testing ;
 
 import type ;
 type.register PYTHON : py ;
 
+actions nop { }
+
+#rule gcno {
+#   echo "rule gcno" ;
+#   echo $(1) "xxx==============\n" 
+#        $(2) "yyy==============\n" 
+#        $(3) "zzz==============\n" 
+#        ;
+#}
+
+#actions gcno {
+#    #echo     gcov -a -c -b -f -o $(1) $(2)
+#    echo    "action gcno" $(1) $(2)
+#    gcov -a -c -b -f -o $(1) $(2)
+#    mkdir -p $(1:P)/$(1:B).coverage
+#    mv *gcov $(1:P)/$(1:B).coverage
+#}
+
+#rule keepcoverage {
+#   echo "rule keep coverage" ;
+#   echo $(1) "xxx==============\n" 
+#        $(2) "yyy==============\n" 
+#        $(3) "zzz==============\n"
+#        $(4)
+#        ; 
+#}
+
+
+#actions keepcoverage {
+#    echo "action keep coverage"
+#    echo $(<[1])
+#    echo $(>[1])
+#    echo $(>[2])
+#    mkdir -p coverage/$(>[2])
+#    cp $(2:P)/$(2:B).coverage coverage/$(1:G)
+#}
+
+rule utest ( target : source : properties * )
+{
+    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
+    echo $(properties)
+    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
+
+    import feature ;
+
+    # local result = [ feature.values <variant> ] ;
+    # local result = [ feature.defaults <variant> ] ;
+    #local result = [ feature.attributes <variant> ] ;
+    local result =  [ modules.peek : variant ]  ;
+
+    echo $(result) ;
+    
+    if <variant>coverage:<library>gcov in $(properties) {
+        echo "unit test coverage" ;
+        unit-test $(target) : $(source) : $(properties) ;
+    }
+    else {
+        echo "unit test not coverage" ;
+        unit-test $(target) : $(source) : $(properties) ;
+    }
+}
+
+
+utest test_utf.passed : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
+
+#make test_utf.gcno : test_utf.ut : gcno ;
+#make utils/utf.hpp.gcov : test_utf.gcno $(SRCDIR)/utils/utf.hpp : keepcoverage ;
+
+#install coverage_utils
+#    : utf.gcov
+#    : 
+#    : <location>$(TOP)/utils/coverage
+#    ;
+
+install install-share
+    : [ glob sys/share/rdpproxy/[^.k]* ]
+    :
+    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
+    ;
+
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+
+if [ SHELL false ]
+{
 actions run-python-test {
     rm -f $(<)
     python $(>[1]) && touch $(<)
@@ -642,6 +697,7 @@ make test_trace.py.unittest
         run-python-test
     :
     ;
+
 
 ## Acl tests
 ## @{
@@ -1029,59 +1085,4 @@ unit-test test_finally : $(TESTDIR)/utils/test_finally.cpp : $(TEST_DEPENDENCIES
 
 unit-test test_verifier : $(TESTDIR)/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
-
-
-if ! [ os.environ NO_MAKE_QT ]
-{
-
-explicit front_Qt.o bitmap_data_allocator.o client_rdp_Qt ; #
-#explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
-
-
-using qt : /usr ; #4
-
-#using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ; #5
-
-#obj test_rdp_Qt.o : $(TESTDIR)/mod/rdp/test_rdp_Qt.cpp
-#    :
-	 #<include>/usr/include/qt4
-#        <include>/usr/include/x86_64-linux-gnu/qt5
-#        <cxxflags>-fPIC
-#    ;
-
-obj front_Qt.o : $(SRCDIR)/system/Qt/front_Qt.cpp
-    :
-	<include>/usr/include/qt4                   #4
-	#<include>/usr/include/x86_64-linux-gnu/qt5  #5
-	#<cxxflags>-fPIC                             #5
-    ;
-
-obj bitmap_data_allocator.o : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
-
-
-exe client_rdp_Qt :
-    #test_rdp_Qt.o #
-    $(SRCDIR)/system/Qt/front_Qt.hpp
-    $(SRCDIR)/system/Qt/front_widget_Qt.hpp
-    $(SRCDIR)/system/Qt/keymaps/Qt_ScanCode_KeyMap.hpp
-    front_Qt.o
-    bitmap_data_allocator.o
-    /qt//QtGui       #4
-    #/qt5//QtGui      #5
-    #/qt5//QtNetwork  #5
-    #/qt5//QtWidgets  #5
-    krb5
-    openssl
-    crypto
-    gssglue
-    png
-    d3des
-    z
-    dl
-    :
-    <include>/usr/include/qt4                   #4
-    #<include>/usr/include/x86_64-linux-gnu/qt5  #5
-    #<cxxflags>-fPIC                             #5
-    ;
-
-} # NO_MAKE_QT
+}

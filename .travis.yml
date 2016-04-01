@@ -53,8 +53,7 @@ matrix:
         #- "echo -e 'using clang : : clang++ : <cxxflags>-Qunused-arguments' > ~/user-config.jam"
 
 script:
-  - sudo cp tools/bjam-patch/clang-linux.jam /usr/share/boost-build/tools/clang-linux.jam
-  - NO_MAKE_QT=1 bjam --toolset=$TOOLSET $CXXFLAGS generate_configs
+  #- sudo cp tools/bjam-patch/clang-linux.jam /usr/share/boost-build/tools/clang-linux.jam
   - NO_MAKE_QT=1 bjam linkflags=-c --toolset=$TOOLSET $CXXFLAGS -q exe
 
 

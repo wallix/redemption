@@ -26,7 +26,7 @@
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
 #include "transport/socket_transport.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "utils/netutils.hpp"
 #include "mod_api.hpp"
 #include "auth_api.hpp"

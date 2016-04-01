@@ -44,7 +44,7 @@
 #include "utils/rect.hpp"
 #include "utils/netutils.hpp"
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "wait_obj.hpp"
 #include "transport/transport.hpp"
 #include "utils/bitmap.hpp"

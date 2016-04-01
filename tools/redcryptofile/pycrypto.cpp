@@ -534,11 +534,11 @@ Inifile * get_ini(){
     static Inifile * ini = nullptr;
     if (ini == nullptr){
         ini = new Inifile;
-        ini->set<cfg::crypto::key0>(cstr_array_view(
+        ini->set<cfg::crypto::key0>(
             "\x01\x02\x03\x04\x05\x06\x07\x08"
             "\x01\x02\x03\x04\x05\x06\x07\x08"
             "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"));
+            "\x01\x02\x03\x04\x05\x06\x07\x08");
     }
     return ini;
 }

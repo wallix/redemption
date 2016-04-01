@@ -243,9 +243,6 @@ project redemption
     <include>$(SRCDIR)
     <include>$(SRCDIR)/system/linux
     <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/configs/autogen
-    <include>$(SRCDIR)/configs/variant
-    <include>$(SRCDIR)/configs/include
     <include>$(SRCDIR)/mod
     <include>$(SRCDIR)/front
     <include>$(SRCDIR)/acl
@@ -256,7 +253,6 @@ project redemption
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
-    <include>/usr/include
 
     <conditional>@defines
 
@@ -345,15 +341,15 @@ constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) ;
 
 using qt : /usr ; #4
 
-#using qt5 
+#using qt5
 #    : /usr/lib/x86_64-linux-gnu/qt5
 #    : 5.3
-#    : 
-#    : 
-#    : 
-#    : 
-#    : /usr/include/x86_64-linux-gnu/qt5 
-#    : /usr/lib/x86_64-linux-gnu 
+#    :
+#    :
+#    :
+#    :
+#    : /usr/include/x86_64-linux-gnu/qt5
+#    : /usr/lib/x86_64-linux-gnu
 #    ;
 
 obj front_Qt4.o : src/Qt4/front_Qt4.cpp
@@ -385,4 +381,4 @@ exe client_rdp_Qt4 :
     <include>/usr/include/qt4                   #4
 #    <cxxflags>-fPIC
     ;
-    
+

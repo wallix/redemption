@@ -24,11 +24,11 @@
 
 #include "utils/translation.hpp"
 #include "front_api.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "widget2/language_button.hpp"
 #include "widget2/flat_dialog.hpp"
 #include "widget2/screen.hpp"
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
 #include "internal_mod.hpp"
 #include "utils/timeout.hpp"
 

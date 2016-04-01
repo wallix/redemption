@@ -40,7 +40,7 @@
 
 #include "openssl_crypto.hpp"
 //#include "openssl_evp.hpp"
-#include "core/config.hpp"
+#include "configs/config.hpp"
 
 enum crypto_file_state {
     CF_EOF = 1

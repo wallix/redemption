@@ -28,7 +28,7 @@
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "utils/timeout.hpp"
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
 
 
 using FlatWabCloseModVariables = vcfg::variables<
