@@ -311,7 +311,6 @@ constant TEST_DEPENDENCIES :
     $(LIB_TEST_DEPENDENCY)
     <implicit-dependency>generate_configs
     <implicit-dependency>generate_spec
-    <include>include/autogen
 ;
 
 ## Tests
