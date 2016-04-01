@@ -1094,8 +1094,11 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-            this->front.disable_input_event_and_graphics_update(false);
+        if (this->enable_session_probe) {
+            const bool disable_input_event     = false;
+            const bool disable_graphics_update = false;
+            this->front.disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
         }
 
         delete this->transparent_recorder;
@@ -1270,9 +1273,6 @@ protected:
             static_cast<data_size_type>(-1);
         session_probe_virtual_channel_params.verbose                                =
             this->verbose;
-
-        session_probe_virtual_channel_params.session_probe_loading_mask_enabled     =
-            this->enable_session_probe_launch_mask;
 
         session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
@@ -3525,8 +3525,11 @@ public:
 
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
+                if (this->enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->front.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
                 }
             }
         }
@@ -3543,8 +3546,11 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
+                if (this->enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->front.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
                 }
 
                 LOG(LOG_ERR,
@@ -5112,10 +5118,13 @@ public:
             this->event.reset();
         }
 
-        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-            this->front.disable_input_event_and_graphics_update(true);
+        if (this->enable_session_probe) {
+            const bool disable_input_event     = true;
+            const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+            this->front.disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
         }
-    }
+    }   // process_logon_info
 
     void process_save_session_info(InStream & stream) {
         RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
@@ -5144,8 +5153,11 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
-            if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-                this->front.disable_input_event_and_graphics_update(true);
+            if (this->enable_session_probe) {
+                const bool disable_input_event     = true;
+                const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+                this->front.disable_input_event_and_graphics_update(
+                    disable_input_event, disable_graphics_update);
             }
         }
         break;

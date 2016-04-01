@@ -657,6 +657,10 @@ struct TLSContext
                         server_notifier.server_cert_success();
                     }
 
+                    if (issuer_existing      != nullptr) { free(const_cast<char *>(issuer_existing     )); }
+                    if (subject_existing     != nullptr) { free(const_cast<char *>(subject_existing    )); }
+                    if (fingerprint_existing != nullptr) { free(const_cast<char *>(fingerprint_existing)); }
+
                     if (issuer               != nullptr) { free(const_cast<char *>(issuer              )); }
                     if (subject              != nullptr) { free(const_cast<char *>(subject             )); }
                     if (fingerprint          != nullptr) { free(const_cast<char *>(fingerprint         )); }
