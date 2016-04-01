@@ -290,8 +290,7 @@ actions cp_config {
         $dirinstall && \
     find $dirinstall -type f -exec \
         sed -i '1,+0i//\n// ATTENTION -- This file is auto-generated\n//\n' \
-        '{}' + && \
-    :>$(<)
+        '{}' +
 }
 
 
