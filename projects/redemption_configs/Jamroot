@@ -276,26 +276,28 @@ exe make_cpp_config : src/configs/write_cpp_config.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_python_spec : src/configs/write_python_spec.cpp : $(LIB_SAN_DEPENDENCY) ;
 
 actions cp_config {
-    #cp -R $PWD/`dirname $(>)` ../../src/configs &&
     dirinstall=../../src/configs
     mkdir -p $dirinstall && \
-    cp -R "$PWD"/include/configs/* $dirinstall && \
-    cp  \
-        "$PWD"/src/configs/types.hpp \
-        "$PWD"/src/configs/parse.hpp \
-        "$PWD"/src/configs/mk_enum_def.hpp \
-        "$PWD"/src/configs/mk_enum_undef.hpp \
-        "$PWD"/src/configs/c_str_buf.hpp \
-        "$PWD"/src/configs/config.hpp \
-        "$PWD"/src/configs/config_access.hpp \
+    cp -R \
+        include/configs/* \
+        src/configs/types.hpp \
+        src/configs/parse.hpp \
+        src/configs/mk_enum_def.hpp \
+        src/configs/mk_enum_undef.hpp \
+        src/configs/c_str_buf.hpp \
+        src/configs/config.hpp \
+        src/configs/config_access.hpp \
         $dirinstall && \
-    find $dirinstall -type f | while read f ; do
-        sed -i '1,+0i//\n// ATTENTION -- This file is auto-generated\n//\n' "$f"
-    done
+    find $dirinstall -type f -exec \
+        sed -i '1,+0i//\n// ATTENTION -- This file is auto-generated\n//\n' \
+        '{}' + && \
+    :>$(<)
 }
 
-import notfile ;
-notfile install : @cp_config : generate_configs generate_spec ;
+
+alias generate : generate_spec generate_configs ;
+
+make install : generate : @cp_config ;
 explicit install ;
 
 
