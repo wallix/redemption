@@ -38,8 +38,6 @@ private:
 
     const unsigned session_probe_effective_launch_timeout;
 
-    const bool     param_session_probe_loading_mask_enabled;
-
     const unsigned param_session_probe_keepalive_timeout;
     const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
 
@@ -78,8 +76,6 @@ private:
 
 public:
     struct Params : public BaseVirtualChannel::Params {
-        bool session_probe_loading_mask_enabled;
-
         unsigned session_probe_launch_timeout;
         unsigned session_probe_launch_fallback_timeout;
         unsigned session_probe_keepalive_timeout;
@@ -120,8 +116,6 @@ public:
             params.session_probe_launch_timeout :
             params.session_probe_launch_fallback_timeout
         )
-    , param_session_probe_loading_mask_enabled(
-          params.session_probe_loading_mask_enabled)
     , param_session_probe_keepalive_timeout(
           params.session_probe_keepalive_timeout)
     , param_session_probe_on_keepalive_timeout_disconnect_user(
@@ -239,10 +233,11 @@ public:
                 this->session_probe_stop_launch_sequence_notifier = nullptr;
             }
 
+            const bool disable_input_event     = false;
+            const bool disable_graphics_update = false;
             const bool need_full_screen_update =
-                (this->param_session_probe_loading_mask_enabled ?
-                 this->front.disable_input_event_and_graphics_update(false) :
-                 false);
+                 this->front.disable_input_event_and_graphics_update(
+                     disable_input_event, disable_graphics_update);
 
             if (this->param_session_probe_on_launch_failure ==
                 ::configs::SessionProbeOnLaunchFailure::ignore_and_continue) {
@@ -265,10 +260,10 @@ public:
         if (this->session_probe_ready &&
             this->param_session_probe_keepalive_timeout) {
             if (!this->session_probe_keep_alive_received) {
-                if (this->param_session_probe_loading_mask_enabled) {
-                    this->front.disable_input_event_and_graphics_update(
-                        false);
-                }
+                const bool disable_input_event     = false;
+                const bool disable_graphics_update = false;
+                this->front.disable_input_event_and_graphics_update(
+                    disable_input_event, disable_graphics_update);
 
                 LOG(LOG_ERR,
                     "SessionProbeVirtualChannel::process_event: "
@@ -389,8 +384,10 @@ public:
 
             this->front.session_probe_started(true);
 
-            if (this->param_session_probe_loading_mask_enabled &&
-                this->front.disable_input_event_and_graphics_update(false)) {
+            const bool disable_input_event     = false;
+            const bool disable_graphics_update = false;
+            if (this->front.disable_input_event_and_graphics_update(
+                    disable_input_event, disable_graphics_update)) {
                 if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
