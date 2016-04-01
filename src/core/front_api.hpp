@@ -89,7 +89,10 @@ class FrontAPI : public RDPGraphicDevice{
     virtual void set_consent_ui_visible(bool set) {}
     virtual void session_update(const char * message) {}
 
-    virtual bool disable_input_event_and_graphics_update(bool disable) { return false; }
+    virtual bool disable_input_event_and_graphics_update(
+            bool disable_input_event, bool disable_graphics_update) {
+        return false;
+    }
 
     virtual void begin_update() = 0;
     virtual void end_update() = 0;

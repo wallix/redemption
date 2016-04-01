@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_SRC_UTILS_APPS_APP_WRITE_PYTHON_SPEC_HPP
 #define REDEMPTION_SRC_UTILS_APPS_APP_WRITE_PYTHON_SPEC_HPP
 
-#include "configs/config_spec.hpp"
+#include "configs/specs/config_spec.hpp"
 #include "configs/multi_filename_writer.hpp"
 
 #include <algorithm>
@@ -62,14 +62,14 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         this->out_ = &this->out_member_;
 
         this->write_if_convertible(pack, type_<desc>{});
-        if (bool(pack & Attribute::iptables)) this->out() << "#_iptables\n";
-        if (bool(pack & Attribute::advanced)) this->out() << "#_advanced\n";
-        if (bool(pack & Attribute::hidden)) this->out() << "#_hidden\n";
-        if (bool(pack & Attribute::hex)) this->out() << "#_hex\n";
-        if (bool(pack & Attribute::password)) this->out() << "#_password\n";
-        this->out() << static_cast<char const *>(pack) << " = ";
+        if (bool(pack & Attribute::iptables)) this->out() << "\"#_iptables\\n\"\n";
+        if (bool(pack & Attribute::advanced)) this->out() << "\"#_advanced\\n\"\n";
+        if (bool(pack & Attribute::hidden)) this->out() << "\"#_hidden\\n\"\n";
+        if (bool(pack & Attribute::hex)) this->out() << "\"#_hex\\n\"\n";
+        if (bool(pack & Attribute::password)) this->out() << "\"#_password\\n\"\n";
+        this->out() << "\"" << static_cast<char const *>(pack) << " = ";
         this->inherit().write_type(this->get_type(this->has_user_type(pack), pack), this->inherit().get_default(pack, pack));
-        this->out() << "\n";
+        this->out() << "\\n\\n\"\n\n";
     }
 
 
@@ -102,7 +102,13 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     T const & get_value(T const & x)
     { return x; }
 
-    const char * get_value(macro const & m) { return m.name; }
+    struct macroio {
+        const char * name;
+        friend std::ostream & operator << (std::ostream & os, macroio const & mio) {
+            return os << "\" " << mio.name << " \"";
+        }
+    };
+    macroio get_value(macro const & m) { return {m.name}; }
     const char * get_value(null_fill) { return ""; }
     uint32_t get_value(uint32_) { return 0; }
     uint64_t get_value(uint64_) { return 0; }
@@ -122,27 +128,50 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         this->member_impl(typename std::is_convertible<Pack, ref<Attribute>>::type(), pack);
     }
 
-    void write(desc x) { this->write_comment("#", x.value); }
+    void write(desc x) {
+        char const * s = x.value;
+        while (*s) {
+            char const * p = s;
+            while (*p && *p != '\n') {
+                ++p;
+            }
+            this->tab();
+            this->out() << "\"# ";
+
+            for (; s != p; ++s) {
+                if (*s == '\\' || *s == '"') {
+                    this->out() << '\\';
+                }
+                this->out() << *s;
+            }
+            this->out() << "\\n\"\n";
+
+            if (*s == '\n') {
+                ++s;
+            }
+        }
+        this->out() << "\n";
+    }
 
 
     template<class T>
     void write_type(type_<bool>, T x) {
-        this->out() << "boolean(default=" << (bool(x) ? "True" : "False") << ")\n";
+        this->out() << "boolean(default=" << (bool(x) ? "True" : "False") << ")";
     }
 
     template<class T>
     void write_type(type_<std::string>, T const & s) {
-        this->out() << "string(default='" << s << "')\n";
+        this->out() << "string(default='" << s << "')";
     }
 
     template<class T>
     void write_type(type_<uint32_>, T i) {
-        this->out() << "integer(min=0, default=" << this->inherit().get_value(i) << ")\n";
+        this->out() << "integer(min=0, default=" << this->inherit().get_value(i) << ")";
     }
 
     template<class T>
     void write_type(type_<uint64_>, T i) {
-        this->out() << "integer(min=0, default=" << this->inherit().get_value(i) << ")\n";
+        this->out() << "integer(min=0, default=" << this->inherit().get_value(i) << ")";
     }
 
     template<class T, class U>
@@ -152,7 +181,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         if (std::is_unsigned<T>::value) {
             this->out() << "min=0, ";
         }
-        this->out() << "default=" << this->inherit().get_value(x) << ")\n";
+        this->out() << "default=" << this->inherit().get_value(x) << ")";
     }
 
     template<class T, class U>
@@ -182,18 +211,18 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         if (is_str) {
             this->out() << "'";
         }
-        this->out() << ")\n";
+        this->out() << ")";
     }
 
     template<class T, class U>
     decltype(T::NB) write_enum(std::false_type, type_<T>, U const & x) {
-        this->out() << "integer(min=0, max=" << (underlying_cast(T::NB)-1) << ", default=" << this->inherit().get_value(x) << ")\n";
+        this->out() << "integer(min=0, max=" << (underlying_cast(T::NB)-1) << ", default=" << this->inherit().get_value(x) << ")";
         return {};
     }
 
     template<class T, class U>
     decltype(T::FULL) write_enum(std::false_type, type_<T>, U const & x) {
-        this->out() << "integer(min=0, max=" << T::FULL << ", default=" << this->inherit().get_value(x) << ")\n";
+        this->out() << "integer(min=0, max=" << T::FULL << ", default=" << this->inherit().get_value(x) << ")";
         return {};
     }
 
@@ -205,7 +234,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<class T, T Min, T Max, T Default, class U>
     void write_type(type_<Range<T, Min, Max, Default>>, U const & i) {
-        this->out() << "integer(min=" << Min << ", max=" << Max << ", default=" << this->inherit().get_value(i) << ")\n";
+        this->out() << "integer(min=" << Min << ", max=" << Max << ", default=" << this->inherit().get_value(i) << ")";
     }
 
     template<class T, T Min, T Max, T Default, class U>
@@ -214,63 +243,50 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         for (auto i = Min; i <=  Max; ++i) {
             this->out() << i << ", ";
         }
-        this->out() << "default=" << this->inherit().get_value(i) << ")\n";
+        this->out() << "default=" << this->inherit().get_value(i) << ")";
     }
 
     template<std::size_t N, class T>
     void write_type(type_<StaticKeyString<N>>, T const & x) {
         this->out() << "string(min=" << N*2 << ", max=" << N*2 << ", default='";
         this->write_key(this->get_cstr(this->inherit().get_value(x)), N);
-        this->out() << "')\n";
+        this->out() << "')";
     }
 
     template<std::size_t N, class Copier, class T>
     void write_type(type_<StaticStringBase<N, Copier>>, T const & x) {
-        this->out() << "string(max=" << N-1 <<  ", default='" << this->inherit().get_value(x) << "')\n";
+        this->out() << "string(max=" << N-1 <<  ", default='" << this->inherit().get_value(x) << "')";
     }
 
     template<class T>
     void write_type(type_<StaticIpString>, T const & x) {
-        this->out() << "ip_addr(default='" << this->inherit().get_value(x) << "')\n";
+        this->out() << "ip_addr(default='" << this->inherit().get_value(x) << "')";
     }
 
     template<class T>
     void write_type(type_<StringList>, T const & s) {
-        this->out() << "string_list(default=list('" << s << "'))\n";
+        this->out() << "string_list(default=list('" << s << "'))";
     }
 
     void write_type(type_<StringList>, StringList) {
-        this->out() << "string_list(default=list())\n";
+        this->out() << "string_list(default=list())";
     }
 };
 
 
 template<class SpecWriter>
 void write_spec(std::ostream & os, SpecWriter & writer) {
-    os <<
-      "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
-      "\"";
+    os << "\"## Config file for RDP proxy.\\n\\n\\n\"\n" ;
     for (auto & section_name : writer.sections_ordered) {
         auto body = writer.sections_member.find(section_name)->second;
         if (std::none_of(begin(body), end(body), [](int c){return std::isblank(c);} )) {
             continue;
         }
         if (!section_name.empty()) {
-            os << "[" << section_name << "]\\n\\n\"\n\n\"";
+            os << "\"[" << section_name << "]\\n\\n\"\n\n";
         }
-        for (char c : body) {
-            if (c == '\\' || c == '"') {
-                os << '\\' << c;
-            }
-            else if (c == '\n') {
-                os << "\\n\"\n\"";
-            }
-            else {
-                os << c;
-            }
-        }
+        os << body;
     }
-    os << "\"";
 }
 
 }

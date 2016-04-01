@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_SRC_UTILS_APPS_APP_WRITE_CPP_CONFIG_HPP
 #define REDEMPTION_SRC_UTILS_APPS_APP_WRITE_CPP_CONFIG_HPP
 
-#include "configs/config_spec.hpp"
+#include "configs/specs/config_spec.hpp"
 #include "configs/multi_filename_writer.hpp"
 
 #include <iostream>
