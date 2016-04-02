@@ -252,8 +252,6 @@ project redemption
     <include>$(SRCDIR)/system/linux
     #<include>$(SRCDIR)/utils
     <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/configs/autogen
-    <include>$(SRCDIR)/configs/variant
     <include>$(SRCDIR)/mod
     <include>$(SRCDIR)/front
     <include>$(SRCDIR)/acl
@@ -421,7 +419,6 @@ constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TES
 exe rdpproxy
     :
         $(SRCDIR)/main/main.cpp
-        $(SRCDIR)/main/write_python_spec.cpp
         bitmap
         program_options
 
@@ -662,22 +659,45 @@ actions nop { }
 import toolset ;
 
 feature.feature <cover-path> : : free ;
+feature.feature <cover-file> : : free ;
 toolset.flags cover COVERPATH : <cover-path> ;
+toolset.flags cover COVERFILE : <cover-file> ;
 
 actions cover
 {
-    echo "Computing coverage" $(COVERPATH:E=) "\n"
-    touch utils/$(<)
+    echo "$(COVERFILE)"
+    mkdir -p coverage/$(COVERFILE)
+    echo "Computing coverage" gcov $(<) $(>) "\n"
+    echo "gcov -a -c -b -f -o $(>:S=.gcno) $(>:S=)"
+
+    gcov -m -a -c -b -f -o $(>:S=.gcno) $(>:S=) > coverage/$(COVERFILE)/report.coverage
+    mv *.gcov coverage/$(COVERFILE)
+    touch $(<)
 }
 
-rule test-run ( target : sources + : requirements * )
+rule test-run ( target : sources + : tested-file : requirements * )
 {
-    echo "run $(sources) : : : $(requirements) : $(target) : coverage ;" ;
+    local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
+    local basepath = "" ;
+    local path = $(sources[0]:P) ;
+    while $(path) != $(TESTDIR) {
+        basepath = $(path:B)/$(basepath) ;
+        path = $(path:P) ;
+    }
+    echo  "===========>" $(basepath)$(base) ;
+
+    echo $(target) ":" $(sources) ":" $(requirements) ;
+
     run $(sources) : : : $(requirements) : $(target) : coverage ;
-    make $(target).coverage : $(target) : nop : <variant>coverage:<action>@cover <cover-path>utils ;
+    echo "make $(base).coverage : $(target) : nop : <variant>coverage:<action>@cover <cover-path>utils" ;
+    make $(base).coverage : $(target) : nop 
+        : <variant>coverage:<action>@cover 
+          <cover-path>$(basepath)$(base) 
+          <cover-file>$(tested-file)
+        ;
 }
 
-test-run test_utf : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
+test-run test_utf : $(TESTDIR)/utils/test_utf.cpp : utils/utf.hpp : $(TEST_DEPENDENCIES) ;
 #make test_utf.coverage : test_utf : nop : <variant>coverage:<action>@cover <cover-path>utils ;
 
 #make test_utf.coverage : test_utf : @cover ;
