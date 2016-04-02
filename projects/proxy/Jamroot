@@ -15,6 +15,7 @@ import modules : poke ;
 
 path-constant TOP : . ;
 constant SRCDIR : ../../src ;
+constant INCLUDEDIR : ../../include ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 
@@ -249,8 +250,8 @@ constant LIB_SAN_DEPENDENCY :
 project redemption
     : requirements
     <include>$(SRCDIR)
+    <include>$(INCLUDEDIR)
     <include>$(SRCDIR)/system/linux
-    #<include>$(SRCDIR)/utils
     <include>$(SRCDIR)/core
     <include>$(SRCDIR)/mod
     <include>$(SRCDIR)/front
@@ -597,79 +598,14 @@ type.register PYTHON : py ;
 
 actions nop { }
 
-#rule gcno {
-#   echo "rule gcno" ;
-#   echo $(1) "xxx==============\n" 
-#        $(2) "yyy==============\n" 
-#        $(3) "zzz==============\n" 
-#        ;
-#}
-
-#actions gcno {
-#    #echo     gcov -a -c -b -f -o $(1) $(2)
-#    echo    "action gcno" $(1) $(2)
-#    gcov -a -c -b -f -o $(1) $(2)
-#    mkdir -p $(1:P)/$(1:B).coverage
-#    mv *gcov $(1:P)/$(1:B).coverage
-#}
-
-#rule keepcoverage {
-#   echo "rule keep coverage" ;
-#   echo $(1) "xxx==============\n" 
-#        $(2) "yyy==============\n" 
-#        $(3) "zzz==============\n"
-#        $(4)
-#        ; 
-#}
-
-
-#actions keepcoverage {
-#    echo "action keep coverage"
-#    echo $(<[1])
-#    echo $(>[1])
-#    echo $(>[2])
-#    mkdir -p coverage/$(>[2])
-#    cp $(2:P)/$(2:B).coverage coverage/$(1:G)
-#}
-
-#rule utest ( target : source : properties * )
-#{
-#    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
-#    echo $(properties)
-#    echo "==============================================!!!!!!!!!!!!!!!!!!!!!!!==============" ;
-
-#    import feature ;
-
-    # local result = [ feature.values <variant> ] ;
-    # local result = [ feature.defaults <variant> ] ;
-    #local result = [ feature.attributes <variant> ] ;
-#    local result =  [ modules.peek : variant ]  ;
-
-#    echo $(result) ;
-    
-#    if <variant>coverage:<library>gcov in $(properties) {
-#        echo "unit test coverage" ;
-#        unit-test $(target) : $(source) : $(properties) ;
-#    }
-#    else {
-#        echo "unit test not coverage" ;
-#        unit-test $(target) : $(source) : $(properties) ;
-#    }
-#}
 import toolset ;
 
-feature.feature <cover-path> : : free ;
 feature.feature <cover-file> : : free ;
-toolset.flags cover COVERPATH : <cover-path> ;
 toolset.flags cover COVERFILE : <cover-file> ;
 
 actions cover
 {
-    echo "$(COVERFILE)"
     mkdir -p coverage/$(COVERFILE)
-    echo "Computing coverage" gcov $(<) $(>) "\n"
-    echo "gcov -a -c -b -f -o $(>:S=.gcno) $(>:S=)"
-
     gcov -m -a -c -b -f -o $(>:S=.gcno) $(>:S=) > coverage/$(COVERFILE)/report.coverage
     mv *.gcov coverage/$(COVERFILE)
     touch $(<)
@@ -684,15 +620,10 @@ rule test-run ( target : sources + : tested-file : requirements * )
         basepath = $(path:B)/$(basepath) ;
         path = $(path:P) ;
     }
-    echo  "===========>" $(basepath)$(base) ;
-
-    echo $(target) ":" $(sources) ":" $(requirements) ;
 
     run $(sources) : : : $(requirements) : $(target) : coverage ;
-    echo "make $(base).coverage : $(target) : nop : <variant>coverage:<action>@cover <cover-path>utils" ;
     make $(base).coverage : $(target) : nop 
         : <variant>coverage:<action>@cover 
-          <cover-path>$(basepath)$(base) 
           <cover-file>$(tested-file)
         ;
 }
