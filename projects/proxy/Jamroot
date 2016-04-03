@@ -611,7 +611,7 @@ actions cover
     touch $(<)
 }
 
-rule test-run ( target : sources + : tested-file : requirements * )
+rule test-run ( target : sources + : tested-file )
 {
     local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
     local basepath = "" ;
@@ -621,14 +621,14 @@ rule test-run ( target : sources + : tested-file : requirements * )
         path = $(path:P) ;
     }
 
-    run $(sources) : : : $(requirements) : $(target) : coverage ;
+    run $(sources) : : : $(TEST_DEPENDENCIES) : $(target) : coverage ;
     make $(base).coverage : $(target) : nop 
         : <variant>coverage:<action>@cover 
           <cover-file>$(tested-file)
         ;
 }
 
-test-run test_utf : $(TESTDIR)/utils/test_utf.cpp : utils/utf.hpp : $(TEST_DEPENDENCIES) ;
+test-run test_utf : $(TESTDIR)/utils/test_utf.cpp : utils/utf.hpp ;
 #make test_utf.coverage : test_utf : nop : <variant>coverage:<action>@cover <cover-path>utils ;
 
 #make test_utf.coverage : test_utf : @cover ;
