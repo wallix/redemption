@@ -30,7 +30,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestTranslation)

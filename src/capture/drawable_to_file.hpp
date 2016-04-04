@@ -25,8 +25,8 @@
 #ifndef REDEMPTION_DRAWABLE_TO_FILE_HPP
 #define REDEMPTION_DRAWABLE_TO_FILE_HPP
 
-#include "png.hpp"
-#include "drawable.hpp"
+#include "utils/png.hpp"
+#include "utils/drawable.hpp"
 
 #include <memory>
 

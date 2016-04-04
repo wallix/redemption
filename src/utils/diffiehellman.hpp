@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_UTILS_DIFFIEHELLMAN_HPP_
 #define _REDEMPTION_UTILS_DIFFIEHELLMAN_HPP_
 
-#include "genrandom.hpp"
+#include "utils/genrandom.hpp"
 
 #include <cstdint>
 

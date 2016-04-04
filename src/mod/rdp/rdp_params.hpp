@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 
-#include "log.hpp"
-#include "translation.hpp"
+#include "utils/log.hpp"
+#include "utils/translation.hpp"
 
 #include <string>
 

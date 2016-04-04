@@ -28,7 +28,7 @@
 #include "gdi/input_pointer_api.hpp"
 
 #include "core/wait_obj.hpp"
-#include "array_view.hpp"
+#include "utils/array_view.hpp"
 
 class Capability;
 class InStream;
@@ -87,7 +87,10 @@ class FrontAPI : public gdi::GraphicApi, public gdi::InputPointer {
     virtual void set_consent_ui_visible(bool set) {}
     virtual void session_update(array_const_char const & message) {}
 
-    virtual bool disable_input_event_and_graphics_update(bool disable) { return false; }
+    virtual bool disable_input_event_and_graphics_update(
+            bool disable_input_event, bool disable_graphics_update) {
+        return false;
+    }
 
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }

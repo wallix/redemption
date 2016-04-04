@@ -25,7 +25,7 @@
 
 #include "callback.hpp"
 #include "font.hpp"
-#include "text_metrics.hpp"
+#include "utils/text_metrics.hpp"
 #include "wait_obj.hpp"
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"

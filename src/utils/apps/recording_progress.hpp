@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 #include <iostream>
 

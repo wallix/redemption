@@ -25,8 +25,8 @@
 #ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 #define _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 
-#include "log.hpp"
-#include "config.hpp"
+#include "utils/log.hpp"
+#include "configs/config.hpp"
 #include "activity_checker.hpp"
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"

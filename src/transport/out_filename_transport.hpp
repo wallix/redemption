@@ -31,11 +31,11 @@
 #include <unistd.h>
 #include <memory>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
 #include "transport/cryptofile.hpp"
-#include "urandom_read.hpp"
+#include "utils/urandom_read.hpp"
 
 namespace transfil {
 

@@ -27,10 +27,10 @@
 #include "multiline.hpp"
 #include "image.hpp"
 #include "widget2_rect.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 #include "group_box.hpp"
 #include "flat_form.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "flat_button.hpp"
 
 class FlatWait : public WidgetParent

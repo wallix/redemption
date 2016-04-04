@@ -88,7 +88,7 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "config.hpp"
+#include "configs/config.hpp"
 
 #include "bitmapupdate.hpp"
 
@@ -121,8 +121,8 @@
 
 #include "transport/transport.hpp"
 
-#include "finally.hpp"
-#include "stream.hpp"
+#include "utils/finally.hpp"
+#include "utils/stream.hpp"
 
 #include "gdi/graphic_api.hpp"
 

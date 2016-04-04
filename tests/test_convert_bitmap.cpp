@@ -30,8 +30,8 @@
 
 #define LOGNULL
 
-#include "bitmap.hpp"
-#include "png.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/png.hpp"
 
 
 // to see last result file, remove unlink

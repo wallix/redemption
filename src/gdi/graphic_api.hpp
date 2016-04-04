@@ -25,7 +25,7 @@
 
 #include <cstdint>
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 
 class BGRPalette;

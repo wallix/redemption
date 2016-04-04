@@ -22,15 +22,15 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
 
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "front_api.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "widget2/language_button.hpp"
 #include "widget2/flat_dialog.hpp"
 #include "widget2/screen.hpp"
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
 #include "internal_mod.hpp"
-#include "timeout.hpp"
+#include "utils/timeout.hpp"
 
 
 

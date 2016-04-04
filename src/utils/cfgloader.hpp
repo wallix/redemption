@@ -24,7 +24,7 @@
 #include <istream>
 #include <fstream>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 struct ConfigurationHolder {
     virtual ~ConfigurationHolder() {}

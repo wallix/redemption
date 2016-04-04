@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_UTILS_REDIRECTIONINFO_HPP_
 #define _REDEMPTION_UTILS_REDIRECTIONINFO_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 struct RedirectionInfo {
     bool valid;

@@ -28,8 +28,8 @@
 #include "rdp/rdp_orders.hpp"
 
 /* include "ther h files */
-#include "stream.hpp"
-#include "ssl_calls.hpp"
+#include "utils/stream.hpp"
+#include "system/ssl_calls.hpp"
 #include "mod_api.hpp"
 #include "auth_api.hpp"
 #include "front_api.hpp"
@@ -42,7 +42,7 @@
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "RDP/autoreconnect.hpp"
 #include "RDP/ServerRedirection.hpp"
 #include "RDP/bitmapupdate.hpp"
@@ -74,9 +74,9 @@
 #include "transparentrecorder.hpp"
 
 #include "client_info.hpp"
-#include "genrandom.hpp"
-#include "authorization_channels.hpp"
-#include "parser.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/authorization_channels.hpp"
+#include "utils/parser.hpp"
 #include "channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
@@ -355,6 +355,7 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
+    const ClientTimeZone client_time_zone;
     Random & gen;
     const uint32_t verbose;
     const uint32_t cache_verbose;
@@ -425,7 +426,7 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     const bool                     server_cert_store;
     const configs::ServerCertCheck server_cert_check;
 
-    const char * certif_path;
+    std::unique_ptr<char[]> certif_path;
 
     bool enable_polygonsc;
     bool enable_polygoncb;
@@ -660,6 +661,7 @@ public:
         , console_session(info.console_session)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
+        , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
@@ -1095,8 +1097,11 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-            this->front.disable_input_event_and_graphics_update(false);
+        if (this->enable_session_probe) {
+            const bool disable_input_event     = false;
+            const bool disable_graphics_update = false;
+            this->front.disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
         }
 
         delete this->transparent_recorder;
@@ -1115,7 +1120,6 @@ public:
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
-        delete [] this->certif_path;
     }
 
 protected:
@@ -1272,9 +1276,6 @@ protected:
             static_cast<data_size_type>(-1);
         session_probe_virtual_channel_params.verbose                                =
             this->verbose;
-
-        session_probe_virtual_channel_params.session_probe_loading_mask_enabled     =
-            this->enable_session_probe_launch_mask;
 
         session_probe_virtual_channel_params.session_probe_launch_timeout           =
             this->session_probe_launch_timeout;
@@ -1965,7 +1966,7 @@ public:
                                 this->server_cert_store,
                                 this->server_cert_check,
                                 this->server_notifier,
-                                this->certif_path
+                                this->certif_path.get()
                             );
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
@@ -3507,6 +3508,14 @@ public:
                     this->end_session_message.clear();
                 }
 
+                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
+                    (e.id == ERR_NLA_AUTHENTICATION_FAILED)) {
+                    throw;
+                }
+
                 StaticOutStream<256> stream;
                 X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                 try {
@@ -3519,17 +3528,11 @@ public:
 
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
-                }
-
-                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
-                    (e.id == ERR_NLA_AUTHENTICATION_FAILED))
-                {
-                    throw;
+                if (this->enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->front.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
                 }
             }
         }
@@ -3546,8 +3549,11 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
+                if (this->enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->front.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
                 }
 
                 LOG(LOG_ERR,
@@ -5115,10 +5121,13 @@ public:
             this->event.reset();
         }
 
-        if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-            this->front.disable_input_event_and_graphics_update(true);
+        if (this->enable_session_probe) {
+            const bool disable_input_event     = true;
+            const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+            this->front.disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
         }
-    }
+    }   // process_logon_info
 
     void process_save_session_info(InStream & stream) {
         RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
@@ -5147,8 +5156,11 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
-            if (this->enable_session_probe && this->enable_session_probe_launch_mask) {
-                this->front.disable_input_event_and_graphics_update(true);
+            if (this->enable_session_probe) {
+                const bool disable_input_event     = true;
+                const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+                this->front.disable_input_event_and_graphics_update(
+                    disable_input_event, disable_graphics_update);
             }
         }
         break;
@@ -6253,6 +6265,8 @@ public:
                              , this->performanceFlags
                              , this->clientAddr
                              );
+
+        infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
 
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,

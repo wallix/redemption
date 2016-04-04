@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "src/core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFileDescriptor)
 {

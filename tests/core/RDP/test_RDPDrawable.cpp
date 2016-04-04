@@ -31,11 +31,11 @@
 
 #include "RDP/caches/glyphcache.hpp"
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "check_sig.hpp"
-#include "png.hpp"
-#include "rect.hpp"
-#include "stream.hpp"
+#include "utils/png.hpp"
+#include "utils/rect.hpp"
+#include "utils/stream.hpp"
 
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
 {

@@ -25,13 +25,13 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "transport/out_filename_sequence_transport.hpp"
-#include "fileutils.hpp"
+#include "utils/fileutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {

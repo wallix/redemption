@@ -27,7 +27,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "finally.hpp"
+#include "utils/finally.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFinally)
 {

@@ -39,7 +39,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
-    const char * input_filename = "./tests/fixtures/sample0.wrm";
+    const char * input_filename = FIXTURES_PATH "/sample0.wrm";
     char path[1024];
     size_t len = strlen(input_filename);
     memcpy(path, input_filename, len);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
 //BOOST_AUTO_TEST_CASE(TestSecondPart)
 //{
-//    const char * input_filename = "./tests/fixtures/sample1.wrm";
+//    const char * input_filename = FIXTURES_PATH "/sample1.wrm";
 //    char path[1024];
 //    size_t len = strlen(input_filename);
 //    memcpy(path, input_filename, len);

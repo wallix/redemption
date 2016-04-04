@@ -28,14 +28,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "mainloop.hpp"
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "listen.hpp"
 #include "session_server.hpp"
-#include "parse_ip_conntrack.hpp"
+#include "utils/parse_ip_conntrack.hpp"
 
-#include "config.hpp"
+#include "configs/config.hpp"
 
 /*****************************************************************************/
 #ifndef IN_IDE_PARSER

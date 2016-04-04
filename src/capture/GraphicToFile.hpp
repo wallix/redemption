@@ -21,9 +21,9 @@
 #ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 #define _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 
-#include "colors.hpp"
-#include "compression_transport_wrapper.hpp"
-#include "config.hpp"
+#include "utils/colors.hpp"
+#include "utils/compression_transport_wrapper.hpp"
+#include "configs/config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"

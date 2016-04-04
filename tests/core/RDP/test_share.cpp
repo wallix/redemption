@@ -28,7 +28,7 @@
 
 #define LOGPRINT
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "RDP/share.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)

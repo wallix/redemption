@@ -23,8 +23,8 @@
 
 #include <array>
 #include <algorithm>
-#include "config.hpp"
-#include "log.hpp"
+#include "configs/config.hpp"
+#include "utils/log.hpp"
 
 struct Translation
 {

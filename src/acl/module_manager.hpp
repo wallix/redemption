@@ -26,8 +26,8 @@
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
 #include "transport/socket_transport.hpp"
-#include "config.hpp"
-#include "netutils.hpp"
+#include "configs/config.hpp"
+#include "utils/netutils.hpp"
 #include "mod_api.hpp"
 #include "auth_api.hpp"
 #include "null/null.hpp"
@@ -38,8 +38,8 @@
 #include "internal/test_card_mod.hpp"
 #include "internal/replay_mod.hpp"
 #include "front.hpp"
-#include "translation.hpp"
-#include "pattutils.hpp"
+#include "utils/translation.hpp"
+#include "utils/pattutils.hpp"
 
 #include "internal/flat_login_mod.hpp"
 #include "internal/flat_selector2_mod.hpp"

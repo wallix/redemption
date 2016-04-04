@@ -13,7 +13,6 @@ from __future__ import with_statement
 
 import random
 import os
-import urllib
 import signal
 import traceback
 import json
@@ -84,7 +83,7 @@ class Sesman():
     #===============================================================================
         try:
             confwab = engine.read_config_file(modulename='sesman',
-                                                   confdir='/opt/wab/share/sesman/config')
+                                              confdir='/var/wab/etc/sesman/config')
             seswabconfig = confwab.get(u'sesman', {})
             SESMANCONF.conf[u'sesman'].update(seswabconfig)
             # Logger().info(" WABCONFIG SESMANCONF = '%s'" % seswabconfig)
@@ -1052,7 +1051,9 @@ class Sesman():
             if _status:
                 tries = 5
                 Logger().info(u"Wab user '%s' authentication succeeded" % mundane(self.shared.get(u'login')))
-
+                if not self.engine.check_license():
+                    _status, _error = False, "License 'sm' not available"
+                    break
                 # Warn password will expire soon for user
                 _status, _error = self.check_password_expiration_date()
 
@@ -1128,10 +1129,7 @@ class Sesman():
 
             if _status:
                 kv[u'session_id'] = session_id
-                _status, _error = self.engine.write_trace(self.full_path)
-                _error = TR(_error)
-                if not _status:
-                    _error = _error % self.full_path
+                trace_written = False # reminder to write_trace later
                 pattern_kill, pattern_notify = self.engine.get_restrictions(selected_target, "RDP")
                 if pattern_kill:
                     self.send_data({ u'module' : u'transitory', u'pattern_kill': pattern_kill })
@@ -1303,6 +1301,7 @@ class Sesman():
                             PASSWORD_INTERACTIVE in auth_policy_methods)
 
                         kv[u'target_password'] = target_password
+                        is_interactive_login = not bool(kv.get('target_login'))
                         extra_kv, _status, _error = self.complete_target_info(
                             kv, allow_interactive_password)
                         kv.update(extra_kv)
@@ -1332,10 +1331,21 @@ class Sesman():
                                 None
                                 )
 
+                        if not trace_written:
+                            # write mwrm path to rdptrc (allow real time display)
+                            trace_written = True
+                            _status, _error = self.engine.write_trace(self.full_path)
+                            if not _status:
+                                _error = TR(_error) % self.full_path
+                                break
+
+                        update_args = { "is_application": bool(application),
+                                        "target_host": self._physical_target_host }
+                        if is_interactive_login:
+                            update_args["effective_login"] = kv.get('target_login')
 
                         self.engine.update_session(physical_target,
-                                                   is_application=bool(application),
-                                                   target_host=self._physical_target_host)
+                                                   **update_args)
 
                         if not _status:
                             Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""
@@ -1578,9 +1588,9 @@ class Sesman():
         res = params.get("rt_display")
         Logger().info("rt_display=%s" % res)
         if res:
-            Logger().info("shared rt_display=%s" % self.shared.get("rt_display"))
+            # Logger().info("shared rt_display=%s" % self.shared.get("rt_display"))
             if self.shared.get("rt_display") != res:
-                Logger().info("sending rt_display=%s !" % res)
+                Logger().info("sending rt_display=%s" % res)
                 self.send_data({ "rt_display": res })
 
 # END CLASS - Sesman

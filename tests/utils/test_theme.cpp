@@ -27,7 +27,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "theme.hpp"
+#include "utils/theme.hpp"
 BOOST_AUTO_TEST_CASE(TestColorFromFile)
 {
     // test we can read from a file (and not only from a stream)

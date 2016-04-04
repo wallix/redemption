@@ -27,7 +27,7 @@
 
 using namespace std;
 
-#include "confdescriptor.hpp"
+#include "utils/confdescriptor.hpp"
 
 BOOST_AUTO_TEST_CASE(TestConfigDescriptorFromFile)
 {

@@ -25,8 +25,8 @@
 #include "transport/transport.hpp"
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
-#include "stream.hpp"
-#include "cast.hpp"
+#include "utils/stream.hpp"
+#include "utils/cast.hpp"
 
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_api.hpp"

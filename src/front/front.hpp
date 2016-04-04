@@ -25,13 +25,13 @@
 #ifndef _REDEMPTION_FRONT_FRONT_HPP_
 #define _REDEMPTION_FRONT_FRONT_HPP_
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "openssl_tls.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "transport/transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
@@ -40,17 +40,17 @@
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "RDP/fastpath.hpp"
 #include "RDP/slowpath.hpp"
 
-#include "ssl_calls.hpp"
-#include "bitfu.hpp"
-#include "rect.hpp"
-#include "region.hpp"
+#include "system/ssl_calls.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/rect.hpp"
+#include "utils/region.hpp"
 #include "capture.hpp"
 #include "font.hpp"
-#include "bitmap.hpp"
+#include "utils/bitmap.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
 #include "RDP/caches/glyphcache.hpp"
@@ -58,15 +58,15 @@
 #include "RDP/caches/brushcache.hpp"
 #include "channel_names.hpp"
 #include "client_info.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "error.hpp"
 #include "callback.hpp"
-#include "colors.hpp"
-#include "bitfu.hpp"
-#include "confdescriptor.hpp"
+#include "utils/colors.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/confdescriptor.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "pattutils.hpp"
+#include "utils/pattutils.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
@@ -91,7 +91,7 @@
 
 #include "front_api.hpp"
 #include "activity_checker.hpp"
-#include "genrandom.hpp"
+#include "utils/genrandom.hpp"
 
 #include "auth_api.hpp"
 
@@ -103,6 +103,7 @@
 #include "RDP/mppc_61.hpp"
 
 #include "utils/timeout.hpp"
+#include "utils/underlying_cast.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/utils/non_null.hpp"
@@ -532,7 +533,7 @@ private:
 
     void set_gd(gdi::GraphicApi & new_gd) {
         this->gd = &new_gd;
-        this->graphics_update = this->input_event_and_graphics_update_disabled ? &null_gd() : &new_gd;
+        this->graphics_update = this->graphics_update_disabled ? &null_gd() : &new_gd;
     }
 
 public:
@@ -620,7 +621,8 @@ private:
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
 
-    bool input_event_and_graphics_update_disabled = false;
+    bool input_event_disabled     = false;
+    bool graphics_update_disabled = false;
 
     bool session_probe_started_ = false;
 
@@ -1413,7 +1415,8 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-                        GCC::UserData::CSMonitor cs_monitor;
+                        GCC::UserData::CSMonitor & cs_monitor =
+                            this->client_info.client_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
@@ -2257,7 +2260,7 @@ public:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_and_graphics_update_disabled) {
+                                if (!this->input_event_disabled) {
                                     cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 }
                                 this->has_activity = true;
@@ -2676,17 +2679,23 @@ private:
         }
     }
 
-    bool disable_input_event_and_graphics_update(bool disable) override {
+    bool disable_input_event_and_graphics_update(bool disable_input_event,
+            bool disable_graphics_update) override {
         bool need_full_screen_update =
-            (this->input_event_and_graphics_update_disabled && !disable);
+            (this->graphics_update_disabled && !disable_graphics_update);
 
-        if (this->input_event_and_graphics_update_disabled != disable) {
-            LOG(LOG_INFO, "Front: %s graphics update.",
-                (disable ? "Disable" : "Enable"));
-
-            this->input_event_and_graphics_update_disabled = disable;
-            this->set_gd(*this->gd);
+        if (this->input_event_disabled != disable_input_event) {
+            LOG(LOG_INFO, "Front: %s input event.",
+                (disable_input_event ? "Disable" : "Enable"));
         }
+        if (this->graphics_update_disabled != disable_graphics_update) {
+            LOG(LOG_INFO, "Front: %s graphics update.",
+                (disable_graphics_update ? "Disable" : "Enable"));
+        }
+
+        this->input_event_disabled     = disable_input_event;
+        this->graphics_update_disabled = disable_graphics_update;
+        this->set_gd(*this->gd);
 
         return need_full_screen_update;
     }
@@ -3564,7 +3573,7 @@ private:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_and_graphics_update_disabled) {
+                                if (!this->input_event_disabled) {
                                     cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 }
                                 this->has_activity = true;
@@ -4345,8 +4354,7 @@ private:
                 LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                if (!this->input_event_and_graphics_update_disabled &&
-                    send_to_mod) {
+                if (!this->input_event_disabled && send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }
                 this->has_activity = true;

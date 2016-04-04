@@ -31,8 +31,8 @@
 
 #define LOGNULL
 
-#include "rect.hpp"
-#include "region.hpp"
+#include "utils/rect.hpp"
+#include "utils/region.hpp"
 //#include <boost/foreach.hpp>
 
 

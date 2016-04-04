@@ -26,23 +26,23 @@
 
 #include "version.hpp"
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "internal/widget2/flat_vnc_authentification.hpp"
 #include "internal/widget2/notify_api.hpp"
 #include "internal/internal_mod.hpp"
 #include "keymapSym.hpp"
-#include "diffiehellman.hpp"
-#include "d3des.hpp"
+#include "utils/diffiehellman.hpp"
+#include "utils/d3des.hpp"
 #include "channel_list.hpp"
 #include "RDP/pointer.hpp"
 #include "RDP/clipboard.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "update_lock.hpp"
+#include "utils/update_lock.hpp"
 #include "transport/socket_transport.hpp"
 #include "channel_names.hpp"
-#include "strutils.hpp"
-#include "utf.hpp"
+#include "utils/strutils.hpp"
+#include "utils/utf.hpp"
 
 #include <cstdlib>
 

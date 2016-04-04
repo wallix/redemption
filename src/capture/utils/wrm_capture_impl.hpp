@@ -24,7 +24,7 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/caches/pointercache.hpp"
-#include "dump_png24_from_rdp_drawable_adapter.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "nativecapture.hpp"
 #include "apis_register.hpp"

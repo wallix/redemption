@@ -31,7 +31,7 @@
 
 #define LOGNULL
 //#define LOGPRINTlibboost_unit_test
-#include "config.hpp"
+#include "configs/config.hpp"
 //#include "test_transport.hpp"
 
 //#include "rdp/rdp.hpp"

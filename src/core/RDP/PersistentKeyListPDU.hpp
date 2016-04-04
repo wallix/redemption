@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
 #define _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
 
-#include "log.hpp"
-#include "stream.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
 #include <algorithm>
 
 namespace RDP {

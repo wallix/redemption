@@ -28,7 +28,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include "font.hpp"
 #include "internal/widget2/flat_dialog.hpp"

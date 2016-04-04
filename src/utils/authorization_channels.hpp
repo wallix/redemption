@@ -22,7 +22,7 @@
 #define REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 
 #include "movable_noncopyable.hpp"
-#include "splitter.hpp"
+#include "utils/splitter.hpp"
 
 #include <algorithm>
 #include <cstring>

@@ -21,8 +21,8 @@
 #ifndef REDEMPTION_GDI_CAPTURE_PROBE_API_HPP
 #define REDEMPTION_GDI_CAPTURE_PROBE_API_HPP
 
-#include "noncopyable.hpp"
-#include "array_view.hpp"
+#include "utils/noncopyable.hpp"
+#include "utils/array_view.hpp"
 
 struct timeval;
 

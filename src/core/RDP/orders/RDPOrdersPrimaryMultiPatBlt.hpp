@@ -136,7 +136,7 @@ namespace RDP {
 //  field.
 
 #include "RDPOrdersCommon.hpp"
-#include "rect.hpp"
+#include "utils/rect.hpp"
 
 class RDPMultiPatBlt {
 public:

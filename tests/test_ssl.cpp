@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "ssl_calls.hpp"
+#include "system/ssl_calls.hpp"
 #include <cstring>
 
 BOOST_AUTO_TEST_CASE(TestRC4)

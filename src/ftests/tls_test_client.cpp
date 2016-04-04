@@ -40,6 +40,9 @@ static void rdp_request(SocketTransport & sockettransport)
 
     printf("HELLO sent, going TLS\n");
 
+    sockettransport.tls = new TLSContext();
+
+
     BIO *bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
     SSL_CTX *ctx = SSL_CTX_new(SSLv23_method());
 
@@ -53,19 +56,23 @@ static void rdp_request(SocketTransport & sockettransport)
         exit(0);
     }
 
-    sockettransport.allocated_ctx = ctx;
-    sockettransport.allocated_ssl = ssl;
-    sockettransport.tls = true;
-    sockettransport.io = ssl;
+    sockettransport.tls->allocated_ctx = ctx;
+    sockettransport.tls->allocated_ssl = ssl;
+    sockettransport.tls->io = ssl;
 
     NullServerNotifier null_server_notifier;
 
     const bool server_cert_store = true;
-    sockettransport.enable_client_tls(
+    sockettransport.tls->enable_client_tls(
+            sockettransport.sck,
             server_cert_store,
-            configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know,
+            true,
+            false,
             null_server_notifier,
-            CERTIF_PATH
+            CERTIF_PATH,
+            nullptr,
+            "127.0.0.1",
+            331
         );
 
     char * pbuf = buf;

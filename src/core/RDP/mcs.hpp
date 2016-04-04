@@ -27,7 +27,7 @@
 #include <cinttypes>
 
 #include "error.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "RDP/out_per_bstream.hpp"
 
 

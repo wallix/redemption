@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_GDI_CAPTURE_API_HPP
 #define REDEMPTION_GDI_CAPTURE_API_HPP
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 #include <type_traits>
 

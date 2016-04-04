@@ -26,8 +26,8 @@
 
 #include <stdlib.h>
 
-#include "log.hpp"
-#include "stream.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
 
 #include "RDP/mppc.hpp"
 

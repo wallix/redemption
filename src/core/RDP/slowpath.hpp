@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_SLOWPATH_HPP_
 #define _REDEMPTION_CORE_RDP_SLOWPATH_HPP_
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 namespace SlowPath {
 

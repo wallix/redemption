@@ -24,7 +24,7 @@
 #include "RDP/clipboard.hpp"
 #include "channel_list.hpp"
 #include "front_api.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "widget2/edit.hpp"
 #include "channel_names.hpp"
 

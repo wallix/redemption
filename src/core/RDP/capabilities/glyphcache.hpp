@@ -22,7 +22,7 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_GLYPHCACHE_HPP_
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // [MS-RDPBCGR] - 2.2.7.1.8 Glyph Cache Capability Set
 //  (TS_GLYPHCACHE_CAPABILITYSET)

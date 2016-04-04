@@ -23,7 +23,7 @@
 #define _REDEMPTION_CAPTURE_STATICCAPTURE_HPP_
 
 #include "capture/drawable_to_file.hpp"
-#include "difftimeval.hpp"
+#include "utils/difftimeval.hpp"
 #include "transport/transport.hpp"
 
 #include "gdi/capture_api.hpp"

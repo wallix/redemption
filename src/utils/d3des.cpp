@@ -26,7 +26,7 @@
  * (GEnie : OUTER; CIS : [71755,204]) Graven Imagery, 1992.
  */
 
-#include "d3des.hpp"
+#include "utils/d3des.hpp"
 
 extern "C" {
 

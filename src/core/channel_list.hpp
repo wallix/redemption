@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 #define _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "transport/transport.hpp"
 
 #include "RDP/mcs.hpp"

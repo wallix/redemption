@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "ellipse.hpp"
+#include "utils/ellipse.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestEllipse)

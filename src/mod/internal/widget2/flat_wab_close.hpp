@@ -28,9 +28,9 @@
 #include "edit.hpp"
 #include "label.hpp"
 #include "multiline.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "widget2_rect.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 #include "defines.hpp"
 
 #include <vector>

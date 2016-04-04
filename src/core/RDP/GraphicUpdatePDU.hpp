@@ -23,7 +23,7 @@
 
 #include <cinttypes>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 #include "RDPSerializer.hpp"
 #include "gdi/input_pointer_api.hpp"
 #include "gcc.hpp"

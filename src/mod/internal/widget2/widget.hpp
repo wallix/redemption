@@ -26,7 +26,7 @@
 
 #include "notify_api.hpp"
 #include "mod_api.hpp"
-#include "rect.hpp"
+#include "utils/rect.hpp"
 #include "callback.hpp"
 #include "RDP/pointer.hpp"
 

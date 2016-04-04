@@ -37,12 +37,12 @@
 
 #include "openssl_crypto.hpp"
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "check_files.hpp"
 #include "mainloop.hpp"
-#include "log.hpp"
-#include "fdbuf.hpp"
-#include "fdbuf.hpp"
+#include "utils/log.hpp"
+#include "utils/fdbuf.hpp"
+#include "utils/fdbuf.hpp"
 
 #include "program_options/program_options.hpp"
 

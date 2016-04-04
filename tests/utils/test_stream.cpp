@@ -30,7 +30,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestStream_uint8)

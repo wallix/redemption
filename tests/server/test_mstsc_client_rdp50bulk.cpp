@@ -33,7 +33,7 @@
 //#define LOGPRINT
 
 #undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
+#define SHARE_PATH FIXTURES_PATH
 
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
@@ -42,7 +42,7 @@
 #include "null/null.hpp"
 #include "internal/test_card_mod.hpp"
 #include "transport/test_transport.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "front.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "listen.hpp"
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx(gen, ini);
 
     // Comment the code block below to generate testing data.
-    #include "fixtures/trace_mstsc_client_rdp50bulk.hpp"
+    #include "../fixtures/trace_mstsc_client_rdp50bulk.hpp"
 
     // Comment the code block below to generate testing data.
     uint32_t     verbose = 511;

@@ -38,8 +38,8 @@
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "front_api.hpp"
 #include "transport/transport.hpp"
-#include "stream.hpp"
-#include "bitmap.hpp"
+#include "utils/stream.hpp"
+#include "utils/bitmap.hpp"
 
 struct xup_mod : public mod_api {
 

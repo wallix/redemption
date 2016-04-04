@@ -29,7 +29,7 @@
 #include <string>
 
 #define LOGPRINT
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include "channel_list.hpp"
 #include "front_api.hpp"

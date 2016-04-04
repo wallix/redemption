@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_GDI_DUMP_PNG24_HPP
 #define REDEMPTION_GDI_DUMP_PNG24_HPP
 
-#include "noncopyable.hpp"
+#include "utils/noncopyable.hpp"
 
 class Transport;
 

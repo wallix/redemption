@@ -26,7 +26,7 @@
 //#define LOGNULL
 #define LOGPRINT
 
-#include "pattutils.hpp"
+#include "utils/pattutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestKbdPattern)
 {

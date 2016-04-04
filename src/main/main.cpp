@@ -24,11 +24,9 @@
 
 #include "version.hpp"
 
-#include "apps/app_proxy.hpp"
+#include "utils/apps/app_proxy.hpp"
 
 #include "program_options/program_options.hpp"
-
-#include "write_python_spec.hpp"
 
 #include "transport/cryptofile.hpp"
 
@@ -55,9 +53,9 @@ int main(int argc, char** argv)
       , [argv](po::variables_map const & options, bool * quit) {
             if (options.count("print-config-spec")) {
                 *quit = true;
-                if (int err = write_python_spec(argv[0], "/dev/stdout")) {
-                    return err;
-                }
+                std::cout <<
+                  #include "configs/autogen/str_python_spec.hpp"
+                ;
             }
             return 0;
         }

@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "stream.hpp"
+#include "utils/stream.hpp"
 #include "RDP/lic.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_lic_new_licence)

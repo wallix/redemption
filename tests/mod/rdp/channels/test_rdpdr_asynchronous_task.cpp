@@ -24,13 +24,13 @@
 #define BOOST_TEST_MODULE TestRDPDRAsynchronousTask
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
-#include "fdbuf.hpp"
+#include "utils/fdbuf.hpp"
 #include "transport/in_file_transport.hpp"
-#include "log.hpp"
-#include "make_unique.hpp"
+#include "utils/log.hpp"
+#include "utils/make_unique.hpp"
 #include "rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "utils/socket_transport_utility.hpp"
 #include "transport/test_transport.hpp"
@@ -58,8 +58,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 {
     uint32_t verbose = 1;
 
-    int fd = ::open("tests/fixtures/rfc959.txt", O_RDONLY);
-    if (fd == -1) { throw Error(ERR_TRANSPORT_OPEN_FAILED); }
+    int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
+    if (fd == -1) {
+        BOOST_CHECK(false);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
 
     io::posix::fdbuf fd_wrapper(fd);
 
@@ -70,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
-    #include "fixtures/test_rdpdr_drive_read_task.hpp"
+    #include "../../../fixtures/test_rdpdr_drive_read_task.hpp"
     CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
     TestToServerSender test_to_server_sender(check_transport);
 
@@ -125,8 +128,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
     uint32_t verbose = 1;
 
-    int fd = ::open("tests/fixtures/sample.bmp", O_RDONLY);
-    if (fd == -1) { throw Error(ERR_TRANSPORT_OPEN_FAILED); }
+    int fd = ::open(FIXTURES_PATH "/sample.bmp", O_RDONLY);
+    if (fd == -1) {
+        BOOST_CHECK(false);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
 
     io::posix::fdbuf fd_wrapper(fd);
 
@@ -151,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
-    #include "fixtures/test_rdpdr_send_drive_io_response_task.hpp"
+    #include "../../../fixtures/test_rdpdr_send_drive_io_response_task.hpp"
     CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
     TestToServerSender test_to_server_sender(check_transport);
 

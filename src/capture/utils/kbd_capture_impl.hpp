@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_CAPTURE_UTILS_KBD_CAPTURE_IMPL_HPP
 #define REDEMPTION_CAPTURE_UTILS_KBD_CAPTURE_IMPL_HPP
 
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "apis_register.hpp"
 #include "new_kbdcapture.hpp"
 #include "gdi/capture_api.hpp"

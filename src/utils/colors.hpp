@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <cstddef>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 typedef uint32_t BGRColor;
 typedef uint32_t RGBColor;
@@ -72,7 +72,7 @@ struct BGRPalette
 
     BGRColor const * begin() const
     { using std::begin; return begin(this->palette); }
-    
+
     BGRColor const * end() const
     { using std::end; return end(this->palette); }
 

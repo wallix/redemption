@@ -26,8 +26,8 @@
 #ifndef _REDEMPTION_CORE_CALLBACK_HPP_
 #define _REDEMPTION_CORE_CALLBACK_HPP_
 
-#include "darray.hpp"
-#include "rect.hpp"
+#include "utils/darray.hpp"
+#include "utils/rect.hpp"
 
 class InStream;
 class Keymap2;

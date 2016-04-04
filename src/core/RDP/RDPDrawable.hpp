@@ -54,9 +54,9 @@
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
 
-#include "drawable.hpp"
-#include "png.hpp"
-#include "text_metrics.hpp"
+#include "utils/drawable.hpp"
+#include "utils/png.hpp"
+#include "utils/text_metrics.hpp"
 
 #include "gdi/graphic_api.hpp"
 
