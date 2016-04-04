@@ -605,14 +605,34 @@ toolset.flags cover COVERFILE : <cover-file> ;
 
 actions cover
 {
+    echo "COVERFILE = $(COVERFILE)"
+    echo "source = $(>)"
+    echo "target = $(<)"
     mkdir -p coverage/$(COVERFILE)
-    gcov -m -a -c -b -f -o $(>:S=.gcno) $(>:S=) > coverage/$(COVERFILE)/report.coverage
-    mv *.gcov coverage/$(COVERFILE)
-    touch $(<)
+    gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > coverage/$(COVERFILE)/report.coverage
+    if [ $? = "0" ]; then
+        mv *.gcov coverage/$(COVERFILE)
+        if [ $? = "0" ]; then
+            etags -o coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
+            if [ $? = "0" ]; then
+                python tools/coverage.py $(COVERFILE) coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(TESTDIR)
+                touch $(<)
+            else
+                echo "etags failed"
+            fi
+        else
+            echo "gcov mv KO"
+        fi
+    else
+        echo "gcov KO"
+    fi
+    
 }
 
-rule test-run ( target : sources + : tested-file )
+rule test-run ( target : sources + : tested )
 {
+    ECHO "TEST RUN" ;
+    sources = $(TESTDIR)/$(sources) ;
     local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
     local basepath = "" ;
     local path = $(sources[0]:P) ;
@@ -621,14 +641,23 @@ rule test-run ( target : sources + : tested-file )
         path = $(path:P) ;
     }
 
-    run $(sources) : : : $(TEST_DEPENDENCIES) : $(target) : coverage ;
-    make $(base).coverage : $(target) : nop 
+    ECHO "base = $(base)" ;
+    ECHO "sources = $(sources)" ;
+    ECHO "target = $(target)" ;
+
+    run $(sources) : : : $(TEST_DEPENDENCIES) : $(target) ;
+    make $(target:S=.coverage) : $(target) : nop 
         : <variant>coverage:<action>@cover 
-          <cover-file>$(tested-file)
+          <cover-file>$(tested)
         ;
 }
 
-test-run test_utf : $(TESTDIR)/utils/test_utf.cpp : utils/utf.hpp ;
+# To compute coverage
+# ===================
+# bjam coverage test_utf.coverage 
+
+test-run test_utf : utils/test_utf.cpp : utils/utf.hpp ;
+
 #make test_utf.coverage : test_utf : nop : <variant>coverage:<action>@cover <cover-path>utils ;
 
 #make test_utf.coverage : test_utf : @cover ;
