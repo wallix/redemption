@@ -35,7 +35,7 @@
 #include "transport/test_transport.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
-#include "image_capture.hpp"
+#include "drawable_to_file.hpp"
 
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
     const SequenceGenerator * seq = out_png_trans.seqgen();
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);

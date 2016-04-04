@@ -54,7 +54,7 @@ struct CaptureApi : private noncopyable
 
     // TODO other interface
     virtual void external_breakpoint() = 0;
-    virtual void external_time(const timeval& now) = 0;
+    virtual void external_time(timeval const & now) = 0;
 };
 
 

@@ -32,7 +32,7 @@
 //#define LOGPRINT
 
 #include "transport/out_filename_sequence_transport.hpp"
-#include "staticcapture.hpp"
+#include "capture/image_capture.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "mod_osd.hpp"
 
@@ -40,7 +40,7 @@ struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
 {
     RDPDrawable gd;
 
-    FakeMod(const uint16_t front_width, const uint16_t front_height, Font const & font)
+    FakeMod(const uint16_t front_width, const uint16_t front_height)
     : FakeMod::base_type(front_width, front_height)
     , gd(front_width, front_height, 24)
     {}
@@ -69,10 +69,8 @@ protected:
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
 {
-    Inifile ini;
-
     Rect screen_rect(0, 0, 800, 600);
-    FakeMod mod(screen_rect.cx, screen_rect.cy, ini.get<cfg::font>());
+    FakeMod mod(screen_rect.cx, screen_rect.cy);
     RDPDrawable & drawable = mod.gd;
 
     const int groupid = 0;
@@ -82,10 +80,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::png_limit>(-1);
-    ini.set<cfg::video::png_interval>(0);
-    StaticCapture consumer(now, trans, trans.seqgen(), screen_rect.cx, screen_rect.cy, false, ini, drawable.impl());
+    ImageCapture consumer(now, drawable.impl(), trans, {});
 
     drawable.show_mouse_cursor(false);
 

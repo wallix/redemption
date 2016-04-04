@@ -686,8 +686,6 @@ unit-test test_new_kbdcapture : tests/capture/test_new_kbdcapture.cpp : $(TEST_D
 unit-test test_RDPChunkedDevice : tests/capture/test_RDPChunkedDevice.cpp : $(TEST_DEPENDENCIES) ;
 #send_wrm_chunk.hpp
 unit-test test_send_wrm_chunk : tests/capture/test_send_wrm_chunk.cpp : $(TEST_DEPENDENCIES) ;
-#staticcapture.hpp
-unit-test test_staticcapture : tests/capture/test_staticcapture.cpp : $(TEST_DEPENDENCIES) <library>png ;
 #transparentchunk.hpp
 unit-test test_transparentchunk : tests/capture/test_transparentchunk.cpp : $(TEST_DEPENDENCIES) ;
 #transparentplayer.hpp
@@ -767,12 +765,6 @@ unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp : $(TEST_D
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
 unit-test test_redirection_info : tests/utils/test_redirection_info.cpp : $(TEST_DEPENDENCIES) ;
-
-## Capabilities tests
-## @{
-unit-test test_config : tests/core/test_config.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_config_assign : tests/core/test_config_assign.cpp : $(TEST_DEPENDENCIES) ;
-## }
 
 ## Capabilities tests
 ## @{

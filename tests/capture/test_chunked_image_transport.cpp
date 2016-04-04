@@ -35,7 +35,7 @@
 #include "transport/out_filename_sequence_transport.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
-#include "image_capture.hpp"
+#include "drawable_to_file.hpp"
 
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
@@ -426,7 +426,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
@@ -498,10 +498,10 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
-    ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl());
 
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
@@ -581,7 +581,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     while (player.next_order()){

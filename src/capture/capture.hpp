@@ -21,13 +21,6 @@
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
-#include "transport/out_meta_sequence_transport.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
-
-#include "nativecapture.hpp"
-#include "staticcapture.hpp"
-#include "new_kbdcapture.hpp"
-
 #include "wait_obj.hpp"
 
 #include "gdi/graphic_api.hpp"
@@ -37,14 +30,12 @@
 #include "gdi/capture_probe_api.hpp"
 
 #include "utils/pattutils.hpp"
-#include "dump_png24_from_rdp_drawable_adapter.hpp"
-#include "gdi/utils/non_null.hpp"
 
-#include "utils/graphic_capture_impl.hpp"
-#include "utils/wrm_capture_impl.hpp"
-#include "utils/kbd_capture_impl.hpp"
-#include "utils/image_capture_impl.hpp"
-#include "utils/capture_apis_impl.hpp"
+#include "capture/utils/graphic_capture_impl.hpp"
+#include "capture/utils/wrm_capture_impl.hpp"
+#include "capture/utils/kbd_capture_impl.hpp"
+#include "capture/utils/image_capture_impl.hpp"
+#include "capture/utils/capture_apis_impl.hpp"
 
 class Capture final
 : public gdi::GraphicBase<Capture>

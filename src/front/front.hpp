@@ -105,6 +105,7 @@
 #include "utils/timeout.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
+#include "gdi/utils/non_null.hpp"
 
 #include <memory>
 

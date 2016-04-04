@@ -35,7 +35,7 @@
 #include "transport/in_file_transport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
-#include "image_capture.hpp"
+#include "drawable_to_file.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
 //    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr);
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    const int groupid = 0;
 //    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
 //    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-//    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
+//    DrawableToFile png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
 //    png_recorder.update_config(ini);
 //    player.add_consumer(&drawable1, &drawable1);

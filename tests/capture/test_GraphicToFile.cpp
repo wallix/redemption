@@ -38,7 +38,7 @@
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
-#include "image_capture.hpp"
+#include "drawable_to_file.hpp"
 
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr);
 
     png_recorder.flush();
