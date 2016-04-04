@@ -88,7 +88,7 @@ public:
     Capture(
         const timeval & now,
         uint16_t width, uint16_t height, int order_bpp, int capture_bpp,
-        bool clear_png, bool no_timestamp, auth_api * authentifier,
+        bool enable_rt, bool no_timestamp, auth_api * authentifier,
         const Inifile & ini, Random & rnd, CryptoContext & cctx,
         bool full_video, bool extract_meta_data)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
@@ -149,7 +149,7 @@ public:
                 }
 
                 this->psc.reset(new Static(
-                    now, clear_png, authentifier, this->gd->impl(),
+                    now, enable_rt, authentifier, this->gd->impl(),
                     record_tmp_path, basename, groupid, ini
                 ));
             }

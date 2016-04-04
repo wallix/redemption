@@ -231,7 +231,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
 
-                    , bool clear_png
+                    , bool enable_rt
                     , bool no_timestamp
                     , auth_api * authentifier
                     , Inifile & ini, Random & rnd, CryptoContext & cctx
@@ -315,7 +315,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , player.screen_rect.cy
                     , player.info_bpp
                     , capture_bpp
-                    , clear_png
+                    , enable_rt
                     , no_timestamp
                     , authentifier
                     , ini
@@ -557,8 +557,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string input_filename;
     std::string output_filename;
 
-    bool clear_png = false;
-    bool no_timestamp = false;
+    bool const enable_rt = false;
+    bool const no_timestamp = false;
     auth_api * authentifier = nullptr;
 
     uint32_t    verbose            = 0;
@@ -917,7 +917,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                             , begin_capture, end_capture
                             , output_filename, capture_bpp
                             , wrm_compression_algorithm_
-                            , clear_png
+                            , enable_rt
                             , no_timestamp
                             , authentifier
                             , ini, rnd, cctx

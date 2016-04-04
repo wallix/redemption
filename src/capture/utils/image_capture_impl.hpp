@@ -36,22 +36,22 @@ class ImageCaptureImpl final : private gdi::CaptureApi
     struct ImageTransportBuilder final : private Transport
     {
         OutFilenameSequenceTransport trans;
-        bool clear_png;
+        bool enable_rt;
         uint32_t num_start = 0;
         unsigned png_limit;
 
         ImageTransportBuilder(
             const char * path, const char * basename, int groupid,
-            auth_api * authentifier, bool clear_png, Inifile const & ini)
+            auth_api * authentifier, bool enable_rt, Inifile const & ini)
         : trans(
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
             path, basename, ".png", groupid, authentifier)
-        , clear_png(clear_png)
-        , png_limit(clear_png ? ini.get<cfg::video::png_limit>() : 0)
+        , enable_rt(enable_rt)
+        , png_limit(enable_rt ? ini.get<cfg::video::png_limit>() : 0)
         {}
 
         ~ImageTransportBuilder() {
-            if (this->clear_png) {
+            if (this->enable_rt) {
                 this->unlink_all_png();
             }
         }
@@ -117,19 +117,19 @@ class ImageCaptureImpl final : private gdi::CaptureApi
 
 public:
     ImageCaptureImpl(
-        const timeval & now, bool clear_png, auth_api * authentifier, Drawable & drawable,
+        const timeval & now, bool enable_rt, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         const Inifile & ini)
     : png_interval(
         std::chrono::duration<std::chrono::microseconds::rep, std::ratio<1, 10>>(
             ini.get<cfg::video::png_interval>()))
-    , trans_builder(record_tmp_path, basename, groupid, authentifier, clear_png, ini)
+    , trans_builder(record_tmp_path, basename, groupid, authentifier, enable_rt, ini)
     , ic(now, drawable, this->trans_builder.get_transport(), this->png_interval)
     , disable_capture(*this)
     {}
 
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        if (this->trans_builder.clear_png) {
+        if (this->trans_builder.enable_rt) {
             this->capture_list = &apis_register.capture_list;
             this->graphic_snapshot_list = apis_register.graphic_snapshot_list;
             this->enable_rt_display = ini.get<cfg::video::rt_display>();
@@ -158,7 +158,7 @@ public:
 
 private:
     void update_config(Inifile const & ini) override {
-        if (this->trans_builder.clear_png) {
+        if (this->trans_builder.enable_rt) {
             assert(this->capture_list && this->graphic_snapshot_list);
 
             auto find_capture = [&](capture_list_t & list, gdi::CaptureApi & cap) {
