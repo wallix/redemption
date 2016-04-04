@@ -56,6 +56,8 @@ constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
 
+constant COVERAGE_PREFIX : [ setvar COVERAGE_PREFIX : "" ] ;
+
 constant PNG_DEBUG : <variant>debug:<library>png ;
 
 rule defines ( properties * )
@@ -608,14 +610,14 @@ actions cover
     echo "COVERFILE = $(COVERFILE)"
     echo "source = $(>)"
     echo "target = $(<)"
-    mkdir -p coverage/$(COVERFILE)
-    gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > coverage/$(COVERFILE)/report.coverage
+    mkdir -p $(COVERAGE_PREFIX)coverage/$(COVERFILE)
+    gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
     if [ $? = "0" ]; then
-        mv *.gcov coverage/$(COVERFILE)
+        mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
         if [ $? = "0" ]; then
-            etags -o coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
+            etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
             if [ $? = "0" ]; then
-                python tools/coverage.py $(COVERFILE) coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(TESTDIR)
+                python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR)
                 touch $(<)
             else
                 echo "etags failed"
@@ -629,7 +631,7 @@ actions cover
     
 }
 
-rule test-run ( target : sources + : tested )
+rule test-run ( target : sources + : tested : requirements * )
 {
     ECHO "TEST RUN" ;
     sources = $(TESTDIR)/$(sources) ;
@@ -645,7 +647,7 @@ rule test-run ( target : sources + : tested )
     ECHO "sources = $(sources)" ;
     ECHO "target = $(target)" ;
 
-    run $(sources) : : : $(TEST_DEPENDENCIES) : $(target) ;
+    run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
     make $(target:S=.coverage) : $(target) : nop 
         : <variant>coverage:<action>@cover 
           <cover-file>$(tested)
@@ -656,28 +658,23 @@ rule test-run ( target : sources + : tested )
 # ===================
 # bjam coverage test_utf.coverage 
 
+
 test-run test_utf : utils/test_utf.cpp : utils/utf.hpp ;
 
-#make test_utf.coverage : test_utf : nop : <variant>coverage:<action>@cover <cover-path>utils ;
+## Acl tests
+## @{
+test-run test_acl_serializer : acl/test_acl_serializer.cpp : acl/acl_serializer.hpp ;
+test-run test_authentifier : acl/test_authentifier.cpp : acl/authentifier.hpp : <library>crypto <library>png ;
+test-run test_module_manager : acl/test_module_manager.cpp : acl/module_manager.hpp : <library>crypto <library>png ;
+## @}
 
-#make test_utf.coverage : test_utf : @cover ;
-
-#unit-test test_utf.passed : $(TESTDIR)/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
-
-#make test_utf.gcno : test_utf.ut : gcno ;
-#make utils/utf.hpp.gcov : test_utf.gcno $(SRCDIR)/utils/utf.hpp : keepcoverage ;
-
-#install coverage_utils
-#    : utf.gcov
-#    : 
-#    : <location>$(TOP)/utils/coverage
-#    ;
 
 install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
     :
     : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
     ;
+
 
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
@@ -700,12 +697,6 @@ make test_trace.py.unittest
     ;
 
 
-## Acl tests
-## @{
-unit-test test_acl_serializer : $(TESTDIR)/acl/test_acl_serializer.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_authentifier : $(TESTDIR)/acl/test_authentifier.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
-unit-test test_module_manager : $(TESTDIR)/acl/test_module_manager.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
-## @}
 
 
 ## Capture tests

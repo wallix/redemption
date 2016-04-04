@@ -19,7 +19,7 @@ def grep(filename, ematch):
 
 class Function:
     def __init__(self, name, startline):
-        self.name = name
+        self.name = name.strip()
         self.startline = startline
         self.total_lines = 0
         self.covered_lines = 0
@@ -56,7 +56,7 @@ class Cover:
                     res = re.match(r'^(.*[(].*)\x7F(\d+)[,].*$', line)
                 if res:
                     name, startline = res.group(1, 2)
-                    print "function found at %s %s" % (name, startline)
+                    print "function found at %s %s" % (name.strip(), startline)
                     self.modules[module].functions[int(startline)] = Function(name, int(startline))
 
             current_function = None
@@ -169,6 +169,8 @@ if __name__ == "__main__":
     td = ""
     if len(sys.argv) > 4:
         td = sys.argv[4]
+        if len(td) and td[-1:] != '/':
+            td = td + '/'
 
     print "================ Coverage Results: ==================="
     g_covered = 0
@@ -190,7 +192,7 @@ if __name__ == "__main__":
                 print "WARNING: LOW COVERAGE %s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
                 low_coverage += 1
             else:
-                print "COVERAGE %s:%s [%s] %s%s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
+                print "COVERAGE %s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
                 covered += 1
         print "MODULE %s : %s COVERED, %s LOW_COVERAGE, %s NO_COVERAGE in %s TOTAL" % (m, covered,
                                                     low_coverage, no_coverage, total_number)
