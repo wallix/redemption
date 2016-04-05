@@ -260,6 +260,7 @@ project redemption
     <include>modules/includes 
     <include>src/utils
     <include>src/system/linux/system
+    <include>include
     #emscripten<include>/usr/include #emscripten
     
     <include>src/system/JS
