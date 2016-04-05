@@ -645,7 +645,6 @@ unit-test test_transparentrecorder : tests/capture/test_transparentrecorder.cpp 
 unit-test test_utils_match_finder : tests/capture/utils/test_match_finder.cpp : $(TEST_DEPENDENCIES) ;
 #wrm_label.hpp
 unit-test test_wrm_label : tests/capture/test_wrm_label.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
 ## @}
 
 

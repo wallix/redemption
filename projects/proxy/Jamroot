@@ -612,29 +612,44 @@ actions cover
 {
     if [ "++ $(COVERFLAG) ++" = "++ nocover ++" ]; then
         echo "NO COVERAGE"
-        touch $(<)
+        touch "$(<)"
     else
         echo "COVERFILE = $(COVERFILE)"
         echo "source = $(>)"
         echo "target = $(<)"
         mkdir -p $(COVERAGE_PREFIX)coverage/$(COVERFILE)
+        if [ ! -e $(>:S=.gcno) ]; then
+            echo "coverage file $(>:S=.gcno) does not exist"
+            exit 1
+        fi
+        
         echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
         gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
         if [ $? = "0" ]; then
+        
             mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
             if [ $? = "0" ]; then
+
+                if [ ! -e "$(SRCDIR)/$(COVERFILE)" ]; then
+                    echo "coverage file $(SRCDIR)/$(COVERFILE) does not exist"
+                    exit 1
+                fi
+
                 etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
                 if [ $? = "0" ]; then
                     python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR)
                     touch $(<)
                 else
                     echo "etags failed"
+                    exit 1
                 fi
             else
                 echo "gcov mv KO"
+                exit 1
             fi
         else
             echo "gcov KO"
+            exit 1
         fi
     fi
 }
@@ -665,8 +680,6 @@ rule test-run ( target : sources + : tested : requirements * )
 # To compute coverage
 # ===================
 # bjam coverage test_utf.coverage 
-
-test-run test_utf : utils/test_utf.cpp : utils/utf.hpp ;
 
 ## Acl tests
 ## @{
@@ -713,6 +726,8 @@ test-run test_GraphicToFile
     : capture/test_GraphicToFile.cpp 
     : capture/GraphicToFile.hpp 
     : <library>bitmap <library>png <library>crypto <library>snappy 
+#    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
+    
     ;
 
 test-run test_image_capture 
@@ -774,11 +789,11 @@ test-run test_wrm_label
     : capture/wrm_label.hpp 
     ;
 
-test-run test_capture_wrm_save_state 
-    : capture/test_capture_wrm_save_state.cpp 
-    : capture/capture_wrm_save_state.hpp 
-    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
-    ;
+#test-run test_capture_wrm_save_state 
+#    : capture/test_capture_wrm_save_state.cpp 
+#    : capture/capture_wrm_save_state.hpp 
+#    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
+#    ;
 ## @}
 
 ## Test facility functions or classes
@@ -809,39 +824,136 @@ test-run test_make_unique
     : ;
 ## @}
 
+test-run test_stream 
+    : utils/test_stream.cpp 
+    : utils/stream.hpp 
+    ;
 
+test-run test_utf 
+    : utils/test_utf.cpp 
+    : utils/utf.hpp 
+    ;
+test-run test_rect 
+    : utils/test_rect.cpp
+    : utils/rect.hpp 
+    ;
+    
+test-run test_ellipse 
+    : utils/test_ellipse.cpp 
+    : utils/ellipse.hpp 
+    ;
+
+test-run test_drawable 
+    : utils/test_drawable.cpp 
+    : utils/drawable.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_region 
+    : utils/test_region.cpp 
+    : utils/region.hpp 
+    ;
+
+test-run test_bitfu 
+    : utils/test_bitfu.cpp
+    : utils/bitfu.hpp
+    ;
+    
+test-run test_parse 
+    : utils/test_parse.cpp 
+    : utils/parse.hpp 
+    ;
+    
+test-run test_parser 
+    : utils/test_parser.cpp 
+    : utils/parser.hpp 
+    ;
+    
+test-run test_fileutils 
+    : utils/test_fileutils.cpp 
+    : utils/fileutils.hpp 
+    ;
+    
+test-run test_parse_ip_conntrack 
+    : utils/test_parse_ip_conntrack.cpp 
+    : utils/parse_ip_conntrack.hpp 
+    ;
+    
+test-run test_x224 
+    : core/RDP/test_x224.cpp 
+    : core/RDP/x224.hpp 
+    ;
+    
+test-run test_out_per_bstream 
+    : core/RDP/test_out_per_bstream.cpp 
+    : core/RDP/out_per_bstream.hpp 
+    ;
+    
+test-run test_mcs 
+    : core/RDP/test_mcs.cpp 
+    : core/RDP/mcs.hpp 
+    ;
+
+test-run test_mppc 
+    : core/RDP/test_mppc.cpp
+    : core/RDP/mppc.hpp
+    ;
+    
+test-run test_mppc_40 
+    : core/RDP/test_mppc_40.cpp 
+    : core/RDP/mppc_40.hpp 
+    ;
+    
+test-run test_mppc_50 
+    : core/RDP/test_mppc_50.cpp 
+    : core/RDP/mppc_50.hpp 
+    ;
+    
+test-run test_mppc_60 
+    : core/RDP/test_mppc_60.cpp
+    : core/RDP/mppc_60.hpp
+    ;
+    
+test-run test_mppc_61 
+    : core/RDP/test_mppc_61.cpp
+    : core/RDP/mppc_61.hpp
+    ;
+    
+test-run test_gcc 
+    : core/RDP/test_gcc.cpp 
+    : core/RDP/gcc.hpp 
+    : <library>dl <library>z <library>crypto 
+    ;
+
+test-run test_sec 
+    : core/RDP/test_sec.cpp 
+    : core/RDP/sec.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_lic 
+    : core/RDP/test_lic.cpp 
+    : core/RDP/lic.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_share 
+    : core/RDP/test_share.cpp 
+    : core/RDP/share.hpp 
+    ;
+
+test-run test_fastpath 
+    : core/RDP/test_fastpath.cpp 
+    : core/RDP/fastpath.hpp 
+    : <library>crypto 
+    ;
+    
+test-run test_slowpath 
+    : core/RDP/test_slowpath.cpp 
+    : core/RDP/slowpath.hpp 
+    ;
 
 if [ SHELL false ] {
-
-
-
-test-run test_stream : utils/test_stream.cpp : ;
-# test-run test_inputarray : utils/test_inputarray.cpp : ;
-test-run test_utf : utils/test_utf.cpp : ;
-test-run test_rect : utils/test_rect.cpp : ;
-test-run test_ellipse : utils/test_ellipse.cpp : ;
-test-run test_drawable : utils/test_drawable.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_region : utils/test_region.cpp : ;
-test-run test_bitfu : utils/test_bitfu.cpp : ;
-test-run test_parse : utils/test_parse.cpp : ;
-test-run test_parser : utils/test_parser.cpp : ;
-test-run test_fileutils : utils/test_fileutils.cpp : ;
-test-run test_parse_ip_conntrack : utils/test_parse_ip_conntrack.cpp : ;
-test-run test_x224 : core/RDP/test_x224.cpp : ;
-test-run test_out_per_bstream : core/RDP/test_out_per_bstream.cpp : ;
-test-run test_mcs : core/RDP/test_mcs.cpp : ;
-
-test-run test_mppc : core/RDP/test_mppc.cpp : ;
-test-run test_mppc_40 : core/RDP/test_mppc_40.cpp : ;
-test-run test_mppc_50 : core/RDP/test_mppc_50.cpp : ;
-test-run test_mppc_60 : core/RDP/test_mppc_60.cpp : ;
-test-run test_mppc_61 : core/RDP/test_mppc_61.cpp : ;
-test-run test_gcc : core/RDP/test_gcc.cpp : <library>dl <library>z <library>crypto ;
-test-run test_sec : core/RDP/test_sec.cpp : <library>crypto ;
-test-run test_lic : core/RDP/test_lic.cpp : <library>crypto ;
-test-run test_share : core/RDP/test_share.cpp : ;
-test-run test_fastpath : core/RDP/test_fastpath.cpp : <library>crypto ;
-test-run test_slowpath : core/RDP/test_slowpath.cpp : ;
 
 test-run test_clipboard : core/RDP/test_clipboard.cpp : ;
 
