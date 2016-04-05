@@ -25,7 +25,7 @@ objjs penta.bc
     <cxxflags>-g3 
     ;
 
-js pentamino.js : penta.bc : 
+exejs pentamino.js : penta.bc : 
     <cxxflags>-g3
     <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
     <cxxflags>"--shell-file templates/penta_template.html"

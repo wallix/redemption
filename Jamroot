@@ -755,7 +755,6 @@ unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp : $(TEST_
 unit-test test_logon : tests/core/RDP/test_logon.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_nego : tests/core/RDP/test_nego.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
 unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_RDPOrdersNames : tests/core/RDP/orders/test_RDPOrdersNames.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;

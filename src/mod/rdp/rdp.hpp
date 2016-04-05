@@ -66,7 +66,7 @@
 #include "RDP/capabilities/input.hpp"
 #include "RDP/capabilities/cap_sound.hpp"
 #include "RDP/capabilities/cap_font.hpp"
-#include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/cap_glyphcache.hpp"
 #include "RDP/capabilities/rail.hpp"
 #include "RDP/capabilities/window.hpp"
 #include "RDP/channels/rdpdr.hpp"

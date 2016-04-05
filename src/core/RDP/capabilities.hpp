@@ -39,7 +39,7 @@
 #include "capabilities/cap_font.hpp"
 // #include "capabilities/frameacknowledge.hpp"
 #include "capabilities/general.hpp"
-#include "capabilities/glyphcache.hpp"
+#include "capabilities/cap_glyphcache.hpp"
 #include "capabilities/input.hpp"
 // #include "capabilities/largepointer.hpp"
 #include "capabilities/multifragmentupdate.hpp"
