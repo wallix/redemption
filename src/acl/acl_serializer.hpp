@@ -30,7 +30,7 @@
 
 #include "utils/exchange.hpp"
 #include "utils/stream.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "authid.hpp"
 #include "transport/transport.hpp"
 #include "utils/translation.hpp"

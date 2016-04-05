@@ -27,7 +27,7 @@
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
-#include "config.hpp"
+#include "configs/config.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIniAssign)
 {

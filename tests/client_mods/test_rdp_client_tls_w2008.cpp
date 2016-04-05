@@ -32,7 +32,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "config.hpp"
+#include "configs/config.hpp"
 //#include "transport/socket_transport.hpp"
 #include "transport/test_transport.hpp"
 #include "client_info.hpp"

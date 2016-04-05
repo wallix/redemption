@@ -30,7 +30,7 @@ enum class CaptureFlags : unsigned {
     png = 1 << 0,
     wrm = 1 << 1,
     FULL = ((1 << 2) - 1),
-    ocr = 1 << 2
+    ocr = 1 << 3,
 };
 MK_PARSER_ENUM_FLAGS(::configs::CaptureFlags)
 

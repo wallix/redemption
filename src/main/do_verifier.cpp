@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include "utils/apps/app_verifier.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "version.hpp"
 
 extern "C" {

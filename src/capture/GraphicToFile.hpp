@@ -30,7 +30,7 @@
 
 #include "utils/colors.hpp"
 #include "utils/compression_transport_wrapper.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"

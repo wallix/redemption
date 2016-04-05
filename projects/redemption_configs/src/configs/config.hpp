@@ -38,7 +38,7 @@
 #include "utils/exchange.hpp"
 #include "utils/underlying_cast.hpp"
 
-#include "authid.hpp"
+#include "core/authid.hpp"
 
 #include "utils/get_printable_password.hpp"
 
@@ -101,6 +101,8 @@ namespace configs {
     }
 }
 
+#include "configs/types.hpp"
+#include "configs/variant/includes.hpp"
 #include "configs/autogen/variables_configuration.hpp"
 
 #include "configs/parse.hpp"

@@ -1,3 +1,5 @@
+#ifndef REDEMPTION_CONFIGS_AUTHID_T_DEF
+#define REDEMPTION_CONFIGS_AUTHID_T_DEF
 enum authid_t {
     AUTHID_GLOBALS_CAPTURE_CHUNK,
     AUTHID_GLOBALS_AUTH_USER,
@@ -208,4 +210,4 @@ constexpr char const * const authstr[] = {
     "disconnect_reason",
     "disconnect_reason_ack",
 };
-
+#endif

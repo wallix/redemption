@@ -17,6 +17,7 @@ rule init ( * )
 {
 }
 
+
 type.register OBJJS : bc ;
 generators.register-standard emscripten.objjs : CPP : OBJJS ;
 flags emscripten.objjs INCLUDES <include> ;
@@ -49,6 +50,5 @@ actions exejs
 {
     em++ $(CXXFLAGS) -I$(INCLUDES) $(2) -o `perl -e '$f = @ARGV[0]; $f =~ s/js$/html/; print $f;' $(1)` 
 }
-
 
 

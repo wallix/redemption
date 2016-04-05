@@ -58,7 +58,7 @@
 #include "RDP/caches/brushcache.hpp"
 #include "channel_names.hpp"
 #include "client_info.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "error.hpp"
 #include "callback.hpp"
 #include "utils/colors.hpp"
@@ -421,7 +421,8 @@ private:
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
 
-    bool input_event_and_graphics_update_disabled = false;
+    bool input_event_disabled     = false;
+    bool graphics_update_disabled = false;
 
     bool session_probe_started_ = false;
 
@@ -2109,7 +2110,7 @@ public:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_and_graphics_update_disabled) {
+                                if (!this->input_event_disabled) {
                                     cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 }
                                 this->has_activity = true;
@@ -2528,16 +2529,22 @@ private:
         }
     }
 
-    bool disable_input_event_and_graphics_update(bool disable) override {
+    bool disable_input_event_and_graphics_update(bool disable_input_event,
+            bool disable_graphics_update) override {
         bool need_full_screen_update =
-            (this->input_event_and_graphics_update_disabled && !disable);
+            (this->graphics_update_disabled && !disable_graphics_update);
 
-            if (this->input_event_and_graphics_update_disabled != disable) {
-                LOG(LOG_INFO, "Front: %s graphics update.",
-                    (disable ? "Disable" : "Enable"));
-            }
+        if (this->input_event_disabled != disable_input_event) {
+            LOG(LOG_INFO, "Front: %s input event.",
+                (disable_input_event ? "Disable" : "Enable"));
+        }
+        if (this->graphics_update_disabled != disable_graphics_update) {
+            LOG(LOG_INFO, "Front: %s graphics update.",
+                (disable_graphics_update ? "Disable" : "Enable"));
+        }
 
-        this->input_event_and_graphics_update_disabled = disable;
+        this->input_event_disabled     = disable_input_event;
+        this->graphics_update_disabled = disable_graphics_update;
 
         return need_full_screen_update;
     }
@@ -3415,7 +3422,7 @@ private:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_and_graphics_update_disabled) {
+                                if (!this->input_event_disabled) {
                                     cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 }
                                 this->has_activity = true;
@@ -3860,7 +3867,7 @@ private:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 if (this->client_info.bpp != this->mod_bpp) {
                     RDPOpaqueRect new_cmd = cmd;
 
@@ -3893,7 +3900,7 @@ private:
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 this->orders->draw(cmd, clip);
 
                 if (  this->capture
@@ -3906,7 +3913,7 @@ private:
 
     void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 this->orders->draw(cmd, clip);
 
                 if (  this->capture
@@ -3920,7 +3927,7 @@ private:
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 this->orders->draw(cmd, clip);
 
                 if (  this->capture
@@ -3936,7 +3943,7 @@ private:
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
             this->send_global_palette();
 
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 if (this->client_info.bpp != this->mod_bpp) {
                     RDPMultiOpaqueRect new_cmd = cmd;
 
@@ -3971,7 +3978,7 @@ private:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 RDP::RDPMultiPatBlt new_cmd = cmd;
                 if (this->client_info.bpp != this->mod_bpp) {
                     const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
@@ -4007,7 +4014,7 @@ private:
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 this->orders->draw(cmd, clip);
 
                 if (  this->capture
@@ -4022,7 +4029,7 @@ private:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
             this->send_global_palette();
 
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 RDPPatBlt new_cmd = cmd;
                 if (this->client_info.bpp != this->mod_bpp) {
                     const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
@@ -4067,7 +4074,7 @@ private:
         const Bitmap tiled_bmp(bitmap, src_tile);
         const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
 
-        if (!this->input_event_and_graphics_update_disabled) {
+        if (!this->graphics_update_disabled) {
             this->orders->draw(cmd2, clip, tiled_bmp);
 
             if (  this->capture
@@ -4176,7 +4183,7 @@ public:
             // this may change the brush add send it to to remote cache
         }
 
-        if (!this->input_event_and_graphics_update_disabled) {
+        if (!this->graphics_update_disabled) {
             this->orders->draw(cmd2, clip, tiled_bmp);
 
             if (  this->capture
@@ -4210,7 +4217,7 @@ public:
                         std::max(cmd.starty, cmd.endy) - miny + 1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 if (this->client_info.bpp != this->mod_bpp) {
                     RDPLineTo new_cmd = cmd;
 
@@ -4262,7 +4269,7 @@ public:
             // this may change the brush and send it to to remote cache
             this->cache_brush(new_cmd.brush);
 
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 this->orders->draw(new_cmd, clip, gly_cache);
 
                 if (  this->capture
@@ -4302,7 +4309,7 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 RDPPolygonSC new_cmd = cmd;
                 if (this->client_info.bpp != this->mod_bpp) {
                     const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
@@ -4346,7 +4353,7 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 if (this->client_info.bpp != this->mod_bpp) {
                     RDPPolygonCB new_cmd = cmd;
 
@@ -4402,7 +4409,7 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 if (this->client_info.bpp != this->mod_bpp) {
                     RDPPolyline new_cmd = cmd;
 
@@ -4437,7 +4444,7 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 if (this->client_info.bpp != this->mod_bpp) {
                     RDPEllipseSC new_cmd = cmd;
                     const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
@@ -4470,7 +4477,7 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
             this->send_global_palette();
 
-            if (!this->input_event_and_graphics_update_disabled) {
+            if (!this->graphics_update_disabled) {
                 if (this->client_info.bpp != this->mod_bpp) {
                     RDPEllipseCB new_cmd = cmd;
                     const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
@@ -4619,7 +4626,7 @@ public:
             return;
         }
 
-        if (!this->input_event_and_graphics_update_disabled) {
+        if (!this->graphics_update_disabled) {
             ::compress_and_draw_bitmap_update(bitmap_data,
                                               Bitmap(this->client_info.bpp, bmp),
                                               this->client_info.bpp,
@@ -4685,8 +4692,7 @@ private:
                 LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                if (!this->input_event_and_graphics_update_disabled &&
-                    send_to_mod) {
+                if (!this->input_event_disabled && send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }
                 this->has_activity = true;

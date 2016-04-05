@@ -35,7 +35,7 @@
 //#define LOGPRINT
 
 #include "check_sig.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 // Comment the code block below to generate testing data.
 #include "transport/test_transport.hpp"
 #include "client_info.hpp"

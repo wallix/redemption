@@ -24,7 +24,7 @@
 
 #include "image_capture.hpp"
 #include "utils/difftimeval.hpp"
-#include "config.hpp"
+#include "configs/config.hpp"
 #include "transport/sequence_generator.hpp"
 #include "CaptureDevice.hpp"
 
