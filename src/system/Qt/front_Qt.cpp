@@ -900,15 +900,14 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         
         case 0x22:  // TODO
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << (int)cmd.rop << ")" << std::endl;
-            //std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
-            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
+            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y), drect.cx, drect.cy));
             dest.invertPixels();
             
-            uchar *       destData = dest.bits();
-            const uchar * srcData  = reinterpret_cast<const uchar *>(bitmap.data());
+            uchar * destData = dest.bits();
+            QImage srcImage(reinterpret_cast<const uchar *>(bitmap.data()), drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
+            uchar * srcData  = srcImage.convertToFormat(this->_imageFormatARGB).mirrored(false, true).bits();
             
-            int len(drect.cx * drect.cy);
+            int len( drect.cx * drect.cy * ((this->_info.bpp+1)/8) );
             for (int i = 0; i < len; i++) {
                 destData[i] = ~(srcData[i]) & destData[i];
             }
@@ -918,8 +917,8 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             QRect tect(drect.x, drect.y, drect.cx, drect.cy);
             this->_screen->paintCache().drawImage(tect, image);
             
-            //this->_screen->repaint();
-            //this->_screen->_timer.stop();
+            this->_screen->repaint();
+            this->_screen->_timer.stop();
 
         }
         break;
@@ -929,14 +928,13 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         
         case 0x66:  // TODO
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << (int)cmd.rop << ")" << std::endl;
-            // std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
-            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
+            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y), drect.cx, drect.cy));
             
-            uchar *       destData = dest.bits();
-            const uchar * srcData  = reinterpret_cast<const uchar *>(bitmap.data());
+            uchar * destData = dest.bits();
+            QImage srcImage(reinterpret_cast<const uchar *>(bitmap.data()), drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
+            uchar * srcData  = srcImage.convertToFormat(this->_imageFormatARGB).mirrored(false, true).bits();
             
-            int len(drect.cx * drect.cy);
+            int len( drect.cx * drect.cy * ((this->_info.bpp+1)/8) );
             for (int i = 0; i < len; i++) {
                 destData[i] = srcData[i] ^ destData[i];
             }
@@ -946,8 +944,8 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             QRect tect(drect.x, drect.y, drect.cx, drect.cy);
             this->_screen->paintCache().drawImage(tect, image);
             
-            //this->_screen->repaint();
             //this->_screen->_timer.stop();
+            //this->_screen->repaint();
         }
         break;
             
