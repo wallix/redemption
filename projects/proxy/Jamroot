@@ -602,38 +602,46 @@ actions nop { }
 
 import toolset ;
 
-feature.feature <cover-file> : : free ;
-toolset.flags cover COVERFILE : <cover-file> ;
+feature.feature <cov-file> : : free ;
+toolset.flags cover COVERFILE : <cov-file> ;
+
+feature.feature <cov-flag> : : free ;
+toolset.flags cover COVERFLAG : <cov-flag> ;
 
 actions cover
 {
-    echo "COVERFILE = $(COVERFILE)"
-    echo "source = $(>)"
-    echo "target = $(<)"
-    mkdir -p $(COVERAGE_PREFIX)coverage/$(COVERFILE)
-    gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
-    if [ $? = "0" ]; then
-        mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
+    if [ "++ $(COVERFLAG) ++" = "++ nocover ++" ]; then
+        echo "NO COVERAGE"
+        touch $(<)
+    else
+        echo "COVERFILE = $(COVERFILE)"
+        echo "source = $(>)"
+        echo "target = $(<)"
+        mkdir -p $(COVERAGE_PREFIX)coverage/$(COVERFILE)
+        echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
+        gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
         if [ $? = "0" ]; then
-            etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
+            mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
             if [ $? = "0" ]; then
-                python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR)
-                touch $(<)
+                etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
+                if [ $? = "0" ]; then
+                    python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR)
+                    touch $(<)
+                else
+                    echo "etags failed"
+                fi
             else
-                echo "etags failed"
+                echo "gcov mv KO"
             fi
         else
-            echo "gcov mv KO"
+            echo "gcov KO"
         fi
-    else
-        echo "gcov KO"
     fi
-    
 }
 
 rule test-run ( target : sources + : tested : requirements * )
 {
-    ECHO "TEST RUN" ;
+#    ECHO "TEST RUN" ;
     sources = $(TESTDIR)/$(sources) ;
     local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
     local basepath = "" ;
@@ -643,21 +651,20 @@ rule test-run ( target : sources + : tested : requirements * )
         path = $(path:P) ;
     }
 
-    ECHO "base = $(base)" ;
-    ECHO "sources = $(sources)" ;
-    ECHO "target = $(target)" ;
+#    ECHO "base = $(base)" ;
+#    ECHO "sources = $(sources)" ;
+#    ECHO "target = $(target)" ;
 
     run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
     make $(target:S=.coverage) : $(target) : nop 
         : <variant>coverage:<action>@cover 
-          <cover-file>$(tested)
+          <cov-file>$(tested) $(requirements)
         ;
 }
 
 # To compute coverage
 # ===================
 # bjam coverage test_utf.coverage 
-
 
 test-run test_utf : utils/test_utf.cpp : utils/utf.hpp ;
 
@@ -685,49 +692,128 @@ test-run test_chunked_image_transport
     : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
     ;
 
-if [ SHELL false ] {
-#ChunkToFile.hpp
-test-run test_ChunkToFile : capture/test_ChunkToFile.cpp : ;
-#FileToChunk.hpp
-test-run test_FileToChunk : capture/test_FileToChunk.cpp : ;
-#FileToGraphic.hpp
-test-run test_FileToGraphic : capture/test_FileToGraphic.cpp : <library>bitmap <library>png <library>snappy <library>crypto ;
-#GraphicToFile.hpp
-test-run test_GraphicToFile : capture/test_GraphicToFile.cpp : <library>bitmap <library>png <library>crypto <library>snappy ;
-#image_capture.hpp
-test-run test_image_capture : capture/test_image_capture.cpp : <library>bitmap <library>png ;
-#nativecapture.hpp
-test-run test_nativecapture : capture/test_nativecapture.cpp : <library>bitmap <library>png <library>crypto <library>snappy ;
-#new_kbdcapture.hpp
-test-run test_new_kbdcapture : capture/test_new_kbdcapture.cpp : ;
-#RDPChunkedDevice.hpp
-test-run test_RDPChunkedDevice : capture/test_RDPChunkedDevice.cpp : ;
-#send_wrm_chunk.hpp
-test-run test_send_wrm_chunk : capture/test_send_wrm_chunk.cpp : ;
-#staticcapture.hpp
-test-run test_staticcapture : capture/test_staticcapture.cpp : <library>png ;
-#transparentchunk.hpp
-test-run test_transparentchunk : capture/test_transparentchunk.cpp : ;
-#transparentplayer.hpp
-test-run test_transparentplayer : capture/test_transparentplayer.cpp : ;
-#transparentrecorder.hpp
-test-run test_transparentrecorder : capture/test_transparentrecorder.cpp : ;
-#utils/match_finder.hpp
-test-run test_utils_match_finder : capture/utils/test_match_finder.cpp : ;
-#wrm_label.hpp
-test-run test_wrm_label : capture/test_wrm_label.cpp : ;
-test-run test_capture_wrm_save_state : capture/test_capture_wrm_save_state.cpp : <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
-## @}
+test-run test_ChunkToFile 
+    : capture/test_ChunkToFile.cpp 
+    : capture/ChunkToFile.hpp 
+    ;
 
+test-run test_FileToChunk 
+    : capture/test_FileToChunk.cpp
+    : capture/FileToChunk.hpp 
+    : <library>png 
+    ;
+
+test-run test_FileToGraphic 
+    : capture/test_FileToGraphic.cpp 
+    : capture/FileToGraphic.hpp 
+    : <library>bitmap <library>png <library>snappy <library>crypto 
+    ;
+
+test-run test_GraphicToFile 
+    : capture/test_GraphicToFile.cpp 
+    : capture/GraphicToFile.hpp 
+    : <library>bitmap <library>png <library>crypto <library>snappy 
+    ;
+
+test-run test_image_capture 
+    : capture/test_image_capture.cpp 
+    : capture/image_capture.hpp 
+    : <library>bitmap <library>png 
+    ;
+
+test-run test_nativecapture 
+    : capture/test_nativecapture.cpp 
+    : capture/nativecapture.hpp 
+    : <library>bitmap <library>png <library>crypto <library>snappy 
+    ;
+
+test-run test_new_kbdcapture 
+    : capture/test_new_kbdcapture.cpp 
+    : capture/new_kbdcapture.hpp 
+    ;
+
+test-run test_RDPChunkedDevice 
+    : capture/test_RDPChunkedDevice.cpp 
+    : capture/RDPChunkedDevice.hpp 
+    ;
+
+test-run test_send_wrm_chunk 
+    : capture/test_send_wrm_chunk.cpp 
+    : capture/send_wrm_chunk.hpp 
+    ;
+
+test-run test_staticcapture 
+    : capture/test_staticcapture.cpp 
+    : capture/staticcapture.hpp 
+    : <library>png 
+    ;
+
+test-run test_transparentchunk 
+    : capture/test_transparentchunk.cpp 
+    : capture/transparentchunk.hpp 
+    ;
+
+test-run test_transparentplayer 
+    : capture/test_transparentplayer.cpp 
+    : capture/transparentplayer.hpp 
+    ;
+
+test-run test_transparentrecorder 
+    : capture/test_transparentrecorder.cpp 
+    : capture/transparentrecorder.hpp 
+    ;
+
+test-run test_utils_match_finder 
+    : capture/utils/test_match_finder.cpp 
+    : capture/utils/match_finder.hpp 
+    : <cov-flag>nocover
+    ;
+
+test-run test_wrm_label 
+    : capture/test_wrm_label.cpp 
+    : capture/wrm_label.hpp 
+    ;
+
+test-run test_capture_wrm_save_state 
+    : capture/test_capture_wrm_save_state.cpp 
+    : capture/capture_wrm_save_state.hpp 
+    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
+    ;
+## @}
 
 ## Test facility functions or classes
 ## @{
-test-run test_iter : utils/test_iter.cpp : ;
-test-run test_noncopyable : utils/test_noncopyable.cpp : ;
-test-run test_splitter : utils/test_splitter.cpp : ;
-test-run test_algostring : utils/test_algostring.cpp : ;
-test-run test_make_unique : utils/test_make_unique.cpp : ;
+test-run test_iter 
+    : utils/test_iter.cpp 
+    : utils/iter.hpp 
+    ;
+
+test-run test_noncopyable 
+    : utils/test_noncopyable.cpp 
+    : utils/noncopyable.hpp 
+    ;
+
+test-run test_splitter 
+    : utils/test_splitter.cpp 
+    : utils/splitter.hpp 
+    ;
+
+test-run test_algostring 
+    : utils/test_algostring.cpp 
+    : utils/algostring.hpp 
+    ;
+
+test-run test_make_unique 
+    : utils/test_make_unique.cpp 
+    : utils/make_unique.hpp 
+    : ;
 ## @}
+
+
+
+if [ SHELL false ] {
+
+
 
 test-run test_stream : utils/test_stream.cpp : ;
 # test-run test_inputarray : utils/test_inputarray.cpp : ;
