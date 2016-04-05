@@ -52,7 +52,7 @@ js client_rdp_JS.js
         bitmap_data_allocator.bc
      : 
         #<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
-        <cxxflags>"--shell-file templates/penta_template.html"
+        #<cxxflags>"--shell-file templates/template.html"
         <cxxflags>-g3 
      ;
 
