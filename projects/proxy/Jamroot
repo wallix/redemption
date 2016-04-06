@@ -1423,11 +1423,17 @@ test-run test_socket_transport
     : <library>openssl <library>crypto <library>dl 
     ;
 
-if [ SHELL false ] {
-test-run test_file_transport 
-    : transport/test_file_transport.cpp 
-    : transport/file_transport.hpp 
+test-run test_in_file_transport 
+    : transport/test_in_file_transport.cpp 
+    : transport/in_file_transport.hpp
     ;
+
+test-run test_out_file_transport 
+    : transport/test_out_file_transport.cpp 
+    : transport/out_file_transport.hpp
+    ;
+
+if [ SHELL false ] {
 
 test-run test_request_full_cleaning 
     : transport/test_request_full_cleaning.cpp 
