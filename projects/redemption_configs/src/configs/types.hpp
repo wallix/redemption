@@ -341,7 +341,7 @@ char const * c_str(CStrBuf<Range<T, Min, Max, Default>>& s, Range<T, Min, Max, D
 
 
 enum class Level : unsigned { low, medium, high, NB };
-ENUM_OPTION(Level, "low", "medium", "high");
+ENUM_OPTION(Level, "low", "medium", "high")
 MK_ENUM_IO(::configs::Level)
 
 inline Level level_from_cstr(char const * value) {
@@ -407,7 +407,7 @@ enum class ColorDepth : unsigned {
     depth24 = 24,
     //depth32,
 };
-ENUM_OPTION(ColorDepth, 8, 15, 16, 24);
+ENUM_OPTION(ColorDepth, 8, 15, 16, 24)
 MK_ENUM_IO(::configs::ColorDepth)
 
 inline ColorDepth enum_to_option(ColorDepth e) {
