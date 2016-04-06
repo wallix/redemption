@@ -22,8 +22,9 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_LABEL_HPP)
 #define REDEMPTION_MOD_WIDGET2_LABEL_HPP
 
-#include "widget.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "mod/internal/widget2/widget.hpp"
+#include "utils/cast.hpp"
 
 class WidgetLabel : public Widget2
 {
@@ -73,7 +74,10 @@ public:
     {
         this->buffer[0] = 0;
         if (text) {
-            const size_t max = std::min(buffer_size - 1, strlen(text));
+            const size_t remain_n = buffer_size - 1;
+            const size_t n = strlen(text);
+            const size_t max = ((remain_n >= n) ? n :
+                                ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize) {

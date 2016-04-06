@@ -423,3 +423,45 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
 TODO("the entry point exists in module: it's rdp_input_invalidate"
      "je just have to change received values to widget messages")
+
+BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
+    WidgetScreen parent(drawable, 800, 600, font);
+    NotifyApi * notifier = nullptr;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
+    bool auto_resize = true;
+    int16_t x = 10;
+    int16_t y = 100;
+
+    char text[] = "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà";
+
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, text,
+        auto_resize, id, fg_color, bg_color, font);
+
+    BOOST_CHECK_EQUAL(0, memcmp(wlabel.get_text(), text, sizeof(text) - 3));
+
+    // ask to widget to redraw at it's current position
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
+                                     0 + wlabel.dy(),
+                                     wlabel.cx(),
+                                     wlabel.cy()));
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label2.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.impl(), message,
+        "\x19\x82\x10\x12\x43\x65\xe9\xf0\xd2\x9f"
+        "\x0b\x2a\x91\x1a\x15\x7a\x2d\xec\x3c\xfc")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
