@@ -6,17 +6,6 @@ import re
 import os
 import os.path
 
-def grep(filename, ematch):
-    result = None
-    try:
-        f_in = open(filename, 'r')
-    except IOError:
-        pass
-    else:
-        with f_in:
-            result = [line for line in f_in if re.search(ematch, line)]
-    return result
-
 class Function:
     def __init__(self, name, startline):
         self.name = name.strip()
@@ -35,10 +24,8 @@ class Module:
 class Cover:
     def __init__(self):
         self.modules = {}
-        self.bestcoverage = {} # module: (lincov, lintotal)
         self.functions = {}
-        self.verbose = 1
-        self.all = False
+        self.verbose = 0
 
     def compute_coverage(self, module, ftags, fgcov):
 
@@ -47,7 +34,8 @@ class Cover:
 
             self.modules[module] = Module(module)
 
-            print("================= Parsing etags for %s ===============" % module)
+            if self.verbose > 1:
+                print("================= Parsing etags for %s ===============" % module)
             for line in open(ftags):
                 if re.match(r'^.*(TODO|REDOC|BODY)', line):
                     continue
@@ -56,7 +44,8 @@ class Cover:
                     res = re.match(r'^(.*[(].*)\x7F(\d+)[,].*$', line)
                 if res:
                     name, startline = res.group(1, 2)
-                    print "function found at %s %s" % (name.strip(), startline)
+                    if self.verbose > 1:
+                        print "function found at %s %s" % (name.strip(), startline)
                     self.modules[module].functions[int(startline)] = Function(name, int(startline))
 
             current_function = None
@@ -66,7 +55,8 @@ class Cover:
             open_parentheses = False
             block_executed = False
             
-            print("================= Parsing gcov for %s ===============" % module)
+            if self.verbose > 1:
+                print("================= Parsing gcov for %s ===============" % module)
             for line in open(fgcov):
 
                 res = re.match(r'^\s*(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
@@ -80,7 +70,8 @@ class Cover:
                     if int(res.group(2)) in self.modules[module].functions:
                         current_function = int(res.group(2))
                         f = self.modules[module].functions[current_function]
-                        print "%s function found at %d" % (f.name, current_function)
+                        if self.verbose > 1:
+                            print "%s function found at %d" % (f.name, current_function)
                         self.modules[module].functions[current_function].total_lines += 1
                         if not res.group(1) in ('#####', "-"):
                             self.modules[module].functions[current_function].covered_lines += 1
@@ -146,7 +137,7 @@ class Cover:
             if self.verbose > 0:
                 print "computing coverage for %s : done" % module
         else:
-            if self.verbose > 1:
+            if self.verbose > 0:
                 print "computing coverage for %s : FAILED" % module
 
 if __name__ == "__main__":
@@ -203,4 +194,5 @@ if __name__ == "__main__":
         covered_rate = 0
         if g_total_number != 0:
             covered_rate = 100 * g_covered / g_total_number
+    print "---------------- End of coverage Results -------------------"
 

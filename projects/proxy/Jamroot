@@ -610,20 +610,21 @@ toolset.flags cover COVERFLAG : <cov-flag> ;
 
 actions cover
 {
+    echo "Computing coverage for $(COVERFILE)"
     if [ "++ $(COVERFLAG) ++" = "++ nocover ++" ]; then
         echo "NO COVERAGE"
         touch "$(<)"
     else
-        echo "COVERFILE = $(COVERFILE)"
-        echo "source = $(>)"
-        echo "target = $(<)"
+        # echo "COVERFILE = $(COVERFILE)"
+        # echo "source = $(>)"
+        # echo "target = $(<)"
         mkdir -p $(COVERAGE_PREFIX)coverage/$(COVERFILE)
         if [ ! -e $(>:S=.gcno) ]; then
             echo "coverage file $(>:S=.gcno) does not exist"
             exit 1
         fi
         
-        echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
+        #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
         gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
         if [ $? = "0" ]; then
         
@@ -631,13 +632,19 @@ actions cover
             if [ $? = "0" ]; then
 
                 if [ ! -e "$(SRCDIR)/$(COVERFILE)" ]; then
-                    echo "coverage file $(SRCDIR)/$(COVERFILE) does not exist"
+                    echo "source file $(SRCDIR)/$(COVERFILE) missing"
                     exit 1
                 fi
 
+                # If no gcov file available for coverage target create an empty one
+                if [ ! -e "$(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov" ]; then
+                    touch $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov
+                fi
+                
                 etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
                 if [ $? = "0" ]; then
-                    python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR)
+                    python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).report
+                    cat $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).report
                     touch $(<)
                 else
                     echo "etags failed"
