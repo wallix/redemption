@@ -680,11 +680,13 @@ rule test-run ( target : sources + : tested ? : requirements * )
 #    ECHO "sources = $(sources)" ;
 #    ECHO "target = $(target)" ;
 
-    run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
-    make $(target:S=.coverage) : $(target) : nop 
-        : <variant>coverage:<action>@cover 
-          <covfile>$(tested) $(requirements)
-        ;
+    if ($(tested)) {
+        run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
+        make $(target:S=.coverage) : $(target) : nop 
+            : <variant>coverage:<action>@cover 
+              <covfile>$(tested) $(requirements)
+            ;
+    }
 }
 
 # To compute coverage
