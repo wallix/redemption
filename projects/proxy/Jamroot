@@ -1602,14 +1602,11 @@ test-run test_AlternateSecondaryWindowing
     : core/RDP/orders/AlternateSecondaryWindowing.hpp 
     ;
 
-if [ SHELL false ] {
-
 test-run test_libpng 
     : test_libpng.cpp 
-    : libpng.hpp 
-    : <library>png <library>z 
+    :  
+    : <library>png <library>z <covflag>nocover
     ;
-}
 
 #test-run test_convert_bitmap : test_convert_bitmap.cpp : <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
 test-run test_rdp 
