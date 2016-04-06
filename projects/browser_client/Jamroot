@@ -1,41 +1,74 @@
-using emscripten ;
+# using emscripten ;
 
-project pentamino
+project js_client
     : requirements
     <cxxflags>-Wall
     <include>src
     : default-build release
 ;
 
+
 #
-# Pentamino
+# JS Client
 #
 
 path-constant TOP : . ;
 
-install pentamino
-    : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
+install js_client
+#    : [ glob ./sys/js_client/* ] js_client.html
+    : [ glob ./sys/js_client/* ] templates/js_client_template.html
     : <location>./sandbox
     ;
 
-objjs penta.bc 
-    : 
-    src/ftests/penta.cpp 
-    : 
-    <cxxflags>-g3 
-    ;
-
-js pentamino.js : penta.bc : 
-    <cxxflags>-g3
-    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
-    <cxxflags>"--shell-file templates/penta_template.html"
- ;
+#js js_client.js : 
+#    <cxxflags>-g3
+#    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+#    <cxxflags>"--shell-file templates/js_client_template.html"
+ #;
 
 actions nothing { }
 
-make pentamino.html : pentamino.js : nothing ;
+#make js_client.html
+#    <cxxflags>-g3
+#    <cxxflags>"--shell-file templates/js_client_template.html" : nothing ;
 
-import testing ;
 
-# unit-test test_penta : test_penta.cpp libboost_unit_test ;
+# project pentamino
+#     : requirements
+#     <cxxflags>-Wall
+#     <include>src
+#     : default-build release
+# ;
+# 
+# #
+# # Pentamino
+# #
+# 
+# path-constant TOP : . ;
+# 
+# install pentamino
+#     : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
+#     : <location>./sandbox
+#     ;
+# 
+# objjs penta.bc 
+#     : 
+#     src/ftests/penta.cpp 
+#     : 
+#     <cxxflags>-g3 
+#     ;
+# 
+# js pentamino.js : penta.bc : 
+#     <cxxflags>-g3
+#     <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+#     <cxxflags>"--shell-file templates/penta_template.html"
+#  ;
+# 
+# actions nothing { }
+# 
+# make pentamino.html : pentamino.js : nothing ;
+# 
+# import testing ;
+# 
+# # unit-test test_penta : test_penta.cpp libboost_unit_test ;
 
